@@ -182,7 +182,7 @@ def main() -> None:
         _default_home_dir(".rustup")
     )
     bin_dir = cache_root / "bin"
-    setup_cache_path = bin_dir
+    setup_cache_path = cache_root
     zccache_cache_dir = soldr_root / "cache" / "zccache"
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
     soldr_path = bin_dir / soldr_binary
@@ -223,7 +223,7 @@ def main() -> None:
     ).hexdigest()[:16]
     runner_os = _sanitize_fragment(os.environ.get("ACTION_OS", os.name).lower())
     runner_arch = _sanitize_fragment(os.environ.get("ACTION_ARCH", "unknown").lower())
-    cache_prefix = f"setup-soldr-v1-{runner_os}-{runner_arch}"
+    cache_prefix = f"setup-soldr-v2-{runner_os}-{runner_arch}"
     cache_key = f"{cache_prefix}-{digest}"
 
     suffix = os.environ.get("INPUT_CACHE_KEY_SUFFIX", "").strip()
