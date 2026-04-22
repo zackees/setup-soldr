@@ -85,9 +85,10 @@ jobs:
 | `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
 | `lockfile` | Optional `Cargo.lock` path used for target-cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save the Soldr-owned zccache compilation artifact cache across runs. Default `true`; set to `false` to opt out. |
-| `target-cache` | Restore and save the Cargo target directory for no-op CI fast paths. Default `true`; set to `false` to cache only zccache compilation artifacts. |
+| `target-cache` | Restore and save Cargo target metadata for no-op CI fast paths. Default `true`; set to `false` to cache only zccache compilation artifacts. |
+| `target-cache-mode` | Target cache mode. Default `hot` caches Cargo freshness metadata and lightweight type metadata; `full` caches the whole `target-dir`; `off` disables target caching. |
 | `target-dir` | Cargo target directory restored by `target-cache`. |
-| `target-cache-paths` | Optional newline-separated target-cache paths or glob patterns. Defaults to `target-dir`; set to a profile subdirectory such as `target/debug` to avoid caching unrelated profiles. |
+| `target-cache-paths` | Optional newline-separated target-cache paths or glob patterns. Overrides `target-cache-mode`; use this to pin a profile-specific or job-specific cache shape. |
 
 ## Outputs
 
@@ -107,6 +108,7 @@ jobs:
 | `target-cache-key` | Primary key used for the Cargo target directory cache. |
 | `target-cache-path` | Cargo target directory cache path. |
 | `target-cache-paths` | Paths or glob patterns passed to `actions/cache` for target-cache. |
+| `target-cache-mode` | Effective target cache mode. |
 | `target-cache-restore-status` | Diagnostic restore status for the Cargo target directory cache. |
 | `target-lockfile` | `Cargo.lock` path used for target-cache keying. |
 | `target-lockfile-hash` | Short hash of the `Cargo.lock` used for target-cache keying, or `no-lock`. |
@@ -119,6 +121,7 @@ jobs:
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action rehydrates the Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores the Soldr-owned zccache cache root by default so child branches can reuse parent-branch build state.
+- The default target cache mode is `hot`, which avoids archiving the full Cargo `target/` tree and caches only Cargo freshness metadata plus lightweight type metadata. Use `target-cache-mode: full` only for tightly scoped jobs where the whole target directory is known to stay bounded.
 - The setup cache intentionally keeps Soldr-managed state so the managed zccache binary does not need to be rebuilt on every run.
 
 ## Development
