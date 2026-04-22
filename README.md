@@ -85,9 +85,9 @@ jobs:
 | `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
 | `lockfile` | Optional `Cargo.lock` path used for target-cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save the Soldr-owned zccache compilation artifact cache across runs. Default `true`; set to `false` to opt out. |
-| `target-cache` | Restore and save the Cargo target directory for no-op CI fast paths. Default `true`; set to `false` to cache only zccache compilation artifacts. |
+| `target-cache` | Restore and save Cargo target paths for no-op CI fast paths. Default `false` because Cargo target directories do not garbage collect themselves and can grow to multi-GB caches; enable only with bounded `target-cache-paths`. See [zackees/setup-soldr#21](https://github.com/zackees/setup-soldr/issues/21), [zackees/zccache#65](https://github.com/zackees/zccache/issues/65), and [zackees/soldr#197](https://github.com/zackees/soldr/issues/197). |
 | `target-dir` | Cargo target directory restored by `target-cache`. |
-| `target-cache-paths` | Optional newline-separated target-cache paths or glob patterns. Defaults to `target-dir`; set to a profile subdirectory such as `target/debug` to avoid caching unrelated profiles. |
+| `target-cache-paths` | Optional newline-separated target-cache paths or glob patterns. Defaults to `target-dir` when `target-cache` is enabled; set to a profile subdirectory such as `target/debug` to avoid caching unrelated profiles. |
 
 ## Outputs
 
@@ -118,6 +118,7 @@ jobs:
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - The action rehydrates the Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores the Soldr-owned zccache cache root by default so child branches can reuse parent-branch build state.
+- Full Cargo target caching is opt-in until target snapshot garbage collection is bounded; prefer the default zccache artifact cache for normal CI.
 - The setup cache intentionally keeps Soldr-managed state so the managed zccache binary does not need to be rebuilt on every run.
 
 ## Development
