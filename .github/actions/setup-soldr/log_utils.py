@@ -15,6 +15,15 @@ def timestamps_enabled() -> bool:
     return value not in {"0", "false", "no", "off"}
 
 
+def color_force_environment(base: dict[str, str] | None = None) -> dict[str, str]:
+    env = dict(os.environ if base is None else base)
+    if timestamps_enabled() and "NO_COLOR" not in env:
+        env.setdefault("CARGO_TERM_COLOR", "always")
+        env.setdefault("CLICOLOR_FORCE", "1")
+        env.setdefault("FORCE_COLOR", "1")
+    return env
+
+
 def _start_epoch() -> float:
     value = os.environ.get("SETUP_SOLDR_LOG_START_EPOCH", "").strip()
     if value:
@@ -48,6 +57,7 @@ def run(command: list[str]) -> None:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
+        env=color_force_environment(),
     )
     assert process.stdout is not None
     for line in process.stdout:
@@ -58,8 +68,9 @@ def run(command: list[str]) -> None:
 
 
 def main() -> int:
-    for line in sys.stdin:
-        print(format_line(line.rstrip("\n")), flush=True)
+    for line in sys.stdin.buffer:
+        message = line.rstrip(b"\r\n").decode("utf-8", errors="replace")
+        print(format_line(message), flush=True)
     return 0
 
 
