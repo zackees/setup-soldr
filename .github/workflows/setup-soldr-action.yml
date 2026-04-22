@@ -75,6 +75,7 @@ jobs:
           SETUP_CACHE_DIR: ${{ steps.setup.outputs.cache-dir }}
           BUILD_CACHE_PATH: ${{ steps.setup.outputs.build-cache-path }}
           TARGET_CACHE_PATH: ${{ steps.setup.outputs.target-cache-path }}
+          CARGO_LOG: cargo::core::compiler::fingerprint=info
         run: |
           set -o pipefail
 
@@ -117,8 +118,8 @@ jobs:
           path_summary "cache before build" "$SETUP_CACHE_DIR"
           path_summary "build-cache before build" "$BUILD_CACHE_PATH"
           path_summary "target-cache before build" "$TARGET_CACHE_PATH"
-          log "running soldr cargo build --locked --package zccache-cli"
-          soldr cargo build --locked --package zccache-cli 2>&1 | python "$logger"
+          log "running soldr cargo build -vv --locked --package zccache-cli"
+          soldr cargo build -vv --locked --package zccache-cli 2>&1 | python "$logger"
           status=$?
           path_summary "cache after build" "$SETUP_CACHE_DIR"
           path_summary "build-cache after build" "$BUILD_CACHE_PATH"
