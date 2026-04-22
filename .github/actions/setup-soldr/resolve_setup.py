@@ -145,11 +145,6 @@ def _default_home_dir(name: str) -> Path:
     return (Path.home() / name).resolve()
 
 
-def _sibling_state_dir(path: Path, suffix: str) -> Path:
-    name = path.name or "setup-soldr"
-    return (path.parent / f"{name}-{suffix}").resolve()
-
-
 def _path_summary(label: str, path: Path) -> None:
     if not path.exists():
         log(f"{label} path={path} exists=false files=0 bytes=0")
@@ -187,7 +182,8 @@ def main() -> None:
         _default_home_dir(".rustup")
     )
     bin_dir = cache_root / "bin"
-    zccache_cache_dir = _sibling_state_dir(cache_root, "zccache")
+    setup_cache_path = bin_dir
+    zccache_cache_dir = soldr_root / "cache" / "zccache"
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
     soldr_path = bin_dir / soldr_binary
 
@@ -298,13 +294,14 @@ def main() -> None:
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
     log(f"target-cache lockfile={_path_for_output(workspace, lockfile_path)}")
     log(f"target-cache lockfile-hash={cargo_lock_hash}")
-    _path_summary("cache before restore", cache_root)
+    _path_summary("cache before restore", setup_cache_path)
     _path_summary("build-cache before restore", zccache_cache_dir)
     _path_summary("target-cache before restore", target_cache_path)
 
     _write_outputs(
         {
             "cache_root": str(cache_root),
+            "setup_cache_path": str(setup_cache_path),
             "cache_key": cache_key,
             "cache_restore_prefix": f"{cache_prefix}-",
             "build_cache_key": build_cache_key,

@@ -1,5 +1,7 @@
 # setup-soldr
 
+[![Setup Soldr Action](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml/badge.svg)](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml)
+
 Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
@@ -83,7 +85,7 @@ jobs:
 | `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
 | `lockfile` | Optional `Cargo.lock` path used for target-cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save the Soldr-owned zccache compilation artifact cache across runs. Default `true`; set to `false` to opt out. |
-| `target-cache` | Restore and save the Cargo target directory for no-op CI fast paths. Default `false`; set to `true` when target restore is faster than rebuilding through zccache. |
+| `target-cache` | Restore and save the Cargo target directory for no-op CI fast paths. Default `true`; set to `false` to cache only zccache compilation artifacts. |
 | `target-dir` | Cargo target directory restored by `target-cache`. |
 
 ## Outputs
@@ -114,7 +116,7 @@ jobs:
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - The action rehydrates a small Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores the Soldr-owned zccache cache root by default so child branches can reuse parent-branch build state.
-- The action exports `ZCCACHE_CACHE_DIR` to a separate cache path so zccache artifacts do not bloat the setup cache.
+- The action caches the Soldr binary separately from `SOLDR_CACHE_DIR/cache/zccache`, keeping setup restore small while preserving zccache artifacts.
 
 ## Development
 
