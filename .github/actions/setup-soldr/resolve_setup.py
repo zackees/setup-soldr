@@ -142,9 +142,7 @@ def _write_outputs(values: dict[str, str]) -> None:
 def main() -> None:
     workspace = Path(os.environ["ACTION_WORKSPACE"]).resolve()
     runner_temp = Path(os.environ.get("RUNNER_TEMP", workspace / ".tmp")).resolve()
-    log_start = os.environ.get("SETUP_SOLDR_LOG_START_EPOCH", "").strip()
-    if not log_start:
-        log_start = str(int(time.time()))
+    log_start = str(int(time.time()))
 
     requested_cache_dir = os.environ.get("INPUT_CACHE_DIR", "").strip()
     cache_root = Path(requested_cache_dir).expanduser().resolve() if requested_cache_dir else (
@@ -241,7 +239,15 @@ def main() -> None:
     _write_env("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", json.dumps(toolchain["components"]))
     _write_env("SETUP_SOLDR_TOOLCHAIN_TARGETS", json.dumps(toolchain["targets"]))
     _write_env("SETUP_SOLDR_LOG_START_EPOCH", log_start)
-    _write_env("SETUP_SOLDR_TIMESTAMPS", os.environ.get("INPUT_TIMESTAMPS", "true").strip() or "true")
+    timestamps = os.environ.get("INPUT_TIMESTAMPS", "true").strip() or "true"
+    _write_env("SETUP_SOLDR_TIMESTAMPS", timestamps)
+    if timestamps.lower() not in {"0", "false", "no", "off"} and "NO_COLOR" not in os.environ:
+        if not os.environ.get("CARGO_TERM_COLOR"):
+            _write_env("CARGO_TERM_COLOR", "always")
+        if not os.environ.get("CLICOLOR_FORCE"):
+            _write_env("CLICOLOR_FORCE", "1")
+        if not os.environ.get("FORCE_COLOR"):
+            _write_env("FORCE_COLOR", "1")
     if os.environ.get("INPUT_TRUST_MODE", "").strip():
         _write_env("SOLDR_TRUST_MODE", os.environ["INPUT_TRUST_MODE"].strip())
 
