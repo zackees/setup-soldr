@@ -40,7 +40,10 @@ jobs:
           cache: true
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
-          target-cache-paths: zccache/target/debug
+          target-cache-paths: |
+            zccache/target/.rustc_info.json
+            zccache/target/CACHEDIR.TAG
+            zccache/target/debug
           cache-key-suffix: zccache
 
       - name: Show action outputs
