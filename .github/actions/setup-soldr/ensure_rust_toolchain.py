@@ -5,6 +5,7 @@ import json
 import os
 import platform
 import stat
+import shlex
 import shutil
 import subprocess
 import sys
@@ -12,7 +13,7 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from log_utils import log, run
+from log_utils import color_force_environment, log, run
 
 
 def append_github_env(name: str, value: str) -> None:
@@ -116,6 +117,165 @@ def toolchain_available(rustup: str, channel: str) -> bool:
     return False
 
 
+def _json_list_env(name: str) -> list[str]:
+    raw_value = os.environ.get(name, "[]")
+    try:
+        value = json.loads(raw_value)
+    except json.JSONDecodeError:
+        value = raw_value.split(",")
+    if isinstance(value, str):
+        values = value.split(",")
+    elif isinstance(value, list):
+        values = value
+    else:
+        return []
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for item in values:
+        item = str(item).strip()
+        if item and item not in seen:
+            normalized.append(item)
+            seen.add(item)
+    return normalized
+
+
+def _rustup_installed_names(rustup: str, args: list[str]) -> set[str]:
+    result = subprocess.run(
+        [rustup, *args],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+    if result.returncode != 0:
+        return set()
+    return {
+        line.split(maxsplit=1)[0]
+        for line in result.stdout.splitlines()
+        if line.strip()
+    }
+
+
+def installed_components(rustup: str, channel: str) -> set[str]:
+    return _rustup_installed_names(
+        rustup,
+        ["component", "list", "--toolchain", channel, "--installed"],
+    )
+
+
+def installed_targets(rustup: str, channel: str) -> set[str]:
+    return _rustup_installed_names(
+        rustup,
+        ["target", "list", "--toolchain", channel, "--installed"],
+    )
+
+
+def component_is_installed(installed: set[str], component: str) -> bool:
+    return any(
+        name == component or name.startswith(f"{component}-")
+        for name in installed
+    )
+
+
+def missing_components(rustup: str, channel: str, components: list[str]) -> list[str]:
+    installed = installed_components(rustup, channel)
+    return [
+        component
+        for component in components
+        if not component_is_installed(installed, component)
+    ]
+
+
+def missing_targets(rustup: str, channel: str, targets: list[str]) -> list[str]:
+    installed = installed_targets(rustup, channel)
+    return [target for target in targets if target not in installed]
+
+
+def run_captured(command: list[str]) -> None:
+    log(f"+ {shlex.join(command)}")
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        env=color_force_environment(),
+    )
+    output_lines: list[str] = []
+    assert process.stdout is not None
+    for line in process.stdout:
+        message = line.rstrip("\n")
+        output_lines.append(message)
+        log(message)
+    returncode = process.wait()
+    if returncode != 0:
+        raise subprocess.CalledProcessError(
+            returncode,
+            command,
+            output="\n".join(output_lines),
+        )
+
+
+def component_conflict_detected(exc: subprocess.CalledProcessError) -> bool:
+    output = str(exc.output or "").lower()
+    return "failed to install component" in output and "detected conflict" in output
+
+
+def remove_components_for_retry(rustup: str, channel: str, components: list[str]) -> None:
+    for component in components:
+        command = [rustup, "component", "remove", "--toolchain", channel, component]
+        try:
+            run_captured(command)
+        except subprocess.CalledProcessError:
+            log(f"Rust component {component} was not removable for {channel}; continuing")
+
+
+def add_components(rustup: str, channel: str, components: list[str]) -> None:
+    if not components:
+        return
+
+    missing = missing_components(rustup, channel, components)
+    if not missing:
+        log(f"Rust components already installed for {channel}: {', '.join(components)}")
+        return
+
+    log(f"Installing Rust components for {channel}: {', '.join(missing)}")
+    command = [rustup, "component", "add", "--toolchain", channel, *missing]
+    try:
+        run_captured(command)
+    except subprocess.CalledProcessError as exc:
+        if not component_conflict_detected(exc):
+            raise
+        log("Rust component install hit a rustup conflict; removing requested components and retrying")
+        remove_components_for_retry(rustup, channel, missing)
+        run_captured(command)
+
+    still_missing = missing_components(rustup, channel, components)
+    if still_missing:
+        raise RuntimeError(
+            f"rustup did not install requested components for {channel}: {', '.join(still_missing)}"
+        )
+
+
+def add_targets(rustup: str, channel: str, targets: list[str]) -> None:
+    if not targets:
+        return
+
+    missing = missing_targets(rustup, channel, targets)
+    if not missing:
+        log(f"Rust targets already installed for {channel}: {', '.join(targets)}")
+        return
+
+    log(f"Installing Rust targets for {channel}: {', '.join(missing)}")
+    run([rustup, "target", "add", "--toolchain", channel, *missing])
+
+    still_missing = missing_targets(rustup, channel, targets)
+    if still_missing:
+        raise RuntimeError(
+            f"rustup did not install requested targets for {channel}: {', '.join(still_missing)}"
+        )
+
+
 def main() -> None:
     cargo_home = Path(os.environ["CARGO_HOME"])
     rustup_home = Path(os.environ["RUSTUP_HOME"])
@@ -129,20 +289,22 @@ def main() -> None:
 
     channel = os.environ.get("SETUP_SOLDR_TOOLCHAIN_CHANNEL", "").strip() or "stable"
     profile = os.environ.get("SETUP_SOLDR_TOOLCHAIN_PROFILE", "").strip() or "minimal"
-    components = json.loads(os.environ.get("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", "[]"))
-    targets = json.loads(os.environ.get("SETUP_SOLDR_TOOLCHAIN_TARGETS", "[]"))
+    components = _json_list_env("SETUP_SOLDR_TOOLCHAIN_COMPONENTS")
+    targets = _json_list_env("SETUP_SOLDR_TOOLCHAIN_TARGETS")
 
-    if components or targets or not toolchain_available(rustup, channel):
+    log(f"Resolved Rust toolchain channel={channel} profile={profile}")
+    log(f"Requested Rust components: {', '.join(components) if components else 'none'}")
+    log(f"Requested Rust targets: {', '.join(targets) if targets else 'none'}")
+
+    run([rustup, "set", "profile", profile])
+    if not toolchain_available(rustup, channel):
         log(f"Installing Rust toolchain {channel} with profile {profile}")
-        run([rustup, "set", "profile", profile])
-        install_command = [rustup, "toolchain", "install", channel, "--profile", profile]
-        for component in components:
-            install_command.extend(["--component", component])
-        for target in targets:
-            install_command.extend(["--target", target])
-        run(install_command)
+        run([rustup, "toolchain", "install", channel, "--profile", profile])
     else:
         log(f"Using installed Rust toolchain {channel}")
+
+    add_components(rustup, channel, components)
+    add_targets(rustup, channel, targets)
 
     os.environ["RUSTUP_TOOLCHAIN"] = channel
     append_github_env("RUSTUP_TOOLCHAIN", channel)
