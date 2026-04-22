@@ -16,8 +16,8 @@ permissions:
   contents: read
 
 jobs:
-  soldr-self-build:
-    name: Build zackees/soldr
+  zccache-build:
+    name: Build zccache
     runs-on: ubuntu-24.04
 
     steps:
@@ -26,11 +26,11 @@ jobs:
         with:
           path: setup-soldr
 
-      - name: Checkout zackees/soldr
+      - name: Checkout zccache
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          repository: zackees/soldr
-          path: soldr
+          repository: zackees/zccache
+          path: zccache
           persist-credentials: false
 
       - name: Initialize elapsed log clock
@@ -43,10 +43,9 @@ jobs:
         uses: ./setup-soldr
         with:
           cache: true
-          toolchain-file: soldr/rust-toolchain.toml
-          lockfile: soldr/Cargo.lock
-          target-dir: soldr/target
-          cache-key-suffix: soldr-self-build
+          lockfile: zccache/Cargo.lock
+          target-dir: zccache/target
+          cache-key-suffix: zccache
 
       - name: Show action outputs
         shell: pwsh
@@ -69,9 +68,9 @@ jobs:
           Write-Host "target-lockfile-hash=${{ steps.setup.outputs.target-lockfile-hash }}"
           Write-Host "toolchain=${{ steps.setup.outputs.toolchain }}"
 
-      - name: Build zackees/soldr through soldr
+      - name: Build zccache through soldr
         shell: bash
-        working-directory: soldr
+        working-directory: zccache
         env:
           SETUP_CACHE_DIR: ${{ steps.setup.outputs.cache-dir }}
           BUILD_CACHE_PATH: ${{ steps.setup.outputs.build-cache-path }}
@@ -118,8 +117,8 @@ jobs:
           path_summary "cache before build" "$SETUP_CACHE_DIR"
           path_summary "build-cache before build" "$BUILD_CACHE_PATH"
           path_summary "target-cache before build" "$TARGET_CACHE_PATH"
-          log "running soldr cargo build --locked --package soldr-cli"
-          soldr cargo build --locked --package soldr-cli 2>&1 | python "$logger"
+          log "running soldr cargo build --locked --package zccache-cli"
+          soldr cargo build --locked --package zccache-cli 2>&1 | python "$logger"
           status=$?
           path_summary "cache after build" "$SETUP_CACHE_DIR"
           path_summary "build-cache after build" "$BUILD_CACHE_PATH"
