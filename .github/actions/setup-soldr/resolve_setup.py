@@ -9,6 +9,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from log_utils import log
+
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover
@@ -139,20 +141,53 @@ def _write_outputs(values: dict[str, str]) -> None:
                 fh.write(f"{key}={value}\n")
 
 
+def _default_home_dir(name: str) -> Path:
+    return (Path.home() / name).resolve()
+
+
+def _sibling_state_dir(path: Path, suffix: str) -> Path:
+    name = path.name or "setup-soldr"
+    return (path.parent / f"{name}-{suffix}").resolve()
+
+
+def _path_summary(label: str, path: Path) -> None:
+    if not path.exists():
+        log(f"{label} path={path} exists=false files=0 bytes=0")
+        return
+
+    files = 0
+    bytes_total = 0
+    for item in path.rglob("*"):
+        try:
+            if item.is_file():
+                files += 1
+                bytes_total += item.stat().st_size
+        except OSError:
+            continue
+    log(f"{label} path={path} exists=true files={files} bytes={bytes_total}")
+
+
 def main() -> None:
     workspace = Path(os.environ["ACTION_WORKSPACE"]).resolve()
     runner_temp = Path(os.environ.get("RUNNER_TEMP", workspace / ".tmp")).resolve()
     log_start = str(int(time.time()))
+    timestamps = os.environ.get("INPUT_TIMESTAMPS", "true").strip() or "true"
+    os.environ["SETUP_SOLDR_LOG_START_EPOCH"] = log_start
+    os.environ["SETUP_SOLDR_TIMESTAMPS"] = timestamps
 
     requested_cache_dir = os.environ.get("INPUT_CACHE_DIR", "").strip()
     cache_root = Path(requested_cache_dir).expanduser().resolve() if requested_cache_dir else (
         runner_temp / "setup-soldr"
     )
     soldr_root = cache_root / "soldr"
-    cargo_home = cache_root / "cargo"
-    rustup_home = cache_root / "rustup"
+    cargo_home = Path(os.environ.get("CARGO_HOME", "")).expanduser().resolve() if os.environ.get("CARGO_HOME") else (
+        _default_home_dir(".cargo")
+    )
+    rustup_home = Path(os.environ.get("RUSTUP_HOME", "")).expanduser().resolve() if os.environ.get("RUSTUP_HOME") else (
+        _default_home_dir(".rustup")
+    )
     bin_dir = cache_root / "bin"
-    zccache_cache_dir = soldr_root / "cache" / "zccache"
+    zccache_cache_dir = _sibling_state_dir(cache_root, "zccache")
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
     soldr_path = bin_dir / soldr_binary
 
@@ -192,7 +227,7 @@ def main() -> None:
     ).hexdigest()[:16]
     runner_os = _sanitize_fragment(os.environ.get("ACTION_OS", os.name).lower())
     runner_arch = _sanitize_fragment(os.environ.get("ACTION_ARCH", "unknown").lower())
-    cache_prefix = f"setup-soldr-v0-{runner_os}-{runner_arch}"
+    cache_prefix = f"setup-soldr-v1-{runner_os}-{runner_arch}"
     cache_key = f"{cache_prefix}-{digest}"
 
     suffix = os.environ.get("INPUT_CACHE_KEY_SUFFIX", "").strip()
@@ -239,7 +274,6 @@ def main() -> None:
     _write_env("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", json.dumps(toolchain["components"]))
     _write_env("SETUP_SOLDR_TOOLCHAIN_TARGETS", json.dumps(toolchain["targets"]))
     _write_env("SETUP_SOLDR_LOG_START_EPOCH", log_start)
-    timestamps = os.environ.get("INPUT_TIMESTAMPS", "true").strip() or "true"
     _write_env("SETUP_SOLDR_TIMESTAMPS", timestamps)
     if timestamps.lower() not in {"0", "false", "no", "off"} and "NO_COLOR" not in os.environ:
         if not os.environ.get("CARGO_TERM_COLOR"):
@@ -253,6 +287,20 @@ def main() -> None:
 
     _write_path(str(bin_dir))
     _write_path(str(cargo_home / "bin"))
+
+    log("setup-soldr cache plan")
+    log(f"cache key={cache_key}")
+    log(f"cache restore-key={cache_prefix}-")
+    log(f"build-cache key={build_cache_key}")
+    log(f"build-cache restore-key-toolchain={build_cache_toolchain_prefix}")
+    log(f"build-cache restore-key-os-arch={build_cache_prefix}-")
+    log(f"target-cache key={target_cache_key}")
+    log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
+    log(f"target-cache lockfile={_path_for_output(workspace, lockfile_path)}")
+    log(f"target-cache lockfile-hash={cargo_lock_hash}")
+    _path_summary("cache before restore", cache_root)
+    _path_summary("build-cache before restore", zccache_cache_dir)
+    _path_summary("target-cache before restore", target_cache_path)
 
     _write_outputs(
         {
