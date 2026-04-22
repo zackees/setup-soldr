@@ -80,7 +80,7 @@ jobs:
 | `cache-dir` | Override the runner-local cache/state root. |
 | `cache-key-suffix` | Optional escape hatch appended to the cache key. |
 | `toolchain` | Explicit Rust toolchain channel override. |
-| `toolchain-file` | Alternate toolchain file path when `toolchain` is empty. |
+| `toolchain-file` | Alternate toolchain file path when `toolchain` is empty; `components` and `targets` in the file are provisioned during setup. |
 | `trust-mode` | Optional `SOLDR_TRUST_MODE` value. |
 | `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
 | `lockfile` | Optional `Cargo.lock` path used for target-cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
@@ -116,6 +116,7 @@ jobs:
 
 - The action installs exactly one released `soldr` binary for the active runner target.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
+- Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action rehydrates the Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores the Soldr-owned zccache cache root by default so child branches can reuse parent-branch build state.
 - The setup cache intentionally keeps Soldr-managed state so the managed zccache binary does not need to be rebuilt on every run.
