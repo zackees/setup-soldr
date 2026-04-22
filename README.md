@@ -1,6 +1,6 @@
 # setup-soldr
 
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring a cacheable runner-local root for Soldr, Cargo, and rustup state.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -83,7 +83,7 @@ jobs:
 | `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
 | `lockfile` | Optional `Cargo.lock` path used for target-cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save the Soldr-owned zccache compilation artifact cache across runs. Default `true`; set to `false` to opt out. |
-| `target-cache` | Restore and save the Cargo target directory for no-op CI fast paths. |
+| `target-cache` | Restore and save the Cargo target directory for no-op CI fast paths. Default `false`; set to `true` when target restore is faster than rebuilding through zccache. |
 | `target-dir` | Cargo target directory restored by `target-cache`. |
 
 ## Outputs
@@ -112,9 +112,9 @@ jobs:
 
 - The action installs exactly one released `soldr` binary for the active runner target.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
-- The action rehydrates `SOLDR_CACHE_DIR`, `CARGO_HOME`, and `RUSTUP_HOME` under the selected cache root.
-- The action restores the Soldr-owned zccache cache root and the Cargo target directory by default so child branches can reuse parent-branch build state.
-- The action exports `ZCCACHE_CACHE_DIR` to keep managed zccache artifact storage under `SOLDR_CACHE_DIR`.
+- The action rehydrates a small Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
+- The action restores the Soldr-owned zccache cache root by default so child branches can reuse parent-branch build state.
+- The action exports `ZCCACHE_CACHE_DIR` to a separate cache path so zccache artifacts do not bloat the setup cache.
 
 ## Development
 
