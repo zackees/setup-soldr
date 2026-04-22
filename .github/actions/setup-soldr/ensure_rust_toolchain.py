@@ -98,6 +98,24 @@ def ensure_rustup_available(soldr_root: Path) -> str:
     return rustup
 
 
+def toolchain_available(rustup: str, channel: str) -> bool:
+    result = subprocess.run(
+        [rustup, "toolchain", "list"],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+    if result.returncode != 0:
+        return False
+
+    for raw_line in result.stdout.splitlines():
+        installed = raw_line.split(maxsplit=1)[0] if raw_line.strip() else ""
+        if installed == channel or installed.startswith(f"{channel}-"):
+            return True
+    return False
+
+
 def main() -> None:
     cargo_home = Path(os.environ["CARGO_HOME"])
     rustup_home = Path(os.environ["RUSTUP_HOME"])
@@ -114,15 +132,18 @@ def main() -> None:
     components = json.loads(os.environ.get("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", "[]"))
     targets = json.loads(os.environ.get("SETUP_SOLDR_TOOLCHAIN_TARGETS", "[]"))
 
-    log(f"Installing Rust toolchain {channel} with profile {profile}")
-    run([rustup, "set", "profile", profile])
-    install_command = [rustup, "toolchain", "install", channel, "--profile", profile]
-    for component in components:
-        install_command.extend(["--component", component])
-    for target in targets:
-        install_command.extend(["--target", target])
-    run(install_command)
-    run([rustup, "default", channel])
+    if components or targets or not toolchain_available(rustup, channel):
+        log(f"Installing Rust toolchain {channel} with profile {profile}")
+        run([rustup, "set", "profile", profile])
+        install_command = [rustup, "toolchain", "install", channel, "--profile", profile]
+        for component in components:
+            install_command.extend(["--component", component])
+        for target in targets:
+            install_command.extend(["--target", target])
+        run(install_command)
+    else:
+        log(f"Using installed Rust toolchain {channel}")
+
     os.environ["RUSTUP_TOOLCHAIN"] = channel
     append_github_env("RUSTUP_TOOLCHAIN", channel)
 

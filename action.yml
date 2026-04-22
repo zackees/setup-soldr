@@ -55,11 +55,12 @@ inputs:
   target-cache:
     description: >
       Restore and save the Cargo target directory across workflow runs.
-      Default "true"; this gives no-op child-branch builds a fast path when
-      Cargo can reuse restored fingerprints and outputs. Set to "false" to
-      cache only zccache compilation artifacts.
+      Default "false"; zccache artifact caching is usually faster than
+      downloading and extracting a large target directory. Set to "true" for
+      no-op CI fast paths when Cargo can reuse restored fingerprints and
+      outputs.
     required: false
-    default: "true"
+    default: "false"
   target-dir:
     description: Cargo target directory restored by target-cache.
     required: false
@@ -142,54 +143,6 @@ runs:
         ACTION_OS: ${{ runner.os }}
         ACTION_ARCH: ${{ runner.arch }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/resolve_setup.py"
-
-    - id: cache-plan
-      shell: pwsh
-      run: |
-        function TimestampEnabled {
-          $value = "$env:SETUP_SOLDR_TIMESTAMPS".Trim().ToLowerInvariant()
-          return -not @("0", "false", "no", "off").Contains($value)
-        }
-        function ElapsedPrefix {
-          $start = 0L
-          if (-not [long]::TryParse($env:SETUP_SOLDR_LOG_START_EPOCH, [ref]$start)) {
-            $start = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-          }
-          $elapsed = [Math]::Max(0, [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $start)
-          $span = [TimeSpan]::FromSeconds($elapsed)
-          return "{0:00}:{1:00}" -f [Math]::Floor($span.TotalMinutes), $span.Seconds
-        }
-        function Log($message) {
-          if (TimestampEnabled) {
-            Write-Host "$(ElapsedPrefix) $message"
-          } else {
-            Write-Host $message
-          }
-        }
-        function LogPath($label, $path) {
-          if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
-            Log "$label path=$path exists=false files=0 bytes=0"
-            return
-          }
-          $measure = Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction SilentlyContinue |
-            Measure-Object -Property Length -Sum
-          $bytes = if ($measure.Sum) { [int64]$measure.Sum } else { 0 }
-          Log "$label path=$path exists=true files=$($measure.Count) bytes=$bytes"
-        }
-
-        Log "setup-soldr cache plan"
-        Log "cache key=${{ steps.resolve.outputs.cache_key }}"
-        Log "cache restore-key=${{ steps.resolve.outputs.cache_restore_prefix }}"
-        Log "build-cache key=${{ steps.resolve.outputs.build_cache_key }}"
-        Log "build-cache restore-key-toolchain=${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}"
-        Log "build-cache restore-key-os-arch=${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}"
-        Log "target-cache key=${{ steps.resolve.outputs.target_cache_key }}"
-        Log "target-cache restore-key-lock=${{ steps.resolve.outputs.target_cache_restore_key_lock }}"
-        Log "target-cache lockfile=${{ steps.resolve.outputs.target_lockfile_path }}"
-        Log "target-cache lockfile-hash=${{ steps.resolve.outputs.target_lockfile_hash }}"
-        LogPath "cache before restore" "${{ steps.resolve.outputs.cache_root }}"
-        LogPath "build-cache before restore" "${{ steps.resolve.outputs.build_cache_path }}"
-        LogPath "target-cache before restore" "${{ steps.resolve.outputs.target_cache_path }}"
 
     - id: cache-lookup
       if: ${{ inputs.cache == 'true' }}
