@@ -87,6 +87,7 @@ jobs:
 | `build-cache` | Restore and save the Soldr-owned zccache compilation artifact cache across runs. Default `true`; set to `false` to opt out. |
 | `target-cache` | Restore and save the Cargo target directory for no-op CI fast paths. Default `true`; set to `false` to cache only zccache compilation artifacts. |
 | `target-dir` | Cargo target directory restored by `target-cache`. |
+| `target-cache-paths` | Optional newline-separated target-cache paths or glob patterns. Defaults to `target-dir`; set to a profile subdirectory such as `target/debug` to avoid caching unrelated profiles. |
 
 ## Outputs
 
@@ -105,6 +106,7 @@ jobs:
 | `target-cache-hit` | Whether the Cargo target directory cache was restored. |
 | `target-cache-key` | Primary key used for the Cargo target directory cache. |
 | `target-cache-path` | Cargo target directory cache path. |
+| `target-cache-paths` | Paths or glob patterns passed to `actions/cache` for target-cache. |
 | `target-cache-restore-status` | Diagnostic restore status for the Cargo target directory cache. |
 | `target-lockfile` | `Cargo.lock` path used for target-cache keying. |
 | `target-lockfile-hash` | Short hash of the `Cargo.lock` used for target-cache keying, or `no-lock`. |

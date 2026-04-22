@@ -64,6 +64,14 @@ inputs:
     description: Cargo target directory restored by target-cache.
     required: false
     default: target
+  target-cache-paths:
+    description: >
+      Optional newline-separated paths or glob patterns to cache for
+      target-cache. Defaults to target-dir. Use this to cache only the
+      profile-specific subdirectory a workflow needs, for example
+      target/debug.
+    required: false
+    default: ""
 outputs:
   soldr-path:
     description: Installed Soldr binary path added to PATH for later steps.
@@ -111,6 +119,9 @@ outputs:
   target-cache-path:
     description: Cargo target directory cache path.
     value: ${{ steps.resolve.outputs.target_cache_path }}
+  target-cache-paths:
+    description: Paths or glob patterns passed to actions/cache for the Cargo target cache.
+    value: ${{ steps.resolve.outputs.target_cache_paths }}
   target-cache-restore-status:
     description: Diagnostic restore status for the Cargo target directory cache.
     value: ${{ steps.cache-meta.outputs.target_cache_restore_status }}
@@ -138,6 +149,7 @@ runs:
         INPUT_TIMESTAMPS: ${{ inputs.timestamps }}
         INPUT_LOCKFILE: ${{ inputs.lockfile }}
         INPUT_TARGET_DIR: ${{ inputs.target-dir }}
+        INPUT_TARGET_CACHE_PATHS: ${{ inputs.target-cache-paths }}
         ACTION_WORKSPACE: ${{ github.workspace }}
         ACTION_OS: ${{ runner.os }}
         ACTION_ARCH: ${{ runner.arch }}
@@ -187,7 +199,7 @@ runs:
       if: ${{ inputs.build-cache == 'true' && inputs.target-cache == 'true' }}
       uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
-        path: ${{ steps.resolve.outputs.target_cache_path }}
+        path: ${{ steps.resolve.outputs.target_cache_paths }}
         key: ${{ steps.resolve.outputs.target_cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
@@ -197,7 +209,7 @@ runs:
       if: ${{ inputs.build-cache == 'true' && inputs.target-cache == 'true' }}
       uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
-        path: ${{ steps.resolve.outputs.target_cache_path }}
+        path: ${{ steps.resolve.outputs.target_cache_paths }}
         key: ${{ steps.resolve.outputs.target_cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
