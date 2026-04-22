@@ -6,6 +6,8 @@ import os
 import subprocess
 import sys
 
+from log_utils import log, run
+
 
 def _is_transient_zccache_status_failure(exc: subprocess.CalledProcessError) -> bool:
     combined = "\n".join(
@@ -24,19 +26,30 @@ def main() -> None:
     binary = os.environ["SETUP_SOLDR_PATH"]
     output_path = os.environ["GITHUB_OUTPUT"]
 
+    log(f"Verifying soldr at {binary}")
     version_json = subprocess.check_output([binary, "version", "--json"], text=True)
     payload = json.loads(version_json)
 
     with open(output_path, "a", encoding="utf-8") as fh:
         fh.write(f"soldr_version={payload['soldr_version']}\n")
 
-    subprocess.run(["cargo", "--version"], check=True)
-    subprocess.run(["rustc", "--version"], check=True)
+    run(["cargo", "--version"])
+    run(["rustc", "--version"])
+    log("+ soldr status --json")
     try:
-        subprocess.run(["soldr", "status", "--json"], check=True, capture_output=True, text=True)
+        status = subprocess.run(
+            ["soldr", "status", "--json"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
     except subprocess.CalledProcessError as exc:
         if not _is_transient_zccache_status_failure(exc):
             raise
+    else:
+        if status.stdout.strip():
+            for line in status.stdout.splitlines():
+                log(line)
 
 
 if __name__ == "__main__":

@@ -33,6 +33,14 @@ inputs:
     description: Optional value for SOLDR_TRUST_MODE.
     required: false
     default: ""
+  timestamps:
+    description: Prefix setup-soldr diagnostic and streamed command output with elapsed mm:ss timestamps.
+    required: false
+    default: "true"
+  lockfile:
+    description: Optional Cargo.lock path used for target-cache keying. Empty infers Cargo.lock next to target-dir, then workspace Cargo.lock.
+    required: false
+    default: ""
   build-cache:
     description: >
       Restore and save the Soldr-owned zccache compilation artifact cache
@@ -69,6 +77,12 @@ outputs:
   cache-hit:
     description: Whether the action restored an exact cache hit for the selected cache/state root.
     value: ${{ steps.cache-meta.outputs.cache_hit }}
+  cache-key:
+    description: Primary key used for the action-managed cache/state root.
+    value: ${{ steps.resolve.outputs.cache_key }}
+  cache-restore-status:
+    description: Diagnostic restore status for the action-managed cache/state root.
+    value: ${{ steps.cache-meta.outputs.cache_restore_status }}
   build-cache-hit:
     description: >
       Whether the action restored the Soldr-owned zccache compilation
@@ -76,12 +90,36 @@ outputs:
       restore-key fallback or no cache, empty string when `build-cache`
       is explicitly disabled.
     value: ${{ steps.cache-meta.outputs.build_cache_hit }}
+  build-cache-key:
+    description: Primary key used for the Soldr-owned zccache compilation cache.
+    value: ${{ steps.resolve.outputs.build_cache_key }}
+  build-cache-path:
+    description: Soldr-owned zccache compilation cache path.
+    value: ${{ steps.resolve.outputs.build_cache_path }}
+  build-cache-restore-status:
+    description: Diagnostic restore status for the Soldr-owned zccache compilation cache.
+    value: ${{ steps.cache-meta.outputs.build_cache_restore_status }}
   target-cache-hit:
     description: >
       Whether the action restored the Cargo target directory cache. "true"
       for an exact key match, "false" for a restore-key fallback or no cache,
       empty string when `target-cache` or `build-cache` is disabled.
     value: ${{ steps.cache-meta.outputs.target_cache_hit }}
+  target-cache-key:
+    description: Primary key used for the Cargo target directory cache.
+    value: ${{ steps.resolve.outputs.target_cache_key }}
+  target-cache-path:
+    description: Cargo target directory cache path.
+    value: ${{ steps.resolve.outputs.target_cache_path }}
+  target-cache-restore-status:
+    description: Diagnostic restore status for the Cargo target directory cache.
+    value: ${{ steps.cache-meta.outputs.target_cache_restore_status }}
+  target-lockfile:
+    description: Cargo.lock path used for target-cache keying.
+    value: ${{ steps.resolve.outputs.target_lockfile_path }}
+  target-lockfile-hash:
+    description: Short hash of the Cargo.lock used for target-cache keying, or no-lock.
+    value: ${{ steps.resolve.outputs.target_lockfile_hash }}
   toolchain:
     description: Exact Rust toolchain channel configured by rustup for the action.
     value: ${{ steps.resolve.outputs.toolchain }}
@@ -97,11 +135,71 @@ runs:
         INPUT_TOOLCHAIN: ${{ inputs.toolchain }}
         INPUT_TOOLCHAIN_FILE: ${{ inputs.toolchain-file }}
         INPUT_TRUST_MODE: ${{ inputs.trust-mode }}
+        INPUT_TIMESTAMPS: ${{ inputs.timestamps }}
+        INPUT_LOCKFILE: ${{ inputs.lockfile }}
         INPUT_TARGET_DIR: ${{ inputs.target-dir }}
         ACTION_WORKSPACE: ${{ github.workspace }}
         ACTION_OS: ${{ runner.os }}
         ACTION_ARCH: ${{ runner.arch }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/resolve_setup.py"
+
+    - id: cache-plan
+      shell: pwsh
+      run: |
+        function TimestampEnabled {
+          $value = "$env:SETUP_SOLDR_TIMESTAMPS".Trim().ToLowerInvariant()
+          return -not @("0", "false", "no", "off").Contains($value)
+        }
+        function ElapsedPrefix {
+          $start = 0L
+          if (-not [long]::TryParse($env:SETUP_SOLDR_LOG_START_EPOCH, [ref]$start)) {
+            $start = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+          }
+          $elapsed = [Math]::Max(0, [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $start)
+          $span = [TimeSpan]::FromSeconds($elapsed)
+          return "{0:00}:{1:00}" -f [Math]::Floor($span.TotalMinutes), $span.Seconds
+        }
+        function Log($message) {
+          if (TimestampEnabled) {
+            Write-Host "$(ElapsedPrefix) $message"
+          } else {
+            Write-Host $message
+          }
+        }
+        function LogPath($label, $path) {
+          if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
+            Log "$label path=$path exists=false files=0 bytes=0"
+            return
+          }
+          $measure = Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction SilentlyContinue |
+            Measure-Object -Property Length -Sum
+          $bytes = if ($measure.Sum) { [int64]$measure.Sum } else { 0 }
+          Log "$label path=$path exists=true files=$($measure.Count) bytes=$bytes"
+        }
+
+        Log "setup-soldr cache plan"
+        Log "cache key=${{ steps.resolve.outputs.cache_key }}"
+        Log "cache restore-key=${{ steps.resolve.outputs.cache_restore_prefix }}"
+        Log "build-cache key=${{ steps.resolve.outputs.build_cache_key }}"
+        Log "build-cache restore-key-toolchain=${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}"
+        Log "build-cache restore-key-os-arch=${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}"
+        Log "target-cache key=${{ steps.resolve.outputs.target_cache_key }}"
+        Log "target-cache restore-key-lock=${{ steps.resolve.outputs.target_cache_restore_key_lock }}"
+        Log "target-cache lockfile=${{ steps.resolve.outputs.target_lockfile_path }}"
+        Log "target-cache lockfile-hash=${{ steps.resolve.outputs.target_lockfile_hash }}"
+        LogPath "cache before restore" "${{ steps.resolve.outputs.cache_root }}"
+        LogPath "build-cache before restore" "${{ steps.resolve.outputs.build_cache_path }}"
+        LogPath "target-cache before restore" "${{ steps.resolve.outputs.target_cache_path }}"
+
+    - id: cache-lookup
+      if: ${{ inputs.cache == 'true' }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.cache_root }}
+        key: ${{ steps.resolve.outputs.cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.cache_restore_prefix }}
+        lookup-only: true
 
     - id: cache
       if: ${{ inputs.cache == 'true' }}
@@ -112,6 +210,17 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.cache_restore_prefix }}
 
+    - id: build-cache-lookup
+      if: ${{ inputs.build-cache == 'true' }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.build_cache_path }}
+        key: ${{ steps.resolve.outputs.build_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
+        lookup-only: true
+
     - id: build-cache-restore
       if: ${{ inputs.build-cache == 'true' }}
       uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
@@ -121,6 +230,16 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
           ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
+
+    - id: target-cache-lookup
+      if: ${{ inputs.build-cache == 'true' && inputs.target-cache == 'true' }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.target_cache_path }}
+        key: ${{ steps.resolve.outputs.target_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+        lookup-only: true
 
     - id: target-cache
       if: ${{ inputs.build-cache == 'true' && inputs.target-cache == 'true' }}
@@ -197,16 +316,70 @@ runs:
       shell: pwsh
       env:
         RAW_CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+        LOOKUP_CACHE_HIT: ${{ steps.cache-lookup.outputs.cache-hit }}
+        LOOKUP_CACHE_MATCHED_KEY: ${{ steps.cache-lookup.outputs.cache-matched-key }}
+        CACHE_KEY: ${{ steps.resolve.outputs.cache_key }}
         RAW_BUILD_CACHE_HIT: ${{ steps.build-cache-restore.outputs.cache-hit }}
+        LOOKUP_BUILD_CACHE_HIT: ${{ steps.build-cache-lookup.outputs.cache-hit }}
+        LOOKUP_BUILD_CACHE_MATCHED_KEY: ${{ steps.build-cache-lookup.outputs.cache-matched-key }}
+        BUILD_CACHE_KEY: ${{ steps.resolve.outputs.build_cache_key }}
         RAW_TARGET_CACHE_HIT: ${{ steps.target-cache.outputs.cache-hit }}
+        LOOKUP_TARGET_CACHE_HIT: ${{ steps.target-cache-lookup.outputs.cache-hit }}
+        LOOKUP_TARGET_CACHE_MATCHED_KEY: ${{ steps.target-cache-lookup.outputs.cache-matched-key }}
+        TARGET_CACHE_KEY: ${{ steps.resolve.outputs.target_cache_key }}
         BUILD_CACHE_ENABLED: ${{ inputs.build-cache }}
         TARGET_CACHE_ENABLED: ${{ inputs.target-cache }}
       run: |
+        function TimestampEnabled {
+          $value = "$env:SETUP_SOLDR_TIMESTAMPS".Trim().ToLowerInvariant()
+          return -not @("0", "false", "no", "off").Contains($value)
+        }
+        function ElapsedPrefix {
+          $start = 0L
+          if (-not [long]::TryParse($env:SETUP_SOLDR_LOG_START_EPOCH, [ref]$start)) {
+            $start = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+          }
+          $elapsed = [Math]::Max(0, [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $start)
+          $span = [TimeSpan]::FromSeconds($elapsed)
+          return "{0:00}:{1:00}" -f [Math]::Floor($span.TotalMinutes), $span.Seconds
+        }
+        function Log($message) {
+          if (TimestampEnabled) {
+            Write-Host "$(ElapsedPrefix) $message"
+          } else {
+            Write-Host $message
+          }
+        }
+        function RestoreStatus($enabled, $lookupHit, $matchedKey, $primaryKey) {
+          if ($enabled -ne "true") {
+            return "disabled"
+          }
+          if ($lookupHit -eq "true") {
+            return "exact-hit"
+          }
+          if (-not [string]::IsNullOrWhiteSpace($matchedKey)) {
+            return "restore-key-hit:$matchedKey"
+          }
+          return "miss"
+        }
+        function LogPath($label, $path) {
+          if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
+            Log "$label path=$path exists=false files=0 bytes=0"
+            return
+          }
+          $measure = Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction SilentlyContinue |
+            Measure-Object -Property Length -Sum
+          $bytes = if ($measure.Sum) { [int64]$measure.Sum } else { 0 }
+          Log "$label path=$path exists=true files=$($measure.Count) bytes=$bytes"
+        }
+
         $value = $env:RAW_CACHE_HIT
         if ([string]::IsNullOrWhiteSpace($value)) {
           $value = "false"
         }
         "cache_hit=$value" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        $cacheStatus = RestoreStatus "${{ inputs.cache }}" $env:LOOKUP_CACHE_HIT $env:LOOKUP_CACHE_MATCHED_KEY $env:CACHE_KEY
+        "cache_restore_status=$cacheStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
         if ($env:BUILD_CACHE_ENABLED -eq "true") {
           $buildValue = $env:RAW_BUILD_CACHE_HIT
@@ -217,6 +390,8 @@ runs:
           $buildValue = ""
         }
         "build_cache_hit=$buildValue" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        $buildStatus = RestoreStatus $env:BUILD_CACHE_ENABLED $env:LOOKUP_BUILD_CACHE_HIT $env:LOOKUP_BUILD_CACHE_MATCHED_KEY $env:BUILD_CACHE_KEY
+        "build_cache_restore_status=$buildStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
         if ($env:BUILD_CACHE_ENABLED -eq "true" -and $env:TARGET_CACHE_ENABLED -eq "true") {
           $targetValue = $env:RAW_TARGET_CACHE_HIT
@@ -227,3 +402,13 @@ runs:
           $targetValue = ""
         }
         "target_cache_hit=$targetValue" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        $targetEnabled = if ($env:BUILD_CACHE_ENABLED -eq "true" -and $env:TARGET_CACHE_ENABLED -eq "true") { "true" } else { "false" }
+        $targetStatus = RestoreStatus $targetEnabled $env:LOOKUP_TARGET_CACHE_HIT $env:LOOKUP_TARGET_CACHE_MATCHED_KEY $env:TARGET_CACHE_KEY
+        "target_cache_restore_status=$targetStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+        Log "cache restore status=$cacheStatus exact-hit=$value"
+        Log "build-cache restore status=$buildStatus exact-hit=$buildValue"
+        Log "target-cache restore status=$targetStatus exact-hit=$targetValue"
+        LogPath "cache after restore" "${{ steps.resolve.outputs.cache_root }}"
+        LogPath "build-cache after restore" "${{ steps.resolve.outputs.build_cache_path }}"
+        LogPath "target-cache after restore" "${{ steps.resolve.outputs.target_cache_path }}"

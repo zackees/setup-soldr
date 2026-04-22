@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -74,6 +75,40 @@ def _short_file_hash(path: Path, missing: str) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
 
 
+def _resolve_workspace_path(workspace: Path, value: str) -> Path | None:
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    path = Path(cleaned).expanduser()
+    if not path.is_absolute():
+        path = workspace / path
+    return path.resolve()
+
+
+def resolve_lockfile_path(workspace: Path, target_cache_path: Path, lockfile_input: str) -> Path | None:
+    explicit = _resolve_workspace_path(workspace, lockfile_input)
+    if explicit is not None:
+        return explicit
+
+    candidates = [
+        target_cache_path.parent / "Cargo.lock",
+        workspace / "Cargo.lock",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+    return candidates[0].resolve()
+
+
+def _path_for_output(workspace: Path, path: Path | None) -> str:
+    if path is None:
+        return ""
+    try:
+        return str(path.relative_to(workspace))
+    except ValueError:
+        return str(path)
+
+
 def _write_env(name: str, value: str) -> None:
     output = os.environ.get("GITHUB_ENV")
     if not output:
@@ -107,6 +142,9 @@ def _write_outputs(values: dict[str, str]) -> None:
 def main() -> None:
     workspace = Path(os.environ["ACTION_WORKSPACE"]).resolve()
     runner_temp = Path(os.environ.get("RUNNER_TEMP", workspace / ".tmp")).resolve()
+    log_start = os.environ.get("SETUP_SOLDR_LOG_START_EPOCH", "").strip()
+    if not log_start:
+        log_start = str(int(time.time()))
 
     requested_cache_dir = os.environ.get("INPUT_CACHE_DIR", "").strip()
     cache_root = Path(requested_cache_dir).expanduser().resolve() if requested_cache_dir else (
@@ -158,7 +196,6 @@ def main() -> None:
     runner_arch = _sanitize_fragment(os.environ.get("ACTION_ARCH", "unknown").lower())
     cache_prefix = f"setup-soldr-v0-{runner_os}-{runner_arch}"
     cache_key = f"{cache_prefix}-{digest}"
-    cargo_lock_hash = _short_file_hash(workspace / "Cargo.lock", "no-lock")
 
     suffix = os.environ.get("INPUT_CACHE_KEY_SUFFIX", "").strip()
     if suffix:
@@ -179,6 +216,13 @@ def main() -> None:
     if not target_cache_path.is_absolute():
         target_cache_path = workspace / target_cache_path
     target_cache_path = target_cache_path.resolve()
+    target_cache_path.mkdir(parents=True, exist_ok=True)
+    lockfile_path = resolve_lockfile_path(
+        workspace,
+        target_cache_path,
+        os.environ.get("INPUT_LOCKFILE", ""),
+    )
+    cargo_lock_hash = _short_file_hash(lockfile_path, "no-lock") if lockfile_path else "no-lock"
     target_cache_prefix = f"setup-soldr-targetcache-v0-{runner_os}-{runner_arch}"
     target_cache_lock_prefix = f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-"
     target_cache_key = f"{target_cache_lock_prefix}{github_sha}"
@@ -196,6 +240,8 @@ def main() -> None:
     _write_env("SETUP_SOLDR_TOOLCHAIN_PROFILE", toolchain["profile"])
     _write_env("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", json.dumps(toolchain["components"]))
     _write_env("SETUP_SOLDR_TOOLCHAIN_TARGETS", json.dumps(toolchain["targets"]))
+    _write_env("SETUP_SOLDR_LOG_START_EPOCH", log_start)
+    _write_env("SETUP_SOLDR_TIMESTAMPS", os.environ.get("INPUT_TIMESTAMPS", "true").strip() or "true")
     if os.environ.get("INPUT_TRUST_MODE", "").strip():
         _write_env("SOLDR_TRUST_MODE", os.environ["INPUT_TRUST_MODE"].strip())
 
@@ -214,6 +260,8 @@ def main() -> None:
             "target_cache_path": str(target_cache_path),
             "target_cache_key": target_cache_key,
             "target_cache_restore_key_lock": target_cache_lock_prefix,
+            "target_lockfile_path": _path_for_output(workspace, lockfile_path),
+            "target_lockfile_hash": cargo_lock_hash,
             "soldr_root": str(soldr_root),
             "cargo_home": str(cargo_home),
             "rustup_home": str(rustup_home),
