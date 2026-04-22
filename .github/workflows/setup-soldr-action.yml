@@ -1,0 +1,59 @@
+name: Setup Soldr Action
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - README.md
+      - action.yml
+      - .github/actions/setup-soldr/**
+      - .github/workflows/setup-soldr-action.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  soldr-self-build:
+    name: Build zackees/soldr
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout setup-soldr action
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: setup-soldr
+
+      - name: Checkout zackees/soldr
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: zackees/soldr
+          path: soldr
+          persist-credentials: false
+
+      - id: setup
+        name: Setup Soldr
+        uses: ./setup-soldr
+        with:
+          cache: true
+          toolchain-file: soldr/rust-toolchain.toml
+          target-dir: soldr/target
+          cache-key-suffix: soldr-self-build
+
+      - name: Show action outputs
+        shell: pwsh
+        run: |
+          Write-Host "soldr-path=${{ steps.setup.outputs.soldr-path }}"
+          Write-Host "soldr-version=${{ steps.setup.outputs.soldr-version }}"
+          Write-Host "cache-dir=${{ steps.setup.outputs.cache-dir }}"
+          Write-Host "cache-hit=${{ steps.setup.outputs.cache-hit }}"
+          Write-Host "build-cache-hit=${{ steps.setup.outputs.build-cache-hit }}"
+          Write-Host "target-cache-hit=${{ steps.setup.outputs.target-cache-hit }}"
+          Write-Host "toolchain=${{ steps.setup.outputs.toolchain }}"
+
+      - name: Build zackees/soldr through soldr
+        shell: pwsh
+        working-directory: soldr
+        run: soldr cargo build --locked --package soldr-cli
