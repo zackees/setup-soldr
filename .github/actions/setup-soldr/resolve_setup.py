@@ -87,6 +87,33 @@ def _resolve_workspace_path(workspace: Path, value: str) -> Path | None:
     return path.resolve()
 
 
+def _path_or_pattern_for_output(workspace: Path, value: str) -> str:
+    cleaned = value.strip()
+    if not cleaned:
+        return ""
+
+    negate = cleaned.startswith("!")
+    if negate:
+        cleaned = cleaned[1:].strip()
+
+    path = Path(cleaned).expanduser()
+    if not path.is_absolute():
+        path = workspace / path
+    rendered = str(path)
+    return f"!{rendered}" if negate else rendered
+
+
+def resolve_target_cache_paths(workspace: Path, target_cache_path: Path, target_cache_paths_input: str) -> str:
+    values = [
+        _path_or_pattern_for_output(workspace, line)
+        for line in target_cache_paths_input.splitlines()
+        if line.strip()
+    ]
+    if not values:
+        return str(target_cache_path)
+    return "\n".join(values)
+
+
 def resolve_lockfile_path(workspace: Path, target_cache_path: Path, lockfile_input: str) -> Path | None:
     explicit = _resolve_workspace_path(workspace, lockfile_input)
     if explicit is not None:
@@ -252,8 +279,19 @@ def main() -> None:
         os.environ.get("INPUT_LOCKFILE", ""),
     )
     cargo_lock_hash = _short_file_hash(lockfile_path, "no-lock") if lockfile_path else "no-lock"
-    target_cache_prefix = f"setup-soldr-targetcache-v0-{runner_os}-{runner_arch}"
-    target_cache_lock_prefix = f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-"
+    target_cache_paths = resolve_target_cache_paths(
+        workspace,
+        target_cache_path,
+        os.environ.get("INPUT_TARGET_CACHE_PATHS", ""),
+    )
+    target_paths_customized = target_cache_paths != str(target_cache_path)
+    if target_paths_customized:
+        target_paths_hash = hashlib.sha256(target_cache_paths.encode("utf-8")).hexdigest()[:16]
+        target_cache_prefix = f"setup-soldr-targetcache-v1-{runner_os}-{runner_arch}"
+        target_cache_lock_prefix = f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-{target_paths_hash}-"
+    else:
+        target_cache_prefix = f"setup-soldr-targetcache-v0-{runner_os}-{runner_arch}"
+        target_cache_lock_prefix = f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-"
     target_cache_key = f"{target_cache_lock_prefix}{github_sha}"
 
     if suffix:
@@ -292,6 +330,7 @@ def main() -> None:
     log(f"build-cache restore-key-os-arch={build_cache_prefix}-")
     log(f"target-cache key={target_cache_key}")
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
+    log(f"target-cache paths={target_cache_paths}")
     log(f"target-cache lockfile={_path_for_output(workspace, lockfile_path)}")
     log(f"target-cache lockfile-hash={cargo_lock_hash}")
     _path_summary("cache before restore", setup_cache_path)
@@ -309,6 +348,7 @@ def main() -> None:
             "build_cache_restore_key_os_arch": f"{build_cache_prefix}-",
             "build_cache_path": str(zccache_cache_dir),
             "target_cache_path": str(target_cache_path),
+            "target_cache_paths": target_cache_paths,
             "target_cache_key": target_cache_key,
             "target_cache_restore_key_lock": target_cache_lock_prefix,
             "target_lockfile_path": _path_for_output(workspace, lockfile_path),
