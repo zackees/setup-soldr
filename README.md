@@ -114,9 +114,9 @@ jobs:
 
 - The action installs exactly one released `soldr` binary for the active runner target.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
-- The action rehydrates a small Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
+- The action rehydrates the Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores the Soldr-owned zccache cache root by default so child branches can reuse parent-branch build state.
-- The action caches the Soldr binary separately from `SOLDR_CACHE_DIR/cache/zccache`, keeping setup restore small while preserving zccache artifacts.
+- The setup cache intentionally keeps Soldr-managed state so the managed zccache binary does not need to be rebuilt on every run.
 
 ## Development
 
