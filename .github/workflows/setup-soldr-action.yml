@@ -33,11 +33,6 @@ jobs:
           path: zccache
           persist-credentials: false
 
-      - name: Initialize elapsed log clock
-        shell: bash
-        run: |
-          echo "SETUP_SOLDR_LOG_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
-
       - id: setup
         name: Setup Soldr
         uses: ./setup-soldr

@@ -142,9 +142,7 @@ def _write_outputs(values: dict[str, str]) -> None:
 def main() -> None:
     workspace = Path(os.environ["ACTION_WORKSPACE"]).resolve()
     runner_temp = Path(os.environ.get("RUNNER_TEMP", workspace / ".tmp")).resolve()
-    log_start = os.environ.get("SETUP_SOLDR_LOG_START_EPOCH", "").strip()
-    if not log_start:
-        log_start = str(int(time.time()))
+    log_start = str(int(time.time()))
 
     requested_cache_dir = os.environ.get("INPUT_CACHE_DIR", "").strip()
     cache_root = Path(requested_cache_dir).expanduser().resolve() if requested_cache_dir else (
