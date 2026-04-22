@@ -12,9 +12,7 @@ from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
-
-def run(command: list[str]) -> None:
-    subprocess.run(command, check=True)
+from log_utils import log, run
 
 
 def append_github_env(name: str, value: str) -> None:
@@ -67,6 +65,7 @@ def download_rustup_init(destination_dir: Path) -> Path:
     url = rustup_init_url()
     temp_destination = destination.with_name(f"{destination.name}.tmp")
     try:
+        log(f"Downloading rustup-init from {url}")
         with urlopen(url) as response, open(temp_destination, "wb") as fh:
             shutil.copyfileobj(response, fh)
         temp_destination.replace(destination)
@@ -84,6 +83,7 @@ def download_rustup_init(destination_dir: Path) -> Path:
 def ensure_rustup_available(soldr_root: Path) -> str:
     rustup = shutil.which("rustup")
     if rustup is not None:
+        log(f"Using rustup at {rustup}")
         return rustup
 
     installer_dir = soldr_root / "cache"
@@ -114,6 +114,7 @@ def main() -> None:
     components = json.loads(os.environ.get("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", "[]"))
     targets = json.loads(os.environ.get("SETUP_SOLDR_TOOLCHAIN_TARGETS", "[]"))
 
+    log(f"Installing Rust toolchain {channel} with profile {profile}")
     run([rustup, "set", "profile", profile])
     install_command = [rustup, "toolchain", "install", channel, "--profile", profile]
     for component in components:
