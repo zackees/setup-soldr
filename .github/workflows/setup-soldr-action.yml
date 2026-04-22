@@ -63,6 +63,7 @@ jobs:
           Write-Host "target-cache-key=${{ steps.setup.outputs.target-cache-key }}"
           Write-Host "target-cache-path=${{ steps.setup.outputs.target-cache-path }}"
           Write-Host "target-cache-paths=${{ steps.setup.outputs.target-cache-paths }}"
+          Write-Host "target-cache-mode=${{ steps.setup.outputs.target-cache-mode }}"
           Write-Host "target-cache-restore-status=${{ steps.setup.outputs.target-cache-restore-status }}"
           Write-Host "target-lockfile=${{ steps.setup.outputs.target-lockfile }}"
           Write-Host "target-lockfile-hash=${{ steps.setup.outputs.target-lockfile-hash }}"

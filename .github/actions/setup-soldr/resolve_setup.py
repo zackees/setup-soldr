@@ -103,15 +103,56 @@ def _path_or_pattern_for_output(workspace: Path, value: str) -> str:
     return f"!{rendered}" if negate else rendered
 
 
-def resolve_target_cache_paths(workspace: Path, target_cache_path: Path, target_cache_paths_input: str) -> str:
+HOT_TARGET_CACHE_PATTERNS = (
+    ".rustc_info.json",
+    "CACHEDIR.TAG",
+    "**/.fingerprint/**",
+    "**/deps/*.d",
+    "**/deps/*.rmeta",
+    "**/build/**/output",
+    "**/build/**/invoked.timestamp",
+    "**/build/**/root-output",
+    "!**/incremental/**",
+)
+
+
+def normalize_target_cache_mode(value: str) -> str:
+    mode = value.strip().lower() or "hot"
+    if mode not in {"hot", "full", "off"}:
+        raise RuntimeError(
+            f"invalid target-cache-mode {value!r}; expected hot, full, or off"
+        )
+    return mode
+
+
+def hot_target_cache_paths(target_cache_path: Path) -> str:
+    values: list[str] = []
+    for pattern in HOT_TARGET_CACHE_PATTERNS:
+        negate = pattern.startswith("!")
+        cleaned = pattern[1:] if negate else pattern
+        rendered = str(target_cache_path / cleaned)
+        values.append(f"!{rendered}" if negate else rendered)
+    return "\n".join(values)
+
+
+def resolve_target_cache_paths(
+    workspace: Path,
+    target_cache_path: Path,
+    target_cache_paths_input: str,
+    target_cache_mode: str,
+) -> tuple[str, str]:
     values = [
         _path_or_pattern_for_output(workspace, line)
         for line in target_cache_paths_input.splitlines()
         if line.strip()
     ]
-    if not values:
-        return str(target_cache_path)
-    return "\n".join(values)
+    if values:
+        return "\n".join(values), "custom"
+    if target_cache_mode == "off":
+        return str(target_cache_path), "off"
+    if target_cache_mode == "full":
+        return str(target_cache_path), "full"
+    return hot_target_cache_paths(target_cache_path), "hot"
 
 
 def resolve_lockfile_path(workspace: Path, target_cache_path: Path, lockfile_input: str) -> Path | None:
@@ -283,19 +324,27 @@ def main() -> None:
         os.environ.get("INPUT_LOCKFILE", ""),
     )
     cargo_lock_hash = _short_file_hash(lockfile_path, "no-lock") if lockfile_path else "no-lock"
-    target_cache_paths = resolve_target_cache_paths(
+    target_cache_mode = normalize_target_cache_mode(
+        os.environ.get("INPUT_TARGET_CACHE_MODE", "hot")
+    )
+    target_cache_enabled = (
+        os.environ.get("INPUT_TARGET_CACHE", "true").strip().lower()
+        not in {"0", "false", "no", "off"}
+        and target_cache_mode != "off"
+    )
+    target_cache_paths, target_cache_effective_mode = resolve_target_cache_paths(
         workspace,
         target_cache_path,
         os.environ.get("INPUT_TARGET_CACHE_PATHS", ""),
+        target_cache_mode,
     )
-    target_paths_customized = target_cache_paths != str(target_cache_path)
-    if target_paths_customized:
-        target_paths_hash = hashlib.sha256(target_cache_paths.encode("utf-8")).hexdigest()[:16]
-        target_cache_prefix = f"setup-soldr-targetcache-v1-{runner_os}-{runner_arch}"
-        target_cache_lock_prefix = f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-{target_paths_hash}-"
-    else:
-        target_cache_prefix = f"setup-soldr-targetcache-v0-{runner_os}-{runner_arch}"
+    if target_cache_effective_mode == "full":
+        target_cache_prefix = f"setup-soldr-targetcache-full-v1-{runner_os}-{runner_arch}"
         target_cache_lock_prefix = f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-"
+    else:
+        target_paths_hash = hashlib.sha256(target_cache_paths.encode("utf-8")).hexdigest()[:16]
+        target_cache_prefix = f"setup-soldr-targetcache-{target_cache_effective_mode}-v1-{runner_os}-{runner_arch}"
+        target_cache_lock_prefix = f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-{target_paths_hash}-"
     target_cache_key = f"{target_cache_lock_prefix}{github_sha}"
     target_cache_parent_key = f"{target_cache_lock_prefix}{parent_sha}" if parent_sha else ""
 
@@ -340,6 +389,8 @@ def main() -> None:
     log(f"build-cache restore-key-toolchain={build_cache_toolchain_prefix}")
     log(f"build-cache restore-key-os-arch={build_cache_prefix}-")
     log(f"target-cache key={target_cache_key}")
+    log(f"target-cache enabled={str(target_cache_enabled).lower()}")
+    log(f"target-cache mode={target_cache_effective_mode}")
     if target_cache_parent_key:
         log(f"target-cache restore-key-parent={target_cache_parent_key}")
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
@@ -363,6 +414,8 @@ def main() -> None:
             "build_cache_path": str(zccache_cache_dir),
             "target_cache_path": str(target_cache_path),
             "target_cache_paths": target_cache_paths,
+            "target_cache_enabled": str(target_cache_enabled).lower(),
+            "target_cache_mode": target_cache_effective_mode,
             "target_cache_key": target_cache_key,
             "target_cache_restore_key_parent": target_cache_parent_key,
             "target_cache_restore_key_lock": target_cache_lock_prefix,
