@@ -259,13 +259,17 @@ def main() -> None:
 
     # Build-artifact cache (Soldr-owned zccache compilation cache).
     # Key shape: setup-soldr-buildcache-v1-{os}-{arch}-{toolchain-digest}-{sha}.
-    # Restore falls back through the same toolchain lineage and then any
-    # OS+arch cache, letting GitHub's own-branch -> PR base -> default branch
-    # restore order provide parent -> child lineage without user config.
+    # Pull request runs prefer the base commit cache before falling back through
+    # broad lineage keys, while still saving a PR-specific cache under the
+    # merge commit SHA for reruns.
     github_sha = os.environ.get("GITHUB_SHA", "").strip() or "nosha"
+    parent_sha = os.environ.get("ACTION_PARENT_SHA", "").strip()
+    if parent_sha == github_sha:
+        parent_sha = ""
     build_cache_prefix = f"setup-soldr-buildcache-v1-{runner_os}-{runner_arch}"
     build_cache_toolchain_prefix = f"{build_cache_prefix}-{digest}-"
     build_cache_key = f"{build_cache_toolchain_prefix}{github_sha}"
+    build_cache_parent_key = f"{build_cache_toolchain_prefix}{parent_sha}" if parent_sha else ""
 
     target_dir_input = os.environ.get("INPUT_TARGET_DIR", "target").strip() or "target"
     target_cache_path = Path(target_dir_input).expanduser()
@@ -293,11 +297,16 @@ def main() -> None:
         target_cache_prefix = f"setup-soldr-targetcache-v0-{runner_os}-{runner_arch}"
         target_cache_lock_prefix = f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-"
     target_cache_key = f"{target_cache_lock_prefix}{github_sha}"
+    target_cache_parent_key = f"{target_cache_lock_prefix}{parent_sha}" if parent_sha else ""
 
     if suffix:
         sanitized_suffix = _sanitize_fragment(suffix)
         build_cache_key = f"{build_cache_key}-{sanitized_suffix}"
         target_cache_key = f"{target_cache_key}-{sanitized_suffix}"
+        if build_cache_parent_key:
+            build_cache_parent_key = f"{build_cache_parent_key}-{sanitized_suffix}"
+        if target_cache_parent_key:
+            target_cache_parent_key = f"{target_cache_parent_key}-{sanitized_suffix}"
 
     _write_env("SOLDR_CACHE_DIR", str(soldr_root))
     _write_env("CARGO_HOME", str(cargo_home))
@@ -326,9 +335,13 @@ def main() -> None:
     log(f"cache key={cache_key}")
     log(f"cache restore-key={cache_prefix}-")
     log(f"build-cache key={build_cache_key}")
+    if build_cache_parent_key:
+        log(f"build-cache restore-key-parent={build_cache_parent_key}")
     log(f"build-cache restore-key-toolchain={build_cache_toolchain_prefix}")
     log(f"build-cache restore-key-os-arch={build_cache_prefix}-")
     log(f"target-cache key={target_cache_key}")
+    if target_cache_parent_key:
+        log(f"target-cache restore-key-parent={target_cache_parent_key}")
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
     log(f"target-cache paths={target_cache_paths}")
     log(f"target-cache lockfile={_path_for_output(workspace, lockfile_path)}")
@@ -344,12 +357,14 @@ def main() -> None:
             "cache_key": cache_key,
             "cache_restore_prefix": f"{cache_prefix}-",
             "build_cache_key": build_cache_key,
+            "build_cache_restore_key_parent": build_cache_parent_key,
             "build_cache_restore_key_toolchain": build_cache_toolchain_prefix,
             "build_cache_restore_key_os_arch": f"{build_cache_prefix}-",
             "build_cache_path": str(zccache_cache_dir),
             "target_cache_path": str(target_cache_path),
             "target_cache_paths": target_cache_paths,
             "target_cache_key": target_cache_key,
+            "target_cache_restore_key_parent": target_cache_parent_key,
             "target_cache_restore_key_lock": target_cache_lock_prefix,
             "target_lockfile_path": _path_for_output(workspace, lockfile_path),
             "target_lockfile_hash": cargo_lock_hash,
