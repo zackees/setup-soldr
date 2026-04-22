@@ -15,6 +15,8 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+from log_utils import log
+
 
 def _normalize_version(value: str) -> str:
     return value[1:] if value.startswith("v") else value
@@ -113,6 +115,7 @@ def main() -> None:
     current = _installed_version(binary_path)
     if current is not None:
         if not requested_version or _normalize_version(current) == _normalize_version(requested_version):
+            log(f"Using cached soldr {current} at {binary_path}")
             output = os.environ.get("GITHUB_OUTPUT")
             if output:
                 with open(output, "a", encoding="utf-8") as fh:
@@ -121,6 +124,7 @@ def main() -> None:
 
     repo = os.environ.get("SOLDR_REPO", "zackees/soldr").strip() or "zackees/soldr"
     target, archive_ext, binary_name = _detect_target()
+    log(f"Resolving soldr release from {repo}")
     release = _fetch_release(repo, requested_version)
     asset_name, download_url = _select_asset(release, target, archive_ext)
     tag_name = str(release["tag_name"])
@@ -129,11 +133,13 @@ def main() -> None:
         tmp_dir = Path(tmp)
         archive_path = tmp_dir / asset_name
         extract_dir = tmp_dir / "extract"
+        log(f"Downloading {asset_name}")
         urllib.request.urlretrieve(download_url, archive_path)
         source = _extract_binary(archive_path, archive_ext, binary_name, extract_dir)
         shutil.copy2(source, binary_path)
         if os.name != "nt":
             binary_path.chmod(binary_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    log(f"Installed soldr {tag_name} at {binary_path}")
 
     output = os.environ.get("GITHUB_OUTPUT")
     if output:

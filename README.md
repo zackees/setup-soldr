@@ -80,6 +80,8 @@ jobs:
 | `toolchain` | Explicit Rust toolchain channel override. |
 | `toolchain-file` | Alternate toolchain file path when `toolchain` is empty. |
 | `trust-mode` | Optional `SOLDR_TRUST_MODE` value. |
+| `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
+| `lockfile` | Optional `Cargo.lock` path used for target-cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save the Soldr-owned zccache compilation artifact cache across runs. Default `true`; set to `false` to opt out. |
 | `target-cache` | Restore and save the Cargo target directory for no-op CI fast paths. |
 | `target-dir` | Cargo target directory restored by `target-cache`. |
@@ -92,8 +94,18 @@ jobs:
 | `soldr-version` | Installed Soldr version reported by `soldr version --json`. |
 | `cache-dir` | Action-managed runner-local cache/state root. |
 | `cache-hit` | Whether the action restored an exact cache hit. |
+| `cache-key` | Primary key used for the action-managed cache/state root. |
+| `cache-restore-status` | Diagnostic restore status for the action-managed cache/state root. |
 | `build-cache-hit` | Whether the Soldr-owned zccache compilation cache was restored. Empty only when `build-cache` is disabled. |
+| `build-cache-key` | Primary key used for the Soldr-owned zccache compilation cache. |
+| `build-cache-path` | Soldr-owned zccache compilation cache path. |
+| `build-cache-restore-status` | Diagnostic restore status for the Soldr-owned zccache compilation cache. |
 | `target-cache-hit` | Whether the Cargo target directory cache was restored. |
+| `target-cache-key` | Primary key used for the Cargo target directory cache. |
+| `target-cache-path` | Cargo target directory cache path. |
+| `target-cache-restore-status` | Diagnostic restore status for the Cargo target directory cache. |
+| `target-lockfile` | `Cargo.lock` path used for target-cache keying. |
+| `target-lockfile-hash` | Short hash of the `Cargo.lock` used for target-cache keying, or `no-lock`. |
 | `toolchain` | Exact Rust toolchain channel configured for the action. |
 
 ## Notes
