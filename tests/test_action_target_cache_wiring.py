@@ -22,3 +22,17 @@ def test_target_tree_cache_is_only_used_in_full_mode() -> None:
 
     assert "steps.resolve.outputs.build_cache_mode == 'full'" in action
     assert "id: target-tree-cache-managed" not in action
+
+
+def test_setup_cache_uses_lookup_exact_restore_and_managed_fallback() -> None:
+    action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
+
+    assert "id: cache-lookup" in action
+    assert "id: cache-restore" in action
+    assert "id: cache-managed" in action
+    assert "uses: actions/cache/restore@" in action
+    assert "uses: actions/cache@" in action
+    assert "lookup-only: true" in action
+    assert "steps.cache-lookup.outputs.cache-hit == 'true'" in action
+    assert "steps.cache-lookup.outputs.cache-hit != 'true'" in action
+    assert "id: cache-save" not in action
