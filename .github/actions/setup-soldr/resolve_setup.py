@@ -310,6 +310,26 @@ def _path_summary(label: str, path: Path) -> None:
     log(f"{label} path={path} exists=true files={files} bytes={bytes_total}")
 
 
+def _setup_cache_paths(setup_cache_path: Path, bin_dir: Path, rustup_home: Path) -> str:
+    # Exact-hit warm reuse only needs the installed soldr binary plus the
+    # managed rustup metadata and toolchain directories. Caching the whole root
+    # also captures transient rustup files that only bloat the setup payload.
+    paths = [str(bin_dir)]
+    try:
+        rustup_home.relative_to(setup_cache_path)
+    except ValueError:
+        return "\n".join(paths)
+
+    paths.extend(
+        (
+            str(rustup_home / "settings.toml"),
+            str(rustup_home / "toolchains"),
+            str(rustup_home / "update-hashes"),
+        )
+    )
+    return "\n".join(paths)
+
+
 def main() -> None:
     workspace = Path(os.environ["ACTION_WORKSPACE"]).resolve()
     runner_temp = Path(os.environ.get("RUNNER_TEMP", workspace / ".tmp")).resolve()
@@ -334,7 +354,7 @@ def main() -> None:
     bin_dir = cache_root / "bin"
     setup_cache_path = cache_root
     soldr_bin_cache_path = soldr_root / "bin"
-    setup_cache_paths = "\n".join((str(setup_cache_path), str(soldr_bin_cache_path)))
+    setup_cache_paths = _setup_cache_paths(setup_cache_path, bin_dir, rustup_home)
     zccache_cache_dir = soldr_root / "cache" / "zccache"
     thin_target_cache_bundle_path = cache_root.parent / f"{cache_root.name}-target-thin"
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
@@ -379,8 +399,8 @@ def main() -> None:
     ).hexdigest()[:16]
     runner_os = _sanitize_fragment(os.environ.get("ACTION_OS", os.name).lower())
     runner_arch = _sanitize_fragment(os.environ.get("ACTION_ARCH", "unknown").lower())
-    # v4 keeps the dedicated zccache build cache separate while restoring the
-    # managed rustup home under the setup-cache root for exact-hit reuse.
+    # v4 keeps the dedicated zccache build cache separate while restoring only
+    # the managed rustup state needed for exact-hit toolchain reuse.
     cache_prefix = f"setup-soldr-v4-{runner_os}-{runner_arch}"
     cache_key = f"{cache_prefix}-{digest}"
     workspace_manifest_hash = _workspace_manifest_hash(workspace)

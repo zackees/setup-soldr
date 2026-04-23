@@ -183,11 +183,9 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         self.assertEqual(build_cache_path, soldr_root / "cache" / "zccache")
         self.assertNotIn(setup_cache_path, build_cache_path.parents)
         self.assertEqual(result.outputs["soldr_bin_cache_path"], str(soldr_root / "bin"))
+        self.assertNotIn(str(setup_cache_path), result.outputs["setup_cache_paths"].splitlines())
         self.assertEqual(result.env_exports.get("ZCCACHE_CACHE_DIR"), str(build_cache_path))
-        self.assertEqual(
-            result.outputs["setup_cache_paths"],
-            f"{setup_cache_path}\n{soldr_root / 'bin'}",
-        )
+        self.assertEqual(result.outputs["setup_cache_paths"], str(setup_cache_path / "bin"))
 
     def test_default_rustup_home_lives_under_setup_cache_root(self) -> None:
         result = _run_resolve_setup(include_explicit_toolchain_homes=False)
@@ -200,6 +198,17 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         self.assertEqual(result.env_exports.get("RUSTUP_HOME"), str(rustup_home))
         self.assertEqual(cargo_home, Path(result.env_exports["CARGO_HOME"]))
         self.assertNotIn(setup_cache_path, cargo_home.parents)
+        self.assertEqual(
+            result.outputs["setup_cache_paths"],
+            "\n".join(
+                (
+                    str(setup_cache_path / "bin"),
+                    str(rustup_home / "settings.toml"),
+                    str(rustup_home / "toolchains"),
+                    str(rustup_home / "update-hashes"),
+                )
+            ),
+        )
 
     def test_full_mode_restores_target_tree_and_bundle_root_together(self) -> None:
         result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "full"})
