@@ -47,6 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pytest \
+            tests/test_action_python_entrypoints.py \
             tests/test_action_target_cache_wiring.py \
             tests/test_ensure_rust_toolchain_refresh.py \
             tests/test_ensure_soldr_source_ref.py \
