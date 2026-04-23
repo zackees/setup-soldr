@@ -3,13 +3,76 @@ name: Soldr Cache Speed Demo
 on:
   push:
   workflow_dispatch:
+    inputs:
+      run_mode:
+        description: Demo mode
+        type: choice
+        required: true
+        default: Warm build only
+        options:
+          - Warm build only
+          - Purge cache and run cold build before warm build
 
 permissions:
+  actions: write
   contents: read
 
+concurrency:
+  group: soldr-cache-speed-demo
+  cancel-in-progress: false
+
+env:
+  DEMO_CACHE_SUFFIX: zccache-demo
+
 jobs:
-  build:
-    name: Warm zccache build with setup-soldr@v0
+  purge-demo-caches:
+    name: Purge demo caches
+    if: ${{ inputs.run_mode == 'Purge cache and run cold build before warm build' }}
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Delete setup-soldr demo caches
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t caches < <(
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" \
+              --paginate \
+              --jq ".actions_caches[] | select(.key | contains(\"${DEMO_CACHE_SUFFIX}\")) | \"\\(.id)\\t\\(.key)\""
+          )
+
+          if [ "${#caches[@]}" -eq 0 ]; then
+            echo "No setup-soldr demo caches matched suffix '${DEMO_CACHE_SUFFIX}'."
+            exit 0
+          fi
+
+          {
+            echo "### Purged demo caches"
+            echo
+            echo "| Cache ID | Key |"
+            echo "| --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for cache in "${caches[@]}"; do
+            cache_id="${cache%%$'\t'*}"
+            cache_key="${cache#*$'\t'}"
+            echo "Deleting cache ${cache_id}: ${cache_key}"
+            gh api \
+              --method DELETE \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${GITHUB_REPOSITORY}/actions/caches/${cache_id}"
+            echo "| ${cache_id} | \`${cache_key}\` |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+  cold-build:
+    name: Cold zccache build after purge
+    if: ${{ inputs.run_mode == 'Purge cache and run cold build before warm build' }}
+    needs: purge-demo-caches
     runs-on: ubuntu-24.04
 
     steps:
@@ -31,13 +94,13 @@ jobs:
             zccache/target/.rustc_info.json
             zccache/target/CACHEDIR.TAG
             zccache/target/debug
-          cache-key-suffix: zccache-demo
+          cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
 
       - name: Show cache plan
         shell: bash
         run: |
           {
-            echo "### Soldr cache speed demo"
+            echo "### Cold build cache state"
             echo
             echo "| Output | Value |"
             echo "| --- | --- |"
@@ -49,7 +112,7 @@ jobs:
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Build zccache
+      - name: Build zccache cold
         shell: bash
         working-directory: zccache
         run: |
@@ -61,7 +124,69 @@ jobs:
 
           {
             echo
-            echo "### Build result"
+            echo "### Cold build result"
+            echo
+            echo "Built \`zccache-cli\` in \`${elapsed}s\` after purging demo caches."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  warm-build:
+    name: Warm zccache build with setup-soldr@v0
+    needs:
+      - purge-demo-caches
+      - cold-build
+    if: ${{ always() && (inputs.run_mode != 'Purge cache and run cold build before warm build' || needs.cold-build.result == 'success') }}
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout zccache
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: zackees/zccache
+          path: zccache
+          persist-credentials: false
+
+      - id: setup
+        name: Setup Soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          cache: true
+          lockfile: zccache/Cargo.lock
+          target-dir: zccache/target
+          target-cache-paths: |
+            zccache/target/.rustc_info.json
+            zccache/target/CACHEDIR.TAG
+            zccache/target/debug
+          cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
+
+      - name: Show cache plan
+        shell: bash
+        run: |
+          {
+            echo "### Warm build cache state"
+            echo
+            echo "| Output | Value |"
+            echo "| --- | --- |"
+            echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
+            echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
+            echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
+            echo "| target-cache-restore-status | \`${{ steps.setup.outputs.target-cache-restore-status }}\` |"
+            echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
+            echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build zccache warm
+        shell: bash
+        working-directory: zccache
+        run: |
+          set -o pipefail
+          start="$(date +%s)"
+          soldr cargo build --locked --package zccache-cli
+          end="$(date +%s)"
+          elapsed="$((end - start))"
+
+          {
+            echo
+            echo "### Warm build result"
             echo
             echo "Built \`zccache-cli\` in \`${elapsed}s\`."
           } >> "$GITHUB_STEP_SUMMARY"
