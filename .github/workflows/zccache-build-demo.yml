@@ -1,0 +1,67 @@
+name: Soldr Cache Speed Demo
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Warm zccache build with setup-soldr@v0
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout zccache
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          repository: zackees/zccache
+          path: zccache
+          persist-credentials: false
+
+      - id: setup
+        name: Setup Soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          cache: true
+          lockfile: zccache/Cargo.lock
+          target-dir: zccache/target
+          target-cache-paths: |
+            zccache/target/.rustc_info.json
+            zccache/target/CACHEDIR.TAG
+            zccache/target/debug
+          cache-key-suffix: zccache-demo
+
+      - name: Show cache plan
+        shell: bash
+        run: |
+          {
+            echo "### Soldr cache speed demo"
+            echo
+            echo "| Output | Value |"
+            echo "| --- | --- |"
+            echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
+            echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
+            echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
+            echo "| target-cache-restore-status | \`${{ steps.setup.outputs.target-cache-restore-status }}\` |"
+            echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
+            echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build zccache
+        shell: bash
+        working-directory: zccache
+        run: |
+          set -o pipefail
+          start="$(date +%s)"
+          soldr cargo build --locked --package zccache-cli
+          end="$(date +%s)"
+          elapsed="$((end - start))"
+
+          {
+            echo
+            echo "### Build result"
+            echo
+            echo "Built \`zccache-cli\` in \`${elapsed}s\`."
+          } >> "$GITHUB_STEP_SUMMARY"
