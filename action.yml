@@ -6,9 +6,9 @@ branding:
   color: green
 inputs:
   version:
-    description: Soldr version or tag to install. Defaults to the latest release.
+    description: Soldr version or tag to install. Defaults to 0.7.9.
     required: false
-    default: ""
+    default: "0.7.9"
   cache:
     description: Restore and save the action-managed cache/state root across workflow runs.
     required: false
