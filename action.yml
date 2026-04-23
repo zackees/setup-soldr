@@ -49,15 +49,16 @@ inputs:
     default: "true"
   build-cache-mode:
     description: >
-      Rust build cache mode. "thin" is the default bounded dependency-artifact
-      mode. "full" opts into whole-target caching and should be treated as
-      unbounded.
+      Rust build cache mode. "once" is the default full-snapshot-on-miss mode
+      that restores without resaving on later hits. "thin" is the bounded
+      dependency-artifact alternative. "full" opts into normal whole-target
+      restore/save behavior and should be treated as unbounded.
     required: false
     default: ""
   target-cache:
     description: >
       Deprecated compatibility input. Set to "false" to disable Rust target
-      artifact caching; prefer build-cache-mode for selecting thin or full.
+      artifact caching; prefer build-cache-mode for selecting once, thin, or full.
     required: false
     default: "true"
   target-cache-mode:
@@ -104,7 +105,7 @@ outputs:
     description: Soldr-owned zccache compilation cache path.
     value: ${{ steps.resolve.outputs.build_cache_path }}
   build-cache-mode:
-    description: Effective Rust build cache mode selected for soldr/zccache.
+    description: Effective setup-soldr Rust build cache mode.
     value: ${{ steps.resolve.outputs.build_cache_mode }}
   build-cache-restore-status:
     description: Diagnostic restore status for the Soldr-owned zccache compilation cache.
@@ -125,7 +126,7 @@ outputs:
     description: Path passed to actions/cache for zccache-owned Rust artifact cache state.
     value: ${{ steps.resolve.outputs.target_cache_paths }}
   target-cache-mode:
-    description: Effective Rust target artifact cache mode.
+    description: Effective setup-soldr Rust target artifact cache mode.
     value: ${{ steps.resolve.outputs.target_cache_mode }}
   target-cache-restore-status:
     description: Diagnostic restore status for the Rust target artifact cache state.
@@ -196,7 +197,18 @@ runs:
         lookup-only: true
 
     - id: build-cache-restore
-      if: ${{ inputs.build-cache == 'true' }}
+      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && (steps.build-cache-lookup.outputs.cache-hit == 'true' || steps.build-cache-lookup.outputs.cache-matched-key != '') }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.build_cache_path }}
+        key: ${{ steps.resolve.outputs.build_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
+
+    - id: build-cache-managed
+      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.build-cache-lookup.outputs.cache-hit != 'true' && steps.build-cache-lookup.outputs.cache-matched-key == '')) }}
       uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
         path: ${{ steps.resolve.outputs.build_cache_path }}
@@ -218,7 +230,17 @@ runs:
         lookup-only: true
 
     - id: target-cache
-      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' }}
+      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && (steps.target-cache-lookup.outputs.cache-hit == 'true' || steps.target-cache-lookup.outputs.cache-matched-key != '') }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.target_cache_paths }}
+        key: ${{ steps.resolve.outputs.target_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+
+    - id: target-cache-managed
+      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.target-cache-lookup.outputs.cache-hit != 'true' && steps.target-cache-lookup.outputs.cache-matched-key == '')) }}
       uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
         path: ${{ steps.resolve.outputs.target_cache_paths }}
@@ -255,11 +277,11 @@ runs:
         LOOKUP_CACHE_HIT: ${{ steps.cache-lookup.outputs.cache-hit }}
         LOOKUP_CACHE_MATCHED_KEY: ${{ steps.cache-lookup.outputs.cache-matched-key }}
         CACHE_KEY: ${{ steps.resolve.outputs.cache_key }}
-        RAW_BUILD_CACHE_HIT: ${{ steps.build-cache-restore.outputs.cache-hit }}
+        RAW_BUILD_CACHE_HIT: ${{ steps.build-cache-managed.outputs.cache-hit || steps.build-cache-restore.outputs.cache-hit }}
         LOOKUP_BUILD_CACHE_HIT: ${{ steps.build-cache-lookup.outputs.cache-hit }}
         LOOKUP_BUILD_CACHE_MATCHED_KEY: ${{ steps.build-cache-lookup.outputs.cache-matched-key }}
         BUILD_CACHE_KEY: ${{ steps.resolve.outputs.build_cache_key }}
-        RAW_TARGET_CACHE_HIT: ${{ steps.target-cache.outputs.cache-hit }}
+        RAW_TARGET_CACHE_HIT: ${{ steps.target-cache-managed.outputs.cache-hit || steps.target-cache.outputs.cache-hit }}
         LOOKUP_TARGET_CACHE_HIT: ${{ steps.target-cache-lookup.outputs.cache-hit }}
         LOOKUP_TARGET_CACHE_MATCHED_KEY: ${{ steps.target-cache-lookup.outputs.cache-matched-key }}
         TARGET_CACHE_KEY: ${{ steps.resolve.outputs.target_cache_key }}

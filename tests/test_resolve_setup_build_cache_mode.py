@@ -111,7 +111,12 @@ def _run_resolve_setup(extra_env: dict[str, str] | None = None) -> ResolveResult
 
 class BuildCacheModeResolveTests(unittest.TestCase):
     def assert_resolved_build_cache_mode(
-        self, result: ResolveResult, expected: str, target_expected: str | None = None
+        self,
+        result: ResolveResult,
+        expected: str,
+        soldr_expected: str | None = None,
+        target_expected: str | None = None,
+        output_target_expected: str | None = None,
     ) -> None:
         self.assertEqual(
             result.returncode,
@@ -119,20 +124,22 @@ class BuildCacheModeResolveTests(unittest.TestCase):
             msg=f"resolve_setup.py failed\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
         )
         self.assertEqual(result.outputs.get("build_cache_mode"), expected)
-        self.assertEqual(result.env_exports.get("SOLDR_BUILD_CACHE_MODE"), expected)
+        self.assertEqual(result.outputs.get("target_cache_mode"), output_target_expected or expected)
+        self.assertEqual(result.env_exports.get("SETUP_SOLDR_BUILD_CACHE_MODE"), expected)
+        self.assertEqual(result.env_exports.get("SOLDR_BUILD_CACHE_MODE"), soldr_expected or expected)
         self.assertEqual(
             result.env_exports.get("SOLDR_TARGET_CACHE_MODE"),
-            target_expected or expected,
+            target_expected or soldr_expected or expected,
         )
 
-    def test_default_build_cache_mode_resolves_to_thin(self) -> None:
-        self.assert_resolved_build_cache_mode(_run_resolve_setup(), "thin")
+    def test_default_build_cache_mode_resolves_to_once(self) -> None:
+        self.assert_resolved_build_cache_mode(_run_resolve_setup(), "once", "full")
 
-    def test_thin_and_full_build_cache_modes_are_accepted(self) -> None:
-        for mode in ("thin", "full"):
+    def test_once_thin_and_full_build_cache_modes_are_accepted(self) -> None:
+        for mode, soldr_mode in (("once", "full"), ("thin", "thin"), ("full", "full")):
             with self.subTest(mode=mode):
                 result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": mode})
-                self.assert_resolved_build_cache_mode(result, mode)
+                self.assert_resolved_build_cache_mode(result, mode, soldr_mode)
 
     def test_unknown_build_cache_mode_fails_clearly(self) -> None:
         result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "wide"})
@@ -140,6 +147,7 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         combined_output = f"{result.stdout}\n{result.stderr}".lower()
         self.assertIn("invalid build-cache-mode", combined_output)
+        self.assertIn("once", combined_output)
         self.assertIn("thin", combined_output)
         self.assertIn("full", combined_output)
 
@@ -147,10 +155,12 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         cases = (
             ({"INPUT_TARGET_CACHE_MODE": "hot"}, "thin", "thin"),
             ({"INPUT_TARGET_CACHE_MODE": "full"}, "full", "full"),
-            ({"INPUT_TARGET_CACHE_MODE": "off"}, "thin", "off"),
+            ({"INPUT_TARGET_CACHE_MODE": "off"}, "once", "full", "off", "off"),
             (
                 {"INPUT_TARGET_CACHE": "false", "INPUT_TARGET_CACHE_MODE": "full"},
-                "thin",
+                "once",
+                "full",
+                "off",
                 "off",
             ),
             (
@@ -169,14 +179,27 @@ class BuildCacheModeResolveTests(unittest.TestCase):
                     "INPUT_TARGET_CACHE_MODE": "hot",
                 },
                 "full",
+                "full",
+                "off",
                 "off",
             ),
         )
 
-        for env, expected, target_expected in cases:
+        for case in cases:
+            env = case[0]
+            expected = case[1]
+            soldr_expected = case[2]
+            target_expected = case[3] if len(case) > 3 else None
+            output_target_expected = case[4] if len(case) > 4 else None
             with self.subTest(env=env):
                 result = _run_resolve_setup(env)
-                self.assert_resolved_build_cache_mode(result, expected, target_expected)
+                self.assert_resolved_build_cache_mode(
+                    result,
+                    expected,
+                    soldr_expected,
+                    target_expected,
+                    output_target_expected,
+                )
 
 
 if __name__ == "__main__":
