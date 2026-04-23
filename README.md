@@ -109,7 +109,7 @@ jobs:
 | `build-cache-key` | Primary key used for the Soldr-owned zccache compilation cache. |
 | `build-cache-path` | Soldr-owned zccache compilation cache path. |
 | `build-cache-mode` | Effective setup-soldr Rust build cache mode. |
-| `build-cache-restore-status` | Diagnostic restore status for the Soldr-owned zccache compilation cache. |
+| `build-cache-restore-status` | Diagnostic restore status for the Soldr-owned zccache compilation cache. In `once` mode this may report `skipped-target-cache-exact-hit` when the rust-plan bundle was already an exact hit and the separate compile-cache restore was intentionally skipped. |
 | `target-cache-hit` | Whether the zccache-owned Rust artifact cache state was restored. |
 | `target-cache-key` | Primary key used for the zccache-owned Rust artifact cache state. |
 | `target-cache-path` | Cargo target directory used by soldr for Rust artifact planning. |
@@ -128,6 +128,7 @@ jobs:
 - The action rehydrates the Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores Soldr/zccache cache state by default so child branches can reuse parent-branch build state.
 - The default `build-cache-mode` is `once`, which maps to soldr/zccache full-target planning on a cold run but restores only the local rust-plan bundle on later hits. Use `build-cache-mode: thin` for the bounded dependency-artifact alternative, or `build-cache-mode: full` when you explicitly want normal whole-target restore/save behavior on every run.
+- In `once` mode, an exact rust-plan bundle hit skips the separate build-cache restore because the target bundle already rehydrates the warm artifacts needed for the following build.
 - zccache is the artifact cache authority; soldr interprets the Rust build and passes zccache a structured Rust artifact plan.
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
 - The setup cache intentionally keeps Soldr setup state, while the dedicated `ZCCACHE_CACHE_DIR` payload is stored in its own cache so warm runs do not restore the same build-cache bytes twice.

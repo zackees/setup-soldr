@@ -204,40 +204,6 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.cache_restore_prefix }}
 
-    - id: build-cache-lookup
-      if: ${{ inputs.build-cache == 'true' }}
-      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
-      with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}
-        key: ${{ steps.resolve.outputs.build_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
-        lookup-only: true
-
-    - id: build-cache-restore
-      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && (steps.build-cache-lookup.outputs.cache-hit == 'true' || steps.build-cache-lookup.outputs.cache-matched-key != '') }}
-      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
-      with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}
-        key: ${{ steps.resolve.outputs.build_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
-
-    - id: build-cache-managed
-      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.build-cache-lookup.outputs.cache-hit != 'true' && steps.build-cache-lookup.outputs.cache-matched-key == '')) }}
-      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
-      with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}
-        key: ${{ steps.resolve.outputs.build_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
-
     - id: target-cache-lookup
       if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' }}
       uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
@@ -268,6 +234,40 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+
+    - id: build-cache-lookup
+      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.build_cache_path }}
+        key: ${{ steps.resolve.outputs.build_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
+        lookup-only: true
+
+    - id: build-cache-restore
+      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') && steps.resolve.outputs.build_cache_mode == 'once' && (steps.build-cache-lookup.outputs.cache-hit == 'true' || steps.build-cache-lookup.outputs.cache-matched-key != '') }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.build_cache_path }}
+        key: ${{ steps.resolve.outputs.build_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
+
+    - id: build-cache-managed
+      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.build-cache-lookup.outputs.cache-hit != 'true' && steps.build-cache-lookup.outputs.cache-matched-key == '')) }}
+      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.build_cache_path }}
+        key: ${{ steps.resolve.outputs.build_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
+          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
 
     - id: target-tree-cache-lookup
       if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode == 'full' }}
@@ -333,6 +333,7 @@ runs:
         BUILD_CACHE_ENABLED: ${{ inputs.build-cache }}
         TARGET_CACHE_ENABLED: ${{ inputs.target-cache }}
         EFFECTIVE_TARGET_CACHE_ENABLED: ${{ steps.resolve.outputs.target_cache_enabled }}
+        SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.target-cache-lookup.outputs.cache-hit == 'true' }}
       run: |
         function TimestampEnabled {
           $value = "$env:SETUP_SOLDR_TIMESTAMPS".Trim().ToLowerInvariant()
@@ -386,15 +387,21 @@ runs:
         "cache_restore_status=$cacheStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
         if ($env:BUILD_CACHE_ENABLED -eq "true") {
-          $buildValue = $env:RAW_BUILD_CACHE_HIT
-          if ([string]::IsNullOrWhiteSpace($buildValue)) {
+          if ($env:SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT -eq "true") {
             $buildValue = "false"
+            $buildStatus = "skipped-target-cache-exact-hit"
+          } else {
+            $buildValue = $env:RAW_BUILD_CACHE_HIT
+            if ([string]::IsNullOrWhiteSpace($buildValue)) {
+              $buildValue = "false"
+            }
+            $buildStatus = RestoreStatus $env:BUILD_CACHE_ENABLED $env:LOOKUP_BUILD_CACHE_HIT $env:LOOKUP_BUILD_CACHE_MATCHED_KEY $env:BUILD_CACHE_KEY
           }
         } else {
           $buildValue = ""
+          $buildStatus = "disabled"
         }
         "build_cache_hit=$buildValue" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        $buildStatus = RestoreStatus $env:BUILD_CACHE_ENABLED $env:LOOKUP_BUILD_CACHE_HIT $env:LOOKUP_BUILD_CACHE_MATCHED_KEY $env:BUILD_CACHE_KEY
         "build_cache_restore_status=$buildStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
         if ($env:BUILD_CACHE_ENABLED -eq "true" -and $env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true") {
@@ -416,6 +423,9 @@ runs:
         }
 
         Log "cache restore status=$cacheStatus exact-hit=$value"
+        if ($env:SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT -eq "true") {
+          Log "build-cache restore skipped because once-mode target cache was an exact hit"
+        }
         Log "build-cache restore status=$buildStatus exact-hit=$buildValue"
         Log "target-cache bundle restore status=$targetStatus exact-hit=$targetValue"
         if ($env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true" -and "${{ steps.resolve.outputs.build_cache_mode }}" -eq "full") {
