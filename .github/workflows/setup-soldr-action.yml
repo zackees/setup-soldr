@@ -38,7 +38,6 @@ jobs:
         uses: ./setup-soldr
         with:
           cache: true
-          build-cache-mode: thin
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
           cache-key-suffix: zccache

@@ -88,7 +88,6 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           cache: true
-          build-cache-mode: thin
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
@@ -148,7 +147,6 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           cache: true
-          build-cache-mode: thin
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
