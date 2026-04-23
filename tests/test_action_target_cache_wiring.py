@@ -24,6 +24,21 @@ def test_target_tree_cache_is_only_used_in_full_mode() -> None:
     assert "id: target-tree-cache-managed" not in action
 
 
+def test_target_cache_budget_outputs_and_warning_are_wired() -> None:
+    action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
+
+    assert "target-cache-budget-bytes:" in action
+    assert "target-cache-budget-files:" in action
+    assert "target-cache-footprint-bytes:" in action
+    assert "target-cache-footprint-files:" in action
+    assert "target-cache-budget-status:" in action
+    assert "TARGET_CACHE_BUDGET_BYTES" in action
+    assert "TARGET_CACHE_BUDGET_FILES" in action
+    assert "MeasurePaths" in action
+    assert "over-soft-budget:" in action
+    assert "::warning::target-cache footprint" in action
+
+
 def test_setup_cache_uses_lookup_exact_restore_and_managed_fallback() -> None:
     action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
 

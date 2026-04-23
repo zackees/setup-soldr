@@ -53,6 +53,7 @@ def _run_resolve_setup(
     *,
     include_explicit_toolchain_homes: bool = True,
     clear_path: bool = False,
+    create_lockfile: bool = True,
 ) -> ResolveResult:
     with tempfile.TemporaryDirectory(prefix="setup-soldr-tests-") as temp_dir:
         root = Path(temp_dir)
@@ -65,7 +66,8 @@ def _run_resolve_setup(
         workspace.mkdir()
         runner_temp.mkdir()
         home_dir.mkdir()
-        (workspace / "Cargo.lock").write_text("# test lockfile\n", encoding="utf-8")
+        if create_lockfile:
+            (workspace / "Cargo.lock").write_text("# test lockfile\n", encoding="utf-8")
 
         env = os.environ.copy()
         for key in list(env):
@@ -274,6 +276,15 @@ def _run_resolve_main_direct(
 
 
 class BuildCacheModeResolveTests(unittest.TestCase):
+    def assert_target_cache_budget(
+        self,
+        result: ResolveResult,
+        expected_bytes: str,
+        expected_files: str,
+    ) -> None:
+        self.assertEqual(result.outputs.get("target_cache_budget_bytes"), expected_bytes)
+        self.assertEqual(result.outputs.get("target_cache_budget_files"), expected_files)
+
     def assert_resolved_build_cache_mode(
         self,
         result: ResolveResult,
@@ -305,6 +316,44 @@ class BuildCacheModeResolveTests(unittest.TestCase):
             with self.subTest(mode=mode):
                 result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": mode})
                 self.assert_resolved_build_cache_mode(result, mode, soldr_mode)
+
+    def test_effective_target_cache_mode_sets_soft_budget_outputs(self) -> None:
+        cases = (
+            ({"INPUT_BUILD_CACHE_MODE": "once"}, "1073741824", "8000"),
+            ({"INPUT_BUILD_CACHE_MODE": "thin"}, "536870912", "4000"),
+            ({"INPUT_BUILD_CACHE_MODE": "full"}, "2147483648", "12000"),
+            ({"INPUT_TARGET_CACHE": "false"}, "", ""),
+        )
+
+        for env, expected_bytes, expected_files in cases:
+            with self.subTest(env=env):
+                result = _run_resolve_setup(env)
+                self.assertEqual(result.returncode, 0)
+                self.assert_target_cache_budget(result, expected_bytes, expected_files)
+
+    def test_disabled_target_cache_clears_cache_path_outputs(self) -> None:
+        result = _run_resolve_setup({"INPUT_TARGET_CACHE": "false"})
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.outputs.get("target_cache_enabled"), "false")
+        self.assertEqual(result.outputs.get("target_cache_mode"), "off")
+        self.assertEqual(result.outputs.get("target_cache_paths"), "")
+        self.assertEqual(result.outputs.get("target_cache_budget_bytes"), "")
+        self.assertEqual(result.outputs.get("target_cache_budget_files"), "")
+
+    def test_thin_mode_without_lockfile_disables_target_cache_budget_outputs(self) -> None:
+        result = _run_resolve_setup(
+            {"INPUT_BUILD_CACHE_MODE": "thin"},
+            create_lockfile=False,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.outputs.get("target_lockfile_hash"), "no-lock")
+        self.assertEqual(result.outputs.get("target_cache_enabled"), "false")
+        self.assertEqual(result.outputs.get("target_cache_mode"), "off")
+        self.assertEqual(result.outputs.get("target_cache_paths"), "")
+        self.assertEqual(result.outputs.get("target_cache_budget_bytes"), "")
+        self.assertEqual(result.outputs.get("target_cache_budget_files"), "")
 
     def test_once_mode_restores_only_the_local_rust_plan_bundle(self) -> None:
         result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "once"})
