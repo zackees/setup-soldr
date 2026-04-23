@@ -6,6 +6,8 @@ import json
 import os
 import re
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +17,9 @@ try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover
     tomllib = None
+
+
+_ROLLING_TOOLCHAIN_ALIASES = ("stable", "beta", "nightly")
 
 
 def _normalize_list(value: Any) -> list[str]:
@@ -57,14 +62,72 @@ def load_toolchain_spec(
         channel = toolchain_override.strip()
         source = "input"
 
+    cache_channel = resolve_toolchain_cache_channel(channel)
+
     return {
         "channel": channel,
+        "cache_channel": cache_channel,
         "profile": profile,
         "components": components,
         "targets": targets,
         "source": source,
         "file_hash": file_hash,
     }
+
+
+def _rolling_toolchain_alias(channel: str) -> str | None:
+    normalized = channel.strip().lower()
+    for alias in _ROLLING_TOOLCHAIN_ALIASES:
+        if normalized == alias:
+            return alias
+        if normalized.startswith(f"{alias}-") and not re.match(rf"^{alias}-\d", normalized):
+            return alias
+    return None
+
+
+def _rust_channel_manifest_release(channel_alias: str) -> str | None:
+    if tomllib is None:
+        return None
+
+    url = f"https://static.rust-lang.org/dist/channel-rust-{channel_alias}.toml"
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            payload = tomllib.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, OSError, TimeoutError, ValueError) as exc:
+        log(
+            f"Unable to resolve rolling Rust channel {channel_alias} to a release version: {exc}. "
+            "Falling back to the requested channel string for cache keying."
+        )
+        return None
+
+    rust_pkg = payload.get("pkg", {}).get("rust", {})
+    if not isinstance(rust_pkg, dict):
+        log(
+            f"Rust manifest for rolling channel {channel_alias} did not contain pkg.rust metadata. "
+            "Falling back to the requested channel string for cache keying."
+        )
+        return None
+
+    raw_version = str(rust_pkg.get("version", "")).strip()
+    if not raw_version:
+        log(
+            f"Rust manifest for rolling channel {channel_alias} did not contain a version string. "
+            "Falling back to the requested channel string for cache keying."
+        )
+        return None
+
+    return raw_version.split(" ", 1)[0]
+
+
+def resolve_toolchain_cache_channel(channel: str) -> str:
+    alias = _rolling_toolchain_alias(channel)
+    if alias is None:
+        return channel
+
+    resolved = _rust_channel_manifest_release(alias)
+    if resolved:
+        return resolved
+    return channel
 
 
 def _sanitize_fragment(value: str) -> str:
@@ -301,7 +364,7 @@ def main() -> None:
     soldr_ref = os.environ.get("INPUT_REF", "").strip()
     soldr_version = os.environ.get("INPUT_VERSION", "").strip()
     toolchain_signature = {
-        "channel": toolchain["channel"],
+        "channel": toolchain["cache_channel"],
         "profile": toolchain["profile"],
         "components": toolchain["components"],
         "targets": toolchain["targets"],
@@ -470,6 +533,7 @@ def main() -> None:
     # bundle instead of switching to zccache's separate direct GHA backend.
     _write_env("SOLDR_TARGET_CACHE_BACKEND", "local")
     _write_env("SETUP_SOLDR_TOOLCHAIN_CHANNEL", toolchain["channel"])
+    _write_env("SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL", toolchain["cache_channel"])
     _write_env("SETUP_SOLDR_TOOLCHAIN_PROFILE", toolchain["profile"])
     _write_env("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", json.dumps(toolchain["components"]))
     _write_env("SETUP_SOLDR_TOOLCHAIN_TARGETS", json.dumps(toolchain["targets"]))
@@ -504,6 +568,8 @@ def main() -> None:
     log("target-cache backend=local")
     log(f"soldr repo={soldr_repo}")
     log(f"soldr ref={soldr_ref or 'release'}")
+    log(f"toolchain channel={toolchain['channel']}")
+    log(f"toolchain cache-channel={toolchain['cache_channel']}")
     if target_cache_parent_key:
         log(f"target-cache restore-key-parent={target_cache_parent_key}")
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
@@ -552,6 +618,7 @@ def main() -> None:
             "soldr_ref": soldr_ref,
             "soldr_version_requested": soldr_version,
             "toolchain_channel": toolchain["channel"],
+            "toolchain_cache_channel": toolchain["cache_channel"],
             "toolchain_profile": toolchain["profile"],
             "toolchain_source": toolchain["source"],
             "toolchain": toolchain["channel"],

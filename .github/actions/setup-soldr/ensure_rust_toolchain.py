@@ -118,6 +118,22 @@ def toolchain_available(rustup: str, channel: str) -> bool:
     return False
 
 
+def installed_toolchain_release(rustup: str, channel: str) -> str | None:
+    result = subprocess.run(
+        [rustup, "run", channel, "rustc", "--version"],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    match = re.match(r"^rustc\s+([^\s]+)", result.stdout.strip())
+    if match is None:
+        return None
+    return match.group(1)
+
+
 def should_refresh_toolchain(channel: str) -> bool:
     normalized = channel.strip().lower()
     if not normalized:
@@ -128,6 +144,21 @@ def should_refresh_toolchain(channel: str) -> bool:
         if normalized.startswith(f"{alias}-") and not re.match(rf"^{alias}-\d", normalized):
             return True
     return False
+
+
+def should_skip_refresh_for_exact_hit(
+    channel: str,
+    expected_release: str,
+    setup_cache_exact_hit: bool,
+    installed_release: str | None,
+) -> bool:
+    if not should_refresh_toolchain(channel):
+        return False
+    if not setup_cache_exact_hit:
+        return False
+    if not expected_release.strip():
+        return False
+    return installed_release == expected_release
 
 
 def _json_list_env(name: str) -> list[str]:
@@ -304,6 +335,10 @@ def main() -> None:
     profile = os.environ.get("SETUP_SOLDR_TOOLCHAIN_PROFILE", "").strip() or "minimal"
     components = _json_list_env("SETUP_SOLDR_TOOLCHAIN_COMPONENTS")
     targets = _json_list_env("SETUP_SOLDR_TOOLCHAIN_TARGETS")
+    cache_channel = os.environ.get("SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL", "").strip()
+    setup_cache_exact_hit = (
+        os.environ.get("SETUP_SOLDR_SETUP_CACHE_EXACT_HIT", "").strip().lower() == "true"
+    )
 
     log(f"Resolved Rust toolchain channel={channel} profile={profile}")
     log(f"Requested Rust components: {', '.join(components) if components else 'none'}")
@@ -311,8 +346,31 @@ def main() -> None:
 
     run([rustup, "set", "profile", profile])
     if should_refresh_toolchain(channel):
-        log(f"Refreshing rolling Rust toolchain {channel} with profile {profile}")
-        run([rustup, "toolchain", "install", channel, "--profile", profile])
+        installed_release = (
+            installed_toolchain_release(rustup, channel)
+            if toolchain_available(rustup, channel)
+            else None
+        )
+        if should_skip_refresh_for_exact_hit(
+            channel,
+            cache_channel,
+            setup_cache_exact_hit,
+            installed_release,
+        ):
+            log(
+                "Using installed rolling Rust toolchain "
+                f"{channel} without refresh because the setup cache exact-hit "
+                f"matches release {cache_channel}"
+            )
+        else:
+            if setup_cache_exact_hit and cache_channel:
+                log(
+                    f"Rolling Rust toolchain {channel} exact-hit expected release {cache_channel}; "
+                    f"installed release is {installed_release or 'missing'}, refreshing"
+                )
+            else:
+                log(f"Refreshing rolling Rust toolchain {channel} with profile {profile}")
+            run([rustup, "toolchain", "install", channel, "--profile", profile])
     elif not toolchain_available(rustup, channel):
         log(f"Installing Rust toolchain {channel} with profile {profile}")
         run([rustup, "toolchain", "install", channel, "--profile", profile])
