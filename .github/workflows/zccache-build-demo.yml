@@ -23,7 +23,7 @@ concurrency:
 
 env:
   DEMO_CACHE_SUFFIX: zccache-demo
-  INTEGRATION_REF: ${{ github.ref_name }}
+  REQUESTED_INTEGRATION_REF: ${{ github.ref_name }}
 
 jobs:
   purge-demo-caches:
@@ -82,11 +82,49 @@ jobs:
         with:
           path: setup-soldr
 
+      - id: resolve-refs
+        name: Resolve upstream integration refs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          resolve_default_branch() {
+            local repo="$1"
+            git ls-remote --symref "https://github.com/${repo}.git" HEAD |
+              awk '/^ref:/ {sub("refs/heads/", "", $2); print $2; exit}'
+          }
+
+          resolve_ref() {
+            local repo="$1"
+            local requested="$2"
+            if git ls-remote --exit-code --heads "https://github.com/${repo}.git" "$requested" >/dev/null 2>&1; then
+              printf '%s' "$requested"
+              return
+            fi
+            local fallback
+            fallback="$(resolve_default_branch "$repo")"
+            if [ -z "$fallback" ]; then
+              echo "Unable to resolve default branch for $repo" >&2
+              exit 1
+            fi
+            printf '%s' "$fallback"
+          }
+
+          requested="$REQUESTED_INTEGRATION_REF"
+          zccache_ref="$(resolve_ref zackees/zccache "$requested")"
+          soldr_ref="$(resolve_ref zackees/soldr "$requested")"
+
+          {
+            echo "requested_ref=$requested"
+            echo "zccache_ref=$zccache_ref"
+            echo "soldr_ref=$soldr_ref"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Checkout zccache
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: zackees/zccache
-          ref: ${{ env.INTEGRATION_REF }}
+          ref: ${{ steps.resolve-refs.outputs.zccache_ref }}
           path: zccache
           persist-credentials: false
 
@@ -99,7 +137,7 @@ jobs:
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
           repo: zackees/soldr
-          ref: ${{ env.INTEGRATION_REF }}
+          ref: ${{ steps.resolve-refs.outputs.soldr_ref }}
 
       - name: Show cache plan
         shell: bash
@@ -110,7 +148,9 @@ jobs:
             echo "| Output | Value |"
             echo "| --- | --- |"
             echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
-            echo "| integration-ref | \`${{ env.INTEGRATION_REF }}\` |"
+            echo "| requested-integration-ref | \`${{ steps.resolve-refs.outputs.requested_ref }}\` |"
+            echo "| zccache-ref | \`${{ steps.resolve-refs.outputs.zccache_ref }}\` |"
+            echo "| soldr-ref | \`${{ steps.resolve-refs.outputs.soldr_ref }}\` |"
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
             echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
@@ -150,11 +190,49 @@ jobs:
         with:
           path: setup-soldr
 
+      - id: resolve-refs
+        name: Resolve upstream integration refs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          resolve_default_branch() {
+            local repo="$1"
+            git ls-remote --symref "https://github.com/${repo}.git" HEAD |
+              awk '/^ref:/ {sub("refs/heads/", "", $2); print $2; exit}'
+          }
+
+          resolve_ref() {
+            local repo="$1"
+            local requested="$2"
+            if git ls-remote --exit-code --heads "https://github.com/${repo}.git" "$requested" >/dev/null 2>&1; then
+              printf '%s' "$requested"
+              return
+            fi
+            local fallback
+            fallback="$(resolve_default_branch "$repo")"
+            if [ -z "$fallback" ]; then
+              echo "Unable to resolve default branch for $repo" >&2
+              exit 1
+            fi
+            printf '%s' "$fallback"
+          }
+
+          requested="$REQUESTED_INTEGRATION_REF"
+          zccache_ref="$(resolve_ref zackees/zccache "$requested")"
+          soldr_ref="$(resolve_ref zackees/soldr "$requested")"
+
+          {
+            echo "requested_ref=$requested"
+            echo "zccache_ref=$zccache_ref"
+            echo "soldr_ref=$soldr_ref"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Checkout zccache
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: zackees/zccache
-          ref: ${{ env.INTEGRATION_REF }}
+          ref: ${{ steps.resolve-refs.outputs.zccache_ref }}
           path: zccache
           persist-credentials: false
 
@@ -167,7 +245,7 @@ jobs:
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
           repo: zackees/soldr
-          ref: ${{ env.INTEGRATION_REF }}
+          ref: ${{ steps.resolve-refs.outputs.soldr_ref }}
 
       - name: Show cache plan
         shell: bash
@@ -178,7 +256,9 @@ jobs:
             echo "| Output | Value |"
             echo "| --- | --- |"
             echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
-            echo "| integration-ref | \`${{ env.INTEGRATION_REF }}\` |"
+            echo "| requested-integration-ref | \`${{ steps.resolve-refs.outputs.requested_ref }}\` |"
+            echo "| zccache-ref | \`${{ steps.resolve-refs.outputs.zccache_ref }}\` |"
+            echo "| soldr-ref | \`${{ steps.resolve-refs.outputs.soldr_ref }}\` |"
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
             echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
