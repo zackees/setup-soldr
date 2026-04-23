@@ -329,7 +329,7 @@ def main() -> None:
         _default_home_dir(".cargo")
     )
     rustup_home = Path(os.environ.get("RUSTUP_HOME", "")).expanduser().resolve() if os.environ.get("RUSTUP_HOME") else (
-        _default_home_dir(".rustup")
+        cache_root / "rustup-home"
     )
     bin_dir = cache_root / "bin"
     setup_cache_path = cache_root
@@ -379,8 +379,9 @@ def main() -> None:
     ).hexdigest()[:16]
     runner_os = _sanitize_fragment(os.environ.get("ACTION_OS", os.name).lower())
     runner_arch = _sanitize_fragment(os.environ.get("ACTION_ARCH", "unknown").lower())
-    # v3 excludes the dedicated zccache build cache from the setup-cache root.
-    cache_prefix = f"setup-soldr-v3-{runner_os}-{runner_arch}"
+    # v4 keeps the dedicated zccache build cache separate while restoring the
+    # managed rustup home under the setup-cache root for exact-hit reuse.
+    cache_prefix = f"setup-soldr-v4-{runner_os}-{runner_arch}"
     cache_key = f"{cache_prefix}-{digest}"
     workspace_manifest_hash = _workspace_manifest_hash(workspace)
     cargo_config_hash = _cargo_config_hash(workspace)
