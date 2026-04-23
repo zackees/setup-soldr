@@ -155,14 +155,15 @@ def normalize_build_cache_mode(
     legacy_target_mode: str = "",
     allow_legacy_translation: bool = True,
 ) -> str:
-    mode = value.strip().lower() or "thin"
-    if mode not in {"thin", "full"}:
+    explicit_mode = value.strip().lower()
+    mode = explicit_mode or "once"
+    if mode not in {"once", "thin", "full"}:
         raise RuntimeError(
-            f"invalid build-cache-mode {value!r}; expected thin or full"
+            f"invalid build-cache-mode {value!r}; expected once, thin, or full"
         )
 
     legacy_mode = _normalize_legacy_target_cache_mode(legacy_target_mode)
-    if allow_legacy_translation and legacy_mode == "full" and mode == "thin":
+    if allow_legacy_translation and not explicit_mode and legacy_mode in {"thin", "full"}:
         log(
             f"target-cache-mode '{legacy_mode}' is deprecated; "
             f"translating to build-cache-mode '{legacy_mode}'."
@@ -366,6 +367,7 @@ def main() -> None:
         os.environ.get("INPUT_BUILD_CACHE", "true").strip().lower()
         not in {"0", "false", "no", "off"}
     )
+    build_cache_runtime_mode = "full" if build_cache_mode == "once" else build_cache_mode
     target_cache_enabled = (
         build_cache_enabled
         and target_cache_requested
@@ -392,17 +394,21 @@ def main() -> None:
     )
     if not target_cache_enabled:
         target_cache_paths = (
-            str(target_cache_path) if build_cache_mode == "full" else str(target_cache_bundle_path)
+            str(target_cache_path)
+            if build_cache_runtime_mode == "full"
+            else str(target_cache_bundle_path)
         )
         target_cache_effective_mode = "off"
         target_cache_prefix = f"setup-soldr-targetcache-off-v1-{runner_os}-{runner_arch}"
         target_cache_lock_prefix = ""
         target_cache_key = f"{target_cache_prefix}-{target_inputs_hash}"
         target_cache_parent_key = ""
-    elif build_cache_mode == "full":
+    elif build_cache_runtime_mode == "full":
         target_cache_paths = str(target_cache_path)
-        target_cache_effective_mode = "full"
-        target_cache_prefix = f"setup-soldr-targetcache-full-v1-{runner_os}-{runner_arch}"
+        target_cache_effective_mode = build_cache_mode
+        target_cache_prefix = (
+            f"setup-soldr-targetcache-{build_cache_mode}-v1-{runner_os}-{runner_arch}"
+        )
         target_cache_suffix_fragment = f"{sanitized_suffix}-" if sanitized_suffix else ""
         target_cache_lock_prefix = (
             f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-"
@@ -431,10 +437,10 @@ def main() -> None:
     _write_env("RUSTUP_HOME", str(rustup_home))
     _write_env("ZCCACHE_CACHE_DIR", str(zccache_cache_dir))
     _write_env("SETUP_SOLDR_BUILD_CACHE_MODE", build_cache_mode)
-    _write_env("SOLDR_BUILD_CACHE_MODE", build_cache_mode)
+    _write_env("SOLDR_BUILD_CACHE_MODE", build_cache_runtime_mode)
     _write_env(
         "SOLDR_TARGET_CACHE_MODE",
-        target_cache_effective_mode if target_cache_enabled else "off",
+        build_cache_runtime_mode if target_cache_enabled else "off",
     )
     _write_env("SOLDR_TARGET_CACHE_DIR", str(target_cache_path))
     _write_env("SOLDR_TARGET_CACHE_BUNDLE_DIR", str(target_cache_bundle_path))
@@ -463,6 +469,7 @@ def main() -> None:
     log(f"cache restore-key={cache_prefix}-")
     log(f"build-cache key={build_cache_key}")
     log(f"build-cache mode={build_cache_mode}")
+    log(f"build-cache soldr-mode={build_cache_runtime_mode}")
     if build_cache_parent_key:
         log(f"build-cache restore-key-parent={build_cache_parent_key}")
     log(f"build-cache restore-key-toolchain={build_cache_toolchain_prefix}")
@@ -481,7 +488,7 @@ def main() -> None:
     _path_summary("build-cache before restore", zccache_cache_dir)
     _path_summary(
         "target-cache before restore",
-        target_cache_path if build_cache_mode == "full" else target_cache_bundle_path,
+        target_cache_path if build_cache_runtime_mode == "full" else target_cache_bundle_path,
     )
 
     _write_outputs(
