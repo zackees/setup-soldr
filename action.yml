@@ -148,8 +148,11 @@ outputs:
   zccache-daemon-log:
     description: Path to the managed zccache daemon log written during soldr-driven builds.
     value: ${{ steps.resolve.outputs.zccache_daemon_log_path }}
+  zccache-session-log:
+    description: Path to the managed zccache session log written during soldr-driven builds.
+    value: ${{ steps.resolve.outputs.zccache_session_log_path }}
   zccache-journal-log:
-    description: Path to the managed zccache session journal written during soldr-driven builds.
+    description: Path to the managed zccache structured session journal written during soldr-driven builds.
     value: ${{ steps.resolve.outputs.zccache_journal_log_path }}
   toolchain:
     description: Exact Rust toolchain channel configured by rustup for the action.

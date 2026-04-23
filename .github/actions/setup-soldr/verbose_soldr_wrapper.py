@@ -92,8 +92,8 @@ def main() -> int:
             state_dir,
         )
         _dump_log(
-            "setup-soldr verbose zccache session journal",
-            os.environ.get("SETUP_SOLDR_ZCCACHE_JOURNAL_LOG", ""),
+            "setup-soldr verbose zccache session log",
+            os.environ.get("SETUP_SOLDR_ZCCACHE_SESSION_LOG", ""),
             state_dir,
         )
 

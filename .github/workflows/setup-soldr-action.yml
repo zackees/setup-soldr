@@ -68,6 +68,7 @@ jobs:
           Write-Host "target-lockfile=${{ steps.setup.outputs.target-lockfile }}"
           Write-Host "target-lockfile-hash=${{ steps.setup.outputs.target-lockfile-hash }}"
           Write-Host "zccache-daemon-log=${{ steps.setup.outputs.zccache-daemon-log }}"
+          Write-Host "zccache-session-log=${{ steps.setup.outputs.zccache-session-log }}"
           Write-Host "zccache-journal-log=${{ steps.setup.outputs.zccache-journal-log }}"
           Write-Host "toolchain=${{ steps.setup.outputs.toolchain }}"
 
@@ -135,7 +136,7 @@ jobs:
           set -o pipefail
           for path in \
             "${{ steps.setup.outputs.zccache-daemon-log }}" \
-            "${{ steps.setup.outputs.zccache-journal-log }}"; do
+            "${{ steps.setup.outputs.zccache-session-log }}"; do
             if [ -f "$path" ]; then
               echo "::group::$path"
               cat "$path"

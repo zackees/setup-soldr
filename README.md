@@ -86,7 +86,7 @@ jobs:
   shell: bash
   run: |
     test -f "${{ steps.setup.outputs.zccache-daemon-log }}" && cat "${{ steps.setup.outputs.zccache-daemon-log }}"
-    test -f "${{ steps.setup.outputs.zccache-journal-log }}" && cat "${{ steps.setup.outputs.zccache-journal-log }}"
+    test -f "${{ steps.setup.outputs.zccache-session-log }}" && cat "${{ steps.setup.outputs.zccache-session-log }}"
 ```
 
 ## Inputs
@@ -135,7 +135,8 @@ jobs:
 | `target-lockfile-hash` | Short hash of the `Cargo.lock` used for Rust artifact cache keying, or `no-lock`. |
 | `verbose` | Whether verbose zccache logging is enabled. |
 | `zccache-daemon-log` | Path to the managed zccache daemon log. |
-| `zccache-journal-log` | Path to the managed zccache session journal. |
+| `zccache-session-log` | Path to the managed zccache session log. |
+| `zccache-journal-log` | Path to the managed zccache structured session journal. |
 | `toolchain` | Exact Rust toolchain channel configured for the action. |
 
 ### Diagnostic And Compatibility Outputs
@@ -161,7 +162,7 @@ jobs:
 - The action restores Soldr/zccache cache state by default so child branches can reuse parent-branch build state.
 - The default `build-cache-mode` is `thin`, which asks soldr to generate a bounded dependency-artifact plan and lets zccache restore/save the artifacts and report stats. Use `build-cache-mode: full` only for tightly scoped jobs where the whole target directory is known to stay bounded.
 - zccache is the artifact cache authority; soldr interprets the Rust build and passes zccache a structured Rust artifact plan.
-- `verbose: true` appends zccache trace filters to `RUST_LOG`, keeps the managed daemon log and session journal paths stable, and makes downstream `soldr ...` invocations dump newly-written zccache log content after each command.
+- `verbose: true` appends zccache trace filters to `RUST_LOG`, keeps the managed daemon log and session log paths stable, and makes downstream `soldr ...` invocations dump newly-written zccache log content after each command.
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
 - The setup cache intentionally keeps Soldr-managed state so the managed zccache binary does not need to be rebuilt on every run.
 

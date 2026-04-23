@@ -18,6 +18,7 @@ class VerboseSoldrWrapperTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="setup-soldr-wrapper-") as temp_dir:
             root = Path(temp_dir)
             daemon_log = root / "daemon.log"
+            session_log = root / "last-session.log"
             journal_log = root / "last-session.jsonl"
             state_dir = root / "state"
             real_soldr = root / "real_soldr.py"
@@ -29,6 +30,7 @@ class VerboseSoldrWrapperTests(unittest.TestCase):
                     import sys
 
                     pathlib.Path({str(daemon_log)!r}).write_text("daemon line\\n", encoding="utf-8")
+                    pathlib.Path({str(session_log)!r}).write_text("session line\\n", encoding="utf-8")
                     pathlib.Path({str(journal_log)!r}).write_text('{{"event":"session"}}\\n', encoding="utf-8")
                     raise SystemExit(7)
                     """
@@ -43,6 +45,7 @@ class VerboseSoldrWrapperTests(unittest.TestCase):
                     "SETUP_SOLDR_VERBOSE": "true",
                     "SETUP_SOLDR_TIMESTAMPS": "false",
                     "SETUP_SOLDR_ZCCACHE_DAEMON_LOG": str(daemon_log),
+                    "SETUP_SOLDR_ZCCACHE_SESSION_LOG": str(session_log),
                     "SETUP_SOLDR_ZCCACHE_JOURNAL_LOG": str(journal_log),
                     "SETUP_SOLDR_ZCCACHE_LOG_STATE_DIR": str(state_dir),
                 }
@@ -60,8 +63,10 @@ class VerboseSoldrWrapperTests(unittest.TestCase):
             self.assertEqual(result.returncode, 7)
             self.assertIn("setup-soldr verbose zccache daemon log", result.stdout)
             self.assertIn("daemon line", result.stdout)
-            self.assertIn("setup-soldr verbose zccache session journal", result.stdout)
-            self.assertIn('"event":"session"', result.stdout)
+            self.assertIn("setup-soldr verbose zccache session log", result.stdout)
+            self.assertIn("session line", result.stdout)
+            self.assertNotIn("setup-soldr verbose zccache session journal", result.stdout)
+            self.assertNotIn('"event":"session"', result.stdout)
 
 
 if __name__ == "__main__":

@@ -336,6 +336,7 @@ def main() -> None:
     zccache_cache_dir = soldr_root / "cache" / "zccache"
     zccache_logs_dir = zccache_cache_dir / "logs"
     zccache_daemon_log_path = zccache_logs_dir / "daemon.log"
+    zccache_session_log_path = zccache_logs_dir / "last-session.log"
     zccache_journal_log_path = zccache_logs_dir / "last-session.jsonl"
     verbose_state_dir = cache_root.parent / f"{cache_root.name}-verbose"
     target_cache_bundle_path = cache_root.parent / f"{cache_root.name}-target-thin"
@@ -523,6 +524,7 @@ def main() -> None:
     _write_env("SETUP_SOLDR_REAL_BIN", str(soldr_path))
     _write_env("SETUP_SOLDR_VERBOSE_WRAPPER", str(action_path / ".github" / "actions" / "setup-soldr" / "verbose_soldr_wrapper.py"))
     _write_env("SETUP_SOLDR_ZCCACHE_DAEMON_LOG", str(zccache_daemon_log_path))
+    _write_env("SETUP_SOLDR_ZCCACHE_SESSION_LOG", str(zccache_session_log_path))
     _write_env("SETUP_SOLDR_ZCCACHE_JOURNAL_LOG", str(zccache_journal_log_path))
     _write_env("SETUP_SOLDR_ZCCACHE_LOG_STATE_DIR", str(verbose_state_dir))
     if timestamps.lower() not in {"0", "false", "no", "off"} and "NO_COLOR" not in os.environ:
@@ -567,6 +569,7 @@ def main() -> None:
     log(f"target-cache lockfile={_path_for_output(workspace, lockfile_path)}")
     log(f"target-cache lockfile-hash={cargo_lock_hash}")
     log(f"zccache daemon log={zccache_daemon_log_path}")
+    log(f"zccache session log={zccache_session_log_path}")
     log(f"zccache session journal={zccache_journal_log_path}")
     _path_summary("cache before restore", setup_cache_path)
     _path_summary("build-cache before restore", zccache_cache_dir)
@@ -607,6 +610,7 @@ def main() -> None:
             "soldr_repo": soldr_repo,
             "soldr_version_requested": soldr_version,
             "zccache_daemon_log_path": str(zccache_daemon_log_path),
+            "zccache_session_log_path": str(zccache_session_log_path),
             "zccache_journal_log_path": str(zccache_journal_log_path),
             "toolchain_channel": toolchain["channel"],
             "toolchain_profile": toolchain["profile"],
