@@ -22,7 +22,7 @@ inputs:
     required: false
     default: "true"
   cache-dir:
-    description: Override the runner-local cache/state root used for Soldr, Cargo, and rustup state rehydrated by this action.
+    description: Override the runner-local cache/state root used for the installed soldr binary and any managed rustup state rehydrated by this action.
     required: false
     default: ""
   cache-key-suffix:

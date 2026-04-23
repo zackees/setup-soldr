@@ -77,7 +77,7 @@ jobs:
 |---|---|
 | `version` | Soldr release tag or version to install. Defaults to `0.7.10`. |
 | `cache` | Restore and save the action-managed cache/state root. |
-| `cache-dir` | Override the runner-local cache/state root. |
+| `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
 | `cache-key-suffix` | Optional escape hatch appended to the cache key. |
 | `toolchain` | Explicit Rust toolchain channel override. |
 | `toolchain-file` | Alternate toolchain file path when `toolchain` is empty; `components` and `targets` in the file are provisioned during setup. |
@@ -125,13 +125,13 @@ jobs:
 - The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.10`.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
-- The action rehydrates the Soldr setup root, keeps a managed `RUSTUP_HOME` inside that cache by default, and continues to use the runner's existing `CARGO_HOME` unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
+- The action rehydrates the installed `soldr` binary plus the managed `RUSTUP_HOME` state it needs for warm reuse when that rustup home lives under the action-managed cache root, and continues to use the runner's existing `CARGO_HOME` unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores Soldr/zccache cache state by default so child branches can reuse parent-branch build state.
 - The default `build-cache-mode` is `once`, which maps to soldr/zccache full-target planning on a cold run but restores only the local rust-plan bundle on later hits. Use `build-cache-mode: thin` for the bounded dependency-artifact alternative, or `build-cache-mode: full` when you explicitly want normal whole-target restore/save behavior on every run.
 - In `once` mode, an exact rust-plan bundle hit skips the separate build-cache restore because the target bundle already rehydrates the warm artifacts needed for the following build.
 - zccache is the artifact cache authority; soldr interprets the Rust build and passes zccache a structured Rust artifact plan.
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
-- The setup cache intentionally keeps Soldr setup state, while the dedicated `ZCCACHE_CACHE_DIR` payload is stored in its own cache so warm runs do not restore the same build-cache bytes twice.
+- The setup cache intentionally keeps the installed `soldr` binary and any managed rustup state that lives under the setup cache root, while the dedicated `ZCCACHE_CACHE_DIR` payload is stored in its own cache so warm runs do not restore the same build-cache bytes twice.
 
 ## Development
 
