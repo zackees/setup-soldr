@@ -11,6 +11,7 @@ import sys
 import tarfile
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from contextlib import closing
@@ -75,6 +76,20 @@ def _fetch_release(repo: str, version: str) -> dict[str, object]:
         return json.load(response)
 
 
+def _resolve_ref_commit_sha(repo: str, ref: str) -> str:
+    encoded_ref = urllib.parse.quote(ref, safe="")
+    request = urllib.request.Request(
+        f"https://api.github.com/repos/{repo}/commits/{encoded_ref}",
+        headers=_request_headers(),
+    )
+    with urllib.request.urlopen(request) as response:
+        payload = json.load(response)
+    commit_sha = payload.get("sha")
+    if not isinstance(commit_sha, str) or not commit_sha:
+        raise RuntimeError(f"failed to resolve commit sha for {repo}@{ref}")
+    return commit_sha
+
+
 def _installed_version(binary_path: Path) -> str | None:
     if not binary_path.exists():
         return None
@@ -108,6 +123,7 @@ def _source_install_matches(
     install_dir: Path,
     repo: str,
     ref: str,
+    commit_sha: str,
     target: str,
     binary_name: str,
 ) -> bool:
@@ -118,6 +134,7 @@ def _source_install_matches(
     return (
         metadata.get("repo") == repo
         and metadata.get("ref") == ref
+        and metadata.get("commit_sha") == commit_sha
         and metadata.get("target") == target
         and metadata.get("binary_name") == binary_name
     )
@@ -164,13 +181,20 @@ def _extract_repo_root(archive_path: Path, out_dir: Path) -> Path:
     return directories[0]
 
 
-def _build_from_source(repo: str, ref: str, install_dir: Path, target: str, binary_name: str) -> Path:
+def _build_from_source(
+    repo: str,
+    ref: str,
+    commit_sha: str,
+    install_dir: Path,
+    target: str,
+    binary_name: str,
+) -> Path:
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp)
         archive_path = tmp_dir / "source.zip"
         source_root = tmp_dir / "source"
-        log(f"Downloading soldr source from {repo}@{ref}")
-        _download(_source_archive_url(repo, ref), archive_path)
+        log(f"Downloading soldr source from {repo}@{ref} ({commit_sha})")
+        _download(_source_archive_url(repo, commit_sha), archive_path)
         repo_root = _extract_repo_root(archive_path, source_root)
         env = os.environ.copy()
         env["CARGO_TERM_COLOR"] = env.get("CARGO_TERM_COLOR", "always")
@@ -183,7 +207,7 @@ def _build_from_source(repo: str, ref: str, install_dir: Path, target: str, bina
             "--target",
             target,
         ]
-        log(f"Building soldr from source ref {ref}")
+        log(f"Building soldr from source ref {ref} ({commit_sha})")
         subprocess.check_call(command, cwd=repo_root, env=env)
         built_binary = repo_root / "target" / target / "debug" / binary_name
         if not built_binary.exists():
@@ -199,6 +223,7 @@ def _build_from_source(repo: str, ref: str, install_dir: Path, target: str, bina
             {
                 "repo": repo,
                 "ref": ref,
+                "commit_sha": commit_sha,
                 "target": target,
                 "binary_name": binary_name,
             },
@@ -218,19 +243,40 @@ def main() -> None:
     if requested_ref:
         if requested_version:
             log(f"Ignoring requested release version {requested_version!r} because SOLDR_REF is set")
-        if _source_install_matches(install_dir, repo, requested_ref, target, binary_name):
+        requested_commit_sha = _resolve_ref_commit_sha(repo, requested_ref)
+        if _source_install_matches(
+            install_dir,
+            repo,
+            requested_ref,
+            requested_commit_sha,
+            target,
+            binary_name,
+        ):
             current = _installed_version(binary_path)
             if current is not None:
-                log(f"Using cached soldr {current} built from {repo}@{requested_ref}")
+                log(
+                    f"Using cached soldr {current} built from "
+                    f"{repo}@{requested_ref} ({requested_commit_sha})"
+                )
                 output = os.environ.get("GITHUB_OUTPUT")
                 if output:
                     with open(output, "a", encoding="utf-8") as fh:
                         fh.write(f"installed_version={current}\n")
                 return
 
-        built_path = _build_from_source(repo, requested_ref, install_dir, target, binary_name)
+        built_path = _build_from_source(
+            repo,
+            requested_ref,
+            requested_commit_sha,
+            install_dir,
+            target,
+            binary_name,
+        )
         current = _installed_version(built_path)
-        log(f"Installed soldr {current or requested_ref} from {repo}@{requested_ref} at {built_path}")
+        log(
+            f"Installed soldr {current or requested_ref} from "
+            f"{repo}@{requested_ref} ({requested_commit_sha}) at {built_path}"
+        )
         output = os.environ.get("GITHUB_OUTPUT")
         if output:
             with open(output, "a", encoding="utf-8") as fh:
