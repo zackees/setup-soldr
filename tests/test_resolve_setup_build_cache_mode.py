@@ -258,7 +258,10 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         self.assertEqual(result.outputs["soldr_bin_cache_path"], str(soldr_root / "bin"))
         self.assertNotIn(str(setup_cache_path), result.outputs["setup_cache_paths"].splitlines())
         self.assertEqual(result.env_exports.get("ZCCACHE_CACHE_DIR"), str(build_cache_path))
-        self.assertEqual(result.outputs["setup_cache_paths"], str(setup_cache_path / "bin"))
+        self.assertEqual(
+            result.outputs["setup_cache_paths"],
+            "\n".join((str(setup_cache_path / "bin"), str(soldr_root / "bin"))),
+        )
 
     def test_default_rustup_home_lives_under_setup_cache_root(self) -> None:
         result = _run_resolve_setup(
@@ -279,6 +282,7 @@ class BuildCacheModeResolveTests(unittest.TestCase):
             "\n".join(
                 (
                     str(setup_cache_path / "bin"),
+                    str(Path(result.outputs["soldr_bin_cache_path"])),
                     str(rustup_home / "settings.toml"),
                     str(rustup_home / "toolchains"),
                     str(rustup_home / "update-hashes"),
@@ -292,8 +296,11 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         rustup_home = Path(outputs["rustup_home"])
 
         self.assertEqual(rustup_home, Path(outputs["cargo_home"]).parent / ".rustup")
-        self.assertEqual(outputs["setup_cache_layout"], "bin-only")
-        self.assertEqual(outputs["setup_cache_paths"], str(setup_cache_path / "bin"))
+        self.assertEqual(outputs["setup_cache_layout"], "bin+soldr-bin")
+        self.assertEqual(
+            outputs["setup_cache_paths"],
+            "\n".join((str(setup_cache_path / "bin"), outputs["soldr_bin_cache_path"])),
+        )
         self.assertEqual(env_exports.get("RUSTUP_HOME"), str(rustup_home))
 
     def test_system_rustup_match_requires_release_components_and_targets(self) -> None:
@@ -356,8 +363,8 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         _, system_outputs = _run_resolve_main_with_system_rustup()
 
         self.assertEqual(managed.returncode, 0)
-        self.assertEqual(managed.outputs["setup_cache_layout"], "bin+rustup")
-        self.assertEqual(system_outputs["setup_cache_layout"], "bin-only")
+        self.assertEqual(managed.outputs["setup_cache_layout"], "bin+soldr-bin+rustup")
+        self.assertEqual(system_outputs["setup_cache_layout"], "bin+soldr-bin")
         self.assertNotEqual(managed.outputs["cache_key"], system_outputs["cache_key"])
 
     def test_full_mode_restores_target_tree_and_bundle_root_together(self) -> None:

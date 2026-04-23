@@ -419,7 +419,7 @@ def _system_rustup_satisfies_request(
 
     log(
         f"Using runner rustup home {rustup_home} for toolchain {channel}; "
-        "setup cache stays bin-only"
+        "setup cache stays binary-only without managed rustup"
     )
     return True
 
@@ -441,11 +441,16 @@ def _path_summary(label: str, path: Path) -> None:
     log(f"{label} path={path} exists=true files={files} bytes={bytes_total}")
 
 
-def _setup_cache_paths(setup_cache_path: Path, bin_dir: Path, rustup_home: Path) -> str:
-    # Exact-hit warm reuse only needs the installed soldr binary plus the
-    # managed rustup metadata and toolchain directories. Caching the whole root
-    # also captures transient rustup files that only bloat the setup payload.
-    paths = [str(bin_dir)]
+def _setup_cache_paths(
+    setup_cache_path: Path,
+    bin_dir: Path,
+    soldr_bin_cache_path: Path,
+    rustup_home: Path,
+) -> str:
+    # Exact-hit warm reuse needs the installed soldr binary plus the soldr-
+    # managed helper binaries under soldr/bin. Only add rustup state when this
+    # action is managing RUSTUP_HOME under the setup cache root.
+    paths = [str(bin_dir), str(soldr_bin_cache_path)]
     try:
         rustup_home.relative_to(setup_cache_path)
     except ValueError:
@@ -459,6 +464,14 @@ def _setup_cache_paths(setup_cache_path: Path, bin_dir: Path, rustup_home: Path)
         )
     )
     return "\n".join(paths)
+
+
+def _setup_cache_layout(setup_cache_path: Path, rustup_home: Path) -> str:
+    try:
+        rustup_home.relative_to(setup_cache_path)
+    except ValueError:
+        return "bin+soldr-bin"
+    return "bin+soldr-bin+rustup"
 
 
 def main() -> None:
@@ -506,8 +519,13 @@ def main() -> None:
             rustup_home = cache_root / "rustup-home"
             rustup_strategy = "managed"
 
-    setup_cache_paths = _setup_cache_paths(setup_cache_path, bin_dir, rustup_home)
-    setup_cache_layout = "bin+rustup" if "\n" in setup_cache_paths else "bin-only"
+    setup_cache_paths = _setup_cache_paths(
+        setup_cache_path,
+        bin_dir,
+        soldr_bin_cache_path,
+        rustup_home,
+    )
+    setup_cache_layout = _setup_cache_layout(setup_cache_path, rustup_home)
 
     for path in (
         cache_root,
