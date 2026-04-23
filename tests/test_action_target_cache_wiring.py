@@ -15,3 +15,10 @@ def test_target_cache_uses_separate_bundle_and_tree_paths() -> None:
     assert "path: ${{ steps.resolve.outputs.target_cache_path }}" in action
     assert 'LogPath "target-cache bundle after restore"' in action
     assert 'LogPath "target-cache tree after restore"' in action
+
+
+def test_target_tree_cache_is_only_used_in_full_mode() -> None:
+    action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
+
+    assert "steps.resolve.outputs.build_cache_mode == 'full'" in action
+    assert "id: target-tree-cache-managed" not in action

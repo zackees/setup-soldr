@@ -85,7 +85,7 @@ jobs:
 | `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
 | `lockfile` | Optional `Cargo.lock` path used for Rust artifact cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save Soldr/zccache build cache state across runs. Default `true`; set to `false` to opt out. |
-| `build-cache-mode` | Rust build cache mode. Default `once` saves a full snapshot on miss, then restores without resaving on later hits. `thin` is the bounded dependency-artifact alternative. `full` opts into normal whole-target restore/save behavior and should be treated as unbounded. |
+| `build-cache-mode` | Rust build cache mode. Default `once` saves a full snapshot on miss, then restores only the local rust-plan bundle on later hits without resaving the full target tree. `thin` is the bounded dependency-artifact alternative. `full` opts into normal whole-target restore/save behavior and should be treated as unbounded. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
 
 ### Legacy Compatibility Inputs
@@ -113,7 +113,7 @@ jobs:
 | `target-cache-hit` | Whether the zccache-owned Rust artifact cache state was restored. |
 | `target-cache-key` | Primary key used for the zccache-owned Rust artifact cache state. |
 | `target-cache-path` | Cargo target directory used by soldr for Rust artifact planning. |
-| `target-cache-paths` | Path passed to `actions/cache` for zccache-owned Rust artifact cache state. |
+| `target-cache-paths` | Path or newline-delimited path list passed to `actions/cache` for zccache-owned Rust artifact cache state. |
 | `target-cache-mode` | Effective setup-soldr Rust target artifact cache mode. |
 | `target-cache-restore-status` | Diagnostic restore status for the Rust target artifact cache state. |
 | `target-lockfile` | `Cargo.lock` path used for Rust artifact cache keying. |
@@ -127,7 +127,7 @@ jobs:
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action rehydrates the Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores Soldr/zccache cache state by default so child branches can reuse parent-branch build state.
-- The default `build-cache-mode` is `once`, which maps to soldr/zccache full-target planning on a cold run but switches restored sessions to restore-only cache rehydration. Use `build-cache-mode: thin` for the bounded dependency-artifact alternative, or `build-cache-mode: full` when you explicitly want normal whole-target restore/save behavior on every run.
+- The default `build-cache-mode` is `once`, which maps to soldr/zccache full-target planning on a cold run but restores only the local rust-plan bundle on later hits. Use `build-cache-mode: thin` for the bounded dependency-artifact alternative, or `build-cache-mode: full` when you explicitly want normal whole-target restore/save behavior on every run.
 - zccache is the artifact cache authority; soldr interprets the Rust build and passes zccache a structured Rust artifact plan.
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
 - The setup cache intentionally keeps Soldr-managed state so the managed zccache binary does not need to be rebuilt on every run.
