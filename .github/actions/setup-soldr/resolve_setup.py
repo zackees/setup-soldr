@@ -259,7 +259,9 @@ def main() -> None:
     cache_root = Path(requested_cache_dir).expanduser().resolve() if requested_cache_dir else (
         runner_temp / "setup-soldr"
     )
-    soldr_root = cache_root / "soldr"
+    # Keep soldr's own cache tree outside the setup cache root so the managed
+    # zccache store is not restored through both setup-cache and build-cache.
+    soldr_root = cache_root.parent / f"{cache_root.name}-soldr"
     cargo_home = Path(os.environ.get("CARGO_HOME", "")).expanduser().resolve() if os.environ.get("CARGO_HOME") else (
         _default_home_dir(".cargo")
     )
@@ -268,6 +270,8 @@ def main() -> None:
     )
     bin_dir = cache_root / "bin"
     setup_cache_path = cache_root
+    soldr_bin_cache_path = soldr_root / "bin"
+    setup_cache_paths = "\n".join((str(setup_cache_path), str(soldr_bin_cache_path)))
     zccache_cache_dir = soldr_root / "cache" / "zccache"
     thin_target_cache_bundle_path = cache_root.parent / f"{cache_root.name}-target-thin"
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
@@ -277,7 +281,7 @@ def main() -> None:
         cache_root,
         soldr_root,
         soldr_root / "cache",
-        soldr_root / "bin",
+        soldr_bin_cache_path,
         cargo_home,
         cargo_home / "bin",
         rustup_home,
@@ -312,7 +316,8 @@ def main() -> None:
     ).hexdigest()[:16]
     runner_os = _sanitize_fragment(os.environ.get("ACTION_OS", os.name).lower())
     runner_arch = _sanitize_fragment(os.environ.get("ACTION_ARCH", "unknown").lower())
-    cache_prefix = f"setup-soldr-v2-{runner_os}-{runner_arch}"
+    # v3 excludes the dedicated zccache build cache from the setup-cache root.
+    cache_prefix = f"setup-soldr-v3-{runner_os}-{runner_arch}"
     cache_key = f"{cache_prefix}-{digest}"
     workspace_manifest_hash = _workspace_manifest_hash(workspace)
     cargo_config_hash = _cargo_config_hash(workspace)
@@ -507,6 +512,7 @@ def main() -> None:
     log(f"target-cache lockfile={_path_for_output(workspace, lockfile_path)}")
     log(f"target-cache lockfile-hash={cargo_lock_hash}")
     _path_summary("cache before restore", setup_cache_path)
+    _path_summary("soldr-bin before restore", soldr_bin_cache_path)
     _path_summary("build-cache before restore", zccache_cache_dir)
     _path_summary(
         "target-cache before restore",
@@ -517,6 +523,7 @@ def main() -> None:
         {
             "cache_root": str(cache_root),
             "setup_cache_path": str(setup_cache_path),
+            "setup_cache_paths": setup_cache_paths,
             "cache_key": cache_key,
             "cache_restore_prefix": f"{cache_prefix}-",
             "build_cache_key": build_cache_key,
@@ -536,6 +543,7 @@ def main() -> None:
             "target_lockfile_path": _path_for_output(workspace, lockfile_path),
             "target_lockfile_hash": cargo_lock_hash,
             "soldr_root": str(soldr_root),
+            "soldr_bin_cache_path": str(soldr_bin_cache_path),
             "cargo_home": str(cargo_home),
             "rustup_home": str(rustup_home),
             "bin_dir": str(bin_dir),

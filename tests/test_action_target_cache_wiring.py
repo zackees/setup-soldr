@@ -35,4 +35,6 @@ def test_setup_cache_uses_lookup_exact_restore_and_managed_fallback() -> None:
     assert "lookup-only: true" in action
     assert "steps.cache-lookup.outputs.cache-hit == 'true'" in action
     assert "steps.cache-lookup.outputs.cache-hit != 'true'" in action
+    assert "steps.resolve.outputs.setup_cache_paths" in action
+    assert 'LogPath "soldr-bin after restore"' in action
     assert "id: cache-save" not in action

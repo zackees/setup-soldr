@@ -158,6 +158,24 @@ class BuildCacheModeResolveTests(unittest.TestCase):
             bundle_path,
         )
 
+    def test_build_cache_path_stays_under_soldr_root_outside_setup_cache_root(self) -> None:
+        result = _run_resolve_setup()
+
+        self.assertEqual(result.returncode, 0)
+        setup_cache_path = Path(result.outputs["setup_cache_path"])
+        soldr_root = Path(result.outputs["soldr_root"])
+        build_cache_path = Path(result.outputs["build_cache_path"])
+        self.assertNotEqual(soldr_root, setup_cache_path)
+        self.assertNotIn(setup_cache_path, soldr_root.parents)
+        self.assertEqual(build_cache_path, soldr_root / "cache" / "zccache")
+        self.assertNotIn(setup_cache_path, build_cache_path.parents)
+        self.assertEqual(result.outputs["soldr_bin_cache_path"], str(soldr_root / "bin"))
+        self.assertEqual(result.env_exports.get("ZCCACHE_CACHE_DIR"), str(build_cache_path))
+        self.assertEqual(
+            result.outputs["setup_cache_paths"],
+            f"{setup_cache_path}\n{soldr_root / 'bin'}",
+        )
+
     def test_full_mode_restores_target_tree_and_bundle_root_together(self) -> None:
         result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "full"})
 
