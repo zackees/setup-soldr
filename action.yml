@@ -140,6 +140,21 @@ outputs:
   target-cache-restore-status:
     description: Diagnostic restore status for the Rust target artifact cache state.
     value: ${{ steps.cache-meta.outputs.target_cache_restore_status }}
+  target-cache-budget-bytes:
+    description: Soft byte budget used to warn when the restored Rust artifact cache footprint is likely too large for fast CI reuse.
+    value: ${{ steps.resolve.outputs.target_cache_budget_bytes }}
+  target-cache-budget-files:
+    description: Soft file-count budget used to warn when the restored Rust artifact cache footprint is likely too large for fast CI reuse.
+    value: ${{ steps.resolve.outputs.target_cache_budget_files }}
+  target-cache-footprint-bytes:
+    description: Observed byte size of the restored Rust artifact cache footprint across the cache paths selected for the current mode.
+    value: ${{ steps.cache-meta.outputs.target_cache_footprint_bytes }}
+  target-cache-footprint-files:
+    description: Observed file count of the restored Rust artifact cache footprint across the cache paths selected for the current mode.
+    value: ${{ steps.cache-meta.outputs.target_cache_footprint_files }}
+  target-cache-budget-status:
+    description: Soft-budget diagnostic for the restored Rust artifact cache footprint.
+    value: ${{ steps.cache-meta.outputs.target_cache_budget_status }}
   target-lockfile:
     description: Cargo.lock path used for Rust artifact cache keying.
     value: ${{ steps.resolve.outputs.target_lockfile_path }}
@@ -334,6 +349,9 @@ runs:
         LOOKUP_TARGET_TREE_CACHE_HIT: ${{ steps.target-tree-cache-lookup.outputs.cache-hit }}
         LOOKUP_TARGET_TREE_CACHE_MATCHED_KEY: ${{ steps.target-tree-cache-lookup.outputs.cache-matched-key }}
         TARGET_CACHE_KEY: ${{ steps.resolve.outputs.target_cache_key }}
+        TARGET_CACHE_PATHS: ${{ steps.resolve.outputs.target_cache_paths }}
+        TARGET_CACHE_BUDGET_BYTES: ${{ steps.resolve.outputs.target_cache_budget_bytes }}
+        TARGET_CACHE_BUDGET_FILES: ${{ steps.resolve.outputs.target_cache_budget_files }}
         BUILD_CACHE_ENABLED: ${{ inputs.build-cache }}
         TARGET_CACHE_ENABLED: ${{ inputs.target-cache }}
         EFFECTIVE_TARGET_CACHE_ENABLED: ${{ steps.resolve.outputs.target_cache_enabled }}
@@ -381,6 +399,26 @@ runs:
           $bytes = if ($measure.Sum) { [int64]$measure.Sum } else { 0 }
           Log "$label path=$path exists=true files=$($measure.Count) bytes=$bytes"
         }
+        function MeasurePaths($pathsText) {
+          $files = 0
+          $bytes = [int64]0
+          foreach ($path in ($pathsText -split "`r?`n")) {
+            $trimmed = $path.Trim()
+            if ([string]::IsNullOrWhiteSpace($trimmed) -or -not (Test-Path -LiteralPath $trimmed)) {
+              continue
+            }
+            $measure = Get-ChildItem -LiteralPath $trimmed -Recurse -File -Force -ErrorAction SilentlyContinue |
+              Measure-Object -Property Length -Sum
+            $files += [int]$measure.Count
+            if ($measure.Sum) {
+              $bytes += [int64]$measure.Sum
+            }
+          }
+          return [pscustomobject]@{
+            Files = $files
+            Bytes = $bytes
+          }
+        }
 
         $value = $env:RAW_CACHE_HIT
         if ([string]::IsNullOrWhiteSpace($value)) {
@@ -420,6 +458,30 @@ runs:
         $targetEnabled = if ($env:BUILD_CACHE_ENABLED -eq "true" -and $env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true") { "true" } else { "false" }
         $targetStatus = RestoreStatus $targetEnabled $env:LOOKUP_TARGET_CACHE_HIT $env:LOOKUP_TARGET_CACHE_MATCHED_KEY $env:TARGET_CACHE_KEY
         "target_cache_restore_status=$targetStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        $targetFootprint = MeasurePaths $env:TARGET_CACHE_PATHS
+        $targetBudgetBytes = 0L
+        [long]::TryParse($env:TARGET_CACHE_BUDGET_BYTES, [ref]$targetBudgetBytes) | Out-Null
+        $targetBudgetFiles = 0
+        [int]::TryParse($env:TARGET_CACHE_BUDGET_FILES, [ref]$targetBudgetFiles) | Out-Null
+        if ($targetEnabled -eq "true") {
+          $budgetOver = @()
+          if ($targetBudgetBytes -gt 0 -and $targetFootprint.Bytes -gt $targetBudgetBytes) {
+            $budgetOver += "bytes"
+          }
+          if ($targetBudgetFiles -gt 0 -and $targetFootprint.Files -gt $targetBudgetFiles) {
+            $budgetOver += "files"
+          }
+          if ($budgetOver.Count -gt 0) {
+            $targetBudgetStatus = "over-soft-budget:$($budgetOver -join ',')"
+          } else {
+            $targetBudgetStatus = "within-soft-budget"
+          }
+        } else {
+          $targetBudgetStatus = "disabled"
+        }
+        "target_cache_footprint_bytes=$($targetFootprint.Bytes)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "target_cache_footprint_files=$($targetFootprint.Files)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "target_cache_budget_status=$targetBudgetStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
         $targetTreeStatus = RestoreStatus $targetEnabled $env:LOOKUP_TARGET_TREE_CACHE_HIT $env:LOOKUP_TARGET_TREE_CACHE_MATCHED_KEY $env:TARGET_CACHE_KEY
         $targetTreeValue = $env:RAW_TARGET_TREE_CACHE_HIT
         if ([string]::IsNullOrWhiteSpace($targetTreeValue)) {
@@ -434,6 +496,13 @@ runs:
         Log "target-cache bundle restore status=$targetStatus exact-hit=$targetValue"
         if ($env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true" -and "${{ steps.resolve.outputs.build_cache_mode }}" -eq "full") {
           Log "target-cache tree restore status=$targetTreeStatus exact-hit=$targetTreeValue"
+        }
+        Log "target-cache footprint files=$($targetFootprint.Files) bytes=$($targetFootprint.Bytes)"
+        if ($targetEnabled -eq "true") {
+          Log "target-cache soft budget files=$targetBudgetFiles bytes=$targetBudgetBytes status=$targetBudgetStatus"
+          if ($targetBudgetStatus.StartsWith("over-soft-budget:")) {
+            Write-Host "::warning::target-cache footprint files=$($targetFootprint.Files) bytes=$($targetFootprint.Bytes) exceeded soft budget files=$targetBudgetFiles bytes=$targetBudgetBytes; consider build-cache-mode 'thin' or narrower target-cache paths."
+          }
         }
         LogPath "cache after restore" "${{ steps.resolve.outputs.setup_cache_path }}"
         LogPath "soldr-bin after restore" "${{ steps.resolve.outputs.soldr_bin_cache_path }}"

@@ -22,6 +22,13 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 _ROLLING_TOOLCHAIN_ALIASES = ("stable", "beta", "nightly")
+_MIB = 1024 * 1024
+_GIB = 1024 * _MIB
+_TARGET_CACHE_SOFT_BUDGETS: dict[str, tuple[int, int]] = {
+    "once": (1024 * 1024 * 1024, 8_000),
+    "thin": (512 * 1024 * 1024, 4_000),
+    "full": (2 * _GIB, 12_000),
+}
 
 
 def _normalize_list(value: Any) -> list[str]:
@@ -254,6 +261,17 @@ def _normalize_legacy_target_cache_mode(value: str) -> str:
             f"invalid target-cache-mode {value!r}; expected thin, full, or off"
         )
     return mode
+
+
+def _target_cache_soft_budget(
+    target_cache_enabled: bool,
+    build_cache_mode: str,
+) -> tuple[str, str]:
+    if not target_cache_enabled:
+        return "", ""
+
+    bytes_budget, files_budget = _TARGET_CACHE_SOFT_BUDGETS[build_cache_mode]
+    return str(bytes_budget), str(files_budget)
 
 
 def normalize_build_cache_mode(
@@ -674,6 +692,10 @@ def main() -> None:
     if build_cache_mode == "thin" and cargo_lock_hash == "no-lock":
         log("build-cache-mode 'thin' requires Cargo.lock; target artifact cache disabled.")
         target_cache_enabled = False
+    target_cache_budget_bytes, target_cache_budget_files = _target_cache_soft_budget(
+        target_cache_enabled,
+        build_cache_mode,
+    )
 
     target_shape_hash = _short_json_hash(
         {
@@ -696,11 +718,7 @@ def main() -> None:
     target_tree_cache_enabled = target_cache_enabled and build_cache_mode == "full"
 
     if not target_cache_enabled:
-        target_cache_paths = (
-            str(target_cache_path)
-            if build_cache_runtime_mode == "full"
-            else str(target_cache_bundle_path)
-        )
+        target_cache_paths = ""
         target_cache_effective_mode = "off"
         target_cache_prefix = f"setup-soldr-targetcache-off-v1-{runner_os}-{runner_arch}"
         target_cache_lock_prefix = ""
@@ -795,6 +813,9 @@ def main() -> None:
     log(f"target-cache enabled={str(target_cache_enabled).lower()}")
     log(f"target-cache mode={target_cache_effective_mode}")
     log("target-cache backend=local")
+    if target_cache_enabled:
+        log(f"target-cache soft-budget-bytes={target_cache_budget_bytes}")
+        log(f"target-cache soft-budget-files={target_cache_budget_files}")
     log(f"soldr repo={soldr_repo}")
     log(f"soldr ref={soldr_ref or 'release'}")
     if soldr_version_resolved:
@@ -839,6 +860,8 @@ def main() -> None:
             "target_cache_key": target_cache_key,
             "target_cache_restore_key_parent": target_cache_parent_key,
             "target_cache_restore_key_lock": target_cache_lock_prefix,
+            "target_cache_budget_bytes": target_cache_budget_bytes,
+            "target_cache_budget_files": target_cache_budget_files,
             "target_lockfile_path": _path_for_output(workspace, lockfile_path),
             "target_lockfile_hash": cargo_lock_hash,
             "soldr_root": str(soldr_root),
