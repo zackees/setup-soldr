@@ -158,6 +158,47 @@ def _short_json_hash(value: dict[str, Any]) -> str:
     ).hexdigest()[:16]
 
 
+def _request_headers() -> dict[str, str]:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "setup-soldr-action",
+    }
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
+def _fetch_release(repo: str, version: str) -> dict[str, Any]:
+    if version:
+        tag = version if version.startswith("v") else f"v{version}"
+        url = f"https://api.github.com/repos/{repo}/releases/tags/{tag}"
+    else:
+        url = f"https://api.github.com/repos/{repo}/releases/latest"
+    request = urllib.request.Request(url, headers=_request_headers())
+    with urllib.request.urlopen(request, timeout=10) as response:
+        payload = json.load(response)
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"unexpected GitHub release payload for {repo}")
+    return payload
+
+
+def _resolve_soldr_release_version(repo: str, version: str, ref: str) -> str:
+    if ref.strip():
+        return ""
+
+    requested = version.strip()
+    if requested and requested.lower() != "latest":
+        return requested if requested.startswith("v") else f"v{requested}"
+
+    release = _fetch_release(repo, "")
+    tag_name = str(release.get("tag_name", "")).strip()
+    if not tag_name:
+        raise RuntimeError(f"failed to resolve latest soldr release tag from {repo}")
+    return tag_name
+
+
 def _workspace_manifest_hash(workspace: Path) -> str:
     hasher = hashlib.sha256()
     matched = False
@@ -543,7 +584,12 @@ def main() -> None:
 
     soldr_repo = os.environ.get("INPUT_REPO", "zackees/soldr").strip() or "zackees/soldr"
     soldr_ref = os.environ.get("INPUT_REF", "").strip()
-    soldr_version = os.environ.get("INPUT_VERSION", "").strip()
+    soldr_version_requested = os.environ.get("INPUT_VERSION", "").strip()
+    soldr_version_resolved = _resolve_soldr_release_version(
+        soldr_repo,
+        soldr_version_requested,
+        soldr_ref,
+    )
     toolchain_signature = {
         "channel": toolchain["cache_channel"],
         "profile": toolchain["profile"],
@@ -554,7 +600,7 @@ def main() -> None:
         "setup_cache_layout": setup_cache_layout,
         "soldr_repo": soldr_repo,
         "soldr_ref": soldr_ref or "release",
-        "soldr_version": soldr_version or "latest",
+        "soldr_version": soldr_version_resolved or soldr_ref or "source-ref",
     }
     digest = hashlib.sha256(
         json.dumps(toolchain_signature, sort_keys=True).encode("utf-8")
@@ -751,6 +797,8 @@ def main() -> None:
     log("target-cache backend=local")
     log(f"soldr repo={soldr_repo}")
     log(f"soldr ref={soldr_ref or 'release'}")
+    if soldr_version_resolved:
+        log(f"soldr version={soldr_version_resolved}")
     log(f"toolchain channel={toolchain['channel']}")
     log(f"toolchain cache-channel={toolchain['cache_channel']}")
     log(f"rustup strategy={rustup_strategy}")
@@ -802,7 +850,8 @@ def main() -> None:
             "soldr_path": str(soldr_path),
             "soldr_repo": soldr_repo,
             "soldr_ref": soldr_ref,
-            "soldr_version_requested": soldr_version,
+            "soldr_version_requested": soldr_version_requested,
+            "soldr_version_resolved": soldr_version_resolved,
             "toolchain_channel": toolchain["channel"],
             "toolchain_cache_channel": toolchain["cache_channel"],
             "toolchain_profile": toolchain["profile"],

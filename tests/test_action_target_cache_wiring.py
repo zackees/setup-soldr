@@ -49,6 +49,13 @@ def test_toolchain_step_receives_setup_cache_exact_hit_metadata() -> None:
     assert "steps.resolve.outputs.toolchain_cache_channel" in action
 
 
+def test_install_step_uses_resolved_soldr_release_version() -> None:
+    action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
+
+    assert "GITHUB_TOKEN: ${{ github.token }}" in action
+    assert "SETUP_SOLDR_VERSION: ${{ steps.resolve.outputs.soldr_version_resolved }}" in action
+
+
 def test_once_mode_skips_build_cache_restore_when_target_cache_is_exact_hit() -> None:
     action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
 

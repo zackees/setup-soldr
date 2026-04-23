@@ -155,6 +155,7 @@ runs:
     - id: resolve
       shell: pwsh
       env:
+        GITHUB_TOKEN: ${{ github.token }}
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_REPO: ${{ inputs.repo }}
         INPUT_REF: ${{ inputs.ref }}
@@ -304,7 +305,7 @@ runs:
         SOLDR_REPO: ${{ steps.resolve.outputs.soldr_repo }}
         SOLDR_REF: ${{ steps.resolve.outputs.soldr_ref }}
         SOLDR_INSTALL_DIR: ${{ steps.resolve.outputs.bin_dir }}
-        SETUP_SOLDR_VERSION: ${{ steps.resolve.outputs.soldr_version_requested }}
+        SETUP_SOLDR_VERSION: ${{ steps.resolve.outputs.soldr_version_resolved }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/ensure_soldr.py"
 
     - id: verify
