@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import os
 import subprocess
 import sys
@@ -7,6 +8,7 @@ import tempfile
 import unittest
 from dataclasses import dataclass
 from pathlib import Path
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +52,7 @@ def _run_resolve_setup(
     extra_env: dict[str, str] | None = None,
     *,
     include_explicit_toolchain_homes: bool = True,
+    clear_path: bool = False,
 ) -> ResolveResult:
     with tempfile.TemporaryDirectory(prefix="setup-soldr-tests-") as temp_dir:
         root = Path(temp_dir)
@@ -101,6 +104,10 @@ def _run_resolve_setup(
                     "RUSTUP_HOME": str(root / "rustup-home"),
                 }
             )
+        if clear_path:
+            empty_path = root / "empty-path"
+            empty_path.mkdir()
+            env["PATH"] = str(empty_path)
         if extra_env:
             env.update(extra_env)
 
@@ -120,6 +127,72 @@ def _run_resolve_setup(
             env_exports=_parse_github_kv_file(github_env),
             outputs=_parse_github_kv_file(github_output),
         )
+
+
+def _load_resolve_module():
+    helper_dir = REPO_ROOT / ".github" / "actions" / "setup-soldr"
+    helper_dir_str = str(helper_dir)
+    if helper_dir_str not in sys.path:
+        sys.path.insert(0, helper_dir_str)
+    spec = importlib.util.spec_from_file_location("resolve_setup", RESOLVE_SETUP)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("failed to load resolve_setup.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _run_resolve_main_with_system_rustup() -> tuple[dict[str, str], dict[str, str]]:
+    module = _load_resolve_module()
+
+    with tempfile.TemporaryDirectory(prefix="setup-soldr-tests-") as temp_dir:
+        root = Path(temp_dir)
+        workspace = root / "workspace"
+        runner_temp = root / "runner-temp"
+        home_dir = root / "home"
+        github_env = root / "github-env"
+        github_output = root / "github-output"
+        github_path = root / "github-path"
+        workspace.mkdir()
+        runner_temp.mkdir()
+        home_dir.mkdir()
+        (workspace / "Cargo.lock").write_text("# test lockfile\n", encoding="utf-8")
+
+        env = os.environ.copy()
+        for key in list(env):
+            if key.startswith(("INPUT_", "ACTION_", "GITHUB_", "SETUP_SOLDR_")):
+                env.pop(key, None)
+        for key in (
+            "CARGO_HOME",
+            "RUSTUP_HOME",
+            "NO_COLOR",
+            "CARGO_TERM_COLOR",
+            "CLICOLOR_FORCE",
+            "FORCE_COLOR",
+        ):
+            env.pop(key, None)
+        env.update(
+            {
+                "ACTION_WORKSPACE": str(workspace),
+                "ACTION_OS": "Linux",
+                "ACTION_ARCH": "X64",
+                "RUNNER_TEMP": str(runner_temp),
+                "GITHUB_ENV": str(github_env),
+                "GITHUB_OUTPUT": str(github_output),
+                "GITHUB_PATH": str(github_path),
+                "GITHUB_SHA": "0123456789abcdef",
+                "HOME": str(home_dir),
+                "USERPROFILE": str(home_dir),
+                "INPUT_TIMESTAMPS": "false",
+                "INPUT_TOOLCHAIN_FILE": "",
+            }
+        )
+
+        with patch.dict(os.environ, env, clear=True):
+            with patch.object(module, "_system_rustup_satisfies_request", return_value=True):
+                module.main()
+
+        return _parse_github_kv_file(github_env), _parse_github_kv_file(github_output)
 
 
 class BuildCacheModeResolveTests(unittest.TestCase):
@@ -188,7 +261,10 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         self.assertEqual(result.outputs["setup_cache_paths"], str(setup_cache_path / "bin"))
 
     def test_default_rustup_home_lives_under_setup_cache_root(self) -> None:
-        result = _run_resolve_setup(include_explicit_toolchain_homes=False)
+        result = _run_resolve_setup(
+            include_explicit_toolchain_homes=False,
+            clear_path=True,
+        )
 
         self.assertEqual(result.returncode, 0)
         setup_cache_path = Path(result.outputs["setup_cache_path"])
@@ -209,6 +285,80 @@ class BuildCacheModeResolveTests(unittest.TestCase):
                 )
             ),
         )
+
+    def test_runner_rustup_home_keeps_setup_cache_bin_only_when_it_already_matches(self) -> None:
+        env_exports, outputs = _run_resolve_main_with_system_rustup()
+        setup_cache_path = Path(outputs["setup_cache_path"])
+        rustup_home = Path(outputs["rustup_home"])
+
+        self.assertEqual(rustup_home, Path(outputs["cargo_home"]).parent / ".rustup")
+        self.assertEqual(outputs["setup_cache_layout"], "bin-only")
+        self.assertEqual(outputs["setup_cache_paths"], str(setup_cache_path / "bin"))
+        self.assertEqual(env_exports.get("RUSTUP_HOME"), str(rustup_home))
+
+    def test_system_rustup_match_requires_release_components_and_targets(self) -> None:
+        module = _load_resolve_module()
+        toolchain = {
+            "channel": "stable",
+            "cache_channel": "1.95.0",
+            "components": ["clippy"],
+            "targets": ["wasm32-unknown-unknown"],
+        }
+
+        with (
+            patch.object(module.shutil, "which", return_value="/fake/rustup"),
+            patch.object(
+                module,
+                "_rustup_installed_names",
+                side_effect=[
+                    {"stable-x86_64-unknown-linux-gnu"},
+                    {"clippy-x86_64-unknown-linux-gnu"},
+                    {"wasm32-unknown-unknown"},
+                ],
+            ),
+            patch.object(module, "_installed_toolchain_release", return_value="1.95.0"),
+        ):
+            self.assertTrue(
+                module._system_rustup_satisfies_request(
+                    Path("/fake/cargo-home"),
+                    Path("/fake/rustup-home"),
+                    toolchain,
+                )
+            )
+
+    def test_system_rustup_mismatch_falls_back_to_managed_rustup_home(self) -> None:
+        module = _load_resolve_module()
+        toolchain = {
+            "channel": "stable",
+            "cache_channel": "1.95.0",
+            "components": ["clippy"],
+            "targets": ["wasm32-unknown-unknown"],
+        }
+
+        with (
+            patch.object(module.shutil, "which", return_value="/fake/rustup"),
+            patch.object(module, "_rustup_installed_names", return_value={"stable"}),
+            patch.object(module, "_installed_toolchain_release", return_value="1.94.1"),
+        ):
+            self.assertFalse(
+                module._system_rustup_satisfies_request(
+                    Path("/fake/cargo-home"),
+                    Path("/fake/rustup-home"),
+                    toolchain,
+                )
+            )
+
+    def test_setup_cache_key_changes_when_layout_switches_between_bin_only_and_managed(self) -> None:
+        managed = _run_resolve_setup(
+            include_explicit_toolchain_homes=False,
+            clear_path=True,
+        )
+        _, system_outputs = _run_resolve_main_with_system_rustup()
+
+        self.assertEqual(managed.returncode, 0)
+        self.assertEqual(managed.outputs["setup_cache_layout"], "bin+rustup")
+        self.assertEqual(system_outputs["setup_cache_layout"], "bin-only")
+        self.assertNotEqual(managed.outputs["cache_key"], system_outputs["cache_key"])
 
     def test_full_mode_restores_target_tree_and_bundle_root_together(self) -> None:
         result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "full"})

@@ -5,6 +5,8 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import time
 import urllib.error
 import urllib.request
@@ -293,6 +295,135 @@ def _default_home_dir(name: str) -> Path:
     return (Path.home() / name).resolve()
 
 
+def _run_rustup_text(command: list[str], env: dict[str, str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        env=env,
+    )
+
+
+def _rustup_probe_env(cargo_home: Path, rustup_home: Path) -> dict[str, str]:
+    env = os.environ.copy()
+    env["CARGO_HOME"] = str(cargo_home)
+    env["RUSTUP_HOME"] = str(rustup_home)
+    return env
+
+
+def _rustup_installed_names(
+    rustup: str,
+    args: list[str],
+    env: dict[str, str],
+) -> set[str]:
+    result = _run_rustup_text([rustup, *args], env)
+    if result.returncode != 0:
+        return set()
+    return {
+        line.split(maxsplit=1)[0]
+        for line in result.stdout.splitlines()
+        if line.strip()
+    }
+
+
+def _toolchain_list_contains(installed: set[str], channel: str) -> bool:
+    return any(name == channel or name.startswith(f"{channel}-") for name in installed)
+
+
+def _installed_toolchain_release(
+    rustup: str,
+    channel: str,
+    env: dict[str, str],
+) -> str | None:
+    result = _run_rustup_text([rustup, "run", channel, "rustc", "--version"], env)
+    if result.returncode != 0:
+        return None
+    match = re.match(r"^rustc\s+([^\s]+)", result.stdout.strip())
+    if match is None:
+        return None
+    return match.group(1)
+
+
+def _component_installed(installed: set[str], component: str) -> bool:
+    return any(name == component or name.startswith(f"{component}-") for name in installed)
+
+
+def _system_rustup_satisfies_request(
+    cargo_home: Path,
+    rustup_home: Path,
+    toolchain: dict[str, Any],
+) -> bool:
+    rustup = shutil.which("rustup")
+    if rustup is None:
+        log("rustup not found on PATH; using managed RUSTUP_HOME under the setup cache root")
+        return False
+
+    env = _rustup_probe_env(cargo_home, rustup_home)
+    channel = str(toolchain["channel"]).strip() or "stable"
+    installed_toolchains = _rustup_installed_names(rustup, ["toolchain", "list"], env)
+    if not _toolchain_list_contains(installed_toolchains, channel):
+        log(
+            f"Runner rustup home {rustup_home} does not already contain toolchain {channel}; "
+            "using managed RUSTUP_HOME under the setup cache root"
+        )
+        return False
+
+    expected_release = str(toolchain.get("cache_channel", "")).strip()
+    if _rolling_toolchain_alias(channel) is not None and expected_release:
+        installed_release = _installed_toolchain_release(rustup, channel, env)
+        if installed_release != expected_release:
+            log(
+                f"Runner rustup home {rustup_home} has {channel} release "
+                f"{installed_release or 'missing'} but exact-hit reuse expects {expected_release}; "
+                "using managed RUSTUP_HOME under the setup cache root"
+            )
+            return False
+
+    components = list(toolchain.get("components", []))
+    if components:
+        installed_components = _rustup_installed_names(
+            rustup,
+            ["component", "list", "--toolchain", channel, "--installed"],
+            env,
+        )
+        missing_components = [
+            component
+            for component in components
+            if not _component_installed(installed_components, component)
+        ]
+        if missing_components:
+            log(
+                f"Runner rustup home {rustup_home} is missing requested components "
+                f"for {channel}: {', '.join(missing_components)}; "
+                "using managed RUSTUP_HOME under the setup cache root"
+            )
+            return False
+
+    targets = list(toolchain.get("targets", []))
+    if targets:
+        installed_targets = _rustup_installed_names(
+            rustup,
+            ["target", "list", "--toolchain", channel, "--installed"],
+            env,
+        )
+        missing_targets = [target for target in targets if target not in installed_targets]
+        if missing_targets:
+            log(
+                f"Runner rustup home {rustup_home} is missing requested targets "
+                f"for {channel}: {', '.join(missing_targets)}; "
+                "using managed RUSTUP_HOME under the setup cache root"
+            )
+            return False
+
+    log(
+        f"Using runner rustup home {rustup_home} for toolchain {channel}; "
+        "setup cache stays bin-only"
+    )
+    return True
+
+
 def _path_summary(label: str, path: Path) -> None:
     if not path.exists():
         log(f"{label} path={path} exists=false files=0 bytes=0")
@@ -348,17 +479,35 @@ def main() -> None:
     cargo_home = Path(os.environ.get("CARGO_HOME", "")).expanduser().resolve() if os.environ.get("CARGO_HOME") else (
         _default_home_dir(".cargo")
     )
-    rustup_home = Path(os.environ.get("RUSTUP_HOME", "")).expanduser().resolve() if os.environ.get("RUSTUP_HOME") else (
-        cache_root / "rustup-home"
-    )
     bin_dir = cache_root / "bin"
     setup_cache_path = cache_root
     soldr_bin_cache_path = soldr_root / "bin"
-    setup_cache_paths = _setup_cache_paths(setup_cache_path, bin_dir, rustup_home)
     zccache_cache_dir = soldr_root / "cache" / "zccache"
     thin_target_cache_bundle_path = cache_root.parent / f"{cache_root.name}-target-thin"
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
     soldr_path = bin_dir / soldr_binary
+
+    toolchain = load_toolchain_spec(
+        workspace=workspace,
+        toolchain_file=os.environ.get("INPUT_TOOLCHAIN_FILE", "rust-toolchain.toml"),
+        toolchain_override=os.environ.get("INPUT_TOOLCHAIN", ""),
+    )
+
+    explicit_rustup_home = os.environ.get("RUSTUP_HOME", "").strip()
+    if explicit_rustup_home:
+        rustup_home = Path(explicit_rustup_home).expanduser().resolve()
+        rustup_strategy = "explicit"
+    else:
+        runner_rustup_home = _default_home_dir(".rustup")
+        if _system_rustup_satisfies_request(cargo_home, runner_rustup_home, toolchain):
+            rustup_home = runner_rustup_home
+            rustup_strategy = "system"
+        else:
+            rustup_home = cache_root / "rustup-home"
+            rustup_strategy = "managed"
+
+    setup_cache_paths = _setup_cache_paths(setup_cache_path, bin_dir, rustup_home)
+    setup_cache_layout = "bin+rustup" if "\n" in setup_cache_paths else "bin-only"
 
     for path in (
         cache_root,
@@ -374,12 +523,6 @@ def main() -> None:
     ):
         path.mkdir(parents=True, exist_ok=True)
 
-    toolchain = load_toolchain_spec(
-        workspace=workspace,
-        toolchain_file=os.environ.get("INPUT_TOOLCHAIN_FILE", "rust-toolchain.toml"),
-        toolchain_override=os.environ.get("INPUT_TOOLCHAIN", ""),
-    )
-
     soldr_repo = os.environ.get("INPUT_REPO", "zackees/soldr").strip() or "zackees/soldr"
     soldr_ref = os.environ.get("INPUT_REF", "").strip()
     soldr_version = os.environ.get("INPUT_VERSION", "").strip()
@@ -390,6 +533,7 @@ def main() -> None:
         "targets": toolchain["targets"],
         "source": toolchain["source"],
         "file_hash": toolchain["file_hash"],
+        "setup_cache_layout": setup_cache_layout,
         "soldr_repo": soldr_repo,
         "soldr_ref": soldr_ref or "release",
         "soldr_version": soldr_version or "latest",
@@ -591,6 +735,8 @@ def main() -> None:
     log(f"soldr ref={soldr_ref or 'release'}")
     log(f"toolchain channel={toolchain['channel']}")
     log(f"toolchain cache-channel={toolchain['cache_channel']}")
+    log(f"rustup strategy={rustup_strategy}")
+    log(f"setup-cache layout={setup_cache_layout}")
     if target_cache_parent_key:
         log(f"target-cache restore-key-parent={target_cache_parent_key}")
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
@@ -633,6 +779,7 @@ def main() -> None:
             "soldr_bin_cache_path": str(soldr_bin_cache_path),
             "cargo_home": str(cargo_home),
             "rustup_home": str(rustup_home),
+            "setup_cache_layout": setup_cache_layout,
             "bin_dir": str(bin_dir),
             "soldr_path": str(soldr_path),
             "soldr_repo": soldr_repo,
