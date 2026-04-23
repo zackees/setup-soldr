@@ -162,6 +162,51 @@ class EnsureSoldrSourceRefTests(unittest.TestCase):
             )
             self.assertEqual(output_path.read_text(encoding="utf-8"), "installed_version=0.7.11\n")
 
+    def test_main_with_ref_skips_release_resolution_even_when_version_is_latest(self) -> None:
+        module = _load_module()
+
+        with tempfile.TemporaryDirectory(prefix="setup-soldr-source-") as temp_dir:
+            install_dir = Path(temp_dir)
+            binary_path = install_dir / "soldr"
+            binary_path.write_text("binary", encoding="utf-8")
+            module._write_source_metadata(
+                module._source_metadata_path(install_dir),
+                {
+                    "repo": "zackees/soldr",
+                    "ref": "feature/cache-hit",
+                    "commit_sha": "abc123",
+                    "target": "x86_64-unknown-linux-gnu",
+                    "binary_name": "soldr",
+                },
+            )
+            output_path = install_dir / "github-output.txt"
+
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        "SOLDR_INSTALL_DIR": str(install_dir),
+                        "SOLDR_REF": "feature/cache-hit",
+                        "SOLDR_REPO": "zackees/soldr",
+                        "SETUP_SOLDR_VERSION": "latest",
+                        "GITHUB_OUTPUT": str(output_path),
+                    },
+                    clear=False,
+                ),
+                patch.object(
+                    module,
+                    "_detect_target",
+                    return_value=("x86_64-unknown-linux-gnu", "tar.gz", "soldr"),
+                ),
+                patch.object(module, "_resolve_ref_commit_sha", return_value="abc123"),
+                patch.object(module, "_fetch_release") as mocked_fetch,
+                patch.object(module, "_installed_version", return_value="0.7.11"),
+            ):
+                module.main()
+
+            mocked_fetch.assert_not_called()
+            self.assertEqual(output_path.read_text(encoding="utf-8"), "installed_version=0.7.11\n")
+
 
 if __name__ == "__main__":
     unittest.main()

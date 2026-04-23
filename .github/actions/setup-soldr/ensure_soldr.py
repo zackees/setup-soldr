@@ -24,6 +24,18 @@ def _normalize_version(value: str) -> str:
     return value[1:] if value.startswith("v") else value
 
 
+def _resolved_release_version(repo: str, requested_version: str) -> tuple[str, dict[str, object] | None]:
+    normalized = requested_version.strip()
+    if normalized and normalized.lower() != "latest":
+        return (normalized if normalized.startswith("v") else f"v{normalized}", None)
+
+    release = _fetch_release(repo, "")
+    tag_name = str(release.get("tag_name", "")).strip()
+    if not tag_name:
+        raise RuntimeError(f"failed to resolve latest soldr release tag from {repo}")
+    return tag_name, release
+
+
 def _detect_target() -> tuple[str, str, str]:
     machine = platform.machine().lower()
     if machine in {"x86_64", "amd64"}:
@@ -283,18 +295,22 @@ def main() -> None:
                 fh.write(f"installed_version={(current or requested_ref)}\n")
         return
 
+    resolved_version, resolved_release = _resolved_release_version(repo, requested_version)
     current = _installed_version(binary_path)
     if current is not None:
-        if not requested_version or _normalize_version(current) == _normalize_version(requested_version):
+        if _normalize_version(current) == _normalize_version(resolved_version):
             log(f"Using cached soldr {current} at {binary_path}")
             output = os.environ.get("GITHUB_OUTPUT")
             if output:
                 with open(output, "a", encoding="utf-8") as fh:
                     fh.write(f"installed_version={current}\n")
             return
+        log(
+            f"Cached soldr {current} does not match requested release {resolved_version}; refreshing"
+        )
 
-    log(f"Resolving soldr release from {repo}")
-    release = _fetch_release(repo, requested_version)
+    log(f"Resolving soldr release {resolved_version} from {repo}")
+    release = resolved_release or _fetch_release(repo, resolved_version)
     asset_name, download_url = _select_asset(release, target, archive_ext)
     tag_name = str(release["tag_name"])
 

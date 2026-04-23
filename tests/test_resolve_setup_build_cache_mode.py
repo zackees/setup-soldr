@@ -93,6 +93,7 @@ def _run_resolve_setup(
                 "GITHUB_SHA": "0123456789abcdef",
                 "HOME": str(home_dir),
                 "USERPROFILE": str(home_dir),
+                "INPUT_VERSION": "0.7.11",
                 "INPUT_TIMESTAMPS": "false",
                 "INPUT_TOOLCHAIN_FILE": "",
             }
@@ -183,6 +184,7 @@ def _run_resolve_main_with_system_rustup() -> tuple[dict[str, str], dict[str, st
                 "GITHUB_SHA": "0123456789abcdef",
                 "HOME": str(home_dir),
                 "USERPROFILE": str(home_dir),
+                "INPUT_VERSION": "0.7.11",
                 "INPUT_TIMESTAMPS": "false",
                 "INPUT_TOOLCHAIN_FILE": "",
             }
@@ -191,6 +193,82 @@ def _run_resolve_main_with_system_rustup() -> tuple[dict[str, str], dict[str, st
         with patch.dict(os.environ, env, clear=True):
             with patch.object(module, "_system_rustup_satisfies_request", return_value=True):
                 module.main()
+
+        return _parse_github_kv_file(github_env), _parse_github_kv_file(github_output)
+
+
+def _run_resolve_main_direct(
+    extra_env: dict[str, str] | None = None,
+    *,
+    resolved_soldr_version: str | None = None,
+) -> tuple[dict[str, str], dict[str, str]]:
+    module = _load_resolve_module()
+
+    with tempfile.TemporaryDirectory(prefix="setup-soldr-tests-") as temp_dir:
+        root = Path(temp_dir)
+        workspace = root / "workspace"
+        runner_temp = root / "runner-temp"
+        home_dir = root / "home"
+        github_env = root / "github-env"
+        github_output = root / "github-output"
+        github_path = root / "github-path"
+        workspace.mkdir()
+        runner_temp.mkdir()
+        home_dir.mkdir()
+        (workspace / "Cargo.lock").write_text("# test lockfile\n", encoding="utf-8")
+
+        env = os.environ.copy()
+        for key in list(env):
+            if key.startswith(("INPUT_", "ACTION_", "GITHUB_", "SETUP_SOLDR_")):
+                env.pop(key, None)
+        for key in (
+            "CARGO_HOME",
+            "RUSTUP_HOME",
+            "NO_COLOR",
+            "CARGO_TERM_COLOR",
+            "CLICOLOR_FORCE",
+            "FORCE_COLOR",
+        ):
+            env.pop(key, None)
+        env.update(
+            {
+                "ACTION_WORKSPACE": str(workspace),
+                "ACTION_OS": "Linux",
+                "ACTION_ARCH": "X64",
+                "RUNNER_TEMP": str(runner_temp),
+                "GITHUB_ENV": str(github_env),
+                "GITHUB_OUTPUT": str(github_output),
+                "GITHUB_PATH": str(github_path),
+                "GITHUB_SHA": "0123456789abcdef",
+                "HOME": str(home_dir),
+                "USERPROFILE": str(home_dir),
+                "INPUT_VERSION": "0.7.11",
+                "INPUT_TIMESTAMPS": "false",
+                "INPUT_TOOLCHAIN_FILE": "",
+                "CARGO_HOME": str(root / "cargo-home"),
+                "RUSTUP_HOME": str(root / "rustup-home"),
+            }
+        )
+        if extra_env:
+            env.update(extra_env)
+
+        with patch.dict(os.environ, env, clear=True):
+            patchers = []
+            if resolved_soldr_version is not None:
+                patchers.append(
+                    patch.object(
+                        module,
+                        "_resolve_soldr_release_version",
+                        return_value=resolved_soldr_version,
+                    )
+                )
+            for patcher in patchers:
+                patcher.start()
+            try:
+                module.main()
+            finally:
+                for patcher in reversed(patchers):
+                    patcher.stop()
 
         return _parse_github_kv_file(github_env), _parse_github_kv_file(github_output)
 
@@ -433,6 +511,54 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         self.assertEqual(base.returncode, 0)
         self.assertEqual(branch.returncode, 0)
         self.assertNotEqual(base.outputs.get("cache_key"), branch.outputs.get("cache_key"))
+
+    def test_explicit_version_is_normalized_for_setup_cache_keying(self) -> None:
+        plain = _run_resolve_setup({"INPUT_VERSION": "0.7.11"})
+        tagged = _run_resolve_setup({"INPUT_VERSION": "v0.7.11"})
+
+        self.assertEqual(plain.returncode, 0)
+        self.assertEqual(tagged.returncode, 0)
+        self.assertEqual(plain.outputs.get("soldr_version_resolved"), "v0.7.11")
+        self.assertEqual(tagged.outputs.get("soldr_version_resolved"), "v0.7.11")
+        self.assertEqual(plain.outputs.get("cache_key"), tagged.outputs.get("cache_key"))
+
+    def test_latest_version_is_resolved_to_concrete_release_tag(self) -> None:
+        module = _load_resolve_module()
+
+        with patch.object(module, "_fetch_release", return_value={"tag_name": "v0.7.11"}):
+            self.assertEqual(
+                module._resolve_soldr_release_version("zackees/soldr", "latest", ""),
+                "v0.7.11",
+            )
+            self.assertEqual(
+                module._resolve_soldr_release_version("zackees/soldr", "", ""),
+                "v0.7.11",
+            )
+
+    def test_source_ref_skips_release_resolution(self) -> None:
+        module = _load_resolve_module()
+
+        with patch.object(module, "_fetch_release") as mocked_fetch:
+            self.assertEqual(
+                module._resolve_soldr_release_version("zackees/soldr", "latest", "feature/cache-hit"),
+                "",
+            )
+
+        mocked_fetch.assert_not_called()
+
+    def test_latest_resolution_uses_concrete_release_tag_for_cache_keying(self) -> None:
+        _, first_outputs = _run_resolve_main_direct(
+            {"INPUT_VERSION": "latest"},
+            resolved_soldr_version="v0.7.11",
+        )
+        _, second_outputs = _run_resolve_main_direct(
+            {"INPUT_VERSION": ""},
+            resolved_soldr_version="v0.7.12",
+        )
+
+        self.assertEqual(first_outputs["soldr_version_resolved"], "v0.7.11")
+        self.assertEqual(second_outputs["soldr_version_resolved"], "v0.7.12")
+        self.assertNotEqual(first_outputs["cache_key"], second_outputs["cache_key"])
 
     def test_legacy_target_cache_inputs_translate_deterministically(self) -> None:
         cases = (
