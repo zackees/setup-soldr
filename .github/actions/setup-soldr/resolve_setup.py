@@ -269,7 +269,7 @@ def main() -> None:
     bin_dir = cache_root / "bin"
     setup_cache_path = cache_root
     zccache_cache_dir = soldr_root / "cache" / "zccache"
-    target_cache_bundle_path = cache_root.parent / f"{cache_root.name}-target-thin"
+    thin_target_cache_bundle_path = cache_root.parent / f"{cache_root.name}-target-thin"
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
     soldr_path = bin_dir / soldr_binary
 
@@ -283,7 +283,7 @@ def main() -> None:
         rustup_home,
         bin_dir,
         zccache_cache_dir,
-        target_cache_bundle_path,
+        thin_target_cache_bundle_path,
     ):
         path.mkdir(parents=True, exist_ok=True)
 
@@ -294,6 +294,7 @@ def main() -> None:
     )
 
     soldr_repo = os.environ.get("INPUT_REPO", "zackees/soldr").strip() or "zackees/soldr"
+    soldr_ref = os.environ.get("INPUT_REF", "").strip()
     soldr_version = os.environ.get("INPUT_VERSION", "").strip()
     toolchain_signature = {
         "channel": toolchain["channel"],
@@ -303,6 +304,7 @@ def main() -> None:
         "source": toolchain["source"],
         "file_hash": toolchain["file_hash"],
         "soldr_repo": soldr_repo,
+        "soldr_ref": soldr_ref or "release",
         "soldr_version": soldr_version or "latest",
     }
     digest = hashlib.sha256(
@@ -392,6 +394,8 @@ def main() -> None:
             "toolchain": digest,
         }
     )
+    target_cache_bundle_path = thin_target_cache_bundle_path
+
     if not target_cache_enabled:
         target_cache_paths = (
             str(target_cache_path)
@@ -404,7 +408,15 @@ def main() -> None:
         target_cache_key = f"{target_cache_prefix}-{target_inputs_hash}"
         target_cache_parent_key = ""
     elif build_cache_runtime_mode == "full":
-        target_cache_paths = str(target_cache_path)
+        # Restore both the full target tree and the separate rust-plan bundle
+        # root so soldr/zccache can reuse the local bundle without storing it
+        # inside target/ and re-bundling previous bundle contents on save.
+        target_cache_paths = "\n".join(
+            (
+                str(target_cache_path),
+                str(target_cache_bundle_path),
+            )
+        )
         target_cache_effective_mode = build_cache_mode
         target_cache_prefix = (
             f"setup-soldr-targetcache-{build_cache_mode}-v1-{runner_os}-{runner_arch}"
@@ -444,7 +456,10 @@ def main() -> None:
     )
     _write_env("SOLDR_TARGET_CACHE_DIR", str(target_cache_path))
     _write_env("SOLDR_TARGET_CACHE_BUNDLE_DIR", str(target_cache_bundle_path))
-    _write_env("SOLDR_TARGET_CACHE_BACKEND", "auto")
+    # setup-soldr already rehydrates the rust-plan bundle directory with
+    # actions/cache, so the soldr/zccache layer should operate on that local
+    # bundle instead of switching to zccache's separate direct GHA backend.
+    _write_env("SOLDR_TARGET_CACHE_BACKEND", "local")
     _write_env("SETUP_SOLDR_TOOLCHAIN_CHANNEL", toolchain["channel"])
     _write_env("SETUP_SOLDR_TOOLCHAIN_PROFILE", toolchain["profile"])
     _write_env("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", json.dumps(toolchain["components"]))
@@ -477,6 +492,9 @@ def main() -> None:
     log(f"target-cache key={target_cache_key}")
     log(f"target-cache enabled={str(target_cache_enabled).lower()}")
     log(f"target-cache mode={target_cache_effective_mode}")
+    log("target-cache backend=local")
+    log(f"soldr repo={soldr_repo}")
+    log(f"soldr ref={soldr_ref or 'release'}")
     if target_cache_parent_key:
         log(f"target-cache restore-key-parent={target_cache_parent_key}")
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
@@ -519,6 +537,7 @@ def main() -> None:
             "bin_dir": str(bin_dir),
             "soldr_path": str(soldr_path),
             "soldr_repo": soldr_repo,
+            "soldr_ref": soldr_ref,
             "soldr_version_requested": soldr_version,
             "toolchain_channel": toolchain["channel"],
             "toolchain_profile": toolchain["profile"],

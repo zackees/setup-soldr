@@ -131,6 +131,7 @@ class BuildCacheModeResolveTests(unittest.TestCase):
             result.env_exports.get("SOLDR_TARGET_CACHE_MODE"),
             target_expected or soldr_expected or expected,
         )
+        self.assertEqual(result.env_exports.get("SOLDR_TARGET_CACHE_BACKEND"), "local")
 
     def test_default_build_cache_mode_resolves_to_once(self) -> None:
         self.assert_resolved_build_cache_mode(_run_resolve_setup(), "once", "full")
@@ -141,6 +142,39 @@ class BuildCacheModeResolveTests(unittest.TestCase):
                 result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": mode})
                 self.assert_resolved_build_cache_mode(result, mode, soldr_mode)
 
+    def test_full_modes_restore_target_tree_and_bundle_root_together(self) -> None:
+        for mode in ("once", "full"):
+            with self.subTest(mode=mode):
+                result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": mode})
+                self.assertEqual(result.returncode, 0)
+                target_path = result.outputs.get("target_cache_path")
+                bundle_path = result.outputs.get("target_cache_bundle_path")
+                self.assertTrue(target_path)
+                self.assertTrue(bundle_path)
+                self.assertNotEqual(bundle_path, target_path)
+                self.assertEqual(
+                    result.outputs.get("target_cache_paths"),
+                    f"{target_path}\n{bundle_path}",
+                )
+                self.assertEqual(result.env_exports.get("SOLDR_TARGET_CACHE_DIR"), target_path)
+                self.assertEqual(
+                    result.env_exports.get("SOLDR_TARGET_CACHE_BUNDLE_DIR"),
+                    bundle_path,
+                )
+
+    def test_thin_mode_keeps_local_rust_plan_bundle_separate_from_target_tree(self) -> None:
+        result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "thin"})
+
+        self.assertEqual(result.returncode, 0)
+        target_path = result.outputs.get("target_cache_path")
+        bundle_path = result.outputs.get("target_cache_bundle_path")
+        self.assertTrue(target_path)
+        self.assertTrue(bundle_path)
+        self.assertNotEqual(bundle_path, target_path)
+        self.assertEqual(result.outputs.get("target_cache_paths"), bundle_path)
+        self.assertEqual(result.env_exports.get("SOLDR_TARGET_CACHE_DIR"), target_path)
+        self.assertEqual(result.env_exports.get("SOLDR_TARGET_CACHE_BUNDLE_DIR"), bundle_path)
+
     def test_unknown_build_cache_mode_fails_clearly(self) -> None:
         result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "wide"})
 
@@ -150,6 +184,31 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         self.assertIn("once", combined_output)
         self.assertIn("thin", combined_output)
         self.assertIn("full", combined_output)
+
+    def test_repo_and_ref_are_exported_for_installer(self) -> None:
+        result = _run_resolve_setup(
+            {
+                "INPUT_REPO": "zackees/soldr",
+                "INPUT_REF": "fast-gh-rebuild",
+            }
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.outputs.get("soldr_repo"), "zackees/soldr")
+        self.assertEqual(result.outputs.get("soldr_ref"), "fast-gh-rebuild")
+
+    def test_source_ref_changes_setup_cache_key(self) -> None:
+        base = _run_resolve_setup({"INPUT_REPO": "zackees/soldr"})
+        branch = _run_resolve_setup(
+            {
+                "INPUT_REPO": "zackees/soldr",
+                "INPUT_REF": "fast-gh-rebuild",
+            }
+        )
+
+        self.assertEqual(base.returncode, 0)
+        self.assertEqual(branch.returncode, 0)
+        self.assertNotEqual(base.outputs.get("cache_key"), branch.outputs.get("cache_key"))
 
     def test_legacy_target_cache_inputs_translate_deterministically(self) -> None:
         cases = (

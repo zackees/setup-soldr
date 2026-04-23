@@ -23,6 +23,7 @@ concurrency:
 
 env:
   DEMO_CACHE_SUFFIX: zccache-demo
+  INTEGRATION_REF: ${{ github.ref_name }}
 
 jobs:
   purge-demo-caches:
@@ -76,21 +77,29 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      - name: Checkout setup-soldr action
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: setup-soldr
+
       - name: Checkout zccache
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: zackees/zccache
+          ref: ${{ env.INTEGRATION_REF }}
           path: zccache
           persist-credentials: false
 
       - id: setup
         name: Setup Soldr
-        uses: zackees/setup-soldr@v0
+        uses: ./setup-soldr
         with:
           cache: true
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
+          repo: zackees/soldr
+          ref: ${{ env.INTEGRATION_REF }}
 
       - name: Show cache plan
         shell: bash
@@ -101,6 +110,7 @@ jobs:
             echo "| Output | Value |"
             echo "| --- | --- |"
             echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
+            echo "| integration-ref | \`${{ env.INTEGRATION_REF }}\` |"
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
             echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
@@ -127,7 +137,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   warm-build:
-    name: Warm zccache build with setup-soldr@v0
+    name: Warm zccache build with checked-out setup-soldr
     needs:
       - purge-demo-caches
       - cold-build
@@ -135,21 +145,29 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      - name: Checkout setup-soldr action
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: setup-soldr
+
       - name: Checkout zccache
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           repository: zackees/zccache
+          ref: ${{ env.INTEGRATION_REF }}
           path: zccache
           persist-credentials: false
 
       - id: setup
         name: Setup Soldr
-        uses: zackees/setup-soldr@v0
+        uses: ./setup-soldr
         with:
           cache: true
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
+          repo: zackees/soldr
+          ref: ${{ env.INTEGRATION_REF }}
 
       - name: Show cache plan
         shell: bash
@@ -160,6 +178,7 @@ jobs:
             echo "| Output | Value |"
             echo "| --- | --- |"
             echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
+            echo "| integration-ref | \`${{ env.INTEGRATION_REF }}\` |"
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
             echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"

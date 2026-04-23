@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import re
 import stat
 import shlex
 import shutil
@@ -113,6 +114,18 @@ def toolchain_available(rustup: str, channel: str) -> bool:
     for raw_line in result.stdout.splitlines():
         installed = raw_line.split(maxsplit=1)[0] if raw_line.strip() else ""
         if installed == channel or installed.startswith(f"{channel}-"):
+            return True
+    return False
+
+
+def should_refresh_toolchain(channel: str) -> bool:
+    normalized = channel.strip().lower()
+    if not normalized:
+        return False
+    for alias in ("stable", "beta", "nightly"):
+        if normalized == alias:
+            return True
+        if normalized.startswith(f"{alias}-") and not re.match(rf"^{alias}-\d", normalized):
             return True
     return False
 
@@ -297,7 +310,10 @@ def main() -> None:
     log(f"Requested Rust targets: {', '.join(targets) if targets else 'none'}")
 
     run([rustup, "set", "profile", profile])
-    if not toolchain_available(rustup, channel):
+    if should_refresh_toolchain(channel):
+        log(f"Refreshing rolling Rust toolchain {channel} with profile {profile}")
+        run([rustup, "toolchain", "install", channel, "--profile", profile])
+    elif not toolchain_available(rustup, channel):
         log(f"Installing Rust toolchain {channel} with profile {profile}")
         run([rustup, "toolchain", "install", channel, "--profile", profile])
     else:

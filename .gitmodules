@@ -1,0 +1,6 @@
+[submodule "zccache"]
+	path = zccache
+	url = https://github.com/zackees/zccache.git
+[submodule "soldr"]
+	path = soldr
+	url = https://github.com/zackees/soldr.git
