@@ -89,6 +89,7 @@ jobs:
         with:
           cache: true
           build-cache-mode: thin
+          verbose: true
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
@@ -105,9 +106,10 @@ jobs:
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
             echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
-            echo "| target-cache-restore-status | \`${{ steps.setup.outputs.target-cache-restore-status }}\` |"
-            echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
+            echo "| verbose | \`${{ steps.setup.outputs.verbose }}\` |"
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
+            echo "| zccache-daemon-log | \`${{ steps.setup.outputs.zccache-daemon-log }}\` |"
+            echo "| zccache-journal-log | \`${{ steps.setup.outputs.zccache-journal-log }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build zccache cold
@@ -126,6 +128,21 @@ jobs:
             echo
             echo "Built \`zccache-cli\` in \`${elapsed}s\` after purging demo caches."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dump verbose zccache logs
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -o pipefail
+          for path in \
+            "${{ steps.setup.outputs.zccache-daemon-log }}" \
+            "${{ steps.setup.outputs.zccache-journal-log }}"; do
+            if [ -f "$path" ]; then
+              echo "::group::$path"
+              cat "$path"
+              echo "::endgroup::"
+            fi
+          done
 
   warm-build:
     name: Warm zccache build with setup-soldr@v0
@@ -149,6 +166,7 @@ jobs:
         with:
           cache: true
           build-cache-mode: thin
+          verbose: true
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
@@ -165,9 +183,10 @@ jobs:
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
             echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
-            echo "| target-cache-restore-status | \`${{ steps.setup.outputs.target-cache-restore-status }}\` |"
-            echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
+            echo "| verbose | \`${{ steps.setup.outputs.verbose }}\` |"
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
+            echo "| zccache-daemon-log | \`${{ steps.setup.outputs.zccache-daemon-log }}\` |"
+            echo "| zccache-journal-log | \`${{ steps.setup.outputs.zccache-journal-log }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build zccache warm
@@ -186,3 +205,18 @@ jobs:
             echo
             echo "Built \`zccache-cli\` in \`${elapsed}s\`."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dump verbose zccache logs
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -o pipefail
+          for path in \
+            "${{ steps.setup.outputs.zccache-daemon-log }}" \
+            "${{ steps.setup.outputs.zccache-journal-log }}"; do
+            if [ -f "$path" ]; then
+              echo "::group::$path"
+              cat "$path"
+              echo "::endgroup::"
+            fi
+          done

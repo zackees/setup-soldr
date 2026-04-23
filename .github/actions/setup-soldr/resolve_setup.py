@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import time
 from pathlib import Path
 from typing import Any
@@ -69,6 +70,13 @@ def load_toolchain_spec(
 
 def _sanitize_fragment(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-") or "default"
+
+
+def _is_enabled(value: str, default: bool = False) -> bool:
+    cleaned = value.strip().lower()
+    if not cleaned:
+        return default
+    return cleaned not in {"0", "false", "no", "off"}
 
 
 def _short_file_hash(path: Path, missing: str) -> str:
@@ -246,8 +254,65 @@ def _path_summary(label: str, path: Path) -> None:
     log(f"{label} path={path} exists=true files={files} bytes={bytes_total}")
 
 
+def _merge_rust_log(existing: str) -> str:
+    wanted = [
+        "zccache_cli=trace",
+        "zccache_daemon=trace",
+        "zccache_artifact=trace",
+        "zccache_gha=trace",
+        "zccache_compiler=trace",
+        "zccache_core=trace",
+        "zccache_depgraph=trace",
+        "zccache_fingerprint=trace",
+    ]
+    parts = [part.strip() for part in existing.split(",") if part.strip()]
+    seen = {part.split("=", 1)[0] for part in parts}
+    for part in wanted:
+        target = part.split("=", 1)[0]
+        if target not in seen:
+            parts.append(part)
+            seen.add(target)
+    return ",".join(parts)
+
+
+def _write_text(path: Path, content: str) -> None:
+    path.write_text(content, encoding="utf-8")
+
+
+def _create_verbose_shims(shim_dir: Path, action_path: Path) -> tuple[Path, Path]:
+    wrapper_script = action_path / ".github" / "actions" / "setup-soldr" / "verbose_soldr_wrapper.py"
+    unix_shim = shim_dir / "soldr"
+    cmd_shim = shim_dir / "soldr.cmd"
+
+    _write_text(
+        unix_shim,
+        "\n".join(
+            [
+                "#!/usr/bin/env bash",
+                "set -euo pipefail",
+                'exec python "${SETUP_SOLDR_VERBOSE_WRAPPER}" "$@"',
+                "",
+            ]
+        ),
+    )
+    unix_shim.chmod(unix_shim.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    _write_text(
+        cmd_shim,
+        "\r\n".join(
+            [
+                "@echo off",
+                'python "%SETUP_SOLDR_VERBOSE_WRAPPER%" %*',
+                "",
+            ]
+        ),
+    )
+    return wrapper_script, unix_shim
+
+
 def main() -> None:
     workspace = Path(os.environ["ACTION_WORKSPACE"]).resolve()
+    action_path = Path(os.environ["ACTION_PATH"]).resolve()
     runner_temp = Path(os.environ.get("RUNNER_TEMP", workspace / ".tmp")).resolve()
     log_start = str(int(time.time()))
     timestamps = os.environ.get("INPUT_TIMESTAMPS", "true").strip() or "true"
@@ -266,8 +331,13 @@ def main() -> None:
         _default_home_dir(".rustup")
     )
     bin_dir = cache_root / "bin"
+    shim_dir = cache_root / "shims"
     setup_cache_path = cache_root
     zccache_cache_dir = soldr_root / "cache" / "zccache"
+    zccache_logs_dir = zccache_cache_dir / "logs"
+    zccache_daemon_log_path = zccache_logs_dir / "daemon.log"
+    zccache_journal_log_path = zccache_logs_dir / "last-session.jsonl"
+    verbose_state_dir = cache_root.parent / f"{cache_root.name}-verbose"
     target_cache_bundle_path = cache_root.parent / f"{cache_root.name}-target-thin"
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
     soldr_path = bin_dir / soldr_binary
@@ -281,7 +351,10 @@ def main() -> None:
         cargo_home / "bin",
         rustup_home,
         bin_dir,
+        shim_dir,
         zccache_cache_dir,
+        zccache_logs_dir,
+        verbose_state_dir,
         target_cache_bundle_path,
     ):
         path.mkdir(parents=True, exist_ok=True)
@@ -366,6 +439,7 @@ def main() -> None:
         os.environ.get("INPUT_BUILD_CACHE", "true").strip().lower()
         not in {"0", "false", "no", "off"}
     )
+    verbose_enabled = _is_enabled(os.environ.get("INPUT_VERBOSE", ""), default=False)
     target_cache_enabled = (
         build_cache_enabled
         and target_cache_requested
@@ -445,6 +519,12 @@ def main() -> None:
     _write_env("SETUP_SOLDR_TOOLCHAIN_TARGETS", json.dumps(toolchain["targets"]))
     _write_env("SETUP_SOLDR_LOG_START_EPOCH", log_start)
     _write_env("SETUP_SOLDR_TIMESTAMPS", timestamps)
+    _write_env("SETUP_SOLDR_VERBOSE", str(verbose_enabled).lower())
+    _write_env("SETUP_SOLDR_REAL_BIN", str(soldr_path))
+    _write_env("SETUP_SOLDR_VERBOSE_WRAPPER", str(action_path / ".github" / "actions" / "setup-soldr" / "verbose_soldr_wrapper.py"))
+    _write_env("SETUP_SOLDR_ZCCACHE_DAEMON_LOG", str(zccache_daemon_log_path))
+    _write_env("SETUP_SOLDR_ZCCACHE_JOURNAL_LOG", str(zccache_journal_log_path))
+    _write_env("SETUP_SOLDR_ZCCACHE_LOG_STATE_DIR", str(verbose_state_dir))
     if timestamps.lower() not in {"0", "false", "no", "off"} and "NO_COLOR" not in os.environ:
         if not os.environ.get("CARGO_TERM_COLOR"):
             _write_env("CARGO_TERM_COLOR", "always")
@@ -452,6 +532,14 @@ def main() -> None:
             _write_env("CLICOLOR_FORCE", "1")
         if not os.environ.get("FORCE_COLOR"):
             _write_env("FORCE_COLOR", "1")
+    if verbose_enabled:
+        rust_log = _merge_rust_log(os.environ.get("RUST_LOG", ""))
+        _write_env("RUST_LOG", rust_log)
+        if not os.environ.get("RUST_BACKTRACE"):
+            _write_env("RUST_BACKTRACE", "1")
+        wrapper_script, _ = _create_verbose_shims(shim_dir, action_path)
+        _write_env("SETUP_SOLDR_VERBOSE_WRAPPER", str(wrapper_script))
+        _write_path(str(shim_dir))
     if os.environ.get("INPUT_TRUST_MODE", "").strip():
         _write_env("SOLDR_TRUST_MODE", os.environ["INPUT_TRUST_MODE"].strip())
 
@@ -463,6 +551,7 @@ def main() -> None:
     log(f"cache restore-key={cache_prefix}-")
     log(f"build-cache key={build_cache_key}")
     log(f"build-cache mode={build_cache_mode}")
+    log(f"verbose={str(verbose_enabled).lower()}")
     if build_cache_parent_key:
         log(f"build-cache restore-key-parent={build_cache_parent_key}")
     log(f"build-cache restore-key-toolchain={build_cache_toolchain_prefix}")
@@ -477,6 +566,8 @@ def main() -> None:
     log(f"target-cache bundle-dir={target_cache_bundle_path}")
     log(f"target-cache lockfile={_path_for_output(workspace, lockfile_path)}")
     log(f"target-cache lockfile-hash={cargo_lock_hash}")
+    log(f"zccache daemon log={zccache_daemon_log_path}")
+    log(f"zccache session journal={zccache_journal_log_path}")
     _path_summary("cache before restore", setup_cache_path)
     _path_summary("build-cache before restore", zccache_cache_dir)
     _path_summary(
@@ -496,6 +587,7 @@ def main() -> None:
             "build_cache_restore_key_os_arch": f"{build_cache_prefix}-",
             "build_cache_path": str(zccache_cache_dir),
             "build_cache_mode": build_cache_mode,
+            "verbose": str(verbose_enabled).lower(),
             "target_cache_path": str(target_cache_path),
             "target_cache_bundle_path": str(target_cache_bundle_path),
             "target_cache_paths": target_cache_paths,
@@ -510,9 +602,12 @@ def main() -> None:
             "cargo_home": str(cargo_home),
             "rustup_home": str(rustup_home),
             "bin_dir": str(bin_dir),
+            "shim_dir": str(shim_dir),
             "soldr_path": str(soldr_path),
             "soldr_repo": soldr_repo,
             "soldr_version_requested": soldr_version,
+            "zccache_daemon_log_path": str(zccache_daemon_log_path),
+            "zccache_journal_log_path": str(zccache_journal_log_path),
             "toolchain_channel": toolchain["channel"],
             "toolchain_profile": toolchain["profile"],
             "toolchain_source": toolchain["source"],

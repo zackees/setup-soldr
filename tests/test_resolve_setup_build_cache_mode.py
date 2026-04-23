@@ -75,6 +75,7 @@ def _run_resolve_setup(extra_env: dict[str, str] | None = None) -> ResolveResult
         env.update(
             {
                 "ACTION_WORKSPACE": str(workspace),
+                "ACTION_PATH": str(REPO_ROOT),
                 "ACTION_OS": "Linux",
                 "ACTION_ARCH": "X64",
                 "RUNNER_TEMP": str(runner_temp),
@@ -177,6 +178,22 @@ class BuildCacheModeResolveTests(unittest.TestCase):
             with self.subTest(env=env):
                 result = _run_resolve_setup(env)
                 self.assert_resolved_build_cache_mode(result, expected, target_expected)
+
+    def test_verbose_mode_exports_log_paths_and_trace_logging(self) -> None:
+        result = _run_resolve_setup({"INPUT_VERBOSE": "true"})
+
+        self.assertEqual(
+            result.returncode,
+            0,
+            msg=f"resolve_setup.py failed\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
+        )
+        self.assertEqual(result.outputs.get("verbose"), "true")
+        self.assertEqual(result.env_exports.get("SETUP_SOLDR_VERBOSE"), "true")
+        self.assertIn("zccache_daemon=trace", result.env_exports.get("RUST_LOG", ""))
+        self.assertTrue(result.outputs.get("zccache_daemon_log_path", "").endswith("daemon.log"))
+        self.assertTrue(
+            result.outputs.get("zccache_journal_log_path", "").endswith("last-session.jsonl")
+        )
 
 
 if __name__ == "__main__":

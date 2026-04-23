@@ -39,6 +39,7 @@ jobs:
         with:
           cache: true
           build-cache-mode: thin
+          verbose: true
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
           cache-key-suffix: zccache
@@ -57,6 +58,7 @@ jobs:
           Write-Host "build-cache-path=${{ steps.setup.outputs.build-cache-path }}"
           Write-Host "build-cache-mode=${{ steps.setup.outputs.build-cache-mode }}"
           Write-Host "build-cache-restore-status=${{ steps.setup.outputs.build-cache-restore-status }}"
+          Write-Host "verbose=${{ steps.setup.outputs.verbose }}"
           Write-Host "target-cache-hit=${{ steps.setup.outputs.target-cache-hit }}"
           Write-Host "target-cache-key=${{ steps.setup.outputs.target-cache-key }}"
           Write-Host "target-cache-path=${{ steps.setup.outputs.target-cache-path }}"
@@ -65,6 +67,8 @@ jobs:
           Write-Host "target-cache-restore-status=${{ steps.setup.outputs.target-cache-restore-status }}"
           Write-Host "target-lockfile=${{ steps.setup.outputs.target-lockfile }}"
           Write-Host "target-lockfile-hash=${{ steps.setup.outputs.target-lockfile-hash }}"
+          Write-Host "zccache-daemon-log=${{ steps.setup.outputs.zccache-daemon-log }}"
+          Write-Host "zccache-journal-log=${{ steps.setup.outputs.zccache-journal-log }}"
           Write-Host "toolchain=${{ steps.setup.outputs.toolchain }}"
 
       - name: Build zccache through soldr
@@ -123,3 +127,18 @@ jobs:
           path_summary "build-cache after build" "$BUILD_CACHE_PATH"
           path_summary "target-cache after build" "$TARGET_CACHE_PATH"
           exit "$status"
+
+      - name: Dump verbose zccache logs
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -o pipefail
+          for path in \
+            "${{ steps.setup.outputs.zccache-daemon-log }}" \
+            "${{ steps.setup.outputs.zccache-journal-log }}"; do
+            if [ -f "$path" ]; then
+              echo "::group::$path"
+              cat "$path"
+              echo "::endgroup::"
+            fi
+          done

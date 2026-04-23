@@ -37,14 +37,20 @@ inputs:
     description: Prefix setup-soldr diagnostic and streamed command output with elapsed mm:ss timestamps.
     required: false
     default: "true"
+  verbose:
+    description: >
+      Turn on zccache trace logging and expose daemon/session logs for dump-on-failure
+      workflow steps. Intended for cache debugging.
+    required: false
+    default: "false"
   lockfile:
     description: Optional Cargo.lock path used for Rust artifact cache keying. Empty infers Cargo.lock next to target-dir, then workspace Cargo.lock.
     required: false
     default: ""
   build-cache:
     description: >
-      Restore and save Soldr/zccache build cache state across workflow runs.
-      Default "true"; set to "false" to opt out of zccache artifact caching.
+      Advanced escape hatch for disabling Soldr/zccache compilation cache restore/save.
+      Default "true"; set to "false" only when debugging or isolating cache behavior.
     required: false
     default: "true"
   build-cache-mode:
@@ -106,6 +112,9 @@ outputs:
   build-cache-mode:
     description: Effective Rust build cache mode selected for soldr/zccache.
     value: ${{ steps.resolve.outputs.build_cache_mode }}
+  verbose:
+    description: Whether verbose zccache logging is enabled for downstream soldr commands.
+    value: ${{ steps.resolve.outputs.verbose }}
   build-cache-restore-status:
     description: Diagnostic restore status for the Soldr-owned zccache compilation cache.
     value: ${{ steps.cache-meta.outputs.build_cache_restore_status }}
@@ -136,6 +145,12 @@ outputs:
   target-lockfile-hash:
     description: Short hash of the Cargo.lock used for Rust artifact cache keying, or no-lock.
     value: ${{ steps.resolve.outputs.target_lockfile_hash }}
+  zccache-daemon-log:
+    description: Path to the managed zccache daemon log written during soldr-driven builds.
+    value: ${{ steps.resolve.outputs.zccache_daemon_log_path }}
+  zccache-journal-log:
+    description: Path to the managed zccache session journal written during soldr-driven builds.
+    value: ${{ steps.resolve.outputs.zccache_journal_log_path }}
   toolchain:
     description: Exact Rust toolchain channel configured by rustup for the action.
     value: ${{ steps.resolve.outputs.toolchain }}
@@ -152,12 +167,14 @@ runs:
         INPUT_TOOLCHAIN_FILE: ${{ inputs.toolchain-file }}
         INPUT_TRUST_MODE: ${{ inputs.trust-mode }}
         INPUT_TIMESTAMPS: ${{ inputs.timestamps }}
+        INPUT_VERBOSE: ${{ inputs.verbose }}
         INPUT_LOCKFILE: ${{ inputs.lockfile }}
         INPUT_BUILD_CACHE: ${{ inputs.build-cache }}
         INPUT_BUILD_CACHE_MODE: ${{ inputs.build-cache-mode }}
         INPUT_TARGET_CACHE: ${{ inputs.target-cache }}
         INPUT_TARGET_CACHE_MODE: ${{ inputs.target-cache-mode }}
         INPUT_TARGET_DIR: ${{ inputs.target-dir }}
+        ACTION_PATH: ${{ github.action_path }}
         ACTION_WORKSPACE: ${{ github.workspace }}
         ACTION_OS: ${{ runner.os }}
         ACTION_ARCH: ${{ runner.arch }}
