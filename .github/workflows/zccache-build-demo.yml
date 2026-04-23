@@ -88,12 +88,9 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           cache: true
+          build-cache-mode: thin
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
-          target-cache-paths: |
-            zccache/target/.rustc_info.json
-            zccache/target/CACHEDIR.TAG
-            zccache/target/debug
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
 
       - name: Show cache plan
@@ -107,6 +104,7 @@ jobs:
             echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
+            echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
             echo "| target-cache-restore-status | \`${{ steps.setup.outputs.target-cache-restore-status }}\` |"
             echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
@@ -150,12 +148,9 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           cache: true
+          build-cache-mode: thin
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
-          target-cache-paths: |
-            zccache/target/.rustc_info.json
-            zccache/target/CACHEDIR.TAG
-            zccache/target/debug
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
 
       - name: Show cache plan
@@ -169,6 +164,7 @@ jobs:
             echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
+            echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
             echo "| target-cache-restore-status | \`${{ steps.setup.outputs.target-cache-restore-status }}\` |"
             echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"

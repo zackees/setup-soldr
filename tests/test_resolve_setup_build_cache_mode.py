@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from dataclasses import dataclass
+from pathlib import Path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+RESOLVE_SETUP = REPO_ROOT / ".github" / "actions" / "setup-soldr" / "resolve_setup.py"
+
+
+@dataclass(frozen=True)
+class ResolveResult:
+    returncode: int
+    stdout: str
+    stderr: str
+    env_exports: dict[str, str]
+    outputs: dict[str, str]
+
+
+def _parse_github_kv_file(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not path.exists():
+        return values
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
+        if "<<" in line:
+            key, delimiter = line.split("<<", 1)
+            index += 1
+            body: list[str] = []
+            while index < len(lines) and lines[index] != delimiter:
+                body.append(lines[index])
+                index += 1
+            values[key] = "\n".join(body)
+        elif "=" in line:
+            key, value = line.split("=", 1)
+            values[key] = value
+        index += 1
+    return values
+
+
+def _run_resolve_setup(extra_env: dict[str, str] | None = None) -> ResolveResult:
+    with tempfile.TemporaryDirectory(prefix="setup-soldr-tests-") as temp_dir:
+        root = Path(temp_dir)
+        workspace = root / "workspace"
+        runner_temp = root / "runner-temp"
+        github_env = root / "github-env"
+        github_output = root / "github-output"
+        github_path = root / "github-path"
+        workspace.mkdir()
+        runner_temp.mkdir()
+        (workspace / "Cargo.lock").write_text("# test lockfile\n", encoding="utf-8")
+
+        env = os.environ.copy()
+        for key in list(env):
+            if key.startswith(("INPUT_", "ACTION_", "GITHUB_", "SETUP_SOLDR_")):
+                env.pop(key, None)
+        for key in (
+            "CARGO_HOME",
+            "RUSTUP_HOME",
+            "NO_COLOR",
+            "CARGO_TERM_COLOR",
+            "CLICOLOR_FORCE",
+            "FORCE_COLOR",
+        ):
+            env.pop(key, None)
+
+        env.update(
+            {
+                "ACTION_WORKSPACE": str(workspace),
+                "ACTION_OS": "Linux",
+                "ACTION_ARCH": "X64",
+                "RUNNER_TEMP": str(runner_temp),
+                "GITHUB_ENV": str(github_env),
+                "GITHUB_OUTPUT": str(github_output),
+                "GITHUB_PATH": str(github_path),
+                "GITHUB_SHA": "0123456789abcdef",
+                "CARGO_HOME": str(root / "cargo-home"),
+                "RUSTUP_HOME": str(root / "rustup-home"),
+                "INPUT_TIMESTAMPS": "false",
+                "INPUT_TOOLCHAIN_FILE": "",
+            }
+        )
+        if extra_env:
+            env.update(extra_env)
+
+        proc = subprocess.run(
+            [sys.executable, str(RESOLVE_SETUP)],
+            cwd=REPO_ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        return ResolveResult(
+            returncode=proc.returncode,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            env_exports=_parse_github_kv_file(github_env),
+            outputs=_parse_github_kv_file(github_output),
+        )
+
+
+class BuildCacheModeResolveTests(unittest.TestCase):
+    def assert_resolved_build_cache_mode(
+        self, result: ResolveResult, expected: str, target_expected: str | None = None
+    ) -> None:
+        self.assertEqual(
+            result.returncode,
+            0,
+            msg=f"resolve_setup.py failed\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}",
+        )
+        self.assertEqual(result.outputs.get("build_cache_mode"), expected)
+        self.assertEqual(result.env_exports.get("SOLDR_BUILD_CACHE_MODE"), expected)
+        self.assertEqual(
+            result.env_exports.get("SOLDR_TARGET_CACHE_MODE"),
+            target_expected or expected,
+        )
+
+    def test_default_build_cache_mode_resolves_to_thin(self) -> None:
+        self.assert_resolved_build_cache_mode(_run_resolve_setup(), "thin")
+
+    def test_thin_and_full_build_cache_modes_are_accepted(self) -> None:
+        for mode in ("thin", "full"):
+            with self.subTest(mode=mode):
+                result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": mode})
+                self.assert_resolved_build_cache_mode(result, mode)
+
+    def test_unknown_build_cache_mode_fails_clearly(self) -> None:
+        result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "wide"})
+
+        self.assertNotEqual(result.returncode, 0)
+        combined_output = f"{result.stdout}\n{result.stderr}".lower()
+        self.assertIn("invalid build-cache-mode", combined_output)
+        self.assertIn("thin", combined_output)
+        self.assertIn("full", combined_output)
+
+    def test_legacy_target_cache_inputs_translate_deterministically(self) -> None:
+        cases = (
+            ({"INPUT_TARGET_CACHE_MODE": "hot"}, "thin", "thin"),
+            ({"INPUT_TARGET_CACHE_MODE": "full"}, "full", "full"),
+            ({"INPUT_TARGET_CACHE_MODE": "off"}, "thin", "off"),
+            (
+                {"INPUT_TARGET_CACHE": "false", "INPUT_TARGET_CACHE_MODE": "full"},
+                "thin",
+                "off",
+            ),
+            (
+                {
+                    "INPUT_BUILD_CACHE_MODE": "thin",
+                    "INPUT_TARGET_CACHE": "true",
+                    "INPUT_TARGET_CACHE_MODE": "full",
+                },
+                "thin",
+                "thin",
+            ),
+            (
+                {
+                    "INPUT_BUILD_CACHE_MODE": "full",
+                    "INPUT_TARGET_CACHE": "false",
+                    "INPUT_TARGET_CACHE_MODE": "hot",
+                },
+                "full",
+                "off",
+            ),
+        )
+
+        for env, expected, target_expected in cases:
+            with self.subTest(env=env):
+                result = _run_resolve_setup(env)
+                self.assert_resolved_build_cache_mode(result, expected, target_expected)
+
+
+if __name__ == "__main__":
+    unittest.main()
