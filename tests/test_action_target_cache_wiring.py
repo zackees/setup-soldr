@@ -38,3 +38,14 @@ def test_setup_cache_uses_lookup_exact_restore_and_managed_fallback() -> None:
     assert "steps.resolve.outputs.setup_cache_paths" in action
     assert 'LogPath "soldr-bin after restore"' in action
     assert "id: cache-save" not in action
+
+
+def test_once_mode_skips_build_cache_restore_when_target_cache_is_exact_hit() -> None:
+    action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
+
+    assert "id: target-cache-lookup" in action
+    assert "id: build-cache-lookup" in action
+    assert "steps.target-cache-lookup.outputs.cache-hit != 'true'" in action
+    assert "SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT" in action
+    assert "skipped-target-cache-exact-hit" in action
+    assert "build-cache restore skipped because once-mode target cache was an exact hit" in action
