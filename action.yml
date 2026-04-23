@@ -232,7 +232,7 @@ runs:
       if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' }}
       uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
-        path: ${{ steps.resolve.outputs.target_cache_paths }}
+        path: ${{ steps.resolve.outputs.target_cache_bundle_path }}
         key: ${{ steps.resolve.outputs.target_cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
@@ -243,7 +243,7 @@ runs:
       if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && (steps.target-cache-lookup.outputs.cache-hit == 'true' || steps.target-cache-lookup.outputs.cache-matched-key != '') }}
       uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
-        path: ${{ steps.resolve.outputs.target_cache_paths }}
+        path: ${{ steps.resolve.outputs.target_cache_bundle_path }}
         key: ${{ steps.resolve.outputs.target_cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
@@ -253,7 +253,38 @@ runs:
       if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.target-cache-lookup.outputs.cache-hit != 'true' && steps.target-cache-lookup.outputs.cache-matched-key == '')) }}
       uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
-        path: ${{ steps.resolve.outputs.target_cache_paths }}
+        path: ${{ steps.resolve.outputs.target_cache_bundle_path }}
+        key: ${{ steps.resolve.outputs.target_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+
+    - id: target-tree-cache-lookup
+      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode != 'thin' }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.target_cache_path }}
+        key: ${{ steps.resolve.outputs.target_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+        lookup-only: true
+
+    - id: target-tree-cache
+      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && (steps.target-tree-cache-lookup.outputs.cache-hit == 'true' || steps.target-tree-cache-lookup.outputs.cache-matched-key != '') }}
+      uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.target_cache_path }}
+        key: ${{ steps.resolve.outputs.target_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+
+    - id: target-tree-cache-managed
+      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode != 'thin' && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.target-tree-cache-lookup.outputs.cache-hit != 'true' && steps.target-tree-cache-lookup.outputs.cache-matched-key == '')) }}
+      uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+      with:
+        path: ${{ steps.resolve.outputs.target_cache_path }}
         key: ${{ steps.resolve.outputs.target_cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
@@ -295,6 +326,9 @@ runs:
         RAW_TARGET_CACHE_HIT: ${{ steps.target-cache-managed.outputs.cache-hit || steps.target-cache.outputs.cache-hit }}
         LOOKUP_TARGET_CACHE_HIT: ${{ steps.target-cache-lookup.outputs.cache-hit }}
         LOOKUP_TARGET_CACHE_MATCHED_KEY: ${{ steps.target-cache-lookup.outputs.cache-matched-key }}
+        RAW_TARGET_TREE_CACHE_HIT: ${{ steps.target-tree-cache-managed.outputs.cache-hit || steps.target-tree-cache.outputs.cache-hit }}
+        LOOKUP_TARGET_TREE_CACHE_HIT: ${{ steps.target-tree-cache-lookup.outputs.cache-hit }}
+        LOOKUP_TARGET_TREE_CACHE_MATCHED_KEY: ${{ steps.target-tree-cache-lookup.outputs.cache-matched-key }}
         TARGET_CACHE_KEY: ${{ steps.resolve.outputs.target_cache_key }}
         BUILD_CACHE_ENABLED: ${{ inputs.build-cache }}
         TARGET_CACHE_ENABLED: ${{ inputs.target-cache }}
@@ -375,10 +409,21 @@ runs:
         $targetEnabled = if ($env:BUILD_CACHE_ENABLED -eq "true" -and $env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true") { "true" } else { "false" }
         $targetStatus = RestoreStatus $targetEnabled $env:LOOKUP_TARGET_CACHE_HIT $env:LOOKUP_TARGET_CACHE_MATCHED_KEY $env:TARGET_CACHE_KEY
         "target_cache_restore_status=$targetStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        $targetTreeStatus = RestoreStatus $targetEnabled $env:LOOKUP_TARGET_TREE_CACHE_HIT $env:LOOKUP_TARGET_TREE_CACHE_MATCHED_KEY $env:TARGET_CACHE_KEY
+        $targetTreeValue = $env:RAW_TARGET_TREE_CACHE_HIT
+        if ([string]::IsNullOrWhiteSpace($targetTreeValue)) {
+          $targetTreeValue = "false"
+        }
 
         Log "cache restore status=$cacheStatus exact-hit=$value"
         Log "build-cache restore status=$buildStatus exact-hit=$buildValue"
-        Log "target-cache restore status=$targetStatus exact-hit=$targetValue"
+        Log "target-cache bundle restore status=$targetStatus exact-hit=$targetValue"
+        if ($env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true" -and "${{ steps.resolve.outputs.build_cache_mode }}" -ne "thin") {
+          Log "target-cache tree restore status=$targetTreeStatus exact-hit=$targetTreeValue"
+        }
         LogPath "cache after restore" "${{ steps.resolve.outputs.setup_cache_path }}"
         LogPath "build-cache after restore" "${{ steps.resolve.outputs.build_cache_path }}"
-        LogPath "target-cache after restore" "${{ steps.resolve.outputs.target_cache_paths }}"
+        if ($env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true" -and "${{ steps.resolve.outputs.build_cache_mode }}" -ne "thin") {
+          LogPath "target-cache tree after restore" "${{ steps.resolve.outputs.target_cache_path }}"
+        }
+        LogPath "target-cache bundle after restore" "${{ steps.resolve.outputs.target_cache_bundle_path }}"
