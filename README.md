@@ -146,4 +146,9 @@ git submodule update --init --recursive
 
 The repository now carries pinned `soldr/` and `zccache/` Git submodules for local source inspection against the exported action bundle.
 
+For cross-repo integration work, the action also carries hidden `repo` and `ref`
+inputs. When `ref` is set, setup-soldr downloads the GitHub source archive for
+that ref, builds `soldr` locally, and caches it under the normal setup root so
+`fast-gh-rebuild` style branch loops can exercise unreleased Soldr changes.
+
 Regenerate this repository bundle from the source repository with the exporter in `zackees/soldr`.

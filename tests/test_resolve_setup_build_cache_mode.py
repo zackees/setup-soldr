@@ -151,6 +151,31 @@ class BuildCacheModeResolveTests(unittest.TestCase):
         self.assertIn("thin", combined_output)
         self.assertIn("full", combined_output)
 
+    def test_repo_and_ref_are_exported_for_installer(self) -> None:
+        result = _run_resolve_setup(
+            {
+                "INPUT_REPO": "zackees/soldr",
+                "INPUT_REF": "fast-gh-rebuild",
+            }
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.outputs.get("soldr_repo"), "zackees/soldr")
+        self.assertEqual(result.outputs.get("soldr_ref"), "fast-gh-rebuild")
+
+    def test_source_ref_changes_setup_cache_key(self) -> None:
+        base = _run_resolve_setup({"INPUT_REPO": "zackees/soldr"})
+        branch = _run_resolve_setup(
+            {
+                "INPUT_REPO": "zackees/soldr",
+                "INPUT_REF": "fast-gh-rebuild",
+            }
+        )
+
+        self.assertEqual(base.returncode, 0)
+        self.assertEqual(branch.returncode, 0)
+        self.assertNotEqual(base.outputs.get("cache_key"), branch.outputs.get("cache_key"))
+
     def test_legacy_target_cache_inputs_translate_deterministically(self) -> None:
         cases = (
             ({"INPUT_TARGET_CACHE_MODE": "hot"}, "thin", "thin"),

@@ -294,6 +294,7 @@ def main() -> None:
     )
 
     soldr_repo = os.environ.get("INPUT_REPO", "zackees/soldr").strip() or "zackees/soldr"
+    soldr_ref = os.environ.get("INPUT_REF", "").strip()
     soldr_version = os.environ.get("INPUT_VERSION", "").strip()
     toolchain_signature = {
         "channel": toolchain["channel"],
@@ -303,6 +304,7 @@ def main() -> None:
         "source": toolchain["source"],
         "file_hash": toolchain["file_hash"],
         "soldr_repo": soldr_repo,
+        "soldr_ref": soldr_ref or "release",
         "soldr_version": soldr_version or "latest",
     }
     digest = hashlib.sha256(
@@ -477,6 +479,8 @@ def main() -> None:
     log(f"target-cache key={target_cache_key}")
     log(f"target-cache enabled={str(target_cache_enabled).lower()}")
     log(f"target-cache mode={target_cache_effective_mode}")
+    log(f"soldr repo={soldr_repo}")
+    log(f"soldr ref={soldr_ref or 'release'}")
     if target_cache_parent_key:
         log(f"target-cache restore-key-parent={target_cache_parent_key}")
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
@@ -519,6 +523,7 @@ def main() -> None:
             "bin_dir": str(bin_dir),
             "soldr_path": str(soldr_path),
             "soldr_repo": soldr_repo,
+            "soldr_ref": soldr_ref,
             "soldr_version_requested": soldr_version,
             "toolchain_channel": toolchain["channel"],
             "toolchain_profile": toolchain["profile"],

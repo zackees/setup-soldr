@@ -13,6 +13,7 @@ import tempfile
 import urllib.error
 import urllib.request
 import zipfile
+from contextlib import closing
 from pathlib import Path
 
 from log_utils import log
@@ -49,6 +50,10 @@ def _release_url(repo: str, version: str) -> str:
     return f"https://api.github.com/repos/{repo}/releases/latest"
 
 
+def _source_archive_url(repo: str, ref: str) -> str:
+    return f"https://api.github.com/repos/{repo}/zipball/{ref}"
+
+
 def _request_headers() -> dict[str, str]:
     headers = {
         "Accept": "application/vnd.github+json",
@@ -79,6 +84,45 @@ def _installed_version(binary_path: Path) -> str | None:
     return str(payload["soldr_version"])
 
 
+def _source_metadata_path(install_dir: Path) -> Path:
+    return install_dir / ".setup-soldr-source.json"
+
+
+def _load_source_metadata(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    return {str(key): str(value) for key, value in payload.items()}
+
+
+def _write_source_metadata(path: Path, payload: dict[str, str]) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _source_install_matches(
+    install_dir: Path,
+    repo: str,
+    ref: str,
+    target: str,
+    binary_name: str,
+) -> bool:
+    binary_path = install_dir / binary_name
+    metadata = _load_source_metadata(_source_metadata_path(install_dir))
+    if metadata is None or not binary_path.exists():
+        return False
+    return (
+        metadata.get("repo") == repo
+        and metadata.get("ref") == ref
+        and metadata.get("target") == target
+        and metadata.get("binary_name") == binary_name
+    )
+
+
 def _select_asset(release: dict[str, object], target: str, archive_ext: str) -> tuple[str, str]:
     assets = release.get("assets") or []
     for asset in assets:
@@ -105,12 +149,93 @@ def _extract_binary(archive_path: Path, archive_ext: str, binary_name: str, out_
     raise RuntimeError(f"downloaded archive did not contain {binary_name}")
 
 
+def _download(url: str, destination: Path) -> None:
+    request = urllib.request.Request(url, headers=_request_headers())
+    with closing(urllib.request.urlopen(request)) as response, destination.open("wb") as fh:
+        shutil.copyfileobj(response, fh)
+
+
+def _extract_repo_root(archive_path: Path, out_dir: Path) -> Path:
+    with zipfile.ZipFile(archive_path) as archive:
+        archive.extractall(out_dir)
+    directories = [path for path in out_dir.iterdir() if path.is_dir()]
+    if len(directories) != 1:
+        raise RuntimeError("source archive did not contain exactly one repository root")
+    return directories[0]
+
+
+def _build_from_source(repo: str, ref: str, install_dir: Path, target: str, binary_name: str) -> Path:
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_dir = Path(tmp)
+        archive_path = tmp_dir / "source.zip"
+        source_root = tmp_dir / "source"
+        log(f"Downloading soldr source from {repo}@{ref}")
+        _download(_source_archive_url(repo, ref), archive_path)
+        repo_root = _extract_repo_root(archive_path, source_root)
+        env = os.environ.copy()
+        env["CARGO_TERM_COLOR"] = env.get("CARGO_TERM_COLOR", "always")
+        command = [
+            "cargo",
+            "build",
+            "--locked",
+            "--bin",
+            "soldr",
+            "--target",
+            target,
+        ]
+        log(f"Building soldr from source ref {ref}")
+        subprocess.check_call(command, cwd=repo_root, env=env)
+        built_binary = repo_root / "target" / target / "debug" / binary_name
+        if not built_binary.exists():
+            raise RuntimeError(f"built soldr binary not found at {built_binary}")
+        destination = install_dir / binary_name
+        shutil.copy2(built_binary, destination)
+        if os.name != "nt":
+            destination.chmod(
+                destination.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            )
+        _write_source_metadata(
+            _source_metadata_path(install_dir),
+            {
+                "repo": repo,
+                "ref": ref,
+                "target": target,
+                "binary_name": binary_name,
+            },
+        )
+        return destination
+
+
 def main() -> None:
     install_dir = Path(os.environ["SOLDR_INSTALL_DIR"])
     install_dir.mkdir(parents=True, exist_ok=True)
-    binary_name = "soldr.exe" if os.name == "nt" else "soldr"
+    target, archive_ext, binary_name = _detect_target()
     binary_path = install_dir / binary_name
     requested_version = os.environ.get("SETUP_SOLDR_VERSION", "").strip()
+    requested_ref = os.environ.get("SOLDR_REF", "").strip()
+    repo = os.environ.get("SOLDR_REPO", "zackees/soldr").strip() or "zackees/soldr"
+
+    if requested_ref:
+        if requested_version:
+            log(f"Ignoring requested release version {requested_version!r} because SOLDR_REF is set")
+        if _source_install_matches(install_dir, repo, requested_ref, target, binary_name):
+            current = _installed_version(binary_path)
+            if current is not None:
+                log(f"Using cached soldr {current} built from {repo}@{requested_ref}")
+                output = os.environ.get("GITHUB_OUTPUT")
+                if output:
+                    with open(output, "a", encoding="utf-8") as fh:
+                        fh.write(f"installed_version={current}\n")
+                return
+
+        built_path = _build_from_source(repo, requested_ref, install_dir, target, binary_name)
+        current = _installed_version(built_path)
+        log(f"Installed soldr {current or requested_ref} from {repo}@{requested_ref} at {built_path}")
+        output = os.environ.get("GITHUB_OUTPUT")
+        if output:
+            with open(output, "a", encoding="utf-8") as fh:
+                fh.write(f"installed_version={(current or requested_ref)}\n")
+        return
 
     current = _installed_version(binary_path)
     if current is not None:
@@ -122,8 +247,6 @@ def main() -> None:
                     fh.write(f"installed_version={current}\n")
             return
 
-    repo = os.environ.get("SOLDR_REPO", "zackees/soldr").strip() or "zackees/soldr"
-    target, archive_ext, binary_name = _detect_target()
     log(f"Resolving soldr release from {repo}")
     release = _fetch_release(repo, requested_version)
     asset_name, download_url = _select_asset(release, target, archive_ext)
@@ -139,6 +262,9 @@ def main() -> None:
         shutil.copy2(source, binary_path)
         if os.name != "nt":
             binary_path.chmod(binary_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    metadata_path = _source_metadata_path(install_dir)
+    if metadata_path.exists():
+        metadata_path.unlink()
     log(f"Installed soldr {tag_name} at {binary_path}")
 
     output = os.environ.get("GITHUB_OUTPUT")

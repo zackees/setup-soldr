@@ -9,6 +9,14 @@ inputs:
     description: Soldr version or tag to install. Defaults to 0.7.10.
     required: false
     default: "0.7.10"
+  repo:
+    description: Internal override for the Soldr source repository used by integration branches.
+    required: false
+    default: zackees/soldr
+  ref:
+    description: Internal override that builds Soldr from a Git ref instead of downloading a release asset.
+    required: false
+    default: ""
   cache:
     description: Restore and save the action-managed cache/state root across workflow runs.
     required: false
@@ -147,6 +155,8 @@ runs:
       shell: pwsh
       env:
         INPUT_VERSION: ${{ inputs.version }}
+        INPUT_REPO: ${{ inputs.repo }}
+        INPUT_REF: ${{ inputs.ref }}
         INPUT_CACHE_DIR: ${{ inputs.cache-dir }}
         INPUT_CACHE_KEY_SUFFIX: ${{ inputs.cache-key-suffix }}
         INPUT_TOOLCHAIN: ${{ inputs.toolchain }}
@@ -258,6 +268,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
         SOLDR_REPO: ${{ steps.resolve.outputs.soldr_repo }}
+        SOLDR_REF: ${{ steps.resolve.outputs.soldr_ref }}
         SOLDR_INSTALL_DIR: ${{ steps.resolve.outputs.bin_dir }}
         SETUP_SOLDR_VERSION: ${{ steps.resolve.outputs.soldr_version_requested }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/ensure_soldr.py"
