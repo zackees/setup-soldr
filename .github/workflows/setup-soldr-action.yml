@@ -38,12 +38,9 @@ jobs:
         uses: ./setup-soldr
         with:
           cache: true
+          build-cache-mode: thin
           lockfile: zccache/Cargo.lock
           target-dir: zccache/target
-          target-cache-paths: |
-            zccache/target/.rustc_info.json
-            zccache/target/CACHEDIR.TAG
-            zccache/target/debug
           cache-key-suffix: zccache
 
       - name: Show action outputs
@@ -58,6 +55,7 @@ jobs:
           Write-Host "build-cache-hit=${{ steps.setup.outputs.build-cache-hit }}"
           Write-Host "build-cache-key=${{ steps.setup.outputs.build-cache-key }}"
           Write-Host "build-cache-path=${{ steps.setup.outputs.build-cache-path }}"
+          Write-Host "build-cache-mode=${{ steps.setup.outputs.build-cache-mode }}"
           Write-Host "build-cache-restore-status=${{ steps.setup.outputs.build-cache-restore-status }}"
           Write-Host "target-cache-hit=${{ steps.setup.outputs.target-cache-hit }}"
           Write-Host "target-cache-key=${{ steps.setup.outputs.target-cache-key }}"

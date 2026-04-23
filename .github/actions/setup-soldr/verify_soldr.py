@@ -9,6 +9,17 @@ import sys
 from log_utils import log, run
 
 
+def _version_tuple(value: str) -> tuple[int, int, int] | None:
+    cleaned = value.strip().lstrip("v")
+    parts = cleaned.split(".")
+    if len(parts) < 3:
+        return None
+    try:
+        return int(parts[0]), int(parts[1]), int(parts[2].split("-", 1)[0])
+    except ValueError:
+        return None
+
+
 def _is_transient_zccache_status_failure(exc: subprocess.CalledProcessError) -> bool:
     combined = "\n".join(
         part
@@ -32,6 +43,17 @@ def main() -> None:
 
     with open(output_path, "a", encoding="utf-8") as fh:
         fh.write(f"soldr_version={payload['soldr_version']}\n")
+
+    if os.environ.get("SETUP_SOLDR_REQUIRE_RUST_PLAN", "").lower() == "true":
+        soldr_version = str(payload["soldr_version"])
+        parsed = _version_tuple(soldr_version)
+        if parsed is None or parsed < (0, 7, 10):
+            mode = os.environ.get("SETUP_SOLDR_BUILD_CACHE_MODE", "thin")
+            raise RuntimeError(
+                "setup-soldr build-cache-mode "
+                f"{mode!r} requires soldr v0.7.10 or newer for the "
+                f"zccache Rust artifact plan API; installed {soldr_version}."
+            )
 
     run(["cargo", "--version"])
     run(["rustc", "--version"])
