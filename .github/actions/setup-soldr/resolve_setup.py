@@ -446,7 +446,10 @@ def main() -> None:
     )
     _write_env("SOLDR_TARGET_CACHE_DIR", str(target_cache_path))
     _write_env("SOLDR_TARGET_CACHE_BUNDLE_DIR", str(target_cache_bundle_path))
-    _write_env("SOLDR_TARGET_CACHE_BACKEND", "auto")
+    # setup-soldr already rehydrates the rust-plan bundle directory with
+    # actions/cache, so the soldr/zccache layer should operate on that local
+    # bundle instead of switching to zccache's separate direct GHA backend.
+    _write_env("SOLDR_TARGET_CACHE_BACKEND", "local")
     _write_env("SETUP_SOLDR_TOOLCHAIN_CHANNEL", toolchain["channel"])
     _write_env("SETUP_SOLDR_TOOLCHAIN_PROFILE", toolchain["profile"])
     _write_env("SETUP_SOLDR_TOOLCHAIN_COMPONENTS", json.dumps(toolchain["components"]))
@@ -479,6 +482,7 @@ def main() -> None:
     log(f"target-cache key={target_cache_key}")
     log(f"target-cache enabled={str(target_cache_enabled).lower()}")
     log(f"target-cache mode={target_cache_effective_mode}")
+    log("target-cache backend=local")
     log(f"soldr repo={soldr_repo}")
     log(f"soldr ref={soldr_ref or 'release'}")
     if target_cache_parent_key:

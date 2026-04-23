@@ -131,6 +131,7 @@ class BuildCacheModeResolveTests(unittest.TestCase):
             result.env_exports.get("SOLDR_TARGET_CACHE_MODE"),
             target_expected or soldr_expected or expected,
         )
+        self.assertEqual(result.env_exports.get("SOLDR_TARGET_CACHE_BACKEND"), "local")
 
     def test_default_build_cache_mode_resolves_to_once(self) -> None:
         self.assert_resolved_build_cache_mode(_run_resolve_setup(), "once", "full")
