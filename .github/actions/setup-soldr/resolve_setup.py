@@ -396,6 +396,8 @@ def main() -> None:
     )
     target_cache_bundle_path = thin_target_cache_bundle_path
 
+    target_tree_cache_enabled = target_cache_enabled and build_cache_mode == "full"
+
     if not target_cache_enabled:
         target_cache_paths = (
             str(target_cache_path)
@@ -407,7 +409,7 @@ def main() -> None:
         target_cache_lock_prefix = ""
         target_cache_key = f"{target_cache_prefix}-{target_inputs_hash}"
         target_cache_parent_key = ""
-    elif build_cache_runtime_mode == "full":
+    elif target_tree_cache_enabled:
         # Restore both the full target tree and the separate rust-plan bundle
         # root so soldr/zccache can reuse the local bundle without storing it
         # inside target/ and re-bundling previous bundle contents on save.
@@ -430,8 +432,10 @@ def main() -> None:
         target_cache_parent_key = f"{target_cache_lock_prefix}{parent_sha}" if parent_sha else ""
     else:
         target_cache_paths = str(target_cache_bundle_path)
-        target_cache_effective_mode = "thin"
-        target_cache_prefix = f"setup-soldr-targetcache-thin-v1-{runner_os}-{runner_arch}"
+        target_cache_effective_mode = build_cache_mode
+        target_cache_prefix = (
+            f"setup-soldr-targetcache-{build_cache_mode}-v1-{runner_os}-{runner_arch}"
+        )
         target_cache_suffix_fragment = f"{sanitized_suffix}-" if sanitized_suffix else ""
         target_cache_lock_prefix = (
             f"{target_cache_prefix}-{target_inputs_hash}-{target_cache_suffix_fragment}"
@@ -506,7 +510,7 @@ def main() -> None:
     _path_summary("build-cache before restore", zccache_cache_dir)
     _path_summary(
         "target-cache before restore",
-        target_cache_path if build_cache_runtime_mode == "full" else target_cache_bundle_path,
+        target_cache_path if target_tree_cache_enabled else target_cache_bundle_path,
     )
 
     _write_outputs(
