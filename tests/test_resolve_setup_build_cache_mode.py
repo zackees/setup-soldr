@@ -46,16 +46,22 @@ def _parse_github_kv_file(path: Path) -> dict[str, str]:
     return values
 
 
-def _run_resolve_setup(extra_env: dict[str, str] | None = None) -> ResolveResult:
+def _run_resolve_setup(
+    extra_env: dict[str, str] | None = None,
+    *,
+    include_explicit_toolchain_homes: bool = True,
+) -> ResolveResult:
     with tempfile.TemporaryDirectory(prefix="setup-soldr-tests-") as temp_dir:
         root = Path(temp_dir)
         workspace = root / "workspace"
         runner_temp = root / "runner-temp"
+        home_dir = root / "home"
         github_env = root / "github-env"
         github_output = root / "github-output"
         github_path = root / "github-path"
         workspace.mkdir()
         runner_temp.mkdir()
+        home_dir.mkdir()
         (workspace / "Cargo.lock").write_text("# test lockfile\n", encoding="utf-8")
 
         env = os.environ.copy()
@@ -82,12 +88,19 @@ def _run_resolve_setup(extra_env: dict[str, str] | None = None) -> ResolveResult
                 "GITHUB_OUTPUT": str(github_output),
                 "GITHUB_PATH": str(github_path),
                 "GITHUB_SHA": "0123456789abcdef",
-                "CARGO_HOME": str(root / "cargo-home"),
-                "RUSTUP_HOME": str(root / "rustup-home"),
+                "HOME": str(home_dir),
+                "USERPROFILE": str(home_dir),
                 "INPUT_TIMESTAMPS": "false",
                 "INPUT_TOOLCHAIN_FILE": "",
             }
         )
+        if include_explicit_toolchain_homes:
+            env.update(
+                {
+                    "CARGO_HOME": str(root / "cargo-home"),
+                    "RUSTUP_HOME": str(root / "rustup-home"),
+                }
+            )
         if extra_env:
             env.update(extra_env)
 
@@ -175,6 +188,18 @@ class BuildCacheModeResolveTests(unittest.TestCase):
             result.outputs["setup_cache_paths"],
             f"{setup_cache_path}\n{soldr_root / 'bin'}",
         )
+
+    def test_default_rustup_home_lives_under_setup_cache_root(self) -> None:
+        result = _run_resolve_setup(include_explicit_toolchain_homes=False)
+
+        self.assertEqual(result.returncode, 0)
+        setup_cache_path = Path(result.outputs["setup_cache_path"])
+        rustup_home = Path(result.outputs["rustup_home"])
+        cargo_home = Path(result.outputs["cargo_home"])
+        self.assertEqual(rustup_home, setup_cache_path / "rustup-home")
+        self.assertEqual(result.env_exports.get("RUSTUP_HOME"), str(rustup_home))
+        self.assertEqual(cargo_home, Path(result.env_exports["CARGO_HOME"]))
+        self.assertNotIn(setup_cache_path, cargo_home.parents)
 
     def test_full_mode_restores_target_tree_and_bundle_root_together(self) -> None:
         result = _run_resolve_setup({"INPUT_BUILD_CACHE_MODE": "full"})

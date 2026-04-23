@@ -125,7 +125,7 @@ jobs:
 - The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.10`.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
-- The action rehydrates the Soldr setup root and uses the runner's existing Cargo/rustup homes unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
+- The action rehydrates the Soldr setup root, keeps a managed `RUSTUP_HOME` inside that cache by default, and continues to use the runner's existing `CARGO_HOME` unless `CARGO_HOME` or `RUSTUP_HOME` are already set by the workflow.
 - The action restores Soldr/zccache cache state by default so child branches can reuse parent-branch build state.
 - The default `build-cache-mode` is `once`, which maps to soldr/zccache full-target planning on a cold run but restores only the local rust-plan bundle on later hits. Use `build-cache-mode: thin` for the bounded dependency-artifact alternative, or `build-cache-mode: full` when you explicitly want normal whole-target restore/save behavior on every run.
 - In `once` mode, an exact rust-plan bundle hit skips the separate build-cache restore because the target bundle already rehydrates the warm artifacts needed for the following build.

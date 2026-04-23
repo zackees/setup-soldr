@@ -40,6 +40,15 @@ def test_setup_cache_uses_lookup_exact_restore_and_managed_fallback() -> None:
     assert "id: cache-save" not in action
 
 
+def test_toolchain_step_receives_setup_cache_exact_hit_metadata() -> None:
+    action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
+
+    assert "SETUP_SOLDR_SETUP_CACHE_EXACT_HIT" in action
+    assert "steps.cache-lookup.outputs.cache-hit" in action
+    assert "SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL" in action
+    assert "steps.resolve.outputs.toolchain_cache_channel" in action
+
+
 def test_once_mode_skips_build_cache_restore_when_target_cache_is_exact_hit() -> None:
     action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
 

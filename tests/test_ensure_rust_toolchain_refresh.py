@@ -121,6 +121,135 @@ class EnsureRustToolchainRefreshTests(unittest.TestCase):
             commands,
         )
 
+    def test_main_skips_refresh_for_exact_hit_when_release_matches(self) -> None:
+        module = _load_module()
+        commands: list[list[str]] = []
+
+        def fake_run(command: list[str]) -> None:
+            commands.append(command)
+
+        with tempfile.TemporaryDirectory(prefix="setup-soldr-toolchain-") as temp_dir:
+            root = Path(temp_dir)
+            env = {
+                "CARGO_HOME": str(root / "cargo-home"),
+                "RUSTUP_HOME": str(root / "rustup-home"),
+                "SOLDR_CACHE_DIR": str(root / "soldr"),
+                "SETUP_SOLDR_TOOLCHAIN_CHANNEL": "stable",
+                "SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL": "1.95.0",
+                "SETUP_SOLDR_TOOLCHAIN_PROFILE": "minimal",
+                "SETUP_SOLDR_SETUP_CACHE_EXACT_HIT": "true",
+            }
+
+            with patch.dict(os.environ, env, clear=False):
+                with (
+                    patch.object(module, "ensure_rustup_available", return_value="rustup"),
+                    patch.object(module, "toolchain_available", return_value=True),
+                    patch.object(module, "installed_toolchain_release", return_value="1.95.0"),
+                    patch.object(module, "_json_list_env", return_value=[]),
+                    patch.object(module, "add_components"),
+                    patch.object(module, "add_targets"),
+                    patch.object(module, "run", side_effect=fake_run),
+                    patch.object(
+                        module.shutil,
+                        "which",
+                        side_effect=lambda name: f"/fake/{name}"
+                        if name in {"cargo", "rustc", "rustup"}
+                        else None,
+                    ),
+                ):
+                    module.main()
+
+        self.assertNotIn(
+            ["rustup", "toolchain", "install", "stable", "--profile", "minimal"],
+            commands,
+        )
+
+    def test_main_skips_refresh_for_beta_exact_hit_when_release_matches(self) -> None:
+        module = _load_module()
+        commands: list[list[str]] = []
+
+        def fake_run(command: list[str]) -> None:
+            commands.append(command)
+
+        with tempfile.TemporaryDirectory(prefix="setup-soldr-toolchain-") as temp_dir:
+            root = Path(temp_dir)
+            env = {
+                "CARGO_HOME": str(root / "cargo-home"),
+                "RUSTUP_HOME": str(root / "rustup-home"),
+                "SOLDR_CACHE_DIR": str(root / "soldr"),
+                "SETUP_SOLDR_TOOLCHAIN_CHANNEL": "beta",
+                "SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL": "1.96.0-beta.3",
+                "SETUP_SOLDR_TOOLCHAIN_PROFILE": "minimal",
+                "SETUP_SOLDR_SETUP_CACHE_EXACT_HIT": "true",
+            }
+
+            with patch.dict(os.environ, env, clear=False):
+                with (
+                    patch.object(module, "ensure_rustup_available", return_value="rustup"),
+                    patch.object(module, "toolchain_available", return_value=True),
+                    patch.object(module, "installed_toolchain_release", return_value="1.96.0-beta.3"),
+                    patch.object(module, "_json_list_env", return_value=[]),
+                    patch.object(module, "add_components"),
+                    patch.object(module, "add_targets"),
+                    patch.object(module, "run", side_effect=fake_run),
+                    patch.object(
+                        module.shutil,
+                        "which",
+                        side_effect=lambda name: f"/fake/{name}"
+                        if name in {"cargo", "rustc", "rustup"}
+                        else None,
+                    ),
+                ):
+                    module.main()
+
+        self.assertNotIn(
+            ["rustup", "toolchain", "install", "beta", "--profile", "minimal"],
+            commands,
+        )
+
+    def test_main_refreshes_exact_hit_when_release_does_not_match(self) -> None:
+        module = _load_module()
+        commands: list[list[str]] = []
+
+        def fake_run(command: list[str]) -> None:
+            commands.append(command)
+
+        with tempfile.TemporaryDirectory(prefix="setup-soldr-toolchain-") as temp_dir:
+            root = Path(temp_dir)
+            env = {
+                "CARGO_HOME": str(root / "cargo-home"),
+                "RUSTUP_HOME": str(root / "rustup-home"),
+                "SOLDR_CACHE_DIR": str(root / "soldr"),
+                "SETUP_SOLDR_TOOLCHAIN_CHANNEL": "stable",
+                "SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL": "1.95.0",
+                "SETUP_SOLDR_TOOLCHAIN_PROFILE": "minimal",
+                "SETUP_SOLDR_SETUP_CACHE_EXACT_HIT": "true",
+            }
+
+            with patch.dict(os.environ, env, clear=False):
+                with (
+                    patch.object(module, "ensure_rustup_available", return_value="rustup"),
+                    patch.object(module, "toolchain_available", return_value=True),
+                    patch.object(module, "installed_toolchain_release", return_value="1.94.1"),
+                    patch.object(module, "_json_list_env", return_value=[]),
+                    patch.object(module, "add_components"),
+                    patch.object(module, "add_targets"),
+                    patch.object(module, "run", side_effect=fake_run),
+                    patch.object(
+                        module.shutil,
+                        "which",
+                        side_effect=lambda name: f"/fake/{name}"
+                        if name in {"cargo", "rustc", "rustup"}
+                        else None,
+                    ),
+                ):
+                    module.main()
+
+        self.assertIn(
+            ["rustup", "toolchain", "install", "stable", "--profile", "minimal"],
+            commands,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

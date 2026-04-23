@@ -292,6 +292,9 @@ runs:
 
     - id: toolchain
       shell: pwsh
+      env:
+        SETUP_SOLDR_SETUP_CACHE_EXACT_HIT: ${{ steps.cache-lookup.outputs.cache-hit }}
+        SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL: ${{ steps.resolve.outputs.toolchain_cache_channel }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/ensure_rust_toolchain.py"
 
     - id: install
