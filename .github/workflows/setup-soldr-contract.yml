@@ -1,0 +1,56 @@
+name: Setup Soldr Contract
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - README.md
+      - action.yml
+      - tests/**
+      - .github/actions/setup-soldr/**
+      - .github/workflows/setup-soldr-action.yml
+      - .github/workflows/setup-soldr-contract.yml
+      - .github/workflows/zccache-build-demo.yml
+  pull_request:
+    paths:
+      - README.md
+      - action.yml
+      - tests/**
+      - .github/actions/setup-soldr/**
+      - .github/workflows/setup-soldr-action.yml
+      - .github/workflows/setup-soldr-contract.yml
+      - .github/workflows/zccache-build-demo.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install pytest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python --version
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+
+      - name: Run setup-soldr contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pytest \
+            tests/test_action_target_cache_wiring.py \
+            tests/test_ensure_rust_toolchain_refresh.py \
+            tests/test_ensure_soldr_source_ref.py \
+            tests/test_release_rollout_contract.py \
+            tests/test_resolve_setup_build_cache_mode.py \
+            tests/test_resolve_setup_toolchain_resolution.py \
+            tests/test_zccache_build_demo_workflow.py
