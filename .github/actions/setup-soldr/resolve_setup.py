@@ -268,7 +268,10 @@ def main() -> None:
     )
     bin_dir = cache_root / "bin"
     setup_cache_path = cache_root
-    zccache_cache_dir = soldr_root / "cache" / "zccache"
+    # Keep the Soldr-managed zccache store outside the setup cache root so the
+    # same payload is not restored twice through both setup-cache and
+    # build-cache layers on warm exact hits.
+    zccache_cache_dir = cache_root.parent / f"{cache_root.name}-buildcache"
     thin_target_cache_bundle_path = cache_root.parent / f"{cache_root.name}-target-thin"
     soldr_binary = "soldr.exe" if os.name == "nt" else "soldr"
     soldr_path = bin_dir / soldr_binary
@@ -312,7 +315,8 @@ def main() -> None:
     ).hexdigest()[:16]
     runner_os = _sanitize_fragment(os.environ.get("ACTION_OS", os.name).lower())
     runner_arch = _sanitize_fragment(os.environ.get("ACTION_ARCH", "unknown").lower())
-    cache_prefix = f"setup-soldr-v2-{runner_os}-{runner_arch}"
+    # v3 excludes the dedicated zccache build cache from the setup-cache root.
+    cache_prefix = f"setup-soldr-v3-{runner_os}-{runner_arch}"
     cache_key = f"{cache_prefix}-{digest}"
     workspace_manifest_hash = _workspace_manifest_hash(workspace)
     cargo_config_hash = _cargo_config_hash(workspace)

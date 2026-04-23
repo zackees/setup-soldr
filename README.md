@@ -130,7 +130,7 @@ jobs:
 - The default `build-cache-mode` is `once`, which maps to soldr/zccache full-target planning on a cold run but restores only the local rust-plan bundle on later hits. Use `build-cache-mode: thin` for the bounded dependency-artifact alternative, or `build-cache-mode: full` when you explicitly want normal whole-target restore/save behavior on every run.
 - zccache is the artifact cache authority; soldr interprets the Rust build and passes zccache a structured Rust artifact plan.
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
-- The setup cache intentionally keeps Soldr-managed state so the managed zccache binary does not need to be rebuilt on every run.
+- The setup cache intentionally keeps Soldr setup state, while the dedicated `ZCCACHE_CACHE_DIR` payload is stored in its own cache so warm runs do not restore the same build-cache bytes twice.
 
 ## Development
 
