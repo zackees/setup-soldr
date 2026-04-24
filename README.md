@@ -140,6 +140,40 @@ jobs:
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
 - The setup cache intentionally keeps the installed `soldr` binary and only includes rustup state when setup-soldr had to fall back to a managed `RUSTUP_HOME` under the setup cache root. The dedicated `ZCCACHE_CACHE_DIR` payload stays in its own cache so warm runs do not restore the same build-cache bytes twice.
 
+## Known limitations
+
+### Repeated `soldr cargo build` sharing a target directory
+
+Running `soldr cargo build` twice in a single job against the same Cargo
+`target/` directory is currently best-effort and not guaranteed to succeed.
+When `build-cache-mode: once` (the default) is combined with a pre-populated
+target directory, the second invocation can restore a stale rust-plan bundle
+whose `restored_file_count` is `0`, and Cargo then fails with
+`error: extern location for ring does not exist: .../libring-*.rmeta`.
+
+When setup-soldr detects that the restored `target-dir` already contains
+compiled artifacts (a `deps/` subtree with `.rmeta` files) under the
+risky configuration, it emits a GitHub Actions log warning so the pitfall
+surfaces before Cargo trips on it.
+
+Recommended workaround: give the second invocation its own `--target-dir`,
+or call `cargo build` directly.
+
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: zackees/setup-soldr@v0
+    with:
+      cache: true
+  - run: soldr cargo build --locked --release
+  # Use a distinct target dir for the second build so the first build's
+  # rust-plan is not reused with a stale dependency map.
+  - run: soldr cargo build --locked --release --target-dir target/python-extension
+```
+
+See [issue #53](https://github.com/zackees/setup-soldr/issues/53) for
+background.
+
 ## Development
 
 Clone with submodules, or initialize them after clone:

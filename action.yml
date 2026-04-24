@@ -511,3 +511,12 @@ runs:
           LogPath "target-cache tree after restore" "${{ steps.resolve.outputs.target_cache_path }}"
         }
         LogPath "target-cache bundle after restore" "${{ steps.resolve.outputs.target_cache_bundle_path }}"
+
+    - id: shared-target-warning
+      shell: pwsh
+      env:
+        BUILD_CACHE_ENABLED: ${{ inputs.build-cache }}
+        EFFECTIVE_TARGET_CACHE_ENABLED: ${{ steps.resolve.outputs.target_cache_enabled }}
+        BUILD_CACHE_MODE: ${{ steps.resolve.outputs.build_cache_mode }}
+        TARGET_DIR: ${{ steps.resolve.outputs.target_cache_path }}
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/detect_shared_target_warning.py"

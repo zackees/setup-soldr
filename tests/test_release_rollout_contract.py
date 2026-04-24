@@ -26,6 +26,7 @@ def test_rollout_contract_workflow_runs_unit_tests_for_the_release_path() -> Non
     assert "python -m pytest" in workflow
     assert "tests/test_action_python_entrypoints.py" in workflow
     assert "tests/test_action_target_cache_wiring.py" in workflow
+    assert "tests/test_detect_shared_target_warning.py" in workflow
     assert "tests/test_ensure_rust_toolchain_refresh.py" in workflow
     assert "tests/test_ensure_soldr_release_resolution.py" in workflow
     assert "tests/test_ensure_soldr_source_ref.py" in workflow

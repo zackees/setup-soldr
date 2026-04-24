@@ -71,6 +71,22 @@ def test_install_step_uses_resolved_soldr_release_version() -> None:
     assert "SETUP_SOLDR_VERSION: ${{ steps.resolve.outputs.soldr_version_resolved }}" in action
 
 
+def test_shared_target_dir_warning_step_is_wired() -> None:
+    action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
+
+    assert "id: shared-target-warning" in action
+    assert "detect_shared_target_warning.py" in action
+    assert "BUILD_CACHE_ENABLED: ${{ inputs.build-cache }}" in action
+    assert (
+        "EFFECTIVE_TARGET_CACHE_ENABLED: ${{ steps.resolve.outputs.target_cache_enabled }}"
+        in action
+    )
+    assert (
+        "BUILD_CACHE_MODE: ${{ steps.resolve.outputs.build_cache_mode }}" in action
+    )
+    assert "TARGET_DIR: ${{ steps.resolve.outputs.target_cache_path }}" in action
+
+
 def test_once_mode_skips_build_cache_restore_when_target_cache_is_exact_hit() -> None:
     action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
 

@@ -18,6 +18,7 @@ EXPECTED_ENTRYPOINTS = {
     ".github/actions/setup-soldr/ensure_rust_toolchain.py",
     ".github/actions/setup-soldr/ensure_soldr.py",
     ".github/actions/setup-soldr/verify_soldr.py",
+    ".github/actions/setup-soldr/detect_shared_target_warning.py",
 }
 
 
