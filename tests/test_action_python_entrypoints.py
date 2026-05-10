@@ -16,6 +16,7 @@ ACTION_YML = REPO_ROOT / "action.yml"
 EXPECTED_ENTRYPOINTS = {
     ".github/actions/setup-soldr/phase_timing.py",
     ".github/actions/setup-soldr/resolve_setup.py",
+    ".github/actions/setup-soldr/normalize_source_mtime.py",
     ".github/actions/setup-soldr/ensure_rust_toolchain.py",
     ".github/actions/setup-soldr/ensure_soldr.py",
     ".github/actions/setup-soldr/verify_soldr.py",

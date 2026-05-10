@@ -81,6 +81,16 @@ inputs:
     description: Cargo target directory used by soldr when constructing the Rust artifact cache plan.
     required: false
     default: target
+  source-mtime-normalize:
+    description: >
+      Opt-in. When "true", rewrite the mtime of tracked Rust build-input files
+      under the GitHub Actions workspace to each file's last-commit timestamp
+      before the target-cache restore runs. This keeps Cargo fingerprints
+      stable across fresh checkouts of the same SHA so restored target caches
+      can be reused as a no-op. Files with no git history are left alone, so
+      real source edits still invalidate fingerprints. Defaults to "false".
+    required: false
+    default: "false"
 outputs:
   soldr-path:
     description: Installed Soldr binary path added to PATH for later steps.
@@ -209,6 +219,15 @@ runs:
     - id: phase-resolve-end
       shell: pwsh
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish resolve
+
+    - id: normalize-source-mtime
+      if: ${{ inputs.source-mtime-normalize == 'true' }}
+      shell: pwsh
+      env:
+        INPUT_SOURCE_MTIME_NORMALIZE: ${{ inputs.source-mtime-normalize }}
+        ACTION_WORKSPACE: ${{ github.workspace }}
+        SETUP_SOLDR_TIMESTAMPS: ${{ inputs.timestamps }}
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/normalize_source_mtime.py"
 
     - id: phase-setup-cache-start
       shell: pwsh
