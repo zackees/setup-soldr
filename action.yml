@@ -92,6 +92,29 @@ inputs:
       for at least one week.
     required: false
     default: thin-v1
+  target-cache-strip-debuginfo:
+    description: >
+      When "true", requests that soldr strip debug-info-bearing artifacts from
+      the target-cache before saving. Forward-compatible: requires soldr#237 to
+      take effect; current soldr releases ignore the flag. Default "" (unset -
+      soldr default applies).
+    required: false
+    default: ""
+  target-cache-include-incremental:
+    description: >
+      When "false", requests that soldr exclude target/*/incremental/
+      directories from the target-cache. Forward-compatible: requires
+      soldr#237 to take effect. Default "" (unset - soldr default applies).
+    required: false
+    default: ""
+  target-cache-include-build-script-binaries:
+    description: >
+      When "false", requests that soldr exclude
+      target/*/build/*-{hash}/build-script-build binaries from the
+      target-cache. Forward-compatible: requires soldr#237 to take effect.
+      Default "" (unset - soldr default applies).
+    required: false
+    default: ""
   source-mtime-normalize:
     description: >
       Opt-in. When "true", rewrite the mtime of tracked Rust build-input files
@@ -225,6 +248,9 @@ runs:
         INPUT_TARGET_CACHE_MODE: ${{ inputs.target-cache-mode }}
         INPUT_TARGET_DIR: ${{ inputs.target-dir }}
         INPUT_TARGET_CACHE_PROFILE: ${{ inputs.target-cache-profile }}
+        INPUT_TARGET_CACHE_STRIP_DEBUGINFO: ${{ inputs.target-cache-strip-debuginfo }}
+        INPUT_TARGET_CACHE_INCLUDE_INCREMENTAL: ${{ inputs.target-cache-include-incremental }}
+        INPUT_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES: ${{ inputs.target-cache-include-build-script-binaries }}
         ACTION_WORKSPACE: ${{ github.workspace }}
         ACTION_OS: ${{ runner.os }}
         ACTION_ARCH: ${{ runner.arch }}
