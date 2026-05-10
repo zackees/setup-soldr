@@ -730,6 +730,12 @@ def main() -> None:
             "toolchain": digest,
         }
     )
+    lockfile_only_hash = _short_json_hash(
+        {
+            "cargo_lock": cargo_lock_hash,
+            "toolchain": digest,
+        }
+    )
     target_cache_bundle_path = thin_target_cache_bundle_path
 
     target_tree_cache_enabled = target_cache_enabled and build_cache_mode == "full"
@@ -739,6 +745,7 @@ def main() -> None:
         target_cache_effective_mode = "off"
         target_cache_prefix = f"setup-soldr-targetcache-off-v1-{runner_os}-{runner_arch}"
         target_cache_lock_prefix = ""
+        target_cache_lockfile_prefix = ""
         target_cache_key = f"{target_cache_prefix}-{target_inputs_hash}"
         target_cache_parent_key = ""
     elif target_tree_cache_enabled:
@@ -760,6 +767,9 @@ def main() -> None:
             f"{target_cache_prefix}-{digest}-{cargo_lock_hash}-"
             f"{target_shape_hash}-{target_cache_suffix_fragment}"
         )
+        target_cache_lockfile_prefix = (
+            f"{target_cache_prefix}-{lockfile_only_hash}-{target_cache_suffix_fragment}"
+        )
         target_cache_key = f"{target_cache_lock_prefix}{github_sha}"
         target_cache_parent_key = f"{target_cache_lock_prefix}{parent_sha}" if parent_sha else ""
     else:
@@ -771,6 +781,9 @@ def main() -> None:
         target_cache_suffix_fragment = f"{sanitized_suffix}-" if sanitized_suffix else ""
         target_cache_lock_prefix = (
             f"{target_cache_prefix}-{target_inputs_hash}-{target_cache_suffix_fragment}"
+        )
+        target_cache_lockfile_prefix = (
+            f"{target_cache_prefix}-{lockfile_only_hash}-{target_cache_suffix_fragment}"
         )
         target_cache_key = f"{target_cache_lock_prefix}{github_sha}"
         target_cache_parent_key = f"{target_cache_lock_prefix}{parent_sha}" if parent_sha else ""
@@ -845,6 +858,7 @@ def main() -> None:
     if target_cache_parent_key:
         log(f"target-cache restore-key-parent={target_cache_parent_key}")
     log(f"target-cache restore-key-lock={target_cache_lock_prefix}")
+    log(f"target-cache restore-key-lockfile={target_cache_lockfile_prefix}")
     log(f"target-cache paths={target_cache_paths}")
     log(f"target-cache bundle-dir={target_cache_bundle_path}")
     log(f"target-cache lockfile={_path_for_output(workspace, lockfile_path)}")
@@ -879,6 +893,7 @@ def main() -> None:
             "target_cache_key": target_cache_key,
             "target_cache_restore_key_parent": target_cache_parent_key,
             "target_cache_restore_key_lock": target_cache_lock_prefix,
+            "target_cache_restore_key_lockfile": target_cache_lockfile_prefix,
             "target_cache_budget_bytes": target_cache_budget_bytes,
             "target_cache_budget_files": target_cache_budget_files,
             "target_lockfile_path": _path_for_output(workspace, lockfile_path),

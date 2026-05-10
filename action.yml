@@ -293,6 +293,7 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
         lookup-only: true
 
     - id: target-cache
@@ -304,6 +305,7 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
 
     - id: target-cache-managed
       if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.target-cache-lookup.outputs.cache-hit != 'true' && steps.target-cache-lookup.outputs.cache-matched-key == '')) }}
@@ -314,6 +316,7 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
 
     - id: phase-target-cache-end
       shell: pwsh
@@ -374,6 +377,7 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
         lookup-only: true
 
     - id: target-tree-cache
@@ -385,6 +389,7 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
 
     - id: phase-target-tree-end
       shell: pwsh
