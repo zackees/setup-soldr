@@ -87,6 +87,7 @@ jobs:
 | `build-cache` | Restore and save Soldr/zccache build cache state across runs. Default `true`; set to `false` to opt out. |
 | `build-cache-mode` | Rust build cache mode. Default `once` saves a full snapshot on miss, then restores only the local rust-plan bundle on later hits without resaving the full target tree. `thin` is the bounded dependency-artifact alternative. `full` opts into normal whole-target restore/save behavior and should be treated as unbounded. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
+| `target-cache-profile` | Thin-slice pruning policy for the `target/` cache. `thin-v1` (default) keeps `.rlib`/`.rmeta`/proc-macro outputs. `thin-v2` is the aggressive prune that keeps fingerprints + dep-info + final outputs only and relies on the zccache compilation cache to repopulate library bytes. See "Target cache profile" below before opting in. |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
 
 ### Legacy Compatibility Inputs
@@ -118,6 +119,7 @@ jobs:
 | `target-cache-path` | Cargo target directory used by soldr for Rust artifact planning. |
 | `target-cache-paths` | Path or newline-delimited path list passed to `actions/cache` for zccache-owned Rust artifact cache state. |
 | `target-cache-mode` | Effective setup-soldr Rust target artifact cache mode. |
+| `target-cache-profile` | Effective setup-soldr thin-slice pruning policy (`thin-v1` or `thin-v2`). |
 | `target-cache-restore-status` | Diagnostic restore status for the Rust target artifact cache state. |
 | `target-cache-budget-bytes` | Soft byte budget used to warn when the restored Rust artifact cache footprint is likely too large for fast CI reuse. |
 | `target-cache-budget-files` | Soft file-count budget used to warn when the restored Rust artifact cache footprint is likely too large for fast CI reuse. |
@@ -177,6 +179,36 @@ steps:
 
 See [issue #53](https://github.com/zackees/setup-soldr/issues/53) for
 background.
+
+## Target cache profile
+
+`target-cache-profile` selects the thin-slice pruning policy used when soldr
+builds the cached `target/` slice. Two values are accepted:
+
+- `thin-v1` (default): the legacy slice that keeps `.rlib`, `.rmeta`, and
+  proc-macro outputs alongside fingerprints, dep-info, and final outputs.
+  This preserves the byte-identical behavior shipped before this input
+  existed, so no caller regresses by leaving the input unset.
+- `thin-v2`: an aggressive prune that keeps only fingerprints, dep-info, and
+  final outputs and relies on the zccache compilation cache to repopulate
+  library bytes on warm runs.
+
+`thin-v2` is opt-in. **Stay on `thin-v1` until the zccache repopulation hook
+(soldr#237 Phase 2) has shipped and the
+[`thin-v2-verify`](https://github.com/zackees/soldr/blob/main/.github/workflows/thin-v2-verify.yml)
+gate has been green on soldr `main` for at least one week.** Setting
+`thin-v2` before that point can leave the restored target slice missing
+library bytes that the build still needs.
+
+```yaml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: zackees/setup-soldr@v0
+        with:
+          cache: true
+          target-cache-profile: thin-v2
+      - run: soldr cargo build --locked --release
+```
 
 ## Source mtime normalization
 

@@ -249,6 +249,20 @@ def _target_env_hash() -> str:
     return _short_json_hash(relevant)
 
 
+_TARGET_CACHE_PROFILES = ("thin-v1", "thin-v2")
+
+
+def normalize_target_cache_profile(value: str) -> str:
+    profile = value.strip().lower()
+    if not profile:
+        return "thin-v1"
+    if profile not in _TARGET_CACHE_PROFILES:
+        raise RuntimeError(
+            f"invalid target-cache-profile {value!r}; expected thin-v1 or thin-v2"
+        )
+    return profile
+
+
 def _normalize_legacy_target_cache_mode(value: str) -> str:
     mode = value.strip().lower()
     if not mode:
@@ -666,6 +680,9 @@ def main() -> None:
     legacy_target_cache_mode = _normalize_legacy_target_cache_mode(
         os.environ.get("INPUT_TARGET_CACHE_MODE", "")
     )
+    target_cache_profile = normalize_target_cache_profile(
+        os.environ.get("INPUT_TARGET_CACHE_PROFILE", "")
+    )
     target_cache_requested = (
         os.environ.get("INPUT_TARGET_CACHE", "true").strip().lower()
         not in {"0", "false", "no", "off"}
@@ -775,6 +792,7 @@ def main() -> None:
     )
     _write_env("SOLDR_TARGET_CACHE_DIR", str(target_cache_path))
     _write_env("SOLDR_TARGET_CACHE_BUNDLE_DIR", str(target_cache_bundle_path))
+    _write_env("SOLDR_TARGET_CACHE_PROFILE", target_cache_profile)
     # setup-soldr already rehydrates the rust-plan bundle directory with
     # actions/cache, so the soldr/zccache layer should operate on that local
     # bundle instead of switching to zccache's separate direct GHA backend.
@@ -857,6 +875,7 @@ def main() -> None:
             "target_cache_paths": target_cache_paths,
             "target_cache_enabled": str(target_cache_enabled).lower(),
             "target_cache_mode": target_cache_effective_mode,
+            "target_cache_profile": target_cache_profile,
             "target_cache_key": target_cache_key,
             "target_cache_restore_key_parent": target_cache_parent_key,
             "target_cache_restore_key_lock": target_cache_lock_prefix,
