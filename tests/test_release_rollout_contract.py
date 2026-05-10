@@ -29,6 +29,7 @@ def test_rollout_contract_workflow_runs_unit_tests_for_the_release_path() -> Non
     assert "tests/test_ensure_rust_toolchain_refresh.py" in workflow
     assert "tests/test_ensure_soldr_release_resolution.py" in workflow
     assert "tests/test_ensure_soldr_source_ref.py" in workflow
+    assert "tests/test_phase_timing.py" in workflow
     assert "tests/test_release_rollout_contract.py" in workflow
     assert "tests/test_resolve_setup_build_cache_mode.py" in workflow
     assert "tests/test_resolve_setup_toolchain_resolution.py" in workflow

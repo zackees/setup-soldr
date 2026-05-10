@@ -14,6 +14,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ACTION_YML = REPO_ROOT / "action.yml"
 EXPECTED_ENTRYPOINTS = {
+    ".github/actions/setup-soldr/phase_timing.py",
     ".github/actions/setup-soldr/resolve_setup.py",
     ".github/actions/setup-soldr/ensure_rust_toolchain.py",
     ".github/actions/setup-soldr/ensure_soldr.py",
