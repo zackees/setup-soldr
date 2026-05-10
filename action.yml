@@ -91,6 +91,12 @@ outputs:
   cache-dir:
     description: Runner-local cache/state root used by the action.
     value: ${{ steps.resolve.outputs.cache_root }}
+  setup-duration-seconds:
+    description: Total wall-clock time spent inside the setup-soldr action.
+    value: ${{ steps.cache-meta.outputs.setup_duration_seconds }}
+  setup-phase-summary:
+    description: JSON timing summary for the main setup phases and cache restore statuses.
+    value: ${{ steps.cache-meta.outputs.setup_phase_summary }}
   cache-hit:
     description: Whether the action restored an exact cache hit for the selected cache/state root.
     value: ${{ steps.cache-meta.outputs.cache_hit }}
@@ -167,6 +173,14 @@ outputs:
 runs:
   using: composite
   steps:
+    - id: phase-action-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark action
+
+    - id: phase-resolve-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark resolve
+
     - id: resolve
       shell: pwsh
       env:
@@ -191,6 +205,14 @@ runs:
         ACTION_ARCH: ${{ runner.arch }}
         ACTION_PARENT_SHA: ${{ github.event.pull_request.base.sha }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/resolve_setup.py"
+
+    - id: phase-resolve-end
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish resolve
+
+    - id: phase-setup-cache-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark setup-cache
 
     - id: cache-lookup
       if: ${{ inputs.cache == 'true' }}
@@ -219,6 +241,14 @@ runs:
         key: ${{ steps.resolve.outputs.cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.cache_restore_prefix }}
+
+    - id: phase-setup-cache-end
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish setup-cache
+
+    - id: phase-target-cache-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark target-cache
 
     - id: target-cache-lookup
       if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' }}
@@ -250,6 +280,14 @@ runs:
         restore-keys: |
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
+
+    - id: phase-target-cache-end
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish target-cache
+
+    - id: phase-build-cache-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark build-cache
 
     - id: build-cache-lookup
       if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') }}
@@ -285,6 +323,14 @@ runs:
           ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
           ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
 
+    - id: phase-build-cache-end
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish build-cache
+
+    - id: phase-target-tree-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark target-tree
+
     - id: target-tree-cache-lookup
       if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode == 'full' }}
       uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -306,12 +352,28 @@ runs:
           ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
 
+    - id: phase-target-tree-end
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish target-tree
+
+    - id: phase-toolchain-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark toolchain
+
     - id: toolchain
       shell: pwsh
       env:
         SETUP_SOLDR_SETUP_CACHE_EXACT_HIT: ${{ steps.cache-lookup.outputs.cache-hit }}
         SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL: ${{ steps.resolve.outputs.toolchain_cache_channel }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/ensure_rust_toolchain.py"
+
+    - id: phase-toolchain-end
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish toolchain
+
+    - id: phase-install-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark install
 
     - id: install
       shell: pwsh
@@ -323,6 +385,14 @@ runs:
         SETUP_SOLDR_VERSION: ${{ steps.resolve.outputs.soldr_version_resolved }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/ensure_soldr.py"
 
+    - id: phase-install-end
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish install
+
+    - id: phase-verify-start
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark verify
+
     - id: verify
       shell: pwsh
       env:
@@ -330,6 +400,10 @@ runs:
         SETUP_SOLDR_BUILD_CACHE_MODE: ${{ steps.resolve.outputs.build_cache_mode }}
         SETUP_SOLDR_REQUIRE_RUST_PLAN: ${{ steps.resolve.outputs.target_cache_enabled }}
       run: python "${{ github.action_path }}/.github/actions/setup-soldr/verify_soldr.py"
+
+    - id: phase-verify-end
+      shell: pwsh
+      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish verify
 
     - id: cache-meta
       shell: pwsh
@@ -356,6 +430,14 @@ runs:
         TARGET_CACHE_ENABLED: ${{ inputs.target-cache }}
         EFFECTIVE_TARGET_CACHE_ENABLED: ${{ steps.resolve.outputs.target_cache_enabled }}
         SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.target-cache-lookup.outputs.cache-hit == 'true' }}
+        PHASE_RESOLVE_SECONDS: ${{ steps.phase-resolve-end.outputs.seconds }}
+        PHASE_SETUP_CACHE_SECONDS: ${{ steps.phase-setup-cache-end.outputs.seconds }}
+        PHASE_TARGET_CACHE_SECONDS: ${{ steps.phase-target-cache-end.outputs.seconds }}
+        PHASE_BUILD_CACHE_SECONDS: ${{ steps.phase-build-cache-end.outputs.seconds }}
+        PHASE_TARGET_TREE_SECONDS: ${{ steps.phase-target-tree-end.outputs.seconds }}
+        PHASE_TOOLCHAIN_SECONDS: ${{ steps.phase-toolchain-end.outputs.seconds }}
+        PHASE_INSTALL_SECONDS: ${{ steps.phase-install-end.outputs.seconds }}
+        PHASE_VERIFY_SECONDS: ${{ steps.phase-verify-end.outputs.seconds }}
       run: |
         function TimestampEnabled {
           $value = "$env:SETUP_SOLDR_TIMESTAMPS".Trim().ToLowerInvariant()
@@ -418,6 +500,11 @@ runs:
             Files = $files
             Bytes = $bytes
           }
+        }
+        function ParsePhaseSeconds($value) {
+          $seconds = 0.0
+          [double]::TryParse($value, [ref]$seconds) | Out-Null
+          return [Math]::Round($seconds, 3)
         }
 
         $value = $env:RAW_CACHE_HIT
@@ -487,6 +574,44 @@ runs:
         if ([string]::IsNullOrWhiteSpace($targetTreeValue)) {
           $targetTreeValue = "false"
         }
+        $setupDurationSeconds = 0.0
+        $actionStartMs = 0L
+        if ([long]::TryParse($env:SETUP_SOLDR_PHASE_ACTION_START_MS, [ref]$actionStartMs)) {
+          $setupDurationSeconds = [Math]::Round(
+            [Math]::Max(0, [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() - $actionStartMs) / 1000.0,
+            3
+          )
+        } else {
+          $startEpoch = 0L
+          if ([long]::TryParse($env:SETUP_SOLDR_LOG_START_EPOCH, [ref]$startEpoch)) {
+            $setupDurationSeconds = [Math]::Round(
+              [Math]::Max(0, [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $startEpoch),
+              3
+            )
+          }
+        }
+        $setupPhaseSummary = (
+          [ordered]@{
+            resolve_seconds = ParsePhaseSeconds $env:PHASE_RESOLVE_SECONDS
+            setup_cache_seconds = ParsePhaseSeconds $env:PHASE_SETUP_CACHE_SECONDS
+            setup_cache_status = $cacheStatus
+            target_cache_seconds = ParsePhaseSeconds $env:PHASE_TARGET_CACHE_SECONDS
+            target_cache_status = $targetStatus
+            target_tree_seconds = ParsePhaseSeconds $env:PHASE_TARGET_TREE_SECONDS
+            target_tree_status = $targetTreeStatus
+            build_cache_seconds = ParsePhaseSeconds $env:PHASE_BUILD_CACHE_SECONDS
+            build_cache_status = $buildStatus
+            toolchain_seconds = ParsePhaseSeconds $env:PHASE_TOOLCHAIN_SECONDS
+            install_seconds = ParsePhaseSeconds $env:PHASE_INSTALL_SECONDS
+            verify_seconds = ParsePhaseSeconds $env:PHASE_VERIFY_SECONDS
+            build_cache_mode = "${{ steps.resolve.outputs.build_cache_mode }}"
+            target_cache_mode = "${{ steps.resolve.outputs.target_cache_mode }}"
+            target_cache_budget_status = $targetBudgetStatus
+            total_seconds = $setupDurationSeconds
+          } | ConvertTo-Json -Compress
+        )
+        "setup_duration_seconds=$setupDurationSeconds" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "setup_phase_summary=$setupPhaseSummary" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
         Log "cache restore status=$cacheStatus exact-hit=$value"
         if ($env:SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT -eq "true") {
@@ -504,6 +629,7 @@ runs:
             Write-Host "::warning::target-cache footprint files=$($targetFootprint.Files) bytes=$($targetFootprint.Bytes) exceeded soft budget files=$targetBudgetFiles bytes=$targetBudgetBytes; consider build-cache-mode 'thin' or narrower target-cache paths."
           }
         }
+        Log "setup-phase summary=$setupPhaseSummary"
         LogPath "cache after restore" "${{ steps.resolve.outputs.setup_cache_path }}"
         LogPath "soldr-bin after restore" "${{ steps.resolve.outputs.soldr_bin_cache_path }}"
         LogPath "build-cache after restore" "${{ steps.resolve.outputs.build_cache_path }}"

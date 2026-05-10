@@ -53,6 +53,7 @@ jobs:
             tests/test_ensure_soldr_release_resolution.py \
             tests/test_ensure_rust_toolchain_refresh.py \
             tests/test_ensure_soldr_source_ref.py \
+            tests/test_phase_timing.py \
             tests/test_release_rollout_contract.py \
             tests/test_resolve_setup_build_cache_mode.py \
             tests/test_resolve_setup_toolchain_resolution.py \

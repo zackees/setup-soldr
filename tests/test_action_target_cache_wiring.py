@@ -27,6 +27,8 @@ def test_target_tree_cache_is_only_used_in_full_mode() -> None:
 def test_target_cache_budget_outputs_and_warning_are_wired() -> None:
     action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
 
+    assert "setup-duration-seconds:" in action
+    assert "setup-phase-summary:" in action
     assert "target-cache-budget-bytes:" in action
     assert "target-cache-budget-files:" in action
     assert "target-cache-footprint-bytes:" in action
@@ -36,7 +38,27 @@ def test_target_cache_budget_outputs_and_warning_are_wired() -> None:
     assert "TARGET_CACHE_BUDGET_FILES" in action
     assert "MeasurePaths" in action
     assert "over-soft-budget:" in action
+    assert "setup_phase_summary" in action
+    assert "phase_timing.py" in action
     assert "::warning::target-cache footprint" in action
+
+
+def test_phase_timing_steps_are_non_overlapping() -> None:
+    action = (REPO_ROOT / "action.yml").read_text(encoding="utf-8")
+
+    action_start = action.index("id: phase-action-start")
+    resolve_start = action.index("id: phase-resolve-start")
+    target_start = action.index("id: phase-target-cache-start")
+    target_end = action.index("id: phase-target-cache-end")
+    build_start = action.index("id: phase-build-cache-start")
+    build_end = action.index("id: phase-build-cache-end")
+    tree_start = action.index("id: phase-target-tree-start")
+    tree_end = action.index("id: phase-target-tree-end")
+
+    assert action_start < resolve_start < target_start < target_end < build_start < build_end < tree_start < tree_end
+    assert "SETUP_SOLDR_PHASE_ACTION_START_MS" in action
+    assert "PHASE_TARGET_TREE_SECONDS" in action
+    assert "target_tree_seconds" in action
 
 
 def test_setup_cache_uses_lookup_exact_restore_and_managed_fallback() -> None:

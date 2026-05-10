@@ -102,6 +102,8 @@ jobs:
 | `soldr-path` | Installed Soldr binary path added to `PATH`. |
 | `soldr-version` | Installed Soldr version reported by `soldr version --json`. |
 | `cache-dir` | Action-managed runner-local cache/state root. |
+| `setup-duration-seconds` | Total wall-clock time spent inside the setup-soldr action. |
+| `setup-phase-summary` | JSON timing summary for the main setup phases and cache restore statuses. |
 | `cache-hit` | Whether the action restored an exact cache hit. |
 | `cache-key` | Primary key used for the action-managed cache/state root. |
 | `cache-restore-status` | Diagnostic restore status for the action-managed cache/state root. |
@@ -136,6 +138,7 @@ jobs:
 - In `once` mode, an exact rust-plan bundle hit skips the separate build-cache restore because the target bundle already rehydrates the warm artifacts needed for the following build.
 - setup-soldr now emits soft target-cache footprint budgets by mode: `once` warns above `1 GiB` or `8000` files, `thin` warns above `512 MiB` or `4000` files, and `full` warns above `2 GiB` or `12000` files.
 - When the restored target-cache footprint exceeds that soft budget, the setup step emits a warning and reports `target-cache-budget-status=over-soft-budget:...` so workflows can spot cache shapes that are unlikely to stay fast.
+- setup-soldr also emits `setup-duration-seconds` plus a JSON `setup-phase-summary` output so warm-path investigations can compare cache restore time against toolchain/install/verify overhead.
 - zccache is the artifact cache authority; soldr interprets the Rust build and passes zccache a structured Rust artifact plan.
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
 - The setup cache intentionally keeps the installed `soldr` binary and only includes rustup state when setup-soldr had to fall back to a managed `RUSTUP_HOME` under the setup cache root. The dedicated `ZCCACHE_CACHE_DIR` payload stays in its own cache so warm runs do not restore the same build-cache bytes twice.
