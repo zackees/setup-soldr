@@ -87,6 +87,7 @@ jobs:
 | `build-cache` | Restore and save Soldr/zccache build cache state across runs. Default `true`; set to `false` to opt out. |
 | `build-cache-mode` | Rust build cache mode. Default `once` saves a full snapshot on miss, then restores only the local rust-plan bundle on later hits without resaving the full target tree. `thin` is the bounded dependency-artifact alternative. `full` opts into normal whole-target restore/save behavior and should be treated as unbounded. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
+| `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
 
 ### Legacy Compatibility Inputs
 
@@ -176,6 +177,20 @@ steps:
 
 See [issue #53](https://github.com/zackees/setup-soldr/issues/53) for
 background.
+
+## Source mtime normalization
+
+Fresh GitHub checkouts assign new mtimes to every file, which can cause Cargo to invalidate fingerprints for packages whose sources did not actually change between a parent branch and a pull request. When `source-mtime-normalize: true` is set, `setup-soldr` rewrites the mtime of tracked Rust build-input files (`**/*.rs`, `**/Cargo.toml`, `**/Cargo.lock`, `**/build.rs`, `rust-toolchain`, `rust-toolchain.toml`) under `${{ github.workspace }}` to each file's last-commit timestamp from `git log -1 --format=%ct`. Files under `target/`, `.git/`, and `node_modules/` are always skipped, and untracked files are left alone, so genuine source edits still invalidate Cargo fingerprints. This is action-side behavior, not a substitute for upstream build-script hygiene, and it is a no-op when the input is `false` or the workspace is not a git work tree.
+
+```yaml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: zackees/setup-soldr@v0
+        with:
+          cache: true
+          source-mtime-normalize: true
+      - run: soldr cargo build --locked --release
+```
 
 ## Development
 
