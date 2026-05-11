@@ -242,6 +242,54 @@ background.
       - run: soldr cargo build --locked --release
 ```
 
+### Measuring target-cache pruning impact
+
+The three pruning inputs above are no-ops until [soldr#237](https://github.com/zackees/soldr/pull/237) lands, but their eventual impact can be measured today against the action's existing footprint outputs and phase-timing summary.
+
+To compare before/after for the same workflow, run a matrix that toggles the three pruning inputs and reads `target-cache-footprint-bytes`:
+
+```yaml
+jobs:
+  measure-prune:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        prune: [off, on]
+    steps:
+      - uses: actions/checkout@v4
+      - id: setup-soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          cache: true
+          target-cache-strip-debuginfo: ${{ matrix.prune == 'on' }}
+          target-cache-include-incremental: ${{ matrix.prune == 'on' && 'false' || '' }}
+          target-cache-include-build-script-binaries: ${{ matrix.prune == 'on' && 'false' || '' }}
+      - run: soldr cargo build --locked --release
+      - name: Report footprint
+        run: |
+          echo "prune=${{ matrix.prune }} bytes=${{ steps.setup-soldr.outputs.target-cache-footprint-bytes }} files=${{ steps.setup-soldr.outputs.target-cache-footprint-files }}"
+```
+
+To fail a job whose restored cache has drifted past the soft budget, gate on `target-cache-budget-status`; it is `disabled`, `within-soft-budget`, or `over-soft-budget:bytes,files`:
+
+```yaml
+      - name: Enforce target-cache budget
+        if: startsWith(steps.setup-soldr.outputs.target-cache-budget-status, 'over-soft-budget:')
+        run: |
+          echo "::error::target-cache over soft budget: ${{ steps.setup-soldr.outputs.target-cache-budget-status }}"
+          exit 1
+```
+
+Footprint deltas conflate cache-restore time and downstream compile time. To attribute wins to the restore phase only, parse `setup-phase-summary` (a compact JSON object) and read its `target_cache_seconds` field:
+
+```yaml
+      - name: Report target-cache restore time
+        run: |
+          echo '${{ steps.setup-soldr.outputs.setup-phase-summary }}' | jq '.target_cache_seconds'
+```
+
+See [soldr#237](https://github.com/zackees/soldr/pull/237) for the upstream artifact-class content policy that determines which files each pruning input actually strips.
+
 ## Source mtime normalization
 
 Fresh GitHub checkouts assign new mtimes to every file, which can cause Cargo to invalidate fingerprints for packages whose sources did not actually change between a parent branch and a pull request. When `source-mtime-normalize: true` is set, `setup-soldr` rewrites the mtime of tracked Rust build-input files (`**/*.rs`, `**/Cargo.toml`, `**/Cargo.lock`, `**/build.rs`, `rust-toolchain`, `rust-toolchain.toml`) under `${{ github.workspace }}` to each file's last-commit timestamp from `git log -1 --format=%ct`. Files under `target/`, `.git/`, and `node_modules/` are always skipped, and untracked files are left alone, so genuine source edits still invalidate Cargo fingerprints. This is action-side behavior, not a substitute for upstream build-script hygiene, and it is a no-op when the input is `false` or the workspace is not a git work tree.
