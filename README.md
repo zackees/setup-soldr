@@ -2,7 +2,7 @@
 
 [![Setup Soldr Action](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml/badge.svg)](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml)
 
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.14`.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.15`.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -75,7 +75,7 @@ jobs:
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.7.14`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.7.15`. |
 | `cache` | Restore and save the action-managed cache/state root. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
 | `cache-key-suffix` | Optional escape hatch appended to the cache key. |
@@ -135,7 +135,7 @@ jobs:
 
 ## Notes
 
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.14`.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.15`.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action keeps using the runner's existing `CARGO_HOME` unless `CARGO_HOME` is already set by the workflow. When `RUSTUP_HOME` is not explicitly set, setup-soldr prefers the runner's existing rustup home if it already satisfies the requested toolchain/components/targets; otherwise it falls back to a managed `RUSTUP_HOME` under the action cache root and rehydrates that state on later warm runs.
@@ -196,12 +196,18 @@ builds the cached `target/` slice. Two values are accepted:
   final outputs and relies on the zccache compilation cache to repopulate
   library bytes on warm runs.
 
-`thin-v2` is opt-in. **Stay on `thin-v1` until the zccache repopulation hook
-(soldr#237 Phase 2) has shipped and the
+`thin-v2` is opt-in. [soldr#237](https://github.com/zackees/soldr/issues/237)
+shipped in Soldr `0.7.15`, so the CLI now generates the thin-v2 manifest when
+`SOLDR_TARGET_CACHE_PROFILE=thin-v2` is set. **Stay on `thin-v1` because
+zccache has not yet been updated to honor the new `manifest.v2` wire format;
+setting `thin-v2` against any current zccache release causes a silent
+downgrade to `thin-v1` with a one-line soldr warning rather than actual
+pruning.** The
 [`thin-v2-verify`](https://github.com/zackees/soldr/blob/main/.github/workflows/thin-v2-verify.yml)
-gate has been green on soldr `main` for at least one week.** Setting
-`thin-v2` before that point can leave the restored target slice missing
-library bytes that the build still needs.
+gate has only been green on soldr `main` since 2026-05-10, so the one-week
+watch is still in progress. Opt into `thin-v2` only after a zccache release
+ships with `manifest.v2` support and the verify gate has stayed green for a
+full week; pin that zccache version alongside the input.
 
 ```yaml
     steps:
@@ -220,12 +226,15 @@ library bytes that the build still needs.
 export `SOLDR_TARGET_CACHE_STRIP_DEBUGINFO`,
 `SOLDR_TARGET_CACHE_INCLUDE_INCREMENTAL`, and
 `SOLDR_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES` env vars for the
-downstream soldr CLI when they are set to a non-empty value. They have no
-effect on current soldr releases and become active once
-[soldr#237](https://github.com/zackees/soldr/pull/237) ships. Leaving these
-inputs unset preserves byte-identical default behavior, so callers can adopt
-the inputs ahead of the upstream landing without changing today's cache
-shape. Accepted values are `true`/`false`/`1`/`0`/`yes`/`no`/`on`/`off`;
+downstream soldr CLI when they are set to a non-empty value. **Soldr
+`0.7.15` shipped [soldr#237](https://github.com/zackees/soldr/issues/237) as
+a single-knob profile selector (`SOLDR_TARGET_CACHE_PROFILE=thin-v2`) and
+does not read these three env vars**, so today they have no effect on any
+released soldr. To prune the target cache, use `target-cache-profile:
+thin-v2` once the wire-format gate described in "Target cache profile"
+above has cleared. These three inputs are retained in case a future soldr
+release introduces finer-grained per-class toggles; until then they remain
+no-ops. Accepted values are `true`/`false`/`1`/`0`/`yes`/`no`/`on`/`off`;
 they are normalized to literal `"true"` or `"false"` before being exported.
 See [issue #58](https://github.com/zackees/setup-soldr/issues/58) for
 background.
@@ -244,9 +253,9 @@ background.
 
 ### Measuring target-cache pruning impact
 
-The three pruning inputs above are no-ops until [soldr#237](https://github.com/zackees/soldr/pull/237) lands, but their eventual impact can be measured today against the action's existing footprint outputs and phase-timing summary.
+The three pruning inputs above are no-ops on every current soldr release because soldr `0.7.15` chose the `target-cache-profile` selector instead of per-class env vars. The same matrix pattern works against `target-cache-profile` once the wire-format gate clears, and the action's existing footprint outputs and phase-timing summary can be used to measure impact today.
 
-To compare before/after for the same workflow, run a matrix that toggles the three pruning inputs and reads `target-cache-footprint-bytes`:
+To compare before/after for the same workflow, run a matrix that toggles `target-cache-profile` and reads `target-cache-footprint-bytes`:
 
 ```yaml
 jobs:
@@ -254,20 +263,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        prune: [off, on]
+        profile: [thin-v1, thin-v2]
     steps:
       - uses: actions/checkout@v4
       - id: setup-soldr
         uses: zackees/setup-soldr@v0
         with:
           cache: true
-          target-cache-strip-debuginfo: ${{ matrix.prune == 'on' }}
-          target-cache-include-incremental: ${{ matrix.prune == 'on' && 'false' || '' }}
-          target-cache-include-build-script-binaries: ${{ matrix.prune == 'on' && 'false' || '' }}
+          target-cache-profile: ${{ matrix.profile }}
       - run: soldr cargo build --locked --release
       - name: Report footprint
         run: |
-          echo "prune=${{ matrix.prune }} bytes=${{ steps.setup-soldr.outputs.target-cache-footprint-bytes }} files=${{ steps.setup-soldr.outputs.target-cache-footprint-files }}"
+          echo "profile=${{ matrix.profile }} bytes=${{ steps.setup-soldr.outputs.target-cache-footprint-bytes }} files=${{ steps.setup-soldr.outputs.target-cache-footprint-files }}"
 ```
 
 To fail a job whose restored cache has drifted past the soft budget, gate on `target-cache-budget-status`; it is `disabled`, `within-soft-budget`, or `over-soft-budget:bytes,files`:
@@ -288,7 +295,7 @@ Footprint deltas conflate cache-restore time and downstream compile time. To att
           echo '${{ steps.setup-soldr.outputs.setup-phase-summary }}' | jq '.target_cache_seconds'
 ```
 
-See [soldr#237](https://github.com/zackees/soldr/pull/237) for the upstream artifact-class content policy that determines which files each pruning input actually strips.
+See [soldr#237](https://github.com/zackees/soldr/issues/237) for the upstream artifact-class content policy that determines which files `thin-v2` actually strips.
 
 ## Source mtime normalization
 

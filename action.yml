@@ -6,9 +6,9 @@ branding:
   color: green
 inputs:
   version:
-    description: Soldr version or tag to install. Defaults to 0.7.14.
+    description: Soldr version or tag to install. Defaults to 0.7.15.
     required: false
-    default: "0.7.14"
+    default: "0.7.15"
   repo:
     description: Internal override for the Soldr source repository used by integration branches.
     required: false
@@ -87,9 +87,12 @@ inputs:
         - thin-v1 (default): legacy slice, keeps .rlib/.rmeta/proc-macro outputs
         - thin-v2: aggressive prune (fingerprints + dep-info + final outputs only),
                    relies on zccache compilation cache to repopulate library bytes
-      Stay on thin-v1 until the zccache repopulation hook (soldr#237 Phase 2)
-      has shipped and the thin-v2-verify gate has been green on soldr main
-      for at least one week.
+      Stay on thin-v1. soldr#237 shipped in soldr 0.7.15 so the CLI now emits
+      the thin-v2 manifest, but zccache has not yet been updated to honor the
+      new manifest.v2 wire format and silently downgrades to thin-v1 with a
+      one-line soldr warning. Opt into thin-v2 only after a zccache release
+      lands with manifest.v2 support and the thin-v2-verify gate has been
+      green on soldr main for at least one week.
     required: false
     default: thin-v1
   target-cache-strip-debuginfo:
