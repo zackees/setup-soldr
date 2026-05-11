@@ -88,6 +88,9 @@ jobs:
 | `build-cache-mode` | Rust build cache mode. Default `once` saves a full snapshot on miss, then restores only the local rust-plan bundle on later hits without resaving the full target tree. `thin` is the bounded dependency-artifact alternative. `full` opts into normal whole-target restore/save behavior and should be treated as unbounded. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
 | `target-cache-profile` | Thin-slice pruning policy for the `target/` cache. `thin-v1` (default) keeps `.rlib`/`.rmeta`/proc-macro outputs. `thin-v2` is the aggressive prune that keeps fingerprints + dep-info + final outputs only and relies on the zccache compilation cache to repopulate library bytes. See "Target cache profile" below before opting in. |
+| `target-cache-strip-debuginfo` | Forward-compatible pass-through. When `true`, requests that soldr strip debug-info-bearing artifacts from the target-cache before saving. Requires soldr#237 to take effect; current soldr releases ignore the flag. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
+| `target-cache-include-incremental` | Forward-compatible pass-through. When `false`, requests that soldr exclude `target/*/incremental/` directories from the target-cache. Requires soldr#237 to take effect. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
+| `target-cache-include-build-script-binaries` | Forward-compatible pass-through. When `false`, requests that soldr exclude `target/*/build/*-{hash}/build-script-build` binaries from the target-cache. Requires soldr#237 to take effect. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
 
 ### Legacy Compatibility Inputs
@@ -207,6 +210,35 @@ library bytes that the build still needs.
         with:
           cache: true
           target-cache-profile: thin-v2
+      - run: soldr cargo build --locked --release
+```
+
+## Forward-compatible target-cache pruning inputs
+
+`target-cache-strip-debuginfo`, `target-cache-include-incremental`, and
+`target-cache-include-build-script-binaries` are pass-through knobs that
+export `SOLDR_TARGET_CACHE_STRIP_DEBUGINFO`,
+`SOLDR_TARGET_CACHE_INCLUDE_INCREMENTAL`, and
+`SOLDR_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES` env vars for the
+downstream soldr CLI when they are set to a non-empty value. They have no
+effect on current soldr releases and become active once
+[soldr#237](https://github.com/zackees/soldr/pull/237) ships. Leaving these
+inputs unset preserves byte-identical default behavior, so callers can adopt
+the inputs ahead of the upstream landing without changing today's cache
+shape. Accepted values are `true`/`false`/`1`/`0`/`yes`/`no`/`on`/`off`;
+they are normalized to literal `"true"` or `"false"` before being exported.
+See [issue #58](https://github.com/zackees/setup-soldr/issues/58) for
+background.
+
+```yaml
+    steps:
+      - uses: actions/checkout@v4
+      - uses: zackees/setup-soldr@v0
+        with:
+          cache: true
+          target-cache-strip-debuginfo: true
+          target-cache-include-incremental: false
+          target-cache-include-build-script-binaries: false
       - run: soldr cargo build --locked --release
 ```
 

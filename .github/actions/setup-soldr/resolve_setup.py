@@ -263,6 +263,23 @@ def normalize_target_cache_profile(value: str) -> str:
     return profile
 
 
+_TARGET_CACHE_BOOL_TRUE = {"true", "1", "yes", "on"}
+_TARGET_CACHE_BOOL_FALSE = {"false", "0", "no", "off"}
+
+
+def normalize_target_cache_bool(input_name: str, value: str) -> str | None:
+    normalized = value.strip().lower()
+    if not normalized:
+        return None
+    if normalized in _TARGET_CACHE_BOOL_TRUE:
+        return "true"
+    if normalized in _TARGET_CACHE_BOOL_FALSE:
+        return "false"
+    raise RuntimeError(
+        f"invalid {input_name} {value!r}; expected true, false, 1, 0, yes, no, on, or off"
+    )
+
+
 def _normalize_legacy_target_cache_mode(value: str) -> str:
     mode = value.strip().lower()
     if not mode:
@@ -806,6 +823,30 @@ def main() -> None:
     _write_env("SOLDR_TARGET_CACHE_DIR", str(target_cache_path))
     _write_env("SOLDR_TARGET_CACHE_BUNDLE_DIR", str(target_cache_bundle_path))
     _write_env("SOLDR_TARGET_CACHE_PROFILE", target_cache_profile)
+    target_cache_strip_debuginfo = normalize_target_cache_bool(
+        "target-cache-strip-debuginfo",
+        os.environ.get("INPUT_TARGET_CACHE_STRIP_DEBUGINFO", ""),
+    )
+    if target_cache_strip_debuginfo is not None:
+        _write_env("SOLDR_TARGET_CACHE_STRIP_DEBUGINFO", target_cache_strip_debuginfo)
+    target_cache_include_incremental = normalize_target_cache_bool(
+        "target-cache-include-incremental",
+        os.environ.get("INPUT_TARGET_CACHE_INCLUDE_INCREMENTAL", ""),
+    )
+    if target_cache_include_incremental is not None:
+        _write_env(
+            "SOLDR_TARGET_CACHE_INCLUDE_INCREMENTAL",
+            target_cache_include_incremental,
+        )
+    target_cache_include_build_script_binaries = normalize_target_cache_bool(
+        "target-cache-include-build-script-binaries",
+        os.environ.get("INPUT_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES", ""),
+    )
+    if target_cache_include_build_script_binaries is not None:
+        _write_env(
+            "SOLDR_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES",
+            target_cache_include_build_script_binaries,
+        )
     # setup-soldr already rehydrates the rust-plan bundle directory with
     # actions/cache, so the soldr/zccache layer should operate on that local
     # bundle instead of switching to zccache's separate direct GHA backend.
