@@ -17,7 +17,14 @@ from urllib.request import urlopen
 from log_utils import color_force_environment, log, run
 
 
+# Jobserver-internal env vars that must never propagate across runner
+# steps. See setup-soldr#71.
+_GITHUB_ENV_DENY_LIST = frozenset({"CARGO_MAKEFLAGS", "MAKEFLAGS"})
+
+
 def append_github_env(name: str, value: str) -> None:
+    if name in _GITHUB_ENV_DENY_LIST:
+        return
     output = os.environ.get("GITHUB_ENV")
     if not output:
         return

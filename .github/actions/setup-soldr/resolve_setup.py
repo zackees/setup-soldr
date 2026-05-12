@@ -393,7 +393,17 @@ def _path_for_output(workspace: Path, path: Path | None) -> str:
         return str(path)
 
 
+# Jobserver-internal env vars that must never propagate across runner
+# steps. CARGO_MAKEFLAGS/MAKEFLAGS describe an in-process pipe whose file
+# descriptors are closed as soon as the producing process exits; persisting
+# them via $GITHUB_ENV causes every downstream cargo invocation to emit a
+# "failed to connect to jobserver" warning. See setup-soldr#71.
+_GITHUB_ENV_DENY_LIST = frozenset({"CARGO_MAKEFLAGS", "MAKEFLAGS"})
+
+
 def _write_env(name: str, value: str) -> None:
+    if name in _GITHUB_ENV_DENY_LIST:
+        return
     output = os.environ.get("GITHUB_ENV")
     if not output:
         return
