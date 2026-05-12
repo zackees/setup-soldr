@@ -118,6 +118,23 @@ inputs:
       Default "" (unset - soldr default applies).
     required: false
     default: ""
+  target-cache-compress:
+    description: >
+      Compression codec used when packing the target-cache tar archive.
+      Values: "auto" (let soldr decide), "zstd" (force zstd), or "none"
+      (uncompressed). Default "zstd". Forward-compatible: requires a soldr
+      release that consumes SOLDR_TARGET_CACHE_COMPRESS; older soldr
+      releases ignore the setting and fall back to their built-in behavior.
+    required: false
+    default: "zstd"
+  target-cache-compress-level:
+    description: >
+      Compression level used when target-cache-compress is "zstd" (or "auto"
+      and soldr selects zstd). Accepts integers 1-22; zstd's default is 3.
+      Forward-compatible: requires a soldr release that consumes
+      SOLDR_TARGET_CACHE_COMPRESS_LEVEL.
+    required: false
+    default: "3"
   source-mtime-normalize:
     description: >
       Opt-in. When "true", rewrite the mtime of tracked Rust build-input files
@@ -193,6 +210,12 @@ outputs:
   target-cache-profile:
     description: Effective setup-soldr thin-slice pruning policy (thin-v1 or thin-v2).
     value: ${{ steps.resolve.outputs.target_cache_profile }}
+  target-cache-compress:
+    description: Effective target-cache compression codec (auto, zstd, or none).
+    value: ${{ steps.resolve.outputs.target_cache_compress }}
+  target-cache-compress-level:
+    description: Effective target-cache compression level (1-22) applied when zstd is selected.
+    value: ${{ steps.resolve.outputs.target_cache_compress_level }}
   target-cache-restore-status:
     description: Diagnostic restore status for the Rust target artifact cache state.
     value: ${{ steps.cache-meta.outputs.target_cache_restore_status }}
@@ -254,6 +277,8 @@ runs:
         INPUT_TARGET_CACHE_STRIP_DEBUGINFO: ${{ inputs.target-cache-strip-debuginfo }}
         INPUT_TARGET_CACHE_INCLUDE_INCREMENTAL: ${{ inputs.target-cache-include-incremental }}
         INPUT_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES: ${{ inputs.target-cache-include-build-script-binaries }}
+        INPUT_TARGET_CACHE_COMPRESS: ${{ inputs.target-cache-compress }}
+        INPUT_TARGET_CACHE_COMPRESS_LEVEL: ${{ inputs.target-cache-compress-level }}
         ACTION_WORKSPACE: ${{ github.workspace }}
         ACTION_OS: ${{ runner.os }}
         ACTION_ARCH: ${{ runner.arch }}
