@@ -266,6 +266,48 @@ def normalize_target_cache_profile(value: str) -> str:
 _TARGET_CACHE_BOOL_TRUE = {"true", "1", "yes", "on"}
 _TARGET_CACHE_BOOL_FALSE = {"false", "0", "no", "off"}
 
+_TARGET_CACHE_COMPRESS_CODECS = ("auto", "zstd", "none")
+_TARGET_CACHE_COMPRESS_DEFAULT = "zstd"
+_TARGET_CACHE_COMPRESS_LEVEL_DEFAULT = "3"
+_TARGET_CACHE_COMPRESS_LEVEL_MIN = 1
+_TARGET_CACHE_COMPRESS_LEVEL_MAX = 22
+
+
+def normalize_target_cache_compress(value: str) -> str:
+    codec = value.strip().lower()
+    if not codec:
+        return _TARGET_CACHE_COMPRESS_DEFAULT
+    if codec not in _TARGET_CACHE_COMPRESS_CODECS:
+        expected = ", ".join(_TARGET_CACHE_COMPRESS_CODECS)
+        raise RuntimeError(
+            f"invalid target-cache-compress {value!r}; expected {expected}"
+        )
+    return codec
+
+
+def normalize_target_cache_compress_level(value: str) -> str:
+    raw = value.strip()
+    if not raw:
+        return _TARGET_CACHE_COMPRESS_LEVEL_DEFAULT
+    try:
+        level = int(raw)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"invalid target-cache-compress-level {value!r}; "
+            f"expected integer between {_TARGET_CACHE_COMPRESS_LEVEL_MIN} and "
+            f"{_TARGET_CACHE_COMPRESS_LEVEL_MAX}"
+        ) from exc
+    if (
+        level < _TARGET_CACHE_COMPRESS_LEVEL_MIN
+        or level > _TARGET_CACHE_COMPRESS_LEVEL_MAX
+    ):
+        raise RuntimeError(
+            f"invalid target-cache-compress-level {value!r}; "
+            f"expected integer between {_TARGET_CACHE_COMPRESS_LEVEL_MIN} and "
+            f"{_TARGET_CACHE_COMPRESS_LEVEL_MAX}"
+        )
+    return str(level)
+
 
 def normalize_target_cache_bool(input_name: str, value: str) -> str | None:
     normalized = value.strip().lower()
@@ -847,6 +889,14 @@ def main() -> None:
             "SOLDR_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES",
             target_cache_include_build_script_binaries,
         )
+    target_cache_compress = normalize_target_cache_compress(
+        os.environ.get("INPUT_TARGET_CACHE_COMPRESS", "")
+    )
+    target_cache_compress_level = normalize_target_cache_compress_level(
+        os.environ.get("INPUT_TARGET_CACHE_COMPRESS_LEVEL", "")
+    )
+    _write_env("SOLDR_TARGET_CACHE_COMPRESS", target_cache_compress)
+    _write_env("SOLDR_TARGET_CACHE_COMPRESS_LEVEL", target_cache_compress_level)
     # setup-soldr already rehydrates the rust-plan bundle directory with
     # actions/cache, so the soldr/zccache layer should operate on that local
     # bundle instead of switching to zccache's separate direct GHA backend.
@@ -931,6 +981,8 @@ def main() -> None:
             "target_cache_enabled": str(target_cache_enabled).lower(),
             "target_cache_mode": target_cache_effective_mode,
             "target_cache_profile": target_cache_profile,
+            "target_cache_compress": target_cache_compress,
+            "target_cache_compress_level": target_cache_compress_level,
             "target_cache_key": target_cache_key,
             "target_cache_restore_key_parent": target_cache_parent_key,
             "target_cache_restore_key_lock": target_cache_lock_prefix,
