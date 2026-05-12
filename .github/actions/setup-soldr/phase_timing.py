@@ -12,7 +12,14 @@ def _phase_env_name(name: str) -> str:
     return f"SETUP_SOLDR_PHASE_{cleaned}_START_MS"
 
 
+# Jobserver-internal env vars that must never propagate across runner
+# steps. See setup-soldr#71.
+_GITHUB_ENV_DENY_LIST = frozenset({"CARGO_MAKEFLAGS", "MAKEFLAGS"})
+
+
 def _write_env(name: str, value: str) -> None:
+    if name in _GITHUB_ENV_DENY_LIST:
+        return
     output = os.environ.get("GITHUB_ENV", "").strip()
     if not output:
         return
