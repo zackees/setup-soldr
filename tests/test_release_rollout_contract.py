@@ -24,7 +24,10 @@ def test_rollout_contract_workflow_builds_and_tests_the_js_action() -> None:
     )
 
     assert "actions/setup-node@" in workflow
-    assert "node-version: 20" in workflow
+    # Node 22+ is required for --experimental-strip-types used by `npm test`
+    # to run our TypeScript test files via `node --test`. The action runtime
+    # in action.yml (`using: node20`) is independent of this CI Node version.
+    assert "node-version: 22" in workflow
     assert "npm ci" in workflow
     assert "npm run typecheck" in workflow
     assert "npm test" in workflow
