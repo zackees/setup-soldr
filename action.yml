@@ -145,6 +145,17 @@ inputs:
       real source edits still invalidate fingerprints. Defaults to "false".
     required: false
     default: "false"
+  cargo-registry-cache:
+    description: >
+      Opt-in. When "true", setup-soldr manages a separate actions/cache step
+      for ~/.cargo/registry that pre-compresses the directory into a single
+      .tar.zst via the embedded setup-soldr-cache-compress sub-action. Also
+      exports SOLDR_SKIP_CARGO_REGISTRY_SAVE=1 so the zccache CLI's built-in
+      cargo-registry save no-ops and the payload is not double-saved.
+      Default "false" until the zccache release that honors the skip flag
+      lands; flip to "true" in a follow-up once it does.
+    required: false
+    default: "false"
 outputs:
   soldr-path:
     description: Installed Soldr binary path added to PATH for later steps.
@@ -279,6 +290,7 @@ runs:
         INPUT_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES: ${{ inputs.target-cache-include-build-script-binaries }}
         INPUT_TARGET_CACHE_COMPRESS: ${{ inputs.target-cache-compress }}
         INPUT_TARGET_CACHE_COMPRESS_LEVEL: ${{ inputs.target-cache-compress-level }}
+        INPUT_CARGO_REGISTRY_CACHE: ${{ inputs.cargo-registry-cache }}
         ACTION_WORKSPACE: ${{ github.workspace }}
         ACTION_OS: ${{ runner.os }}
         ACTION_ARCH: ${{ runner.arch }}
@@ -384,7 +396,7 @@ runs:
       if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') }}
       uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}
+        path: ${{ steps.resolve.outputs.build_cache_path }}.tar.zst
         key: ${{ steps.resolve.outputs.build_cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
@@ -396,23 +408,73 @@ runs:
       if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') && steps.resolve.outputs.build_cache_mode == 'once' && (steps.build-cache-lookup.outputs.cache-hit == 'true' || steps.build-cache-lookup.outputs.cache-matched-key != '') }}
       uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}
+        path: ${{ steps.resolve.outputs.build_cache_path }}.tar.zst
         key: ${{ steps.resolve.outputs.build_cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
           ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
 
+    # actions/cache@v5 must be registered BEFORE setup-soldr-cache-compress
+    # so the post hooks fire in the right order: compress (tar+zstd) runs
+    # first, then actions/cache's post-job save uploads the .tar.zst file.
     - id: build-cache-managed
       if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.build-cache-lookup.outputs.cache-hit != 'true' && steps.build-cache-lookup.outputs.cache-matched-key == '')) }}
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}
+        path: ${{ steps.resolve.outputs.build_cache_path }}.tar.zst
         key: ${{ steps.resolve.outputs.build_cache_key }}
         restore-keys: |
           ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
           ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
           ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
+
+    - id: build-cache-compress
+      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') }}
+      uses: ./.github/actions/setup-soldr-cache-compress
+      with:
+        cache-dir: ${{ steps.resolve.outputs.build_cache_path }}
+        codec: ${{ inputs.target-cache-compress }}
+        level: ${{ inputs.target-cache-compress-level }}
+
+    # Cargo registry cache (payload C). Opt-in via inputs.cargo-registry-cache.
+    # actions/cache@v5 must be registered BEFORE the matching compress
+    # sub-action so the post-job hooks fire in the right order.
+    - id: cargo-registry-cache-lookup
+      if: ${{ inputs.cargo-registry-cache == 'true' && steps.resolve.outputs.cargo_registry_cache_enabled == 'true' }}
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ${{ steps.resolve.outputs.cargo_registry_cache_path }}.tar.zst
+        key: ${{ steps.resolve.outputs.cargo_registry_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.cargo_registry_cache_restore_prefix }}
+        lookup-only: true
+
+    - id: cargo-registry-cache-restore
+      if: ${{ inputs.cargo-registry-cache == 'true' && steps.resolve.outputs.cargo_registry_cache_enabled == 'true' && (steps.cargo-registry-cache-lookup.outputs.cache-hit == 'true' || steps.cargo-registry-cache-lookup.outputs.cache-matched-key != '') }}
+      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ${{ steps.resolve.outputs.cargo_registry_cache_path }}.tar.zst
+        key: ${{ steps.resolve.outputs.cargo_registry_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.cargo_registry_cache_restore_prefix }}
+
+    - id: cargo-registry-cache-managed
+      if: ${{ inputs.cargo-registry-cache == 'true' && steps.resolve.outputs.cargo_registry_cache_enabled == 'true' && steps.cargo-registry-cache-lookup.outputs.cache-hit != 'true' && steps.cargo-registry-cache-lookup.outputs.cache-matched-key == '' }}
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: ${{ steps.resolve.outputs.cargo_registry_cache_path }}.tar.zst
+        key: ${{ steps.resolve.outputs.cargo_registry_cache_key }}
+        restore-keys: |
+          ${{ steps.resolve.outputs.cargo_registry_cache_restore_prefix }}
+
+    - id: cargo-registry-cache-compress
+      if: ${{ inputs.cargo-registry-cache == 'true' && steps.resolve.outputs.cargo_registry_cache_enabled == 'true' }}
+      uses: ./.github/actions/setup-soldr-cache-compress
+      with:
+        cache-dir: ${{ steps.resolve.outputs.cargo_registry_cache_path }}
+        codec: ${{ inputs.target-cache-compress }}
+        level: ${{ inputs.target-cache-compress-level }}
 
     - id: phase-build-cache-end
       shell: pwsh
