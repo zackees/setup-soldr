@@ -1,0 +1,41 @@
+name: Update v0 tag
+
+# Keep the floating `v0` major-version tag pointing at the latest `main`.
+# Users who pin to `zackees/setup-soldr@v0` then automatically pick up the
+# newest commit on `main` without each merge requiring a manual tag move.
+#
+# Trigger: every push to `main` (including merge commits from PRs) plus a
+# manual workflow_dispatch escape hatch for one-off catch-up bumps.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-v0-tag
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Force-update v0 tag to current commit
+        env:
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo "Pointing v0 at ${TARGET_SHA}"
+          git tag -f v0 "${TARGET_SHA}"
+          git push origin "refs/tags/v0" --force
