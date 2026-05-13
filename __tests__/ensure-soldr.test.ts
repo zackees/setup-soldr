@@ -22,7 +22,7 @@ test("ensureSoldr rejects with a clear message for unknown arch (mocked)", async
       soldrRepo: "zackees/soldr",
       soldrRef: "",
       soldrVersionRequested: "",
-      soldrVersionResolved: "v0.7.16",
+      soldrVersionResolved: "v0.7.18",
     } as Parameters<typeof ensureSoldr>[0]["resolveResult"];
     await assert.rejects(
       ensureSoldr({ resolveResult, githubToken: "" }),
