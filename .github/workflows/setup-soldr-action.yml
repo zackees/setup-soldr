@@ -8,7 +8,11 @@ on:
     paths:
       - README.md
       - action.yml
-      - .github/actions/setup-soldr/**
+      - src/**
+      - dist/**
+      - package.json
+      - package-lock.json
+      - tsconfig.json
       - .github/workflows/setup-soldr-action.yml
   workflow_dispatch:
 
@@ -110,13 +114,11 @@ jobs:
             log "$label path=$path exists=true files=$files bytes=${bytes:-0}"
           }
 
-          logger="$GITHUB_WORKSPACE/setup-soldr/.github/actions/setup-soldr/log_utils.py"
-
           path_summary "cache before build" "$SETUP_CACHE_DIR"
           path_summary "build-cache before build" "$BUILD_CACHE_PATH"
           path_summary "target-cache before build" "$TARGET_CACHE_PATH"
           log "running soldr cargo build --locked --package zccache-cli"
-          soldr cargo build --locked --package zccache-cli 2>&1 | python "$logger"
+          soldr cargo build --locked --package zccache-cli
           status=$?
           path_summary "cache after build" "$SETUP_CACHE_DIR"
           path_summary "build-cache after build" "$BUILD_CACHE_PATH"

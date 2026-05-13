@@ -313,6 +313,8 @@ Fresh GitHub checkouts assign new mtimes to every file, which can cause Cargo to
 
 ## Development
 
+`setup-soldr` is a Node 20 JavaScript GitHub Action. The runtime lives in TypeScript under `src/` and is bundled into `dist/main.js` (pre-step) and `dist/post.js` (post-step) with `@vercel/ncc`. The bundled output **is committed** to the repository so consumers running `uses: zackees/setup-soldr@v0` get a self-contained action without needing `npm install` at action runtime.
+
 Clone with submodules, or initialize them after clone:
 
 ```bash
@@ -323,9 +325,22 @@ git clone --recurse-submodules https://github.com/zackees/setup-soldr.git
 git submodule update --init --recursive
 ```
 
-The repository now carries pinned `soldr/` and `zccache/` Git submodules for local source inspection against the exported action bundle.
+The repository carries pinned `soldr/` and `zccache/` Git submodules for local source inspection against the exported action bundle.
 
-For cross-repo integration work, the action also carries hidden `repo` and `ref`
+### Local toolchain
+
+```bash
+npm install         # install TypeScript, ncc, and @actions/* runtime deps
+npm run typecheck   # tsc --noEmit
+npm test            # node --test across __tests__/**/*.test.ts
+npm run build       # bundle dist/main.js and dist/post.js with ncc
+```
+
+Always re-run `npm run build` after changing anything under `src/` and commit the regenerated `dist/` alongside the source change — CI gates on `git diff --exit-code -- dist/` to catch dist drift.
+
+### Integration knobs
+
+For cross-repo integration work, the action carries hidden `repo` and `ref`
 inputs. When `ref` is set, setup-soldr downloads the GitHub source archive for
 that ref, builds `soldr` locally, and caches it under the normal setup root so
 `fast-gh-rebuild` style branch loops can exercise unreleased Soldr changes.

@@ -1,0 +1,27 @@
+{
+  "name": "setup-soldr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Setup-soldr GitHub Action: installs soldr, provisions Rust toolchain, manages caches. TypeScript port of the composite action.",
+  "main": "dist/main.js",
+  "scripts": {
+    "build:main": "ncc build src/main.ts -o dist-main --license licenses.txt --no-source-map-register && node -e \"require('fs').copyFileSync('dist-main/index.js','dist/main.js')\"",
+    "build:post": "ncc build src/post.ts -o dist-post --license licenses.txt --no-source-map-register && node -e \"require('fs').copyFileSync('dist-post/index.js','dist/post.js')\"",
+    "build": "npm run build:main && npm run build:post",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types --import ./__tests__/register-loader.mjs __tests__/log-utils.test.ts __tests__/cache-keys.test.ts __tests__/toolchain.test.ts __tests__/resolve-setup.test.ts __tests__/phase-timing.test.ts __tests__/normalize-source-mtime.test.ts __tests__/detect-shared-target-warning.test.ts __tests__/cache-compress.test.ts __tests__/verify-soldr.test.ts __tests__/ensure-rust-toolchain.test.ts __tests__/ensure-soldr.test.ts __tests__/main.test.ts __tests__/post.test.ts"
+  },
+  "dependencies": {
+    "@actions/cache": "^4.0.0",
+    "@actions/core": "^1.11.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/io": "^1.1.3",
+    "@actions/tool-cache": "^2.0.1",
+    "@iarna/toml": "^2.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@vercel/ncc": "^0.38.4",
+    "typescript": "^5.7.0"
+  }
+}
