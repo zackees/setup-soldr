@@ -18,11 +18,15 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 ACTION_PATH = REPO_ROOT / "action.yml"
 
 
-# Inputs preserved verbatim from the original composite action.
+# Full set of inputs the action.yml manifest exposes. Originally preserved
+# verbatim from the composite action; new inputs added since the node20 port
+# are appended here so the contract test continues to guard the public input
+# surface.
 EXPECTED_INPUTS = {
     "version",
     "repo",
     "ref",
+    "token",
     "cache",
     "cache-dir",
     "cache-key-suffix",
