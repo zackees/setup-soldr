@@ -5,8 +5,8 @@
   "description": "Setup-soldr GitHub Action: installs soldr, provisions Rust toolchain, manages caches. TypeScript port of the composite action.",
   "main": "dist/main.js",
   "scripts": {
-    "build:main": "ncc build src/main.ts -o dist-main --license licenses.txt --no-source-map-register && node -e \"require('fs').copyFileSync('dist-main/index.js','dist/main.js')\"",
-    "build:post": "ncc build src/post.ts -o dist-post --license licenses.txt --no-source-map-register && node -e \"require('fs').copyFileSync('dist-post/index.js','dist/post.js')\"",
+    "build:main": "ncc build src/main.ts -o dist-main --license licenses.txt --no-source-map-register && node scripts/bundle-entrypoint.mjs main",
+    "build:post": "ncc build src/post.ts -o dist-post --license licenses.txt --no-source-map-register && node scripts/bundle-entrypoint.mjs post",
     "build": "npm run build:main && npm run build:post",
     "typecheck": "tsc --noEmit",
     "test": "node --test --experimental-strip-types --import ./__tests__/register-loader.mjs __tests__/log-utils.test.ts __tests__/cache-keys.test.ts __tests__/toolchain.test.ts __tests__/resolve-setup.test.ts __tests__/phase-timing.test.ts __tests__/normalize-source-mtime.test.ts __tests__/detect-shared-target-warning.test.ts __tests__/cache-compress.test.ts __tests__/verify-soldr.test.ts __tests__/ensure-rust-toolchain.test.ts __tests__/ensure-soldr.test.ts __tests__/main.test.ts __tests__/post.test.ts"
