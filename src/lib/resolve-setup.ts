@@ -148,7 +148,7 @@ async function fetchReleaseTagDefault(
     "X-GitHub-Api-Version": "2022-11-28",
     "User-Agent": "setup-soldr-action",
   };
-  const token = (env["GITHUB_TOKEN"] ?? "").trim();
+  const token = (env["GITHUB_TOKEN"] ?? "").trim() || (env["INPUT_TOKEN"] ?? "").trim();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
