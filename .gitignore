@@ -1,3 +1,17 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Node / TypeScript build artifacts
+node_modules/
+dist-main/
+dist-post/
+dist-tsc/
+*.tsbuildinfo
+licenses.txt
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
