@@ -9,14 +9,15 @@
     "build:post": "ncc build src/post.ts -o dist-post --license licenses.txt --no-source-map-register && node -e \"require('fs').copyFileSync('dist-post/index.js','dist/post.js')\"",
     "build": "npm run build:main && npm run build:post",
     "typecheck": "tsc --noEmit",
-    "test": "node --test --experimental-strip-types __tests__/**/*.test.ts"
+    "test": "node --test --experimental-strip-types --import ./__tests__/register-loader.mjs __tests__/log-utils.test.ts __tests__/cache-keys.test.ts __tests__/toolchain.test.ts __tests__/resolve-setup.test.ts"
   },
   "dependencies": {
     "@actions/cache": "^4.0.0",
     "@actions/core": "^1.11.1",
     "@actions/exec": "^1.1.1",
     "@actions/io": "^1.1.3",
-    "@actions/tool-cache": "^2.0.1"
+    "@actions/tool-cache": "^2.0.1",
+    "@iarna/toml": "^2.2.5"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

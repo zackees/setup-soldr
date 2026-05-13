@@ -7,6 +7,44 @@
 import * as core from "@actions/core";
 import type { Logger } from "./types.js";
 
+const FALSY_VALUES: ReadonlySet<string> = new Set(["0", "false", "no", "off"]);
+
+// Per-process fallback start epoch (seconds since epoch), mirrors the
+// _FALLBACK_START semantics in log_utils.py: captured once at module load.
+const FALLBACK_START_SECONDS = Date.now() / 1000;
+
+function timestampsEnabled(env: Record<string, string | undefined>): boolean {
+  const raw = env["SETUP_SOLDR_TIMESTAMPS"] ?? "true";
+  const value = raw.trim().toLowerCase();
+  return !FALSY_VALUES.has(value);
+}
+
+function startEpoch(env: Record<string, string | undefined>): number {
+  const raw = (env["SETUP_SOLDR_LOG_START_EPOCH"] ?? "").trim();
+  if (raw) {
+    const parsed = Number(raw);
+    if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return FALLBACK_START_SECONDS;
+}
+
+function elapsedPrefix(env: Record<string, string | undefined>): string {
+  const now = Date.now() / 1000;
+  const elapsed = Math.max(0, Math.floor(now - startEpoch(env)));
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function formatLine(env: Record<string, string | undefined>, message: string): string {
+  if (timestampsEnabled(env)) {
+    return `${elapsedPrefix(env)} ${message}`;
+  }
+  return message;
+}
+
 /**
  * Build a Logger that:
  *   - prefixes elapsed time when SETUP_SOLDR_TIMESTAMPS is truthy
@@ -14,12 +52,64 @@ import type { Logger } from "./types.js";
  *   - writes the rest to stdout via core.info()
  */
 export function createLogger(env: Record<string, string | undefined> = process.env): Logger {
-  void env;
-  void core;
-  throw new Error("not implemented: createLogger");
+  return {
+    info(msg: string): void {
+      // Use stdout directly so the message reaches the runner log without
+      // being annotated as info; mirrors log_utils.log() behavior.
+      process.stdout.write(`${msg}\n`);
+    },
+    warning(msg: string): void {
+      core.warning(msg);
+    },
+    error(msg: string): void {
+      core.error(msg);
+    },
+    debug(msg: string): void {
+      core.debug(msg);
+    },
+    log(msg: string): void {
+      process.stdout.write(`${formatLine(env, msg)}\n`);
+    },
+  };
 }
 
+/**
+ * Mirror of log_utils.color_force_environment(): produce the set of env vars
+ * to inject when timestamps are enabled and NO_COLOR is not already set.
+ * Returns only the keys that should be added (caller decides how to merge).
+ */
 export function colorForceEnvironment(env: Record<string, string | undefined>): Record<string, string> {
-  void env;
-  throw new Error("not implemented: colorForceEnvironment");
+  const additions: Record<string, string> = {};
+  if (!timestampsEnabled(env)) {
+    return additions;
+  }
+  if (env["NO_COLOR"] !== undefined) {
+    return additions;
+  }
+  if (env["CARGO_TERM_COLOR"] === undefined) {
+    additions["CARGO_TERM_COLOR"] = "always";
+  }
+  if (env["CLICOLOR_FORCE"] === undefined) {
+    additions["CLICOLOR_FORCE"] = "1";
+  }
+  if (env["FORCE_COLOR"] === undefined) {
+    additions["FORCE_COLOR"] = "1";
+  }
+  return additions;
+}
+
+/**
+ * Test/library helper: format a single line using the supplied env.
+ * Exported so cache-keys/resolve-setup can reuse the elapsed prefix logic
+ * without instantiating a Logger.
+ */
+export function formatLogLine(env: Record<string, string | undefined>, message: string): string {
+  return formatLine(env, message);
+}
+
+/**
+ * Test helper: report whether the given env enables timestamped output.
+ */
+export function isTimestampsEnabled(env: Record<string, string | undefined>): boolean {
+  return timestampsEnabled(env);
 }
