@@ -261,6 +261,37 @@ test("explicit version is normalized for cache keying", async () => {
   assert.equal(a["cache_key"], b["cache_key"]);
 });
 
+test("latest release lookup uses token input for GitHub API auth", async () => {
+  const originalFetch = globalThis.fetch;
+  let authorization = "";
+  globalThis.fetch = (async (_url: unknown, init?: { headers?: unknown }) => {
+    const headers = init?.headers as Record<string, string> | undefined;
+    authorization = headers?.["Authorization"] ?? "";
+    return new Response(JSON.stringify({ tag_name: "v0.7.12" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }) as typeof fetch;
+
+  try {
+    const { root, workspace, runnerTemp } = makeWorkspace({});
+    const ctx = makeContext(root, workspace, runnerTemp);
+    ctx.env = withInputs(ctx.env, {
+      INPUT_VERSION: "latest",
+      INPUT_TOKEN: "input-token",
+    });
+    const inputs = readRawInputs(ctx.env);
+    const result = await resolveSetup(ctx, inputs, {
+      systemRustupOverride: async () => false,
+    });
+
+    assert.equal(result.soldrVersionResolved, "v0.7.12");
+    assert.equal(authorization, "Bearer input-token");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("source ref changes setup cache key", async () => {
   const { outputs: base } = await run({}, { INPUT_REPO: "zackees/soldr" });
   const { outputs: branch } = await run({}, {

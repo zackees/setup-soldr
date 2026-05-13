@@ -17,6 +17,10 @@ inputs:
     description: Internal override that builds Soldr from a Git ref instead of downloading a release asset.
     required: false
     default: ""
+  token:
+    description: GitHub token used for authenticated release metadata and asset download requests.
+    required: false
+    default: ${{ github.token }}
   cache:
     description: Restore and save the action-managed cache/state root across workflow runs.
     required: false

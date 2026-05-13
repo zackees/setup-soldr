@@ -71,11 +71,41 @@ jobs:
       - run: soldr cargo test --locked
 ```
 
+## GitHub API Authentication
+
+`setup-soldr` calls the GitHub Releases API to resolve the requested
+`soldr` release and download its platform asset. The action authenticates those
+requests by default with the workflow's `${{ github.token }}` through its
+`token` input. This avoids anonymous API rate limits and transient HTTP 403
+failures on busy CI matrices.
+
+Most workflows do not need to configure anything:
+
+```yaml
+- uses: zackees/setup-soldr@v0
+  with:
+    cache: true
+```
+
+To override the token, pass a token with read access to the release repository:
+
+```yaml
+- uses: zackees/setup-soldr@v0
+  with:
+    token: ${{ secrets.SOLDR_RELEASE_TOKEN }}
+    cache: true
+```
+
+For compatibility with older workflows, `setup-soldr` also honors a
+`GITHUB_TOKEN` environment variable on the step. The explicit `token` input is
+preferred for new workflows.
+
 ## Inputs
 
 | Input | Meaning |
 |---|---|
 | `version` | Soldr release tag or version to install. Defaults to `0.7.18`. |
+| `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
 | `cache-key-suffix` | Optional escape hatch appended to the cache key. |
