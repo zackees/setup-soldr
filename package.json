@@ -22,6 +22,8 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@vercel/ncc": "^0.38.4",
+    "has-flag": "4.0.0",
+    "supports-color": "7.2.0",
     "typescript": "^5.7.0"
   }
 }
