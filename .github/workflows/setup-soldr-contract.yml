@@ -47,7 +47,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 22 LTS — required for `--experimental-strip-types` used by
+          # `npm test` to run our TypeScript test files via node --test.
+          # The action runtime declared in action.yml (`using: node20`) is
+          # independent of this CI Node version; consumers run the bundled
+          # dist/ on node20 regardless.
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
