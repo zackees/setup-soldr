@@ -1,0 +1,19 @@
+{
+  "name": "setup-soldr-cache-compress",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JS post-action that tar+zstd compresses a cache directory before actions/cache uploads it, and decompresses on restore.",
+  "scripts": {
+    "build:main": "ncc build src/main.js -o dist-main --license licenses.txt --no-source-map-register && node -e \"require('fs').copyFileSync('dist-main/index.js','dist/main.js')\"",
+    "build:post": "ncc build src/post.js -o dist-post --license licenses.txt --no-source-map-register && node -e \"require('fs').copyFileSync('dist-post/index.js','dist/post.js')\"",
+    "build": "npm run build:main && npm run build:post",
+    "test": "node --test __tests__/*.test.js"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/exec": "^1.1.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.4"
+  }
+}

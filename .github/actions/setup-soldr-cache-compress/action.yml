@@ -1,0 +1,22 @@
+name: setup-soldr-cache-compress
+description: >
+  Tars and zstd-compresses a cache directory at job end so that
+  actions/cache@v5's post-job save uploads a single .tar.zst file regardless
+  of platform. On main, looks for <cache-dir>.tar.zst and decompresses it
+  in place; auto-detects zstd vs gzip magic for backward compatibility.
+inputs:
+  cache-dir:
+    description: Directory to compress on save / decompress on restore.
+    required: true
+  codec:
+    description: Compression codec used for the post-job tar archive. One of zstd, none, auto.
+    required: false
+    default: "zstd"
+  level:
+    description: zstd compression level (1-22). Ignored when codec is none.
+    required: false
+    default: "3"
+runs:
+  using: node20
+  main: dist/main.js
+  post: dist/post.js

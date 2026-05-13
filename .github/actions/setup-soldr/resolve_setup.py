@@ -729,7 +729,10 @@ def main() -> None:
     parent_sha = os.environ.get("ACTION_PARENT_SHA", "").strip()
     if parent_sha == github_sha:
         parent_sha = ""
-    build_cache_prefix = f"setup-soldr-buildcache-v1-{runner_os}-{runner_arch}"
+    # v2 bumps the on-wire format from a restored directory to a single
+    # `.tar.zst` archive produced by setup-soldr-cache-compress; v1 entries
+    # are abandoned (one-shot migration, no fallback).
+    build_cache_prefix = f"setup-soldr-buildcache-v2-{runner_os}-{runner_arch}"
     build_cache_toolchain_prefix = f"{build_cache_prefix}-{digest}-"
     build_cache_key = f"{build_cache_toolchain_prefix}{github_sha}"
     build_cache_parent_key = f"{build_cache_toolchain_prefix}{parent_sha}" if parent_sha else ""
@@ -862,6 +865,32 @@ def main() -> None:
         if build_cache_parent_key:
             build_cache_parent_key = f"{build_cache_parent_key}-{sanitized_suffix}"
 
+    # Cargo registry cache (payload C). Opt-in: setup-soldr-owned caching is
+    # safe only after the zccache CLI honors SOLDR_SKIP_CARGO_REGISTRY_SAVE
+    # so its built-in cargo-registry save no-ops and we don't double-save.
+    # See setup-soldr#70 for the rollout plan.
+    cargo_registry_cache_requested = (
+        os.environ.get("INPUT_CARGO_REGISTRY_CACHE", "false").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    cargo_registry_cache_path = cargo_home / "registry"
+    cargo_registry_cache_prefix = (
+        f"setup-soldr-cargoregistry-v1-{runner_os}-{runner_arch}"
+    )
+    cargo_registry_cache_restore_prefix = (
+        f"{cargo_registry_cache_prefix}-{cargo_lock_hash}-"
+    )
+    cargo_registry_cache_key = (
+        f"{cargo_registry_cache_restore_prefix}{digest}-{github_sha}"
+    )
+    if suffix:
+        cargo_registry_cache_key = (
+            f"{cargo_registry_cache_key}-{sanitized_suffix}"
+        )
+    cargo_registry_cache_enabled = cargo_registry_cache_requested
+    if cargo_registry_cache_enabled:
+        cargo_registry_cache_path.mkdir(parents=True, exist_ok=True)
+
     _write_env("SOLDR_CACHE_DIR", str(soldr_root))
     _write_env("CARGO_HOME", str(cargo_home))
     _write_env("RUSTUP_HOME", str(rustup_home))
@@ -907,6 +936,13 @@ def main() -> None:
     )
     _write_env("SOLDR_TARGET_CACHE_COMPRESS", target_cache_compress)
     _write_env("SOLDR_TARGET_CACHE_COMPRESS_LEVEL", target_cache_compress_level)
+    if cargo_registry_cache_enabled:
+        # Signal to zccache CLI: skip its built-in cargo-registry save so the
+        # setup-soldr-managed actions/cache step is the single source of truth
+        # for the cargo registry payload. Flag is honored by zccache once the
+        # coordination patch lands; until then the default-off path keeps
+        # behavior unchanged.
+        _write_env("SOLDR_SKIP_CARGO_REGISTRY_SAVE", "1")
     # setup-soldr already rehydrates the rust-plan bundle directory with
     # actions/cache, so the soldr/zccache layer should operate on that local
     # bundle instead of switching to zccache's separate direct GHA backend.
@@ -1001,6 +1037,14 @@ def main() -> None:
             "target_cache_budget_files": target_cache_budget_files,
             "target_lockfile_path": _path_for_output(workspace, lockfile_path),
             "target_lockfile_hash": cargo_lock_hash,
+            "cargo_registry_cache_enabled": str(
+                cargo_registry_cache_enabled
+            ).lower(),
+            "cargo_registry_cache_path": str(cargo_registry_cache_path),
+            "cargo_registry_cache_key": cargo_registry_cache_key,
+            "cargo_registry_cache_restore_prefix": (
+                cargo_registry_cache_restore_prefix
+            ),
             "soldr_root": str(soldr_root),
             "soldr_bin_cache_path": str(soldr_bin_cache_path),
             "cargo_home": str(cargo_home),
