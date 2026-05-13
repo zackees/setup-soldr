@@ -151,15 +151,15 @@ inputs:
     default: "false"
   cargo-registry-cache:
     description: >
-      Opt-in. When "true", setup-soldr manages a separate actions/cache step
+      When "true" (default), setup-soldr manages a separate actions/cache step
       for ~/.cargo/registry that pre-compresses the directory into a single
       .tar.zst via the embedded setup-soldr-cache-compress sub-action. Also
       exports SOLDR_SKIP_CARGO_REGISTRY_SAVE=1 so the zccache CLI's built-in
-      cargo-registry save no-ops and the payload is not double-saved.
-      Default "false" until the zccache release that honors the skip flag
-      lands; flip to "true" in a follow-up once it does.
+      cargo-registry save (honored in zccache >=1.4.4) no-ops and the
+      payload is not double-saved. Set to "false" to opt out and let
+      zccache own the registry cache via its legacy gzip path.
     required: false
-    default: "false"
+    default: "true"
 outputs:
   soldr-path:
     description: Installed Soldr binary path added to PATH for later steps.

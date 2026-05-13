@@ -61896,7 +61896,7 @@ async function resolveSetup(ctx, inputs, deps) {
         }
     }
     // ---- cargo registry cache ----
-    const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "false");
+    const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "true");
     const cargoRegistryCachePath = path.join(cargoHome, "registry");
     const cargoRegistryCachePrefix = `setup-soldr-cargoregistry-v1-${runnerOs}-${runnerArch}`;
     const cargoRegistryCacheRestorePrefix = `${cargoRegistryCachePrefix}-${cargoLockHash}-`;
