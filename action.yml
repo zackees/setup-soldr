@@ -159,645 +159,73 @@ inputs:
 outputs:
   soldr-path:
     description: Installed Soldr binary path added to PATH for later steps.
-    value: ${{ steps.resolve.outputs.soldr_path }}
   soldr-version:
     description: Installed Soldr version reported by soldr version --json.
-    value: ${{ steps.verify.outputs.soldr_version }}
   cache-dir:
     description: Runner-local cache/state root used by the action.
-    value: ${{ steps.resolve.outputs.cache_root }}
   setup-duration-seconds:
     description: Total wall-clock time spent inside the setup-soldr action.
-    value: ${{ steps.cache-meta.outputs.setup_duration_seconds }}
   setup-phase-summary:
     description: JSON timing summary for the main setup phases and cache restore statuses.
-    value: ${{ steps.cache-meta.outputs.setup_phase_summary }}
   cache-hit:
     description: Whether the action restored an exact cache hit for the selected cache/state root.
-    value: ${{ steps.cache-meta.outputs.cache_hit }}
   cache-key:
     description: Primary key used for the action-managed cache/state root.
-    value: ${{ steps.resolve.outputs.cache_key }}
   cache-restore-status:
     description: Diagnostic restore status for the action-managed cache/state root.
-    value: ${{ steps.cache-meta.outputs.cache_restore_status }}
   build-cache-hit:
     description: >
       Whether the action restored the Soldr-owned zccache compilation
       artifact cache. "true" for an exact key match, "false" for a
       restore-key fallback or no cache, empty string when `build-cache`
       is explicitly disabled.
-    value: ${{ steps.cache-meta.outputs.build_cache_hit }}
   build-cache-key:
     description: Primary key used for the Soldr-owned zccache compilation cache.
-    value: ${{ steps.resolve.outputs.build_cache_key }}
   build-cache-path:
     description: Soldr-owned zccache compilation cache path.
-    value: ${{ steps.resolve.outputs.build_cache_path }}
   build-cache-mode:
     description: Effective setup-soldr Rust build cache mode.
-    value: ${{ steps.resolve.outputs.build_cache_mode }}
   build-cache-restore-status:
     description: Diagnostic restore status for the Soldr-owned zccache compilation cache.
-    value: ${{ steps.cache-meta.outputs.build_cache_restore_status }}
   target-cache-hit:
     description: >
       Whether the action restored the zccache-owned Rust artifact cache state. "true"
       for an exact key match, "false" for a restore-key fallback or no cache,
       empty string when `target-cache` or `build-cache` is disabled.
-    value: ${{ steps.cache-meta.outputs.target_cache_hit }}
   target-cache-key:
     description: Primary key used for the zccache-owned Rust artifact cache state.
-    value: ${{ steps.resolve.outputs.target_cache_key }}
   target-cache-path:
     description: Cargo target directory used by soldr for Rust artifact planning.
-    value: ${{ steps.resolve.outputs.target_cache_path }}
   target-cache-paths:
     description: Path or newline-delimited path list passed to actions/cache for zccache-owned Rust artifact cache state.
-    value: ${{ steps.resolve.outputs.target_cache_paths }}
   target-cache-mode:
     description: Effective setup-soldr Rust target artifact cache mode.
-    value: ${{ steps.resolve.outputs.target_cache_mode }}
   target-cache-profile:
     description: Effective setup-soldr thin-slice pruning policy (thin-v1 or thin-v2).
-    value: ${{ steps.resolve.outputs.target_cache_profile }}
   target-cache-compress:
     description: Effective target-cache compression codec (auto, zstd, or none).
-    value: ${{ steps.resolve.outputs.target_cache_compress }}
   target-cache-compress-level:
     description: Effective target-cache compression level (1-22) applied when zstd is selected.
-    value: ${{ steps.resolve.outputs.target_cache_compress_level }}
   target-cache-restore-status:
     description: Diagnostic restore status for the Rust target artifact cache state.
-    value: ${{ steps.cache-meta.outputs.target_cache_restore_status }}
   target-cache-budget-bytes:
     description: Soft byte budget used to warn when the restored Rust artifact cache footprint is likely too large for fast CI reuse.
-    value: ${{ steps.resolve.outputs.target_cache_budget_bytes }}
   target-cache-budget-files:
     description: Soft file-count budget used to warn when the restored Rust artifact cache footprint is likely too large for fast CI reuse.
-    value: ${{ steps.resolve.outputs.target_cache_budget_files }}
   target-cache-footprint-bytes:
     description: Observed byte size of the restored Rust artifact cache footprint across the cache paths selected for the current mode.
-    value: ${{ steps.cache-meta.outputs.target_cache_footprint_bytes }}
   target-cache-footprint-files:
     description: Observed file count of the restored Rust artifact cache footprint across the cache paths selected for the current mode.
-    value: ${{ steps.cache-meta.outputs.target_cache_footprint_files }}
   target-cache-budget-status:
     description: Soft-budget diagnostic for the restored Rust artifact cache footprint.
-    value: ${{ steps.cache-meta.outputs.target_cache_budget_status }}
   target-lockfile:
     description: Cargo.lock path used for Rust artifact cache keying.
-    value: ${{ steps.resolve.outputs.target_lockfile_path }}
   target-lockfile-hash:
     description: Short hash of the Cargo.lock used for Rust artifact cache keying, or no-lock.
-    value: ${{ steps.resolve.outputs.target_lockfile_hash }}
   toolchain:
     description: Exact Rust toolchain channel configured by rustup for the action.
-    value: ${{ steps.resolve.outputs.toolchain }}
 runs:
-  using: composite
-  steps:
-    - id: phase-action-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark action
-
-    - id: phase-resolve-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark resolve
-
-    - id: resolve
-      shell: pwsh
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        INPUT_VERSION: ${{ inputs.version }}
-        INPUT_REPO: ${{ inputs.repo }}
-        INPUT_REF: ${{ inputs.ref }}
-        INPUT_CACHE_DIR: ${{ inputs.cache-dir }}
-        INPUT_CACHE_KEY_SUFFIX: ${{ inputs.cache-key-suffix }}
-        INPUT_TOOLCHAIN: ${{ inputs.toolchain }}
-        INPUT_TOOLCHAIN_FILE: ${{ inputs.toolchain-file }}
-        INPUT_TRUST_MODE: ${{ inputs.trust-mode }}
-        INPUT_TIMESTAMPS: ${{ inputs.timestamps }}
-        INPUT_LOCKFILE: ${{ inputs.lockfile }}
-        INPUT_BUILD_CACHE: ${{ inputs.build-cache }}
-        INPUT_BUILD_CACHE_MODE: ${{ inputs.build-cache-mode }}
-        INPUT_TARGET_CACHE: ${{ inputs.target-cache }}
-        INPUT_TARGET_CACHE_MODE: ${{ inputs.target-cache-mode }}
-        INPUT_TARGET_DIR: ${{ inputs.target-dir }}
-        INPUT_TARGET_CACHE_PROFILE: ${{ inputs.target-cache-profile }}
-        INPUT_TARGET_CACHE_STRIP_DEBUGINFO: ${{ inputs.target-cache-strip-debuginfo }}
-        INPUT_TARGET_CACHE_INCLUDE_INCREMENTAL: ${{ inputs.target-cache-include-incremental }}
-        INPUT_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES: ${{ inputs.target-cache-include-build-script-binaries }}
-        INPUT_TARGET_CACHE_COMPRESS: ${{ inputs.target-cache-compress }}
-        INPUT_TARGET_CACHE_COMPRESS_LEVEL: ${{ inputs.target-cache-compress-level }}
-        INPUT_CARGO_REGISTRY_CACHE: ${{ inputs.cargo-registry-cache }}
-        ACTION_WORKSPACE: ${{ github.workspace }}
-        ACTION_OS: ${{ runner.os }}
-        ACTION_ARCH: ${{ runner.arch }}
-        ACTION_PARENT_SHA: ${{ github.event.pull_request.base.sha }}
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/resolve_setup.py"
-
-    - id: phase-resolve-end
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish resolve
-
-    - id: normalize-source-mtime
-      if: ${{ inputs.source-mtime-normalize == 'true' }}
-      shell: pwsh
-      env:
-        INPUT_SOURCE_MTIME_NORMALIZE: ${{ inputs.source-mtime-normalize }}
-        ACTION_WORKSPACE: ${{ github.workspace }}
-        SETUP_SOLDR_TIMESTAMPS: ${{ inputs.timestamps }}
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/normalize_source_mtime.py"
-
-    - id: phase-setup-cache-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark setup-cache
-
-    - id: cache-lookup
-      if: ${{ inputs.cache == 'true' }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.setup_cache_paths }}
-        key: ${{ steps.resolve.outputs.cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.cache_restore_prefix }}
-        lookup-only: true
-
-    - id: cache-restore
-      if: ${{ inputs.cache == 'true' && steps.cache-lookup.outputs.cache-hit == 'true' }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.setup_cache_paths }}
-        key: ${{ steps.resolve.outputs.cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.cache_restore_prefix }}
-
-    - id: cache-managed
-      if: ${{ inputs.cache == 'true' && steps.cache-lookup.outputs.cache-hit != 'true' }}
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.setup_cache_paths }}
-        key: ${{ steps.resolve.outputs.cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.cache_restore_prefix }}
-
-    - id: phase-setup-cache-end
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish setup-cache
-
-    - id: phase-target-cache-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark target-cache
-
-    - id: target-cache-lookup
-      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.target_cache_bundle_path }}
-        key: ${{ steps.resolve.outputs.target_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
-        lookup-only: true
-
-    - id: target-cache
-      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && (steps.target-cache-lookup.outputs.cache-hit == 'true' || steps.target-cache-lookup.outputs.cache-matched-key != '') }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.target_cache_bundle_path }}
-        key: ${{ steps.resolve.outputs.target_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
-
-    - id: target-cache-managed
-      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.target-cache-lookup.outputs.cache-hit != 'true' && steps.target-cache-lookup.outputs.cache-matched-key == '')) }}
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.target_cache_bundle_path }}
-        key: ${{ steps.resolve.outputs.target_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
-
-    - id: phase-target-cache-end
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish target-cache
-
-    - id: phase-build-cache-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark build-cache
-
-    - id: build-cache-lookup
-      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}.tar.zst
-        key: ${{ steps.resolve.outputs.build_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
-        lookup-only: true
-
-    - id: build-cache-restore
-      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') && steps.resolve.outputs.build_cache_mode == 'once' && (steps.build-cache-lookup.outputs.cache-hit == 'true' || steps.build-cache-lookup.outputs.cache-matched-key != '') }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}.tar.zst
-        key: ${{ steps.resolve.outputs.build_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
-
-    # actions/cache@v5 must be registered BEFORE setup-soldr-cache-compress
-    # so the post hooks fire in the right order: compress (tar+zstd) runs
-    # first, then actions/cache's post-job save uploads the .tar.zst file.
-    - id: build-cache-managed
-      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') && (steps.resolve.outputs.build_cache_mode != 'once' || (steps.build-cache-lookup.outputs.cache-hit != 'true' && steps.build-cache-lookup.outputs.cache-matched-key == '')) }}
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.build_cache_path }}.tar.zst
-        key: ${{ steps.resolve.outputs.build_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.build_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_toolchain }}
-          ${{ steps.resolve.outputs.build_cache_restore_key_os_arch }}
-
-    - id: build-cache-compress
-      if: ${{ inputs.build-cache == 'true' && (steps.resolve.outputs.build_cache_mode != 'once' || steps.resolve.outputs.target_cache_enabled != 'true' || steps.target-cache-lookup.outputs.cache-hit != 'true') }}
-      uses: ./.github/actions/setup-soldr-cache-compress
-      with:
-        cache-dir: ${{ steps.resolve.outputs.build_cache_path }}
-        codec: ${{ inputs.target-cache-compress }}
-        level: ${{ inputs.target-cache-compress-level }}
-
-    # Cargo registry cache (payload C). Opt-in via inputs.cargo-registry-cache.
-    # actions/cache@v5 must be registered BEFORE the matching compress
-    # sub-action so the post-job hooks fire in the right order.
-    - id: cargo-registry-cache-lookup
-      if: ${{ inputs.cargo-registry-cache == 'true' && steps.resolve.outputs.cargo_registry_cache_enabled == 'true' }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.cargo_registry_cache_path }}.tar.zst
-        key: ${{ steps.resolve.outputs.cargo_registry_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.cargo_registry_cache_restore_prefix }}
-        lookup-only: true
-
-    - id: cargo-registry-cache-restore
-      if: ${{ inputs.cargo-registry-cache == 'true' && steps.resolve.outputs.cargo_registry_cache_enabled == 'true' && (steps.cargo-registry-cache-lookup.outputs.cache-hit == 'true' || steps.cargo-registry-cache-lookup.outputs.cache-matched-key != '') }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.cargo_registry_cache_path }}.tar.zst
-        key: ${{ steps.resolve.outputs.cargo_registry_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.cargo_registry_cache_restore_prefix }}
-
-    - id: cargo-registry-cache-managed
-      if: ${{ inputs.cargo-registry-cache == 'true' && steps.resolve.outputs.cargo_registry_cache_enabled == 'true' && steps.cargo-registry-cache-lookup.outputs.cache-hit != 'true' && steps.cargo-registry-cache-lookup.outputs.cache-matched-key == '' }}
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.cargo_registry_cache_path }}.tar.zst
-        key: ${{ steps.resolve.outputs.cargo_registry_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.cargo_registry_cache_restore_prefix }}
-
-    - id: cargo-registry-cache-compress
-      if: ${{ inputs.cargo-registry-cache == 'true' && steps.resolve.outputs.cargo_registry_cache_enabled == 'true' }}
-      uses: ./.github/actions/setup-soldr-cache-compress
-      with:
-        cache-dir: ${{ steps.resolve.outputs.cargo_registry_cache_path }}
-        codec: ${{ inputs.target-cache-compress }}
-        level: ${{ inputs.target-cache-compress-level }}
-
-    - id: phase-build-cache-end
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish build-cache
-
-    - id: phase-target-tree-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark target-tree
-
-    - id: target-tree-cache-lookup
-      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode == 'full' }}
-      uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.target_cache_path }}
-        key: ${{ steps.resolve.outputs.target_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
-        lookup-only: true
-
-    - id: target-tree-cache
-      if: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.resolve.outputs.build_cache_mode == 'full' }}
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-      with:
-        path: ${{ steps.resolve.outputs.target_cache_path }}
-        key: ${{ steps.resolve.outputs.target_cache_key }}
-        restore-keys: |
-          ${{ steps.resolve.outputs.target_cache_restore_key_parent }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lock }}
-          ${{ steps.resolve.outputs.target_cache_restore_key_lockfile }}
-
-    - id: phase-target-tree-end
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish target-tree
-
-    - id: phase-toolchain-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark toolchain
-
-    - id: toolchain
-      shell: pwsh
-      env:
-        SETUP_SOLDR_SETUP_CACHE_EXACT_HIT: ${{ steps.cache-lookup.outputs.cache-hit }}
-        SETUP_SOLDR_TOOLCHAIN_CACHE_CHANNEL: ${{ steps.resolve.outputs.toolchain_cache_channel }}
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/ensure_rust_toolchain.py"
-
-    - id: phase-toolchain-end
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish toolchain
-
-    - id: phase-install-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark install
-
-    - id: install
-      shell: pwsh
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-        SOLDR_REPO: ${{ steps.resolve.outputs.soldr_repo }}
-        SOLDR_REF: ${{ steps.resolve.outputs.soldr_ref }}
-        SOLDR_INSTALL_DIR: ${{ steps.resolve.outputs.bin_dir }}
-        SETUP_SOLDR_VERSION: ${{ steps.resolve.outputs.soldr_version_resolved }}
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/ensure_soldr.py"
-
-    - id: phase-install-end
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish install
-
-    - id: phase-verify-start
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" mark verify
-
-    - id: verify
-      shell: pwsh
-      env:
-        SETUP_SOLDR_PATH: ${{ steps.resolve.outputs.soldr_path }}
-        SETUP_SOLDR_BUILD_CACHE_MODE: ${{ steps.resolve.outputs.build_cache_mode }}
-        SETUP_SOLDR_REQUIRE_RUST_PLAN: ${{ steps.resolve.outputs.target_cache_enabled }}
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/verify_soldr.py"
-
-    - id: phase-verify-end
-      shell: pwsh
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/phase_timing.py" finish verify
-
-    - id: cache-meta
-      shell: pwsh
-      env:
-        RAW_CACHE_HIT: ${{ steps.cache-managed.outputs.cache-hit || steps.cache-restore.outputs.cache-hit }}
-        LOOKUP_CACHE_HIT: ${{ steps.cache-lookup.outputs.cache-hit }}
-        LOOKUP_CACHE_MATCHED_KEY: ${{ steps.cache-lookup.outputs.cache-matched-key }}
-        CACHE_KEY: ${{ steps.resolve.outputs.cache_key }}
-        RAW_BUILD_CACHE_HIT: ${{ steps.build-cache-managed.outputs.cache-hit || steps.build-cache-restore.outputs.cache-hit }}
-        LOOKUP_BUILD_CACHE_HIT: ${{ steps.build-cache-lookup.outputs.cache-hit }}
-        LOOKUP_BUILD_CACHE_MATCHED_KEY: ${{ steps.build-cache-lookup.outputs.cache-matched-key }}
-        BUILD_CACHE_KEY: ${{ steps.resolve.outputs.build_cache_key }}
-        RAW_TARGET_CACHE_HIT: ${{ steps.target-cache-managed.outputs.cache-hit || steps.target-cache.outputs.cache-hit }}
-        LOOKUP_TARGET_CACHE_HIT: ${{ steps.target-cache-lookup.outputs.cache-hit }}
-        LOOKUP_TARGET_CACHE_MATCHED_KEY: ${{ steps.target-cache-lookup.outputs.cache-matched-key }}
-        RAW_TARGET_TREE_CACHE_HIT: ${{ steps.target-tree-cache.outputs.cache-hit }}
-        LOOKUP_TARGET_TREE_CACHE_HIT: ${{ steps.target-tree-cache-lookup.outputs.cache-hit }}
-        LOOKUP_TARGET_TREE_CACHE_MATCHED_KEY: ${{ steps.target-tree-cache-lookup.outputs.cache-matched-key }}
-        TARGET_CACHE_KEY: ${{ steps.resolve.outputs.target_cache_key }}
-        TARGET_CACHE_PATHS: ${{ steps.resolve.outputs.target_cache_paths }}
-        TARGET_CACHE_BUDGET_BYTES: ${{ steps.resolve.outputs.target_cache_budget_bytes }}
-        TARGET_CACHE_BUDGET_FILES: ${{ steps.resolve.outputs.target_cache_budget_files }}
-        BUILD_CACHE_ENABLED: ${{ inputs.build-cache }}
-        TARGET_CACHE_ENABLED: ${{ inputs.target-cache }}
-        EFFECTIVE_TARGET_CACHE_ENABLED: ${{ steps.resolve.outputs.target_cache_enabled }}
-        SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT: ${{ inputs.build-cache == 'true' && steps.resolve.outputs.build_cache_mode == 'once' && steps.resolve.outputs.target_cache_enabled == 'true' && steps.target-cache-lookup.outputs.cache-hit == 'true' }}
-        PHASE_RESOLVE_SECONDS: ${{ steps.phase-resolve-end.outputs.seconds }}
-        PHASE_SETUP_CACHE_SECONDS: ${{ steps.phase-setup-cache-end.outputs.seconds }}
-        PHASE_TARGET_CACHE_SECONDS: ${{ steps.phase-target-cache-end.outputs.seconds }}
-        PHASE_BUILD_CACHE_SECONDS: ${{ steps.phase-build-cache-end.outputs.seconds }}
-        PHASE_TARGET_TREE_SECONDS: ${{ steps.phase-target-tree-end.outputs.seconds }}
-        PHASE_TOOLCHAIN_SECONDS: ${{ steps.phase-toolchain-end.outputs.seconds }}
-        PHASE_INSTALL_SECONDS: ${{ steps.phase-install-end.outputs.seconds }}
-        PHASE_VERIFY_SECONDS: ${{ steps.phase-verify-end.outputs.seconds }}
-      run: |
-        function TimestampEnabled {
-          $value = "$env:SETUP_SOLDR_TIMESTAMPS".Trim().ToLowerInvariant()
-          return -not @("0", "false", "no", "off").Contains($value)
-        }
-        function ElapsedPrefix {
-          $start = 0L
-          if (-not [long]::TryParse($env:SETUP_SOLDR_LOG_START_EPOCH, [ref]$start)) {
-            $start = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-          }
-          $elapsed = [Math]::Max(0, [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $start)
-          $span = [TimeSpan]::FromSeconds($elapsed)
-          return "{0:00}:{1:00}" -f [Math]::Floor($span.TotalMinutes), $span.Seconds
-        }
-        function Log($message) {
-          if (TimestampEnabled) {
-            Write-Host "$(ElapsedPrefix) $message"
-          } else {
-            Write-Host $message
-          }
-        }
-        function RestoreStatus($enabled, $lookupHit, $matchedKey, $primaryKey) {
-          if ($enabled -ne "true") {
-            return "disabled"
-          }
-          if ($lookupHit -eq "true") {
-            return "exact-hit"
-          }
-          if (-not [string]::IsNullOrWhiteSpace($matchedKey)) {
-            return "restore-key-hit:$matchedKey"
-          }
-          return "miss"
-        }
-        function LogPath($label, $path) {
-          if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) {
-            Log "$label path=$path exists=false files=0 bytes=0"
-            return
-          }
-          $measure = Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction SilentlyContinue |
-            Measure-Object -Property Length -Sum
-          $bytes = if ($measure.Sum) { [int64]$measure.Sum } else { 0 }
-          Log "$label path=$path exists=true files=$($measure.Count) bytes=$bytes"
-        }
-        function MeasurePaths($pathsText) {
-          $files = 0
-          $bytes = [int64]0
-          foreach ($path in ($pathsText -split "`r?`n")) {
-            $trimmed = $path.Trim()
-            if ([string]::IsNullOrWhiteSpace($trimmed) -or -not (Test-Path -LiteralPath $trimmed)) {
-              continue
-            }
-            $measure = Get-ChildItem -LiteralPath $trimmed -Recurse -File -Force -ErrorAction SilentlyContinue |
-              Measure-Object -Property Length -Sum
-            $files += [int]$measure.Count
-            if ($measure.Sum) {
-              $bytes += [int64]$measure.Sum
-            }
-          }
-          return [pscustomobject]@{
-            Files = $files
-            Bytes = $bytes
-          }
-        }
-        function ParsePhaseSeconds($value) {
-          $seconds = 0.0
-          [double]::TryParse($value, [ref]$seconds) | Out-Null
-          return [Math]::Round($seconds, 3)
-        }
-
-        $value = $env:RAW_CACHE_HIT
-        if ([string]::IsNullOrWhiteSpace($value)) {
-          $value = "false"
-        }
-        "cache_hit=$value" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        $cacheStatus = RestoreStatus "${{ inputs.cache }}" $env:LOOKUP_CACHE_HIT $env:LOOKUP_CACHE_MATCHED_KEY $env:CACHE_KEY
-        "cache_restore_status=$cacheStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
-        if ($env:BUILD_CACHE_ENABLED -eq "true") {
-          if ($env:SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT -eq "true") {
-            $buildValue = "false"
-            $buildStatus = "skipped-target-cache-exact-hit"
-          } else {
-            $buildValue = $env:RAW_BUILD_CACHE_HIT
-            if ([string]::IsNullOrWhiteSpace($buildValue)) {
-              $buildValue = "false"
-            }
-            $buildStatus = RestoreStatus $env:BUILD_CACHE_ENABLED $env:LOOKUP_BUILD_CACHE_HIT $env:LOOKUP_BUILD_CACHE_MATCHED_KEY $env:BUILD_CACHE_KEY
-          }
-        } else {
-          $buildValue = ""
-          $buildStatus = "disabled"
-        }
-        "build_cache_hit=$buildValue" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        "build_cache_restore_status=$buildStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
-        if ($env:BUILD_CACHE_ENABLED -eq "true" -and $env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true") {
-          $targetValue = $env:RAW_TARGET_CACHE_HIT
-          if ([string]::IsNullOrWhiteSpace($targetValue)) {
-            $targetValue = "false"
-          }
-        } else {
-          $targetValue = ""
-        }
-        "target_cache_hit=$targetValue" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        $targetEnabled = if ($env:BUILD_CACHE_ENABLED -eq "true" -and $env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true") { "true" } else { "false" }
-        $targetStatus = RestoreStatus $targetEnabled $env:LOOKUP_TARGET_CACHE_HIT $env:LOOKUP_TARGET_CACHE_MATCHED_KEY $env:TARGET_CACHE_KEY
-        "target_cache_restore_status=$targetStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        $targetFootprint = MeasurePaths $env:TARGET_CACHE_PATHS
-        $targetBudgetBytes = 0L
-        [long]::TryParse($env:TARGET_CACHE_BUDGET_BYTES, [ref]$targetBudgetBytes) | Out-Null
-        $targetBudgetFiles = 0
-        [int]::TryParse($env:TARGET_CACHE_BUDGET_FILES, [ref]$targetBudgetFiles) | Out-Null
-        if ($targetEnabled -eq "true") {
-          $budgetOver = @()
-          if ($targetBudgetBytes -gt 0 -and $targetFootprint.Bytes -gt $targetBudgetBytes) {
-            $budgetOver += "bytes"
-          }
-          if ($targetBudgetFiles -gt 0 -and $targetFootprint.Files -gt $targetBudgetFiles) {
-            $budgetOver += "files"
-          }
-          if ($budgetOver.Count -gt 0) {
-            $targetBudgetStatus = "over-soft-budget:$($budgetOver -join ',')"
-          } else {
-            $targetBudgetStatus = "within-soft-budget"
-          }
-        } else {
-          $targetBudgetStatus = "disabled"
-        }
-        "target_cache_footprint_bytes=$($targetFootprint.Bytes)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        "target_cache_footprint_files=$($targetFootprint.Files)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        "target_cache_budget_status=$targetBudgetStatus" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        $targetTreeStatus = RestoreStatus $targetEnabled $env:LOOKUP_TARGET_TREE_CACHE_HIT $env:LOOKUP_TARGET_TREE_CACHE_MATCHED_KEY $env:TARGET_CACHE_KEY
-        $targetTreeValue = $env:RAW_TARGET_TREE_CACHE_HIT
-        if ([string]::IsNullOrWhiteSpace($targetTreeValue)) {
-          $targetTreeValue = "false"
-        }
-        $setupDurationSeconds = 0.0
-        $actionStartMs = 0L
-        if ([long]::TryParse($env:SETUP_SOLDR_PHASE_ACTION_START_MS, [ref]$actionStartMs)) {
-          $setupDurationSeconds = [Math]::Round(
-            [Math]::Max(0, [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() - $actionStartMs) / 1000.0,
-            3
-          )
-        } else {
-          $startEpoch = 0L
-          if ([long]::TryParse($env:SETUP_SOLDR_LOG_START_EPOCH, [ref]$startEpoch)) {
-            $setupDurationSeconds = [Math]::Round(
-              [Math]::Max(0, [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - $startEpoch),
-              3
-            )
-          }
-        }
-        $setupPhaseSummary = (
-          [ordered]@{
-            resolve_seconds = ParsePhaseSeconds $env:PHASE_RESOLVE_SECONDS
-            setup_cache_seconds = ParsePhaseSeconds $env:PHASE_SETUP_CACHE_SECONDS
-            setup_cache_status = $cacheStatus
-            target_cache_seconds = ParsePhaseSeconds $env:PHASE_TARGET_CACHE_SECONDS
-            target_cache_status = $targetStatus
-            target_tree_seconds = ParsePhaseSeconds $env:PHASE_TARGET_TREE_SECONDS
-            target_tree_status = $targetTreeStatus
-            build_cache_seconds = ParsePhaseSeconds $env:PHASE_BUILD_CACHE_SECONDS
-            build_cache_status = $buildStatus
-            toolchain_seconds = ParsePhaseSeconds $env:PHASE_TOOLCHAIN_SECONDS
-            install_seconds = ParsePhaseSeconds $env:PHASE_INSTALL_SECONDS
-            verify_seconds = ParsePhaseSeconds $env:PHASE_VERIFY_SECONDS
-            build_cache_mode = "${{ steps.resolve.outputs.build_cache_mode }}"
-            target_cache_mode = "${{ steps.resolve.outputs.target_cache_mode }}"
-            target_cache_budget_status = $targetBudgetStatus
-            total_seconds = $setupDurationSeconds
-          } | ConvertTo-Json -Compress
-        )
-        "setup_duration_seconds=$setupDurationSeconds" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        "setup_phase_summary=$setupPhaseSummary" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
-        Log "cache restore status=$cacheStatus exact-hit=$value"
-        if ($env:SKIP_BUILD_CACHE_FOR_TARGET_EXACT_HIT -eq "true") {
-          Log "build-cache restore skipped because once-mode target cache was an exact hit"
-        }
-        Log "build-cache restore status=$buildStatus exact-hit=$buildValue"
-        Log "target-cache bundle restore status=$targetStatus exact-hit=$targetValue"
-        if ($env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true" -and "${{ steps.resolve.outputs.build_cache_mode }}" -eq "full") {
-          Log "target-cache tree restore status=$targetTreeStatus exact-hit=$targetTreeValue"
-        }
-        Log "target-cache footprint files=$($targetFootprint.Files) bytes=$($targetFootprint.Bytes)"
-        if ($targetEnabled -eq "true") {
-          Log "target-cache soft budget files=$targetBudgetFiles bytes=$targetBudgetBytes status=$targetBudgetStatus"
-          if ($targetBudgetStatus.StartsWith("over-soft-budget:")) {
-            Write-Host "::warning::target-cache footprint files=$($targetFootprint.Files) bytes=$($targetFootprint.Bytes) exceeded soft budget files=$targetBudgetFiles bytes=$targetBudgetBytes; consider build-cache-mode 'thin' or narrower target-cache paths."
-          }
-        }
-        Log "setup-phase summary=$setupPhaseSummary"
-        LogPath "cache after restore" "${{ steps.resolve.outputs.setup_cache_path }}"
-        LogPath "soldr-bin after restore" "${{ steps.resolve.outputs.soldr_bin_cache_path }}"
-        LogPath "build-cache after restore" "${{ steps.resolve.outputs.build_cache_path }}"
-        if ($env:EFFECTIVE_TARGET_CACHE_ENABLED -eq "true" -and "${{ steps.resolve.outputs.build_cache_mode }}" -eq "full") {
-          LogPath "target-cache tree after restore" "${{ steps.resolve.outputs.target_cache_path }}"
-        }
-        LogPath "target-cache bundle after restore" "${{ steps.resolve.outputs.target_cache_bundle_path }}"
-
-    - id: shared-target-warning
-      shell: pwsh
-      env:
-        BUILD_CACHE_ENABLED: ${{ inputs.build-cache }}
-        EFFECTIVE_TARGET_CACHE_ENABLED: ${{ steps.resolve.outputs.target_cache_enabled }}
-        BUILD_CACHE_MODE: ${{ steps.resolve.outputs.build_cache_mode }}
-        TARGET_DIR: ${{ steps.resolve.outputs.target_cache_path }}
-      run: python "${{ github.action_path }}/.github/actions/setup-soldr/detect_shared_target_warning.py"
+  using: node20
+  main: dist/main.js
+  post: dist/post.js
+  post-if: success()

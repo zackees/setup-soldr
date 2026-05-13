@@ -7,8 +7,13 @@ on:
     paths:
       - README.md
       - action.yml
+      - src/**
+      - dist/**
+      - __tests__/**
       - tests/**
-      - .github/actions/setup-soldr/**
+      - package.json
+      - package-lock.json
+      - tsconfig.json
       - .github/workflows/setup-soldr-action.yml
       - .github/workflows/setup-soldr-contract.yml
       - .github/workflows/zccache-build-demo.yml
@@ -16,8 +21,13 @@ on:
     paths:
       - README.md
       - action.yml
+      - src/**
+      - dist/**
+      - __tests__/**
       - tests/**
-      - .github/actions/setup-soldr/**
+      - package.json
+      - package-lock.json
+      - tsconfig.json
       - .github/workflows/setup-soldr-action.yml
       - .github/workflows/setup-soldr-contract.yml
       - .github/workflows/zccache-build-demo.yml
@@ -27,6 +37,39 @@ permissions:
   contents: read
 
 jobs:
+  js-build:
+    name: JS Build and Tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build dist bundles
+        run: npm run build
+
+      - name: Verify dist/ is up to date
+        run: |
+          set -euo pipefail
+          if ! git diff --exit-code -- dist/; then
+            echo "::error::dist/ is out of date. Run 'npm run build' and commit the result." >&2
+            exit 1
+          fi
+
   contract-tests:
     name: Contract Tests
     runs-on: ubuntu-24.04
@@ -40,21 +83,13 @@ jobs:
           set -euo pipefail
           python --version
           python -m pip install --upgrade pip
-          python -m pip install pytest
+          python -m pip install pytest pyyaml
 
       - name: Run setup-soldr contract tests
         shell: bash
         run: |
           set -euo pipefail
           python -m pytest \
-            tests/test_action_python_entrypoints.py \
             tests/test_action_target_cache_wiring.py \
-            tests/test_detect_shared_target_warning.py \
-            tests/test_ensure_soldr_release_resolution.py \
-            tests/test_ensure_rust_toolchain_refresh.py \
-            tests/test_ensure_soldr_source_ref.py \
-            tests/test_phase_timing.py \
             tests/test_release_rollout_contract.py \
-            tests/test_resolve_setup_build_cache_mode.py \
-            tests/test_resolve_setup_toolchain_resolution.py \
             tests/test_zccache_build_demo_workflow.py
