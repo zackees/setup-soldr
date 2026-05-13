@@ -426,10 +426,42 @@ test("readRawInputs maps INPUT_* env vars by name", () => {
     INPUT_REPO: "zackees/soldr",
     INPUT_TARGET_CACHE_COMPRESS: "zstd",
     INPUT_CARGO_REGISTRY_CACHE: "true",
+    INPUT_LINKER: "fast",
   });
   assert.equal(inputs.version, "0.7.11");
   assert.equal(inputs.repo, "zackees/soldr");
   assert.equal(inputs.targetCacheCompress, "zstd");
   assert.equal(inputs.cargoRegistryCache, "true");
   assert.equal(inputs.cacheDir, "");
+  assert.equal(inputs.linker, "fast");
+});
+
+// --- linker input ---
+
+test("linker empty does not export SOLDR_LINKER", async () => {
+  const { result } = await run({}, { INPUT_LINKER: "" });
+  assert.equal(result.envExports["SOLDR_LINKER"], undefined);
+});
+
+test("linker 'default' does not export SOLDR_LINKER", async () => {
+  const { result } = await run({}, { INPUT_LINKER: "default" });
+  assert.equal(result.envExports["SOLDR_LINKER"], undefined);
+});
+
+test("linker valid non-default values export SOLDR_LINKER", async () => {
+  for (const value of ["ld", "mold", "rust-lld", "fast"]) {
+    const { result } = await run({}, { INPUT_LINKER: value });
+    assert.equal(result.envExports["SOLDR_LINKER"], value, `linker=${value}`);
+  }
+});
+
+test("linker invalid value throws with helpful message", async () => {
+  await assert.rejects(
+    () => run({}, { INPUT_LINKER: "garbage" }),
+    (err: unknown) => {
+      assert.ok(err instanceof Error);
+      assert.match(err.message, /invalid 'linker' input/);
+      return true;
+    },
+  );
 });

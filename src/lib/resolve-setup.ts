@@ -48,6 +48,7 @@ import type {
 
 const FALSY_VALUES: ReadonlySet<string> = new Set(["0", "false", "no", "off"]);
 const TRUTHY_VALUES: ReadonlySet<string> = new Set(["1", "true", "yes", "on"]);
+const ALLOWED_LINKER_VALUES = ["default", "ld", "mold", "rust-lld", "fast"] as const;
 
 // CARGO_MAKEFLAGS / MAKEFLAGS describe an in-process jobserver pipe whose
 // FDs are closed once the producing process exits. Forwarding via $GITHUB_ENV
@@ -83,6 +84,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     toolchain: get("TOOLCHAIN"),
     toolchainFile: get("TOOLCHAIN_FILE"),
     trustMode: get("TRUST_MODE"),
+    linker: get("LINKER"),
     timestamps: get("TIMESTAMPS"),
     lockfile: get("LOCKFILE"),
     buildCache: get("BUILD_CACHE"),
@@ -537,6 +539,17 @@ export async function resolveSetup(
   }
   if (inputs.trustMode.trim()) {
     setEnv("SOLDR_TRUST_MODE", inputs.trustMode.trim());
+  }
+  const linkerValue = inputs.linker.trim();
+  if (linkerValue) {
+    if (!(ALLOWED_LINKER_VALUES as readonly string[]).includes(linkerValue)) {
+      throw new Error(
+        `invalid 'linker' input: '${linkerValue}'. Allowed: default | ld | mold | rust-lld | fast`,
+      );
+    }
+    if (linkerValue !== "default") {
+      setEnv("SOLDR_LINKER", linkerValue);
+    }
   }
 
   // ---- path additions ----
