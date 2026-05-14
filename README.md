@@ -112,6 +112,7 @@ preferred for new workflows.
 | `toolchain` | Explicit Rust toolchain channel override. |
 | `toolchain-file` | Alternate toolchain file path when `toolchain` is empty; `components` and `targets` in the file are provisioned during setup. |
 | `trust-mode` | Optional `SOLDR_TRUST_MODE` value. |
+| `linker` | Linker override forwarded as `SOLDR_LINKER`. One of `default`, `ld`, `mold`, `rust-lld`, `fast`. Omit (or leave empty) and `default` both mean "do not export `SOLDR_LINKER`", so soldr's config-file value (if any) stays in effect. |
 | `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
 | `lockfile` | Optional `Cargo.lock` path used for Rust artifact cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save Soldr/zccache build cache state across runs. Default `true`; set to `false` to opt out. |

@@ -61556,6 +61556,7 @@ const log_utils_js_1 = __nccwpck_require__(28129);
 const toolchain_js_1 = __nccwpck_require__(10260);
 const FALSY_VALUES = new Set(["0", "false", "no", "off"]);
 const TRUTHY_VALUES = new Set(["1", "true", "yes", "on"]);
+const ALLOWED_LINKER_VALUES = ["default", "ld", "mold", "rust-lld", "fast"];
 // CARGO_MAKEFLAGS / MAKEFLAGS describe an in-process jobserver pipe whose
 // FDs are closed once the producing process exits. Forwarding via $GITHUB_ENV
 // causes "failed to connect to jobserver" warnings in every downstream step.
@@ -61589,6 +61590,7 @@ function readRawInputs(env) {
         toolchain: get("TOOLCHAIN"),
         toolchainFile: get("TOOLCHAIN_FILE"),
         trustMode: get("TRUST_MODE"),
+        linker: get("LINKER"),
         timestamps: get("TIMESTAMPS"),
         lockfile: get("LOCKFILE"),
         buildCache: get("BUILD_CACHE"),
@@ -61962,6 +61964,15 @@ async function resolveSetup(ctx, inputs, deps) {
     }
     if (inputs.trustMode.trim()) {
         setEnv("SOLDR_TRUST_MODE", inputs.trustMode.trim());
+    }
+    const linkerValue = inputs.linker.trim();
+    if (linkerValue) {
+        if (!ALLOWED_LINKER_VALUES.includes(linkerValue)) {
+            throw new Error(`invalid 'linker' input: '${linkerValue}'. Allowed: default | ld | mold | rust-lld | fast`);
+        }
+        if (linkerValue !== "default") {
+            setEnv("SOLDR_LINKER", linkerValue);
+        }
     }
     // ---- path additions ----
     const pathAdditions = [binDir, path.join(cargoHome, "bin")];

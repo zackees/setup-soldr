@@ -45,6 +45,13 @@ inputs:
     description: Optional value for SOLDR_TRUST_MODE.
     required: false
     default: ""
+  linker:
+    description: |
+      Linker override forwarded as SOLDR_LINKER.
+      One of: default | ld | mold | rust-lld | fast.
+      Omit or set to empty to leave the linker unspecified.
+    required: false
+    default: ""
   timestamps:
     description: Prefix setup-soldr diagnostic and streamed command output with elapsed mm:ss timestamps.
     required: false
