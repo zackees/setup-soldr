@@ -118,3 +118,145 @@ test("final cache summary includes zccache stats and cache layer outcomes", asyn
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("compile_cache_report reports missing-binary when SOLDR_BINARY is unset", async () => {
+  const mod = (await import("../src/post.js")) as {
+    buildFinalCacheSummary: (result: any, state: any, saves: any) => any;
+    formatFinalCacheSummaryMarkdown: (summary: any) => string;
+  };
+  const root = mkTmp("post-compile-cache-missing-");
+  const previousBinary = process.env["SOLDR_BINARY"];
+  delete process.env["SOLDR_BINARY"];
+  try {
+    const result = {
+      setupCache: { key: "setup-key" },
+      targetCache: { key: "target-key" },
+      buildCache: { key: "build-key", path: path.join(root, "cache", "zccache") },
+      cargoRegistryCache: { key: "registry-key" },
+    };
+    const summary = mod.buildFinalCacheSummary(
+      result,
+      {
+        setupCacheEnabled: false,
+        setupCacheExactHit: false,
+        setupCacheMatchedKey: "",
+        targetCacheEnabled: false,
+        targetCacheExactHit: false,
+        targetCacheMatchedKey: "",
+        buildCacheEnabled: false,
+        buildCacheExactHit: false,
+        buildCacheMatchedKey: "",
+        cargoRegistryCacheEnabled: false,
+        cargoRegistryCacheExactHit: false,
+        cargoRegistryCacheMatchedKey: "",
+      },
+      {
+        buildCache: { status: "disabled" },
+        cargoRegistryCache: { status: "disabled" },
+      },
+    );
+    assert.equal(summary.compile_cache_report.status, "missing-binary");
+    assert.ok(summary.compile_cache_report.error?.includes("SOLDR_BINARY"));
+    const md = mod.formatFinalCacheSummaryMarkdown(summary);
+    assert.match(md, /Compile cache report/);
+    assert.match(md, /missing-binary/);
+  } finally {
+    if (previousBinary === undefined) delete process.env["SOLDR_BINARY"];
+    else process.env["SOLDR_BINARY"] = previousBinary;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("compile_cache_report parses a fake soldr cache report --json output", { skip: process.platform === "win32" ? "spawnSync cannot exec a .cmd shim without shell:true; real soldr is a .exe so this only matters for the test contrivance" : false }, async () => {
+  const mod = (await import("../src/post.js")) as {
+    buildFinalCacheSummary: (result: any, state: any, saves: any) => any;
+    formatFinalCacheSummaryMarkdown: (summary: any) => string;
+  };
+  const root = mkTmp("post-compile-cache-fake-");
+  const previousBinary = process.env["SOLDR_BINARY"];
+  try {
+    // Write a tiny fake-soldr that prints a canned cache report JSON when
+    // invoked with `cache report --json`. Unix-only test (sh hashbang
+    // script). Real soldr is a .exe on Windows so production spawnSync
+    // works without shell:true; the test contrivance does not.
+    const fakeJson = JSON.stringify({
+      schema_version: 1,
+      command: "cache report",
+      soldr_version: "0.7.22",
+      managed_zccache_version: "1.5.0",
+      session_stats_present: true,
+      journal_present: true,
+      last_session: { status: "ok", hits: 11, misses: 4, hit_rate: 11 / 15 },
+      rollups: {
+        by_extension: { rlib: { hits: 8, misses: 2, total_ms: 1200 } },
+        by_tool_total_ms: { rustc: 2500, "clippy-driver": 400 },
+      },
+      diagnoses: [],
+      notes: [],
+    });
+    const helperPath = path.join(root, "fake-soldr-helper.cjs");
+    fs.writeFileSync(
+      helperPath,
+      `process.stdout.write(${JSON.stringify(fakeJson)} + '\\n');\n`,
+      "utf8",
+    );
+    const isWindows = process.platform === "win32";
+    const fakeBinary = path.join(root, isWindows ? "soldr.cmd" : "soldr");
+    if (isWindows) {
+      fs.writeFileSync(
+        fakeBinary,
+        `@echo off\r\nnode "${helperPath}"\r\n`,
+        "utf8",
+      );
+    } else {
+      fs.writeFileSync(
+        fakeBinary,
+        `#!/bin/sh\nexec node "${helperPath}"\n`,
+        "utf8",
+      );
+      fs.chmodSync(fakeBinary, 0o755);
+    }
+    process.env["SOLDR_BINARY"] = fakeBinary;
+    const result = {
+      setupCache: { key: "k" },
+      targetCache: { key: "k" },
+      buildCache: { key: "k", path: path.join(root, "cache", "zccache") },
+      cargoRegistryCache: { key: "k" },
+    };
+    const summary = mod.buildFinalCacheSummary(
+      result,
+      {
+        setupCacheEnabled: false,
+        setupCacheExactHit: false,
+        setupCacheMatchedKey: "",
+        targetCacheEnabled: false,
+        targetCacheExactHit: false,
+        targetCacheMatchedKey: "",
+        buildCacheEnabled: false,
+        buildCacheExactHit: false,
+        buildCacheMatchedKey: "",
+        cargoRegistryCacheEnabled: false,
+        cargoRegistryCacheExactHit: false,
+        cargoRegistryCacheMatchedKey: "",
+      },
+      {
+        buildCache: { status: "disabled" },
+        cargoRegistryCache: { status: "disabled" },
+      },
+    );
+    assert.equal(summary.compile_cache_report.status, "ok");
+    assert.equal(summary.compile_cache_report.soldr_version, "0.7.22");
+    assert.equal(summary.compile_cache_report.managed_zccache_version, "1.5.0");
+    assert.equal((summary.compile_cache_report.report as any).last_session.hits, 11);
+    const md = mod.formatFinalCacheSummaryMarkdown(summary);
+    assert.match(md, /11 hits \/ 4 misses/);
+    assert.match(md, /Rollups by output extension/);
+    assert.match(md, /\| rlib \| 8 \| 2 \| 1200 \|/);
+    assert.match(md, /Top tools by wall-clock/);
+    assert.match(md, /\| rustc \| 2500 \|/);
+  } finally {
+    if (previousBinary === undefined) delete process.env["SOLDR_BINARY"];
+    else process.env["SOLDR_BINARY"] = previousBinary;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
