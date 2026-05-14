@@ -112,12 +112,10 @@ jobs:
 
           requested="$REQUESTED_INTEGRATION_REF"
           zccache_ref="$(resolve_ref zackees/zccache "$requested")"
-          soldr_ref="$(resolve_ref zackees/soldr "$requested")"
 
           {
             echo "requested_ref=$requested"
             echo "zccache_ref=$zccache_ref"
-            echo "soldr_ref=$soldr_ref"
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout zccache
@@ -137,7 +135,6 @@ jobs:
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
           repo: zackees/soldr
-          ref: ${{ steps.resolve-refs.outputs.soldr_ref }}
 
       - name: Show cache plan
         shell: bash
@@ -148,9 +145,9 @@ jobs:
             echo "| Output | Value |"
             echo "| --- | --- |"
             echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
+            echo "| soldr-install | \`release asset\` |"
             echo "| requested-integration-ref | \`${{ steps.resolve-refs.outputs.requested_ref }}\` |"
             echo "| zccache-ref | \`${{ steps.resolve-refs.outputs.zccache_ref }}\` |"
-            echo "| soldr-ref | \`${{ steps.resolve-refs.outputs.soldr_ref }}\` |"
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
             echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
@@ -220,12 +217,10 @@ jobs:
 
           requested="$REQUESTED_INTEGRATION_REF"
           zccache_ref="$(resolve_ref zackees/zccache "$requested")"
-          soldr_ref="$(resolve_ref zackees/soldr "$requested")"
 
           {
             echo "requested_ref=$requested"
             echo "zccache_ref=$zccache_ref"
-            echo "soldr_ref=$soldr_ref"
           } >> "$GITHUB_OUTPUT"
 
       - name: Checkout zccache
@@ -245,7 +240,6 @@ jobs:
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
           repo: zackees/soldr
-          ref: ${{ steps.resolve-refs.outputs.soldr_ref }}
 
       - name: Show cache plan
         shell: bash
@@ -256,9 +250,9 @@ jobs:
             echo "| Output | Value |"
             echo "| --- | --- |"
             echo "| soldr-version | \`${{ steps.setup.outputs.soldr-version }}\` |"
+            echo "| soldr-install | \`release asset\` |"
             echo "| requested-integration-ref | \`${{ steps.resolve-refs.outputs.requested_ref }}\` |"
             echo "| zccache-ref | \`${{ steps.resolve-refs.outputs.zccache_ref }}\` |"
-            echo "| soldr-ref | \`${{ steps.resolve-refs.outputs.soldr_ref }}\` |"
             echo "| cache-restore-status | \`${{ steps.setup.outputs.cache-restore-status }}\` |"
             echo "| build-cache-restore-status | \`${{ steps.setup.outputs.build-cache-restore-status }}\` |"
             echo "| build-cache-mode | \`${{ steps.setup.outputs.build-cache-mode }}\` |"
