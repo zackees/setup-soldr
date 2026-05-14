@@ -185,6 +185,15 @@ inputs:
       zccache own the registry cache via its legacy gzip path.
     required: false
     default: "true"
+  shims:
+    description: >
+      When "true" (default), setup-soldr writes PATH-shadowing shims for cargo,
+      rustfmt, clippy-driver, rustc, and rustdoc into ${cache-dir}/shims/ and
+      prepends that directory to $PATH. Each shim routes its invocation through
+      the installed soldr binary. Set to "false" to opt out and call
+      `soldr cargo` / `soldr rustfmt` explicitly.
+    required: false
+    default: "true"
   stats:
     description: >
       Controls diagnostic output for cache operations. "none" suppresses all
@@ -273,6 +282,8 @@ outputs:
     description: >
       JSON string containing full cache stats (restores + saves with byte counts,
       durations, and hit/miss status). Only set when stats is "detailed".
+  shims-dir:
+    description: Path to the directory containing the PATH shims written by setup-soldr.
 runs:
   using: node20
   main: dist/main.js

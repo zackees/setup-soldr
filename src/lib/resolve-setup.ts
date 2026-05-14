@@ -109,6 +109,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     targetCacheCompressLevel: get("TARGET_CACHE_COMPRESS_LEVEL"),
     sourceMtimeNormalize: get("SOURCE_MTIME_NORMALIZE"),
     cargoRegistryCache: get("CARGO_REGISTRY_CACHE"),
+    shims: get("SHIMS"),
     stats: get("STATS"),
     debugMode: get("DEBUG"),
   };
@@ -663,6 +664,11 @@ export async function resolveSetup(
   const stats = normalizeStatsMode(inputs.stats);
   const debugMode = isTruthy(inputs.debugMode.trim() || "false");
 
+  // ---- shims ----
+  const shimsRaw = inputs.shims.trim() || "true";
+  const shimsEnabled = !isFalsy(shimsRaw);
+  const shimsDir = path.join(cacheRoot, "shims");
+
   return {
     workspace,
     cacheRoot,
@@ -688,6 +694,8 @@ export async function resolveSetup(
     pathAdditions,
     logStartEpoch: logStart,
     timestamps,
+    shimsEnabled,
+    shimsDir,
     stats,
     debugMode,
   };

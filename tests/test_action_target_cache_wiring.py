@@ -50,6 +50,7 @@ EXPECTED_INPUTS = {
     "target-cache-compress-level",
     "source-mtime-normalize",
     "cargo-registry-cache",
+    "shims",
     "stats",
     "debug",
 }
@@ -88,6 +89,7 @@ EXPECTED_OUTPUTS = {
     "target-lockfile-hash",
     "toolchain",
     "stats-json",
+    "shims-dir",
 }
 
 
