@@ -135,6 +135,9 @@ jobs:
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
           repo: zackees/soldr
+          stats: detailed
+          debug: "true"
+          shims: "true"
 
       - name: Show cache plan
         shell: bash
@@ -154,6 +157,7 @@ jobs:
             echo "| target-cache-restore-status | \`${{ steps.setup.outputs.target-cache-restore-status }}\` |"
             echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
+            echo "| stats-json | \`${{ steps.setup.outputs.stats-json }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build zccache cold
@@ -240,6 +244,9 @@ jobs:
           target-dir: zccache/target
           cache-key-suffix: ${{ env.DEMO_CACHE_SUFFIX }}
           repo: zackees/soldr
+          stats: detailed
+          debug: "true"
+          shims: "true"
 
       - name: Show cache plan
         shell: bash
@@ -259,6 +266,7 @@ jobs:
             echo "| target-cache-restore-status | \`${{ steps.setup.outputs.target-cache-restore-status }}\` |"
             echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
+            echo "| stats-json | \`${{ steps.setup.outputs.stats-json }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build zccache warm
