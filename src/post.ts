@@ -13,7 +13,8 @@ import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { compressCache } from "./lib/cache-compress.js";
 import { createLogger } from "./lib/log-utils.js";
-import type { ResolveResult } from "./lib/types.js";
+import { StatsCollector } from "./lib/stats-collector.js";
+import type { ResolveResult, StatsMode } from "./lib/types.js";
 
 type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
 type SaveStatus = "disabled" | "not-managed-in-post" | "exact-hit-skip" | "missing-dir-skip" | "saved" | "failed";
@@ -130,35 +131,42 @@ async function saveOne(opts: {
   key: string;
   matchedKey: string;
   label: string;
+  debug: boolean;
   log: (msg: string) => void;
-}): Promise<CacheSaveResult> {
-  const { cacheDir, codec, level, key, matchedKey, label, log } = opts;
+}): Promise<CacheSaveResult & { archiveBytes: number | null }> {
+  const { cacheDir, codec, level, key, matchedKey, label, debug, log } = opts;
+  const withBytes = (r: CacheSaveResult): CacheSaveResult & { archiveBytes: number | null } =>
+    Object.assign(r, { archiveBytes: null });
   if (!dirExists(cacheDir)) {
     log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
-    return { status: "missing-dir-skip", cache_dir: cacheDir };
+    return withBytes({ status: "missing-dir-skip", cache_dir: cacheDir });
   }
   if (matchedKey === key) {
     log(`${label}: exact cache hit on ${key}, skipping save`);
-    return { status: "exact-hit-skip", cache_dir: cacheDir };
+    return withBytes({ status: "exact-hit-skip", cache_dir: cacheDir });
   }
-  let archive: string | null = null;
+  let archiveBytes: number | null = null;
+  let archivePath: string | null = null;
   try {
-    archive = await compressCache({ cacheDir, codec, level });
+    const result = await compressCache({ cacheDir, codec, level, debug, log });
+    archivePath = result.archivePath;
+    archiveBytes = result.archiveBytes || null;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log(`${label}: compression failed: ${message}`);
-    return { status: "failed", cache_dir: cacheDir, error: message };
+    return withBytes({ status: "failed", cache_dir: cacheDir, error: message });
   }
-  const pathsToSave = archive ? [archive] : [cacheDir];
+  const pathsToSave = archivePath ? [archivePath] : [cacheDir];
   try {
     const id = await cache.saveCache(pathsToSave, key);
-    log(`${label}: saved cache id=${id} key=${key} via ${archive ? "tar.zst" : "default"}`);
+    log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"}`);
     return {
       status: "saved",
       cache_dir: cacheDir,
-      archive_path: archive ?? undefined,
+      archive_path: archivePath ?? undefined,
       saved_paths: pathsToSave,
       cache_id: id,
+      archiveBytes,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -166,9 +174,10 @@ async function saveOne(opts: {
     return {
       status: "failed",
       cache_dir: cacheDir,
-      archive_path: archive ?? undefined,
+      archive_path: archivePath ?? undefined,
       saved_paths: pathsToSave,
       error: message,
+      archiveBytes,
     };
   }
 }
@@ -387,8 +396,14 @@ export async function run(): Promise<void> {
   const buildCacheMatched = core.getState("buildCacheMatchedKey");
   const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
   const restoreState = readRestoreState();
+  const statsMode = (core.getState("statsMode") || "summarize") as StatsMode;
+  const runnerTemp = core.getState("runnerTemp") || "";
+  const debugMode = result.debugMode ?? false;
+  const debugLog = debugMode ? log : (): void => undefined;
+  const postCollector = new StatsCollector();
 
   // Build cache
+  const buildSaveStart = Date.now();
   const buildSave = restoreState.buildCacheEnabled
     ? await saveOne({
         cacheDir: result.buildCache.path,
@@ -397,13 +412,23 @@ export async function run(): Promise<void> {
         key: result.buildCache.key,
         matchedKey: buildCacheMatched,
         label: "build-cache",
-        log,
+        debug: debugMode,
+        log: debugLog,
       })
-    : disabledSave();
+    : Object.assign(disabledSave(), { archiveBytes: null });
+  if (buildSave.status === "saved") {
+    postCollector.record({
+      label: "build-cache", operation: "save", hit: false,
+      key: result.buildCache.key, matchedKey: buildCacheMatched, restoreKeys: [],
+      archiveBytes: buildSave.archiveBytes, inflatedBytes: null, fileCount: null,
+      durationMs: Date.now() - buildSaveStart, timestamp: new Date().toISOString(),
+    });
+  }
 
   // Cargo registry cache (only when enabled)
-  let cargoRegistrySave = disabledSave();
+  let cargoRegistrySave = Object.assign(disabledSave(), { archiveBytes: null as number | null });
   if (result.cargoRegistryCache.enabled) {
+    const regSaveStart = Date.now();
     cargoRegistrySave = await saveOne({
       cacheDir: result.cargoRegistryCache.path,
       codec: result.targetCacheCompress,
@@ -411,8 +436,17 @@ export async function run(): Promise<void> {
       key: result.cargoRegistryCache.key,
       matchedKey: registryMatched,
       label: "cargo-registry-cache",
-      log,
+      debug: debugMode,
+      log: debugLog,
     });
+    if (cargoRegistrySave.status === "saved") {
+      postCollector.record({
+        label: "cargo-registry", operation: "save", hit: false,
+        key: result.cargoRegistryCache.key, matchedKey: registryMatched, restoreKeys: [],
+        archiveBytes: cargoRegistrySave.archiveBytes, inflatedBytes: null, fileCount: null,
+        durationMs: Date.now() - regSaveStart, timestamp: new Date().toISOString(),
+      });
+    }
   }
 
   const finalSummary = buildFinalCacheSummary(result, restoreState, {
@@ -421,6 +455,15 @@ export async function run(): Promise<void> {
   });
   logFinalCacheSummary(finalSummary, log);
   writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary), log);
+
+  // Append save ops to detailed session log if requested
+  if (statsMode === "detailed" && runnerTemp) {
+    try {
+      await postCollector.appendSavesToSessionLog(runnerTemp);
+    } catch (err) {
+      log(`post: stats log append failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 }
 
 // See main.ts for the rationale behind the test-import escape hatch.
