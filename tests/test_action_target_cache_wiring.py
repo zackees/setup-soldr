@@ -34,6 +34,7 @@ EXPECTED_INPUTS = {
     "toolchain-file",
     "trust-mode",
     "linker",
+    "compile-priority",
     "timestamps",
     "lockfile",
     "build-cache",

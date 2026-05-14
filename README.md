@@ -2,7 +2,7 @@
 
 [![Setup Soldr Action](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml/badge.svg)](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml)
 
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.18`.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.19`.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -104,7 +104,7 @@ preferred for new workflows.
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.7.18`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.7.19`. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
@@ -112,7 +112,8 @@ preferred for new workflows.
 | `toolchain` | Explicit Rust toolchain channel override. |
 | `toolchain-file` | Alternate toolchain file path when `toolchain` is empty; `components` and `targets` in the file are provisioned during setup. |
 | `trust-mode` | Optional `SOLDR_TRUST_MODE` value. |
-| `linker` | Linker override forwarded as `SOLDR_LINKER`. One of `default`, `ld`, `mold`, `rust-lld`, `fast`. Omit (or leave empty) and `default` both mean "do not export `SOLDR_LINKER`", so soldr's config-file value (if any) stays in effect. |
+| `linker` | Linker override forwarded as `SOLDR_LINKER` (requires soldr 0.7.19+). Empty (default) selects `fast` — mold-if-on-PATH-else-rust-lld on Linux, rust-lld on macOS/Windows — and emits a one-time GitHub Actions warning so the override is visible in CI logs. Soldr's native default is no injection (smaller artifact cache, slower link); pass `platform-default` (or `default`) to opt out and keep cargo/rust-toolchain.toml in charge. Other accepted values pass through verbatim: `ld`, `mold`, `rust-lld`, `fast`. Unknown values raise an error. |
+| `compile-priority` | Compiler/linker child-process priority forwarded as `ZCCACHE_COMPILE_PRIORITY` (requires zccache 1.4.6+). Defaults to `high` because CI runners are dedicated and have no foreground workload to yield to. zccache's native default is `low` (designed for interactive dev). Accepted: `normal`, `low`, `idle`, `high`. Set to empty string to opt out and let zccache pick its native default. |
 | `timestamps` | Prefix setup-soldr diagnostics and streamed command output with elapsed `mm:ss` timestamps. Default `true`; set to `false` to opt out. |
 | `lockfile` | Optional `Cargo.lock` path used for Rust artifact cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save Soldr/zccache build cache state across runs. Default `true`; set to `false` to opt out. |
@@ -167,7 +168,7 @@ preferred for new workflows.
 
 ## Notes
 
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.18`.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.19`.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action keeps using the runner's existing `CARGO_HOME` unless `CARGO_HOME` is already set by the workflow. When `RUSTUP_HOME` is not explicitly set, setup-soldr prefers the runner's existing rustup home if it already satisfies the requested toolchain/components/targets; otherwise it falls back to a managed `RUSTUP_HOME` under the action cache root and rehydrates that state on later warm runs.

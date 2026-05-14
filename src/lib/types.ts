@@ -28,6 +28,7 @@ export interface RawInputs {
   toolchainFile: string;
   trustMode: string;
   linker: string;
+  compilePriority: string;
   timestamps: string;
   lockfile: string;
   buildCache: string;
