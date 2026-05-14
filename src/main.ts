@@ -17,6 +17,7 @@ import { ensureSoldr } from "./lib/ensure-soldr.js";
 import { verifySoldr } from "./lib/verify-soldr.js";
 import { normalizeSourceMtime } from "./lib/normalize-source-mtime.js";
 import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js";
+import { ensureShims } from "./lib/ensure-shims.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import type { ActionContext } from "./lib/types.js";
@@ -100,6 +101,13 @@ export async function run(): Promise<void> {
   const result = await resolveSetup(ctx, inputs);
   await applyResolveResult(result);
   await finishPhase("resolve");
+
+  const dryRun = TRUTHY.has((process.env["SETUP_SOLDR_DRY_RUN"] ?? "").trim().toLowerCase());
+  if (dryRun) {
+    logger.log("DRY RUN: setup-soldr dry run — skipping cache, install, and verify");
+    await finishPhase("action");
+    return;
+  }
 
   // Persist resolve state for the post-job step.
   core.saveState("resolveResult", JSON.stringify(result));
@@ -251,6 +259,19 @@ export async function run(): Promise<void> {
   await markPhase("install");
   await ensureSoldr({ resolveResult: result, githubToken: ctx.githubToken });
   await finishPhase("install");
+
+  // Export SOLDR_BINARY so shims can exec it directly
+  core.exportVariable("SOLDR_BINARY", result.soldrPath);
+
+  // ---- shims ----
+  if (result.shimsEnabled) {
+    await ensureShims({
+      shimsDir: result.shimsDir,
+      soldrPath: result.soldrPath,
+      isWindows: process.platform === "win32",
+      log: (msg) => logger.log(msg),
+    });
+  }
 
   // ---- verify ----
   await markPhase("verify");

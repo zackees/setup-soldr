@@ -59,6 +59,7 @@ export interface RawInputs {
   targetCacheCompressLevel: string;
   sourceMtimeNormalize: string;
   cargoRegistryCache: string;
+  shims: string;
   stats: string;
   debugMode: string;
 }
@@ -177,6 +178,10 @@ export interface ResolveResult {
   // Timing
   logStartEpoch: string;
   timestamps: string;
+
+  // Shims
+  shimsEnabled: boolean;
+  shimsDir: string;
 
   // Stats and debug
   stats: StatsMode;

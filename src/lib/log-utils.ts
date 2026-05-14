@@ -5,7 +5,20 @@
 // SETUP_SOLDR_TIMESTAMPS to decide.
 
 import * as core from "@actions/core";
+import * as fs from "node:fs";
 import type { Logger } from "./types.js";
+
+function makeFileLogger(env: Record<string, string | undefined>): ((line: string) => void) | null {
+  const logPath = (env["SETUP_SOLDR_LOG"] ?? "").trim();
+  if (!logPath) return null;
+  return (line: string): void => {
+    try {
+      fs.appendFileSync(logPath, line + "\n", "utf8");
+    } catch {
+      // best-effort
+    }
+  };
+}
 
 const FALSY_VALUES: ReadonlySet<string> = new Set(["0", "false", "no", "off"]);
 
@@ -50,13 +63,16 @@ function formatLine(env: Record<string, string | undefined>, message: string): s
  *   - prefixes elapsed time when SETUP_SOLDR_TIMESTAMPS is truthy
  *   - writes warnings/errors via @actions/core's annotated channels
  *   - writes the rest to stdout via core.info()
+ *   - optionally appends each log/info line to SETUP_SOLDR_LOG file
  */
 export function createLogger(env: Record<string, string | undefined> = process.env): Logger {
+  const fileLog = makeFileLogger(env);
   return {
     info(msg: string): void {
       // Use stdout directly so the message reaches the runner log without
       // being annotated as info; mirrors log_utils.log() behavior.
       process.stdout.write(`${msg}\n`);
+      if (fileLog) fileLog(msg);
     },
     warning(msg: string): void {
       core.warning(msg);
@@ -68,7 +84,9 @@ export function createLogger(env: Record<string, string | undefined> = process.e
       core.debug(msg);
     },
     log(msg: string): void {
-      process.stdout.write(`${formatLine(env, msg)}\n`);
+      const formatted = formatLine(env, msg);
+      process.stdout.write(`${formatted}\n`);
+      if (fileLog) fileLog(formatted);
     },
   };
 }
