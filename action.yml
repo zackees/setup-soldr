@@ -185,6 +185,22 @@ inputs:
       zccache own the registry cache via its legacy gzip path.
     required: false
     default: "true"
+  stats:
+    description: >
+      Controls diagnostic output for cache operations. "none" suppresses all
+      stats output. "summarize" (default) prints a compact hit/miss table after
+      setup. "detailed" adds full JSON stats to the log, writes
+      $RUNNER_TEMP/setup-soldr-stats.json and $RUNNER_TEMP/setup-soldr-session.log
+      (updated by the post phase with save operations), and sets the stats-json output.
+    required: false
+    default: "summarize"
+  debug:
+    description: >
+      When "true", enables verbose per-operation diagnostics: archive magic bytes,
+      compressed/inflated byte counts, file counts, compression ratios, and the
+      exact decompression/compression commands run.
+    required: false
+    default: "false"
 outputs:
   soldr-path:
     description: Installed Soldr binary path added to PATH for later steps.
@@ -253,6 +269,10 @@ outputs:
     description: Short hash of the Cargo.lock used for Rust artifact cache keying, or no-lock.
   toolchain:
     description: Exact Rust toolchain channel configured by rustup for the action.
+  stats-json:
+    description: >
+      JSON string containing full cache stats (restores + saves with byte counts,
+      durations, and hit/miss status). Only set when stats is "detailed".
 runs:
   using: node20
   main: dist/main.js

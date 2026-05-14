@@ -8,10 +8,49 @@
 // zstd vs gzip magic bytes for back-compat.
 
 import * as fs from "node:fs/promises";
+import type { Dirent } from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as io from "@actions/io";
+
+/**
+ * Recursively walk a directory and sum file sizes.
+ */
+export async function walkDirSize(dir: string): Promise<{ bytes: number; files: number }> {
+  let bytes = 0;
+  let files = 0;
+  async function walk(d: string): Promise<void> {
+    let entries: Dirent[];
+    try {
+      entries = await fs.readdir(d, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const full = path.join(d, entry.name);
+      if (entry.isDirectory()) {
+        await walk(full);
+      } else if (entry.isFile()) {
+        try {
+          bytes += (await fs.stat(full)).size;
+          files++;
+        } catch {
+          // skip inaccessible files
+        }
+      }
+    }
+  }
+  await walk(dir);
+  return { bytes, files };
+}
+
+function fmtBytesDebug(n: number): string {
+  if (n < 1024) return `${n}B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)}KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)}MB`;
+  return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
+}
 
 export type CompressMagic = "zstd" | "gzip" | "unknown";
 
@@ -53,62 +92,113 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
+export interface DecompressResult {
+  archiveBytes: number;
+  inflatedBytes: number;
+  fileCount: number;
+}
+
 /**
  * Decompress <cache-dir>.tar.zst (or .tar.gz) into <cache-dir>.
  *
  *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <targetDir>`.
  *   gzip: `tar -xzf <archive> -C <targetDir>`.
+ *
+ * Returns compressed/inflated byte counts and file count.
+ * When debug=true, logs diagnostics via the supplied log fn.
  */
-export async function decompressCache(opts: { archivePath: string; targetDir: string }): Promise<void> {
-  const { archivePath, targetDir } = opts;
+export async function decompressCache(opts: {
+  archivePath: string;
+  targetDir: string;
+  debug?: boolean;
+  log?: (msg: string) => void;
+}): Promise<DecompressResult> {
+  const { archivePath, targetDir, debug = false, log = (): void => undefined } = opts;
   await ensureDir(targetDir);
+
+  let archiveBytes = 0;
+  try { archiveBytes = (await fs.stat(archivePath)).size; } catch { /* archive may not exist */ }
+
   const magic = await detectCompressMagic(archivePath);
-  if (magic === "gzip") {
-    await exec.exec("tar", ["-xzf", archivePath, "-C", targetDir]);
-    return;
+  if (debug) {
+    log(`[debug] decompress ${path.basename(archivePath)}: magic=${magic} archive=${fmtBytesDebug(archiveBytes)}`);
   }
-  if (magic === "zstd") {
-    // tar -xf - reads from stdin; we pipe `zstd -d -c <archive>` into it.
+
+  if (magic === "gzip") {
+    if (debug) log(`[debug] decompress cmd: tar -xzf ${archivePath} -C ${targetDir}`);
+    await exec.exec("tar", ["-xzf", archivePath, "-C", targetDir]);
+  } else if (magic === "zstd") {
     const zstdPath = await io.which("zstd", false);
     if (!zstdPath) {
+      if (debug) log(`[debug] decompress cmd (fallback): tar --zstd -xf ${archivePath} -C ${targetDir}`);
       // Fall back: many tars know how to decode zstd themselves (--zstd).
       await exec.exec("tar", ["--zstd", "-xf", archivePath, "-C", targetDir]);
-      return;
+    } else {
+      if (debug) log(`[debug] decompress cmd: zstd -d -c ${archivePath} | tar -xf - -C ${targetDir}`);
+      // tar -xf - reads from stdin; we pipe `zstd -d -c <archive>` into it.
+      await runPipe(
+        [zstdPath, ["-d", "-c", archivePath]],
+        ["tar", ["-xf", "-", "-C", targetDir]],
+      );
     }
-    await runPipe(
-      [zstdPath, ["-d", "-c", archivePath]],
-      ["tar", ["-xf", "-", "-C", targetDir]],
-    );
-    return;
+  } else {
+    throw new Error(`decompressCache: unrecognized archive magic for ${archivePath}`);
   }
-  throw new Error(`decompressCache: unrecognized archive magic for ${archivePath}`);
+
+  const { bytes: inflatedBytes, files: fileCount } = await walkDirSize(targetDir);
+  if (debug) {
+    const ratio = archiveBytes > 0 && inflatedBytes > 0 ? (archiveBytes / inflatedBytes).toFixed(2) : "n/a";
+    log(`[debug] decompress result: inflated=${fmtBytesDebug(inflatedBytes)} files=${fileCount} ratio=${ratio}`);
+  }
+  return { archiveBytes, inflatedBytes, fileCount };
+}
+
+export interface CompressResult {
+  archivePath: string | null;
+  archiveBytes: number;
+  inflatedBytes: number | null;
+  fileCount: number | null;
 }
 
 /**
  * tar -cf - <cache-dir-basename> | zstd -T0 -<level> > <cache-dir>.tar.zst
  *
- * When codec=="none" or zstd is not installed, returns null and leaves the
- * caller to use the default actions/cache compression.
+ * When codec=="none" or zstd is not installed, returns archivePath=null and
+ * leaves the caller to use the default actions/cache compression.
+ * When debug=true, walks the source dir for byte/file counts and logs ratios.
  */
 export async function compressCache(opts: {
   cacheDir: string;
   codec: "auto" | "zstd" | "none";
   level: string;
-}): Promise<string | null> {
-  const { cacheDir, codec, level } = opts;
-  if (codec === "none") return null;
+  debug?: boolean;
+  log?: (msg: string) => void;
+}): Promise<CompressResult> {
+  const { cacheDir, codec, level, debug = false, log = (): void => undefined } = opts;
+  const nullResult: CompressResult = { archivePath: null, archiveBytes: 0, inflatedBytes: null, fileCount: null };
+
+  if (codec === "none") return nullResult;
 
   const zstdPath = await io.which("zstd", false);
   if (!zstdPath) {
     core.warning(
       "setup-soldr: zstd binary not found on PATH; falling back to actions/cache default codec",
     );
-    return null;
+    return nullResult;
   }
 
   if (!(await pathExists(cacheDir))) {
     core.warning(`setup-soldr: cache dir ${cacheDir} does not exist, skipping compression`);
-    return null;
+    return nullResult;
+  }
+
+  let inflatedBytes: number | null = null;
+  let fileCount: number | null = null;
+  if (debug) {
+    const walked = await walkDirSize(cacheDir);
+    inflatedBytes = walked.bytes;
+    fileCount = walked.files;
+    log(`[debug] compress ${path.basename(cacheDir)}: input=${fmtBytesDebug(inflatedBytes)} files=${fileCount}`);
   }
 
   const parent = path.dirname(cacheDir);
@@ -120,12 +210,20 @@ export async function compressCache(opts: {
   const levelNumeric = parseLevel(level);
   const levelFlag = `-${levelNumeric}`;
 
+  if (debug) log(`[debug] compress cmd: tar -cf - -C ${parent} ${basename} | zstd -T0 ${levelFlag} -o ${archivePath}`);
   await runPipe(
     ["tar", ["-cf", "-", "-C", parent, basename]],
     [zstdPath, ["-T0", levelFlag, "-o", archivePath]],
   );
 
-  return archivePath;
+  let archiveBytes = 0;
+  try { archiveBytes = (await fs.stat(archivePath)).size; } catch { /* archive may not exist */ }
+
+  if (debug && inflatedBytes !== null && inflatedBytes > 0) {
+    log(`[debug] compress result: archive=${fmtBytesDebug(archiveBytes)} ratio=${(archiveBytes / inflatedBytes).toFixed(2)}`);
+  }
+
+  return { archivePath, archiveBytes, inflatedBytes, fileCount };
 }
 
 function parseLevel(value: string): number {
