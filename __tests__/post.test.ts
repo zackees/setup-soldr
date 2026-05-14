@@ -50,3 +50,71 @@ test("post.run parses bad state gracefully", async () => {
     else process.env["STATE_resolveResult"] = prev;
   }
 });
+
+test("final cache summary includes zccache stats and cache layer outcomes", async () => {
+  const mod = (await import("../src/post.js")) as {
+    buildFinalCacheSummary: (result: any, state: any, saves: any) => any;
+    formatFinalCacheSummaryMarkdown: (summary: any) => string;
+  };
+  const root = mkTmp("post-final-summary-");
+  try {
+    const buildCachePath = path.join(root, "cache", "zccache");
+    const statsPath = path.join(buildCachePath, "logs", "last-session-stats.json");
+    fs.mkdirSync(path.dirname(statsPath), { recursive: true });
+    fs.writeFileSync(
+      statsPath,
+      JSON.stringify({
+        status: "ok",
+        session_id: "session-1",
+        compilations: 10,
+        hits: 7,
+        misses: 3,
+        non_cacheable: 2,
+        errors: 1,
+        hit_rate: 0.7,
+      }),
+      "utf8",
+    );
+
+    const result = {
+      setupCache: { key: "setup-key" },
+      targetCache: { key: "target-key" },
+      buildCache: { key: "build-key", path: buildCachePath },
+      cargoRegistryCache: { key: "registry-key" },
+    };
+    const summary = mod.buildFinalCacheSummary(
+      result,
+      {
+        setupCacheEnabled: true,
+        setupCacheExactHit: true,
+        setupCacheMatchedKey: "setup-key",
+        targetCacheEnabled: true,
+        targetCacheExactHit: false,
+        targetCacheMatchedKey: "target-restore-key",
+        buildCacheEnabled: true,
+        buildCacheExactHit: false,
+        buildCacheMatchedKey: "",
+        cargoRegistryCacheEnabled: false,
+        cargoRegistryCacheExactHit: false,
+        cargoRegistryCacheMatchedKey: "",
+      },
+      {
+        buildCache: { status: "saved", cache_id: 42 },
+        cargoRegistryCache: { status: "disabled" },
+      },
+    );
+
+    assert.equal(summary.zccache_session.status, "ok");
+    assert.equal(summary.zccache_session.stats.hits, 7);
+    assert.equal(summary.build_cache.save.cache_id, 42);
+    assert.equal(summary.target_cache.restore_status, "restore-key-hit");
+    assert.equal(summary.cargo_registry_cache.restore_status, "disabled");
+
+    const markdown = mod.formatFinalCacheSummaryMarkdown(summary);
+    assert.match(markdown, /hits=7 misses=3/);
+    assert.match(markdown, /saved id=42/);
+    assert.match(markdown, /restore-key hit/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
