@@ -408,6 +408,75 @@ test("layout switch alters cache key", async () => {
   assert.notEqual(r1.setupCache.key, r2.setupCache.key);
 });
 
+// --- linker ---
+
+async function runCapturingWarnings(
+  extraEnv: Record<string, string> = {},
+): Promise<{ result: ResolveResult; warnings: string[] }> {
+  const { root, workspace, runnerTemp } = makeWorkspace();
+  const ctx = makeContext(root, workspace, runnerTemp);
+  ctx.env = withInputs(ctx.env, extraEnv);
+  const warnings: string[] = [];
+  ctx.logger = {
+    info: () => {},
+    warning: (msg) => warnings.push(msg),
+    error: () => {},
+    debug: () => {},
+    log: () => {},
+  };
+  const inputs: RawInputs = readRawInputs(ctx.env);
+  const result = await resolveSetup(ctx, inputs, {
+    fetchReleaseTag: async () => "v0.7.11",
+    systemRustupOverride: async () => false,
+  });
+  return { result, warnings };
+}
+
+test("linker default exports SOLDR_LINKER=fast and warns", async () => {
+  const { result, warnings } = await runCapturingWarnings();
+  assert.equal(result.envExports["SOLDR_LINKER"], "fast");
+  assert.equal(
+    warnings.some((m) => m.includes("SOLDR_LINKER=fast") && m.includes("platform-default")),
+    true,
+    `expected linker warning, got: ${JSON.stringify(warnings)}`,
+  );
+});
+
+test("linker platform-default omits SOLDR_LINKER and does not warn", async () => {
+  const { result, warnings } = await runCapturingWarnings({ INPUT_LINKER: "platform-default" });
+  assert.equal(result.envExports["SOLDR_LINKER"], undefined);
+  assert.equal(warnings.some((m) => m.includes("SOLDR_LINKER")), false);
+});
+
+test("linker explicit value passes through verbatim without warning", async () => {
+  const { result, warnings } = await runCapturingWarnings({ INPUT_LINKER: "rust-lld" });
+  assert.equal(result.envExports["SOLDR_LINKER"], "rust-lld");
+  assert.equal(warnings.some((m) => m.includes("SOLDR_LINKER")), false);
+});
+
+test("linker explicit fast passes through without warning", async () => {
+  const { result, warnings } = await runCapturingWarnings({ INPUT_LINKER: "fast" });
+  assert.equal(result.envExports["SOLDR_LINKER"], "fast");
+  assert.equal(warnings.some((m) => m.includes("SOLDR_LINKER")), false);
+});
+
+// --- compile-priority ---
+
+test("compile-priority defaults to high via action.yml", async () => {
+  const { result } = await run({}, { INPUT_COMPILE_PRIORITY: "high" });
+  assert.equal(result.envExports["ZCCACHE_COMPILE_PRIORITY"], "high");
+});
+
+test("compile-priority explicit low passes through verbatim", async () => {
+  const { result } = await run({}, { INPUT_COMPILE_PRIORITY: "low" });
+  assert.equal(result.envExports["ZCCACHE_COMPILE_PRIORITY"], "low");
+});
+
+test("compile-priority empty string skips export so zccache uses its native default", async () => {
+  const { result } = await run({}, { INPUT_COMPILE_PRIORITY: "" });
+  assert.equal(result.envExports["ZCCACHE_COMPILE_PRIORITY"], undefined);
+});
+
 // --- jobserver env deny list ---
 
 test("CARGO_MAKEFLAGS / MAKEFLAGS are never exported", async () => {
@@ -436,19 +505,14 @@ test("readRawInputs maps INPUT_* env vars by name", () => {
   assert.equal(inputs.linker, "fast");
 });
 
-// --- linker input ---
+// --- linker input (validation + alias semantics) ---
 
-test("linker empty does not export SOLDR_LINKER", async () => {
-  const { result } = await run({}, { INPUT_LINKER: "" });
-  assert.equal(result.envExports["SOLDR_LINKER"], undefined);
-});
-
-test("linker 'default' does not export SOLDR_LINKER", async () => {
+test("linker 'default' opts out and does not export SOLDR_LINKER", async () => {
   const { result } = await run({}, { INPUT_LINKER: "default" });
   assert.equal(result.envExports["SOLDR_LINKER"], undefined);
 });
 
-test("linker valid non-default values export SOLDR_LINKER", async () => {
+test("linker valid non-opt-out values export SOLDR_LINKER", async () => {
   for (const value of ["ld", "mold", "rust-lld", "fast"]) {
     const { result } = await run({}, { INPUT_LINKER: value });
     assert.equal(result.envExports["SOLDR_LINKER"], value, `linker=${value}`);

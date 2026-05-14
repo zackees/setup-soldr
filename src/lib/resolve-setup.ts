@@ -48,7 +48,14 @@ import type {
 
 const FALSY_VALUES: ReadonlySet<string> = new Set(["0", "false", "no", "off"]);
 const TRUTHY_VALUES: ReadonlySet<string> = new Set(["1", "true", "yes", "on"]);
-const ALLOWED_LINKER_VALUES = ["default", "ld", "mold", "rust-lld", "fast"] as const;
+const ALLOWED_LINKER_VALUES = [
+  "default",
+  "platform-default",
+  "ld",
+  "mold",
+  "rust-lld",
+  "fast",
+] as const;
 
 // CARGO_MAKEFLAGS / MAKEFLAGS describe an in-process jobserver pipe whose
 // FDs are closed once the producing process exits. Forwarding via $GITHUB_ENV
@@ -85,6 +92,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     toolchainFile: get("TOOLCHAIN_FILE"),
     trustMode: get("TRUST_MODE"),
     linker: get("LINKER"),
+    compilePriority: get("COMPILE_PRIORITY"),
     timestamps: get("TIMESTAMPS"),
     lockfile: get("LOCKFILE"),
     buildCache: get("BUILD_CACHE"),
@@ -540,16 +548,22 @@ export async function resolveSetup(
   if (inputs.trustMode.trim()) {
     setEnv("SOLDR_TRUST_MODE", inputs.trustMode.trim());
   }
-  const linkerValue = inputs.linker.trim();
-  if (linkerValue) {
-    if (!(ALLOWED_LINKER_VALUES as readonly string[]).includes(linkerValue)) {
-      throw new Error(
-        `invalid 'linker' input: '${linkerValue}'. Allowed: default | ld | mold | rust-lld | fast`,
-      );
-    }
-    if (linkerValue !== "default") {
-      setEnv("SOLDR_LINKER", linkerValue);
-    }
+  const linkerRaw = inputs.linker.trim();
+  if (linkerRaw === "") {
+    setEnv("SOLDR_LINKER", "fast");
+    logger.warning(
+      "setup-soldr: defaulting SOLDR_LINKER=fast (mold-if-on-PATH-else-rust-lld on Linux, rust-lld on macOS/Windows) for faster CI links. Soldr's native default is no injection, which produces a smaller build-cache and a slower link. Set `linker: platform-default` to opt out and keep cargo/rust-toolchain.toml in charge, or set `linker: <value>` to silence this warning.",
+    );
+  } else if (!(ALLOWED_LINKER_VALUES as readonly string[]).includes(linkerRaw)) {
+    throw new Error(
+      `invalid 'linker' input: '${linkerRaw}'. Allowed: default | platform-default | ld | mold | rust-lld | fast`,
+    );
+  } else if (linkerRaw !== "default" && linkerRaw !== "platform-default") {
+    setEnv("SOLDR_LINKER", linkerRaw);
+  }
+  const compilePriorityRaw = inputs.compilePriority.trim();
+  if (compilePriorityRaw !== "") {
+    setEnv("ZCCACHE_COMPILE_PRIORITY", compilePriorityRaw);
   }
 
   // ---- path additions ----

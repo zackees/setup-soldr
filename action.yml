@@ -6,9 +6,9 @@ branding:
   color: green
 inputs:
   version:
-    description: Soldr version or tag to install. Defaults to 0.7.18.
+    description: Soldr version or tag to install. Defaults to 0.7.19.
     required: false
-    default: "0.7.18"
+    default: "0.7.19"
   repo:
     description: Internal override for the Soldr source repository used by integration branches.
     required: false
@@ -46,12 +46,30 @@ inputs:
     required: false
     default: ""
   linker:
-    description: |
-      Linker override forwarded as SOLDR_LINKER.
-      One of: default | ld | mold | rust-lld | fast.
-      Omit or set to empty to leave the linker unspecified.
+    description: >
+      Linker override forwarded as SOLDR_LINKER for `soldr cargo ...` builds
+      (requires soldr 0.7.19+). Empty (the default) opts the workflow into
+      `fast` — mold-if-on-PATH-else-rust-lld on Linux, rust-lld on macOS and
+      Windows — and emits a one-time GitHub Actions warning so the override
+      is visible in CI logs. Soldr's own native default is no injection
+      (smaller artifact cache, slower link); pass `platform-default` (or
+      `default`) to opt out and keep whatever cargo config /
+      rust-toolchain.toml specifies. Other accepted values pass through
+      verbatim to SOLDR_LINKER: `ld`, `mold`, `rust-lld`, `fast`. Unknown
+      values raise an error.
     required: false
     default: ""
+  compile-priority:
+    description: >
+      Compiler/linker child-process priority forwarded as
+      ZCCACHE_COMPILE_PRIORITY (requires zccache 1.4.6+). Setup-soldr defaults
+      to `high` because GitHub Actions runners are dedicated to CI and have
+      no foreground workload to yield to — zccache's own native default is
+      `low` (designed for interactive dev). Accepted values:
+      `normal`, `low`, `idle`, `high`. Set to empty string to opt out and
+      let zccache pick its native default.
+    required: false
+    default: "high"
   timestamps:
     description: Prefix setup-soldr diagnostic and streamed command output with elapsed mm:ss timestamps.
     required: false
