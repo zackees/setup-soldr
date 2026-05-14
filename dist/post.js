@@ -8918,6 +8918,203 @@ module.exports = Dispatcher
 
 /***/ }),
 
+/***/ 1002:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.StatsCollector = void 0;
+const fs = __importStar(__nccwpck_require__(1455));
+const path = __importStar(__nccwpck_require__(6760));
+const core = __importStar(__nccwpck_require__(7484));
+function fmtBytes(n) {
+    if (n === null)
+        return "-";
+    if (n < 1024)
+        return `${n}B`;
+    if (n < 1024 * 1024)
+        return `${(n / 1024).toFixed(1)}KB`;
+    if (n < 1024 * 1024 * 1024)
+        return `${(n / 1024 / 1024).toFixed(1)}MB`;
+    return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
+}
+function fmtMs(ms) {
+    return `${(ms / 1000).toFixed(1)}s`;
+}
+function truncKey(key, maxLen) {
+    if (!key)
+        return "(no match)";
+    if (key.length <= maxLen)
+        return key;
+    return `\u2026${key.slice(-(maxLen - 1))}`;
+}
+function ratioStr(archiveBytes, inflatedBytes) {
+    if (archiveBytes === null || inflatedBytes === null || inflatedBytes === 0)
+        return "";
+    return ` ratio=${(archiveBytes / inflatedBytes).toFixed(2)}`;
+}
+class StatsCollector {
+    ops = [];
+    record(op) {
+        this.ops.push(op);
+    }
+    summaryText() {
+        const restoreOps = this.ops.filter((o) => o.operation === "restore");
+        if (restoreOps.length === 0)
+            return "";
+        const CW = { cache: 20, status: 8, matched: 42, archive: 10, inflated: 10, files: 8, time: 7 };
+        const header = [
+            "cache".padEnd(CW.cache),
+            "status".padEnd(CW.status),
+            "matched-key".padEnd(CW.matched),
+            "archive".padStart(CW.archive),
+            "inflated".padStart(CW.inflated),
+            "files".padStart(CW.files),
+            "time".padStart(CW.time),
+        ].join("  ");
+        const rule = "\u2500".repeat(header.length);
+        const rows = restoreOps.map((op) => {
+            const status = op.hit ? "HIT" : op.matchedKey ? "FALLBACK" : "MISS";
+            const matchedDisplay = op.hit
+                ? truncKey(op.matchedKey, CW.matched - 4)
+                : op.matchedKey
+                    ? `fallback: ${truncKey(op.matchedKey, CW.matched - 10)}`
+                    : "(no match)";
+            return [
+                op.label.padEnd(CW.cache),
+                status.padEnd(CW.status),
+                matchedDisplay.padEnd(CW.matched),
+                fmtBytes(op.archiveBytes).padStart(CW.archive),
+                fmtBytes(op.inflatedBytes).padStart(CW.inflated),
+                (op.fileCount !== null ? String(op.fileCount) : "-").padStart(CW.files),
+                fmtMs(op.durationMs).padStart(CW.time),
+            ].join("  ");
+        });
+        const exactHits = restoreOps.filter((o) => o.hit).length;
+        const anyHits = restoreOps.filter((o) => o.hit || Boolean(o.matchedKey)).length;
+        const totalMs = restoreOps.reduce((s, o) => s + o.durationMs, 0);
+        const footer = `${exactHits}/${restoreOps.length} exact-hit  ${anyHits}/${restoreOps.length} any-hit  total restore: ${fmtMs(totalMs)}`;
+        return [header, rule, ...rows, rule, footer].join("\n");
+    }
+    detailedJson() {
+        const restoreOps = this.ops.filter((o) => o.operation === "restore");
+        const saveOps = this.ops.filter((o) => o.operation === "save");
+        const exactHits = restoreOps.filter((o) => o.hit).length;
+        const anyHits = restoreOps.filter((o) => o.hit || Boolean(o.matchedKey)).length;
+        const totalRestoreMs = restoreOps.reduce((s, o) => s + o.durationMs, 0);
+        return {
+            summary: {
+                totalCaches: restoreOps.length,
+                exactHits,
+                anyHits,
+                misses: restoreOps.length - anyHits,
+                totalRestoreMs,
+                savedCaches: saveOps.length,
+            },
+            restores: restoreOps,
+            saves: saveOps,
+        };
+    }
+    restoreLogLine(op) {
+        const status = op.hit ? "HIT" : op.matchedKey ? "FALLBACK" : "MISS";
+        const matchStr = op.matchedKey ? ` matched=${op.matchedKey}` : "";
+        const archStr = op.archiveBytes !== null ? ` archive=${fmtBytes(op.archiveBytes)}` : "";
+        const inflStr = op.inflatedBytes !== null ? ` inflated=${fmtBytes(op.inflatedBytes)}` : "";
+        const filesStr = op.fileCount !== null ? ` files=${op.fileCount}` : "";
+        return `[restore] ${op.label.padEnd(20)} ${status.padEnd(8)} key=${op.key}${matchStr}${archStr}${inflStr}${filesStr}  ${op.timestamp}  ${fmtMs(op.durationMs)}`;
+    }
+    saveLogLine(op) {
+        const archStr = op.archiveBytes !== null ? ` archive=${fmtBytes(op.archiveBytes)}` : "";
+        const inflStr = op.inflatedBytes !== null ? ` inflated=${fmtBytes(op.inflatedBytes)}` : "";
+        const filesStr = op.fileCount !== null ? ` files=${op.fileCount}` : "";
+        const ratio = ratioStr(op.archiveBytes, op.inflatedBytes);
+        return `[save]    ${op.label.padEnd(20)}          key=${op.key}${archStr}${inflStr}${filesStr}${ratio}  ${op.timestamp}  ${fmtMs(op.durationMs)}`;
+    }
+    async writeFiles(runnerTemp) {
+        await fs.mkdir(runnerTemp, { recursive: true });
+        const jsonPath = path.join(runnerTemp, "setup-soldr-stats.json");
+        const logPath = path.join(runnerTemp, "setup-soldr-session.log");
+        await fs.writeFile(jsonPath, JSON.stringify(this.detailedJson(), null, 2), "utf8");
+        const restoreLines = this.ops
+            .filter((o) => o.operation === "restore")
+            .map((o) => this.restoreLogLine(o));
+        await fs.writeFile(logPath, restoreLines.join("\n") + "\n", "utf8");
+    }
+    async appendSavesToSessionLog(runnerTemp) {
+        const saveOps = this.ops.filter((o) => o.operation === "save");
+        if (saveOps.length === 0)
+            return;
+        const logPath = path.join(runnerTemp, "setup-soldr-session.log");
+        const lines = saveOps.map((o) => this.saveLogLine(o));
+        await fs.appendFile(logPath, lines.join("\n") + "\n", "utf8").catch(() => undefined);
+    }
+    report(mode, log) {
+        if (mode === "none")
+            return;
+        const summary = this.summaryText();
+        if (summary)
+            log(summary);
+        if (mode === "detailed") {
+            log(JSON.stringify(this.detailedJson(), null, 2));
+        }
+    }
+    setGithubOutputs() {
+        core.setOutput("stats-json", JSON.stringify(this.detailedJson()));
+    }
+    serialize() {
+        return JSON.stringify({ ops: this.ops });
+    }
+    static deserialize(s) {
+        const c = new StatsCollector();
+        try {
+            const parsed = JSON.parse(s);
+            c.ops = Array.isArray(parsed.ops) ? parsed.ops : [];
+        }
+        catch {
+            // empty collector
+        }
+        return c;
+    }
+}
+exports.StatsCollector = StatsCollector;
+
+
+/***/ }),
+
 /***/ 1093:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -45346,6 +45543,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.walkDirSize = walkDirSize;
 exports.detectCompressMagic = detectCompressMagic;
 exports.decompressCache = decompressCache;
 exports.compressCache = compressCache;
@@ -45354,6 +45552,41 @@ const path = __importStar(__nccwpck_require__(6760));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
 const io = __importStar(__nccwpck_require__(4994));
+/**
+ * Recursively walk a directory and sum file sizes.
+ * Returns { bytes, files } for all regular files found.
+ */
+async function walkDirSize(dir) {
+    let bytes = 0;
+    let files = 0;
+    async function walk(d) {
+        let entries;
+        try {
+            entries = await fs.readdir(d, { withFileTypes: true });
+        }
+        catch {
+            return;
+        }
+        for (const entry of entries) {
+            const full = path.join(d, entry.name);
+            if (entry.isDirectory()) {
+                await walk(full);
+            }
+            else if (entry.isFile()) {
+                try {
+                    const st = await fs.stat(full);
+                    bytes += st.size;
+                    files++;
+                }
+                catch {
+                    // skip inaccessible files
+                }
+            }
+        }
+    }
+    await walk(dir);
+    return { bytes, files };
+}
 /**
  * Read the first 4 bytes of a file and identify the compression codec.
  *   zstd:  0x28 B5 2F FD
@@ -45398,46 +45631,82 @@ async function pathExists(p) {
  *
  *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <targetDir>`.
  *   gzip: `tar -xzf <archive> -C <targetDir>`.
+ *
+ * Returns compressed archive size, inflated directory size, and file count.
+ * When debug=true, logs verbose byte/file diagnostics via the supplied log fn.
  */
 async function decompressCache(opts) {
-    const { archivePath, targetDir } = opts;
+    const { archivePath, targetDir, debug = false, log = () => undefined } = opts;
     await ensureDir(targetDir);
-    const magic = await detectCompressMagic(archivePath);
-    if (magic === "gzip") {
-        await exec.exec("tar", ["-xzf", archivePath, "-C", targetDir]);
-        return;
+    let archiveBytes = 0;
+    try {
+        archiveBytes = (await fs.stat(archivePath)).size;
     }
-    if (magic === "zstd") {
-        // tar -xf - reads from stdin; we pipe `zstd -d -c <archive>` into it.
+    catch {
+        // archive may not exist — caller guards, but be safe
+    }
+    const magic = await detectCompressMagic(archivePath);
+    if (debug) {
+        log(`[debug] decompress ${path.basename(archivePath)}: magic=${magic} archive=${fmtBytesDebug(archiveBytes)}`);
+    }
+    if (magic === "gzip") {
+        if (debug)
+            log(`[debug] decompress cmd: tar -xzf ${archivePath} -C ${targetDir}`);
+        await exec.exec("tar", ["-xzf", archivePath, "-C", targetDir]);
+    }
+    else if (magic === "zstd") {
         const zstdPath = await io.which("zstd", false);
         if (!zstdPath) {
+            if (debug)
+                log(`[debug] decompress cmd (zstd fallback): tar --zstd -xf ${archivePath} -C ${targetDir}`);
             // Fall back: many tars know how to decode zstd themselves (--zstd).
             await exec.exec("tar", ["--zstd", "-xf", archivePath, "-C", targetDir]);
-            return;
         }
-        await runPipe([zstdPath, ["-d", "-c", archivePath]], ["tar", ["-xf", "-", "-C", targetDir]]);
-        return;
+        else {
+            if (debug)
+                log(`[debug] decompress cmd: zstd -d -c ${archivePath} | tar -xf - -C ${targetDir}`);
+            // tar -xf - reads from stdin; we pipe `zstd -d -c <archive>` into it.
+            await runPipe([zstdPath, ["-d", "-c", archivePath]], ["tar", ["-xf", "-", "-C", targetDir]]);
+        }
     }
-    throw new Error(`decompressCache: unrecognized archive magic for ${archivePath}`);
+    else {
+        throw new Error(`decompressCache: unrecognized archive magic for ${archivePath}`);
+    }
+    const { bytes: inflatedBytes, files: fileCount } = await walkDirSize(targetDir);
+    if (debug) {
+        const ratio = archiveBytes > 0 ? (archiveBytes / inflatedBytes).toFixed(2) : "n/a";
+        log(`[debug] decompress result: inflated=${fmtBytesDebug(inflatedBytes)} files=${fileCount} ratio=${ratio}`);
+    }
+    return { archiveBytes, inflatedBytes, fileCount };
 }
 /**
  * tar -cf - <cache-dir-basename> | zstd -T0 -<level> > <cache-dir>.tar.zst
  *
- * When codec=="none" or zstd is not installed, returns null and leaves the
- * caller to use the default actions/cache compression.
+ * When codec=="none" or zstd is not installed, returns archivePath=null and
+ * leaves the caller to use the default actions/cache compression.
+ * When debug=true, walks the source dir for byte/file counts and logs ratios.
  */
 async function compressCache(opts) {
-    const { cacheDir, codec, level } = opts;
+    const { cacheDir, codec, level, debug = false, log = () => undefined } = opts;
+    const nullResult = { archivePath: null, archiveBytes: 0, inflatedBytes: null, fileCount: null };
     if (codec === "none")
-        return null;
+        return nullResult;
     const zstdPath = await io.which("zstd", false);
     if (!zstdPath) {
         core.warning("setup-soldr: zstd binary not found on PATH; falling back to actions/cache default codec");
-        return null;
+        return nullResult;
     }
     if (!(await pathExists(cacheDir))) {
         core.warning(`setup-soldr: cache dir ${cacheDir} does not exist, skipping compression`);
-        return null;
+        return nullResult;
+    }
+    let inflatedBytes = null;
+    let fileCount = null;
+    if (debug) {
+        const walked = await walkDirSize(cacheDir);
+        inflatedBytes = walked.bytes;
+        fileCount = walked.files;
+        log(`[debug] compress ${path.basename(cacheDir)}: input=${fmtBytesDebug(inflatedBytes)} files=${fileCount}`);
     }
     const parent = path.dirname(cacheDir);
     const basename = path.basename(cacheDir);
@@ -45446,8 +45715,30 @@ async function compressCache(opts) {
     await fs.rm(archivePath, { force: true }).catch(() => undefined);
     const levelNumeric = parseLevel(level);
     const levelFlag = `-${levelNumeric}`;
+    if (debug)
+        log(`[debug] compress cmd: tar -cf - -C ${parent} ${basename} | zstd -T0 ${levelFlag} -o ${archivePath}`);
     await runPipe(["tar", ["-cf", "-", "-C", parent, basename]], [zstdPath, ["-T0", levelFlag, "-o", archivePath]]);
-    return archivePath;
+    let archiveBytes = 0;
+    try {
+        archiveBytes = (await fs.stat(archivePath)).size;
+    }
+    catch {
+        // archive may not have been created
+    }
+    if (debug && inflatedBytes !== null && inflatedBytes > 0) {
+        const ratio = (archiveBytes / inflatedBytes).toFixed(2);
+        log(`[debug] compress result: archive=${fmtBytesDebug(archiveBytes)} ratio=${ratio}`);
+    }
+    return { archivePath, archiveBytes, inflatedBytes, fileCount };
+}
+function fmtBytesDebug(n) {
+    if (n < 1024)
+        return `${n}B`;
+    if (n < 1024 * 1024)
+        return `${(n / 1024).toFixed(1)}KB`;
+    if (n < 1024 * 1024 * 1024)
+        return `${(n / 1024 / 1024).toFixed(1)}MB`;
+    return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
 }
 function parseLevel(value) {
     const trimmed = (value ?? "").toString().trim();
@@ -63376,6 +63667,7 @@ const core = __importStar(__nccwpck_require__(7484));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(4978);
 const log_utils_js_1 = __nccwpck_require__(8129);
+const stats_collector_js_1 = __nccwpck_require__(1002);
 function dirExists(p) {
     try {
         return fs.statSync(p).isDirectory();
@@ -63385,24 +63677,32 @@ function dirExists(p) {
     }
 }
 async function saveOne(opts) {
-    const { cacheDir, codec, level, key, matchedKey, label, log } = opts;
+    const { cacheDir, codec, level, key, matchedKey, label, debug, log } = opts;
+    const nullResult = { archiveBytes: null, inflatedBytes: null, fileCount: null, skipped: true };
     if (!dirExists(cacheDir)) {
         log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
-        return;
+        return nullResult;
     }
     if (matchedKey === key) {
         log(`${label}: exact cache hit on ${key}, skipping save`);
-        return;
+        return nullResult;
     }
-    const archive = await (0, cache_compress_js_1.compressCache)({ cacheDir, codec, level });
-    const pathsToSave = archive ? [archive] : [cacheDir];
+    const { archivePath, archiveBytes, inflatedBytes, fileCount } = await (0, cache_compress_js_1.compressCache)({
+        cacheDir,
+        codec,
+        level,
+        debug,
+        log,
+    });
+    const pathsToSave = archivePath ? [archivePath] : [cacheDir];
     try {
         const id = await cache.saveCache(pathsToSave, key);
-        log(`${label}: saved cache id=${id} key=${key} via ${archive ? "tar.zst" : "default"}`);
+        log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"}`);
     }
     catch (err) {
         log(`${label}: save failed: ${err instanceof Error ? err.message : String(err)}`);
     }
+    return { archiveBytes, inflatedBytes, fileCount, skipped: false };
 }
 async function run() {
     const logger = (0, log_utils_js_1.createLogger)(process.env);
@@ -63422,27 +63722,75 @@ async function run() {
     }
     const buildCacheMatched = core.getState("buildCacheMatchedKey");
     const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
+    const statsMode = (core.getState("statsMode") || "summarize");
+    const runnerTemp = core.getState("runnerTemp") || "";
+    const debugMode = result.debugMode ?? false;
+    const debugLog = debugMode ? log : () => undefined;
+    const postCollector = new stats_collector_js_1.StatsCollector();
     // Build cache
-    await saveOne({
+    const buildSaveStart = Date.now();
+    const buildSaveResult = await saveOne({
         cacheDir: result.buildCache.path,
         codec: result.targetCacheCompress,
         level: result.targetCacheCompressLevel,
         key: result.buildCache.key,
         matchedKey: buildCacheMatched,
         label: "build-cache",
-        log,
+        debug: debugMode,
+        log: debugLog,
     });
+    if (!buildSaveResult.skipped) {
+        postCollector.record({
+            label: "build-cache",
+            operation: "save",
+            hit: false,
+            key: result.buildCache.key,
+            matchedKey: buildCacheMatched,
+            restoreKeys: [],
+            archiveBytes: buildSaveResult.archiveBytes,
+            inflatedBytes: buildSaveResult.inflatedBytes,
+            fileCount: buildSaveResult.fileCount,
+            durationMs: Date.now() - buildSaveStart,
+            timestamp: new Date().toISOString(),
+        });
+    }
     // Cargo registry cache (only when enabled)
     if (result.cargoRegistryCache.enabled) {
-        await saveOne({
+        const regSaveStart = Date.now();
+        const regSaveResult = await saveOne({
             cacheDir: result.cargoRegistryCache.path,
             codec: result.targetCacheCompress,
             level: result.targetCacheCompressLevel,
             key: result.cargoRegistryCache.key,
             matchedKey: registryMatched,
             label: "cargo-registry-cache",
-            log,
+            debug: debugMode,
+            log: debugLog,
         });
+        if (!regSaveResult.skipped) {
+            postCollector.record({
+                label: "cargo-registry",
+                operation: "save",
+                hit: false,
+                key: result.cargoRegistryCache.key,
+                matchedKey: registryMatched,
+                restoreKeys: [],
+                archiveBytes: regSaveResult.archiveBytes,
+                inflatedBytes: regSaveResult.inflatedBytes,
+                fileCount: regSaveResult.fileCount,
+                durationMs: Date.now() - regSaveStart,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    }
+    // Append save ops to session log when detailed stats are enabled
+    if (statsMode === "detailed" && runnerTemp) {
+        try {
+            await postCollector.appendSavesToSessionLog(runnerTemp);
+        }
+        catch (err) {
+            log(`post: stats log append failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
     }
 }
 // See main.ts for the rationale behind the test-import escape hatch.

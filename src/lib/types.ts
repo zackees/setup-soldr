@@ -11,6 +11,24 @@ export type CompressCodec = "auto" | "zstd" | "none";
 export type BuildCacheMode = "" | "once" | "thin" | "full";
 export type TargetCacheMode = "" | "thin" | "full" | "off" | "hot";
 export type TargetCacheProfile = "thin-v1" | "thin-v2";
+export type StatsMode = "none" | "summarize" | "detailed";
+
+/**
+ * Per-cache-operation stats record collected during main and post phases.
+ */
+export interface CacheOpStats {
+  label: string;
+  operation: "restore" | "save";
+  hit: boolean;
+  key: string;
+  matchedKey: string;
+  restoreKeys: string[];
+  archiveBytes: number | null;
+  inflatedBytes: number | null;
+  fileCount: number | null;
+  durationMs: number;
+  timestamp: string;
+}
 
 /**
  * Raw INPUT_* env vars read at process start. Mirrors `inputs:` in action.yml.
@@ -44,6 +62,8 @@ export interface RawInputs {
   targetCacheCompressLevel: string;
   sourceMtimeNormalize: string;
   cargoRegistryCache: string;
+  stats: string;
+  debugMode: string;
 }
 
 /**
@@ -160,6 +180,10 @@ export interface ResolveResult {
   // Timing
   logStartEpoch: string;
   timestamps: string;
+
+  // Stats and debug
+  stats: StatsMode;
+  debugMode: boolean;
 }
 
 /**

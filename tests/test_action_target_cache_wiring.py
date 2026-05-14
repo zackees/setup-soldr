@@ -50,6 +50,8 @@ EXPECTED_INPUTS = {
     "target-cache-compress-level",
     "source-mtime-normalize",
     "cargo-registry-cache",
+    "stats",
+    "debug",
 }
 
 
@@ -85,6 +87,7 @@ EXPECTED_OUTPUTS = {
     "target-lockfile",
     "target-lockfile-hash",
     "toolchain",
+    "stats-json",
 }
 
 

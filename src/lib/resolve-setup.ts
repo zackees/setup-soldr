@@ -42,6 +42,7 @@ import type {
   RawInputs,
   ResolveResult,
   SetupCachePlan,
+  StatsMode,
   TargetCachePlan,
   ToolchainSpec,
 } from "./types.js";
@@ -108,7 +109,15 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     targetCacheCompressLevel: get("TARGET_CACHE_COMPRESS_LEVEL"),
     sourceMtimeNormalize: get("SOURCE_MTIME_NORMALIZE"),
     cargoRegistryCache: get("CARGO_REGISTRY_CACHE"),
+    stats: get("STATS"),
+    debugMode: get("DEBUG"),
   };
+}
+
+function normalizeStatsMode(raw: string): StatsMode {
+  const v = raw.trim().toLowerCase();
+  if (v === "none" || v === "summarize" || v === "detailed") return v;
+  return "summarize";
 }
 
 function isFalsy(value: string): boolean {
@@ -651,6 +660,9 @@ export async function resolveSetup(
   void rollingToolchainAlias;
   void canonicalJsonStringify;
 
+  const stats = normalizeStatsMode(inputs.stats);
+  const debugMode = isTruthy(inputs.debugMode.trim() || "false");
+
   return {
     workspace,
     cacheRoot,
@@ -676,6 +688,8 @@ export async function resolveSetup(
     pathAdditions,
     logStartEpoch: logStart,
     timestamps,
+    stats,
+    debugMode,
   };
 }
 

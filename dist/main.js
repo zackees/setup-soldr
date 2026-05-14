@@ -19909,6 +19909,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.walkDirSize = walkDirSize;
 exports.detectCompressMagic = detectCompressMagic;
 exports.decompressCache = decompressCache;
 exports.compressCache = compressCache;
@@ -19917,6 +19918,41 @@ const path = __importStar(__nccwpck_require__(76760));
 const core = __importStar(__nccwpck_require__(37484));
 const exec = __importStar(__nccwpck_require__(95236));
 const io = __importStar(__nccwpck_require__(94994));
+/**
+ * Recursively walk a directory and sum file sizes.
+ * Returns { bytes, files } for all regular files found.
+ */
+async function walkDirSize(dir) {
+    let bytes = 0;
+    let files = 0;
+    async function walk(d) {
+        let entries;
+        try {
+            entries = await fs.readdir(d, { withFileTypes: true });
+        }
+        catch {
+            return;
+        }
+        for (const entry of entries) {
+            const full = path.join(d, entry.name);
+            if (entry.isDirectory()) {
+                await walk(full);
+            }
+            else if (entry.isFile()) {
+                try {
+                    const st = await fs.stat(full);
+                    bytes += st.size;
+                    files++;
+                }
+                catch {
+                    // skip inaccessible files
+                }
+            }
+        }
+    }
+    await walk(dir);
+    return { bytes, files };
+}
 /**
  * Read the first 4 bytes of a file and identify the compression codec.
  *   zstd:  0x28 B5 2F FD
@@ -19961,46 +19997,82 @@ async function pathExists(p) {
  *
  *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <targetDir>`.
  *   gzip: `tar -xzf <archive> -C <targetDir>`.
+ *
+ * Returns compressed archive size, inflated directory size, and file count.
+ * When debug=true, logs verbose byte/file diagnostics via the supplied log fn.
  */
 async function decompressCache(opts) {
-    const { archivePath, targetDir } = opts;
+    const { archivePath, targetDir, debug = false, log = () => undefined } = opts;
     await ensureDir(targetDir);
-    const magic = await detectCompressMagic(archivePath);
-    if (magic === "gzip") {
-        await exec.exec("tar", ["-xzf", archivePath, "-C", targetDir]);
-        return;
+    let archiveBytes = 0;
+    try {
+        archiveBytes = (await fs.stat(archivePath)).size;
     }
-    if (magic === "zstd") {
-        // tar -xf - reads from stdin; we pipe `zstd -d -c <archive>` into it.
+    catch {
+        // archive may not exist — caller guards, but be safe
+    }
+    const magic = await detectCompressMagic(archivePath);
+    if (debug) {
+        log(`[debug] decompress ${path.basename(archivePath)}: magic=${magic} archive=${fmtBytesDebug(archiveBytes)}`);
+    }
+    if (magic === "gzip") {
+        if (debug)
+            log(`[debug] decompress cmd: tar -xzf ${archivePath} -C ${targetDir}`);
+        await exec.exec("tar", ["-xzf", archivePath, "-C", targetDir]);
+    }
+    else if (magic === "zstd") {
         const zstdPath = await io.which("zstd", false);
         if (!zstdPath) {
+            if (debug)
+                log(`[debug] decompress cmd (zstd fallback): tar --zstd -xf ${archivePath} -C ${targetDir}`);
             // Fall back: many tars know how to decode zstd themselves (--zstd).
             await exec.exec("tar", ["--zstd", "-xf", archivePath, "-C", targetDir]);
-            return;
         }
-        await runPipe([zstdPath, ["-d", "-c", archivePath]], ["tar", ["-xf", "-", "-C", targetDir]]);
-        return;
+        else {
+            if (debug)
+                log(`[debug] decompress cmd: zstd -d -c ${archivePath} | tar -xf - -C ${targetDir}`);
+            // tar -xf - reads from stdin; we pipe `zstd -d -c <archive>` into it.
+            await runPipe([zstdPath, ["-d", "-c", archivePath]], ["tar", ["-xf", "-", "-C", targetDir]]);
+        }
     }
-    throw new Error(`decompressCache: unrecognized archive magic for ${archivePath}`);
+    else {
+        throw new Error(`decompressCache: unrecognized archive magic for ${archivePath}`);
+    }
+    const { bytes: inflatedBytes, files: fileCount } = await walkDirSize(targetDir);
+    if (debug) {
+        const ratio = archiveBytes > 0 ? (archiveBytes / inflatedBytes).toFixed(2) : "n/a";
+        log(`[debug] decompress result: inflated=${fmtBytesDebug(inflatedBytes)} files=${fileCount} ratio=${ratio}`);
+    }
+    return { archiveBytes, inflatedBytes, fileCount };
 }
 /**
  * tar -cf - <cache-dir-basename> | zstd -T0 -<level> > <cache-dir>.tar.zst
  *
- * When codec=="none" or zstd is not installed, returns null and leaves the
- * caller to use the default actions/cache compression.
+ * When codec=="none" or zstd is not installed, returns archivePath=null and
+ * leaves the caller to use the default actions/cache compression.
+ * When debug=true, walks the source dir for byte/file counts and logs ratios.
  */
 async function compressCache(opts) {
-    const { cacheDir, codec, level } = opts;
+    const { cacheDir, codec, level, debug = false, log = () => undefined } = opts;
+    const nullResult = { archivePath: null, archiveBytes: 0, inflatedBytes: null, fileCount: null };
     if (codec === "none")
-        return null;
+        return nullResult;
     const zstdPath = await io.which("zstd", false);
     if (!zstdPath) {
         core.warning("setup-soldr: zstd binary not found on PATH; falling back to actions/cache default codec");
-        return null;
+        return nullResult;
     }
     if (!(await pathExists(cacheDir))) {
         core.warning(`setup-soldr: cache dir ${cacheDir} does not exist, skipping compression`);
-        return null;
+        return nullResult;
+    }
+    let inflatedBytes = null;
+    let fileCount = null;
+    if (debug) {
+        const walked = await walkDirSize(cacheDir);
+        inflatedBytes = walked.bytes;
+        fileCount = walked.files;
+        log(`[debug] compress ${path.basename(cacheDir)}: input=${fmtBytesDebug(inflatedBytes)} files=${fileCount}`);
     }
     const parent = path.dirname(cacheDir);
     const basename = path.basename(cacheDir);
@@ -20009,8 +20081,30 @@ async function compressCache(opts) {
     await fs.rm(archivePath, { force: true }).catch(() => undefined);
     const levelNumeric = parseLevel(level);
     const levelFlag = `-${levelNumeric}`;
+    if (debug)
+        log(`[debug] compress cmd: tar -cf - -C ${parent} ${basename} | zstd -T0 ${levelFlag} -o ${archivePath}`);
     await runPipe(["tar", ["-cf", "-", "-C", parent, basename]], [zstdPath, ["-T0", levelFlag, "-o", archivePath]]);
-    return archivePath;
+    let archiveBytes = 0;
+    try {
+        archiveBytes = (await fs.stat(archivePath)).size;
+    }
+    catch {
+        // archive may not have been created
+    }
+    if (debug && inflatedBytes !== null && inflatedBytes > 0) {
+        const ratio = (archiveBytes / inflatedBytes).toFixed(2);
+        log(`[debug] compress result: archive=${fmtBytesDebug(archiveBytes)} ratio=${ratio}`);
+    }
+    return { archivePath, archiveBytes, inflatedBytes, fileCount };
+}
+function fmtBytesDebug(n) {
+    if (n < 1024)
+        return `${n}B`;
+    if (n < 1024 * 1024)
+        return `${(n / 1024).toFixed(1)}KB`;
+    if (n < 1024 * 1024 * 1024)
+        return `${(n / 1024 / 1024).toFixed(1)}MB`;
+    return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
 }
 function parseLevel(value) {
     const trimmed = (value ?? "").toString().trim();
@@ -35242,6 +35336,7 @@ const verify_soldr_js_1 = __nccwpck_require__(82947);
 const normalize_source_mtime_js_1 = __nccwpck_require__(79691);
 const detect_shared_target_warning_js_1 = __nccwpck_require__(35761);
 const cache_compress_js_1 = __nccwpck_require__(24978);
+const stats_collector_js_1 = __nccwpck_require__(51002);
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 const FALSY = new Set(["0", "false", "no", "off"]);
 function isTruthy(value) {
@@ -35314,6 +35409,10 @@ async function run() {
     // Persist resolve state for the post-job step.
     core.saveState("resolveResult", JSON.stringify(result));
     core.saveState("buildCacheMode", result.buildCache.mode);
+    const stats = result.stats;
+    const debugMode = result.debugMode;
+    const debugLog = debugMode ? (msg) => logger.log(msg) : () => undefined;
+    const statsCollector = new stats_collector_js_1.StatsCollector();
     // ---- source-mtime-normalize ----
     if (isTruthy(inputs.sourceMtimeNormalize)) {
         await (0, normalize_source_mtime_js_1.normalizeSourceMtime)({ workspace: ctx.workspace, enabled: true });
@@ -35324,6 +35423,7 @@ async function run() {
     await (0, phase_timing_js_1.markPhase)("setup-cache");
     let setupCacheExactHit = false;
     if (cacheEnabled && result.setupCache.paths.length > 0) {
+        const setupCacheStart = Date.now();
         const restore = await restoreCacheSafe(result.setupCache.paths, result.setupCache.key, [result.setupCache.restorePrefix], logger);
         setupCacheExactHit = restore.hit;
         core.setOutput("setup_cache_hit", restore.hit ? "true" : "false");
@@ -35332,6 +35432,22 @@ async function run() {
         core.saveState("setupCacheMatchedKey", restore.matchedKey);
         // Expose for ensure_rust_toolchain to read via env (the python port did this).
         process.env["SETUP_SOLDR_SETUP_CACHE_EXACT_HIT"] = restore.hit ? "true" : "false";
+        statsCollector.record({
+            label: "setup-cache",
+            operation: "restore",
+            hit: restore.hit,
+            key: result.setupCache.key,
+            matchedKey: restore.matchedKey,
+            restoreKeys: [result.setupCache.restorePrefix],
+            archiveBytes: null,
+            inflatedBytes: null,
+            fileCount: null,
+            durationMs: Date.now() - setupCacheStart,
+            timestamp: new Date().toISOString(),
+        });
+        if (debugMode) {
+            debugLog(`[debug] setup-cache: hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`);
+        }
     }
     await (0, phase_timing_js_1.finishPhase)("setup-cache");
     // ---- target-cache ----
@@ -35342,6 +35458,7 @@ async function run() {
             .map((s) => s.trim())
             .filter((s) => s.length > 0);
         if (targetPaths.length > 0) {
+            const targetCacheStart = Date.now();
             const restoreKeys = [];
             if (result.targetCache.restoreKeyParent)
                 restoreKeys.push(result.targetCache.restoreKeyParent);
@@ -35353,6 +35470,22 @@ async function run() {
             core.setOutput("target_cache_hit", restore.hit ? "true" : "false");
             core.setOutput("target_cache_matched_key", restore.matchedKey);
             core.saveState("targetCacheMatchedKey", restore.matchedKey);
+            statsCollector.record({
+                label: "target-cache",
+                operation: "restore",
+                hit: restore.hit,
+                key: result.targetCache.key,
+                matchedKey: restore.matchedKey,
+                restoreKeys,
+                archiveBytes: null,
+                inflatedBytes: null,
+                fileCount: null,
+                durationMs: Date.now() - targetCacheStart,
+                timestamp: new Date().toISOString(),
+            });
+            if (debugMode) {
+                debugLog(`[debug] target-cache: hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`);
+            }
         }
     }
     await (0, phase_timing_js_1.finishPhase)("target-cache");
@@ -35368,21 +35501,46 @@ async function run() {
             restoreKeys.push(result.buildCache.restoreKeyToolchain);
         if (result.buildCache.restoreKeyOsArch)
             restoreKeys.push(result.buildCache.restoreKeyOsArch);
+        const buildCacheStart = Date.now();
         const restore = await restoreCacheSafe([archivePath, buildCachePath], result.buildCache.key, restoreKeys, logger);
         core.setOutput("build_cache_hit", restore.hit ? "true" : "false");
         core.setOutput("build_cache_matched_key", restore.matchedKey);
         core.saveState("buildCacheMatchedKey", restore.matchedKey);
+        let buildArchiveBytes = null;
+        let buildInflatedBytes = null;
+        let buildFileCount = null;
         if (fileExists(archivePath)) {
             const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
             if (magic === "zstd" || magic === "gzip") {
                 try {
-                    await (0, cache_compress_js_1.decompressCache)({ archivePath, targetDir: buildCachePath });
+                    const decompResult = await (0, cache_compress_js_1.decompressCache)({
+                        archivePath,
+                        targetDir: buildCachePath,
+                        debug: debugMode,
+                        log: debugLog,
+                    });
+                    buildArchiveBytes = decompResult.archiveBytes;
+                    buildInflatedBytes = decompResult.inflatedBytes;
+                    buildFileCount = decompResult.fileCount;
                 }
                 catch (err) {
                     logger.log(`build-cache decompress failed: ${err instanceof Error ? err.message : String(err)}`);
                 }
             }
         }
+        statsCollector.record({
+            label: "build-cache",
+            operation: "restore",
+            hit: restore.hit,
+            key: result.buildCache.key,
+            matchedKey: restore.matchedKey,
+            restoreKeys,
+            archiveBytes: buildArchiveBytes,
+            inflatedBytes: buildInflatedBytes,
+            fileCount: buildFileCount,
+            durationMs: Date.now() - buildCacheStart,
+            timestamp: new Date().toISOString(),
+        });
     }
     await (0, phase_timing_js_1.finishPhase)("build-cache");
     // ---- target-tree-cache (full mode) ----
@@ -35412,22 +35570,44 @@ async function run() {
     // ---- cargo-registry restore (if requested) ----
     if (result.cargoRegistryCache.enabled) {
         const registryArchive = `${result.cargoRegistryCache.path}.tar.zst`;
+        const registryCacheStart = Date.now();
         const restore = await restoreCacheSafe([registryArchive, result.cargoRegistryCache.path], result.cargoRegistryCache.key, [result.cargoRegistryCache.restorePrefix], logger);
         core.setOutput("cargo_registry_cache_hit", restore.hit ? "true" : "false");
+        let regArchiveBytes = null;
+        let regInflatedBytes = null;
+        let regFileCount = null;
         if (fileExists(registryArchive)) {
             const magic = await (0, cache_compress_js_1.detectCompressMagic)(registryArchive);
             if (magic === "zstd" || magic === "gzip") {
                 try {
-                    await (0, cache_compress_js_1.decompressCache)({
+                    const decompResult = await (0, cache_compress_js_1.decompressCache)({
                         archivePath: registryArchive,
                         targetDir: result.cargoRegistryCache.path,
+                        debug: debugMode,
+                        log: debugLog,
                     });
+                    regArchiveBytes = decompResult.archiveBytes;
+                    regInflatedBytes = decompResult.inflatedBytes;
+                    regFileCount = decompResult.fileCount;
                 }
                 catch (err) {
                     logger.log(`cargo-registry decompress failed: ${err instanceof Error ? err.message : String(err)}`);
                 }
             }
         }
+        statsCollector.record({
+            label: "cargo-registry",
+            operation: "restore",
+            hit: restore.hit,
+            key: result.cargoRegistryCache.key,
+            matchedKey: restore.matchedKey,
+            restoreKeys: [result.cargoRegistryCache.restorePrefix],
+            archiveBytes: regArchiveBytes,
+            inflatedBytes: regInflatedBytes,
+            fileCount: regFileCount,
+            durationMs: Date.now() - registryCacheStart,
+            timestamp: new Date().toISOString(),
+        });
     }
     // ---- shared-target warning ----
     await (0, detect_shared_target_warning_js_1.detectSharedTargetWarning)({
@@ -35436,6 +35616,20 @@ async function run() {
         buildCacheMode: result.buildCache.mode,
         targetDir: result.targetCache.targetPath,
     });
+    // ---- stats report ----
+    statsCollector.report(stats, (msg) => logger.log(msg));
+    if (stats === "detailed") {
+        try {
+            await statsCollector.writeFiles(ctx.runnerTemp);
+            statsCollector.setGithubOutputs();
+        }
+        catch (err) {
+            logger.log(`stats: failed to write files: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+    core.saveState("statsCollector", statsCollector.serialize());
+    core.saveState("statsMode", stats);
+    core.saveState("runnerTemp", ctx.runnerTemp);
     await (0, phase_timing_js_1.finishPhase)("action");
     // dirHasContent is exported for tests; suppress unused warning here.
     void dirHasContent;
@@ -44649,6 +44843,203 @@ inherits(PartStream, ReadableStream)
 PartStream.prototype._read = function (n) {}
 
 module.exports = PartStream
+
+
+/***/ }),
+
+/***/ 51002:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.StatsCollector = void 0;
+const fs = __importStar(__nccwpck_require__(51455));
+const path = __importStar(__nccwpck_require__(76760));
+const core = __importStar(__nccwpck_require__(37484));
+function fmtBytes(n) {
+    if (n === null)
+        return "-";
+    if (n < 1024)
+        return `${n}B`;
+    if (n < 1024 * 1024)
+        return `${(n / 1024).toFixed(1)}KB`;
+    if (n < 1024 * 1024 * 1024)
+        return `${(n / 1024 / 1024).toFixed(1)}MB`;
+    return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
+}
+function fmtMs(ms) {
+    return `${(ms / 1000).toFixed(1)}s`;
+}
+function truncKey(key, maxLen) {
+    if (!key)
+        return "(no match)";
+    if (key.length <= maxLen)
+        return key;
+    return `\u2026${key.slice(-(maxLen - 1))}`;
+}
+function ratioStr(archiveBytes, inflatedBytes) {
+    if (archiveBytes === null || inflatedBytes === null || inflatedBytes === 0)
+        return "";
+    return ` ratio=${(archiveBytes / inflatedBytes).toFixed(2)}`;
+}
+class StatsCollector {
+    ops = [];
+    record(op) {
+        this.ops.push(op);
+    }
+    summaryText() {
+        const restoreOps = this.ops.filter((o) => o.operation === "restore");
+        if (restoreOps.length === 0)
+            return "";
+        const CW = { cache: 20, status: 8, matched: 42, archive: 10, inflated: 10, files: 8, time: 7 };
+        const header = [
+            "cache".padEnd(CW.cache),
+            "status".padEnd(CW.status),
+            "matched-key".padEnd(CW.matched),
+            "archive".padStart(CW.archive),
+            "inflated".padStart(CW.inflated),
+            "files".padStart(CW.files),
+            "time".padStart(CW.time),
+        ].join("  ");
+        const rule = "\u2500".repeat(header.length);
+        const rows = restoreOps.map((op) => {
+            const status = op.hit ? "HIT" : op.matchedKey ? "FALLBACK" : "MISS";
+            const matchedDisplay = op.hit
+                ? truncKey(op.matchedKey, CW.matched - 4)
+                : op.matchedKey
+                    ? `fallback: ${truncKey(op.matchedKey, CW.matched - 10)}`
+                    : "(no match)";
+            return [
+                op.label.padEnd(CW.cache),
+                status.padEnd(CW.status),
+                matchedDisplay.padEnd(CW.matched),
+                fmtBytes(op.archiveBytes).padStart(CW.archive),
+                fmtBytes(op.inflatedBytes).padStart(CW.inflated),
+                (op.fileCount !== null ? String(op.fileCount) : "-").padStart(CW.files),
+                fmtMs(op.durationMs).padStart(CW.time),
+            ].join("  ");
+        });
+        const exactHits = restoreOps.filter((o) => o.hit).length;
+        const anyHits = restoreOps.filter((o) => o.hit || Boolean(o.matchedKey)).length;
+        const totalMs = restoreOps.reduce((s, o) => s + o.durationMs, 0);
+        const footer = `${exactHits}/${restoreOps.length} exact-hit  ${anyHits}/${restoreOps.length} any-hit  total restore: ${fmtMs(totalMs)}`;
+        return [header, rule, ...rows, rule, footer].join("\n");
+    }
+    detailedJson() {
+        const restoreOps = this.ops.filter((o) => o.operation === "restore");
+        const saveOps = this.ops.filter((o) => o.operation === "save");
+        const exactHits = restoreOps.filter((o) => o.hit).length;
+        const anyHits = restoreOps.filter((o) => o.hit || Boolean(o.matchedKey)).length;
+        const totalRestoreMs = restoreOps.reduce((s, o) => s + o.durationMs, 0);
+        return {
+            summary: {
+                totalCaches: restoreOps.length,
+                exactHits,
+                anyHits,
+                misses: restoreOps.length - anyHits,
+                totalRestoreMs,
+                savedCaches: saveOps.length,
+            },
+            restores: restoreOps,
+            saves: saveOps,
+        };
+    }
+    restoreLogLine(op) {
+        const status = op.hit ? "HIT" : op.matchedKey ? "FALLBACK" : "MISS";
+        const matchStr = op.matchedKey ? ` matched=${op.matchedKey}` : "";
+        const archStr = op.archiveBytes !== null ? ` archive=${fmtBytes(op.archiveBytes)}` : "";
+        const inflStr = op.inflatedBytes !== null ? ` inflated=${fmtBytes(op.inflatedBytes)}` : "";
+        const filesStr = op.fileCount !== null ? ` files=${op.fileCount}` : "";
+        return `[restore] ${op.label.padEnd(20)} ${status.padEnd(8)} key=${op.key}${matchStr}${archStr}${inflStr}${filesStr}  ${op.timestamp}  ${fmtMs(op.durationMs)}`;
+    }
+    saveLogLine(op) {
+        const archStr = op.archiveBytes !== null ? ` archive=${fmtBytes(op.archiveBytes)}` : "";
+        const inflStr = op.inflatedBytes !== null ? ` inflated=${fmtBytes(op.inflatedBytes)}` : "";
+        const filesStr = op.fileCount !== null ? ` files=${op.fileCount}` : "";
+        const ratio = ratioStr(op.archiveBytes, op.inflatedBytes);
+        return `[save]    ${op.label.padEnd(20)}          key=${op.key}${archStr}${inflStr}${filesStr}${ratio}  ${op.timestamp}  ${fmtMs(op.durationMs)}`;
+    }
+    async writeFiles(runnerTemp) {
+        await fs.mkdir(runnerTemp, { recursive: true });
+        const jsonPath = path.join(runnerTemp, "setup-soldr-stats.json");
+        const logPath = path.join(runnerTemp, "setup-soldr-session.log");
+        await fs.writeFile(jsonPath, JSON.stringify(this.detailedJson(), null, 2), "utf8");
+        const restoreLines = this.ops
+            .filter((o) => o.operation === "restore")
+            .map((o) => this.restoreLogLine(o));
+        await fs.writeFile(logPath, restoreLines.join("\n") + "\n", "utf8");
+    }
+    async appendSavesToSessionLog(runnerTemp) {
+        const saveOps = this.ops.filter((o) => o.operation === "save");
+        if (saveOps.length === 0)
+            return;
+        const logPath = path.join(runnerTemp, "setup-soldr-session.log");
+        const lines = saveOps.map((o) => this.saveLogLine(o));
+        await fs.appendFile(logPath, lines.join("\n") + "\n", "utf8").catch(() => undefined);
+    }
+    report(mode, log) {
+        if (mode === "none")
+            return;
+        const summary = this.summaryText();
+        if (summary)
+            log(summary);
+        if (mode === "detailed") {
+            log(JSON.stringify(this.detailedJson(), null, 2));
+        }
+    }
+    setGithubOutputs() {
+        core.setOutput("stats-json", JSON.stringify(this.detailedJson()));
+    }
+    serialize() {
+        return JSON.stringify({ ops: this.ops });
+    }
+    static deserialize(s) {
+        const c = new StatsCollector();
+        try {
+            const parsed = JSON.parse(s);
+            c.ops = Array.isArray(parsed.ops) ? parsed.ops : [];
+        }
+        catch {
+            // empty collector
+        }
+        return c;
+    }
+}
+exports.StatsCollector = StatsCollector;
 
 
 /***/ }),
@@ -61614,7 +62005,15 @@ function readRawInputs(env) {
         targetCacheCompressLevel: get("TARGET_CACHE_COMPRESS_LEVEL"),
         sourceMtimeNormalize: get("SOURCE_MTIME_NORMALIZE"),
         cargoRegistryCache: get("CARGO_REGISTRY_CACHE"),
+        stats: get("STATS"),
+        debugMode: get("DEBUG"),
     };
+}
+function normalizeStatsMode(raw) {
+    const v = raw.trim().toLowerCase();
+    if (v === "none" || v === "summarize" || v === "detailed")
+        return v;
+    return "summarize";
 }
 function isFalsy(value) {
     return FALSY_VALUES.has(value.trim().toLowerCase());
@@ -62069,6 +62468,8 @@ async function resolveSetup(ctx, inputs, deps) {
     // Avoid unused warnings on alias helper.
     void toolchain_js_1.rollingToolchainAlias;
     void cache_keys_js_1.canonicalJsonStringify;
+    const stats = normalizeStatsMode(inputs.stats);
+    const debugMode = isTruthy(inputs.debugMode.trim() || "false");
     return {
         workspace,
         cacheRoot,
@@ -62094,6 +62495,8 @@ async function resolveSetup(ctx, inputs, deps) {
         pathAdditions,
         logStartEpoch: logStart,
         timestamps,
+        stats,
+        debugMode,
     };
 }
 /**

@@ -18,6 +18,7 @@ import { verifySoldr } from "./lib/verify-soldr.js";
 import { normalizeSourceMtime } from "./lib/normalize-source-mtime.js";
 import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
+import { StatsCollector } from "./lib/stats-collector.js";
 import type { ActionContext } from "./lib/types.js";
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
@@ -104,6 +105,11 @@ export async function run(): Promise<void> {
   core.saveState("resolveResult", JSON.stringify(result));
   core.saveState("buildCacheMode", result.buildCache.mode);
 
+  const stats = result.stats;
+  const debugMode = result.debugMode;
+  const debugLog = debugMode ? (msg: string): void => logger.log(msg) : (): void => undefined;
+  const statsCollector = new StatsCollector();
+
   // ---- source-mtime-normalize ----
   if (isTruthy(inputs.sourceMtimeNormalize)) {
     await normalizeSourceMtime({ workspace: ctx.workspace, enabled: true });
@@ -116,6 +122,7 @@ export async function run(): Promise<void> {
   await markPhase("setup-cache");
   let setupCacheExactHit = false;
   if (cacheEnabled && result.setupCache.paths.length > 0) {
+    const setupCacheStart = Date.now();
     const restore = await restoreCacheSafe(
       result.setupCache.paths,
       result.setupCache.key,
@@ -129,6 +136,22 @@ export async function run(): Promise<void> {
     core.saveState("setupCacheMatchedKey", restore.matchedKey);
     // Expose for ensure_rust_toolchain to read via env (the python port did this).
     process.env["SETUP_SOLDR_SETUP_CACHE_EXACT_HIT"] = restore.hit ? "true" : "false";
+    statsCollector.record({
+      label: "setup-cache",
+      operation: "restore",
+      hit: restore.hit,
+      key: result.setupCache.key,
+      matchedKey: restore.matchedKey,
+      restoreKeys: [result.setupCache.restorePrefix],
+      archiveBytes: null,
+      inflatedBytes: null,
+      fileCount: null,
+      durationMs: Date.now() - setupCacheStart,
+      timestamp: new Date().toISOString(),
+    });
+    if (debugMode) {
+      debugLog(`[debug] setup-cache: hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`);
+    }
   }
   await finishPhase("setup-cache");
 
@@ -140,6 +163,7 @@ export async function run(): Promise<void> {
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
     if (targetPaths.length > 0) {
+      const targetCacheStart = Date.now();
       const restoreKeys: string[] = [];
       if (result.targetCache.restoreKeyParent) restoreKeys.push(result.targetCache.restoreKeyParent);
       if (result.targetCache.restoreKeyLock) restoreKeys.push(result.targetCache.restoreKeyLock);
@@ -148,6 +172,22 @@ export async function run(): Promise<void> {
       core.setOutput("target_cache_hit", restore.hit ? "true" : "false");
       core.setOutput("target_cache_matched_key", restore.matchedKey);
       core.saveState("targetCacheMatchedKey", restore.matchedKey);
+      statsCollector.record({
+        label: "target-cache",
+        operation: "restore",
+        hit: restore.hit,
+        key: result.targetCache.key,
+        matchedKey: restore.matchedKey,
+        restoreKeys,
+        archiveBytes: null,
+        inflatedBytes: null,
+        fileCount: null,
+        durationMs: Date.now() - targetCacheStart,
+        timestamp: new Date().toISOString(),
+      });
+      if (debugMode) {
+        debugLog(`[debug] target-cache: hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`);
+      }
     }
   }
   await finishPhase("target-cache");
@@ -161,6 +201,7 @@ export async function run(): Promise<void> {
     if (result.buildCache.restoreKeyParent) restoreKeys.push(result.buildCache.restoreKeyParent);
     if (result.buildCache.restoreKeyToolchain) restoreKeys.push(result.buildCache.restoreKeyToolchain);
     if (result.buildCache.restoreKeyOsArch) restoreKeys.push(result.buildCache.restoreKeyOsArch);
+    const buildCacheStart = Date.now();
     const restore = await restoreCacheSafe(
       [archivePath, buildCachePath],
       result.buildCache.key,
@@ -170,11 +211,22 @@ export async function run(): Promise<void> {
     core.setOutput("build_cache_hit", restore.hit ? "true" : "false");
     core.setOutput("build_cache_matched_key", restore.matchedKey);
     core.saveState("buildCacheMatchedKey", restore.matchedKey);
+    let buildArchiveBytes: number | null = null;
+    let buildInflatedBytes: number | null = null;
+    let buildFileCount: number | null = null;
     if (fileExists(archivePath)) {
       const magic = await detectCompressMagic(archivePath);
       if (magic === "zstd" || magic === "gzip") {
         try {
-          await decompressCache({ archivePath, targetDir: buildCachePath });
+          const decompResult = await decompressCache({
+            archivePath,
+            targetDir: buildCachePath,
+            debug: debugMode,
+            log: debugLog,
+          });
+          buildArchiveBytes = decompResult.archiveBytes;
+          buildInflatedBytes = decompResult.inflatedBytes;
+          buildFileCount = decompResult.fileCount;
         } catch (err) {
           logger.log(
             `build-cache decompress failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -182,6 +234,19 @@ export async function run(): Promise<void> {
         }
       }
     }
+    statsCollector.record({
+      label: "build-cache",
+      operation: "restore",
+      hit: restore.hit,
+      key: result.buildCache.key,
+      matchedKey: restore.matchedKey,
+      restoreKeys,
+      archiveBytes: buildArchiveBytes,
+      inflatedBytes: buildInflatedBytes,
+      fileCount: buildFileCount,
+      durationMs: Date.now() - buildCacheStart,
+      timestamp: new Date().toISOString(),
+    });
   }
   await finishPhase("build-cache");
 
@@ -216,6 +281,7 @@ export async function run(): Promise<void> {
   // ---- cargo-registry restore (if requested) ----
   if (result.cargoRegistryCache.enabled) {
     const registryArchive = `${result.cargoRegistryCache.path}.tar.zst`;
+    const registryCacheStart = Date.now();
     const restore = await restoreCacheSafe(
       [registryArchive, result.cargoRegistryCache.path],
       result.cargoRegistryCache.key,
@@ -223,14 +289,22 @@ export async function run(): Promise<void> {
       logger,
     );
     core.setOutput("cargo_registry_cache_hit", restore.hit ? "true" : "false");
+    let regArchiveBytes: number | null = null;
+    let regInflatedBytes: number | null = null;
+    let regFileCount: number | null = null;
     if (fileExists(registryArchive)) {
       const magic = await detectCompressMagic(registryArchive);
       if (magic === "zstd" || magic === "gzip") {
         try {
-          await decompressCache({
+          const decompResult = await decompressCache({
             archivePath: registryArchive,
             targetDir: result.cargoRegistryCache.path,
+            debug: debugMode,
+            log: debugLog,
           });
+          regArchiveBytes = decompResult.archiveBytes;
+          regInflatedBytes = decompResult.inflatedBytes;
+          regFileCount = decompResult.fileCount;
         } catch (err) {
           logger.log(
             `cargo-registry decompress failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -238,6 +312,19 @@ export async function run(): Promise<void> {
         }
       }
     }
+    statsCollector.record({
+      label: "cargo-registry",
+      operation: "restore",
+      hit: restore.hit,
+      key: result.cargoRegistryCache.key,
+      matchedKey: restore.matchedKey,
+      restoreKeys: [result.cargoRegistryCache.restorePrefix],
+      archiveBytes: regArchiveBytes,
+      inflatedBytes: regInflatedBytes,
+      fileCount: regFileCount,
+      durationMs: Date.now() - registryCacheStart,
+      timestamp: new Date().toISOString(),
+    });
   }
 
   // ---- shared-target warning ----
@@ -247,6 +334,20 @@ export async function run(): Promise<void> {
     buildCacheMode: result.buildCache.mode,
     targetDir: result.targetCache.targetPath,
   });
+
+  // ---- stats report ----
+  statsCollector.report(stats, (msg) => logger.log(msg));
+  if (stats === "detailed") {
+    try {
+      await statsCollector.writeFiles(ctx.runnerTemp);
+      statsCollector.setGithubOutputs();
+    } catch (err) {
+      logger.log(`stats: failed to write files: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  core.saveState("statsCollector", statsCollector.serialize());
+  core.saveState("statsMode", stats);
+  core.saveState("runnerTemp", ctx.runnerTemp);
 
   await finishPhase("action");
 
