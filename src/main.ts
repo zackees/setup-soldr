@@ -111,6 +111,18 @@ export async function run(): Promise<void> {
 
   const cacheEnabled = !isFalsy(inputs.cache.trim() || "true");
   const buildCacheEnabled = !isFalsy(inputs.buildCache.trim() || "true");
+  core.saveState("setupCacheEnabled", cacheEnabled && result.setupCache.paths.length > 0 ? "true" : "false");
+  core.saveState("setupCacheExactHit", "false");
+  core.saveState("setupCacheMatchedKey", "");
+  core.saveState("targetCacheEnabled", result.targetCache.enabled ? "true" : "false");
+  core.saveState("targetCacheExactHit", "false");
+  core.saveState("targetCacheMatchedKey", "");
+  core.saveState("buildCacheEnabled", buildCacheEnabled ? "true" : "false");
+  core.saveState("buildCacheExactHit", "false");
+  core.saveState("buildCacheMatchedKey", "");
+  core.saveState("cargoRegistryCacheEnabled", result.cargoRegistryCache.enabled ? "true" : "false");
+  core.saveState("cargoRegistryCacheExactHit", "false");
+  core.saveState("cargoRegistryCacheMatchedKey", "");
 
   // ---- setup-cache ----
   await markPhase("setup-cache");
@@ -147,6 +159,7 @@ export async function run(): Promise<void> {
       const restore = await restoreCacheSafe(targetPaths, result.targetCache.key, restoreKeys, logger);
       core.setOutput("target_cache_hit", restore.hit ? "true" : "false");
       core.setOutput("target_cache_matched_key", restore.matchedKey);
+      core.saveState("targetCacheExactHit", restore.hit ? "true" : "false");
       core.saveState("targetCacheMatchedKey", restore.matchedKey);
     }
   }
@@ -169,6 +182,7 @@ export async function run(): Promise<void> {
     );
     core.setOutput("build_cache_hit", restore.hit ? "true" : "false");
     core.setOutput("build_cache_matched_key", restore.matchedKey);
+    core.saveState("buildCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("buildCacheMatchedKey", restore.matchedKey);
     if (fileExists(archivePath)) {
       const magic = await detectCompressMagic(archivePath);
@@ -223,6 +237,8 @@ export async function run(): Promise<void> {
       logger,
     );
     core.setOutput("cargo_registry_cache_hit", restore.hit ? "true" : "false");
+    core.saveState("cargoRegistryCacheExactHit", restore.hit ? "true" : "false");
+    core.saveState("cargoRegistryCacheMatchedKey", restore.matchedKey);
     if (fileExists(registryArchive)) {
       const magic = await detectCompressMagic(registryArchive);
       if (magic === "zstd" || magic === "gzip") {

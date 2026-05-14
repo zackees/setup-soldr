@@ -8,11 +8,65 @@
 // falls back to gzip).
 
 import * as fs from "node:fs";
+import * as path from "node:path";
 import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { compressCache } from "./lib/cache-compress.js";
 import { createLogger } from "./lib/log-utils.js";
 import type { ResolveResult } from "./lib/types.js";
+
+type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
+type SaveStatus = "disabled" | "not-managed-in-post" | "exact-hit-skip" | "missing-dir-skip" | "saved" | "failed";
+
+interface CacheSaveResult {
+  status: SaveStatus;
+  cache_dir?: string;
+  archive_path?: string;
+  saved_paths?: string[];
+  cache_id?: number;
+  error?: string;
+}
+
+interface CacheLayerSummary {
+  enabled: boolean;
+  key: string;
+  matched_key: string;
+  exact_hit: boolean;
+  restore_status: RestoreStatus;
+  save: CacheSaveResult;
+}
+
+interface ZccacheSessionSummary {
+  stats_path: string;
+  present: boolean;
+  status: string;
+  stats?: Record<string, unknown>;
+  error?: string;
+}
+
+export interface FinalCacheSummary {
+  schema_version: 1;
+  setup_cache: CacheLayerSummary;
+  target_cache: CacheLayerSummary;
+  build_cache: CacheLayerSummary;
+  cargo_registry_cache: CacheLayerSummary;
+  zccache_session: ZccacheSessionSummary;
+}
+
+interface RestoreState {
+  setupCacheEnabled: boolean;
+  setupCacheExactHit: boolean;
+  setupCacheMatchedKey: string;
+  targetCacheEnabled: boolean;
+  targetCacheExactHit: boolean;
+  targetCacheMatchedKey: string;
+  buildCacheEnabled: boolean;
+  buildCacheExactHit: boolean;
+  buildCacheMatchedKey: string;
+  cargoRegistryCacheEnabled: boolean;
+  cargoRegistryCacheExactHit: boolean;
+  cargoRegistryCacheMatchedKey: string;
+}
 
 function dirExists(p: string): boolean {
   try {
@@ -20,6 +74,53 @@ function dirExists(p: string): boolean {
   } catch {
     return false;
   }
+}
+
+function fileExists(p: string): boolean {
+  try {
+    return fs.statSync(p).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function stateBool(name: string, fallback = false): boolean {
+  const value = core.getState(name).trim().toLowerCase();
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
+function readRestoreState(): RestoreState {
+  return {
+    setupCacheEnabled: stateBool("setupCacheEnabled"),
+    setupCacheExactHit: stateBool("setupCacheExactHit"),
+    setupCacheMatchedKey: core.getState("setupCacheMatchedKey"),
+    targetCacheEnabled: stateBool("targetCacheEnabled"),
+    targetCacheExactHit: stateBool("targetCacheExactHit"),
+    targetCacheMatchedKey: core.getState("targetCacheMatchedKey"),
+    buildCacheEnabled: stateBool("buildCacheEnabled"),
+    buildCacheExactHit: stateBool("buildCacheExactHit"),
+    buildCacheMatchedKey: core.getState("buildCacheMatchedKey"),
+    cargoRegistryCacheEnabled: stateBool("cargoRegistryCacheEnabled"),
+    cargoRegistryCacheExactHit: stateBool("cargoRegistryCacheExactHit"),
+    cargoRegistryCacheMatchedKey: core.getState("cargoRegistryCacheMatchedKey"),
+  };
+}
+
+function disabledSave(): CacheSaveResult {
+  return { status: "disabled" };
+}
+
+function notManagedSave(): CacheSaveResult {
+  return { status: "not-managed-in-post" };
+}
+
+function restoreStatus(enabled: boolean, exactHit: boolean, matchedKey: string): RestoreStatus {
+  if (!enabled) return "disabled";
+  if (exactHit) return "exact-hit";
+  if (matchedKey.trim()) return "restore-key-hit";
+  return "miss";
 }
 
 async function saveOne(opts: {
@@ -30,23 +131,240 @@ async function saveOne(opts: {
   matchedKey: string;
   label: string;
   log: (msg: string) => void;
-}): Promise<void> {
+}): Promise<CacheSaveResult> {
   const { cacheDir, codec, level, key, matchedKey, label, log } = opts;
   if (!dirExists(cacheDir)) {
     log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
-    return;
+    return { status: "missing-dir-skip", cache_dir: cacheDir };
   }
   if (matchedKey === key) {
     log(`${label}: exact cache hit on ${key}, skipping save`);
-    return;
+    return { status: "exact-hit-skip", cache_dir: cacheDir };
   }
-  const archive = await compressCache({ cacheDir, codec, level });
+  let archive: string | null = null;
+  try {
+    archive = await compressCache({ cacheDir, codec, level });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log(`${label}: compression failed: ${message}`);
+    return { status: "failed", cache_dir: cacheDir, error: message };
+  }
   const pathsToSave = archive ? [archive] : [cacheDir];
   try {
     const id = await cache.saveCache(pathsToSave, key);
     log(`${label}: saved cache id=${id} key=${key} via ${archive ? "tar.zst" : "default"}`);
+    return {
+      status: "saved",
+      cache_dir: cacheDir,
+      archive_path: archive ?? undefined,
+      saved_paths: pathsToSave,
+      cache_id: id,
+    };
   } catch (err) {
-    log(`${label}: save failed: ${err instanceof Error ? err.message : String(err)}`);
+    const message = err instanceof Error ? err.message : String(err);
+    log(`${label}: save failed: ${message}`);
+    return {
+      status: "failed",
+      cache_dir: cacheDir,
+      archive_path: archive ?? undefined,
+      saved_paths: pathsToSave,
+      error: message,
+    };
+  }
+}
+
+function cacheLayerSummary(opts: {
+  enabled: boolean;
+  key: string;
+  exactHit: boolean;
+  matchedKey: string;
+  save: CacheSaveResult;
+}): CacheLayerSummary {
+  const matchedKey = opts.matchedKey.trim();
+  return {
+    enabled: opts.enabled,
+    key: opts.key,
+    matched_key: matchedKey,
+    exact_hit: opts.enabled ? opts.exactHit : false,
+    restore_status: restoreStatus(opts.enabled, opts.exactHit, matchedKey),
+    save: opts.save,
+  };
+}
+
+function readZccacheSessionSummary(buildCachePath: string): ZccacheSessionSummary {
+  const statsPath = path.join(buildCachePath, "logs", "last-session-stats.json");
+  if (!fileExists(statsPath)) {
+    return { stats_path: statsPath, present: false, status: "missing" };
+  }
+  try {
+    const parsed = JSON.parse(fs.readFileSync(statsPath, "utf8")) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {
+        stats_path: statsPath,
+        present: true,
+        status: "invalid",
+        error: "stats JSON was not an object",
+      };
+    }
+    const stats = parsed as Record<string, unknown>;
+    const status = typeof stats["status"] === "string" ? stats["status"] : "unknown";
+    return { stats_path: statsPath, present: true, status, stats };
+  } catch (err) {
+    return {
+      stats_path: statsPath,
+      present: true,
+      status: "invalid",
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export function buildFinalCacheSummary(
+  result: ResolveResult,
+  state: RestoreState,
+  saves: {
+    buildCache: CacheSaveResult;
+    cargoRegistryCache: CacheSaveResult;
+  },
+): FinalCacheSummary {
+  return {
+    schema_version: 1,
+    setup_cache: cacheLayerSummary({
+      enabled: state.setupCacheEnabled,
+      key: result.setupCache.key,
+      exactHit: state.setupCacheExactHit,
+      matchedKey: state.setupCacheMatchedKey,
+      save: notManagedSave(),
+    }),
+    target_cache: cacheLayerSummary({
+      enabled: state.targetCacheEnabled,
+      key: result.targetCache.key,
+      exactHit: state.targetCacheExactHit,
+      matchedKey: state.targetCacheMatchedKey,
+      save: notManagedSave(),
+    }),
+    build_cache: cacheLayerSummary({
+      enabled: state.buildCacheEnabled,
+      key: result.buildCache.key,
+      exactHit: state.buildCacheExactHit,
+      matchedKey: state.buildCacheMatchedKey,
+      save: saves.buildCache,
+    }),
+    cargo_registry_cache: cacheLayerSummary({
+      enabled: state.cargoRegistryCacheEnabled,
+      key: result.cargoRegistryCache.key,
+      exactHit: state.cargoRegistryCacheExactHit,
+      matchedKey: state.cargoRegistryCacheMatchedKey,
+      save: saves.cargoRegistryCache,
+    }),
+    zccache_session: readZccacheSessionSummary(result.buildCache.path),
+  };
+}
+
+function numberStat(stats: Record<string, unknown> | undefined, key: string): number | undefined {
+  const value = stats?.[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function zccacheOneLine(summary: ZccacheSessionSummary): string {
+  if (!summary.present) return `missing (${summary.stats_path})`;
+  if (summary.status !== "ok") {
+    return summary.error ? `${summary.status} (${summary.error})` : summary.status;
+  }
+  const hits = numberStat(summary.stats, "hits") ?? 0;
+  const misses = numberStat(summary.stats, "misses") ?? 0;
+  const compilations = numberStat(summary.stats, "compilations") ?? hits + misses;
+  const nonCacheable = numberStat(summary.stats, "non_cacheable") ?? 0;
+  const errors = numberStat(summary.stats, "errors") ?? 0;
+  const hitRate = numberStat(summary.stats, "hit_rate");
+  const hitRateText = hitRate === undefined ? "n/a" : `${(hitRate * 100).toFixed(1)}%`;
+  return `hits=${hits} misses=${misses} compilations=${compilations} non_cacheable=${nonCacheable} errors=${errors} hit_rate=${hitRateText}`;
+}
+
+function restoreText(layer: CacheLayerSummary): string {
+  if (!layer.enabled) return "disabled";
+  if (layer.restore_status === "exact-hit") return "exact hit";
+  if (layer.restore_status === "restore-key-hit") return "restore-key hit";
+  return "miss";
+}
+
+function saveText(save: CacheSaveResult): string {
+  switch (save.status) {
+    case "saved":
+      return save.cache_id === undefined ? "saved" : `saved id=${save.cache_id}`;
+    case "exact-hit-skip":
+      return "skipped exact hit";
+    case "missing-dir-skip":
+      return "skipped missing dir";
+    case "failed":
+      return save.error ? `failed: ${save.error}` : "failed";
+    case "disabled":
+      return "disabled";
+    case "not-managed-in-post":
+      return "not managed in post";
+  }
+}
+
+function markdownCell(value: string): string {
+  return value.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+}
+
+function tableRow(label: string, layer: CacheLayerSummary): string {
+  return [
+    label,
+    restoreText(layer),
+    layer.key,
+    layer.matched_key || "",
+    saveText(layer.save),
+  ]
+    .map(markdownCell)
+    .join(" | ");
+}
+
+export function formatFinalCacheSummaryMarkdown(summary: FinalCacheSummary): string {
+  const lines = [
+    "## setup-soldr final cache summary",
+    "",
+    "| Layer | Restore | Primary key | Matched key | Save |",
+    "| --- | --- | --- | --- | --- |",
+    `| ${tableRow("setup cache", summary.setup_cache)} |`,
+    `| ${tableRow("target cache", summary.target_cache)} |`,
+    `| ${tableRow("build cache", summary.build_cache)} |`,
+    `| ${tableRow("cargo registry cache", summary.cargo_registry_cache)} |`,
+    "",
+    "### zccache session",
+    "",
+    `- Stats: ${zccacheOneLine(summary.zccache_session)}`,
+    `- Stats file: ${summary.zccache_session.stats_path}`,
+    "",
+    "<details><summary>Final cache summary JSON</summary>",
+    "",
+    "```json",
+    JSON.stringify(summary, null, 2),
+    "```",
+    "",
+    "</details>",
+    "",
+  ];
+  return `${lines.join("\n")}\n`;
+}
+
+function logFinalCacheSummary(summary: FinalCacheSummary, log: (msg: string) => void): void {
+  log(
+    `final cache summary: setup=${restoreText(summary.setup_cache)} target=${restoreText(summary.target_cache)} ` +
+      `build=${restoreText(summary.build_cache)}/${saveText(summary.build_cache.save)} ` +
+      `cargo-registry=${restoreText(summary.cargo_registry_cache)}/${saveText(summary.cargo_registry_cache.save)}`,
+  );
+  log(`final zccache session stats: ${zccacheOneLine(summary.zccache_session)}`);
+}
+
+function writeStepSummary(markdown: string, log: (msg: string) => void): void {
+  const summaryPath = process.env["GITHUB_STEP_SUMMARY"]?.trim();
+  if (!summaryPath) return;
+  try {
+    fs.appendFileSync(summaryPath, markdown, "utf8");
+  } catch (err) {
+    log(`post: failed to write GitHub step summary: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -68,21 +386,25 @@ export async function run(): Promise<void> {
 
   const buildCacheMatched = core.getState("buildCacheMatchedKey");
   const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
+  const restoreState = readRestoreState();
 
   // Build cache
-  await saveOne({
-    cacheDir: result.buildCache.path,
-    codec: result.targetCacheCompress,
-    level: result.targetCacheCompressLevel,
-    key: result.buildCache.key,
-    matchedKey: buildCacheMatched,
-    label: "build-cache",
-    log,
-  });
+  const buildSave = restoreState.buildCacheEnabled
+    ? await saveOne({
+        cacheDir: result.buildCache.path,
+        codec: result.targetCacheCompress,
+        level: result.targetCacheCompressLevel,
+        key: result.buildCache.key,
+        matchedKey: buildCacheMatched,
+        label: "build-cache",
+        log,
+      })
+    : disabledSave();
 
   // Cargo registry cache (only when enabled)
+  let cargoRegistrySave = disabledSave();
   if (result.cargoRegistryCache.enabled) {
-    await saveOne({
+    cargoRegistrySave = await saveOne({
       cacheDir: result.cargoRegistryCache.path,
       codec: result.targetCacheCompress,
       level: result.targetCacheCompressLevel,
@@ -92,6 +414,13 @@ export async function run(): Promise<void> {
       log,
     });
   }
+
+  const finalSummary = buildFinalCacheSummary(result, restoreState, {
+    buildCache: buildSave,
+    cargoRegistryCache: cargoRegistrySave,
+  });
+  logFinalCacheSummary(finalSummary, log);
+  writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary), log);
 }
 
 // See main.ts for the rationale behind the test-import escape hatch.

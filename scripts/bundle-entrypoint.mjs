@@ -8,20 +8,18 @@
 //    the same file is LF. Without this normalization dist/ differs across
 //    build hosts.
 //
-// 2) Sort webpack modules by numeric ID. webpack emits modules in discovery
-//    order, which depends on filesystem enumeration and module resolution
-//    timing. On Windows the same set of modules can appear in a different
-//    order than on Linux even when every module ID and body is identical.
-//    Sorting the modules by numeric ID makes the output byte-identical
-//    across platforms regardless of discovery order. Module IDs are looked
-//    up via __nccwpck_require__(id), so reordering within the
-//    __webpack_modules__ object is purely cosmetic — runtime behavior is
-//    unchanged.
+// 2) Reassign webpack modules to stable numeric IDs. webpack emits modules in
+//    discovery order, which depends on filesystem enumeration and module
+//    resolution timing. On Windows the same set of modules can receive
+//    different numeric IDs than on Linux. Sorting by normalized module body and
+//    rewriting __nccwpck_require__(id) references makes the output
+//    byte-identical across platforms.
 //
 // Usage: node scripts/bundle-entrypoint.mjs main
 //        node scripts/bundle-entrypoint.mjs post
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 const name = process.argv[2];
 if (!name) {
@@ -34,12 +32,12 @@ const targetPath = `dist/${name}.js`;
 mkdirSync("dist", { recursive: true });
 
 const buf = readFileSync(sourcePath);
-// Normalize CRLF -> LF. Standalone CR (without LF) is left alone — ncc bundles
+// Normalize CRLF -> LF. Standalone CR (without LF) is left alone - ncc bundles
 // don't emit lone CRs in practice and we want to fail loudly if they appear
 // rather than silently transform.
 const lfText = buf.toString("utf8").replace(/\r\n/g, "\n");
 
-const sortedText = sortWebpackModules(lfText);
+const sortedText = stripTrailingLineWhitespace(sortWebpackModules(lfText));
 
 const out = Buffer.from(sortedText, "utf8");
 writeFileSync(targetPath, out);
@@ -49,7 +47,8 @@ console.log(
 );
 
 /**
- * Sort the `var __webpack_modules__ = ({ ... });` block by module ID.
+ * Sort the `var __webpack_modules__ = ({ ... });` block by normalized module
+ * body and reassign stable numeric IDs.
  *
  * Bundle shape produced by ncc/webpack:
  *
@@ -121,12 +120,31 @@ function sortWebpackModules(text) {
     }
   }
 
-  modules.sort((a, b) => a.id - b.id);
+  const sortKeys = stableModuleSortKeys(modules);
+  modules.sort((a, b) => {
+    const aKey = sortKeys.get(a.id);
+    const bKey = sortKeys.get(b.id);
+    if (aKey === undefined || bKey === undefined) {
+      throw new Error("bundle-entrypoint: missing module sort key");
+    }
+    if (aKey < bKey) return -1;
+    if (aKey > bKey) return 1;
+    return a.id - b.id;
+  });
+
+  const idMap = new Map();
+  modules.forEach((mod, i) => idMap.set(mod.id, i));
 
   // Strip trailing whitespace and any `,` after the closing `})` on every
   // module, then reapply: comma on all but the last.
   const normalizedBodies = modules.map((mod) => {
-    let body = mod.body.replace(/\s+$/, "");
+    const newId = idMap.get(mod.id);
+    if (newId === undefined) {
+      throw new Error(`bundle-entrypoint: missing stable ID for module ${mod.id}`);
+    }
+    let body = rewriteRequireIds(mod.body, idMap);
+    body = body.replace(/^\/\*\*\*\/ \d+:/m, `/***/ ${newId}:`);
+    body = body.replace(/\s+$/, "");
     body = body.replace(/\/\*\*\*\/ \}\),?\s*$/, "/***/ })");
     return { id: mod.id, body };
   });
@@ -144,5 +162,82 @@ function sortWebpackModules(text) {
     })
     .join("");
 
-  return `${header}\n${reassembledModules}${footer}`;
+  return `${rewriteRequireIds(header, idMap)}\n${reassembledModules}${rewriteRequireIds(footer, idMap)}`;
+}
+
+function stripTrailingLineWhitespace(text) {
+  return text.replace(/[ \t]+$/gm, "");
+}
+
+function stableModuleSortKeys(modules) {
+  let signatures = new Map(
+    modules.map((mod) => [
+      mod.id,
+      hashString(replaceRequireIdsInText(stableModuleBaseBody(mod.body), () => "<id>")),
+    ]),
+  );
+
+  for (let i = 0; i < 8; i++) {
+    const next = new Map();
+    for (const mod of modules) {
+      const body = replaceRequireIdsInText(stableModuleBaseBody(mod.body), (rawId) => {
+        const target = signatures.get(Number(rawId));
+        return target === undefined ? `external:${rawId}` : `module:${target}`;
+      });
+      next.set(mod.id, hashString(body));
+    }
+
+    if (mapsEqual(signatures, next)) {
+      return next;
+    }
+    signatures = next;
+  }
+
+  return signatures;
+}
+
+function stableModuleBaseBody(body) {
+  return body.replace(/^\/\*\*\*\/ \d+:/m, "/***/ <id>:");
+}
+
+function rewriteRequireIds(text, idMap) {
+  return replaceRequireIdsInText(text, (rawId) => {
+    const oldId = Number(rawId);
+    const newId = idMap.get(oldId);
+    return newId === undefined ? rawId : String(newId);
+  });
+}
+
+function replaceRequireIdsInText(text, mapId) {
+  let out = text.replace(/__nccwpck_require__\((\d+)\)/g, (match, rawId) => {
+    return `__nccwpck_require__(${mapId(rawId)})`;
+  });
+
+  out = out.replace(
+    /(__nccwpck_require__\.t\.bind\(__nccwpck_require__,\s*)(\d+)(\s*,)/g,
+    (match, prefix, rawId, suffix) => `${prefix}${mapId(rawId)}${suffix}`,
+  );
+
+  out = out.replace(
+    /(__nccwpck_require__\.t\(\s*)(\d+)(\s*,)/g,
+    (match, prefix, rawId, suffix) => `${prefix}${mapId(rawId)}${suffix}`,
+  );
+
+  return out;
+}
+
+function hashString(text) {
+  return createHash("sha256").update(text).digest("hex");
+}
+
+function mapsEqual(a, b) {
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const [key, value] of a) {
+    if (b.get(key) !== value) {
+      return false;
+    }
+  }
+  return true;
 }
