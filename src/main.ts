@@ -348,6 +348,7 @@ export async function run(): Promise<void> {
   }
   core.saveState("statsCollector", statsCollector.serialize());
   core.saveState("statsMode", statsMode);
+  core.saveState("compileCacheStats", result.compileCacheStats);
   core.saveState("runnerTemp", ctx.runnerTemp);
 
   await finishPhase("action");

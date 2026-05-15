@@ -39,6 +39,7 @@ import type {
   ActionContext,
   BuildCachePlan,
   CargoRegistryCachePlan,
+  CompileCacheStatsMode,
   RawInputs,
   ResolveResult,
   SetupCachePlan,
@@ -109,6 +110,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     targetCacheCompressLevel: get("TARGET_CACHE_COMPRESS_LEVEL"),
     sourceMtimeNormalize: get("SOURCE_MTIME_NORMALIZE"),
     cargoRegistryCache: get("CARGO_REGISTRY_CACHE"),
+    compileCacheStats: get("COMPILE_CACHE_STATS"),
     shims: get("SHIMS"),
     stats: get("STATS"),
     debugMode: get("DEBUG"),
@@ -118,6 +120,13 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
 function normalizeStatsMode(raw: string): StatsMode {
   const v = raw.trim().toLowerCase();
   if (v === "none" || v === "summarize" || v === "detailed") return v;
+  return "summarize";
+}
+
+function normalizeCompileCacheStats(raw: string): CompileCacheStatsMode {
+  const v = raw.trim().toLowerCase();
+  if (v === "none") return "none";
+  if (v === "detailed" || v === "insights") return "detailed";
   return "summarize";
 }
 
@@ -661,6 +670,7 @@ export async function resolveSetup(
   void rollingToolchainAlias;
   void canonicalJsonStringify;
 
+  const compileCacheStats = normalizeCompileCacheStats(inputs.compileCacheStats);
   const stats = normalizeStatsMode(inputs.stats);
   const debugMode = isTruthy(inputs.debugMode.trim() || "false");
 
@@ -696,6 +706,7 @@ export async function resolveSetup(
     timestamps,
     shimsEnabled,
     shimsDir,
+    compileCacheStats,
     stats,
     debugMode,
   };

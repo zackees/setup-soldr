@@ -194,6 +194,15 @@ inputs:
       `soldr cargo` / `soldr rustfmt` explicitly.
     required: false
     default: "true"
+  compile-cache-stats:
+    description: >
+      Controls compile-cache (zccache) diagnostic output. "none" suppresses all
+      compile-cache info. "summarize" (default) renders a per-session totals table
+      into $GITHUB_STEP_SUMMARY and emits scalar action outputs (hit rate, hits,
+      misses, etc.). "detailed" adds per-extension and per-tool rollup tables and
+      sets compile-cache-rollups-json.
+    required: false
+    default: "summarize"
   stats:
     description: >
       Controls diagnostic output for cache operations. "none" suppresses all
@@ -284,6 +293,30 @@ outputs:
       durations, and hit/miss status). Only set when stats is "detailed".
   shims-dir:
     description: Path to the directory containing the PATH shims written by setup-soldr.
+  compile-cache-session-status:
+    description: Compile-cache session status (ok / missing / unsupported / error).
+  compile-cache-hit-rate:
+    description: Compile-cache hit rate (0.0–1.0) for the last session, or empty when unavailable.
+  compile-cache-hits:
+    description: Compile-cache hit count for the last session.
+  compile-cache-misses:
+    description: Compile-cache miss count for the last session.
+  compile-cache-compilations:
+    description: Total compilation count for the last session.
+  compile-cache-time-saved-ms:
+    description: Estimated compile time saved (ms) for the last session.
+  compile-cache-bytes-read:
+    description: Cache bytes read during the last session.
+  compile-cache-bytes-written:
+    description: Cache bytes written during the last session.
+  compile-cache-rollups-json:
+    description: >
+      JSON-encoded rollups object (by_extension, by_tool_total_ms) from soldr cache report.
+      Only set when compile-cache-stats is "detailed".
+  compile-cache-summary-json:
+    description: >
+      Full soldr cache report JSON payload (one-shot consumer hook).
+      Set whenever soldr cache report succeeds (status "ok").
 runs:
   using: node20
   main: dist/main.js
