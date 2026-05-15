@@ -50,6 +50,7 @@ EXPECTED_INPUTS = {
     "target-cache-compress-level",
     "source-mtime-normalize",
     "cargo-registry-cache",
+    "compile-cache-stats",
     "shims",
     "stats",
     "debug",
@@ -90,6 +91,16 @@ EXPECTED_OUTPUTS = {
     "toolchain",
     "stats-json",
     "shims-dir",
+    "compile-cache-session-status",
+    "compile-cache-hit-rate",
+    "compile-cache-hits",
+    "compile-cache-misses",
+    "compile-cache-compilations",
+    "compile-cache-time-saved-ms",
+    "compile-cache-bytes-read",
+    "compile-cache-bytes-written",
+    "compile-cache-rollups-json",
+    "compile-cache-summary-json",
 }
 
 

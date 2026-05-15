@@ -12,6 +12,7 @@ export type BuildCacheMode = "" | "once" | "thin" | "full";
 export type TargetCacheMode = "" | "thin" | "full" | "off" | "hot";
 export type TargetCacheProfile = "thin-v1" | "thin-v2";
 export type StatsMode = "none" | "summarize" | "detailed";
+export type CompileCacheStatsMode = "none" | "summarize" | "detailed";
 
 export interface CacheOpStats {
   label: string;
@@ -59,6 +60,7 @@ export interface RawInputs {
   targetCacheCompressLevel: string;
   sourceMtimeNormalize: string;
   cargoRegistryCache: string;
+  compileCacheStats: string;
   shims: string;
   stats: string;
   debugMode: string;
@@ -182,6 +184,9 @@ export interface ResolveResult {
   // Shims
   shimsEnabled: boolean;
   shimsDir: string;
+
+  // Compile-cache observability
+  compileCacheStats: CompileCacheStatsMode;
 
   // Stats and debug
   stats: StatsMode;

@@ -138,6 +138,7 @@ jobs:
           stats: detailed
           debug: "true"
           shims: "true"
+          compile-cache-stats: detailed
 
       - name: Show cache plan
         shell: bash
@@ -158,6 +159,9 @@ jobs:
             echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
             echo "| stats-json | \`${{ steps.setup.outputs.stats-json }}\` |"
+            echo "| compile-cache-hit-rate | \`${{ steps.setup.outputs.compile-cache-hit-rate }}\` |"
+            echo "| compile-cache-hits | \`${{ steps.setup.outputs.compile-cache-hits }}\` |"
+            echo "| compile-cache-misses | \`${{ steps.setup.outputs.compile-cache-misses }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build zccache cold
@@ -247,6 +251,7 @@ jobs:
           stats: detailed
           debug: "true"
           shims: "true"
+          compile-cache-stats: detailed
 
       - name: Show cache plan
         shell: bash
@@ -267,6 +272,9 @@ jobs:
             echo "| target-cache-mode | \`${{ steps.setup.outputs.target-cache-mode }}\` |"
             echo "| target-lockfile-hash | \`${{ steps.setup.outputs.target-lockfile-hash }}\` |"
             echo "| stats-json | \`${{ steps.setup.outputs.stats-json }}\` |"
+            echo "| compile-cache-hit-rate | \`${{ steps.setup.outputs.compile-cache-hit-rate }}\` |"
+            echo "| compile-cache-hits | \`${{ steps.setup.outputs.compile-cache-hits }}\` |"
+            echo "| compile-cache-misses | \`${{ steps.setup.outputs.compile-cache-misses }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build zccache warm

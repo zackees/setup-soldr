@@ -15,7 +15,7 @@ import * as cache from "@actions/cache";
 import { compressCache } from "./lib/cache-compress.js";
 import { createLogger } from "./lib/log-utils.js";
 import { StatsCollector } from "./lib/stats-collector.js";
-import type { ResolveResult, StatsMode } from "./lib/types.js";
+import type { CompileCacheStatsMode, ResolveResult, StatsMode } from "./lib/types.js";
 
 type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
 type SaveStatus = "disabled" | "not-managed-in-post" | "exact-hit-skip" | "missing-dir-skip" | "saved" | "failed";
@@ -428,18 +428,51 @@ function tableRow(label: string, layer: CacheLayerSummary): string {
     .join(" | ");
 }
 
-function compileCacheReportSection(report: SoldrCacheReportSummary): string[] {
-  const lines: string[] = ["", "### Compile cache report (`soldr cache report`)", ""];
+function fmtBytes(n: number): string {
+  if (n >= 1_073_741_824) return `${(n / 1_073_741_824).toFixed(1)} GB`;
+  if (n >= 1_048_576) return `${(n / 1_048_576).toFixed(1)} MB`;
+  if (n >= 1_024) return `${(n / 1_024).toFixed(1)} KB`;
+  return `${n} B`;
+}
+
+function setCompileCacheOutputs(report: SoldrCacheReportSummary, mode: CompileCacheStatsMode): void {
+  core.setOutput("compile-cache-session-status", report.status);
+  if (report.status !== "ok" || !report.report) return;
+  core.setOutput("compile-cache-summary-json", JSON.stringify(report.report));
+  const lastSession = report.report["last_session"] as Record<string, unknown> | null;
+  if (lastSession) {
+    const hits = numberStat(lastSession, "hits") ?? 0;
+    const misses = numberStat(lastSession, "misses") ?? 0;
+    const compilations = numberStat(lastSession, "compilations") ?? hits + misses;
+    const hitRate = numberStat(lastSession, "hit_rate");
+    const timeSavedMs = numberStat(lastSession, "time_saved_ms");
+    const bytesRead = numberStat(lastSession, "bytes_read");
+    const bytesWritten = numberStat(lastSession, "bytes_written");
+    core.setOutput("compile-cache-hits", String(hits));
+    core.setOutput("compile-cache-misses", String(misses));
+    core.setOutput("compile-cache-compilations", String(compilations));
+    if (hitRate !== undefined) core.setOutput("compile-cache-hit-rate", String(hitRate));
+    if (timeSavedMs !== undefined) core.setOutput("compile-cache-time-saved-ms", String(timeSavedMs));
+    if (bytesRead !== undefined) core.setOutput("compile-cache-bytes-read", String(bytesRead));
+    if (bytesWritten !== undefined) core.setOutput("compile-cache-bytes-written", String(bytesWritten));
+  }
+  if (mode === "detailed") {
+    const rollups = report.report["rollups"];
+    if (rollups) core.setOutput("compile-cache-rollups-json", JSON.stringify(rollups));
+  }
+}
+
+function compileCacheReportSection(report: SoldrCacheReportSummary, mode: CompileCacheStatsMode): string[] {
+  if (mode === "none") return [];
+  const lines: string[] = ["", "### Compile cache (zccache)", ""];
   if (report.status !== "ok" || !report.report) {
-    lines.push(`- Status: ${report.status}`);
-    if (report.error) lines.push(`- Detail: ${report.error}`);
+    lines.push(`| Status | ${markdownCell(report.status)} |`);
+    if (report.error) lines.push(`| Detail | ${markdownCell(report.error)} |`);
     return lines;
   }
   const body = report.report;
   const lastSession = (body["last_session"] as Record<string, unknown> | null) ?? null;
   const rollups = (body["rollups"] as Record<string, unknown> | null) ?? null;
-  if (report.soldr_version) lines.push(`- soldr: ${report.soldr_version}`);
-  if (report.managed_zccache_version) lines.push(`- managed zccache: ${report.managed_zccache_version}`);
   if (lastSession) {
     const hits = numberStat(lastSession, "hits") ?? 0;
     const misses = numberStat(lastSession, "misses") ?? 0;
@@ -447,18 +480,27 @@ function compileCacheReportSection(report: SoldrCacheReportSummary): string[] {
     const rate = numberStat(lastSession, "hit_rate");
     const rateText = rate === undefined ? "n/a" : `${(rate * 100).toFixed(1)}%`;
     const saved = numberStat(lastSession, "time_saved_ms");
-    lines.push(
-      `- Session: ${hits} hit${hits === 1 ? "" : "s"} / ${misses} miss${misses === 1 ? "" : "es"} of ${compilations} (hit rate ${rateText})${saved !== undefined ? `, time saved ${saved} ms` : ""}`,
-    );
+    const bytesRead = numberStat(lastSession, "bytes_read");
+    const bytesWritten = numberStat(lastSession, "bytes_written");
+    lines.push("| Metric | Value |", "| --- | --- |");
+    lines.push(`| Compilations | ${compilations} |`);
+    lines.push(`| Hits | ${hits} |`);
+    lines.push(`| Misses | ${misses} |`);
+    lines.push(`| Hit rate | ${rateText} |`);
+    if (saved !== undefined) lines.push(`| Time saved (est.) | ${(saved / 1000).toFixed(1)}s |`);
+    if (bytesRead !== undefined) lines.push(`| Bytes read | ${fmtBytes(bytesRead)} |`);
+    if (bytesWritten !== undefined) lines.push(`| Bytes written | ${fmtBytes(bytesWritten)} |`);
+    if (report.soldr_version) lines.push(`| soldr | ${markdownCell(report.soldr_version)} |`);
+    if (report.managed_zccache_version) lines.push(`| zccache | ${markdownCell(report.managed_zccache_version)} |`);
   } else {
-    lines.push("- Session: (no last_session payload yet — run a cache-enabled build first)");
+    lines.push("_(no last\\_session yet — run a cache-enabled build first)_");
   }
-  if (rollups) {
+  if (mode === "detailed" && rollups) {
     const byExt = rollups["by_extension"];
     if (byExt && typeof byExt === "object" && !Array.isArray(byExt)) {
       const rows = Object.entries(byExt as Record<string, unknown>);
       if (rows.length > 0) {
-        lines.push("", "<details><summary>Rollups by output extension</summary>", "");
+        lines.push("", "#### By output extension", "");
         lines.push("| Extension | Hits | Misses | Total ms |", "| --- | --- | --- | --- |");
         for (const [ext, bucket] of rows) {
           const b = (bucket as Record<string, unknown>) ?? {};
@@ -467,7 +509,6 @@ function compileCacheReportSection(report: SoldrCacheReportSummary): string[] {
           const t = numberStat(b, "total_ms") ?? 0;
           lines.push(`| ${markdownCell(ext)} | ${h} | ${m} | ${t} |`);
         }
-        lines.push("", "</details>");
       }
     }
     const byTool = rollups["by_tool_total_ms"];
@@ -477,12 +518,11 @@ function compileCacheReportSection(report: SoldrCacheReportSummary): string[] {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
       if (rows.length > 0) {
-        lines.push("", "<details><summary>Top tools by wall-clock</summary>", "");
+        lines.push("", "#### By tool (wall-clock)", "");
         lines.push("| Tool | ms |", "| --- | --- |");
         for (const [tool, ms] of rows) {
           lines.push(`| ${markdownCell(tool)} | ${ms} |`);
         }
-        lines.push("", "</details>");
       }
     }
   }
@@ -497,7 +537,10 @@ function compileCacheReportSection(report: SoldrCacheReportSummary): string[] {
   return lines;
 }
 
-export function formatFinalCacheSummaryMarkdown(summary: FinalCacheSummary): string {
+export function formatFinalCacheSummaryMarkdown(
+  summary: FinalCacheSummary,
+  compileCacheStats: CompileCacheStatsMode = "summarize",
+): string {
   const lines = [
     "## setup-soldr final cache summary",
     "",
@@ -512,7 +555,7 @@ export function formatFinalCacheSummaryMarkdown(summary: FinalCacheSummary): str
     "",
     `- Stats: ${zccacheOneLine(summary.zccache_session)}`,
     `- Stats file: ${summary.zccache_session.stats_path}`,
-    ...compileCacheReportSection(summary.compile_cache_report),
+    ...compileCacheReportSection(summary.compile_cache_report, compileCacheStats),
     "",
     "<details><summary>Final cache summary JSON</summary>",
     "",
@@ -597,6 +640,7 @@ export async function run(): Promise<void> {
   const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
   const restoreState = readRestoreState();
   const statsMode = (core.getState("statsMode") || "summarize") as StatsMode;
+  const compileCacheStats = (core.getState("compileCacheStats") || "summarize") as CompileCacheStatsMode;
   const runnerTemp = core.getState("runnerTemp") || "";
   const debugMode = result.debugMode ?? false;
   const debugLog = debugMode ? log : (): void => undefined;
@@ -654,7 +698,10 @@ export async function run(): Promise<void> {
     cargoRegistryCache: cargoRegistrySave,
   });
   logFinalCacheSummary(finalSummary, log);
-  writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary), log);
+  if (compileCacheStats !== "none") {
+    setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);
+  }
+  writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary, compileCacheStats), log);
   const reportPath = writeCompileCacheReportFile(finalSummary.compile_cache_report, runnerTemp, log);
   if (reportPath) {
     log(`compile-cache-report.json written to ${reportPath}`);

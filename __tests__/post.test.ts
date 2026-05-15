@@ -158,7 +158,7 @@ test("compile_cache_report reports missing-binary when SOLDR_BINARY is unset", a
     assert.equal(summary.compile_cache_report.status, "missing-binary");
     assert.ok(summary.compile_cache_report.error?.includes("SOLDR_BINARY"));
     const md = mod.formatFinalCacheSummaryMarkdown(summary);
-    assert.match(md, /Compile cache report/);
+    assert.match(md, /Compile cache/);
     assert.match(md, /missing-binary/);
   } finally {
     if (previousBinary === undefined) delete process.env["SOLDR_BINARY"];
