@@ -276,7 +276,7 @@ export async function resolveSetup(
   // ---- toolchain ----
   const toolchain = await loadToolchainSpec({
     workspace,
-    toolchainFile: inputs.toolchainFile === "" ? "" : (inputs.toolchainFile || "rust-toolchain.toml"),
+    toolchainFile: inputs.toolchainFile || "rust-toolchain.toml",
     toolchainOverride: inputs.toolchain,
     log,
   });
