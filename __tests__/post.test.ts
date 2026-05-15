@@ -170,7 +170,7 @@ test("compile_cache_report reports missing-binary when SOLDR_BINARY is unset", a
 test("compile_cache_report parses a fake soldr cache report --json output", { skip: process.platform === "win32" ? "spawnSync cannot exec a .cmd shim without shell:true; real soldr is a .exe so this only matters for the test contrivance" : false }, async () => {
   const mod = (await import("../src/post.js")) as {
     buildFinalCacheSummary: (result: any, state: any, saves: any) => any;
-    formatFinalCacheSummaryMarkdown: (summary: any) => string;
+    formatFinalCacheSummaryMarkdown: (summary: any, mode?: string) => string;
   };
   const root = mkTmp("post-compile-cache-fake-");
   const previousBinary = process.env["SOLDR_BINARY"];
@@ -248,11 +248,12 @@ test("compile_cache_report parses a fake soldr cache report --json output", { sk
     assert.equal(summary.compile_cache_report.soldr_version, "0.7.22");
     assert.equal(summary.compile_cache_report.managed_zccache_version, "1.5.0");
     assert.equal((summary.compile_cache_report.report as any).last_session.hits, 11);
-    const md = mod.formatFinalCacheSummaryMarkdown(summary);
-    assert.match(md, /11 hits \/ 4 misses/);
-    assert.match(md, /Rollups by output extension/);
+    const md = mod.formatFinalCacheSummaryMarkdown(summary, "detailed");
+    assert.match(md, /\| Hits \| 11 \|/);
+    assert.match(md, /\| Misses \| 4 \|/);
+    assert.match(md, /By output extension/);
     assert.match(md, /\| rlib \| 8 \| 2 \| 1200 \|/);
-    assert.match(md, /Top tools by wall-clock/);
+    assert.match(md, /By tool \(wall-clock\)/);
     assert.match(md, /\| rustc \| 2500 \|/);
   } finally {
     if (previousBinary === undefined) delete process.env["SOLDR_BINARY"];
