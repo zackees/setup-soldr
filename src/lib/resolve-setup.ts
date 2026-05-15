@@ -675,7 +675,7 @@ export async function resolveSetup(
   const debugMode = isTruthy(inputs.debugMode.trim() || "false");
 
   // ---- shims ----
-  const shimsRaw = inputs.shims.trim() || "true";
+  const shimsRaw = inputs.shims.trim() || "false";
   const shimsEnabled = !isFalsy(shimsRaw);
   const shimsDir = path.join(cacheRoot, "shims");
 
@@ -773,6 +773,7 @@ export function buildOutputs(result: ResolveResult): Record<string, string> {
     rustup_home: result.rustupHome,
     setup_cache_layout: result.setupCache.layout,
     bin_dir: result.binDir,
+    shims_dir: result.shimsDir,
     soldr_path: result.soldrPath,
     soldr_repo: result.soldrRepo,
     soldr_ref: result.soldrRef,

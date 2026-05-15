@@ -187,13 +187,12 @@ inputs:
     default: "true"
   shims:
     description: >
-      When "true" (default), setup-soldr writes PATH-shadowing shims for cargo,
+      When "true", setup-soldr writes PATH-shadowing shims for cargo,
       rustfmt, clippy-driver, rustc, and rustdoc into ${cache-dir}/shims/ and
       prepends that directory to $PATH. Each shim routes its invocation through
-      the installed soldr binary. Set to "false" to opt out and call
-      `soldr cargo` / `soldr rustfmt` explicitly.
+      the installed soldr binary. Default "false".
     required: false
-    default: "true"
+    default: "false"
   compile-cache-stats:
     description: >
       Controls compile-cache (zccache) diagnostic output. "none" suppresses all
