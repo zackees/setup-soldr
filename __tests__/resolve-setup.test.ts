@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { buildOutputs, readRawInputs, resolveSetup } from "../src/lib/resolve-setup.js";
+import {
+  buildOutputs,
+  detectUserLinkerEnv,
+  readRawInputs,
+  resolveSetup,
+} from "../src/lib/resolve-setup.js";
 import { createLogger } from "../src/lib/log-utils.js";
 import type { ActionContext, RawInputs, ResolveResult } from "../src/lib/types.js";
 
@@ -412,13 +417,14 @@ test("layout switch alters cache key", async () => {
 
 async function runCapturingWarnings(
   extraEnv: Record<string, string> = {},
-): Promise<{ result: ResolveResult; warnings: string[] }> {
+): Promise<{ result: ResolveResult; warnings: string[]; infos: string[] }> {
   const { root, workspace, runnerTemp } = makeWorkspace();
   const ctx = makeContext(root, workspace, runnerTemp);
   ctx.env = withInputs(ctx.env, extraEnv);
   const warnings: string[] = [];
+  const infos: string[] = [];
   ctx.logger = {
-    info: () => {},
+    info: (msg) => infos.push(msg),
     warning: (msg) => warnings.push(msg),
     error: () => {},
     debug: () => {},
@@ -429,7 +435,7 @@ async function runCapturingWarnings(
     fetchReleaseTag: async () => "v0.7.11",
     systemRustupOverride: async () => false,
   });
-  return { result, warnings };
+  return { result, warnings, infos };
 }
 
 test("linker default exports SOLDR_LINKER=fast and warns", async () => {
@@ -528,4 +534,70 @@ test("linker invalid value throws with helpful message", async () => {
       return true;
     },
   );
+});
+
+// --- linker default deferral when user has cross-compile env preset (issue #108) ---
+
+test("linker default defers to user-set CARGO_TARGET_<TRIPLE>_LINKER and skips SOLDR_LINKER=fast", async () => {
+  const { result, warnings, infos } = await runCapturingWarnings({
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: "aarch64-linux-gnu-gcc",
+  });
+  assert.equal(result.envExports["SOLDR_LINKER"], undefined);
+  assert.equal(
+    warnings.some((m) => m.includes("SOLDR_LINKER")),
+    false,
+    `unexpected linker warning: ${JSON.stringify(warnings)}`,
+  );
+  assert.ok(
+    infos.some(
+      (m) =>
+        m.includes("deferring to user-set") &&
+        m.includes("CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc"),
+    ),
+    `expected deferral info, got: ${JSON.stringify(infos)}`,
+  );
+});
+
+test("linker default defers when only CARGO_TARGET_<TRIPLE>_RUSTFLAGS is preset", async () => {
+  const { result, infos } = await runCapturingWarnings({
+    CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: "-C link-arg=-fuse-ld=ld",
+  });
+  assert.equal(result.envExports["SOLDR_LINKER"], undefined);
+  assert.ok(
+    infos.some((m) =>
+      m.includes("CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C link-arg=-fuse-ld=ld"),
+    ),
+    `expected deferral info, got: ${JSON.stringify(infos)}`,
+  );
+});
+
+test("linker explicit 'fast' still injects even when CARGO_TARGET_<TRIPLE>_LINKER is preset", async () => {
+  const { result } = await runCapturingWarnings({
+    INPUT_LINKER: "fast",
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: "aarch64-linux-gnu-gcc",
+  });
+  assert.equal(result.envExports["SOLDR_LINKER"], "fast");
+});
+
+test("linker default with empty CARGO_TARGET_<TRIPLE>_LINKER does not defer", async () => {
+  const { result, warnings } = await runCapturingWarnings({
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: "",
+  });
+  assert.equal(result.envExports["SOLDR_LINKER"], "fast");
+  assert.ok(warnings.some((m) => m.includes("SOLDR_LINKER=fast")));
+});
+
+test("detectUserLinkerEnv returns matching CARGO_TARGET_<TRIPLE> vars sorted", () => {
+  const env = {
+    HOME: "/home/x",
+    CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS: "-C link-arg=-fuse-ld=ld",
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: "aarch64-linux-gnu-gcc",
+    CARGO_TARGET_DIR: "/tmp/target",
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_CC: "aarch64-linux-gnu-gcc",
+    CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER: "",
+  };
+  assert.deepEqual(detectUserLinkerEnv(env), [
+    "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc",
+    "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C link-arg=-fuse-ld=ld",
+  ]);
 });

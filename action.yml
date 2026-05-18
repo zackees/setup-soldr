@@ -56,7 +56,11 @@ inputs:
       `default`) to opt out and keep whatever cargo config /
       rust-toolchain.toml specifies. Other accepted values pass through
       verbatim to SOLDR_LINKER: `ld`, `mold`, `rust-lld`, `fast`. Unknown
-      values raise an error.
+      values raise an error. When the input is left empty and the workflow
+      has already exported any `CARGO_TARGET_<TRIPLE>_LINKER` or
+      `CARGO_TARGET_<TRIPLE>_RUSTFLAGS` env var (typical for cross-compile
+      setups), setup-soldr defers to the user's values and skips the `fast`
+      default to avoid clobbering them. See issue #108.
     required: false
     default: ""
   compile-priority:

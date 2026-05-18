@@ -117,6 +117,25 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
   };
 }
 
+/**
+ * Detect cross-compile env vars the user has already set that soldr's
+ * `linker: fast` default would silently overwrite (CARGO_TARGET_<TRIPLE>_LINKER
+ * and CARGO_TARGET_<TRIPLE>_RUSTFLAGS). Returns the list of `NAME=value`
+ * strings to surface in the deferral log. See issue #108.
+ */
+export function detectUserLinkerEnv(env: Record<string, string | undefined>): string[] {
+  const hits: string[] = [];
+  for (const [name, raw] of Object.entries(env)) {
+    if (raw === undefined || raw === "") continue;
+    if (!name.startsWith("CARGO_TARGET_")) continue;
+    if (name.endsWith("_LINKER") || name.endsWith("_RUSTFLAGS")) {
+      hits.push(`${name}=${raw}`);
+    }
+  }
+  hits.sort();
+  return hits;
+}
+
 function normalizeStatsMode(raw: string): StatsMode {
   const v = raw.trim().toLowerCase();
   if (v === "none" || v === "summarize" || v === "detailed") return v;
@@ -569,10 +588,17 @@ export async function resolveSetup(
   }
   const linkerRaw = inputs.linker.trim();
   if (linkerRaw === "") {
-    setEnv("SOLDR_LINKER", "fast");
-    logger.warning(
-      "setup-soldr: defaulting SOLDR_LINKER=fast (mold-if-on-PATH-else-rust-lld on Linux, rust-lld on macOS/Windows) for faster CI links. Soldr's native default is no injection, which produces a smaller build-cache and a slower link. Set `linker: platform-default` to opt out and keep cargo/rust-toolchain.toml in charge, or set `linker: <value>` to silence this warning.",
-    );
+    const preset = detectUserLinkerEnv(env);
+    if (preset.length > 0) {
+      logger.info(
+        `setup-soldr: deferring to user-set ${preset.join(", ")}; skipping default SOLDR_LINKER=fast injection. See https://github.com/zackees/setup-soldr/issues/108`,
+      );
+    } else {
+      setEnv("SOLDR_LINKER", "fast");
+      logger.warning(
+        "setup-soldr: defaulting SOLDR_LINKER=fast (mold-if-on-PATH-else-rust-lld on Linux, rust-lld on macOS/Windows) for faster CI links. Soldr's native default is no injection, which produces a smaller build-cache and a slower link. Set `linker: platform-default` to opt out and keep cargo/rust-toolchain.toml in charge, or set `linker: <value>` to silence this warning.",
+      );
+    }
   } else if (!(ALLOWED_LINKER_VALUES as readonly string[]).includes(linkerRaw)) {
     throw new Error(
       `invalid 'linker' input: '${linkerRaw}'. Allowed: default | platform-default | ld | mold | rust-lld | fast`,
