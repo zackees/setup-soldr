@@ -84,6 +84,7 @@ function resolveAbsolute(p: string, env: Record<string, string | undefined>): st
 export function readRawInputs(env: Record<string, string | undefined>): RawInputs {
   const get = (name: string): string => env[`INPUT_${name}`] ?? "";
   return {
+    enable: get("ENABLE"),
     version: get("VERSION"),
     repo: get("REPO"),
     ref: get("REF"),
@@ -423,7 +424,25 @@ export async function resolveSetup(
     path.dirname(cacheRoot),
     `${path.basename(cacheRoot)}-target-thin`,
   );
-  const soldrBinary = process.platform === "win32" ? "soldr.exe" : "soldr";
+  // When the action is disabled (`enable: false`), we write a script-based
+  // passthrough stub at soldrPath instead of installing the real binary.
+  // The stub is a bash script on Unix and a .cmd shim on Windows — Windows
+  // cannot spawn a script via the .exe extension without a real PE, so
+  // soldrPath must end in .cmd in passthrough mode.
+  const enableRaw = inputs.enable.trim() || "true";
+  if (!TRUTHY_VALUES.has(enableRaw.toLowerCase()) && !FALSY_VALUES.has(enableRaw.toLowerCase())) {
+    throw new Error(
+      `invalid 'enable' input: '${enableRaw}'. Allowed: true | false`,
+    );
+  }
+  const enabled = !FALSY_VALUES.has(enableRaw.toLowerCase());
+  const soldrBinary = enabled
+    ? process.platform === "win32"
+      ? "soldr.exe"
+      : "soldr"
+    : process.platform === "win32"
+      ? "soldr.cmd"
+      : "soldr";
   const soldrPath = path.join(binDir, soldrBinary);
 
   // ---- toolchain ----
@@ -863,6 +882,7 @@ export async function resolveSetup(
   const shimsDir = path.join(cacheRoot, "shims");
 
   return {
+    enabled,
     workspace,
     cacheRoot,
     soldrRoot,
@@ -967,6 +987,7 @@ export function buildOutputs(result: ResolveResult): Record<string, string> {
     toolchain_profile: result.toolchain.profile,
     toolchain_source: result.toolchain.source,
     toolchain: result.toolchain.channel,
+    enabled: result.enabled ? "true" : "false",
   };
 }
 

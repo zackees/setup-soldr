@@ -226,7 +226,25 @@ function cacheLayerSummary(opts: {
   };
 }
 
-function readSoldrCacheReport(soldrBinary: string | undefined): SoldrCacheReportSummary {
+function readSoldrCacheReport(
+  soldrBinary: string | undefined,
+  passthrough: boolean,
+): SoldrCacheReportSummary {
+  if (passthrough) {
+    // Short-circuit when the main step installed a passthrough stub
+    // (enable=false). Skips spawning a .cmd on Windows (where
+    // child_process.spawnSync can't launch shell scripts directly) and
+    // documents the passthrough state in the post-step summary.
+    return {
+      status: "ok",
+      soldr_version: "passthrough",
+      report: {
+        notes: ["setup-soldr enable=false: soldr passthrough stub"],
+        last_session: null,
+        rollups: null,
+      },
+    };
+  }
   if (!soldrBinary || !fileExists(soldrBinary)) {
     return {
       status: "missing-binary",
@@ -332,6 +350,7 @@ export function buildFinalCacheSummary(
     buildCache: CacheSaveResult;
     cargoRegistryCache: CacheSaveResult;
   },
+  passthrough = false,
 ): FinalCacheSummary {
   return {
     schema_version: 1,
@@ -364,7 +383,7 @@ export function buildFinalCacheSummary(
       save: saves.cargoRegistryCache,
     }),
     zccache_session: readZccacheSessionSummary(result.buildCache.path),
-    compile_cache_report: readSoldrCacheReport(process.env["SOLDR_BINARY"]?.trim()),
+    compile_cache_report: readSoldrCacheReport(process.env["SOLDR_BINARY"]?.trim(), passthrough),
   };
 }
 
@@ -638,6 +657,7 @@ export async function run(): Promise<void> {
 
   const buildCacheMatched = core.getState("buildCacheMatchedKey");
   const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
+  const passthrough = stateBool("setupSoldrPassthrough");
   const restoreState = readRestoreState();
   const statsMode = (core.getState("statsMode") || "summarize") as StatsMode;
   const compileCacheStats = (core.getState("compileCacheStats") || "summarize") as CompileCacheStatsMode;
@@ -693,10 +713,15 @@ export async function run(): Promise<void> {
     }
   }
 
-  const finalSummary = buildFinalCacheSummary(result, restoreState, {
-    buildCache: buildSave,
-    cargoRegistryCache: cargoRegistrySave,
-  });
+  const finalSummary = buildFinalCacheSummary(
+    result,
+    restoreState,
+    {
+      buildCache: buildSave,
+      cargoRegistryCache: cargoRegistrySave,
+    },
+    passthrough,
+  );
   logFinalCacheSummary(finalSummary, log);
   if (compileCacheStats !== "none") {
     setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);

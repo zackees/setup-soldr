@@ -15,6 +15,7 @@ import { markPhase, finishPhase } from "./lib/phase-timing.js";
 import { ensureRustToolchain } from "./lib/ensure-rust-toolchain.js";
 import { ensureSoldr } from "./lib/ensure-soldr.js";
 import { verifySoldr } from "./lib/verify-soldr.js";
+import { installPassthrough } from "./lib/install-passthrough.js";
 import { normalizeSourceMtime } from "./lib/normalize-source-mtime.js";
 import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js";
 import { ensureShims } from "./lib/ensure-shims.js";
@@ -257,11 +258,25 @@ export async function run(): Promise<void> {
 
   // ---- install soldr ----
   await markPhase("install");
-  await ensureSoldr({ resolveResult: result, githubToken: ctx.githubToken });
+  if (result.enabled) {
+    await ensureSoldr({ resolveResult: result, githubToken: ctx.githubToken });
+  } else {
+    installPassthrough({
+      soldrPath: result.soldrPath,
+      isWindows: process.platform === "win32",
+      log: (msg) => logger.log(msg),
+    });
+    logger.warning(
+      "setup-soldr: enable=false — installed a passthrough stub at " +
+        `${result.soldrPath}. \`soldr <tool> <args>\` will run \`<tool> <args>\` ` +
+        "verbatim, and soldr-aware caching/observability is disabled.",
+    );
+  }
   await finishPhase("install");
 
   // Export SOLDR_BINARY so shims can exec it directly
   core.exportVariable("SOLDR_BINARY", result.soldrPath);
+  core.saveState("setupSoldrPassthrough", result.enabled ? "false" : "true");
 
   // ---- shims ----
   if (result.shimsEnabled) {
@@ -275,13 +290,18 @@ export async function run(): Promise<void> {
 
   // ---- verify ----
   await markPhase("verify");
-  const verify = await verifySoldr({
-    soldrPath: result.soldrPath,
-    buildCacheMode: result.buildCache.mode,
-    requireRustPlan: result.targetCache.enabled,
-  });
-  core.setOutput("soldr-version", verify.soldrVersion);
-  core.setOutput("soldr_version", verify.soldrVersion);
+  if (result.enabled) {
+    const verify = await verifySoldr({
+      soldrPath: result.soldrPath,
+      buildCacheMode: result.buildCache.mode,
+      requireRustPlan: result.targetCache.enabled,
+    });
+    core.setOutput("soldr-version", verify.soldrVersion);
+    core.setOutput("soldr_version", verify.soldrVersion);
+  } else {
+    core.setOutput("soldr-version", "passthrough");
+    core.setOutput("soldr_version", "passthrough");
+  }
   await finishPhase("verify");
 
   // ---- cargo-registry restore (if requested) ----

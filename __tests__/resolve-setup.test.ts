@@ -771,3 +771,39 @@ test("detectUserLinkerEnv returns matching CARGO_TARGET_<TRIPLE> vars sorted", (
     "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS=-C link-arg=-fuse-ld=ld",
   ]);
 });
+
+// --- enable input (passthrough mode) ---
+
+test("enable defaults to true and soldrPath ends in soldr/soldr.exe", async () => {
+  const { result, outputs } = await run();
+  assert.equal(result.enabled, true);
+  assert.equal(outputs["enabled"], "true");
+  const expectedName = process.platform === "win32" ? "soldr.exe" : "soldr";
+  assert.ok(
+    result.soldrPath.endsWith(expectedName),
+    `expected soldrPath to end in ${expectedName}, got ${result.soldrPath}`,
+  );
+});
+
+test("enable=true is accepted and behaves as default", async () => {
+  const { result } = await run({}, { INPUT_ENABLE: "true" });
+  assert.equal(result.enabled, true);
+});
+
+test("enable=false flips enabled to false and points soldrPath at the stub file", async () => {
+  const { result, outputs } = await run({}, { INPUT_ENABLE: "false" });
+  assert.equal(result.enabled, false);
+  assert.equal(outputs["enabled"], "false");
+  const expectedName = process.platform === "win32" ? "soldr.cmd" : "soldr";
+  assert.ok(
+    result.soldrPath.endsWith(expectedName),
+    `expected soldrPath to end in ${expectedName}, got ${result.soldrPath}`,
+  );
+});
+
+test("enable invalid value rejects with helpful message", async () => {
+  await assert.rejects(
+    () => run({}, { INPUT_ENABLE: "maybe" }),
+    /invalid 'enable' input/,
+  );
+});
