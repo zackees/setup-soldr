@@ -36,7 +36,17 @@ inputs:
     required: false
     default: ${{ github.token }}
   cache:
-    description: Restore and save the action-managed cache/state root across workflow runs.
+    description: >
+      Umbrella switch for all caching layers. Default "true" (caches
+      managed normally). Set to "false" to disable every layer in one
+      go: setup-cache, build-cache (zccache compilation cache),
+      target-cache (Rust target/ artifacts), and cargo-registry-cache.
+      Also exports `SOLDR_BUILD_CACHE_MODE=off` / `SOLDR_TARGET_CACHE_MODE=off`
+      so soldr skips its zccache wrapping entirely — the daemon won't be
+      invoked and no per-session stats are written. Use this when you
+      want a clean uncached build (CI A/B test, debugging cache-related
+      regressions, etc.). For finer control, leave `cache: true` and
+      flip individual layer inputs.
     required: false
     default: "true"
   cache-dir:

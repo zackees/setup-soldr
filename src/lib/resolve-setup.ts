@@ -328,9 +328,19 @@ export async function resolveSetup(
   const legacyTargetCacheMode = normalizeLegacyTargetCacheMode(legacyTargetCacheModeInput, log);
   const targetCacheProfile = normalizeTargetCacheProfile(inputs.targetCacheProfile);
 
+  // `cache: "false"` is the umbrella switch. It originally only gated the
+  // action-managed setup-cache (soldr binary + rustup state), but consumers
+  // reasonably expect it to mean "no caching at all" — so when the umbrella
+  // is off we force every per-layer flag off too AND tell soldr to skip its
+  // zccache build-cache wrapper. See zccache#307 / zackees/setup-soldr#118
+  // follow-up.
+  const cacheUmbrellaEnabled = !isFalsy(inputs.cache.trim() || "true");
+
   const targetCacheInputRaw = inputs.targetCache.trim() || "true";
   const targetCacheRequested =
-    !isFalsy(targetCacheInputRaw) && legacyTargetCacheMode !== "off";
+    cacheUmbrellaEnabled &&
+    !isFalsy(targetCacheInputRaw) &&
+    legacyTargetCacheMode !== "off";
 
   const explicitBuildCacheMode = inputs.buildCacheMode.trim();
   const buildCacheMode = normalizeBuildCacheMode(
@@ -341,7 +351,7 @@ export async function resolveSetup(
   );
 
   const buildCacheInputRaw = inputs.buildCache.trim() || "true";
-  const buildCacheEnabled = !isFalsy(buildCacheInputRaw);
+  const buildCacheEnabled = cacheUmbrellaEnabled && !isFalsy(buildCacheInputRaw);
   const buildCacheRuntimeMode = buildCacheMode === "once" ? "full" : buildCacheMode;
   let targetCacheEnabled = buildCacheEnabled && targetCacheRequested;
   if (buildCacheMode === "thin" && cargoLockHash === "no-lock") {
@@ -424,7 +434,7 @@ export async function resolveSetup(
   if (suffix) {
     cargoRegistryCacheKey = `${cargoRegistryCacheKey}-${sanitizedSuffix}`;
   }
-  const cargoRegistryCacheEnabled = cargoRegistryCacheRequested;
+  const cargoRegistryCacheEnabled = cacheUmbrellaEnabled && cargoRegistryCacheRequested;
   if (cargoRegistryCacheEnabled) {
     makeDirs(cargoRegistryCachePath);
   }
@@ -441,8 +451,8 @@ export async function resolveSetup(
   setEnv("CARGO_HOME", cargoHome);
   setEnv("RUSTUP_HOME", rustupHome);
   setEnv("ZCCACHE_CACHE_DIR", zccacheCacheDir);
-  setEnv("SETUP_SOLDR_BUILD_CACHE_MODE", buildCacheMode);
-  setEnv("SOLDR_BUILD_CACHE_MODE", buildCacheRuntimeMode);
+  setEnv("SETUP_SOLDR_BUILD_CACHE_MODE", cacheUmbrellaEnabled ? buildCacheMode : "off");
+  setEnv("SOLDR_BUILD_CACHE_MODE", cacheUmbrellaEnabled ? buildCacheRuntimeMode : "off");
   setEnv(
     "SOLDR_TARGET_CACHE_MODE",
     targetCacheEnabled ? buildCacheRuntimeMode : "off",
