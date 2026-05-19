@@ -33,6 +33,38 @@ test("installPassthrough writes a stub at the requested path", () => {
   }
 });
 
+test("installPassthrough on Windows writes a bash-twin alongside soldr.cmd for Git Bash callers", () => {
+  const dir = mkTmp("setup-soldr-passthrough-twin-");
+  try {
+    const cmdPath = path.join(dir, "soldr.cmd");
+    installPassthrough({ soldrPath: cmdPath, isWindows: true, log: () => {} });
+    assert.ok(fs.statSync(cmdPath).isFile(), "soldr.cmd was created");
+    const twinPath = path.join(dir, "soldr");
+    assert.ok(
+      fs.statSync(twinPath).isFile(),
+      "no-extension soldr bash twin was created next to soldr.cmd",
+    );
+    const twin = fs.readFileSync(twinPath, "utf8");
+    assert.match(twin, /^#!\/usr\/bin\/env bash/, "twin has bash shebang");
+    assert.match(twin, /exec "\$@"/, "twin forwards argv via exec");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("bash stub treats `stop` as a silent no-op (passthrough has no daemon)", { skip: process.platform === "win32" }, () => {
+  const dir = mkTmp("setup-soldr-passthrough-stop-");
+  try {
+    const target = path.join(dir, "soldr");
+    installPassthrough({ soldrPath: target, isWindows: false, log: () => {} });
+    const result = spawnSync(target, ["stop"], { encoding: "utf8" });
+    assert.equal(result.status, 0, `stop should exit 0; stdout=${result.stdout} stderr=${result.stderr}`);
+    assert.equal(result.stdout.trim(), "", "stop should produce no stdout");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("bash stub forwards argv[1..] to the named tool", { skip: process.platform === "win32" }, () => {
   const dir = mkTmp("setup-soldr-passthrough-fwd-");
   try {
