@@ -34,6 +34,7 @@ export interface CacheOpStats {
  * inside the resolve layer.
  */
 export interface RawInputs {
+  enable: string;
   version: string;
   repo: string;
   ref: string;
@@ -141,6 +142,10 @@ export interface CargoRegistryCachePlan {
  * $GITHUB_OUTPUT by Python's resolve_setup.py.
  */
 export interface ResolveResult {
+  // Enabled flag. When false, ensureSoldr/verifySoldr are skipped and a
+  // passthrough stub is written at soldrPath instead.
+  enabled: boolean;
+
   // Roots
   workspace: string;
   cacheRoot: string;

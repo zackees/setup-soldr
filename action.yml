@@ -5,6 +5,20 @@ branding:
   icon: terminal
   color: green
 inputs:
+  enable:
+    description: >
+      When "true" (default), install the real soldr binary and run the
+      full setup. When "false", skip the soldr download/verify and write a
+      passthrough stub at the soldr binary path that forwards
+      `soldr <tool> <args>` to `<tool> <args>` (as if `soldr` were omitted
+      from the command line). Internal subcommands soldr-aware code paths
+      query (`version`, `cache`, `status`) return stub JSON so the rest of
+      the action keeps working. The Rust toolchain is still provisioned;
+      cache layers naturally no-op because the build-cache dir stays
+      empty. Useful for A/B testing soldr's effect on a workflow without
+      rewriting it.
+    required: false
+    default: "true"
   version:
     description: Soldr version or tag to install. Defaults to 0.7.22.
     required: false
@@ -223,10 +237,16 @@ inputs:
     required: false
     default: "false"
 outputs:
+  enabled:
+    description: >
+      "true" when the action installed the real soldr binary, "false" when
+      the action installed the passthrough stub (input `enable: false`).
   soldr-path:
     description: Installed Soldr binary path added to PATH for later steps.
   soldr-version:
-    description: Installed Soldr version reported by soldr version --json.
+    description: >
+      Installed Soldr version reported by `soldr version --json`. The
+      literal string "passthrough" when `enable: false`.
   cache-dir:
     description: Runner-local cache/state root used by the action.
   setup-duration-seconds:
