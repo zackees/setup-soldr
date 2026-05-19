@@ -23,6 +23,7 @@ ACTION_PATH = REPO_ROOT / "action.yml"
 # are appended here so the contract test continues to guard the public input
 # surface.
 EXPECTED_INPUTS = {
+    "enable",
     "version",
     "repo",
     "ref",
@@ -59,6 +60,7 @@ EXPECTED_INPUTS = {
 
 # Outputs preserved verbatim from the original composite action.
 EXPECTED_OUTPUTS = {
+    "enabled",
     "soldr-path",
     "soldr-version",
     "cache-dir",
