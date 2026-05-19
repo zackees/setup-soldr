@@ -807,3 +807,27 @@ test("enable invalid value rejects with helpful message", async () => {
     /invalid 'enable' input/,
   );
 });
+
+// --- shutdown-cache-on-exit input ---
+
+test("shutdown-cache-on-exit defaults to false", async () => {
+  const { result } = await run();
+  assert.equal(result.shutdownCacheOnExit, false);
+});
+
+test("shutdown-cache-on-exit=true is accepted", async () => {
+  const { result } = await run({}, { INPUT_SHUTDOWN_CACHE_ON_EXIT: "true" });
+  assert.equal(result.shutdownCacheOnExit, true);
+});
+
+test("shutdown-cache-on-exit=false is accepted", async () => {
+  const { result } = await run({}, { INPUT_SHUTDOWN_CACHE_ON_EXIT: "false" });
+  assert.equal(result.shutdownCacheOnExit, false);
+});
+
+test("shutdown-cache-on-exit invalid value rejects with helpful message", async () => {
+  await assert.rejects(
+    () => run({}, { INPUT_SHUTDOWN_CACHE_ON_EXIT: "maybe" }),
+    /invalid 'shutdown-cache-on-exit' input/,
+  );
+});

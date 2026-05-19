@@ -14,6 +14,7 @@ import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { compressCache } from "./lib/cache-compress.js";
 import { createLogger } from "./lib/log-utils.js";
+import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import type { CompileCacheStatsMode, ResolveResult, StatsMode } from "./lib/types.js";
 
@@ -658,6 +659,7 @@ export async function run(): Promise<void> {
   const buildCacheMatched = core.getState("buildCacheMatchedKey");
   const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
   const passthrough = stateBool("setupSoldrPassthrough");
+  const shutdownCacheOnExit = stateBool("setupSoldrShutdownCacheOnExit");
   const restoreState = readRestoreState();
   const statsMode = (core.getState("statsMode") || "summarize") as StatsMode;
   const compileCacheStats = (core.getState("compileCacheStats") || "summarize") as CompileCacheStatsMode;
@@ -665,6 +667,16 @@ export async function run(): Promise<void> {
   const debugMode = result.debugMode ?? false;
   const debugLog = debugMode ? log : (): void => undefined;
   const postCollector = new StatsCollector();
+
+  // Optional: stop long-running cache daemons before packing the build
+  // cache, so file locks release and the tarball reflects a quiescent
+  // on-disk view. Best-effort; failures are logged, not raised.
+  if (shutdownCacheOnExit) {
+    await shutdownCacheDaemons({
+      soldrPath: process.env["SOLDR_BINARY"]?.trim() || undefined,
+      log,
+    });
+  }
 
   // Build cache
   const buildSaveStart = Date.now();

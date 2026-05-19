@@ -65,6 +65,7 @@ export interface RawInputs {
   shims: string;
   stats: string;
   debugMode: string;
+  shutdownCacheOnExit: string;
 }
 
 /**
@@ -196,6 +197,10 @@ export interface ResolveResult {
   // Stats and debug
   stats: StatsMode;
   debugMode: boolean;
+
+  // When true, the post step asks zccache / soldr daemons to stop
+  // before saving the build cache.
+  shutdownCacheOnExit: boolean;
 }
 
 /**

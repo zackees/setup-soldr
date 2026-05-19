@@ -236,6 +236,17 @@ inputs:
       exact decompression/compression commands run.
     required: false
     default: "false"
+  shutdown-cache-on-exit:
+    description: >
+      When "true", the post phase asks long-running cache daemons (zccache,
+      soldr) to shut down BEFORE the build-cache tarball is written. Useful
+      when a daemon holds file locks on cache files at job end and that
+      blocks a clean tar or causes intermittent cache-upload failures. The
+      shutdown is best-effort — missing binaries and non-zero exit codes
+      are logged and ignored, never failing the post step. Default "false"
+      (leave the daemon running and let the runner reap it on shutdown).
+    required: false
+    default: "false"
 outputs:
   enabled:
     description: >
