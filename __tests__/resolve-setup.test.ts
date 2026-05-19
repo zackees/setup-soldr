@@ -846,6 +846,35 @@ test("cache-shutdown-on-idle '0'/'off'/'false' disable the override", async () =
   }
 });
 
+// --- cache umbrella ---
+
+test("cache=false cascades to disable build-cache, target-cache, and cargo-registry-cache", async () => {
+  const { result } = await run({}, {
+    INPUT_CACHE: "false",
+    INPUT_CARGO_REGISTRY_CACHE: "true",
+    INPUT_TARGET_CACHE: "true",
+    INPUT_BUILD_CACHE: "true",
+  });
+  assert.equal(result.buildCache.path !== "", true);
+  assert.equal(result.targetCache.enabled, false, "target-cache forced off by cache=false");
+  assert.equal(result.cargoRegistryCache.enabled, false, "cargo-registry-cache forced off by cache=false");
+  // SOLDR_BUILD_CACHE_MODE switches to "off" so soldr stops invoking zccache.
+  assert.equal(result.envExports["SOLDR_BUILD_CACHE_MODE"], "off");
+  assert.equal(result.envExports["SETUP_SOLDR_BUILD_CACHE_MODE"], "off");
+  assert.equal(result.envExports["SOLDR_TARGET_CACHE_MODE"], "off");
+});
+
+test("cache=true (default) leaves per-layer flags in charge", async () => {
+  const { result } = await run({}, {
+    INPUT_CACHE: "true",
+    INPUT_CARGO_REGISTRY_CACHE: "true",
+    INPUT_TARGET_CACHE: "true",
+    INPUT_BUILD_CACHE: "true",
+  });
+  assert.equal(result.cargoRegistryCache.enabled, true);
+  assert.notEqual(result.envExports["SOLDR_BUILD_CACHE_MODE"], "off");
+});
+
 test("cache-shutdown-on-idle rejects malformed values", async () => {
   await assert.rejects(
     () => run({}, { INPUT_CACHE_SHUTDOWN_ON_IDLE: "thirty" }),
