@@ -36,23 +36,32 @@ import {
   type MuslCcResolution,
 } from "./detect-musl-cc.js";
 import { buildOutputs } from "./build-outputs.js";
+import { readRawInputs } from "./raw-inputs.js";
+import {
+  detectUserLinkerEnv,
+  normalizeCompileCacheStats,
+  normalizeStatsMode,
+  parseCacheShutdownOnIdleSeconds,
+} from "./input-parsers.js";
+import {
+  fetchReleaseTagDefault,
+  resolveSoldrReleaseVersion,
+  type ResolveSetupDeps,
+} from "./fetch-release.js";
+import { pythonDefaultJson } from "./python-json.js";
 import {
   loadToolchainSpec,
   rollingToolchainAlias,
   systemRustupSatisfiesRequest,
-  type SystemRustupProbeDeps,
 } from "./toolchain.js";
 import type {
   ActionContext,
   BuildCachePlan,
   CargoRegistryCachePlan,
-  CompileCacheStatsMode,
   RawInputs,
   ResolveResult,
   SetupCachePlan,
-  StatsMode,
   TargetCachePlan,
-  ToolchainSpec,
 } from "./types.js";
 
 const FALSY_VALUES: ReadonlySet<string> = new Set(["0", "false", "no", "off"]);
@@ -88,114 +97,22 @@ function resolveAbsolute(p: string, env: Record<string, string | undefined>): st
   return path.resolve(expanduser(p, env));
 }
 
-export function readRawInputs(env: Record<string, string | undefined>): RawInputs {
-  const get = (name: string): string => env[`INPUT_${name}`] ?? "";
-  return {
-    enable: get("ENABLE"),
-    version: get("VERSION"),
-    repo: get("REPO"),
-    ref: get("REF"),
-    cache: get("CACHE"),
-    cacheDir: get("CACHE_DIR"),
-    cacheKeySuffix: get("CACHE_KEY_SUFFIX"),
-    toolchain: get("TOOLCHAIN"),
-    toolchainFile: get("TOOLCHAIN_FILE"),
-    trustMode: get("TRUST_MODE"),
-    linker: get("LINKER"),
-    compilePriority: get("COMPILE_PRIORITY"),
-    timestamps: get("TIMESTAMPS"),
-    lockfile: get("LOCKFILE"),
-    buildCache: get("BUILD_CACHE"),
-    buildCacheMode: get("BUILD_CACHE_MODE"),
-    targetCache: get("TARGET_CACHE"),
-    targetCacheMode: get("TARGET_CACHE_MODE"),
-    targetDir: get("TARGET_DIR"),
-    targetCacheProfile: get("TARGET_CACHE_PROFILE"),
-    targetCacheStripDebuginfo: get("TARGET_CACHE_STRIP_DEBUGINFO"),
-    targetCacheIncludeIncremental: get("TARGET_CACHE_INCLUDE_INCREMENTAL"),
-    targetCacheIncludeBuildScriptBinaries: get("TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES"),
-    targetCacheCompress: get("TARGET_CACHE_COMPRESS"),
-    targetCacheCompressLevel: get("TARGET_CACHE_COMPRESS_LEVEL"),
-    sourceMtimeNormalize: get("SOURCE_MTIME_NORMALIZE"),
-    cargoRegistryCache: get("CARGO_REGISTRY_CACHE"),
-    compileCacheStats: get("COMPILE_CACHE_STATS"),
-    shims: get("SHIMS"),
-    stats: get("STATS"),
-    debugMode: get("DEBUG"),
-    cacheShutdownOnIdle: get("CACHE_SHUTDOWN_ON_IDLE"),
-  };
-}
-
-/**
- * Parse the `cache-shutdown-on-idle` input into a seconds count.
- *
- * Accepts:
- *   - "" / "0" / "off" / "false" / "no" → null (disabled)
- *   - bare integer ("30")               → that many seconds
- *   - "<N>s" / "<N>m" / "<N>h"          → seconds / minutes / hours
- *
- * Throws on any other value so misspellings ("30sec", "thirty") surface
- * loudly at action start rather than silently being treated as "off".
- */
-export function parseCacheShutdownOnIdleSeconds(raw: string): number | null {
-  const value = raw.trim().toLowerCase();
-  if (value === "" || value === "0" || value === "off" || value === "false" || value === "no") {
-    return null;
-  }
-  const m = value.match(/^(\d+)\s*(s|m|h)?$/);
-  if (!m) {
-    throw new Error(
-      `invalid 'cache-shutdown-on-idle' input: '${raw}'. ` +
-        "Expected <seconds>, <N>s, <N>m, <N>h, or empty/off/false to disable.",
-    );
-  }
-  const n = parseInt(m[1]!, 10);
-  if (!Number.isFinite(n) || n < 0) {
-    throw new Error(`invalid 'cache-shutdown-on-idle' input: '${raw}'.`);
-  }
-  const unit = m[2] ?? "s";
-  if (unit === "s") return n;
-  if (unit === "m") return n * 60;
-  return n * 3600;
-}
-
-/**
- * Detect cross-compile env vars the user has already set that soldr's
- * `linker: fast` default would silently overwrite (CARGO_TARGET_<TRIPLE>_LINKER
- * and CARGO_TARGET_<TRIPLE>_RUSTFLAGS). Returns the list of `NAME=value`
- * strings to surface in the deferral log. See issue #108.
- */
-export function detectUserLinkerEnv(env: Record<string, string | undefined>): string[] {
-  const hits: string[] = [];
-  for (const [name, raw] of Object.entries(env)) {
-    if (raw === undefined || raw === "") continue;
-    if (!name.startsWith("CARGO_TARGET_")) continue;
-    if (name.endsWith("_LINKER") || name.endsWith("_RUSTFLAGS")) {
-      hits.push(`${name}=${raw}`);
-    }
-  }
-  hits.sort();
-  return hits;
-}
-
 // Re-exports kept for backward compatibility with tests and external
-// consumers that imported the musl cc-rs helpers from this module
-// before the split. New code should import directly from
-// ./detect-musl-cc.js.
-export { detectMuslCcEnv, type MuslCcResolution, type DetectMuslCcDeps };
-
-function normalizeStatsMode(raw: string): StatsMode {
-  const v = raw.trim().toLowerCase();
-  if (v === "none" || v === "summarize" || v === "detailed") return v;
-  return "summarize";
-}
-
-function normalizeCompileCacheStats(raw: string): CompileCacheStatsMode {
-  const v = raw.trim().toLowerCase();
-  if (v === "none") return "none";
-  if (v === "detailed" || v === "insights") return "detailed";
-  return "summarize";
-}
+// consumers that imported these symbols from this module before the
+// split. New code should import directly from the named submodules
+// (./raw-inputs.js, ./input-parsers.js, ./detect-musl-cc.js,
+// ./fetch-release.js, ./build-outputs.js, ./python-json.js).
+export {
+  readRawInputs,
+  parseCacheShutdownOnIdleSeconds,
+  detectUserLinkerEnv,
+  detectMuslCcEnv,
+  buildOutputs,
+  pythonDefaultJson,
+  type MuslCcResolution,
+  type DetectMuslCcDeps,
+  type ResolveSetupDeps,
+};
 
 function isFalsy(value: string): boolean {
   return FALSY_VALUES.has(value.trim().toLowerCase());
@@ -216,81 +133,8 @@ function makeDirs(...paths: string[]): void {
   }
 }
 
-/**
- * Optional injectable dependencies for tests. Production code uses defaults.
- */
-export interface ResolveSetupDeps {
-  fetchReleaseTag?: (repo: string, version: string, env: Record<string, string | undefined>) => Promise<string>;
-  systemRustup?: SystemRustupProbeDeps;
-  systemRustupOverride?: (
-    cargoHome: string,
-    rustupHome: string,
-    toolchain: ToolchainSpec,
-  ) => Promise<boolean> | boolean;
-}
-
-async function fetchReleaseTagDefault(
-  repo: string,
-  version: string,
-  env: Record<string, string | undefined>,
-): Promise<string> {
-  if (version) {
-    // For explicit (non-latest) versions, return as-is. Caller normalizes.
-    return "";
-  }
-  const url = `https://api.github.com/repos/${repo}/releases/latest`;
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "setup-soldr-action",
-  };
-  const token = (env["GITHUB_TOKEN"] ?? "").trim() || (env["INPUT_TOKEN"] ?? "").trim();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10_000);
-  try {
-    const response = await fetch(url, { headers, signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`GitHub API returned HTTP ${response.status} for ${repo}`);
-    }
-    const payload = (await response.json()) as unknown;
-    if (typeof payload !== "object" || payload === null) {
-      throw new Error(`unexpected GitHub release payload for ${repo}`);
-    }
-    const tag = (payload as Record<string, unknown>)["tag_name"];
-    const tagName = typeof tag === "string" ? tag.trim() : "";
-    if (!tagName) {
-      throw new Error(`failed to resolve latest soldr release tag from ${repo}`);
-    }
-    return tagName;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function resolveSoldrReleaseVersion(
-  repo: string,
-  version: string,
-  ref: string,
-  env: Record<string, string | undefined>,
-  deps?: ResolveSetupDeps,
-): Promise<string> {
-  if (ref.trim()) {
-    return "";
-  }
-  const requested = version.trim();
-  if (requested && requested.toLowerCase() !== "latest") {
-    return requested.startsWith("v") ? requested : `v${requested}`;
-  }
-  const fetcher = deps?.fetchReleaseTag ?? fetchReleaseTagDefault;
-  const tagName = await fetcher(repo, "", env);
-  if (!tagName) {
-    throw new Error(`failed to resolve latest soldr release tag from ${repo}`);
-  }
-  return tagName;
-}
+// `fetchReleaseTagDefault` and `resolveSoldrReleaseVersion` live in
+// ./fetch-release.js — used directly from resolveSetup() below.
 
 /**
  * Resolve setup state. The orchestrator calls this once at the start of the
@@ -859,40 +703,5 @@ export async function applyResolveResult(result: ResolveResult): Promise<void> {
   }
 }
 
-// Re-export buildOutputs for backward compatibility with existing
-// test imports. New code should import directly from
-// ./build-outputs.js.
-export { buildOutputs };
-
-// --------------------- Python-default JSON serialization ---------------------
-
-/**
- * Mirror Python's `json.dumps(value, sort_keys=True)` with default separators
- * (", " between items, ": " between key/value). Used for the toolchain
- * signature digest where Python does NOT pass compact separators.
- */
-export function pythonDefaultJson(value: unknown): string {
-  return formatDefaultJson(value);
-}
-
-function formatDefaultJson(value: unknown): string {
-  if (value === null || value === undefined) return "null";
-  if (typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? JSON.stringify(value) : "null";
-  }
-  if (typeof value === "boolean") return value ? "true" : "false";
-  if (Array.isArray(value)) {
-    const parts = value.map((item) => formatDefaultJson(item));
-    return `[${parts.join(", ")}]`;
-  }
-  if (typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    const keys = Object.keys(obj).sort();
-    const parts = keys.map(
-      (key) => `${JSON.stringify(key)}: ${formatDefaultJson(obj[key])}`,
-    );
-    return `{${parts.join(", ")}}`;
-  }
-  return JSON.stringify(value);
-}
+// `buildOutputs` and `pythonDefaultJson` are re-exported at the top of
+// this file from their dedicated submodules.
