@@ -115,8 +115,41 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     shims: get("SHIMS"),
     stats: get("STATS"),
     debugMode: get("DEBUG"),
-    shutdownCacheOnExit: get("SHUTDOWN_CACHE_ON_EXIT"),
+    cacheShutdownOnIdle: get("CACHE_SHUTDOWN_ON_IDLE"),
   };
+}
+
+/**
+ * Parse the `cache-shutdown-on-idle` input into a seconds count.
+ *
+ * Accepts:
+ *   - "" / "0" / "off" / "false" / "no" → null (disabled)
+ *   - bare integer ("30")               → that many seconds
+ *   - "<N>s" / "<N>m" / "<N>h"          → seconds / minutes / hours
+ *
+ * Throws on any other value so misspellings ("30sec", "thirty") surface
+ * loudly at action start rather than silently being treated as "off".
+ */
+export function parseCacheShutdownOnIdleSeconds(raw: string): number | null {
+  const value = raw.trim().toLowerCase();
+  if (value === "" || value === "0" || value === "off" || value === "false" || value === "no") {
+    return null;
+  }
+  const m = value.match(/^(\d+)\s*(s|m|h)?$/);
+  if (!m) {
+    throw new Error(
+      `invalid 'cache-shutdown-on-idle' input: '${raw}'. ` +
+        "Expected <seconds>, <N>s, <N>m, <N>h, or empty/off/false to disable.",
+    );
+  }
+  const n = parseInt(m[1]!, 10);
+  if (!Number.isFinite(n) || n < 0) {
+    throw new Error(`invalid 'cache-shutdown-on-idle' input: '${raw}'.`);
+  }
+  const unit = m[2] ?? "s";
+  if (unit === "s") return n;
+  if (unit === "m") return n * 60;
+  return n * 3600;
 }
 
 /**
@@ -674,6 +707,8 @@ export async function resolveSetup(
   }
 
   // ---- env exports ----
+  const cacheShutdownOnIdleSeconds = parseCacheShutdownOnIdleSeconds(inputs.cacheShutdownOnIdle);
+
   const envExports: Record<string, string> = {};
   const setEnv = (name: string, value: string): void => {
     if (GITHUB_ENV_DENY_LIST.has(name)) return;
@@ -763,6 +798,16 @@ export async function resolveSetup(
   const compilePriorityRaw = inputs.compilePriority.trim();
   if (compilePriorityRaw !== "") {
     setEnv("ZCCACHE_COMPILE_PRIORITY", compilePriorityRaw);
+  }
+
+  if (cacheShutdownOnIdleSeconds !== null) {
+    // Set both env vars. zccache reads its own, sccache reads the
+    // SCCACHE_-prefixed one; exporting both means a zccache fork that
+    // still honors only the sccache name keeps working, and a vanilla
+    // sccache invoked via this action would too.
+    const seconds = String(cacheShutdownOnIdleSeconds);
+    setEnv("ZCCACHE_IDLE_TIMEOUT", seconds);
+    setEnv("SCCACHE_IDLE_TIMEOUT", seconds);
   }
 
   // Auto-export cc-rs cross-compile env for *-unknown-linux-musl triples
@@ -876,16 +921,6 @@ export async function resolveSetup(
   const compileCacheStats = normalizeCompileCacheStats(inputs.compileCacheStats);
   const stats = normalizeStatsMode(inputs.stats);
   const debugMode = isTruthy(inputs.debugMode.trim() || "false");
-  const shutdownCacheOnExitRaw = inputs.shutdownCacheOnExit.trim() || "false";
-  if (
-    !TRUTHY_VALUES.has(shutdownCacheOnExitRaw.toLowerCase()) &&
-    !FALSY_VALUES.has(shutdownCacheOnExitRaw.toLowerCase())
-  ) {
-    throw new Error(
-      `invalid 'shutdown-cache-on-exit' input: '${shutdownCacheOnExitRaw}'. Allowed: true | false`,
-    );
-  }
-  const shutdownCacheOnExit = TRUTHY_VALUES.has(shutdownCacheOnExitRaw.toLowerCase());
 
   // ---- shims ----
   const shimsRaw = inputs.shims.trim() || "false";
@@ -923,7 +958,7 @@ export async function resolveSetup(
     compileCacheStats,
     stats,
     debugMode,
-    shutdownCacheOnExit,
+    cacheShutdownOnIdleSeconds,
   };
 }
 

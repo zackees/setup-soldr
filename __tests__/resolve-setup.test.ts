@@ -808,26 +808,51 @@ test("enable invalid value rejects with helpful message", async () => {
   );
 });
 
-// --- shutdown-cache-on-exit input ---
+// --- cache-shutdown-on-idle input ---
 
-test("shutdown-cache-on-exit defaults to false", async () => {
+test("cache-shutdown-on-idle defaults to null (no override)", async () => {
   const { result } = await run();
-  assert.equal(result.shutdownCacheOnExit, false);
+  assert.equal(result.cacheShutdownOnIdleSeconds, null);
+  assert.equal(result.envExports["ZCCACHE_IDLE_TIMEOUT"], undefined);
+  assert.equal(result.envExports["SCCACHE_IDLE_TIMEOUT"], undefined);
 });
 
-test("shutdown-cache-on-exit=true is accepted", async () => {
-  const { result } = await run({}, { INPUT_SHUTDOWN_CACHE_ON_EXIT: "true" });
-  assert.equal(result.shutdownCacheOnExit, true);
+test("cache-shutdown-on-idle bare integer parsed as seconds", async () => {
+  const { result } = await run({}, { INPUT_CACHE_SHUTDOWN_ON_IDLE: "30" });
+  assert.equal(result.cacheShutdownOnIdleSeconds, 30);
+  assert.equal(result.envExports["ZCCACHE_IDLE_TIMEOUT"], "30");
+  assert.equal(result.envExports["SCCACHE_IDLE_TIMEOUT"], "30");
 });
 
-test("shutdown-cache-on-exit=false is accepted", async () => {
-  const { result } = await run({}, { INPUT_SHUTDOWN_CACHE_ON_EXIT: "false" });
-  assert.equal(result.shutdownCacheOnExit, false);
+test("cache-shutdown-on-idle accepts s/m/h suffixes", async () => {
+  const cases: Array<[string, number]> = [
+    ["30s", 30],
+    ["2m", 120],
+    ["1h", 3600],
+  ];
+  for (const [raw, expected] of cases) {
+    const { result } = await run({}, { INPUT_CACHE_SHUTDOWN_ON_IDLE: raw });
+    assert.equal(result.cacheShutdownOnIdleSeconds, expected, `input=${raw}`);
+    assert.equal(result.envExports["ZCCACHE_IDLE_TIMEOUT"], String(expected));
+    assert.equal(result.envExports["SCCACHE_IDLE_TIMEOUT"], String(expected));
+  }
 });
 
-test("shutdown-cache-on-exit invalid value rejects with helpful message", async () => {
+test("cache-shutdown-on-idle '0'/'off'/'false' disable the override", async () => {
+  for (const raw of ["0", "off", "false", "no"]) {
+    const { result } = await run({}, { INPUT_CACHE_SHUTDOWN_ON_IDLE: raw });
+    assert.equal(result.cacheShutdownOnIdleSeconds, null, `input=${raw}`);
+    assert.equal(result.envExports["ZCCACHE_IDLE_TIMEOUT"], undefined);
+  }
+});
+
+test("cache-shutdown-on-idle rejects malformed values", async () => {
   await assert.rejects(
-    () => run({}, { INPUT_SHUTDOWN_CACHE_ON_EXIT: "maybe" }),
-    /invalid 'shutdown-cache-on-exit' input/,
+    () => run({}, { INPUT_CACHE_SHUTDOWN_ON_IDLE: "thirty" }),
+    /invalid 'cache-shutdown-on-idle' input/,
+  );
+  await assert.rejects(
+    () => run({}, { INPUT_CACHE_SHUTDOWN_ON_IDLE: "30sec" }),
+    /invalid 'cache-shutdown-on-idle' input/,
   );
 });

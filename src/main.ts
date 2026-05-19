@@ -277,10 +277,6 @@ export async function run(): Promise<void> {
   // Export SOLDR_BINARY so shims can exec it directly
   core.exportVariable("SOLDR_BINARY", result.soldrPath);
   core.saveState("setupSoldrPassthrough", result.enabled ? "false" : "true");
-  core.saveState(
-    "setupSoldrShutdownCacheOnExit",
-    result.shutdownCacheOnExit ? "true" : "false",
-  );
 
   // ---- shims ----
   if (result.shimsEnabled) {

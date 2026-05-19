@@ -236,17 +236,21 @@ inputs:
       exact decompression/compression commands run.
     required: false
     default: "false"
-  shutdown-cache-on-exit:
+  cache-shutdown-on-idle:
     description: >
-      When "true", the post phase asks long-running cache daemons (zccache,
-      soldr) to shut down BEFORE the build-cache tarball is written. Useful
-      when a daemon holds file locks on cache files at job end and that
-      blocks a clean tar or causes intermittent cache-upload failures. The
-      shutdown is best-effort — missing binaries and non-zero exit codes
-      are logged and ignored, never failing the post step. Default "false"
-      (leave the daemon running and let the runner reap it on shutdown).
+      Configure the cache daemon (zccache / sccache) to self-exit after
+      this much idle time. Accepts bare integers (seconds), "<N>s",
+      "<N>m", or "<N>h". The empty string and "0"/"off"/"false" disable
+      the override and let the daemon use its built-in timeout. When set,
+      setup-soldr exports both `ZCCACHE_IDLE_TIMEOUT` and
+      `SCCACHE_IDLE_TIMEOUT` to the resolved seconds so the daemon dies
+      between idle compile invocations and respawns on next use — a
+      workaround for daemons that accumulate state or hold locks across
+      a long build. The post step always calls
+      `zccache --stop-server` / `<soldrPath> stop` as a final
+      best-effort sweep regardless of this setting.
     required: false
-    default: "false"
+    default: ""
 outputs:
   enabled:
     description: >
