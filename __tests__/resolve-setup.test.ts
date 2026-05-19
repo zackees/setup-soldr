@@ -5,6 +5,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import {
   buildOutputs,
+  detectMuslCcEnv,
   detectUserLinkerEnv,
   readRawInputs,
   resolveSetup,
@@ -585,6 +586,175 @@ test("linker default with empty CARGO_TARGET_<TRIPLE>_LINKER does not defer", as
   });
   assert.equal(result.envExports["SOLDR_LINKER"], "fast");
   assert.ok(warnings.some((m) => m.includes("SOLDR_LINKER=fast")));
+});
+
+// --- detectMuslCcEnv (cc-rs cross-compile env autodetect) ---
+
+test("detectMuslCcEnv picks up triple from CARGO_BUILD_TARGET and exports CC/CXX/AR", () => {
+  const found = new Set([
+    "aarch64-unknown-linux-musl-gcc",
+    "aarch64-unknown-linux-musl-g++",
+    "aarch64-unknown-linux-musl-ar",
+  ]);
+  const hits = detectMuslCcEnv(
+    { PATH: "/opt/cross/bin", CARGO_BUILD_TARGET: "aarch64-unknown-linux-musl" },
+    {
+      findOnPath: (cmd) => (found.has(cmd) ? `/opt/cross/bin/${cmd}` : null),
+      readDir: () => [],
+    },
+  );
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0]!.triple, "aarch64-unknown-linux-musl");
+  assert.deepEqual(hits[0]!.exports, {
+    CC_aarch64_unknown_linux_musl: "aarch64-unknown-linux-musl-gcc",
+    CXX_aarch64_unknown_linux_musl: "aarch64-unknown-linux-musl-g++",
+    AR_aarch64_unknown_linux_musl: "aarch64-unknown-linux-musl-ar",
+  });
+});
+
+test("detectMuslCcEnv picks up triple from CARGO_TARGET_<TRIPLE>_LINKER preset", () => {
+  const found = new Set([
+    "x86_64-unknown-linux-musl-gcc",
+    "x86_64-unknown-linux-musl-g++",
+    "x86_64-unknown-linux-musl-ar",
+  ]);
+  const hits = detectMuslCcEnv(
+    {
+      PATH: "/opt/cross/bin",
+      CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: "x86_64-unknown-linux-musl-gcc",
+    },
+    {
+      findOnPath: (cmd) => (found.has(cmd) ? `/opt/cross/bin/${cmd}` : null),
+      readDir: () => [],
+    },
+  );
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0]!.triple, "x86_64-unknown-linux-musl");
+});
+
+test("detectMuslCcEnv discovers triples by PATH scan when no env hints exist", () => {
+  const hits = detectMuslCcEnv(
+    { PATH: "/opt/cross/bin" },
+    {
+      findOnPath: (cmd) => {
+        if (cmd.endsWith("-gcc") || cmd.endsWith("-g++") || cmd.endsWith("-ar")) {
+          return `/opt/cross/bin/${cmd}`;
+        }
+        return null;
+      },
+      readDir: (dir) =>
+        dir === "/opt/cross/bin"
+          ? [
+              "aarch64-unknown-linux-musl-gcc",
+              "aarch64-unknown-linux-musl-g++",
+              "aarch64-unknown-linux-musl-ar",
+              "ls",
+            ]
+          : [],
+    },
+  );
+  assert.equal(hits.length, 1);
+  assert.equal(hits[0]!.triple, "aarch64-unknown-linux-musl");
+});
+
+test("detectMuslCcEnv skips triple when user has already set CC_<triple>", () => {
+  const found = new Set([
+    "aarch64-unknown-linux-musl-gcc",
+    "aarch64-unknown-linux-musl-g++",
+    "aarch64-unknown-linux-musl-ar",
+  ]);
+  const hits = detectMuslCcEnv(
+    {
+      PATH: "/opt/cross/bin",
+      CARGO_BUILD_TARGET: "aarch64-unknown-linux-musl",
+      CC_aarch64_unknown_linux_musl: "/custom/path/cc",
+    },
+    {
+      findOnPath: (cmd) => (found.has(cmd) ? `/opt/cross/bin/${cmd}` : null),
+      readDir: () => [],
+    },
+  );
+  assert.deepEqual(hits, []);
+});
+
+test("detectMuslCcEnv ignores non-musl triples (e.g. linux-gnu)", () => {
+  const hits = detectMuslCcEnv(
+    {
+      PATH: "/usr/bin",
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: "aarch64-linux-gnu-gcc",
+    },
+    {
+      findOnPath: () => "/usr/bin/aarch64-linux-gnu-gcc",
+      readDir: () => [],
+    },
+  );
+  assert.deepEqual(hits, []);
+});
+
+test("detectMuslCcEnv skips triple when a required binary (ar) is missing on PATH", () => {
+  const present = new Set([
+    "aarch64-unknown-linux-musl-gcc",
+    "aarch64-unknown-linux-musl-g++",
+  ]);
+  const hits = detectMuslCcEnv(
+    { PATH: "/opt/cross/bin", CARGO_BUILD_TARGET: "aarch64-unknown-linux-musl" },
+    {
+      findOnPath: (cmd) => (present.has(cmd) ? `/opt/cross/bin/${cmd}` : null),
+      readDir: () => [],
+    },
+  );
+  assert.deepEqual(hits, []);
+});
+
+test("resolveSetup exports cc-rs musl env and emits a yellow warning when binaries are on PATH", async () => {
+  const { root, workspace, runnerTemp } = makeWorkspace();
+  const fakeBin = path.join(root, "cross-bin");
+  fs.mkdirSync(fakeBin, { recursive: true });
+  for (const name of [
+    "aarch64-unknown-linux-musl-gcc",
+    "aarch64-unknown-linux-musl-g++",
+    "aarch64-unknown-linux-musl-ar",
+  ]) {
+    fs.writeFileSync(path.join(fakeBin, name), "", "utf8");
+  }
+  const ctx = makeContext(root, workspace, runnerTemp);
+  ctx.env = withInputs(ctx.env, {
+    CARGO_BUILD_TARGET: "aarch64-unknown-linux-musl",
+    PATH: fakeBin,
+  });
+  const warnings: string[] = [];
+  ctx.logger = {
+    info: () => {},
+    warning: (msg) => warnings.push(msg),
+    error: () => {},
+    debug: () => {},
+    log: () => {},
+  };
+  const inputs: RawInputs = readRawInputs(ctx.env);
+  const result = await resolveSetup(ctx, inputs, {
+    fetchReleaseTag: async () => "v0.7.11",
+    systemRustupOverride: async () => false,
+  });
+  assert.equal(
+    result.envExports["CC_aarch64_unknown_linux_musl"],
+    "aarch64-unknown-linux-musl-gcc",
+  );
+  assert.equal(
+    result.envExports["CXX_aarch64_unknown_linux_musl"],
+    "aarch64-unknown-linux-musl-g++",
+  );
+  assert.equal(
+    result.envExports["AR_aarch64_unknown_linux_musl"],
+    "aarch64-unknown-linux-musl-ar",
+  );
+  assert.ok(
+    warnings.some(
+      (m) =>
+        m.includes("auto-exporting cc-rs cross-compile env") &&
+        m.includes("aarch64-unknown-linux-musl"),
+    ),
+    `expected musl cc-rs warning, got: ${JSON.stringify(warnings)}`,
+  );
 });
 
 test("detectUserLinkerEnv returns matching CARGO_TARGET_<TRIPLE> vars sorted", () => {
