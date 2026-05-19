@@ -115,6 +115,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     shims: get("SHIMS"),
     stats: get("STATS"),
     debugMode: get("DEBUG"),
+    shutdownCacheOnExit: get("SHUTDOWN_CACHE_ON_EXIT"),
   };
 }
 
@@ -875,6 +876,16 @@ export async function resolveSetup(
   const compileCacheStats = normalizeCompileCacheStats(inputs.compileCacheStats);
   const stats = normalizeStatsMode(inputs.stats);
   const debugMode = isTruthy(inputs.debugMode.trim() || "false");
+  const shutdownCacheOnExitRaw = inputs.shutdownCacheOnExit.trim() || "false";
+  if (
+    !TRUTHY_VALUES.has(shutdownCacheOnExitRaw.toLowerCase()) &&
+    !FALSY_VALUES.has(shutdownCacheOnExitRaw.toLowerCase())
+  ) {
+    throw new Error(
+      `invalid 'shutdown-cache-on-exit' input: '${shutdownCacheOnExitRaw}'. Allowed: true | false`,
+    );
+  }
+  const shutdownCacheOnExit = TRUTHY_VALUES.has(shutdownCacheOnExitRaw.toLowerCase());
 
   // ---- shims ----
   const shimsRaw = inputs.shims.trim() || "false";
@@ -912,6 +923,7 @@ export async function resolveSetup(
     compileCacheStats,
     stats,
     debugMode,
+    shutdownCacheOnExit,
   };
 }
 
