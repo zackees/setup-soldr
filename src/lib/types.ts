@@ -65,7 +65,7 @@ export interface RawInputs {
   shims: string;
   stats: string;
   debugMode: string;
-  shutdownCacheOnExit: string;
+  cacheShutdownOnIdle: string;
 }
 
 /**
@@ -198,9 +198,10 @@ export interface ResolveResult {
   stats: StatsMode;
   debugMode: boolean;
 
-  // When true, the post step asks zccache / soldr daemons to stop
-  // before saving the build cache.
-  shutdownCacheOnExit: boolean;
+  // Daemon idle-timeout override in seconds, or null when unset.
+  // When set, exported as ZCCACHE_IDLE_TIMEOUT / SCCACHE_IDLE_TIMEOUT
+  // so the cache daemon self-exits after the given idle window.
+  cacheShutdownOnIdleSeconds: number | null;
 }
 
 /**

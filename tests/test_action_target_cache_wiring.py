@@ -55,7 +55,7 @@ EXPECTED_INPUTS = {
     "shims",
     "stats",
     "debug",
-    "shutdown-cache-on-exit",
+    "cache-shutdown-on-idle",
 }
 
 
