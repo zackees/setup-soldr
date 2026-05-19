@@ -30,6 +30,13 @@ import {
 } from "./cache-keys.js";
 import { createLogger } from "./log-utils.js";
 import {
+  detectMuslCcEnv,
+  tripleToCcRsSuffix,
+  type DetectMuslCcDeps,
+  type MuslCcResolution,
+} from "./detect-musl-cc.js";
+import { buildOutputs } from "./build-outputs.js";
+import {
   loadToolchainSpec,
   rollingToolchainAlias,
   systemRustupSatisfiesRequest,
@@ -171,139 +178,11 @@ export function detectUserLinkerEnv(env: Record<string, string | undefined>): st
   return hits;
 }
 
-const MUSL_TRIPLE_RE = /^[a-z0-9_]+-unknown-linux-musl$/;
-
-function tripleToCcRsSuffix(triple: string): string {
-  return triple.replace(/-/g, "_");
-}
-
-function findOnPathSync(env: Record<string, string | undefined>, cmd: string): string | null {
-  const pathRaw = env["PATH"] ?? env["Path"] ?? "";
-  if (!pathRaw) return null;
-  const sep = process.platform === "win32" ? ";" : ":";
-  const exts = process.platform === "win32" ? ["", ".exe"] : [""];
-  for (const dir of pathRaw.split(sep)) {
-    if (!dir) continue;
-    for (const ext of exts) {
-      const candidate = path.join(dir, `${cmd}${ext}`);
-      try {
-        if (fs.statSync(candidate).isFile()) return candidate;
-      } catch {
-        // not present; continue
-      }
-    }
-  }
-  return null;
-}
-
-function scanPathForMuslTriples(
-  env: Record<string, string | undefined>,
-  readDir: (dir: string) => string[],
-): Set<string> {
-  const triples = new Set<string>();
-  const pathRaw = env["PATH"] ?? env["Path"] ?? "";
-  if (!pathRaw) return triples;
-  const sep = process.platform === "win32" ? ";" : ":";
-  const isWin = process.platform === "win32";
-  const tail = isWin ? /-unknown-linux-musl-gcc(?:\.exe)?$/i : /-unknown-linux-musl-gcc$/;
-  for (const dir of pathRaw.split(sep)) {
-    if (!dir) continue;
-    let entries: string[];
-    try {
-      entries = readDir(dir);
-    } catch {
-      continue;
-    }
-    for (const entry of entries) {
-      const m = entry.match(tail);
-      if (!m) continue;
-      const triple = entry.slice(0, entry.length - m[0].length) + "-unknown-linux-musl";
-      if (MUSL_TRIPLE_RE.test(triple)) triples.add(triple);
-    }
-  }
-  return triples;
-}
-
-export interface MuslCcResolution {
-  triple: string;
-  exports: Record<string, string>;
-  resolvedPaths: { cc: string; cxx: string; ar: string };
-}
-
-export interface DetectMuslCcDeps {
-  findOnPath?: (cmd: string) => string | null;
-  readDir?: (dir: string) => string[];
-}
-
-/**
- * Detect *-unknown-linux-musl cross compilers on PATH and return the
- * cc-rs env-var exports needed to make cc-rs find them. cc-rs strips the
- * "-unknown-" segment from the Rust target triple when searching for a
- * cross compiler, so the cross-tools archives (which ship binaries named
- * with the full triple, e.g. aarch64-unknown-linux-musl-gcc) are missed
- * and cc-rs falls back to the host gcc. Auto-exporting CC_<triple>,
- * CXX_<triple>, and AR_<triple> in snake-case fixes the build without
- * any workflow edits.
- *
- * Triples are sourced from: CARGO_BUILD_TARGET, any CARGO_TARGET_<T>_*
- * env vars the user has already set, and PATH-scanning for
- * `*-unknown-linux-musl-gcc` binaries. A triple is skipped when the user
- * has already set any of CC_/CXX_/AR_<snake_triple>.
- */
-export function detectMuslCcEnv(
-  env: Record<string, string | undefined>,
-  deps?: DetectMuslCcDeps,
-): MuslCcResolution[] {
-  const find = deps?.findOnPath ?? ((cmd: string) => findOnPathSync(env, cmd));
-  const readDir = deps?.readDir ?? ((dir: string) => fs.readdirSync(dir));
-  const triples = new Set<string>();
-
-  const cbt = (env["CARGO_BUILD_TARGET"] ?? "").trim();
-  if (cbt && MUSL_TRIPLE_RE.test(cbt)) triples.add(cbt);
-
-  // Cargo encodes triples by uppercasing and replacing `-` with `_`, so
-  // `x86_64-unknown-linux-musl` becomes `X86_64_UNKNOWN_LINUX_MUSL` — the
-  // reverse is ambiguous (the arch may contain a real underscore). Match on
-  // the fixed `_UNKNOWN_LINUX_MUSL_` suffix and treat the prefix as the
-  // verbatim arch name to round-trip safely.
-  for (const name of Object.keys(env)) {
-    const m = name.match(/^CARGO_TARGET_(.+?)_UNKNOWN_LINUX_MUSL_(LINKER|RUSTFLAGS|RUNNER)$/);
-    if (!m) continue;
-    const arch = m[1]!.toLowerCase();
-    if (!/^[a-z0-9_]+$/.test(arch)) continue;
-    const triple = `${arch}-unknown-linux-musl`;
-    if (MUSL_TRIPLE_RE.test(triple)) triples.add(triple);
-  }
-
-  for (const t of scanPathForMuslTriples(env, readDir)) {
-    triples.add(t);
-  }
-
-  const out: MuslCcResolution[] = [];
-  for (const triple of [...triples].sort()) {
-    const suffix = tripleToCcRsSuffix(triple);
-    const ccVar = `CC_${suffix}`;
-    const cxxVar = `CXX_${suffix}`;
-    const arVar = `AR_${suffix}`;
-    if ((env[ccVar] ?? "").trim() !== "") continue;
-    if ((env[cxxVar] ?? "").trim() !== "") continue;
-    if ((env[arVar] ?? "").trim() !== "") continue;
-    const ccPath = find(`${triple}-gcc`);
-    const cxxPath = find(`${triple}-g++`);
-    const arPath = find(`${triple}-ar`);
-    if (!ccPath || !cxxPath || !arPath) continue;
-    out.push({
-      triple,
-      exports: {
-        [ccVar]: `${triple}-gcc`,
-        [cxxVar]: `${triple}-g++`,
-        [arVar]: `${triple}-ar`,
-      },
-      resolvedPaths: { cc: ccPath, cxx: cxxPath, ar: arPath },
-    });
-  }
-  return out;
-}
+// Re-exports kept for backward compatibility with tests and external
+// consumers that imported the musl cc-rs helpers from this module
+// before the split. New code should import directly from
+// ./detect-musl-cc.js.
+export { detectMuslCcEnv, type MuslCcResolution, type DetectMuslCcDeps };
 
 function normalizeStatsMode(raw: string): StatsMode {
   const v = raw.trim().toLowerCase();
@@ -980,63 +859,10 @@ export async function applyResolveResult(result: ResolveResult): Promise<void> {
   }
 }
 
-/**
- * Build the $GITHUB_OUTPUT key/value map mirroring resolve_setup.py's
- * `_write_outputs()` call. Exposed for tests so they can assert byte-for-byte.
- */
-export function buildOutputs(result: ResolveResult): Record<string, string> {
-  return {
-    cache_root: result.cacheRoot,
-    setup_cache_path: result.setupCache.setupCachePath,
-    setup_cache_paths: result.setupCache.paths.join("\n"),
-    cache_key: result.setupCache.key,
-    cache_restore_prefix: result.setupCache.restorePrefix,
-    build_cache_key: result.buildCache.key,
-    build_cache_restore_key_parent: result.buildCache.restoreKeyParent,
-    build_cache_restore_key_toolchain: result.buildCache.restoreKeyToolchain,
-    build_cache_restore_key_os_arch: result.buildCache.restoreKeyOsArch,
-    build_cache_path: result.buildCache.path,
-    build_cache_mode: result.buildCache.mode,
-    target_cache_path: result.targetCache.targetPath,
-    target_cache_bundle_path: result.targetCache.bundlePath,
-    target_cache_paths: result.targetCache.paths,
-    target_cache_enabled: result.targetCache.enabled ? "true" : "false",
-    target_cache_mode: result.targetCache.effectiveMode,
-    target_cache_profile: result.targetCache.profile,
-    target_cache_compress: result.targetCacheCompress,
-    target_cache_compress_level: result.targetCacheCompressLevel,
-    target_cache_key: result.targetCache.key,
-    target_cache_restore_key_parent: result.targetCache.restoreKeyParent,
-    target_cache_restore_key_lock: result.targetCache.restoreKeyLock,
-    target_cache_restore_key_lockfile: result.targetCache.restoreKeyLockfile,
-    target_cache_budget_bytes: result.targetCache.budgetBytes,
-    target_cache_budget_files: result.targetCache.budgetFiles,
-    target_lockfile_path: result.targetCache.lockfilePath,
-    target_lockfile_hash: result.targetCache.lockfileHash,
-    cargo_registry_cache_enabled: result.cargoRegistryCache.enabled ? "true" : "false",
-    cargo_registry_cache_path: result.cargoRegistryCache.path,
-    cargo_registry_cache_key: result.cargoRegistryCache.key,
-    cargo_registry_cache_restore_prefix: result.cargoRegistryCache.restorePrefix,
-    soldr_root: result.soldrRoot,
-    soldr_bin_cache_path: result.soldrBinCachePath,
-    cargo_home: result.cargoHome,
-    rustup_home: result.rustupHome,
-    setup_cache_layout: result.setupCache.layout,
-    bin_dir: result.binDir,
-    shims_dir: result.shimsDir,
-    soldr_path: result.soldrPath,
-    soldr_repo: result.soldrRepo,
-    soldr_ref: result.soldrRef,
-    soldr_version_requested: result.soldrVersionRequested,
-    soldr_version_resolved: result.soldrVersionResolved,
-    toolchain_channel: result.toolchain.channel,
-    toolchain_cache_channel: result.toolchain.cacheChannel,
-    toolchain_profile: result.toolchain.profile,
-    toolchain_source: result.toolchain.source,
-    toolchain: result.toolchain.channel,
-    enabled: result.enabled ? "true" : "false",
-  };
-}
+// Re-export buildOutputs for backward compatibility with existing
+// test imports. New code should import directly from
+// ./build-outputs.js.
+export { buildOutputs };
 
 // --------------------- Python-default JSON serialization ---------------------
 
