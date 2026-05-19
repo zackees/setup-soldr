@@ -39,6 +39,11 @@ JSON
 JSON
     exit 0
     ;;
+  stop)
+    # No daemon to stop in passthrough mode; report success so the
+    # post-step shutdown-cache helper doesn't log a noisy non-zero exit.
+    exit 0
+    ;;
   *)
     exec "$@"
     ;;
@@ -71,6 +76,7 @@ function cmdStub(): string {
     `  echo ${stubJsonStatus}`,
     "  exit /b 0",
     ")",
+    'if /I "%~1"=="stop" exit /b 0',
     'set "TOOL=%~1"',
     "shift",
     '"%TOOL%" %*',
@@ -80,9 +86,19 @@ function cmdStub(): string {
 }
 
 /**
- * Write a passthrough stub at soldrPath. `soldrPath` is expected to end
- * in `.cmd` on Windows and have no extension on Unix; resolveSetup picks
- * the right name when `enable: false`.
+ * Write a passthrough stub at `soldrPath`. On Unix this is a single
+ * bash script at `<binDir>/soldr`. On Windows we write TWO files:
+ *
+ *   - `soldrPath` (ends in `.cmd`) — for cmd.exe, PowerShell, and
+ *     @actions/exec calls that route through cross-spawn's .cmd
+ *     handling. This is the canonical SOLDR_BINARY.
+ *   - `<binDir>/soldr` (no extension) — a bash-flavored stub that Git
+ *     Bash / MSYS / WSL resolves when a workflow step running under
+ *     `shell: bash` invokes the literal `soldr` command. Without this
+ *     companion file, a bash script that runs `soldr cargo build` on
+ *     a Windows runner exits 127 with `soldr: command not found`,
+ *     because bash on Windows doesn't auto-append `.cmd` to PATH
+ *     lookups. See zccache CI run zackees/zccache#307.
  */
 export function installPassthrough(opts: {
   soldrPath: string;
@@ -93,10 +109,15 @@ export function installPassthrough(opts: {
   fs.mkdirSync(path.dirname(soldrPath), { recursive: true });
   if (isWindows) {
     fs.writeFileSync(soldrPath, cmdStub(), "utf8");
+    const bashTwin = path.join(path.dirname(soldrPath), "soldr");
+    fs.writeFileSync(bashTwin, bashStub(), "utf8");
+    log(
+      `setup-soldr: installed passthrough stubs at ${soldrPath} and ${bashTwin} (enable=false)`,
+    );
   } else {
     fs.writeFileSync(soldrPath, bashStub(), { encoding: "utf8", mode: 0o755 });
+    log(`setup-soldr: installed passthrough stub at ${soldrPath} (enable=false)`);
   }
-  log(`setup-soldr: installed passthrough stub at ${soldrPath} (enable=false)`);
 }
 
 // Exported for tests.
