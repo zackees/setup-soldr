@@ -117,7 +117,7 @@ def test_action_runs_as_node20_with_main_and_post_entrypoints() -> None:
     assert runs["using"] == "node20"
     assert runs["main"] == "dist/main.js"
     assert runs["post"] == "dist/post.js"
-    assert runs.get("post-if") == "success()"
+    assert runs.get("post-if") == "always()"
 
 
 def test_action_preserves_all_original_inputs() -> None:

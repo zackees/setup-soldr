@@ -359,4 +359,8 @@ runs:
   using: node20
   main: dist/main.js
   post: dist/post.js
-  post-if: success()
+  # always() so the post step (and its unconditional cache-daemon
+  # shutdown) fires on job failure too. saveOne is already best-effort
+  # — missing dirs and save errors are logged, not raised — so running
+  # the full post pipeline on failure cannot brick the run.
+  post-if: always()
