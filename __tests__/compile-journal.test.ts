@@ -115,7 +115,7 @@ test("formatJournalSection includes every reason name in output", () => {
   assert.match(out, /sample_records/);
 });
 
-test("formatJournalSection redacts token env values in sample records", () => {
+test("formatJournalSection redacts token env values in sample records (object form)", () => {
   const records: JournalRecord[] = [
     {
       outcome: "miss",
@@ -133,6 +133,58 @@ test("formatJournalSection redacts token env values in sample records", () => {
   assert.match(out, /GITHUB_TOKEN":"<redacted>"/);
   // Non-token vars stay verbatim.
   assert.match(out, /CARGO_TERM_COLOR":"always"/);
+});
+
+test("formatJournalSection redacts env when zccache writes array-of-pairs", () => {
+  // This is the on-the-wire shape (run 26145372118 leaked the full
+  // env on every sample because the previous impl indexed by array
+  // position so the redaction regex never matched the real key names).
+  const records: JournalRecord[] = [
+    {
+      outcome: "miss",
+      miss_reason: "ContentChanged",
+      crate_name: "demo",
+      output_ext: "rmeta",
+      env: [
+        ["GITHUB_TOKEN", "ghs_super_secret_array_form"],
+        ["CARGO_TERM_COLOR", "always"],
+        ["RUSTUP_TOOLCHAIN", "stable"],
+      ],
+    },
+  ];
+  const out = formatJournalSection(summarize(records)).join("\n");
+  assert.doesNotMatch(
+    out,
+    /ghs_super_secret_array_form/,
+    "secret must NOT appear verbatim regardless of env shape",
+  );
+  assert.match(out, /GITHUB_TOKEN":"<redacted>"/);
+  assert.match(out, /CARGO_TERM_COLOR":"always"/);
+  assert.match(out, /RUSTUP_TOOLCHAIN":"stable"/);
+  // The previous bug produced keys like "0", "1" — assert that pattern
+  // no longer appears in our output so a regression jumps out fast.
+  assert.doesNotMatch(out, /"0":\[/);
+  assert.doesNotMatch(out, /"1":\[/);
+});
+
+test("formatJournalSection recovers env from legacy index-keyed-object shape", () => {
+  // If some intermediate layer stringifies an array via
+  // `Object.fromEntries(arr.entries())` we'd get `{"0":[k,v]}`. We
+  // detect + recover so secrets still get redacted.
+  const records: JournalRecord[] = [
+    {
+      outcome: "miss",
+      miss_reason: "ContentChanged",
+      crate_name: "demo",
+      env: {
+        "0": ["GITHUB_TOKEN", "ghs_legacy_form"] as unknown as string,
+        "1": ["CARGO_TERM_COLOR", "always"] as unknown as string,
+      } as unknown as Record<string, string>,
+    },
+  ];
+  const out = formatJournalSection(summarize(records)).join("\n");
+  assert.doesNotMatch(out, /ghs_legacy_form/);
+  assert.match(out, /GITHUB_TOKEN":"<redacted>"/);
 });
 
 test("formatJournalSection handles empty input gracefully", () => {

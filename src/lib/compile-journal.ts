@@ -31,7 +31,12 @@ export interface JournalRecord {
   output_ext?: string;
   args?: string[];
   cwd?: string;
-  env?: Record<string, string>;
+  /**
+   * zccache writes `env` as an array of [key, value] pairs (the typical
+   * Rust serde-as-Vec form, since process envs are ordered). Some
+   * future versions may switch to a plain object. Accept both shapes.
+   */
+  env?: Array<[string, string]> | Record<string, string>;
   exit_code?: number;
   session_id?: string;
   latency_ns?: number;
@@ -162,11 +167,67 @@ function pad(left: number, right: number, label: string, value: string | number)
   return `${label.padEnd(left)}${String(value).padStart(right)}`;
 }
 
-function redactEnv(env: Record<string, string> | undefined): Record<string, string> {
+/**
+ * Normalise zccache's `env` field into a plain `{key: value}` map.
+ * The wire format is array-of-pairs (`Array<[string, string]>`) in
+ * current zccache builds; older / future builds may use a plain
+ * object. We tolerate both — and crucially, when given the array
+ * form we DO NOT use array indices as keys (the previous bug:
+ * indices like "0", "1" don't match the redaction regex so secrets
+ * leaked verbatim).
+ */
+function normaliseEnv(
+  env: Array<[string, string]> | Record<string, string> | undefined,
+): Record<string, string> {
   if (!env) return {};
+  if (Array.isArray(env)) {
+    const out: Record<string, string> = {};
+    for (const pair of env) {
+      if (Array.isArray(pair) && pair.length >= 2 && typeof pair[0] === "string") {
+        out[pair[0]] = String(pair[1] ?? "");
+      }
+    }
+    return out;
+  }
+  // Plain object form. Defend against the legacy index-keyed shape that
+  // sneaks in if some intermediate code stringifies an array via
+  // `Object.fromEntries(arr.entries())` — detect that and recover.
+  const entries = Object.entries(env);
+  const looksLikeIndexedArray =
+    entries.length > 0 &&
+    entries.every(
+      ([k, v]) =>
+        /^\d+$/.test(k) &&
+        Array.isArray(v) &&
+        (v as unknown as unknown[]).length >= 2 &&
+        typeof (v as unknown as unknown[])[0] === "string",
+    );
+  if (looksLikeIndexedArray) {
+    const out: Record<string, string> = {};
+    for (const [, v] of entries) {
+      const pair = v as unknown as [string, string];
+      out[pair[0]] = String(pair[1] ?? "");
+    }
+    return out;
+  }
+  return env as Record<string, string>;
+}
+
+function redactEnv(
+  env: Array<[string, string]> | Record<string, string> | undefined,
+): Record<string, string> {
+  const norm = normaliseEnv(env);
   const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(env)) out[k] = redactValue(k, v);
+  for (const [k, v] of Object.entries(norm)) out[k] = redactValue(k, v);
   return out;
+}
+
+function envIsNonEmpty(
+  env: Array<[string, string]> | Record<string, string> | undefined,
+): boolean {
+  if (!env) return false;
+  if (Array.isArray(env)) return env.length > 0;
+  return Object.keys(env).length > 0;
 }
 
 function formatRecord(r: JournalRecord): string {
@@ -186,7 +247,7 @@ function formatRecord(r: JournalRecord): string {
   if (r.args && r.args.length > 0) {
     parts.push(`    args: ${JSON.stringify(r.args)}`);
   }
-  if (r.env && Object.keys(r.env).length > 0) {
+  if (envIsNonEmpty(r.env)) {
     parts.push(`    env (redacted): ${JSON.stringify(redactEnv(r.env))}`);
   }
   if (r.miss_diff && Object.keys(r.miss_diff).length > 0) {
