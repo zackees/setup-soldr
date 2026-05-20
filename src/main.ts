@@ -21,7 +21,35 @@ import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js
 import { ensureShims } from "./lib/ensure-shims.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { StatsCollector } from "./lib/stats-collector.js";
-import type { ActionContext } from "./lib/types.js";
+import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
+import {
+  replaySourceMtimes,
+  readSnapshotFile,
+  SNAPSHOT_FILENAME,
+} from "./lib/source-mtime-snapshot.js";
+import type { ActionContext, ResolveResult } from "./lib/types.js";
+
+function writeCacheKeysManifest(
+  result: ResolveResult,
+  runnerTemp: string,
+  log: (msg: string) => void,
+): void {
+  if (!runnerTemp) return;
+  const keys = [
+    result.setupCache.key,
+    result.buildCache.key,
+    result.targetCache.key,
+    result.cargoRegistryCache.key,
+  ].filter((k) => Boolean(k));
+  if (keys.length === 0) return;
+  const outPath = path.join(runnerTemp, "setup-soldr-cache-keys.txt");
+  try {
+    fs.writeFileSync(outPath, keys.join("\n") + "\n", "utf8");
+    log(`cache-keys manifest written to ${outPath} (${keys.length} keys)`);
+  } catch (err) {
+    log(`cache-keys manifest write failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 const FALSY = new Set(["0", "false", "no", "off"]);
@@ -103,6 +131,24 @@ export async function run(): Promise<void> {
   await applyResolveResult(result);
   await finishPhase("resolve");
 
+  // Always emit the cache-keys manifest right after resolve so workflow
+  // steps that run between main and post (e.g. actions/upload-artifact)
+  // can read it. The four keys are fully determined by resolveSetup and
+  // never change later in the run.
+  writeCacheKeysManifest(result, ctx.runnerTemp, (msg) => logger.log(msg));
+
+  const logging = loggingEnabled(inputs.logging);
+  if (logging) {
+    dumpDiagnostics({
+      phase: "main",
+      env: process.env,
+      rawInputs: inputs,
+      result,
+      logger,
+      stepSummaryPath: process.env["GITHUB_STEP_SUMMARY"]?.trim() || undefined,
+    });
+  }
+
   const dryRun = TRUTHY.has((process.env["SETUP_SOLDR_DRY_RUN"] ?? "").trim().toLowerCase());
   if (dryRun) {
     logger.log("DRY RUN: setup-soldr dry run — skipping cache, install, and verify");
@@ -113,6 +159,8 @@ export async function run(): Promise<void> {
   // Persist resolve state for the post-job step.
   core.saveState("resolveResult", JSON.stringify(result));
   core.saveState("buildCacheMode", result.buildCache.mode);
+  core.saveState("logging", logging ? "true" : "false");
+  core.saveState("preserveSourceMtimes", isTruthy(inputs.preserveSourceMtimes) ? "true" : "false");
 
   const statsMode = result.stats;
   const debugMode = result.debugMode;
@@ -207,8 +255,13 @@ export async function run(): Promise<void> {
     if (result.buildCache.restoreKeyToolchain) restoreKeys.push(result.buildCache.restoreKeyToolchain);
     if (result.buildCache.restoreKeyOsArch) restoreKeys.push(result.buildCache.restoreKeyOsArch);
     const t0 = Date.now();
+    // @actions/cache hashes the `paths` array into a "version" key — save and
+    // restore MUST pass the same array or the lookup misses even when the
+    // entry exists. post.ts saves `[archivePath]` (just the .tar.zst), so
+    // restore must use the same single-path array. The decompression below
+    // unpacks archivePath → buildCachePath afterwards.
     const restore = await restoreCacheSafe(
-      [archivePath, buildCachePath],
+      [archivePath],
       result.buildCache.key,
       restoreKeys,
       logger,
@@ -233,6 +286,41 @@ export async function run(): Promise<void> {
             `build-cache decompress failed: ${err instanceof Error ? err.message : String(err)}`,
           );
         }
+      }
+    }
+    // Source-mtime replay (preserve-source-mtimes opt-in). post.ts dropped
+    // a `setup-soldr-source-mtimes.json` sidecar inside the build-cache
+    // dir on the cold side; if it's present after decompress, walk it and
+    // set each matching source file's mtime to what cold saw. The replay
+    // is gated by (size, content-hash) match so we never overwrite a
+    // genuinely modified file's mtime — that would underbuild.
+    if (isTruthy(inputs.preserveSourceMtimes) && restore.hit) {
+      const snapshotPath = path.join(buildCachePath, SNAPSHOT_FILENAME);
+      const snapshot = readSnapshotFile(snapshotPath);
+      if (snapshot) {
+        const rt0 = Date.now();
+        try {
+          // Match the project-root selection that post.ts uses when
+          // writing the snapshot — the parent of the resolved target-dir,
+          // not the (outer) GITHUB_WORKSPACE.
+          const projectRoot = path.dirname(result.targetCache.targetPath);
+          const rr = await replaySourceMtimes({
+            workspace: projectRoot,
+            snapshot,
+            log: (msg) => logger.log(msg),
+          });
+          logger.log(
+            `source-mtime-replay: applied=${rr.applied} skipped_missing=${rr.skipped_missing} ` +
+              `skipped_modified=${rr.skipped_modified} skipped_size_mismatch=${rr.skipped_size_mismatch} ` +
+              `total=${rr.total} elapsed_ms=${Date.now() - rt0}`,
+          );
+        } catch (err) {
+          logger.log(
+            `source-mtime-replay: failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      } else {
+        logger.log(`source-mtime-replay: snapshot file not found at ${snapshotPath}, skipping`);
       }
     }
     statsCollector.record({
@@ -308,8 +396,11 @@ export async function run(): Promise<void> {
   if (result.cargoRegistryCache.enabled) {
     const registryArchive = `${result.cargoRegistryCache.path}.tar.zst`;
     const t0 = Date.now();
+    // Match the single-path save (post.ts:`pathsToSave = [archivePath]`) so
+    // the @actions/cache version hashes agree and the restore can find the
+    // entry. See the build-cache restore comment above for details.
     const restore = await restoreCacheSafe(
-      [registryArchive, result.cargoRegistryCache.path],
+      [registryArchive],
       result.cargoRegistryCache.key,
       [result.cargoRegistryCache.restorePrefix],
       logger,
@@ -370,6 +461,17 @@ export async function run(): Promise<void> {
   core.saveState("statsMode", statsMode);
   core.saveState("compileCacheStats", result.compileCacheStats);
   core.saveState("runnerTemp", ctx.runnerTemp);
+
+  if (logging) {
+    dumpDiagnostics({
+      phase: "main",
+      env: process.env,
+      rawInputs: inputs,
+      result,
+      cacheOutcomes: statsCollector.snapshot(),
+      logger,
+    });
+  }
 
   await finishPhase("action");
 

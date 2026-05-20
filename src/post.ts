@@ -16,6 +16,13 @@ import { compressCache } from "./lib/cache-compress.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
+import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
+import { readRawInputs } from "./lib/raw-inputs.js";
+import {
+  snapshotSourceMtimes,
+  writeSnapshotFile,
+  SNAPSHOT_FILENAME,
+} from "./lib/source-mtime-snapshot.js";
 import type { CompileCacheStatsMode, ResolveResult, StatsMode } from "./lib/types.js";
 
 type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
@@ -675,6 +682,43 @@ export async function run(): Promise<void> {
     log,
   });
 
+  // Source-mtime snapshot (preserve-source-mtimes opt-in). Walk tracked
+  // sources, capture each (mtime, size, content-hash), and drop the JSON
+  // INSIDE the build-cache directory so it gets bundled into the same
+  // tar.zst the build-cache save will upload. main.ts replays the
+  // mtimes on warm after the build-cache decompresses, gated on each
+  // file's content matching what we snapshotted here.
+  const preserveSourceMtimes = core.getState("preserveSourceMtimes") === "true";
+  if (preserveSourceMtimes && restoreState.buildCacheEnabled) {
+    const t0 = Date.now();
+    // The "project root" — where the Cargo workspace being built actually
+    // lives — is the parent of the resolved target-dir, NOT result.workspace
+    // (which is GITHUB_WORKSPACE — usually the outer checkout containing
+    // the action itself plus one or more sub-repos). For the demo,
+    // result.workspace=/home/runner/work/setup-soldr/setup-soldr but the
+    // zccache project being built is at .../setup-soldr/zccache.
+    const projectRoot = path.dirname(result.targetCache.targetPath);
+    try {
+      const r = await snapshotSourceMtimes({ workspace: projectRoot, log });
+      const out = path.join(result.buildCache.path, SNAPSHOT_FILENAME);
+      try {
+        fs.mkdirSync(path.dirname(out), { recursive: true });
+        writeSnapshotFile(r.snapshot, out);
+        log(
+          `source-mtime-snapshot: wrote ${out} scanned=${r.scanned} hashed=${r.hashed} skipped=${r.skipped} elapsed_ms=${Date.now() - t0}`,
+        );
+      } catch (err) {
+        log(
+          `source-mtime-snapshot: failed to write ${out}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    } catch (err) {
+      log(
+        `source-mtime-snapshot: scan failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
   // Build cache
   const buildSaveStart = Date.now();
   const buildSave = restoreState.buildCacheEnabled
@@ -741,6 +785,14 @@ export async function run(): Promise<void> {
     log(`compile-cache-report.json written to ${reportPath}`);
   }
 
+  // Note: setup-soldr-cache-keys.txt is written in main.ts (right after
+  // resolveSetup) so workflow steps that run between main and post —
+  // notably actions/upload-artifact — can read it. Re-write it here
+  // anyway as a safety net in case main.ts crashed before writing.
+  if (runnerTemp) {
+    writeCacheKeysManifestFromSummary(finalSummary, runnerTemp, log);
+  }
+
   // Append save ops to detailed session log if requested
   if (statsMode === "detailed" && runnerTemp) {
     try {
@@ -748,6 +800,44 @@ export async function run(): Promise<void> {
     } catch (err) {
       log(`post: stats log append failed: ${err instanceof Error ? err.message : String(err)}`);
     }
+  }
+
+  // Optional verbose diagnostic dump. Gated on `logging: true` which
+  // main.ts persists into action state.
+  const loggingState = core.getState("logging");
+  if (loggingEnabled(loggingState)) {
+    const rawInputs = readRawInputs(process.env);
+    dumpDiagnostics({
+      phase: "post",
+      env: process.env,
+      rawInputs,
+      result,
+      cacheOutcomes: postCollector.snapshot(),
+      finalSummary: finalSummary as unknown as Record<string, unknown>,
+      logger,
+      stepSummaryPath: process.env["GITHUB_STEP_SUMMARY"]?.trim() || undefined,
+    });
+  }
+}
+
+function writeCacheKeysManifestFromSummary(
+  summary: FinalCacheSummary,
+  runnerTemp: string,
+  log: (msg: string) => void,
+): void {
+  const keys = [
+    summary.setup_cache.key,
+    summary.build_cache.key,
+    summary.target_cache.key,
+    summary.cargo_registry_cache.key,
+  ].filter((k) => Boolean(k));
+  if (keys.length === 0) return;
+  const outPath = path.join(runnerTemp, "setup-soldr-cache-keys.txt");
+  try {
+    fs.writeFileSync(outPath, keys.join("\n") + "\n", "utf8");
+    log(`cache-keys manifest written to ${outPath} (${keys.length} keys)`);
+  } catch (err) {
+    log(`post: failed to write cache-keys manifest: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

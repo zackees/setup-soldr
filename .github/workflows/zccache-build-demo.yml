@@ -32,43 +32,95 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Delete setup-soldr demo caches
+      - name: Delete demo caches recorded by the previous run
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          mapfile -t caches < <(
-            gh api \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" \
-              --paginate \
-              --jq ".actions_caches[] | select(.key | contains(\"${DEMO_CACHE_SUFFIX}\")) | \"\\(.id)\\t\\(.key)\""
-          )
+          # Find the most recent prior run of THIS workflow on THIS branch
+          # whose cache-keys artifacts we can use as the deletion list.
+          # Falls back to suffix-based deletion if there's no prior run yet
+          # (first invocation after the manifest feature lands).
+          prev_run_id=""
+          prev_run_id=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/zccache-build-demo.yml/runs?branch=${GITHUB_REF_NAME}&per_page=20" \
+            --jq ".workflow_runs[] | select(.id != ${GITHUB_RUN_ID}) | .id" \
+            | head -n1 || true)
 
-          if [ "${#caches[@]}" -eq 0 ]; then
-            echo "No setup-soldr demo caches matched suffix '${DEMO_CACHE_SUFFIX}'."
+          touch keys-to-delete.txt
+
+          if [ -n "${prev_run_id}" ]; then
+            echo "Looking up cache-keys manifests from prior run ${prev_run_id}…"
+            mkdir -p prev-manifests
+            # Both manifests (cache-keys-cold-build, cache-keys-warm-build) live
+            # under prev-manifests/<artifact-name>/setup-soldr-cache-keys.txt.
+            gh run download "${prev_run_id}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --dir prev-manifests \
+              --pattern 'cache-keys-*' || echo "(no cache-keys-* artifacts on prev run)"
+            if compgen -G 'prev-manifests/*/setup-soldr-cache-keys.txt' >/dev/null; then
+              cat prev-manifests/*/setup-soldr-cache-keys.txt | sort -u >> keys-to-delete.txt
+            fi
+          else
+            echo "(no prior run found to source a manifest from)"
+          fi
+
+          # Fallback / belt-and-braces: also include any cache keys still
+          # carrying the demo suffix, even though the manifest is normally
+          # authoritative. This catches caches saved by old setup-soldr
+          # builds (pre-kebab-fix) that never appeared in a manifest, and
+          # any stragglers saved under refs/tags scopes.
+          gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/actions/caches?per_page=100" \
+            --paginate \
+            --jq ".actions_caches[] | select(.key | contains(\"${DEMO_CACHE_SUFFIX}\")) | .key" \
+            >> keys-to-delete.txt || true
+
+          mapfile -t unique_keys < <(sort -u keys-to-delete.txt | sed '/^$/d')
+
+          if [ "${#unique_keys[@]}" -eq 0 ]; then
+            echo "No demo caches found to delete (clean slate)."
             exit 0
           fi
 
           {
             echo "### Purged demo caches"
             echo
-            echo "| Cache ID | Key |"
-            echo "| --- | --- |"
+            echo "| Cache ID | Ref | Key |"
+            echo "| --- | --- | --- |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-          for cache in "${caches[@]}"; do
-            cache_id="${cache%%$'\t'*}"
-            cache_key="${cache#*$'\t'}"
-            echo "Deleting cache ${cache_id}: ${cache_key}"
-            gh api \
-              --method DELETE \
-              -H "Accept: application/vnd.github+json" \
-              "/repos/${GITHUB_REPOSITORY}/actions/caches/${cache_id}"
-            echo "| ${cache_id} | \`${cache_key}\` |" >> "$GITHUB_STEP_SUMMARY"
+          deleted_count=0
+          for key in "${unique_keys[@]}"; do
+            # A single key can have multiple cache entries (different scope
+            # refs, e.g. main + refs/tags/v0). Delete every entry per key.
+            while read -r row; do
+              [ -z "$row" ] && continue
+              cache_id="${row%%$'\t'*}"
+              rest="${row#*$'\t'}"
+              cache_ref="${rest%%$'\t'*}"
+              cache_key="${rest#*$'\t'}"
+              echo "Deleting cache ${cache_id} (ref=${cache_ref}): ${cache_key}"
+              if gh api --method DELETE \
+                -H "Accept: application/vnd.github+json" \
+                "/repos/${GITHUB_REPOSITORY}/actions/caches/${cache_id}"; then
+                echo "| ${cache_id} | \`${cache_ref}\` | \`${cache_key}\` |" >> "$GITHUB_STEP_SUMMARY"
+                deleted_count=$((deleted_count + 1))
+              else
+                echo "  (delete failed; ignoring)"
+              fi
+            done < <(
+              gh api -H "Accept: application/vnd.github+json" \
+                "/repos/${GITHUB_REPOSITORY}/actions/caches?key=${key}&per_page=50" \
+                --jq '.actions_caches[] | "\(.id)\t\(.ref)\t\(.key)"' || true
+            )
           done
+
+          echo
+          echo "Deleted ${deleted_count} cache entries across ${#unique_keys[@]} unique keys."
 
   cold-build:
     name: Cold zccache build after purge
@@ -139,6 +191,8 @@ jobs:
           debug: "true"
           shims: "true"
           compile-cache-stats: detailed
+          logging: "true"
+          preserve-source-mtimes: "true"
 
       - name: Show cache plan
         shell: bash
@@ -180,6 +234,15 @@ jobs:
             echo
             echo "Built \`zccache-cli\` in \`${elapsed}s\` after purging demo caches."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload cache-keys manifest (cold)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cache-keys-cold-build
+          path: ${{ runner.temp }}/setup-soldr-cache-keys.txt
+          if-no-files-found: warn
+          retention-days: 7
 
   warm-build:
     name: Warm zccache build with checked-out setup-soldr
@@ -252,6 +315,8 @@ jobs:
           debug: "true"
           shims: "true"
           compile-cache-stats: detailed
+          logging: "true"
+          preserve-source-mtimes: "true"
 
       - name: Show cache plan
         shell: bash
@@ -293,3 +358,12 @@ jobs:
             echo
             echo "Built \`zccache-cli\` in \`${elapsed}s\`."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload cache-keys manifest (warm)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cache-keys-warm-build
+          path: ${{ runner.temp }}/setup-soldr-cache-keys.txt
+          if-no-files-found: warn
+          retention-days: 7

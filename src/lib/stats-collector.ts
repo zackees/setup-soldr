@@ -148,6 +148,10 @@ export class StatsCollector {
     return JSON.stringify({ ops: this.ops });
   }
 
+  snapshot(): readonly CacheOpStats[] {
+    return this.ops.slice();
+  }
+
   static deserialize(s: string): StatsCollector {
     const c = new StatsCollector();
     try {

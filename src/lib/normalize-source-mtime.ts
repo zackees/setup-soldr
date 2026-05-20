@@ -124,7 +124,7 @@ async function captureGit(args: string[], cwd: string): Promise<{ code: number; 
   return { code, stdout, stderr };
 }
 
-async function isGitRepo(workspace: string): Promise<boolean> {
+export async function isGitRepo(workspace: string): Promise<boolean> {
   try {
     const r = await captureGit(["-C", workspace, "rev-parse", "--is-inside-work-tree"], workspace);
     return r.code === 0 && r.stdout.trim() === "true";
@@ -133,7 +133,7 @@ async function isGitRepo(workspace: string): Promise<boolean> {
   }
 }
 
-async function listTrackedFiles(workspace: string): Promise<string[]> {
+export async function listTrackedFiles(workspace: string): Promise<string[]> {
   // We use newline (default) instead of -z because @actions/exec gives us text;
   // GitHub Actions paths shouldn't contain NULs.
   const r = await captureGit(["-C", workspace, "ls-files"], workspace);

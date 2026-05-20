@@ -275,6 +275,36 @@ inputs:
       best-effort sweep regardless of this setting.
     required: false
     default: ""
+  logging:
+    description: >
+      When "true", emit a one-shot "DIAGNOSTIC DUMP" section after the
+      main step (post-resolve) and again at the end of the post step.
+      The dump includes every observed `INPUT_*` env var (so you can see
+      what the runner actually passed in), the parsed RawInputs struct,
+      every constructed cache key with its restore-key fallbacks, all
+      restore/save outcomes, key SOLDR_/ZCCACHE_ env exports, and the
+      compile-cache report. Token-shaped values are redacted. Use this
+      when cache behavior surprises you — captures everything needed to
+      file a bug without having to re-run with extra flags. Distinct
+      from `debug`, which only adds a few targeted `[debug]` lines.
+    required: false
+    default: "false"
+  preserve-source-mtimes:
+    description: >
+      Experimental. When "true", snapshot every tracked Rust source
+      file's (mtime, size, content-hash) at cold-post time and replay
+      the mtime onto matching files on warm — *only* when the current
+      content is byte-identical to the snapshot. Solves the case where
+      `actions/checkout` resets every source mtime on each run, which
+      otherwise makes Cargo invalidate every fingerprint and bypass
+      zccache's compile cache. The size+hash safety net means we
+      cannot underbuild the way the abandoned `source-mtime-normalize`
+      could: if a source file genuinely changed between cold and warm
+      (e.g., a patch landed at the same SHA range), its current mtime
+      is left alone and Cargo rebuilds correctly. Snapshot is a small
+      JSON sidecar shipped inside the existing build-cache tar.zst.
+    required: false
+    default: "false"
 outputs:
   enabled:
     description: >

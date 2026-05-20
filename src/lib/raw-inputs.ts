@@ -6,40 +6,51 @@
 import type { RawInputs } from "./types.js";
 
 export function readRawInputs(env: Record<string, string | undefined>): RawInputs {
-  const get = (name: string): string => env[`INPUT_${name}`] ?? "";
+  // The runner sets `INPUT_<NAME>` where <NAME> is the input name with spaces
+  // replaced by `_` and uppercased — **dashes are NOT converted**. So
+  // `cache-key-suffix` lands as `INPUT_CACHE-KEY-SUFFIX`. This matches
+  // @actions/core.getInput()'s lookup convention. We also accept the
+  // underscored form (`INPUT_CACHE_KEY_SUFFIX`) as a fallback so older tests
+  // and any callers that pre-set the underscored env keep working.
+  const get = (kebab: string): string => {
+    const upper = kebab.replace(/ /g, "_").toUpperCase();
+    return env[`INPUT_${upper}`] ?? env[`INPUT_${upper.replace(/-/g, "_")}`] ?? "";
+  };
   return {
-    enable: get("ENABLE"),
-    version: get("VERSION"),
-    repo: get("REPO"),
-    ref: get("REF"),
-    cache: get("CACHE"),
-    cacheDir: get("CACHE_DIR"),
-    cacheKeySuffix: get("CACHE_KEY_SUFFIX"),
-    toolchain: get("TOOLCHAIN"),
-    toolchainFile: get("TOOLCHAIN_FILE"),
-    trustMode: get("TRUST_MODE"),
-    linker: get("LINKER"),
-    compilePriority: get("COMPILE_PRIORITY"),
-    timestamps: get("TIMESTAMPS"),
-    lockfile: get("LOCKFILE"),
-    buildCache: get("BUILD_CACHE"),
-    buildCacheMode: get("BUILD_CACHE_MODE"),
-    targetCache: get("TARGET_CACHE"),
-    targetCacheMode: get("TARGET_CACHE_MODE"),
-    targetDir: get("TARGET_DIR"),
-    targetCacheProfile: get("TARGET_CACHE_PROFILE"),
-    targetCacheStripDebuginfo: get("TARGET_CACHE_STRIP_DEBUGINFO"),
-    targetCacheIncludeIncremental: get("TARGET_CACHE_INCLUDE_INCREMENTAL"),
-    targetCacheIncludeBuildScriptBinaries: get("TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES"),
-    targetCacheCompress: get("TARGET_CACHE_COMPRESS"),
-    targetCacheCompressLevel: get("TARGET_CACHE_COMPRESS_LEVEL"),
-    sourceMtimeNormalize: get("SOURCE_MTIME_NORMALIZE"),
-    cargoRegistryCache: get("CARGO_REGISTRY_CACHE"),
-    compileCacheStats: get("COMPILE_CACHE_STATS"),
-    shims: get("SHIMS"),
-    stats: get("STATS"),
-    debugMode: get("DEBUG"),
-    cacheShutdownOnIdle: get("CACHE_SHUTDOWN_ON_IDLE"),
-    rustBacktrace: get("RUST_BACKTRACE"),
+    enable: get("enable"),
+    version: get("version"),
+    repo: get("repo"),
+    ref: get("ref"),
+    cache: get("cache"),
+    cacheDir: get("cache-dir"),
+    cacheKeySuffix: get("cache-key-suffix"),
+    toolchain: get("toolchain"),
+    toolchainFile: get("toolchain-file"),
+    trustMode: get("trust-mode"),
+    linker: get("linker"),
+    compilePriority: get("compile-priority"),
+    timestamps: get("timestamps"),
+    lockfile: get("lockfile"),
+    buildCache: get("build-cache"),
+    buildCacheMode: get("build-cache-mode"),
+    targetCache: get("target-cache"),
+    targetCacheMode: get("target-cache-mode"),
+    targetDir: get("target-dir"),
+    targetCacheProfile: get("target-cache-profile"),
+    targetCacheStripDebuginfo: get("target-cache-strip-debuginfo"),
+    targetCacheIncludeIncremental: get("target-cache-include-incremental"),
+    targetCacheIncludeBuildScriptBinaries: get("target-cache-include-build-script-binaries"),
+    targetCacheCompress: get("target-cache-compress"),
+    targetCacheCompressLevel: get("target-cache-compress-level"),
+    sourceMtimeNormalize: get("source-mtime-normalize"),
+    cargoRegistryCache: get("cargo-registry-cache"),
+    compileCacheStats: get("compile-cache-stats"),
+    shims: get("shims"),
+    stats: get("stats"),
+    debugMode: get("debug"),
+    cacheShutdownOnIdle: get("cache-shutdown-on-idle"),
+    rustBacktrace: get("rust-backtrace"),
+    logging: get("logging"),
+    preserveSourceMtimes: get("preserve-source-mtimes"),
   };
 }
