@@ -13,6 +13,12 @@
 // Token-shaped values are redacted before printing.
 
 import * as fs from "node:fs";
+import {
+  formatJournalSection,
+  formatRollupsSection,
+  readJournal,
+  summarize as summarizeJournal,
+} from "./compile-journal.js";
 import type { CacheOpStats, Logger, RawInputs, ResolveResult } from "./types.js";
 
 const ENV_KEY_PREFIXES: readonly string[] = [
@@ -34,7 +40,7 @@ const SECRET_KEY_PATTERN = /(token|secret|password|^.*_pass$|api[_-]?key|client[
 // Cache-key fields look secret-y but never are; never redact them.
 const NEVER_REDACT_PATTERN = /(_key$|cache[-_]key|cache[-_]keys$|key[-_]suffix$|public[-_]key)/i;
 
-function redactValue(key: string, value: string): string {
+export function redactValue(key: string, value: string): string {
   if (NEVER_REDACT_PATTERN.test(key)) return value;
   if (SECRET_KEY_PATTERN.test(key)) return value ? "<redacted>" : "";
   return value;
@@ -121,6 +127,22 @@ export interface DumpOptions {
   cacheOutcomes?: readonly CacheOpStats[];
   /** Verbatim FinalCacheSummary from post.ts. Stringified as pretty JSON. */
   finalSummary?: Record<string, unknown>;
+  /**
+   * Path to zccache's per-rustc-invocation JSONL journal (typically
+   * `${ZCCACHE_CACHE_DIR}/logs/last-session.jsonl`). When set AND the
+   * file exists, the post-phase dump appends a `[compile_journal]`
+   * section with per-outcome / per-miss-reason histograms + a sample
+   * of verbatim records so the reader can answer "why didn't warm hit?"
+   * from this one log block.
+   */
+  journalPath?: string;
+  /**
+   * Verbatim `report` field returned by `soldr cache report --json`
+   * (parsed into `SoldrCacheReportSummary.report`). When present, the
+   * post-phase dump also includes the `rollups` (per-extension /
+   * per-crate) breakdown from `zccache analyze --json`.
+   */
+  cacheReport?: Record<string, unknown>;
   logger: Logger;
   /** When set, also append the dump to this file as a fenced markdown block. */
   stepSummaryPath?: string;
@@ -196,6 +218,41 @@ export function dumpDiagnostics(opts: DumpOptions): void {
     for (const line of json.split("\n")) {
       lines.push(`  ${line}`);
     }
+  }
+
+  // Per-compilation zccache journal — the answer to "warm reports
+  // hits=0; WHY did each lookup miss?". Reads the JSONL emitted by
+  // zccache for the just-finished session, summarizes it (outcome +
+  // miss_reason histograms, slowest misses with their miss_diff, a
+  // handful of verbatim records), and prints. Silently no-ops when
+  // the journal file isn't present.
+  if (opts.journalPath) {
+    try {
+      const records = readJournal(opts.journalPath);
+      if (records === null) {
+        lines.push(`[compile_journal]`);
+        lines.push(`  (journal file not found at ${opts.journalPath})`);
+      } else if (records.length === 0) {
+        lines.push(`[compile_journal]`);
+        lines.push(`  (journal file empty at ${opts.journalPath})`);
+      } else {
+        lines.push(...formatJournalSection(summarizeJournal(records)));
+      }
+    } catch (err) {
+      lines.push(`[compile_journal]`);
+      lines.push(
+        `  (failed to read ${opts.journalPath}: ${err instanceof Error ? err.message : String(err)})`,
+      );
+    }
+  }
+
+  // Rollups (per-extension / per-crate) from `soldr cache report --json`.
+  // The raw report is already parsed into finalSummary's
+  // compile_cache_report.report; we accept it as a separate
+  // `cacheReport` so callers can pass it without rebuilding the
+  // FinalCacheSummary shape.
+  if (opts.cacheReport) {
+    lines.push(...formatRollupsSection(opts.cacheReport));
   }
 
   lines.push(footer);
