@@ -743,12 +743,12 @@ export async function run(): Promise<void> {
     log(`compile-cache-report.json written to ${reportPath}`);
   }
 
-  // Always emit the cache-keys manifest so external tools (the
-  // zccache-build-demo workflow's purge step in particular) can delete
-  // exactly the keys this run produced without having to filter by
-  // suffix. Small file, no downside to writing on every run.
+  // Note: setup-soldr-cache-keys.txt is written in main.ts (right after
+  // resolveSetup) so workflow steps that run between main and post —
+  // notably actions/upload-artifact — can read it. Re-write it here
+  // anyway as a safety net in case main.ts crashed before writing.
   if (runnerTemp) {
-    writeCacheKeysManifest(finalSummary, runnerTemp, log);
+    writeCacheKeysManifestFromSummary(finalSummary, runnerTemp, log);
   }
 
   // Append save ops to detailed session log if requested
@@ -778,7 +778,7 @@ export async function run(): Promise<void> {
   }
 }
 
-function writeCacheKeysManifest(
+function writeCacheKeysManifestFromSummary(
   summary: FinalCacheSummary,
   runnerTemp: string,
   log: (msg: string) => void,

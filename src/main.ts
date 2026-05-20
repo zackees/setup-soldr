@@ -22,7 +22,29 @@ import { ensureShims } from "./lib/ensure-shims.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
-import type { ActionContext } from "./lib/types.js";
+import type { ActionContext, ResolveResult } from "./lib/types.js";
+
+function writeCacheKeysManifest(
+  result: ResolveResult,
+  runnerTemp: string,
+  log: (msg: string) => void,
+): void {
+  if (!runnerTemp) return;
+  const keys = [
+    result.setupCache.key,
+    result.buildCache.key,
+    result.targetCache.key,
+    result.cargoRegistryCache.key,
+  ].filter((k) => Boolean(k));
+  if (keys.length === 0) return;
+  const outPath = path.join(runnerTemp, "setup-soldr-cache-keys.txt");
+  try {
+    fs.writeFileSync(outPath, keys.join("\n") + "\n", "utf8");
+    log(`cache-keys manifest written to ${outPath} (${keys.length} keys)`);
+  } catch (err) {
+    log(`cache-keys manifest write failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 const FALSY = new Set(["0", "false", "no", "off"]);
@@ -103,6 +125,12 @@ export async function run(): Promise<void> {
   const result = await resolveSetup(ctx, inputs);
   await applyResolveResult(result);
   await finishPhase("resolve");
+
+  // Always emit the cache-keys manifest right after resolve so workflow
+  // steps that run between main and post (e.g. actions/upload-artifact)
+  // can read it. The four keys are fully determined by resolveSetup and
+  // never change later in the run.
+  writeCacheKeysManifest(result, ctx.runnerTemp, (msg) => logger.log(msg));
 
   const logging = loggingEnabled(inputs.logging);
   if (logging) {
