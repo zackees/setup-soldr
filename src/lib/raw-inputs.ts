@@ -40,5 +40,6 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     stats: get("STATS"),
     debugMode: get("DEBUG"),
     cacheShutdownOnIdle: get("CACHE_SHUTDOWN_ON_IDLE"),
+    rustBacktrace: get("RUST_BACKTRACE"),
   };
 }

@@ -246,6 +246,20 @@ inputs:
       exact decompression/compression commands run.
     required: false
     default: "false"
+  rust-backtrace:
+    description: >
+      Value to export as `RUST_BACKTRACE`. Default "1" so any
+      unexpected panic in `soldr cargo …` (or anything else downstream
+      of this action) emits a backtrace immediately — saving a re-run
+      to capture context after the fact. Accepts "1"/"true"/"on"/"yes"
+      (trimmed backtrace, default), "full" (full stack including std
+      internals), or "0"/"false"/"off"/"no"/"" to skip the export and
+      keep whatever the calling environment had. Has no effect on
+      release builds with `panic = "abort"` (Rust doesn't print a
+      backtrace in that case) and only fires on panic — there's no
+      runtime cost for builds that don't panic.
+    required: false
+    default: "1"
   cache-shutdown-on-idle:
     description: >
       Configure the cache daemon (zccache / sccache) to self-exit after

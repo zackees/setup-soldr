@@ -59,6 +59,30 @@ export function detectUserLinkerEnv(env: Record<string, string | undefined>): st
   return hits;
 }
 
+/**
+ * Parse the `rust-backtrace` input into the literal value to export as
+ * `RUST_BACKTRACE`, or `null` to skip the export entirely.
+ *
+ * Accepts:
+ *   - "1" / "true" / "on" / "yes" → "1" (trimmed backtrace; default)
+ *   - "full"                      → "full" (full stack incl. std internals)
+ *   - "" / "0" / "false" / "off" / "no" → null (don't export)
+ *
+ * Throws on anything else so typos surface at action start.
+ */
+export function parseRustBacktrace(raw: string): string | null {
+  const value = raw.trim().toLowerCase();
+  if (value === "" || value === "0" || value === "false" || value === "off" || value === "no") {
+    return null;
+  }
+  if (value === "1" || value === "true" || value === "on" || value === "yes") return "1";
+  if (value === "full") return "full";
+  throw new Error(
+    `invalid 'rust-backtrace' input: '${raw}'. ` +
+      "Expected 1/true/on/yes, full, or 0/false/off/no/'' to disable.",
+  );
+}
+
 export function normalizeStatsMode(raw: string): StatsMode {
   const v = raw.trim().toLowerCase();
   if (v === "none" || v === "summarize" || v === "detailed") return v;
