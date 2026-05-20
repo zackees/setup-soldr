@@ -251,7 +251,12 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: zccache-logs-cold
-          path: ${{ steps.setup.outputs.build-cache-path }}/logs/
+          # NB: hardcoded layout — setup-soldr installs zccache into
+          # ${runner.temp}/setup-soldr-soldr/cache/zccache/ by default.
+          # Switch to ${{ steps.setup.outputs.build-cache-path }}/logs/
+          # once zackees/setup-soldr#125 (action outputs unreachable in
+          # workflows) is fixed.
+          path: ${{ runner.temp }}/setup-soldr-soldr/cache/zccache/logs/
           if-no-files-found: ignore
 
   warm-build:
@@ -385,5 +390,10 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: zccache-logs-warm
-          path: ${{ steps.setup.outputs.build-cache-path }}/logs/
+          # NB: hardcoded layout — setup-soldr installs zccache into
+          # ${runner.temp}/setup-soldr-soldr/cache/zccache/ by default.
+          # Switch to ${{ steps.setup.outputs.build-cache-path }}/logs/
+          # once zackees/setup-soldr#125 (action outputs unreachable in
+          # workflows) is fixed.
+          path: ${{ runner.temp }}/setup-soldr-soldr/cache/zccache/logs/
           if-no-files-found: ignore

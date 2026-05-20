@@ -829,6 +829,8 @@ export async function run(): Promise<void> {
       cacheOutcomes: postCollector.snapshot(),
       finalSummary: finalSummary as unknown as Record<string, unknown>,
       journalPath,
+      // Only dump the raw JSONL when debug=true — it's large.
+      journalPrintRaw: debugMode,
       cacheReport,
       processSnapshot,
       logger,
