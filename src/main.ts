@@ -249,8 +249,13 @@ export async function run(): Promise<void> {
     if (result.buildCache.restoreKeyToolchain) restoreKeys.push(result.buildCache.restoreKeyToolchain);
     if (result.buildCache.restoreKeyOsArch) restoreKeys.push(result.buildCache.restoreKeyOsArch);
     const t0 = Date.now();
+    // @actions/cache hashes the `paths` array into a "version" key — save and
+    // restore MUST pass the same array or the lookup misses even when the
+    // entry exists. post.ts saves `[archivePath]` (just the .tar.zst), so
+    // restore must use the same single-path array. The decompression below
+    // unpacks archivePath → buildCachePath afterwards.
     const restore = await restoreCacheSafe(
-      [archivePath, buildCachePath],
+      [archivePath],
       result.buildCache.key,
       restoreKeys,
       logger,
@@ -350,8 +355,11 @@ export async function run(): Promise<void> {
   if (result.cargoRegistryCache.enabled) {
     const registryArchive = `${result.cargoRegistryCache.path}.tar.zst`;
     const t0 = Date.now();
+    // Match the single-path save (post.ts:`pathsToSave = [archivePath]`) so
+    // the @actions/cache version hashes agree and the restore can find the
+    // entry. See the build-cache restore comment above for details.
     const restore = await restoreCacheSafe(
-      [registryArchive, result.cargoRegistryCache.path],
+      [registryArchive],
       result.cargoRegistryCache.key,
       [result.cargoRegistryCache.restorePrefix],
       logger,
