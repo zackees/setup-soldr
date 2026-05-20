@@ -361,6 +361,44 @@ test("lockfile prefix includes cache-key suffix fragment", async () => {
   assert.ok(prefix.endsWith("-myjob-"));
 });
 
+test("primary cache_key includes cache-key-suffix", async () => {
+  const { outputs } = await run({}, { INPUT_CACHE_KEY_SUFFIX: "myjob" });
+  const key = outputs["cache_key"] ?? "";
+  assert.ok(
+    key.endsWith("-myjob"),
+    `expected cache_key to end with -myjob, got ${key}`,
+  );
+});
+
+test("build_cache_key includes cache-key-suffix", async () => {
+  const { outputs } = await run({}, { INPUT_CACHE_KEY_SUFFIX: "myjob" });
+  const key = outputs["build_cache_key"] ?? "";
+  assert.ok(
+    key.endsWith("-myjob"),
+    `expected build_cache_key to end with -myjob, got ${key}`,
+  );
+});
+
+test("cargo_registry_cache_key includes cache-key-suffix", async () => {
+  const { outputs } = await run({}, { INPUT_CACHE_KEY_SUFFIX: "myjob" });
+  const key = outputs["cargo_registry_cache_key"] ?? "";
+  assert.ok(
+    key.endsWith("-myjob"),
+    `expected cargo_registry_cache_key to end with -myjob, got ${key}`,
+  );
+});
+
+test("cache-key-suffix works via kebab-case env (production form)", async () => {
+  // Simulate exactly what the GitHub Actions runner does: set
+  // INPUT_CACHE-KEY-SUFFIX (dashes), not INPUT_CACHE_KEY_SUFFIX.
+  const { outputs } = await run({}, { "INPUT_CACHE-KEY-SUFFIX": "demo" });
+  const key = outputs["cache_key"] ?? "";
+  assert.ok(
+    key.endsWith("-demo"),
+    `expected cache_key to end with -demo when set via kebab env, got ${key}`,
+  );
+});
+
 test("target_cache_key always derived from narrow lock prefix + SHA", async () => {
   const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "once" });
   const key = outputs["target_cache_key"] ?? "";

@@ -21,6 +21,7 @@ import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js
 import { ensureShims } from "./lib/ensure-shims.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { StatsCollector } from "./lib/stats-collector.js";
+import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import type { ActionContext } from "./lib/types.js";
 
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
@@ -103,6 +104,18 @@ export async function run(): Promise<void> {
   await applyResolveResult(result);
   await finishPhase("resolve");
 
+  const logging = loggingEnabled(inputs.logging);
+  if (logging) {
+    dumpDiagnostics({
+      phase: "main",
+      env: process.env,
+      rawInputs: inputs,
+      result,
+      logger,
+      stepSummaryPath: process.env["GITHUB_STEP_SUMMARY"]?.trim() || undefined,
+    });
+  }
+
   const dryRun = TRUTHY.has((process.env["SETUP_SOLDR_DRY_RUN"] ?? "").trim().toLowerCase());
   if (dryRun) {
     logger.log("DRY RUN: setup-soldr dry run — skipping cache, install, and verify");
@@ -113,6 +126,7 @@ export async function run(): Promise<void> {
   // Persist resolve state for the post-job step.
   core.saveState("resolveResult", JSON.stringify(result));
   core.saveState("buildCacheMode", result.buildCache.mode);
+  core.saveState("logging", logging ? "true" : "false");
 
   const statsMode = result.stats;
   const debugMode = result.debugMode;
@@ -370,6 +384,17 @@ export async function run(): Promise<void> {
   core.saveState("statsMode", statsMode);
   core.saveState("compileCacheStats", result.compileCacheStats);
   core.saveState("runnerTemp", ctx.runnerTemp);
+
+  if (logging) {
+    dumpDiagnostics({
+      phase: "main",
+      env: process.env,
+      rawInputs: inputs,
+      result,
+      cacheOutcomes: statsCollector.snapshot(),
+      logger,
+    });
+  }
 
   await finishPhase("action");
 

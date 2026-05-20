@@ -16,6 +16,8 @@ import { compressCache } from "./lib/cache-compress.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
+import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
+import { readRawInputs } from "./lib/raw-inputs.js";
 import type { CompileCacheStatsMode, ResolveResult, StatsMode } from "./lib/types.js";
 
 type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
@@ -741,6 +743,14 @@ export async function run(): Promise<void> {
     log(`compile-cache-report.json written to ${reportPath}`);
   }
 
+  // Always emit the cache-keys manifest so external tools (the
+  // zccache-build-demo workflow's purge step in particular) can delete
+  // exactly the keys this run produced without having to filter by
+  // suffix. Small file, no downside to writing on every run.
+  if (runnerTemp) {
+    writeCacheKeysManifest(finalSummary, runnerTemp, log);
+  }
+
   // Append save ops to detailed session log if requested
   if (statsMode === "detailed" && runnerTemp) {
     try {
@@ -748,6 +758,44 @@ export async function run(): Promise<void> {
     } catch (err) {
       log(`post: stats log append failed: ${err instanceof Error ? err.message : String(err)}`);
     }
+  }
+
+  // Optional verbose diagnostic dump. Gated on `logging: true` which
+  // main.ts persists into action state.
+  const loggingState = core.getState("logging");
+  if (loggingEnabled(loggingState)) {
+    const rawInputs = readRawInputs(process.env);
+    dumpDiagnostics({
+      phase: "post",
+      env: process.env,
+      rawInputs,
+      result,
+      cacheOutcomes: postCollector.snapshot(),
+      finalSummary: finalSummary as unknown as Record<string, unknown>,
+      logger,
+      stepSummaryPath: process.env["GITHUB_STEP_SUMMARY"]?.trim() || undefined,
+    });
+  }
+}
+
+function writeCacheKeysManifest(
+  summary: FinalCacheSummary,
+  runnerTemp: string,
+  log: (msg: string) => void,
+): void {
+  const keys = [
+    summary.setup_cache.key,
+    summary.build_cache.key,
+    summary.target_cache.key,
+    summary.cargo_registry_cache.key,
+  ].filter((k) => Boolean(k));
+  if (keys.length === 0) return;
+  const outPath = path.join(runnerTemp, "setup-soldr-cache-keys.txt");
+  try {
+    fs.writeFileSync(outPath, keys.join("\n") + "\n", "utf8");
+    log(`cache-keys manifest written to ${outPath} (${keys.length} keys)`);
+  } catch (err) {
+    log(`post: failed to write cache-keys manifest: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

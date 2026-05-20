@@ -67,6 +67,7 @@ export interface RawInputs {
   debugMode: string;
   cacheShutdownOnIdle: string;
   rustBacktrace: string;
+  logging: string;
 }
 
 /**
