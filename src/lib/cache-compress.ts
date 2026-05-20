@@ -101,10 +101,20 @@ export interface DecompressResult {
 /**
  * Decompress <cache-dir>.tar.zst (or .tar.gz) into <cache-dir>.
  *
- *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <targetDir>`.
- *   gzip: `tar -xzf <archive> -C <targetDir>`.
+ *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <extractRoot>`.
+ *   gzip: `tar -xzf <archive> -C <extractRoot>`.
  *
- * Returns compressed/inflated byte counts and file count.
+ * `extractRoot` is `dirname(targetDir)` because compressCache writes
+ * archives via `tar -cf - -C <parent> <basename>` — the archive's
+ * top-level directory IS `<basename>`. If we extract into <targetDir>
+ * directly, that <basename> gets nested twice and the contents end up
+ * at <targetDir>/<basename>/... where zccache and cargo can't find them.
+ * That double-nesting is the root cause of the long-standing zccache
+ * "0 hits despite restored artifacts" symptom.
+ *
+ * Returns compressed/inflated byte counts and file count (the count is
+ * taken from <targetDir> after extraction, so consumers see exactly
+ * what landed in the cache dir).
  * When debug=true, logs diagnostics via the supplied log fn.
  */
 export async function decompressCache(opts: {
@@ -114,7 +124,11 @@ export async function decompressCache(opts: {
   log?: (msg: string) => void;
 }): Promise<DecompressResult> {
   const { archivePath, targetDir, debug = false, log = (): void => undefined } = opts;
+  // Ensure both <targetDir> exists (zccache may have already populated it)
+  // and the extract root (which is the parent) is writable.
   await ensureDir(targetDir);
+  const extractRoot = path.dirname(targetDir);
+  await ensureDir(extractRoot);
 
   let archiveBytes = 0;
   try { archiveBytes = (await fs.stat(archivePath)).size; } catch { /* archive may not exist */ }
@@ -125,20 +139,20 @@ export async function decompressCache(opts: {
   }
 
   if (magic === "gzip") {
-    if (debug) log(`[debug] decompress cmd: tar -xzf ${archivePath} -C ${targetDir}`);
-    await exec.exec("tar", ["-xzf", archivePath, "-C", targetDir]);
+    if (debug) log(`[debug] decompress cmd: tar -xzf ${archivePath} -C ${extractRoot}`);
+    await exec.exec("tar", ["-xzf", archivePath, "-C", extractRoot]);
   } else if (magic === "zstd") {
     const zstdPath = await io.which("zstd", false);
     if (!zstdPath) {
-      if (debug) log(`[debug] decompress cmd (fallback): tar --zstd -xf ${archivePath} -C ${targetDir}`);
+      if (debug) log(`[debug] decompress cmd (fallback): tar --zstd -xf ${archivePath} -C ${extractRoot}`);
       // Fall back: many tars know how to decode zstd themselves (--zstd).
-      await exec.exec("tar", ["--zstd", "-xf", archivePath, "-C", targetDir]);
+      await exec.exec("tar", ["--zstd", "-xf", archivePath, "-C", extractRoot]);
     } else {
-      if (debug) log(`[debug] decompress cmd: zstd -d -c ${archivePath} | tar -xf - -C ${targetDir}`);
+      if (debug) log(`[debug] decompress cmd: zstd -d -c ${archivePath} | tar -xf - -C ${extractRoot}`);
       // tar -xf - reads from stdin; we pipe `zstd -d -c <archive>` into it.
       await runPipe(
         [zstdPath, ["-d", "-c", archivePath]],
-        ["tar", ["-xf", "-", "-C", targetDir]],
+        ["tar", ["-xf", "-", "-C", extractRoot]],
       );
     }
   } else {
