@@ -42,6 +42,7 @@ import {
   normalizeCompileCacheStats,
   normalizeStatsMode,
   parseCacheShutdownOnIdleSeconds,
+  parseRustBacktrace,
 } from "./input-parsers.js";
 import {
   fetchReleaseTagDefault,
@@ -105,6 +106,7 @@ function resolveAbsolute(p: string, env: Record<string, string | undefined>): st
 export {
   readRawInputs,
   parseCacheShutdownOnIdleSeconds,
+  parseRustBacktrace,
   detectUserLinkerEnv,
   detectMuslCcEnv,
   buildOutputs,
@@ -441,6 +443,7 @@ export async function resolveSetup(
 
   // ---- env exports ----
   const cacheShutdownOnIdleSeconds = parseCacheShutdownOnIdleSeconds(inputs.cacheShutdownOnIdle);
+  const rustBacktraceValue = parseRustBacktrace(inputs.rustBacktrace);
 
   const envExports: Record<string, string> = {};
   const setEnv = (name: string, value: string): void => {
@@ -541,6 +544,10 @@ export async function resolveSetup(
     const seconds = String(cacheShutdownOnIdleSeconds);
     setEnv("ZCCACHE_IDLE_TIMEOUT", seconds);
     setEnv("SCCACHE_IDLE_TIMEOUT", seconds);
+  }
+
+  if (rustBacktraceValue !== null) {
+    setEnv("RUST_BACKTRACE", rustBacktraceValue);
   }
 
   // Auto-export cc-rs cross-compile env for *-unknown-linux-musl triples

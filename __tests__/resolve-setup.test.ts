@@ -846,6 +846,39 @@ test("cache-shutdown-on-idle '0'/'off'/'false' disable the override", async () =
   }
 });
 
+// --- rust-backtrace input ---
+
+test("rust-backtrace defaults to '1' (action.yml default)", async () => {
+  const { result } = await run({}, { INPUT_RUST_BACKTRACE: "1" });
+  assert.equal(result.envExports["RUST_BACKTRACE"], "1");
+});
+
+test("rust-backtrace accepts truthy aliases", async () => {
+  for (const raw of ["1", "true", "on", "yes", "TRUE", "YES"]) {
+    const { result } = await run({}, { INPUT_RUST_BACKTRACE: raw });
+    assert.equal(result.envExports["RUST_BACKTRACE"], "1", `input=${raw}`);
+  }
+});
+
+test("rust-backtrace accepts 'full' and exports verbatim", async () => {
+  const { result } = await run({}, { INPUT_RUST_BACKTRACE: "full" });
+  assert.equal(result.envExports["RUST_BACKTRACE"], "full");
+});
+
+test("rust-backtrace '0'/'off'/'false'/'no'/'' skip the export", async () => {
+  for (const raw of ["0", "off", "false", "no", ""]) {
+    const { result } = await run({}, { INPUT_RUST_BACKTRACE: raw });
+    assert.equal(result.envExports["RUST_BACKTRACE"], undefined, `input=${JSON.stringify(raw)}`);
+  }
+});
+
+test("rust-backtrace rejects unknown values", async () => {
+  await assert.rejects(
+    () => run({}, { INPUT_RUST_BACKTRACE: "maybe" }),
+    /invalid 'rust-backtrace' input/,
+  );
+});
+
 // --- cache umbrella ---
 
 test("cache=false cascades to disable build-cache, target-cache, and cargo-registry-cache", async () => {
