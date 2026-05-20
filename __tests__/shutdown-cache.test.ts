@@ -30,7 +30,7 @@ test("shutdownCacheDaemons logs and returns without throwing when nothing is ins
   );
 });
 
-test("shutdownCacheDaemons attempts soldr stop when soldrPath is given", async () => {
+test("shutdownCacheDaemons attempts soldr cache shutdown when soldrPath is given", async () => {
   const logged: string[] = [];
   const dir = mkTmp("shutdown-cache-soldr-");
   // Provide a fake soldr binary path that does not exist on disk; the
@@ -43,7 +43,73 @@ test("shutdownCacheDaemons attempts soldr stop when soldrPath is given", async (
     fs.rmSync(dir, { recursive: true, force: true });
   }
   assert.ok(
-    logged.some((m) => m.includes("soldr") && (m.includes("$") || m.includes("spawn failed") || m.includes("exit"))),
-    `expected soldr invocation attempt, got: ${JSON.stringify(logged)}`,
+    logged.some(
+      (m) => m.includes("soldr") && m.includes("cache shutdown"),
+    ),
+    `expected 'soldr cache shutdown' invocation log, got: ${JSON.stringify(logged)}`,
+  );
+});
+
+test("shutdownCacheDaemons never invokes the broken 'soldr stop' subcommand", async () => {
+  // Regression guard for zackees/setup-soldr#126: `soldr stop` is not a real
+  // subcommand — soldr interprets it as fetching a tool named "stop" from
+  // misaka10987/stop, which always fails. The shutdown helper must never
+  // attempt this command.
+  const logged: string[] = [];
+  const dir = mkTmp("shutdown-cache-no-stop-");
+  const fakeSoldr = path.join(dir, "soldr-does-not-exist");
+  try {
+    await shutdownCacheDaemons({ soldrPath: fakeSoldr, log: (m) => logged.push(m) });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  const ranSoldrStop = logged.some((m) => /\bsoldr\b[^\n]*\$[^\n]*\bstop\b(?!\w)/.test(m) && !m.includes("cache shutdown") && !m.includes("--stop-server"));
+  assert.ok(!ranSoldrStop, `must not invoke 'soldr stop'; saw: ${JSON.stringify(logged)}`);
+});
+
+test("shutdownCacheDaemons falls back to zccache when soldr lacks the cache shutdown subcommand", async () => {
+  // Simulate an older soldr by pointing soldrPath at a script that prints
+  // "unrecognized subcommand" to stderr and exits 2 — matching soldr#379's
+  // contract for "this CLI doesn't have cache shutdown yet."
+  const logged: string[] = [];
+  const dir = mkTmp("shutdown-cache-fallback-");
+  const isWindows = process.platform === "win32";
+  const fakeSoldr = path.join(dir, isWindows ? "soldr.cmd" : "soldr");
+  try {
+    if (isWindows) {
+      fs.writeFileSync(
+        fakeSoldr,
+        `@echo off\r\necho error: unrecognized subcommand '%2' 1>&2\r\nexit /b 2\r\n`,
+        "utf8",
+      );
+    } else {
+      fs.writeFileSync(
+        fakeSoldr,
+        `#!/bin/sh\necho "error: unrecognized subcommand '$2'" 1>&2\nexit 2\n`,
+        "utf8",
+      );
+      fs.chmodSync(fakeSoldr, 0o755);
+    }
+    // Force a PATH with nothing on it so the zccache fallback also reports
+    // skipped (we just want to confirm it WAS attempted after the soldr
+    // path returned the unknown-subcommand signal).
+    const previousPath = process.env["PATH"];
+    process.env["PATH"] = mkTmp("empty-path-");
+    try {
+      await shutdownCacheDaemons({ soldrPath: fakeSoldr, log: (m) => logged.push(m) });
+    } finally {
+      if (previousPath === undefined) delete process.env["PATH"];
+      else process.env["PATH"] = previousPath;
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  assert.ok(
+    logged.some((m) => m.includes("not supported on this soldr version")),
+    `expected fallback log line, got: ${JSON.stringify(logged)}`,
+  );
+  assert.ok(
+    logged.some((m) => m.includes("zccache") && m.includes("not on PATH, skipping")),
+    `expected zccache fallback attempt, got: ${JSON.stringify(logged)}`,
   );
 });
