@@ -220,6 +220,17 @@ jobs:
       - name: Build zccache cold
         shell: bash
         working-directory: zccache
+        env:
+          # Cargo's unstable checksum-freshness replaces mtime-based change
+          # detection with file content hashes — exactly what we want here.
+          # `actions/checkout` resets mtimes on every run, so without this
+          # the warm build re-fingerprints every source as "changed" and
+          # zccache's compile cache returns 0 hits even when its artifacts
+          # are on disk. RUSTC_BOOTSTRAP=1 is the documented stable-channel
+          # escape hatch to enable Cargo's -Z flags without installing
+          # nightly. Tracking: rust-lang/cargo#14136.
+          RUSTC_BOOTSTRAP: "1"
+          CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
         run: |
           set -o pipefail
           start="$(date +%s)"
@@ -343,6 +354,10 @@ jobs:
       - name: Build zccache warm
         shell: bash
         working-directory: zccache
+        env:
+          # Must match cold's env exactly — see the cold step's comment.
+          RUSTC_BOOTSTRAP: "1"
+          CARGO_UNSTABLE_CHECKSUM_FRESHNESS: "true"
         run: |
           set -o pipefail
           start="$(date +%s)"
