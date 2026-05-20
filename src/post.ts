@@ -807,6 +807,16 @@ export async function run(): Promise<void> {
   const loggingState = core.getState("logging");
   if (loggingEnabled(loggingState)) {
     const rawInputs = readRawInputs(process.env);
+    // zccache writes its per-rustc-invocation JSONL journal under the
+    // build-cache directory (which == ZCCACHE_CACHE_DIR per
+    // resolve-setup.ts's env exports). When `logging: true` is on we
+    // surface its contents so the reader can answer "warm reported 0
+    // hits — why did each lookup miss" without another build.
+    const journalPath = path.join(result.buildCache.path, "logs", "last-session.jsonl");
+    // Forward the verbatim `report` field from `soldr cache report --json`
+    // so dumpDiagnostics can format its `rollups` (per-extension /
+    // per-crate / slowest_entries) breakdown.
+    const cacheReport = finalSummary.compile_cache_report.report;
     dumpDiagnostics({
       phase: "post",
       env: process.env,
@@ -814,6 +824,8 @@ export async function run(): Promise<void> {
       result,
       cacheOutcomes: postCollector.snapshot(),
       finalSummary: finalSummary as unknown as Record<string, unknown>,
+      journalPath,
+      cacheReport,
       logger,
       stepSummaryPath: process.env["GITHUB_STEP_SUMMARY"]?.trim() || undefined,
     });
