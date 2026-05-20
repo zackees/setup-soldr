@@ -300,8 +300,12 @@ export async function run(): Promise<void> {
       if (snapshot) {
         const rt0 = Date.now();
         try {
+          // Match the project-root selection that post.ts uses when
+          // writing the snapshot — the parent of the resolved target-dir,
+          // not the (outer) GITHUB_WORKSPACE.
+          const projectRoot = path.dirname(result.targetCache.targetPath);
           const rr = await replaySourceMtimes({
-            workspace: ctx.workspace,
+            workspace: projectRoot,
             snapshot,
             log: (msg) => logger.log(msg),
           });

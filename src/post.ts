@@ -691,8 +691,15 @@ export async function run(): Promise<void> {
   const preserveSourceMtimes = core.getState("preserveSourceMtimes") === "true";
   if (preserveSourceMtimes && restoreState.buildCacheEnabled) {
     const t0 = Date.now();
+    // The "project root" — where the Cargo workspace being built actually
+    // lives — is the parent of the resolved target-dir, NOT result.workspace
+    // (which is GITHUB_WORKSPACE — usually the outer checkout containing
+    // the action itself plus one or more sub-repos). For the demo,
+    // result.workspace=/home/runner/work/setup-soldr/setup-soldr but the
+    // zccache project being built is at .../setup-soldr/zccache.
+    const projectRoot = path.dirname(result.targetCache.targetPath);
     try {
-      const r = await snapshotSourceMtimes({ workspace: result.workspace, log });
+      const r = await snapshotSourceMtimes({ workspace: projectRoot, log });
       const out = path.join(result.buildCache.path, SNAPSHOT_FILENAME);
       try {
         fs.mkdirSync(path.dirname(out), { recursive: true });

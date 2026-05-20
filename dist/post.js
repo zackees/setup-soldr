@@ -15,7 +15,7 @@
 //     -- this will require modifications to utils.parseParams
 
 const { Readable } = __nccwpck_require__(403)
-const { inherits } = __nccwpck_require__(353)
+const { inherits } = __nccwpck_require__(354)
 
 const Dicer = __nccwpck_require__(11)
 
@@ -340,7 +340,7 @@ __export(inspect_exports, {
   custom: () => custom
 });
 module.exports = __toCommonJS(inspect_exports);
-var import_node_util = __nccwpck_require__(353);
+var import_node_util = __nccwpck_require__(354);
 const custom = import_node_util.inspect.custom;
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
@@ -1526,7 +1526,7 @@ const { kState, kHeaders, kGuard, kRealm } = __nccwpck_require__(13)
 const { fetching } = __nccwpck_require__(423)
 const { urlIsHttpHttpsScheme, createDeferredPromise, readAllBytes } = __nccwpck_require__(485)
 const assert = __nccwpck_require__(493)
-const { getGlobalDispatcher } = __nccwpck_require__(354)
+const { getGlobalDispatcher } = __nccwpck_require__(355)
 
 /**
  * @see https://w3c.github.io/ServiceWorker/#dfn-cache-batch-operation
@@ -2362,7 +2362,7 @@ module.exports = {
 
 
 const WritableStream = (__nccwpck_require__(403).Writable)
-const inherits = (__nccwpck_require__(353).inherits)
+const inherits = (__nccwpck_require__(354).inherits)
 
 const StreamSearch = __nccwpck_require__(110)
 
@@ -3290,7 +3290,7 @@ const { kBodyUsed } = __nccwpck_require__(188)
 const assert = __nccwpck_require__(493)
 const { isErrored } = __nccwpck_require__(66)
 const { isUint8Array, isArrayBuffer } = __nccwpck_require__(191)
-const { File: UndiciFile } = __nccwpck_require__(343)
+const { File: UndiciFile } = __nccwpck_require__(344)
 const { parseMIMEType, serializeAMimeType } = __nccwpck_require__(23)
 
 let random
@@ -5241,7 +5241,7 @@ const downloadUtils_1 = __nccwpck_require__(3);
 const options_1 = __nccwpck_require__(255);
 const requestUtils_1 = __nccwpck_require__(251);
 const config_1 = __nccwpck_require__(35);
-const user_agent_1 = __nccwpck_require__(341);
+const user_agent_1 = __nccwpck_require__(342);
 function getCacheApiUrl(resource) {
     const baseUrl = (0, config_1.getCacheServiceURL)();
     if (!baseUrl) {
@@ -9293,7 +9293,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.internalCacheTwirpClient = void 0;
 const core_1 = __nccwpck_require__(431);
-const user_agent_1 = __nccwpck_require__(341);
+const user_agent_1 = __nccwpck_require__(342);
 const errors_1 = __nccwpck_require__(291);
 const config_1 = __nccwpck_require__(35);
 const cacheUtils_1 = __nccwpck_require__(73);
@@ -12712,7 +12712,7 @@ exports.listType = {
 "use strict";
 
 
-const inherits = (__nccwpck_require__(353).inherits)
+const inherits = (__nccwpck_require__(354).inherits)
 const ReadableStream = (__nccwpck_require__(403).Readable)
 
 function PartStream (opts) {
@@ -12748,7 +12748,7 @@ exports.generateBlobSASQueryParametersInternal = generateBlobSASQueryParametersI
 const BlobSASPermissions_js_1 = __nccwpck_require__(473);
 const ContainerSASPermissions_js_1 = __nccwpck_require__(268);
 const storage_common_1 = __nccwpck_require__(266);
-const SasIPRange_js_1 = __nccwpck_require__(339);
+const SasIPRange_js_1 = __nccwpck_require__(340);
 const SASQueryParameters_js_1 = __nccwpck_require__(492);
 const constants_js_1 = __nccwpck_require__(143);
 const utils_common_js_1 = __nccwpck_require__(149);
@@ -15200,7 +15200,7 @@ exports.normalizeSourceMtime = normalizeSourceMtime;
 const fs = __importStar(__nccwpck_require__(239));
 const path = __importStar(__nccwpck_require__(477));
 const exec = __importStar(__nccwpck_require__(16));
-const log_utils_js_1 = __nccwpck_require__(333);
+const log_utils_js_1 = __nccwpck_require__(334);
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 // Globs evaluated against the repo-relative POSIX path of each tracked file.
 const INCLUDE_GLOBS = [
@@ -19342,10 +19342,10 @@ var import_pipelineRequest = __nccwpck_require__(111);
 var import_pipeline = __nccwpck_require__(491);
 var import_restError = __nccwpck_require__(417);
 var import_bytesEncoding = __nccwpck_require__(276);
-var import_defaultHttpClient = __nccwpck_require__(350);
+var import_defaultHttpClient = __nccwpck_require__(351);
 var import_getClient = __nccwpck_require__(203);
-var import_operationOptionHelpers = __nccwpck_require__(361);
-var import_restError2 = __nccwpck_require__(346);
+var import_operationOptionHelpers = __nccwpck_require__(362);
+var import_restError2 = __nccwpck_require__(347);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
 //# sourceMappingURL=index.js.map
@@ -20617,7 +20617,7 @@ var import_createPipelineFromOptions = __nccwpck_require__(269);
 var import_defaultHttpClient = __nccwpck_require__(226);
 var import_httpHeaders = __nccwpck_require__(233);
 var import_pipelineRequest = __nccwpck_require__(18);
-var import_restError = __nccwpck_require__(334);
+var import_restError = __nccwpck_require__(335);
 var import_decompressResponsePolicy = __nccwpck_require__(229);
 var import_exponentialRetryPolicy = __nccwpck_require__(370);
 var import_setClientRequestIdPolicy = __nccwpck_require__(145);
@@ -20631,7 +20631,7 @@ var import_retryPolicy = __nccwpck_require__(205);
 var import_tracingPolicy = __nccwpck_require__(320);
 var import_defaultRetryPolicy = __nccwpck_require__(52);
 var import_userAgentPolicy = __nccwpck_require__(367);
-var import_tlsPolicy = __nccwpck_require__(356);
+var import_tlsPolicy = __nccwpck_require__(357);
 var import_formDataPolicy = __nccwpck_require__(258);
 var import_bearerTokenAuthenticationPolicy = __nccwpck_require__(210);
 var import_ndJsonPolicy = __nccwpck_require__(230);
@@ -21074,7 +21074,7 @@ exports.logger = (0, logger_1.createClientLogger)("storage-blob");
 
 
 const EventEmitter = (__nccwpck_require__(139).EventEmitter)
-const inherits = (__nccwpck_require__(353).inherits)
+const inherits = (__nccwpck_require__(354).inherits)
 const getLimit = __nccwpck_require__(454)
 
 const StreamSearch = __nccwpck_require__(110)
@@ -21665,7 +21665,7 @@ function calculateRetryDelay(retryAttempt, config) {
  * by Hongli Lai at: https://github.com/FooBarWidget/boyer-moore-horspool
  */
 const EventEmitter = (__nccwpck_require__(139).EventEmitter)
-const inherits = (__nccwpck_require__(353).inherits)
+const inherits = (__nccwpck_require__(354).inherits)
 
 function SBMH (needle) {
   if (typeof needle === 'string') {
@@ -21983,7 +21983,7 @@ __export(userAgentPlatform_exports, {
   setPlatformSpecificData: () => setPlatformSpecificData
 });
 module.exports = __toCommonJS(userAgentPlatform_exports);
-var import_node_os = __toESM(__nccwpck_require__(360));
+var import_node_os = __toESM(__nccwpck_require__(361));
 var import_node_process = __toESM(__nccwpck_require__(227));
 function getHeaderName() {
   return "User-Agent";
@@ -25700,10 +25700,10 @@ async function parseXML(str, opts = {}) {
 
 
 module.exports.request = __nccwpck_require__(480)
-module.exports.stream = __nccwpck_require__(335)
+module.exports.stream = __nccwpck_require__(336)
 module.exports.pipeline = __nccwpck_require__(102)
 module.exports.upgrade = __nccwpck_require__(406)
-module.exports.connect = __nccwpck_require__(351)
+module.exports.connect = __nccwpck_require__(352)
 
 
 /***/ }),
@@ -25959,7 +25959,7 @@ function setup(env) {
 	createDebug.disable = disable;
 	createDebug.enable = enable;
 	createDebug.enabled = enabled;
-	createDebug.humanize = __nccwpck_require__(352);
+	createDebug.humanize = __nccwpck_require__(353);
 	createDebug.destroy = destroy;
 
 	Object.keys(env).forEach(key => {
@@ -28177,19 +28177,19 @@ const Client = __nccwpck_require__(85)
 const Dispatcher = __nccwpck_require__(449)
 const errors = __nccwpck_require__(459)
 const Pool = __nccwpck_require__(321)
-const BalancedPool = __nccwpck_require__(359)
+const BalancedPool = __nccwpck_require__(360)
 const Agent = __nccwpck_require__(5)
 const util = __nccwpck_require__(66)
 const { InvalidArgumentError } = errors
 const api = __nccwpck_require__(134)
 const buildConnector = __nccwpck_require__(256)
 const MockClient = __nccwpck_require__(192)
-const MockAgent = __nccwpck_require__(355)
+const MockAgent = __nccwpck_require__(356)
 const MockPool = __nccwpck_require__(330)
 const mockErrors = __nccwpck_require__(223)
 const ProxyAgent = __nccwpck_require__(325)
 const RetryHandler = __nccwpck_require__(263)
-const { getGlobalDispatcher, setGlobalDispatcher } = __nccwpck_require__(354)
+const { getGlobalDispatcher, setGlobalDispatcher } = __nccwpck_require__(355)
 const DecoratorHandler = __nccwpck_require__(447)
 const RedirectHandler = __nccwpck_require__(368)
 const createRedirectInterceptor = __nccwpck_require__(245)
@@ -28292,7 +28292,7 @@ if (util.nodeMajor > 16 || (util.nodeMajor === 16 && util.nodeMinor >= 8)) {
   module.exports.Response = __nccwpck_require__(39).Response
   module.exports.Request = __nccwpck_require__(81).Request
   module.exports.FormData = __nccwpck_require__(201).FormData
-  module.exports.File = __nccwpck_require__(343).File
+  module.exports.File = __nccwpck_require__(344).File
   module.exports.FileReader = __nccwpck_require__(91).FileReader
 
   const { setGlobalOrigin, getGlobalOrigin } = __nccwpck_require__(135)
@@ -29048,7 +29048,7 @@ Object.defineProperty(exports, "Deferred", ({ enumerable: true, get: function ()
 Object.defineProperty(exports, "DeferredState", ({ enumerable: true, get: function () { return deferred_1.DeferredState; } }));
 var duplex_streaming_call_1 = __nccwpck_require__(292);
 Object.defineProperty(exports, "DuplexStreamingCall", ({ enumerable: true, get: function () { return duplex_streaming_call_1.DuplexStreamingCall; } }));
-var client_streaming_call_1 = __nccwpck_require__(331);
+var client_streaming_call_1 = __nccwpck_require__(332);
 Object.defineProperty(exports, "ClientStreamingCall", ({ enumerable: true, get: function () { return client_streaming_call_1.ClientStreamingCall; } }));
 var server_streaming_call_1 = __nccwpck_require__(424);
 Object.defineProperty(exports, "ServerStreamingCall", ({ enumerable: true, get: function () { return server_streaming_call_1.ServerStreamingCall; } }));
@@ -29202,7 +29202,7 @@ function isLessThan(lhs, rhs) {
 // Licensed under the MIT license.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LroEngine = void 0;
-const operation_js_1 = __nccwpck_require__(338);
+const operation_js_1 = __nccwpck_require__(339);
 const constants_js_1 = __nccwpck_require__(57);
 const poller_js_1 = __nccwpck_require__(72);
 const operation_js_2 = __nccwpck_require__(136);
@@ -44038,7 +44038,7 @@ exports.streamToBuffer3 = streamToBuffer3;
 exports.readStreamToLocalFile = readStreamToLocalFile;
 const tslib_1 = __nccwpck_require__(209);
 const node_fs_1 = tslib_1.__importDefault(__nccwpck_require__(239));
-const node_util_1 = tslib_1.__importDefault(__nccwpck_require__(353));
+const node_util_1 = tslib_1.__importDefault(__nccwpck_require__(354));
 const constants_js_1 = __nccwpck_require__(143);
 /**
  * Reads a readable stream into buffer. Fill the buffer from offset to end.
@@ -45020,7 +45020,7 @@ function storageBrowserPolicy() {
 
 const { isBlobLike, toUSVString, makeIterator } = __nccwpck_require__(485)
 const { kState } = __nccwpck_require__(13)
-const { File: UndiciFile, FileLike, isFileLike } = __nccwpck_require__(343)
+const { File: UndiciFile, FileLike, isFileLike } = __nccwpck_require__(344)
 const { webidl } = __nccwpck_require__(429)
 const { Blob, File: NativeFile } = __nccwpck_require__(115)
 
@@ -46700,7 +46700,7 @@ __export(bearerTokenAuthenticationPolicy_exports, {
 module.exports = __toCommonJS(bearerTokenAuthenticationPolicy_exports);
 var import_tokenCycler = __nccwpck_require__(157);
 var import_log = __nccwpck_require__(177);
-var import_restError = __nccwpck_require__(334);
+var import_restError = __nccwpck_require__(335);
 const bearerTokenAuthenticationPolicyName = "bearerTokenAuthenticationPolicy";
 async function trySendRequest(request, next) {
   try {
@@ -52327,7 +52327,7 @@ module.exports = decodeText
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BaseRequestPolicy = exports.getCachedDefaultHttpClient = void 0;
 const tslib_1 = __nccwpck_require__(209);
-tslib_1.__exportStar(__nccwpck_require__(342), exports);
+tslib_1.__exportStar(__nccwpck_require__(343), exports);
 var cache_js_1 = __nccwpck_require__(243);
 Object.defineProperty(exports, "getCachedDefaultHttpClient", ({ enumerable: true, get: function () { return cache_js_1.getCachedDefaultHttpClient; } }));
 tslib_1.__exportStar(__nccwpck_require__(80), exports);
@@ -52370,7 +52370,7 @@ tslib_1.__exportStar(__nccwpck_require__(212), exports);
 tslib_1.__exportStar(__nccwpck_require__(45), exports);
 tslib_1.__exportStar(__nccwpck_require__(270), exports);
 tslib_1.__exportStar(__nccwpck_require__(24), exports);
-tslib_1.__exportStar(__nccwpck_require__(336), exports);
+tslib_1.__exportStar(__nccwpck_require__(337), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
@@ -52642,7 +52642,7 @@ var import_core_util = __nccwpck_require__(12);
 var import_proxyPolicy = __nccwpck_require__(444);
 var import_setClientRequestIdPolicy = __nccwpck_require__(145);
 var import_agentPolicy = __nccwpck_require__(222);
-var import_tlsPolicy = __nccwpck_require__(356);
+var import_tlsPolicy = __nccwpck_require__(357);
 var import_tracingPolicy = __nccwpck_require__(320);
 var import_wrapAbortSignalLikePolicy = __nccwpck_require__(249);
 function createPipelineFromOptions(options) {
@@ -54340,7 +54340,7 @@ __export(internal_exports, {
 });
 module.exports = __toCommonJS(internal_exports);
 var import_agentPolicy = __nccwpck_require__(436);
-var import_decompressResponsePolicy = __nccwpck_require__(337);
+var import_decompressResponsePolicy = __nccwpck_require__(338);
 var import_defaultRetryPolicy = __nccwpck_require__(310);
 var import_exponentialRetryPolicy = __nccwpck_require__(490);
 var import_retryPolicy = __nccwpck_require__(14);
@@ -54352,7 +54352,7 @@ var import_multipartPolicy = __nccwpck_require__(165);
 var import_proxyPolicy = __nccwpck_require__(37);
 var import_redirectPolicy = __nccwpck_require__(303);
 var import_tlsPolicy = __nccwpck_require__(213);
-var import_userAgentPolicy = __nccwpck_require__(340);
+var import_userAgentPolicy = __nccwpck_require__(341);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
 //# sourceMappingURL=internal.js.map
@@ -54411,8 +54411,8 @@ exports.generateAccountSASQueryParameters = generateAccountSASQueryParameters;
 exports.generateAccountSASQueryParametersInternal = generateAccountSASQueryParametersInternal;
 const AccountSASPermissions_js_1 = __nccwpck_require__(55);
 const AccountSASResourceTypes_js_1 = __nccwpck_require__(2);
-const AccountSASServices_js_1 = __nccwpck_require__(357);
-const SasIPRange_js_1 = __nccwpck_require__(339);
+const AccountSASServices_js_1 = __nccwpck_require__(358);
+const SasIPRange_js_1 = __nccwpck_require__(340);
 const SASQueryParameters_js_1 = __nccwpck_require__(492);
 const constants_js_1 = __nccwpck_require__(143);
 const utils_common_js_1 = __nccwpck_require__(149);
@@ -55871,11 +55871,11 @@ const {
   kByteParser
 } = __nccwpck_require__(95)
 const { isEstablished, isClosing, isValidSubprotocol, failWebsocketConnection, fireEvent } = __nccwpck_require__(54)
-const { establishWebSocketConnection } = __nccwpck_require__(344)
+const { establishWebSocketConnection } = __nccwpck_require__(345)
 const { WebsocketFrameSend } = __nccwpck_require__(180)
 const { ByteParser } = __nccwpck_require__(453)
 const { kEnumerableProperty, isBlobLike } = __nccwpck_require__(66)
-const { getGlobalDispatcher } = __nccwpck_require__(354)
+const { getGlobalDispatcher } = __nccwpck_require__(355)
 const { types } = __nccwpck_require__(119)
 
 let experimentalWarned = false
@@ -58209,8 +58209,8 @@ module.exports = __toCommonJS(createPipelineFromOptions_exports);
 var import_logPolicy = __nccwpck_require__(99);
 var import_pipeline = __nccwpck_require__(491);
 var import_redirectPolicy = __nccwpck_require__(303);
-var import_userAgentPolicy = __nccwpck_require__(340);
-var import_decompressResponsePolicy = __nccwpck_require__(337);
+var import_userAgentPolicy = __nccwpck_require__(341);
+var import_decompressResponsePolicy = __nccwpck_require__(338);
 var import_defaultRetryPolicy = __nccwpck_require__(310);
 var import_formDataPolicy = __nccwpck_require__(323);
 var import_checkEnvironment = __nccwpck_require__(411);
@@ -59498,7 +59498,7 @@ var import_constants = __nccwpck_require__(154);
 var import_userAgent = __nccwpck_require__(280);
 var import_log = __nccwpck_require__(177);
 var import_core_util = __nccwpck_require__(12);
-var import_restError = __nccwpck_require__(334);
+var import_restError = __nccwpck_require__(335);
 var import_util = __nccwpck_require__(141);
 const tracingPolicyName = "tracingPolicy";
 function tracingPolicy(options = {}) {
@@ -59625,7 +59625,7 @@ const {
   kNeedDrain,
   kAddClient,
   kGetDispatcher
-} = __nccwpck_require__(347)
+} = __nccwpck_require__(348)
 const Client = __nccwpck_require__(85)
 const {
   InvalidArgumentError
@@ -60839,7 +60839,7 @@ exports.utf8read = utf8read;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createTracingClient = createTracingClient;
 const instrumenter_js_1 = __nccwpck_require__(382);
-const tracingContext_js_1 = __nccwpck_require__(348);
+const tracingContext_js_1 = __nccwpck_require__(349);
 /**
  * Creates a new tracing client.
  *
@@ -60985,3594 +60985,6 @@ module.exports = MockPool
 /***/ }),
 
 /***/ 331:
-/***/ (function(__unused_webpack_module, exports) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ClientStreamingCall = void 0;
-/**
- * A client streaming RPC call. This means that the clients sends 0, 1, or
- * more messages to the server, and the server replies with exactly one
- * message.
- */
-class ClientStreamingCall {
-    constructor(method, requestHeaders, request, headers, response, status, trailers) {
-        this.method = method;
-        this.requestHeaders = requestHeaders;
-        this.requests = request;
-        this.headers = headers;
-        this.response = response;
-        this.status = status;
-        this.trailers = trailers;
-    }
-    /**
-     * Instead of awaiting the response status and trailers, you can
-     * just as well await this call itself to receive the server outcome.
-     * Note that it may still be valid to send more request messages.
-     */
-    then(onfulfilled, onrejected) {
-        return this.promiseFinished().then(value => onfulfilled ? Promise.resolve(onfulfilled(value)) : value, reason => onrejected ? Promise.resolve(onrejected(reason)) : Promise.reject(reason));
-    }
-    promiseFinished() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let [headers, response, status, trailers] = yield Promise.all([this.headers, this.response, this.status, this.trailers]);
-            return {
-                method: this.method,
-                requestHeaders: this.requestHeaders,
-                headers,
-                response,
-                status,
-                trailers
-            };
-        });
-    }
-}
-exports.ClientStreamingCall = ClientStreamingCall;
-
-
-/***/ }),
-
-/***/ 332:
-/***/ ((module) => {
-
-module.exports = function (xs, fn) {
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        var x = fn(xs[i], i);
-        if (isArray(x)) res.push.apply(res, x);
-        else res.push(x);
-    }
-    return res;
-};
-
-var isArray = Array.isArray || function (xs) {
-    return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-
-/***/ }),
-
-/***/ 333:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Logger wiring. Owned by Agent 1 (called from every helper).
-//
-// Mirrors the Python log_utils.log() behavior: prefix each line with elapsed
-// mm:ss from SETUP_SOLDR_LOG_START_EPOCH when timestamps are enabled. Reads
-// SETUP_SOLDR_TIMESTAMPS to decide.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createLogger = createLogger;
-exports.colorForceEnvironment = colorForceEnvironment;
-exports.formatLogLine = formatLogLine;
-exports.isTimestampsEnabled = isTimestampsEnabled;
-const core = __importStar(__nccwpck_require__(431));
-const fs = __importStar(__nccwpck_require__(239));
-function makeFileLogger(env) {
-    const logPath = (env["SETUP_SOLDR_LOG"] ?? "").trim();
-    if (!logPath)
-        return null;
-    return (line) => {
-        try {
-            fs.appendFileSync(logPath, line + "\n", "utf8");
-        }
-        catch {
-            // best-effort
-        }
-    };
-}
-const FALSY_VALUES = new Set(["0", "false", "no", "off"]);
-// Per-process fallback start epoch (seconds since epoch), mirrors the
-// _FALLBACK_START semantics in log_utils.py: captured once at module load.
-const FALLBACK_START_SECONDS = Date.now() / 1000;
-function timestampsEnabled(env) {
-    const raw = env["SETUP_SOLDR_TIMESTAMPS"] ?? "true";
-    const value = raw.trim().toLowerCase();
-    return !FALSY_VALUES.has(value);
-}
-function startEpoch(env) {
-    const raw = (env["SETUP_SOLDR_LOG_START_EPOCH"] ?? "").trim();
-    if (raw) {
-        const parsed = Number(raw);
-        if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
-            return parsed;
-        }
-    }
-    return FALLBACK_START_SECONDS;
-}
-function elapsedPrefix(env) {
-    const now = Date.now() / 1000;
-    const elapsed = Math.max(0, Math.floor(now - startEpoch(env)));
-    const minutes = Math.floor(elapsed / 60);
-    const seconds = elapsed % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-function formatLine(env, message) {
-    if (timestampsEnabled(env)) {
-        return `${elapsedPrefix(env)} ${message}`;
-    }
-    return message;
-}
-/**
- * Build a Logger that:
- *   - prefixes elapsed time when SETUP_SOLDR_TIMESTAMPS is truthy
- *   - writes warnings/errors via @actions/core's annotated channels
- *   - writes the rest to stdout via core.info()
- *   - optionally appends each log/info line to SETUP_SOLDR_LOG file
- */
-function createLogger(env = process.env) {
-    const fileLog = makeFileLogger(env);
-    return {
-        info(msg) {
-            // Use stdout directly so the message reaches the runner log without
-            // being annotated as info; mirrors log_utils.log() behavior.
-            process.stdout.write(`${msg}\n`);
-            if (fileLog)
-                fileLog(msg);
-        },
-        warning(msg) {
-            core.warning(msg);
-        },
-        error(msg) {
-            core.error(msg);
-        },
-        debug(msg) {
-            core.debug(msg);
-        },
-        log(msg) {
-            const formatted = formatLine(env, msg);
-            process.stdout.write(`${formatted}\n`);
-            if (fileLog)
-                fileLog(formatted);
-        },
-    };
-}
-/**
- * Mirror of log_utils.color_force_environment(): produce the set of env vars
- * to inject when timestamps are enabled and NO_COLOR is not already set.
- * Returns only the keys that should be added (caller decides how to merge).
- */
-function colorForceEnvironment(env) {
-    const additions = {};
-    if (!timestampsEnabled(env)) {
-        return additions;
-    }
-    if (env["NO_COLOR"] !== undefined) {
-        return additions;
-    }
-    if (env["CARGO_TERM_COLOR"] === undefined) {
-        additions["CARGO_TERM_COLOR"] = "always";
-    }
-    if (env["CLICOLOR_FORCE"] === undefined) {
-        additions["CLICOLOR_FORCE"] = "1";
-    }
-    if (env["FORCE_COLOR"] === undefined) {
-        additions["FORCE_COLOR"] = "1";
-    }
-    return additions;
-}
-/**
- * Test/library helper: format a single line using the supplied env.
- * Exported so cache-keys/resolve-setup can reuse the elapsed prefix logic
- * without instantiating a Logger.
- */
-function formatLogLine(env, message) {
-    return formatLine(env, message);
-}
-/**
- * Test helper: report whether the given env enables timestamped output.
- */
-function isTimestampsEnabled(env) {
-    return timestampsEnabled(env);
-}
-
-
-/***/ }),
-
-/***/ 334:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var restError_exports = {};
-__export(restError_exports, {
-  RestError: () => RestError,
-  isRestError: () => isRestError
-});
-module.exports = __toCommonJS(restError_exports);
-var import_ts_http_runtime = __nccwpck_require__(86);
-const RestError = import_ts_http_runtime.RestError;
-function isRestError(e) {
-  return (0, import_ts_http_runtime.isRestError)(e);
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 335:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { finished, PassThrough } = __nccwpck_require__(126)
-const {
-  InvalidArgumentError,
-  InvalidReturnValueError,
-  RequestAbortedError
-} = __nccwpck_require__(459)
-const util = __nccwpck_require__(66)
-const { getResolveErrorBodyCallback } = __nccwpck_require__(182)
-const { AsyncResource } = __nccwpck_require__(402)
-const { addSignal, removeSignal } = __nccwpck_require__(100)
-
-class StreamHandler extends AsyncResource {
-  constructor (opts, factory, callback) {
-    if (!opts || typeof opts !== 'object') {
-      throw new InvalidArgumentError('invalid opts')
-    }
-
-    const { signal, method, opaque, body, onInfo, responseHeaders, throwOnError } = opts
-
-    try {
-      if (typeof callback !== 'function') {
-        throw new InvalidArgumentError('invalid callback')
-      }
-
-      if (typeof factory !== 'function') {
-        throw new InvalidArgumentError('invalid factory')
-      }
-
-      if (signal && typeof signal.on !== 'function' && typeof signal.addEventListener !== 'function') {
-        throw new InvalidArgumentError('signal must be an EventEmitter or EventTarget')
-      }
-
-      if (method === 'CONNECT') {
-        throw new InvalidArgumentError('invalid method')
-      }
-
-      if (onInfo && typeof onInfo !== 'function') {
-        throw new InvalidArgumentError('invalid onInfo callback')
-      }
-
-      super('UNDICI_STREAM')
-    } catch (err) {
-      if (util.isStream(body)) {
-        util.destroy(body.on('error', util.nop), err)
-      }
-      throw err
-    }
-
-    this.responseHeaders = responseHeaders || null
-    this.opaque = opaque || null
-    this.factory = factory
-    this.callback = callback
-    this.res = null
-    this.abort = null
-    this.context = null
-    this.trailers = null
-    this.body = body
-    this.onInfo = onInfo || null
-    this.throwOnError = throwOnError || false
-
-    if (util.isStream(body)) {
-      body.on('error', (err) => {
-        this.onError(err)
-      })
-    }
-
-    addSignal(this, signal)
-  }
-
-  onConnect (abort, context) {
-    if (!this.callback) {
-      throw new RequestAbortedError()
-    }
-
-    this.abort = abort
-    this.context = context
-  }
-
-  onHeaders (statusCode, rawHeaders, resume, statusMessage) {
-    const { factory, opaque, context, callback, responseHeaders } = this
-
-    const headers = responseHeaders === 'raw' ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders)
-
-    if (statusCode < 200) {
-      if (this.onInfo) {
-        this.onInfo({ statusCode, headers })
-      }
-      return
-    }
-
-    this.factory = null
-
-    let res
-
-    if (this.throwOnError && statusCode >= 400) {
-      const parsedHeaders = responseHeaders === 'raw' ? util.parseHeaders(rawHeaders) : headers
-      const contentType = parsedHeaders['content-type']
-      res = new PassThrough()
-
-      this.callback = null
-      this.runInAsyncScope(getResolveErrorBodyCallback, null,
-        { callback, body: res, contentType, statusCode, statusMessage, headers }
-      )
-    } else {
-      if (factory === null) {
-        return
-      }
-
-      res = this.runInAsyncScope(factory, null, {
-        statusCode,
-        headers,
-        opaque,
-        context
-      })
-
-      if (
-        !res ||
-        typeof res.write !== 'function' ||
-        typeof res.end !== 'function' ||
-        typeof res.on !== 'function'
-      ) {
-        throw new InvalidReturnValueError('expected Writable')
-      }
-
-      // TODO: Avoid finished. It registers an unnecessary amount of listeners.
-      finished(res, { readable: false }, (err) => {
-        const { callback, res, opaque, trailers, abort } = this
-
-        this.res = null
-        if (err || !res.readable) {
-          util.destroy(res, err)
-        }
-
-        this.callback = null
-        this.runInAsyncScope(callback, null, err || null, { opaque, trailers })
-
-        if (err) {
-          abort()
-        }
-      })
-    }
-
-    res.on('drain', resume)
-
-    this.res = res
-
-    const needDrain = res.writableNeedDrain !== undefined
-      ? res.writableNeedDrain
-      : res._writableState && res._writableState.needDrain
-
-    return needDrain !== true
-  }
-
-  onData (chunk) {
-    const { res } = this
-
-    return res ? res.write(chunk) : true
-  }
-
-  onComplete (trailers) {
-    const { res } = this
-
-    removeSignal(this)
-
-    if (!res) {
-      return
-    }
-
-    this.trailers = util.parseHeaders(trailers)
-
-    res.end()
-  }
-
-  onError (err) {
-    const { res, callback, opaque, body } = this
-
-    removeSignal(this)
-
-    this.factory = null
-
-    if (res) {
-      this.res = null
-      util.destroy(res, err)
-    } else if (callback) {
-      this.callback = null
-      queueMicrotask(() => {
-        this.runInAsyncScope(callback, null, err, { opaque })
-      })
-    }
-
-    if (body) {
-      this.body = null
-      util.destroy(body, err)
-    }
-  }
-}
-
-function stream (opts, factory, callback) {
-  if (callback === undefined) {
-    return new Promise((resolve, reject) => {
-      stream.call(this, opts, factory, (err, data) => {
-        return err ? reject(err) : resolve(data)
-      })
-    })
-  }
-
-  try {
-    this.dispatch(opts, new StreamHandler(opts, factory, callback))
-  } catch (err) {
-    if (typeof callback !== 'function') {
-      throw err
-    }
-    const opaque = opts && opts.opaque
-    queueMicrotask(() => callback(err, { opaque }))
-  }
-}
-
-module.exports = stream
-
-
-/***/ }),
-
-/***/ 336:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BlockBlobImpl = void 0;
-const tslib_1 = __nccwpck_require__(209);
-const coreClient = tslib_1.__importStar(__nccwpck_require__(412));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(173));
-const Parameters = tslib_1.__importStar(__nccwpck_require__(62));
-/** Class containing BlockBlob operations. */
-class BlockBlobImpl {
-    client;
-    /**
-     * Initialize a new instance of the class BlockBlob class.
-     * @param client Reference to the service client
-     */
-    constructor(client) {
-        this.client = client;
-    }
-    /**
-     * The Upload Block Blob operation updates the content of an existing block blob. Updating an existing
-     * block blob overwrites any existing metadata on the blob. Partial updates are not supported with Put
-     * Blob; the content of the existing blob is overwritten with the content of the new blob. To perform a
-     * partial update of the content of a block blob, use the Put Block List operation.
-     * @param contentLength The length of the request.
-     * @param body Initial data
-     * @param options The options parameters.
-     */
-    upload(contentLength, body, options) {
-        return this.client.sendOperationRequest({ contentLength, body, options }, uploadOperationSpec);
-    }
-    /**
-     * The Put Blob from URL operation creates a new Block Blob where the contents of the blob are read
-     * from a given URL.  This API is supported beginning with the 2020-04-08 version. Partial updates are
-     * not supported with Put Blob from URL; the content of an existing blob is overwritten with the
-     * content of the new blob.  To perform partial updates to a block blob’s contents using a source URL,
-     * use the Put Block from URL API in conjunction with Put Block List.
-     * @param contentLength The length of the request.
-     * @param copySource Specifies the name of the source page blob snapshot. This value is a URL of up to
-     *                   2 KB in length that specifies a page blob snapshot. The value should be URL-encoded as it would
-     *                   appear in a request URI. The source blob must either be public or must be authenticated via a shared
-     *                   access signature.
-     * @param options The options parameters.
-     */
-    putBlobFromUrl(contentLength, copySource, options) {
-        return this.client.sendOperationRequest({ contentLength, copySource, options }, putBlobFromUrlOperationSpec);
-    }
-    /**
-     * The Stage Block operation creates a new block to be committed as part of a blob
-     * @param blockId A valid Base64 string value that identifies the block. Prior to encoding, the string
-     *                must be less than or equal to 64 bytes in size. For a given blob, the length of the value specified
-     *                for the blockid parameter must be the same size for each block.
-     * @param contentLength The length of the request.
-     * @param body Initial data
-     * @param options The options parameters.
-     */
-    stageBlock(blockId, contentLength, body, options) {
-        return this.client.sendOperationRequest({ blockId, contentLength, body, options }, stageBlockOperationSpec);
-    }
-    /**
-     * The Stage Block operation creates a new block to be committed as part of a blob where the contents
-     * are read from a URL.
-     * @param blockId A valid Base64 string value that identifies the block. Prior to encoding, the string
-     *                must be less than or equal to 64 bytes in size. For a given blob, the length of the value specified
-     *                for the blockid parameter must be the same size for each block.
-     * @param contentLength The length of the request.
-     * @param sourceUrl Specify a URL to the copy source.
-     * @param options The options parameters.
-     */
-    stageBlockFromURL(blockId, contentLength, sourceUrl, options) {
-        return this.client.sendOperationRequest({ blockId, contentLength, sourceUrl, options }, stageBlockFromURLOperationSpec);
-    }
-    /**
-     * The Commit Block List operation writes a blob by specifying the list of block IDs that make up the
-     * blob. In order to be written as part of a blob, a block must have been successfully written to the
-     * server in a prior Put Block operation. You can call Put Block List to update a blob by uploading
-     * only those blocks that have changed, then committing the new and existing blocks together. You can
-     * do this by specifying whether to commit a block from the committed block list or from the
-     * uncommitted block list, or to commit the most recently uploaded version of the block, whichever list
-     * it may belong to.
-     * @param blocks Blob Blocks.
-     * @param options The options parameters.
-     */
-    commitBlockList(blocks, options) {
-        return this.client.sendOperationRequest({ blocks, options }, commitBlockListOperationSpec);
-    }
-    /**
-     * The Get Block List operation retrieves the list of blocks that have been uploaded as part of a block
-     * blob
-     * @param listType Specifies whether to return the list of committed blocks, the list of uncommitted
-     *                 blocks, or both lists together.
-     * @param options The options parameters.
-     */
-    getBlockList(listType, options) {
-        return this.client.sendOperationRequest({ listType, options }, getBlockListOperationSpec);
-    }
-}
-exports.BlockBlobImpl = BlockBlobImpl;
-// Operation Specifications
-const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
-const uploadOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.BlockBlobUploadHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.BlockBlobUploadExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.body1,
-    queryParameters: [Parameters.timeoutInSeconds],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.contentLength,
-        Parameters.metadata,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.blobCacheControl,
-        Parameters.blobContentType,
-        Parameters.blobContentMD5,
-        Parameters.blobContentEncoding,
-        Parameters.blobContentLanguage,
-        Parameters.blobContentDisposition,
-        Parameters.immutabilityPolicyExpiry,
-        Parameters.immutabilityPolicyMode,
-        Parameters.encryptionScope,
-        Parameters.tier,
-        Parameters.blobTagsString,
-        Parameters.legalHold1,
-        Parameters.transactionalContentMD5,
-        Parameters.transactionalContentCrc64,
-        Parameters.contentType1,
-        Parameters.accept2,
-        Parameters.blobType2,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "binary",
-    serializer: xmlSerializer,
-};
-const putBlobFromUrlOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.BlockBlobPutBlobFromUrlHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.BlockBlobPutBlobFromUrlExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.timeoutInSeconds],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.contentLength,
-        Parameters.metadata,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.blobCacheControl,
-        Parameters.blobContentType,
-        Parameters.blobContentMD5,
-        Parameters.blobContentEncoding,
-        Parameters.blobContentLanguage,
-        Parameters.blobContentDisposition,
-        Parameters.encryptionScope,
-        Parameters.tier,
-        Parameters.sourceIfModifiedSince,
-        Parameters.sourceIfUnmodifiedSince,
-        Parameters.sourceIfMatch,
-        Parameters.sourceIfNoneMatch,
-        Parameters.sourceIfTags,
-        Parameters.copySource,
-        Parameters.blobTagsString,
-        Parameters.sourceContentMD5,
-        Parameters.copySourceAuthorization,
-        Parameters.copySourceTags,
-        Parameters.fileRequestIntent,
-        Parameters.transactionalContentMD5,
-        Parameters.blobType2,
-        Parameters.copySourceBlobProperties,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const stageBlockOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.BlockBlobStageBlockHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.BlockBlobStageBlockExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.body1,
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.comp24,
-        Parameters.blockId,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.contentLength,
-        Parameters.leaseId,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.encryptionScope,
-        Parameters.transactionalContentMD5,
-        Parameters.transactionalContentCrc64,
-        Parameters.contentType1,
-        Parameters.accept2,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "binary",
-    serializer: xmlSerializer,
-};
-const stageBlockFromURLOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.BlockBlobStageBlockFromURLHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.BlockBlobStageBlockFromURLExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.comp24,
-        Parameters.blockId,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.contentLength,
-        Parameters.leaseId,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.encryptionScope,
-        Parameters.sourceIfModifiedSince,
-        Parameters.sourceIfUnmodifiedSince,
-        Parameters.sourceIfMatch,
-        Parameters.sourceIfNoneMatch,
-        Parameters.sourceContentMD5,
-        Parameters.copySourceAuthorization,
-        Parameters.fileRequestIntent,
-        Parameters.sourceUrl,
-        Parameters.sourceContentCrc64,
-        Parameters.sourceRange1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const commitBlockListOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.BlockBlobCommitBlockListHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.BlockBlobCommitBlockListExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.blocks,
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp25],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.contentType,
-        Parameters.accept,
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.metadata,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.blobCacheControl,
-        Parameters.blobContentType,
-        Parameters.blobContentMD5,
-        Parameters.blobContentEncoding,
-        Parameters.blobContentLanguage,
-        Parameters.blobContentDisposition,
-        Parameters.immutabilityPolicyExpiry,
-        Parameters.immutabilityPolicyMode,
-        Parameters.encryptionScope,
-        Parameters.tier,
-        Parameters.blobTagsString,
-        Parameters.legalHold1,
-        Parameters.transactionalContentMD5,
-        Parameters.transactionalContentCrc64,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "xml",
-    serializer: xmlSerializer,
-};
-const getBlockListOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.BlockList,
-            headersMapper: Mappers.BlockBlobGetBlockListHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.BlockBlobGetBlockListExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.snapshot,
-        Parameters.comp25,
-        Parameters.listType,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.leaseId,
-        Parameters.ifTags,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-//# sourceMappingURL=blockBlob.js.map
-
-/***/ }),
-
-/***/ 337:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var decompressResponsePolicy_exports = {};
-__export(decompressResponsePolicy_exports, {
-  decompressResponsePolicy: () => decompressResponsePolicy,
-  decompressResponsePolicyName: () => decompressResponsePolicyName
-});
-module.exports = __toCommonJS(decompressResponsePolicy_exports);
-const decompressResponsePolicyName = "decompressResponsePolicy";
-function decompressResponsePolicy() {
-  return {
-    name: decompressResponsePolicyName,
-    async sendRequest(request, next) {
-      if (request.method !== "HEAD") {
-        request.headers.set("Accept-Encoding", "gzip,deflate");
-      }
-      return next(request);
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=decompressResponsePolicy.js.map
-
-
-/***/ }),
-
-/***/ 338:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GenericPollOperation = void 0;
-const operation_js_1 = __nccwpck_require__(49);
-const logger_js_1 = __nccwpck_require__(184);
-const createStateProxy = () => ({
-    initState: (config) => ({ config, isStarted: true }),
-    setCanceled: (state) => (state.isCancelled = true),
-    setError: (state, error) => (state.error = error),
-    setResult: (state, result) => (state.result = result),
-    setRunning: (state) => (state.isStarted = true),
-    setSucceeded: (state) => (state.isCompleted = true),
-    setFailed: () => {
-        /** empty body */
-    },
-    getError: (state) => state.error,
-    getResult: (state) => state.result,
-    isCanceled: (state) => !!state.isCancelled,
-    isFailed: (state) => !!state.error,
-    isRunning: (state) => !!state.isStarted,
-    isSucceeded: (state) => Boolean(state.isCompleted && !state.isCancelled && !state.error),
-});
-class GenericPollOperation {
-    constructor(state, lro, setErrorAsResult, lroResourceLocationConfig, processResult, updateState, isDone) {
-        this.state = state;
-        this.lro = lro;
-        this.setErrorAsResult = setErrorAsResult;
-        this.lroResourceLocationConfig = lroResourceLocationConfig;
-        this.processResult = processResult;
-        this.updateState = updateState;
-        this.isDone = isDone;
-    }
-    setPollerConfig(pollerConfig) {
-        this.pollerConfig = pollerConfig;
-    }
-    async update(options) {
-        var _a;
-        const stateProxy = createStateProxy();
-        if (!this.state.isStarted) {
-            this.state = Object.assign(Object.assign({}, this.state), (await (0, operation_js_1.initHttpOperation)({
-                lro: this.lro,
-                stateProxy,
-                resourceLocationConfig: this.lroResourceLocationConfig,
-                processResult: this.processResult,
-                setErrorAsResult: this.setErrorAsResult,
-            })));
-        }
-        const updateState = this.updateState;
-        const isDone = this.isDone;
-        if (!this.state.isCompleted && this.state.error === undefined) {
-            await (0, operation_js_1.pollHttpOperation)({
-                lro: this.lro,
-                state: this.state,
-                stateProxy,
-                processResult: this.processResult,
-                updateState: updateState
-                    ? (state, { rawResponse }) => updateState(state, rawResponse)
-                    : undefined,
-                isDone: isDone
-                    ? ({ flatResponse }, state) => isDone(flatResponse, state)
-                    : undefined,
-                options,
-                setDelay: (intervalInMs) => {
-                    this.pollerConfig.intervalInMs = intervalInMs;
-                },
-                setErrorAsResult: this.setErrorAsResult,
-            });
-        }
-        (_a = options === null || options === void 0 ? void 0 : options.fireProgress) === null || _a === void 0 ? void 0 : _a.call(options, this.state);
-        return this;
-    }
-    async cancel() {
-        logger_js_1.logger.error("`cancelOperation` is deprecated because it wasn't implemented");
-        return this;
-    }
-    /**
-     * Serializes the Poller operation.
-     */
-    toString() {
-        return JSON.stringify({
-            state: this.state,
-        });
-    }
-}
-exports.GenericPollOperation = GenericPollOperation;
-//# sourceMappingURL=operation.js.map
-
-/***/ }),
-
-/***/ 339:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ipRangeToString = ipRangeToString;
-/**
- * Generate SasIPRange format string. For example:
- *
- * "8.8.8.8" or "1.1.1.1-255.255.255.255"
- *
- * @param ipRange -
- */
-function ipRangeToString(ipRange) {
-    return ipRange.end ? `${ipRange.start}-${ipRange.end}` : ipRange.start;
-}
-//# sourceMappingURL=SasIPRange.js.map
-
-/***/ }),
-
-/***/ 340:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var userAgentPolicy_exports = {};
-__export(userAgentPolicy_exports, {
-  userAgentPolicy: () => userAgentPolicy,
-  userAgentPolicyName: () => userAgentPolicyName
-});
-module.exports = __toCommonJS(userAgentPolicy_exports);
-var import_userAgent = __nccwpck_require__(246);
-const UserAgentHeaderName = (0, import_userAgent.getUserAgentHeaderName)();
-const userAgentPolicyName = "userAgentPolicy";
-function userAgentPolicy(options = {}) {
-  const userAgentValue = (0, import_userAgent.getUserAgentValue)(options.userAgentPrefix);
-  return {
-    name: userAgentPolicyName,
-    async sendRequest(request, next) {
-      if (!request.headers.has(UserAgentHeaderName)) {
-        request.headers.set(UserAgentHeaderName, await userAgentValue);
-      }
-      return next(request);
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=userAgentPolicy.js.map
-
-
-/***/ }),
-
-/***/ 341:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getUserAgentString = void 0;
-// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-const packageJson = __nccwpck_require__(440);
-/**
- * Ensure that this User Agent String is used in all HTTP calls so that we can monitor telemetry between different versions of this package
- */
-function getUserAgentString() {
-    return `@actions/cache-${packageJson.version}`;
-}
-exports.getUserAgentString = getUserAgentString;
-//# sourceMappingURL=user-agent.js.map
-
-/***/ }),
-
-/***/ 342:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BufferScheduler = void 0;
-const events_1 = __nccwpck_require__(441);
-const PooledBuffer_js_1 = __nccwpck_require__(349);
-/**
- * This class accepts a Node.js Readable stream as input, and keeps reading data
- * from the stream into the internal buffer structure, until it reaches maxBuffers.
- * Every available buffer will try to trigger outgoingHandler.
- *
- * The internal buffer structure includes an incoming buffer array, and a outgoing
- * buffer array. The incoming buffer array includes the "empty" buffers can be filled
- * with new incoming data. The outgoing array includes the filled buffers to be
- * handled by outgoingHandler. Every above buffer size is defined by parameter bufferSize.
- *
- * NUM_OF_ALL_BUFFERS = BUFFERS_IN_INCOMING + BUFFERS_IN_OUTGOING + BUFFERS_UNDER_HANDLING
- *
- * NUM_OF_ALL_BUFFERS lesser than or equal to maxBuffers
- *
- * PERFORMANCE IMPROVEMENT TIPS:
- * 1. Input stream highWaterMark is better to set a same value with bufferSize
- *    parameter, which will avoid Buffer.concat() operations.
- * 2. concurrency should set a smaller value than maxBuffers, which is helpful to
- *    reduce the possibility when a outgoing handler waits for the stream data.
- *    in this situation, outgoing handlers are blocked.
- *    Outgoing queue shouldn't be empty.
- */
-class BufferScheduler {
-    /**
-     * Size of buffers in incoming and outgoing queues. This class will try to align
-     * data read from Readable stream into buffer chunks with bufferSize defined.
-     */
-    bufferSize;
-    /**
-     * How many buffers can be created or maintained.
-     */
-    maxBuffers;
-    /**
-     * A Node.js Readable stream.
-     */
-    readable;
-    /**
-     * OutgoingHandler is an async function triggered by BufferScheduler when there
-     * are available buffers in outgoing array.
-     */
-    outgoingHandler;
-    /**
-     * An internal event emitter.
-     */
-    emitter = new events_1.EventEmitter();
-    /**
-     * Concurrency of executing outgoingHandlers. (0 lesser than concurrency lesser than or equal to maxBuffers)
-     */
-    concurrency;
-    /**
-     * An internal offset marker to track data offset in bytes of next outgoingHandler.
-     */
-    offset = 0;
-    /**
-     * An internal marker to track whether stream is end.
-     */
-    isStreamEnd = false;
-    /**
-     * An internal marker to track whether stream or outgoingHandler returns error.
-     */
-    isError = false;
-    /**
-     * How many handlers are executing.
-     */
-    executingOutgoingHandlers = 0;
-    /**
-     * Encoding of the input Readable stream which has string data type instead of Buffer.
-     */
-    encoding;
-    /**
-     * How many buffers have been allocated.
-     */
-    numBuffers = 0;
-    /**
-     * Because this class doesn't know how much data every time stream pops, which
-     * is defined by highWaterMarker of the stream. So BufferScheduler will cache
-     * data received from the stream, when data in unresolvedDataArray exceeds the
-     * blockSize defined, it will try to concat a blockSize of buffer, fill into available
-     * buffers from incoming and push to outgoing array.
-     */
-    unresolvedDataArray = [];
-    /**
-     * How much data consisted in unresolvedDataArray.
-     */
-    unresolvedLength = 0;
-    /**
-     * The array includes all the available buffers can be used to fill data from stream.
-     */
-    incoming = [];
-    /**
-     * The array (queue) includes all the buffers filled from stream data.
-     */
-    outgoing = [];
-    /**
-     * Creates an instance of BufferScheduler.
-     *
-     * @param readable - A Node.js Readable stream
-     * @param bufferSize - Buffer size of every maintained buffer
-     * @param maxBuffers - How many buffers can be allocated
-     * @param outgoingHandler - An async function scheduled to be
-     *                                          triggered when a buffer fully filled
-     *                                          with stream data
-     * @param concurrency - Concurrency of executing outgoingHandlers (&gt;0)
-     * @param encoding - [Optional] Encoding of Readable stream when it's a string stream
-     */
-    constructor(readable, bufferSize, maxBuffers, outgoingHandler, concurrency, encoding) {
-        if (bufferSize <= 0) {
-            throw new RangeError(`bufferSize must be larger than 0, current is ${bufferSize}`);
-        }
-        if (maxBuffers <= 0) {
-            throw new RangeError(`maxBuffers must be larger than 0, current is ${maxBuffers}`);
-        }
-        if (concurrency <= 0) {
-            throw new RangeError(`concurrency must be larger than 0, current is ${concurrency}`);
-        }
-        this.bufferSize = bufferSize;
-        this.maxBuffers = maxBuffers;
-        this.readable = readable;
-        this.outgoingHandler = outgoingHandler;
-        this.concurrency = concurrency;
-        this.encoding = encoding;
-    }
-    /**
-     * Start the scheduler, will return error when stream of any of the outgoingHandlers
-     * returns error.
-     *
-     */
-    async do() {
-        return new Promise((resolve, reject) => {
-            this.readable.on("data", (data) => {
-                data = typeof data === "string" ? Buffer.from(data, this.encoding) : data;
-                this.appendUnresolvedData(data);
-                if (!this.resolveData()) {
-                    this.readable.pause();
-                }
-            });
-            this.readable.on("error", (err) => {
-                this.emitter.emit("error", err);
-            });
-            this.readable.on("end", () => {
-                this.isStreamEnd = true;
-                this.emitter.emit("checkEnd");
-            });
-            this.emitter.on("error", (err) => {
-                this.isError = true;
-                this.readable.pause();
-                reject(err);
-            });
-            this.emitter.on("checkEnd", () => {
-                if (this.outgoing.length > 0) {
-                    this.triggerOutgoingHandlers();
-                    return;
-                }
-                if (this.isStreamEnd && this.executingOutgoingHandlers === 0) {
-                    if (this.unresolvedLength > 0 && this.unresolvedLength < this.bufferSize) {
-                        const buffer = this.shiftBufferFromUnresolvedDataArray();
-                        this.outgoingHandler(() => buffer.getReadableStream(), buffer.size, this.offset)
-                            .then(resolve)
-                            .catch(reject);
-                    }
-                    else if (this.unresolvedLength >= this.bufferSize) {
-                        return;
-                    }
-                    else {
-                        resolve();
-                    }
-                }
-            });
-        });
-    }
-    /**
-     * Insert a new data into unresolved array.
-     *
-     * @param data -
-     */
-    appendUnresolvedData(data) {
-        this.unresolvedDataArray.push(data);
-        this.unresolvedLength += data.length;
-    }
-    /**
-     * Try to shift a buffer with size in blockSize. The buffer returned may be less
-     * than blockSize when data in unresolvedDataArray is less than bufferSize.
-     *
-     */
-    shiftBufferFromUnresolvedDataArray(buffer) {
-        if (!buffer) {
-            buffer = new PooledBuffer_js_1.PooledBuffer(this.bufferSize, this.unresolvedDataArray, this.unresolvedLength);
-        }
-        else {
-            buffer.fill(this.unresolvedDataArray, this.unresolvedLength);
-        }
-        this.unresolvedLength -= buffer.size;
-        return buffer;
-    }
-    /**
-     * Resolve data in unresolvedDataArray. For every buffer with size in blockSize
-     * shifted, it will try to get (or allocate a buffer) from incoming, and fill it,
-     * then push it into outgoing to be handled by outgoing handler.
-     *
-     * Return false when available buffers in incoming are not enough, else true.
-     *
-     * @returns Return false when buffers in incoming are not enough, else true.
-     */
-    resolveData() {
-        while (this.unresolvedLength >= this.bufferSize) {
-            let buffer;
-            if (this.incoming.length > 0) {
-                buffer = this.incoming.shift();
-                this.shiftBufferFromUnresolvedDataArray(buffer);
-            }
-            else {
-                if (this.numBuffers < this.maxBuffers) {
-                    buffer = this.shiftBufferFromUnresolvedDataArray();
-                    this.numBuffers++;
-                }
-                else {
-                    // No available buffer, wait for buffer returned
-                    return false;
-                }
-            }
-            this.outgoing.push(buffer);
-            this.triggerOutgoingHandlers();
-        }
-        return true;
-    }
-    /**
-     * Try to trigger a outgoing handler for every buffer in outgoing. Stop when
-     * concurrency reaches.
-     */
-    async triggerOutgoingHandlers() {
-        let buffer;
-        do {
-            if (this.executingOutgoingHandlers >= this.concurrency) {
-                return;
-            }
-            buffer = this.outgoing.shift();
-            if (buffer) {
-                this.triggerOutgoingHandler(buffer);
-            }
-        } while (buffer);
-    }
-    /**
-     * Trigger a outgoing handler for a buffer shifted from outgoing.
-     *
-     * @param buffer -
-     */
-    async triggerOutgoingHandler(buffer) {
-        const bufferLength = buffer.size;
-        this.executingOutgoingHandlers++;
-        this.offset += bufferLength;
-        try {
-            await this.outgoingHandler(() => buffer.getReadableStream(), bufferLength, this.offset - bufferLength);
-        }
-        catch (err) {
-            this.emitter.emit("error", err);
-            return;
-        }
-        this.executingOutgoingHandlers--;
-        this.reuseBuffer(buffer);
-        this.emitter.emit("checkEnd");
-    }
-    /**
-     * Return buffer used by outgoing handler into incoming.
-     *
-     * @param buffer -
-     */
-    reuseBuffer(buffer) {
-        this.incoming.push(buffer);
-        if (!this.isError && this.resolveData() && !this.isStreamEnd) {
-            this.readable.resume();
-        }
-    }
-}
-exports.BufferScheduler = BufferScheduler;
-//# sourceMappingURL=BufferScheduler.js.map
-
-/***/ }),
-
-/***/ 343:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { Blob, File: NativeFile } = __nccwpck_require__(115)
-const { types } = __nccwpck_require__(119)
-const { kState } = __nccwpck_require__(13)
-const { isBlobLike } = __nccwpck_require__(485)
-const { webidl } = __nccwpck_require__(429)
-const { parseMIMEType, serializeAMimeType } = __nccwpck_require__(23)
-const { kEnumerableProperty } = __nccwpck_require__(66)
-const encoder = new TextEncoder()
-
-class File extends Blob {
-  constructor (fileBits, fileName, options = {}) {
-    // The File constructor is invoked with two or three parameters, depending
-    // on whether the optional dictionary parameter is used. When the File()
-    // constructor is invoked, user agents must run the following steps:
-    webidl.argumentLengthCheck(arguments, 2, { header: 'File constructor' })
-
-    fileBits = webidl.converters['sequence<BlobPart>'](fileBits)
-    fileName = webidl.converters.USVString(fileName)
-    options = webidl.converters.FilePropertyBag(options)
-
-    // 1. Let bytes be the result of processing blob parts given fileBits and
-    // options.
-    // Note: Blob handles this for us
-
-    // 2. Let n be the fileName argument to the constructor.
-    const n = fileName
-
-    // 3. Process FilePropertyBag dictionary argument by running the following
-    // substeps:
-
-    //    1. If the type member is provided and is not the empty string, let t
-    //    be set to the type dictionary member. If t contains any characters
-    //    outside the range U+0020 to U+007E, then set t to the empty string
-    //    and return from these substeps.
-    //    2. Convert every character in t to ASCII lowercase.
-    let t = options.type
-    let d
-
-    // eslint-disable-next-line no-labels
-    substep: {
-      if (t) {
-        t = parseMIMEType(t)
-
-        if (t === 'failure') {
-          t = ''
-          // eslint-disable-next-line no-labels
-          break substep
-        }
-
-        t = serializeAMimeType(t).toLowerCase()
-      }
-
-      //    3. If the lastModified member is provided, let d be set to the
-      //    lastModified dictionary member. If it is not provided, set d to the
-      //    current date and time represented as the number of milliseconds since
-      //    the Unix Epoch (which is the equivalent of Date.now() [ECMA-262]).
-      d = options.lastModified
-    }
-
-    // 4. Return a new File object F such that:
-    // F refers to the bytes byte sequence.
-    // F.size is set to the number of total bytes in bytes.
-    // F.name is set to n.
-    // F.type is set to t.
-    // F.lastModified is set to d.
-
-    super(processBlobParts(fileBits, options), { type: t })
-    this[kState] = {
-      name: n,
-      lastModified: d,
-      type: t
-    }
-  }
-
-  get name () {
-    webidl.brandCheck(this, File)
-
-    return this[kState].name
-  }
-
-  get lastModified () {
-    webidl.brandCheck(this, File)
-
-    return this[kState].lastModified
-  }
-
-  get type () {
-    webidl.brandCheck(this, File)
-
-    return this[kState].type
-  }
-}
-
-class FileLike {
-  constructor (blobLike, fileName, options = {}) {
-    // TODO: argument idl type check
-
-    // The File constructor is invoked with two or three parameters, depending
-    // on whether the optional dictionary parameter is used. When the File()
-    // constructor is invoked, user agents must run the following steps:
-
-    // 1. Let bytes be the result of processing blob parts given fileBits and
-    // options.
-
-    // 2. Let n be the fileName argument to the constructor.
-    const n = fileName
-
-    // 3. Process FilePropertyBag dictionary argument by running the following
-    // substeps:
-
-    //    1. If the type member is provided and is not the empty string, let t
-    //    be set to the type dictionary member. If t contains any characters
-    //    outside the range U+0020 to U+007E, then set t to the empty string
-    //    and return from these substeps.
-    //    TODO
-    const t = options.type
-
-    //    2. Convert every character in t to ASCII lowercase.
-    //    TODO
-
-    //    3. If the lastModified member is provided, let d be set to the
-    //    lastModified dictionary member. If it is not provided, set d to the
-    //    current date and time represented as the number of milliseconds since
-    //    the Unix Epoch (which is the equivalent of Date.now() [ECMA-262]).
-    const d = options.lastModified ?? Date.now()
-
-    // 4. Return a new File object F such that:
-    // F refers to the bytes byte sequence.
-    // F.size is set to the number of total bytes in bytes.
-    // F.name is set to n.
-    // F.type is set to t.
-    // F.lastModified is set to d.
-
-    this[kState] = {
-      blobLike,
-      name: n,
-      type: t,
-      lastModified: d
-    }
-  }
-
-  stream (...args) {
-    webidl.brandCheck(this, FileLike)
-
-    return this[kState].blobLike.stream(...args)
-  }
-
-  arrayBuffer (...args) {
-    webidl.brandCheck(this, FileLike)
-
-    return this[kState].blobLike.arrayBuffer(...args)
-  }
-
-  slice (...args) {
-    webidl.brandCheck(this, FileLike)
-
-    return this[kState].blobLike.slice(...args)
-  }
-
-  text (...args) {
-    webidl.brandCheck(this, FileLike)
-
-    return this[kState].blobLike.text(...args)
-  }
-
-  get size () {
-    webidl.brandCheck(this, FileLike)
-
-    return this[kState].blobLike.size
-  }
-
-  get type () {
-    webidl.brandCheck(this, FileLike)
-
-    return this[kState].blobLike.type
-  }
-
-  get name () {
-    webidl.brandCheck(this, FileLike)
-
-    return this[kState].name
-  }
-
-  get lastModified () {
-    webidl.brandCheck(this, FileLike)
-
-    return this[kState].lastModified
-  }
-
-  get [Symbol.toStringTag] () {
-    return 'File'
-  }
-}
-
-Object.defineProperties(File.prototype, {
-  [Symbol.toStringTag]: {
-    value: 'File',
-    configurable: true
-  },
-  name: kEnumerableProperty,
-  lastModified: kEnumerableProperty
-})
-
-webidl.converters.Blob = webidl.interfaceConverter(Blob)
-
-webidl.converters.BlobPart = function (V, opts) {
-  if (webidl.util.Type(V) === 'Object') {
-    if (isBlobLike(V)) {
-      return webidl.converters.Blob(V, { strict: false })
-    }
-
-    if (
-      ArrayBuffer.isView(V) ||
-      types.isAnyArrayBuffer(V)
-    ) {
-      return webidl.converters.BufferSource(V, opts)
-    }
-  }
-
-  return webidl.converters.USVString(V, opts)
-}
-
-webidl.converters['sequence<BlobPart>'] = webidl.sequenceConverter(
-  webidl.converters.BlobPart
-)
-
-// https://www.w3.org/TR/FileAPI/#dfn-FilePropertyBag
-webidl.converters.FilePropertyBag = webidl.dictionaryConverter([
-  {
-    key: 'lastModified',
-    converter: webidl.converters['long long'],
-    get defaultValue () {
-      return Date.now()
-    }
-  },
-  {
-    key: 'type',
-    converter: webidl.converters.DOMString,
-    defaultValue: ''
-  },
-  {
-    key: 'endings',
-    converter: (value) => {
-      value = webidl.converters.DOMString(value)
-      value = value.toLowerCase()
-
-      if (value !== 'native') {
-        value = 'transparent'
-      }
-
-      return value
-    },
-    defaultValue: 'transparent'
-  }
-])
-
-/**
- * @see https://www.w3.org/TR/FileAPI/#process-blob-parts
- * @param {(NodeJS.TypedArray|Blob|string)[]} parts
- * @param {{ type: string, endings: string }} options
- */
-function processBlobParts (parts, options) {
-  // 1. Let bytes be an empty sequence of bytes.
-  /** @type {NodeJS.TypedArray[]} */
-  const bytes = []
-
-  // 2. For each element in parts:
-  for (const element of parts) {
-    // 1. If element is a USVString, run the following substeps:
-    if (typeof element === 'string') {
-      // 1. Let s be element.
-      let s = element
-
-      // 2. If the endings member of options is "native", set s
-      //    to the result of converting line endings to native
-      //    of element.
-      if (options.endings === 'native') {
-        s = convertLineEndingsNative(s)
-      }
-
-      // 3. Append the result of UTF-8 encoding s to bytes.
-      bytes.push(encoder.encode(s))
-    } else if (
-      types.isAnyArrayBuffer(element) ||
-      types.isTypedArray(element)
-    ) {
-      // 2. If element is a BufferSource, get a copy of the
-      //    bytes held by the buffer source, and append those
-      //    bytes to bytes.
-      if (!element.buffer) { // ArrayBuffer
-        bytes.push(new Uint8Array(element))
-      } else {
-        bytes.push(
-          new Uint8Array(element.buffer, element.byteOffset, element.byteLength)
-        )
-      }
-    } else if (isBlobLike(element)) {
-      // 3. If element is a Blob, append the bytes it represents
-      //    to bytes.
-      bytes.push(element)
-    }
-  }
-
-  // 3. Return bytes.
-  return bytes
-}
-
-/**
- * @see https://www.w3.org/TR/FileAPI/#convert-line-endings-to-native
- * @param {string} s
- */
-function convertLineEndingsNative (s) {
-  // 1. Let native line ending be be the code point U+000A LF.
-  let nativeLineEnding = '\n'
-
-  // 2. If the underlying platform’s conventions are to
-  //    represent newlines as a carriage return and line feed
-  //    sequence, set native line ending to the code point
-  //    U+000D CR followed by the code point U+000A LF.
-  if (process.platform === 'win32') {
-    nativeLineEnding = '\r\n'
-  }
-
-  return s.replace(/\r?\n/g, nativeLineEnding)
-}
-
-// If this function is moved to ./util.js, some tools (such as
-// rollup) will warn about circular dependencies. See:
-// https://github.com/nodejs/undici/issues/1629
-function isFileLike (object) {
-  return (
-    (NativeFile && object instanceof NativeFile) ||
-    object instanceof File || (
-      object &&
-      (typeof object.stream === 'function' ||
-      typeof object.arrayBuffer === 'function') &&
-      object[Symbol.toStringTag] === 'File'
-    )
-  )
-}
-
-module.exports = { File, FileLike, isFileLike }
-
-
-/***/ }),
-
-/***/ 344:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const diagnosticsChannel = __nccwpck_require__(137)
-const { uid, states } = __nccwpck_require__(437)
-const {
-  kReadyState,
-  kSentClose,
-  kByteParser,
-  kReceivedClose
-} = __nccwpck_require__(95)
-const { fireEvent, failWebsocketConnection } = __nccwpck_require__(54)
-const { CloseEvent } = __nccwpck_require__(240)
-const { makeRequest } = __nccwpck_require__(81)
-const { fetching } = __nccwpck_require__(423)
-const { Headers } = __nccwpck_require__(484)
-const { getGlobalDispatcher } = __nccwpck_require__(354)
-const { kHeadersList } = __nccwpck_require__(188)
-
-const channels = {}
-channels.open = diagnosticsChannel.channel('undici:websocket:open')
-channels.close = diagnosticsChannel.channel('undici:websocket:close')
-channels.socketError = diagnosticsChannel.channel('undici:websocket:socket_error')
-
-/** @type {import('crypto')} */
-let crypto
-try {
-  crypto = __nccwpck_require__(279)
-} catch {
-
-}
-
-/**
- * @see https://websockets.spec.whatwg.org/#concept-websocket-establish
- * @param {URL} url
- * @param {string|string[]} protocols
- * @param {import('./websocket').WebSocket} ws
- * @param {(response: any) => void} onEstablish
- * @param {Partial<import('../../types/websocket').WebSocketInit>} options
- */
-function establishWebSocketConnection (url, protocols, ws, onEstablish, options) {
-  // 1. Let requestURL be a copy of url, with its scheme set to "http", if url’s
-  //    scheme is "ws", and to "https" otherwise.
-  const requestURL = url
-
-  requestURL.protocol = url.protocol === 'ws:' ? 'http:' : 'https:'
-
-  // 2. Let request be a new request, whose URL is requestURL, client is client,
-  //    service-workers mode is "none", referrer is "no-referrer", mode is
-  //    "websocket", credentials mode is "include", cache mode is "no-store" ,
-  //    and redirect mode is "error".
-  const request = makeRequest({
-    urlList: [requestURL],
-    serviceWorkers: 'none',
-    referrer: 'no-referrer',
-    mode: 'websocket',
-    credentials: 'include',
-    cache: 'no-store',
-    redirect: 'error'
-  })
-
-  // Note: undici extension, allow setting custom headers.
-  if (options.headers) {
-    const headersList = new Headers(options.headers)[kHeadersList]
-
-    request.headersList = headersList
-  }
-
-  // 3. Append (`Upgrade`, `websocket`) to request’s header list.
-  // 4. Append (`Connection`, `Upgrade`) to request’s header list.
-  // Note: both of these are handled by undici currently.
-  // https://github.com/nodejs/undici/blob/68c269c4144c446f3f1220951338daef4a6b5ec4/lib/client.js#L1397
-
-  // 5. Let keyValue be a nonce consisting of a randomly selected
-  //    16-byte value that has been forgiving-base64-encoded and
-  //    isomorphic encoded.
-  const keyValue = crypto.randomBytes(16).toString('base64')
-
-  // 6. Append (`Sec-WebSocket-Key`, keyValue) to request’s
-  //    header list.
-  request.headersList.append('sec-websocket-key', keyValue)
-
-  // 7. Append (`Sec-WebSocket-Version`, `13`) to request’s
-  //    header list.
-  request.headersList.append('sec-websocket-version', '13')
-
-  // 8. For each protocol in protocols, combine
-  //    (`Sec-WebSocket-Protocol`, protocol) in request’s header
-  //    list.
-  for (const protocol of protocols) {
-    request.headersList.append('sec-websocket-protocol', protocol)
-  }
-
-  // 9. Let permessageDeflate be a user-agent defined
-  //    "permessage-deflate" extension header value.
-  // https://github.com/mozilla/gecko-dev/blob/ce78234f5e653a5d3916813ff990f053510227bc/netwerk/protocol/websocket/WebSocketChannel.cpp#L2673
-  // TODO: enable once permessage-deflate is supported
-  const permessageDeflate = '' // 'permessage-deflate; 15'
-
-  // 10. Append (`Sec-WebSocket-Extensions`, permessageDeflate) to
-  //     request’s header list.
-  // request.headersList.append('sec-websocket-extensions', permessageDeflate)
-
-  // 11. Fetch request with useParallelQueue set to true, and
-  //     processResponse given response being these steps:
-  const controller = fetching({
-    request,
-    useParallelQueue: true,
-    dispatcher: options.dispatcher ?? getGlobalDispatcher(),
-    processResponse (response) {
-      // 1. If response is a network error or its status is not 101,
-      //    fail the WebSocket connection.
-      if (response.type === 'error' || response.status !== 101) {
-        failWebsocketConnection(ws, 'Received network error or non-101 status code.')
-        return
-      }
-
-      // 2. If protocols is not the empty list and extracting header
-      //    list values given `Sec-WebSocket-Protocol` and response’s
-      //    header list results in null, failure, or the empty byte
-      //    sequence, then fail the WebSocket connection.
-      if (protocols.length !== 0 && !response.headersList.get('Sec-WebSocket-Protocol')) {
-        failWebsocketConnection(ws, 'Server did not respond with sent protocols.')
-        return
-      }
-
-      // 3. Follow the requirements stated step 2 to step 6, inclusive,
-      //    of the last set of steps in section 4.1 of The WebSocket
-      //    Protocol to validate response. This either results in fail
-      //    the WebSocket connection or the WebSocket connection is
-      //    established.
-
-      // 2. If the response lacks an |Upgrade| header field or the |Upgrade|
-      //    header field contains a value that is not an ASCII case-
-      //    insensitive match for the value "websocket", the client MUST
-      //    _Fail the WebSocket Connection_.
-      if (response.headersList.get('Upgrade')?.toLowerCase() !== 'websocket') {
-        failWebsocketConnection(ws, 'Server did not set Upgrade header to "websocket".')
-        return
-      }
-
-      // 3. If the response lacks a |Connection| header field or the
-      //    |Connection| header field doesn't contain a token that is an
-      //    ASCII case-insensitive match for the value "Upgrade", the client
-      //    MUST _Fail the WebSocket Connection_.
-      if (response.headersList.get('Connection')?.toLowerCase() !== 'upgrade') {
-        failWebsocketConnection(ws, 'Server did not set Connection header to "upgrade".')
-        return
-      }
-
-      // 4. If the response lacks a |Sec-WebSocket-Accept| header field or
-      //    the |Sec-WebSocket-Accept| contains a value other than the
-      //    base64-encoded SHA-1 of the concatenation of the |Sec-WebSocket-
-      //    Key| (as a string, not base64-decoded) with the string "258EAFA5-
-      //    E914-47DA-95CA-C5AB0DC85B11" but ignoring any leading and
-      //    trailing whitespace, the client MUST _Fail the WebSocket
-      //    Connection_.
-      const secWSAccept = response.headersList.get('Sec-WebSocket-Accept')
-      const digest = crypto.createHash('sha1').update(keyValue + uid).digest('base64')
-      if (secWSAccept !== digest) {
-        failWebsocketConnection(ws, 'Incorrect hash received in Sec-WebSocket-Accept header.')
-        return
-      }
-
-      // 5. If the response includes a |Sec-WebSocket-Extensions| header
-      //    field and this header field indicates the use of an extension
-      //    that was not present in the client's handshake (the server has
-      //    indicated an extension not requested by the client), the client
-      //    MUST _Fail the WebSocket Connection_.  (The parsing of this
-      //    header field to determine which extensions are requested is
-      //    discussed in Section 9.1.)
-      const secExtension = response.headersList.get('Sec-WebSocket-Extensions')
-
-      if (secExtension !== null && secExtension !== permessageDeflate) {
-        failWebsocketConnection(ws, 'Received different permessage-deflate than the one set.')
-        return
-      }
-
-      // 6. If the response includes a |Sec-WebSocket-Protocol| header field
-      //    and this header field indicates the use of a subprotocol that was
-      //    not present in the client's handshake (the server has indicated a
-      //    subprotocol not requested by the client), the client MUST _Fail
-      //    the WebSocket Connection_.
-      const secProtocol = response.headersList.get('Sec-WebSocket-Protocol')
-
-      if (secProtocol !== null && secProtocol !== request.headersList.get('Sec-WebSocket-Protocol')) {
-        failWebsocketConnection(ws, 'Protocol was not set in the opening handshake.')
-        return
-      }
-
-      response.socket.on('data', onSocketData)
-      response.socket.on('close', onSocketClose)
-      response.socket.on('error', onSocketError)
-
-      if (channels.open.hasSubscribers) {
-        channels.open.publish({
-          address: response.socket.address(),
-          protocol: secProtocol,
-          extensions: secExtension
-        })
-      }
-
-      onEstablish(response)
-    }
-  })
-
-  return controller
-}
-
-/**
- * @param {Buffer} chunk
- */
-function onSocketData (chunk) {
-  if (!this.ws[kByteParser].write(chunk)) {
-    this.pause()
-  }
-}
-
-/**
- * @see https://websockets.spec.whatwg.org/#feedback-from-the-protocol
- * @see https://datatracker.ietf.org/doc/html/rfc6455#section-7.1.4
- */
-function onSocketClose () {
-  const { ws } = this
-
-  // If the TCP connection was closed after the
-  // WebSocket closing handshake was completed, the WebSocket connection
-  // is said to have been closed _cleanly_.
-  const wasClean = ws[kSentClose] && ws[kReceivedClose]
-
-  let code = 1005
-  let reason = ''
-
-  const result = ws[kByteParser].closingInfo
-
-  if (result) {
-    code = result.code ?? 1005
-    reason = result.reason
-  } else if (!ws[kSentClose]) {
-    // If _The WebSocket
-    // Connection is Closed_ and no Close control frame was received by the
-    // endpoint (such as could occur if the underlying transport connection
-    // is lost), _The WebSocket Connection Close Code_ is considered to be
-    // 1006.
-    code = 1006
-  }
-
-  // 1. Change the ready state to CLOSED (3).
-  ws[kReadyState] = states.CLOSED
-
-  // 2. If the user agent was required to fail the WebSocket
-  //    connection, or if the WebSocket connection was closed
-  //    after being flagged as full, fire an event named error
-  //    at the WebSocket object.
-  // TODO
-
-  // 3. Fire an event named close at the WebSocket object,
-  //    using CloseEvent, with the wasClean attribute
-  //    initialized to true if the connection closed cleanly
-  //    and false otherwise, the code attribute initialized to
-  //    the WebSocket connection close code, and the reason
-  //    attribute initialized to the result of applying UTF-8
-  //    decode without BOM to the WebSocket connection close
-  //    reason.
-  fireEvent('close', ws, CloseEvent, {
-    wasClean, code, reason
-  })
-
-  if (channels.close.hasSubscribers) {
-    channels.close.publish({
-      websocket: ws,
-      code,
-      reason
-    })
-  }
-}
-
-function onSocketError (error) {
-  const { ws } = this
-
-  ws[kReadyState] = states.CLOSING
-
-  if (channels.socketError.hasSubscribers) {
-    channels.socketError.publish(error)
-  }
-
-  this.destroy()
-}
-
-module.exports = {
-  establishWebSocketConnection
-}
-
-
-/***/ }),
-
-/***/ 345:
-/***/ ((module) => {
-
-"use strict";
-
-
-module.exports = (flag, argv = process.argv) => {
-	const prefix = flag.startsWith('-') ? '' : (flag.length === 1 ? '-' : '--');
-	const position = argv.indexOf(prefix + flag);
-	const terminatorPosition = argv.indexOf('--');
-	return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
-};
-
-
-/***/ }),
-
-/***/ 346:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var restError_exports = {};
-__export(restError_exports, {
-  createRestError: () => createRestError
-});
-module.exports = __toCommonJS(restError_exports);
-var import_restError = __nccwpck_require__(417);
-var import_httpHeaders = __nccwpck_require__(456);
-function createRestError(messageOrResponse, response) {
-  const resp = typeof messageOrResponse === "string" ? response : messageOrResponse;
-  const internalError = resp.body?.error ?? resp.body;
-  const message = typeof messageOrResponse === "string" ? messageOrResponse : internalError?.message ?? `Unexpected status code: ${resp.status}`;
-  return new import_restError.RestError(message, {
-    statusCode: statusCodeToNumber(resp.status),
-    code: internalError?.code,
-    request: resp.request,
-    response: toPipelineResponse(resp)
-  });
-}
-function toPipelineResponse(response) {
-  return {
-    headers: (0, import_httpHeaders.createHttpHeaders)(response.headers),
-    request: response.request,
-    status: statusCodeToNumber(response.status) ?? -1
-  };
-}
-function statusCodeToNumber(statusCode) {
-  const status = Number.parseInt(statusCode);
-  return Number.isNaN(status) ? void 0 : status;
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=restError.js.map
-
-
-/***/ }),
-
-/***/ 347:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const DispatcherBase = __nccwpck_require__(59)
-const FixedQueue = __nccwpck_require__(189)
-const { kConnected, kSize, kRunning, kPending, kQueued, kBusy, kFree, kUrl, kClose, kDestroy, kDispatch } = __nccwpck_require__(188)
-const PoolStats = __nccwpck_require__(20)
-
-const kClients = Symbol('clients')
-const kNeedDrain = Symbol('needDrain')
-const kQueue = Symbol('queue')
-const kClosedResolve = Symbol('closed resolve')
-const kOnDrain = Symbol('onDrain')
-const kOnConnect = Symbol('onConnect')
-const kOnDisconnect = Symbol('onDisconnect')
-const kOnConnectionError = Symbol('onConnectionError')
-const kGetDispatcher = Symbol('get dispatcher')
-const kAddClient = Symbol('add client')
-const kRemoveClient = Symbol('remove client')
-const kStats = Symbol('stats')
-
-class PoolBase extends DispatcherBase {
-  constructor () {
-    super()
-
-    this[kQueue] = new FixedQueue()
-    this[kClients] = []
-    this[kQueued] = 0
-
-    const pool = this
-
-    this[kOnDrain] = function onDrain (origin, targets) {
-      const queue = pool[kQueue]
-
-      let needDrain = false
-
-      while (!needDrain) {
-        const item = queue.shift()
-        if (!item) {
-          break
-        }
-        pool[kQueued]--
-        needDrain = !this.dispatch(item.opts, item.handler)
-      }
-
-      this[kNeedDrain] = needDrain
-
-      if (!this[kNeedDrain] && pool[kNeedDrain]) {
-        pool[kNeedDrain] = false
-        pool.emit('drain', origin, [pool, ...targets])
-      }
-
-      if (pool[kClosedResolve] && queue.isEmpty()) {
-        Promise
-          .all(pool[kClients].map(c => c.close()))
-          .then(pool[kClosedResolve])
-      }
-    }
-
-    this[kOnConnect] = (origin, targets) => {
-      pool.emit('connect', origin, [pool, ...targets])
-    }
-
-    this[kOnDisconnect] = (origin, targets, err) => {
-      pool.emit('disconnect', origin, [pool, ...targets], err)
-    }
-
-    this[kOnConnectionError] = (origin, targets, err) => {
-      pool.emit('connectionError', origin, [pool, ...targets], err)
-    }
-
-    this[kStats] = new PoolStats(this)
-  }
-
-  get [kBusy] () {
-    return this[kNeedDrain]
-  }
-
-  get [kConnected] () {
-    return this[kClients].filter(client => client[kConnected]).length
-  }
-
-  get [kFree] () {
-    return this[kClients].filter(client => client[kConnected] && !client[kNeedDrain]).length
-  }
-
-  get [kPending] () {
-    let ret = this[kQueued]
-    for (const { [kPending]: pending } of this[kClients]) {
-      ret += pending
-    }
-    return ret
-  }
-
-  get [kRunning] () {
-    let ret = 0
-    for (const { [kRunning]: running } of this[kClients]) {
-      ret += running
-    }
-    return ret
-  }
-
-  get [kSize] () {
-    let ret = this[kQueued]
-    for (const { [kSize]: size } of this[kClients]) {
-      ret += size
-    }
-    return ret
-  }
-
-  get stats () {
-    return this[kStats]
-  }
-
-  async [kClose] () {
-    if (this[kQueue].isEmpty()) {
-      return Promise.all(this[kClients].map(c => c.close()))
-    } else {
-      return new Promise((resolve) => {
-        this[kClosedResolve] = resolve
-      })
-    }
-  }
-
-  async [kDestroy] (err) {
-    while (true) {
-      const item = this[kQueue].shift()
-      if (!item) {
-        break
-      }
-      item.handler.onError(err)
-    }
-
-    return Promise.all(this[kClients].map(c => c.destroy(err)))
-  }
-
-  [kDispatch] (opts, handler) {
-    const dispatcher = this[kGetDispatcher]()
-
-    if (!dispatcher) {
-      this[kNeedDrain] = true
-      this[kQueue].push({ opts, handler })
-      this[kQueued]++
-    } else if (!dispatcher.dispatch(opts, handler)) {
-      dispatcher[kNeedDrain] = true
-      this[kNeedDrain] = !this[kGetDispatcher]()
-    }
-
-    return !this[kNeedDrain]
-  }
-
-  [kAddClient] (client) {
-    client
-      .on('drain', this[kOnDrain])
-      .on('connect', this[kOnConnect])
-      .on('disconnect', this[kOnDisconnect])
-      .on('connectionError', this[kOnConnectionError])
-
-    this[kClients].push(client)
-
-    if (this[kNeedDrain]) {
-      process.nextTick(() => {
-        if (this[kNeedDrain]) {
-          this[kOnDrain](client[kUrl], [this, client])
-        }
-      })
-    }
-
-    return this
-  }
-
-  [kRemoveClient] (client) {
-    client.close(() => {
-      const idx = this[kClients].indexOf(client)
-      if (idx !== -1) {
-        this[kClients].splice(idx, 1)
-      }
-    })
-
-    this[kNeedDrain] = this[kClients].some(dispatcher => (
-      !dispatcher[kNeedDrain] &&
-      dispatcher.closed !== true &&
-      dispatcher.destroyed !== true
-    ))
-  }
-}
-
-module.exports = {
-  PoolBase,
-  kClients,
-  kNeedDrain,
-  kAddClient,
-  kRemoveClient,
-  kGetDispatcher
-}
-
-
-/***/ }),
-
-/***/ 348:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TracingContextImpl = exports.knownContextKeys = void 0;
-exports.createTracingContext = createTracingContext;
-/** @internal */
-exports.knownContextKeys = {
-    span: Symbol.for("@azure/core-tracing span"),
-    namespace: Symbol.for("@azure/core-tracing namespace"),
-};
-/**
- * Creates a new {@link TracingContext} with the given options.
- * @param options - A set of known keys that may be set on the context.
- * @returns A new {@link TracingContext} with the given options.
- *
- * @internal
- */
-function createTracingContext(options = {}) {
-    let context = new TracingContextImpl(options.parentContext);
-    if (options.span) {
-        context = context.setValue(exports.knownContextKeys.span, options.span);
-    }
-    if (options.namespace) {
-        context = context.setValue(exports.knownContextKeys.namespace, options.namespace);
-    }
-    return context;
-}
-/** @internal */
-class TracingContextImpl {
-    _contextMap;
-    constructor(initialContext) {
-        this._contextMap =
-            initialContext instanceof TracingContextImpl
-                ? new Map(initialContext._contextMap)
-                : new Map();
-    }
-    setValue(key, value) {
-        const newContext = new TracingContextImpl(this);
-        newContext._contextMap.set(key, value);
-        return newContext;
-    }
-    getValue(key) {
-        return this._contextMap.get(key);
-    }
-    deleteValue(key) {
-        const newContext = new TracingContextImpl(this);
-        newContext._contextMap.delete(key);
-        return newContext;
-    }
-}
-exports.TracingContextImpl = TracingContextImpl;
-//# sourceMappingURL=tracingContext.js.map
-
-/***/ }),
-
-/***/ 349:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PooledBuffer = void 0;
-const tslib_1 = __nccwpck_require__(209);
-const BuffersStream_js_1 = __nccwpck_require__(362);
-const node_buffer_1 = tslib_1.__importDefault(__nccwpck_require__(254));
-/**
- * maxBufferLength is max size of each buffer in the pooled buffers.
- */
-const maxBufferLength = node_buffer_1.default.constants.MAX_LENGTH;
-/**
- * This class provides a buffer container which conceptually has no hard size limit.
- * It accepts a capacity, an array of input buffers and the total length of input data.
- * It will allocate an internal "buffer" of the capacity and fill the data in the input buffers
- * into the internal "buffer" serially with respect to the total length.
- * Then by calling PooledBuffer.getReadableStream(), you can get a readable stream
- * assembled from all the data in the internal "buffer".
- */
-class PooledBuffer {
-    /**
-     * Internal buffers used to keep the data.
-     * Each buffer has a length of the maxBufferLength except last one.
-     */
-    buffers = [];
-    /**
-     * The total size of internal buffers.
-     */
-    capacity;
-    /**
-     * The total size of data contained in internal buffers.
-     */
-    _size;
-    /**
-     * The size of the data contained in the pooled buffers.
-     */
-    get size() {
-        return this._size;
-    }
-    constructor(capacity, buffers, totalLength) {
-        this.capacity = capacity;
-        this._size = 0;
-        // allocate
-        const bufferNum = Math.ceil(capacity / maxBufferLength);
-        for (let i = 0; i < bufferNum; i++) {
-            let len = i === bufferNum - 1 ? capacity % maxBufferLength : maxBufferLength;
-            if (len === 0) {
-                len = maxBufferLength;
-            }
-            this.buffers.push(Buffer.allocUnsafe(len));
-        }
-        if (buffers) {
-            this.fill(buffers, totalLength);
-        }
-    }
-    /**
-     * Fill the internal buffers with data in the input buffers serially
-     * with respect to the total length and the total capacity of the internal buffers.
-     * Data copied will be shift out of the input buffers.
-     *
-     * @param buffers - Input buffers containing the data to be filled in the pooled buffer
-     * @param totalLength - Total length of the data to be filled in.
-     *
-     */
-    fill(buffers, totalLength) {
-        this._size = Math.min(this.capacity, totalLength);
-        let i = 0, j = 0, targetOffset = 0, sourceOffset = 0, totalCopiedNum = 0;
-        while (totalCopiedNum < this._size) {
-            const source = buffers[i];
-            const target = this.buffers[j];
-            const copiedNum = source.copy(target, targetOffset, sourceOffset);
-            totalCopiedNum += copiedNum;
-            sourceOffset += copiedNum;
-            targetOffset += copiedNum;
-            if (sourceOffset === source.length) {
-                i++;
-                sourceOffset = 0;
-            }
-            if (targetOffset === target.length) {
-                j++;
-                targetOffset = 0;
-            }
-        }
-        // clear copied from source buffers
-        buffers.splice(0, i);
-        if (buffers.length > 0) {
-            buffers[0] = buffers[0].slice(sourceOffset);
-        }
-    }
-    /**
-     * Get the readable stream assembled from all the data in the internal buffers.
-     *
-     */
-    getReadableStream() {
-        return new BuffersStream_js_1.BuffersStream(this.buffers, this.size);
-    }
-}
-exports.PooledBuffer = PooledBuffer;
-//# sourceMappingURL=PooledBuffer.js.map
-
-/***/ }),
-
-/***/ 350:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var defaultHttpClient_exports = {};
-__export(defaultHttpClient_exports, {
-  createDefaultHttpClient: () => createDefaultHttpClient
-});
-module.exports = __toCommonJS(defaultHttpClient_exports);
-var import_nodeHttpClient = __nccwpck_require__(414);
-function createDefaultHttpClient() {
-  return (0, import_nodeHttpClient.createNodeHttpClient)();
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=defaultHttpClient.js.map
-
-
-/***/ }),
-
-/***/ 351:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { AsyncResource } = __nccwpck_require__(402)
-const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(459)
-const util = __nccwpck_require__(66)
-const { addSignal, removeSignal } = __nccwpck_require__(100)
-
-class ConnectHandler extends AsyncResource {
-  constructor (opts, callback) {
-    if (!opts || typeof opts !== 'object') {
-      throw new InvalidArgumentError('invalid opts')
-    }
-
-    if (typeof callback !== 'function') {
-      throw new InvalidArgumentError('invalid callback')
-    }
-
-    const { signal, opaque, responseHeaders } = opts
-
-    if (signal && typeof signal.on !== 'function' && typeof signal.addEventListener !== 'function') {
-      throw new InvalidArgumentError('signal must be an EventEmitter or EventTarget')
-    }
-
-    super('UNDICI_CONNECT')
-
-    this.opaque = opaque || null
-    this.responseHeaders = responseHeaders || null
-    this.callback = callback
-    this.abort = null
-
-    addSignal(this, signal)
-  }
-
-  onConnect (abort, context) {
-    if (!this.callback) {
-      throw new RequestAbortedError()
-    }
-
-    this.abort = abort
-    this.context = context
-  }
-
-  onHeaders () {
-    throw new SocketError('bad connect', null)
-  }
-
-  onUpgrade (statusCode, rawHeaders, socket) {
-    const { callback, opaque, context } = this
-
-    removeSignal(this)
-
-    this.callback = null
-
-    let headers = rawHeaders
-    // Indicates is an HTTP2Session
-    if (headers != null) {
-      headers = this.responseHeaders === 'raw' ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders)
-    }
-
-    this.runInAsyncScope(callback, null, null, {
-      statusCode,
-      headers,
-      socket,
-      opaque,
-      context
-    })
-  }
-
-  onError (err) {
-    const { callback, opaque } = this
-
-    removeSignal(this)
-
-    if (callback) {
-      this.callback = null
-      queueMicrotask(() => {
-        this.runInAsyncScope(callback, null, err, { opaque })
-      })
-    }
-  }
-}
-
-function connect (opts, callback) {
-  if (callback === undefined) {
-    return new Promise((resolve, reject) => {
-      connect.call(this, opts, (err, data) => {
-        return err ? reject(err) : resolve(data)
-      })
-    })
-  }
-
-  try {
-    const connectHandler = new ConnectHandler(opts, callback)
-    this.dispatch({ ...opts, method: 'CONNECT' }, connectHandler)
-  } catch (err) {
-    if (typeof callback !== 'function') {
-      throw err
-    }
-    const opaque = opts && opts.opaque
-    queueMicrotask(() => callback(err, { opaque }))
-  }
-}
-
-module.exports = connect
-
-
-/***/ }),
-
-/***/ 352:
-/***/ ((module) => {
-
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var w = d * 7;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} [options]
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function (val, options) {
-  options = options || {};
-  var type = typeof val;
-  if (type === 'string' && val.length > 0) {
-    return parse(val);
-  } else if (type === 'number' && isFinite(val)) {
-    return options.long ? fmtLong(val) : fmtShort(val);
-  }
-  throw new Error(
-    'val is not a non-empty string or a valid number. val=' +
-      JSON.stringify(val)
-  );
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = String(str);
-  if (str.length > 100) {
-    return;
-  }
-  var match = /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
-    str
-  );
-  if (!match) {
-    return;
-  }
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'weeks':
-    case 'week':
-    case 'w':
-      return n * w;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtShort(ms) {
-  var msAbs = Math.abs(ms);
-  if (msAbs >= d) {
-    return Math.round(ms / d) + 'd';
-  }
-  if (msAbs >= h) {
-    return Math.round(ms / h) + 'h';
-  }
-  if (msAbs >= m) {
-    return Math.round(ms / m) + 'm';
-  }
-  if (msAbs >= s) {
-    return Math.round(ms / s) + 's';
-  }
-  return ms + 'ms';
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtLong(ms) {
-  var msAbs = Math.abs(ms);
-  if (msAbs >= d) {
-    return plural(ms, msAbs, d, 'day');
-  }
-  if (msAbs >= h) {
-    return plural(ms, msAbs, h, 'hour');
-  }
-  if (msAbs >= m) {
-    return plural(ms, msAbs, m, 'minute');
-  }
-  if (msAbs >= s) {
-    return plural(ms, msAbs, s, 'second');
-  }
-  return ms + ' ms';
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, msAbs, n, name) {
-  var isPlural = msAbs >= n * 1.5;
-  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
-}
-
-
-/***/ }),
-
-/***/ 353:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:util");
-
-/***/ }),
-
-/***/ 354:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-// We include a version number for the Dispatcher API. In case of breaking changes,
-// this version number must be increased to avoid conflicts.
-const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-const { InvalidArgumentError } = __nccwpck_require__(459)
-const Agent = __nccwpck_require__(5)
-
-if (getGlobalDispatcher() === undefined) {
-  setGlobalDispatcher(new Agent())
-}
-
-function setGlobalDispatcher (agent) {
-  if (!agent || typeof agent.dispatch !== 'function') {
-    throw new InvalidArgumentError('Argument agent must implement Agent')
-  }
-  Object.defineProperty(globalThis, globalDispatcher, {
-    value: agent,
-    writable: true,
-    enumerable: false,
-    configurable: false
-  })
-}
-
-function getGlobalDispatcher () {
-  return globalThis[globalDispatcher]
-}
-
-module.exports = {
-  setGlobalDispatcher,
-  getGlobalDispatcher
-}
-
-
-/***/ }),
-
-/***/ 355:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { kClients } = __nccwpck_require__(188)
-const Agent = __nccwpck_require__(5)
-const {
-  kAgent,
-  kMockAgentSet,
-  kMockAgentGet,
-  kDispatches,
-  kIsMockActive,
-  kNetConnect,
-  kGetNetConnect,
-  kOptions,
-  kFactory
-} = __nccwpck_require__(442)
-const MockClient = __nccwpck_require__(192)
-const MockPool = __nccwpck_require__(330)
-const { matchValue, buildMockOptions } = __nccwpck_require__(7)
-const { InvalidArgumentError, UndiciError } = __nccwpck_require__(459)
-const Dispatcher = __nccwpck_require__(449)
-const Pluralizer = __nccwpck_require__(244)
-const PendingInterceptorsFormatter = __nccwpck_require__(224)
-
-class FakeWeakRef {
-  constructor (value) {
-    this.value = value
-  }
-
-  deref () {
-    return this.value
-  }
-}
-
-class MockAgent extends Dispatcher {
-  constructor (opts) {
-    super(opts)
-
-    this[kNetConnect] = true
-    this[kIsMockActive] = true
-
-    // Instantiate Agent and encapsulate
-    if ((opts && opts.agent && typeof opts.agent.dispatch !== 'function')) {
-      throw new InvalidArgumentError('Argument opts.agent must implement Agent')
-    }
-    const agent = opts && opts.agent ? opts.agent : new Agent(opts)
-    this[kAgent] = agent
-
-    this[kClients] = agent[kClients]
-    this[kOptions] = buildMockOptions(opts)
-  }
-
-  get (origin) {
-    let dispatcher = this[kMockAgentGet](origin)
-
-    if (!dispatcher) {
-      dispatcher = this[kFactory](origin)
-      this[kMockAgentSet](origin, dispatcher)
-    }
-    return dispatcher
-  }
-
-  dispatch (opts, handler) {
-    // Call MockAgent.get to perform additional setup before dispatching as normal
-    this.get(opts.origin)
-    return this[kAgent].dispatch(opts, handler)
-  }
-
-  async close () {
-    await this[kAgent].close()
-    this[kClients].clear()
-  }
-
-  deactivate () {
-    this[kIsMockActive] = false
-  }
-
-  activate () {
-    this[kIsMockActive] = true
-  }
-
-  enableNetConnect (matcher) {
-    if (typeof matcher === 'string' || typeof matcher === 'function' || matcher instanceof RegExp) {
-      if (Array.isArray(this[kNetConnect])) {
-        this[kNetConnect].push(matcher)
-      } else {
-        this[kNetConnect] = [matcher]
-      }
-    } else if (typeof matcher === 'undefined') {
-      this[kNetConnect] = true
-    } else {
-      throw new InvalidArgumentError('Unsupported matcher. Must be one of String|Function|RegExp.')
-    }
-  }
-
-  disableNetConnect () {
-    this[kNetConnect] = false
-  }
-
-  // This is required to bypass issues caused by using global symbols - see:
-  // https://github.com/nodejs/undici/issues/1447
-  get isMockActive () {
-    return this[kIsMockActive]
-  }
-
-  [kMockAgentSet] (origin, dispatcher) {
-    this[kClients].set(origin, new FakeWeakRef(dispatcher))
-  }
-
-  [kFactory] (origin) {
-    const mockOptions = Object.assign({ agent: this }, this[kOptions])
-    return this[kOptions] && this[kOptions].connections === 1
-      ? new MockClient(origin, mockOptions)
-      : new MockPool(origin, mockOptions)
-  }
-
-  [kMockAgentGet] (origin) {
-    // First check if we can immediately find it
-    const ref = this[kClients].get(origin)
-    if (ref) {
-      return ref.deref()
-    }
-
-    // If the origin is not a string create a dummy parent pool and return to user
-    if (typeof origin !== 'string') {
-      const dispatcher = this[kFactory]('http://localhost:9999')
-      this[kMockAgentSet](origin, dispatcher)
-      return dispatcher
-    }
-
-    // If we match, create a pool and assign the same dispatches
-    for (const [keyMatcher, nonExplicitRef] of Array.from(this[kClients])) {
-      const nonExplicitDispatcher = nonExplicitRef.deref()
-      if (nonExplicitDispatcher && typeof keyMatcher !== 'string' && matchValue(keyMatcher, origin)) {
-        const dispatcher = this[kFactory](origin)
-        this[kMockAgentSet](origin, dispatcher)
-        dispatcher[kDispatches] = nonExplicitDispatcher[kDispatches]
-        return dispatcher
-      }
-    }
-  }
-
-  [kGetNetConnect] () {
-    return this[kNetConnect]
-  }
-
-  pendingInterceptors () {
-    const mockAgentClients = this[kClients]
-
-    return Array.from(mockAgentClients.entries())
-      .flatMap(([origin, scope]) => scope.deref()[kDispatches].map(dispatch => ({ ...dispatch, origin })))
-      .filter(({ pending }) => pending)
-  }
-
-  assertNoPendingInterceptors ({ pendingInterceptorsFormatter = new PendingInterceptorsFormatter() } = {}) {
-    const pending = this.pendingInterceptors()
-
-    if (pending.length === 0) {
-      return
-    }
-
-    const pluralizer = new Pluralizer('interceptor', 'interceptors').pluralize(pending.length)
-
-    throw new UndiciError(`
-${pluralizer.count} ${pluralizer.noun} ${pluralizer.is} pending:
-
-${pendingInterceptorsFormatter.format(pending)}
-`.trim())
-  }
-}
-
-module.exports = MockAgent
-
-
-/***/ }),
-
-/***/ 356:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var tlsPolicy_exports = {};
-__export(tlsPolicy_exports, {
-  tlsPolicy: () => tlsPolicy,
-  tlsPolicyName: () => tlsPolicyName
-});
-module.exports = __toCommonJS(tlsPolicy_exports);
-var import_policies = __nccwpck_require__(275);
-const tlsPolicyName = import_policies.tlsPolicyName;
-function tlsPolicy(tlsSettings) {
-  return (0, import_policies.tlsPolicy)(tlsSettings);
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 357:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AccountSASServices = void 0;
-/**
- * ONLY AVAILABLE IN NODE.JS RUNTIME.
- *
- * This is a helper class to construct a string representing the services accessible by an AccountSAS. Setting a value
- * to true means that any SAS which uses these permissions will grant access to that service. Once all the
- * values are set, this should be serialized with toString and set as the services field on an
- * {@link AccountSASSignatureValues} object. It is possible to construct the services string without this class, but
- * the order of the services is particular and this class guarantees correctness.
- */
-class AccountSASServices {
-    /**
-     * Creates an {@link AccountSASServices} from the specified services string. This method will throw an
-     * Error if it encounters a character that does not correspond to a valid service.
-     *
-     * @param services -
-     */
-    static parse(services) {
-        const accountSASServices = new AccountSASServices();
-        for (const c of services) {
-            switch (c) {
-                case "b":
-                    accountSASServices.blob = true;
-                    break;
-                case "f":
-                    accountSASServices.file = true;
-                    break;
-                case "q":
-                    accountSASServices.queue = true;
-                    break;
-                case "t":
-                    accountSASServices.table = true;
-                    break;
-                default:
-                    throw new RangeError(`Invalid service character: ${c}`);
-            }
-        }
-        return accountSASServices;
-    }
-    /**
-     * Permission to access blob resources granted.
-     */
-    blob = false;
-    /**
-     * Permission to access file resources granted.
-     */
-    file = false;
-    /**
-     * Permission to access queue resources granted.
-     */
-    queue = false;
-    /**
-     * Permission to access table resources granted.
-     */
-    table = false;
-    /**
-     * Converts the given services to a string.
-     *
-     */
-    toString() {
-        const services = [];
-        if (this.blob) {
-            services.push("b");
-        }
-        if (this.table) {
-            services.push("t");
-        }
-        if (this.queue) {
-            services.push("q");
-        }
-        if (this.file) {
-            services.push("f");
-        }
-        return services.join("");
-    }
-}
-exports.AccountSASServices = AccountSASServices;
-//# sourceMappingURL=AccountSASServices.js.map
-
-/***/ }),
-
-/***/ 358:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var bearerAuthenticationPolicy_exports = {};
-__export(bearerAuthenticationPolicy_exports, {
-  bearerAuthenticationPolicy: () => bearerAuthenticationPolicy,
-  bearerAuthenticationPolicyName: () => bearerAuthenticationPolicyName
-});
-module.exports = __toCommonJS(bearerAuthenticationPolicy_exports);
-var import_checkInsecureConnection = __nccwpck_require__(408);
-const bearerAuthenticationPolicyName = "bearerAuthenticationPolicy";
-function bearerAuthenticationPolicy(options) {
-  return {
-    name: bearerAuthenticationPolicyName,
-    async sendRequest(request, next) {
-      (0, import_checkInsecureConnection.ensureSecureConnection)(request, options);
-      const scheme = (request.authSchemes ?? options.authSchemes)?.find(
-        (x) => x.kind === "http" && x.scheme === "bearer"
-      );
-      if (!scheme) {
-        return next(request);
-      }
-      const token = await options.credential.getBearerToken({
-        abortSignal: request.abortSignal
-      });
-      request.headers.set("Authorization", `Bearer ${token}`);
-      return next(request);
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=bearerAuthenticationPolicy.js.map
-
-
-/***/ }),
-
-/***/ 359:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const {
-  BalancedPoolMissingUpstreamError,
-  InvalidArgumentError
-} = __nccwpck_require__(459)
-const {
-  PoolBase,
-  kClients,
-  kNeedDrain,
-  kAddClient,
-  kRemoveClient,
-  kGetDispatcher
-} = __nccwpck_require__(347)
-const Pool = __nccwpck_require__(321)
-const { kUrl, kInterceptors } = __nccwpck_require__(188)
-const { parseOrigin } = __nccwpck_require__(66)
-const kFactory = Symbol('factory')
-
-const kOptions = Symbol('options')
-const kGreatestCommonDivisor = Symbol('kGreatestCommonDivisor')
-const kCurrentWeight = Symbol('kCurrentWeight')
-const kIndex = Symbol('kIndex')
-const kWeight = Symbol('kWeight')
-const kMaxWeightPerServer = Symbol('kMaxWeightPerServer')
-const kErrorPenalty = Symbol('kErrorPenalty')
-
-function getGreatestCommonDivisor (a, b) {
-  if (b === 0) return a
-  return getGreatestCommonDivisor(b, a % b)
-}
-
-function defaultFactory (origin, opts) {
-  return new Pool(origin, opts)
-}
-
-class BalancedPool extends PoolBase {
-  constructor (upstreams = [], { factory = defaultFactory, ...opts } = {}) {
-    super()
-
-    this[kOptions] = opts
-    this[kIndex] = -1
-    this[kCurrentWeight] = 0
-
-    this[kMaxWeightPerServer] = this[kOptions].maxWeightPerServer || 100
-    this[kErrorPenalty] = this[kOptions].errorPenalty || 15
-
-    if (!Array.isArray(upstreams)) {
-      upstreams = [upstreams]
-    }
-
-    if (typeof factory !== 'function') {
-      throw new InvalidArgumentError('factory must be a function.')
-    }
-
-    this[kInterceptors] = opts.interceptors && opts.interceptors.BalancedPool && Array.isArray(opts.interceptors.BalancedPool)
-      ? opts.interceptors.BalancedPool
-      : []
-    this[kFactory] = factory
-
-    for (const upstream of upstreams) {
-      this.addUpstream(upstream)
-    }
-    this._updateBalancedPoolStats()
-  }
-
-  addUpstream (upstream) {
-    const upstreamOrigin = parseOrigin(upstream).origin
-
-    if (this[kClients].find((pool) => (
-      pool[kUrl].origin === upstreamOrigin &&
-      pool.closed !== true &&
-      pool.destroyed !== true
-    ))) {
-      return this
-    }
-    const pool = this[kFactory](upstreamOrigin, Object.assign({}, this[kOptions]))
-
-    this[kAddClient](pool)
-    pool.on('connect', () => {
-      pool[kWeight] = Math.min(this[kMaxWeightPerServer], pool[kWeight] + this[kErrorPenalty])
-    })
-
-    pool.on('connectionError', () => {
-      pool[kWeight] = Math.max(1, pool[kWeight] - this[kErrorPenalty])
-      this._updateBalancedPoolStats()
-    })
-
-    pool.on('disconnect', (...args) => {
-      const err = args[2]
-      if (err && err.code === 'UND_ERR_SOCKET') {
-        // decrease the weight of the pool.
-        pool[kWeight] = Math.max(1, pool[kWeight] - this[kErrorPenalty])
-        this._updateBalancedPoolStats()
-      }
-    })
-
-    for (const client of this[kClients]) {
-      client[kWeight] = this[kMaxWeightPerServer]
-    }
-
-    this._updateBalancedPoolStats()
-
-    return this
-  }
-
-  _updateBalancedPoolStats () {
-    this[kGreatestCommonDivisor] = this[kClients].map(p => p[kWeight]).reduce(getGreatestCommonDivisor, 0)
-  }
-
-  removeUpstream (upstream) {
-    const upstreamOrigin = parseOrigin(upstream).origin
-
-    const pool = this[kClients].find((pool) => (
-      pool[kUrl].origin === upstreamOrigin &&
-      pool.closed !== true &&
-      pool.destroyed !== true
-    ))
-
-    if (pool) {
-      this[kRemoveClient](pool)
-    }
-
-    return this
-  }
-
-  get upstreams () {
-    return this[kClients]
-      .filter(dispatcher => dispatcher.closed !== true && dispatcher.destroyed !== true)
-      .map((p) => p[kUrl].origin)
-  }
-
-  [kGetDispatcher] () {
-    // We validate that pools is greater than 0,
-    // otherwise we would have to wait until an upstream
-    // is added, which might never happen.
-    if (this[kClients].length === 0) {
-      throw new BalancedPoolMissingUpstreamError()
-    }
-
-    const dispatcher = this[kClients].find(dispatcher => (
-      !dispatcher[kNeedDrain] &&
-      dispatcher.closed !== true &&
-      dispatcher.destroyed !== true
-    ))
-
-    if (!dispatcher) {
-      return
-    }
-
-    const allClientsBusy = this[kClients].map(pool => pool[kNeedDrain]).reduce((a, b) => a && b, true)
-
-    if (allClientsBusy) {
-      return
-    }
-
-    let counter = 0
-
-    let maxWeightIndex = this[kClients].findIndex(pool => !pool[kNeedDrain])
-
-    while (counter++ < this[kClients].length) {
-      this[kIndex] = (this[kIndex] + 1) % this[kClients].length
-      const pool = this[kClients][this[kIndex]]
-
-      // find pool index with the largest weight
-      if (pool[kWeight] > this[kClients][maxWeightIndex][kWeight] && !pool[kNeedDrain]) {
-        maxWeightIndex = this[kIndex]
-      }
-
-      // decrease the current weight every `this[kClients].length`.
-      if (this[kIndex] === 0) {
-        // Set the current weight to the next lower weight.
-        this[kCurrentWeight] = this[kCurrentWeight] - this[kGreatestCommonDivisor]
-
-        if (this[kCurrentWeight] <= 0) {
-          this[kCurrentWeight] = this[kMaxWeightPerServer]
-        }
-      }
-      if (pool[kWeight] >= this[kCurrentWeight] && (!pool[kNeedDrain])) {
-        return pool
-      }
-    }
-
-    this[kCurrentWeight] = this[kClients][maxWeightIndex][kWeight]
-    this[kIndex] = maxWeightIndex
-    return this[kClients][maxWeightIndex]
-  }
-}
-
-module.exports = BalancedPool
-
-
-/***/ }),
-
-/***/ 360:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:os");
-
-/***/ }),
-
-/***/ 361:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var operationOptionHelpers_exports = {};
-__export(operationOptionHelpers_exports, {
-  operationOptionsToRequestParameters: () => operationOptionsToRequestParameters
-});
-module.exports = __toCommonJS(operationOptionHelpers_exports);
-function operationOptionsToRequestParameters(options) {
-  return {
-    allowInsecureConnection: options.requestOptions?.allowInsecureConnection,
-    timeout: options.requestOptions?.timeout,
-    skipUrlEncoding: options.requestOptions?.skipUrlEncoding,
-    abortSignal: options.abortSignal,
-    onUploadProgress: options.requestOptions?.onUploadProgress,
-    onDownloadProgress: options.requestOptions?.onDownloadProgress,
-    headers: { ...options.requestOptions?.headers },
-    onResponse: options.onResponse
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=operationOptionHelpers.js.map
-
-
-/***/ }),
-
-/***/ 362:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BuffersStream = void 0;
-const node_stream_1 = __nccwpck_require__(403);
-/**
- * This class generates a readable stream from the data in an array of buffers.
- */
-class BuffersStream extends node_stream_1.Readable {
-    buffers;
-    byteLength;
-    /**
-     * The offset of data to be read in the current buffer.
-     */
-    byteOffsetInCurrentBuffer;
-    /**
-     * The index of buffer to be read in the array of buffers.
-     */
-    bufferIndex;
-    /**
-     * The total length of data already read.
-     */
-    pushedBytesLength;
-    /**
-     * Creates an instance of BuffersStream that will emit the data
-     * contained in the array of buffers.
-     *
-     * @param buffers - Array of buffers containing the data
-     * @param byteLength - The total length of data contained in the buffers
-     */
-    constructor(buffers, byteLength, options) {
-        super(options);
-        this.buffers = buffers;
-        this.byteLength = byteLength;
-        this.byteOffsetInCurrentBuffer = 0;
-        this.bufferIndex = 0;
-        this.pushedBytesLength = 0;
-        // check byteLength is no larger than buffers[] total length
-        let buffersLength = 0;
-        for (const buf of this.buffers) {
-            buffersLength += buf.byteLength;
-        }
-        if (buffersLength < this.byteLength) {
-            throw new Error("Data size shouldn't be larger than the total length of buffers.");
-        }
-    }
-    /**
-     * Internal _read() that will be called when the stream wants to pull more data in.
-     *
-     * @param size - Optional. The size of data to be read
-     */
-    _read(size) {
-        if (this.pushedBytesLength >= this.byteLength) {
-            this.push(null);
-        }
-        if (!size) {
-            size = this.readableHighWaterMark;
-        }
-        const outBuffers = [];
-        let i = 0;
-        while (i < size && this.pushedBytesLength < this.byteLength) {
-            // The last buffer may be longer than the data it contains.
-            const remainingDataInAllBuffers = this.byteLength - this.pushedBytesLength;
-            const remainingCapacityInThisBuffer = this.buffers[this.bufferIndex].byteLength - this.byteOffsetInCurrentBuffer;
-            const remaining = Math.min(remainingCapacityInThisBuffer, remainingDataInAllBuffers);
-            if (remaining > size - i) {
-                // chunkSize = size - i
-                const end = this.byteOffsetInCurrentBuffer + size - i;
-                outBuffers.push(this.buffers[this.bufferIndex].slice(this.byteOffsetInCurrentBuffer, end));
-                this.pushedBytesLength += size - i;
-                this.byteOffsetInCurrentBuffer = end;
-                i = size;
-                break;
-            }
-            else {
-                // chunkSize = remaining
-                const end = this.byteOffsetInCurrentBuffer + remaining;
-                outBuffers.push(this.buffers[this.bufferIndex].slice(this.byteOffsetInCurrentBuffer, end));
-                if (remaining === remainingCapacityInThisBuffer) {
-                    // this.buffers[this.bufferIndex] used up, shift to next one
-                    this.byteOffsetInCurrentBuffer = 0;
-                    this.bufferIndex++;
-                }
-                else {
-                    this.byteOffsetInCurrentBuffer = end;
-                }
-                this.pushedBytesLength += remaining;
-                i += remaining;
-            }
-        }
-        if (outBuffers.length > 1) {
-            this.push(Buffer.concat(outBuffers));
-        }
-        else if (outBuffers.length === 1) {
-            this.push(outBuffers[0]);
-        }
-    }
-}
-exports.BuffersStream = BuffersStream;
-//# sourceMappingURL=BuffersStream.js.map
-
-/***/ }),
-
-/***/ 363:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -64628,7 +61040,7 @@ const node_child_process_1 = __nccwpck_require__(190);
 const core = __importStar(__nccwpck_require__(431));
 const cache = __importStar(__nccwpck_require__(207));
 const cache_compress_js_1 = __nccwpck_require__(272);
-const log_utils_js_1 = __nccwpck_require__(333);
+const log_utils_js_1 = __nccwpck_require__(334);
 const shutdown_cache_js_1 = __nccwpck_require__(159);
 const stats_collector_js_1 = __nccwpck_require__(71);
 const diagnostics_js_1 = __nccwpck_require__(198);
@@ -65191,8 +61603,15 @@ async function run() {
     const preserveSourceMtimes = core.getState("preserveSourceMtimes") === "true";
     if (preserveSourceMtimes && restoreState.buildCacheEnabled) {
         const t0 = Date.now();
+        // The "project root" — where the Cargo workspace being built actually
+        // lives — is the parent of the resolved target-dir, NOT result.workspace
+        // (which is GITHUB_WORKSPACE — usually the outer checkout containing
+        // the action itself plus one or more sub-repos). For the demo,
+        // result.workspace=/home/runner/work/setup-soldr/setup-soldr but the
+        // zccache project being built is at .../setup-soldr/zccache.
+        const projectRoot = path.dirname(result.targetCache.targetPath);
         try {
-            const r = await (0, source_mtime_snapshot_js_1.snapshotSourceMtimes)({ workspace: result.workspace, log });
+            const r = await (0, source_mtime_snapshot_js_1.snapshotSourceMtimes)({ workspace: projectRoot, log });
             const out = path.join(result.buildCache.path, source_mtime_snapshot_js_1.SNAPSHOT_FILENAME);
             try {
                 fs.mkdirSync(path.dirname(out), { recursive: true });
@@ -65325,6 +61744,3594 @@ if (typeof process !== "undefined" &&
     });
 }
 
+
+/***/ }),
+
+/***/ 332:
+/***/ (function(__unused_webpack_module, exports) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ClientStreamingCall = void 0;
+/**
+ * A client streaming RPC call. This means that the clients sends 0, 1, or
+ * more messages to the server, and the server replies with exactly one
+ * message.
+ */
+class ClientStreamingCall {
+    constructor(method, requestHeaders, request, headers, response, status, trailers) {
+        this.method = method;
+        this.requestHeaders = requestHeaders;
+        this.requests = request;
+        this.headers = headers;
+        this.response = response;
+        this.status = status;
+        this.trailers = trailers;
+    }
+    /**
+     * Instead of awaiting the response status and trailers, you can
+     * just as well await this call itself to receive the server outcome.
+     * Note that it may still be valid to send more request messages.
+     */
+    then(onfulfilled, onrejected) {
+        return this.promiseFinished().then(value => onfulfilled ? Promise.resolve(onfulfilled(value)) : value, reason => onrejected ? Promise.resolve(onrejected(reason)) : Promise.reject(reason));
+    }
+    promiseFinished() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let [headers, response, status, trailers] = yield Promise.all([this.headers, this.response, this.status, this.trailers]);
+            return {
+                method: this.method,
+                requestHeaders: this.requestHeaders,
+                headers,
+                response,
+                status,
+                trailers
+            };
+        });
+    }
+}
+exports.ClientStreamingCall = ClientStreamingCall;
+
+
+/***/ }),
+
+/***/ 333:
+/***/ ((module) => {
+
+module.exports = function (xs, fn) {
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        var x = fn(xs[i], i);
+        if (isArray(x)) res.push.apply(res, x);
+        else res.push(x);
+    }
+    return res;
+};
+
+var isArray = Array.isArray || function (xs) {
+    return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+
+/***/ }),
+
+/***/ 334:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Logger wiring. Owned by Agent 1 (called from every helper).
+//
+// Mirrors the Python log_utils.log() behavior: prefix each line with elapsed
+// mm:ss from SETUP_SOLDR_LOG_START_EPOCH when timestamps are enabled. Reads
+// SETUP_SOLDR_TIMESTAMPS to decide.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createLogger = createLogger;
+exports.colorForceEnvironment = colorForceEnvironment;
+exports.formatLogLine = formatLogLine;
+exports.isTimestampsEnabled = isTimestampsEnabled;
+const core = __importStar(__nccwpck_require__(431));
+const fs = __importStar(__nccwpck_require__(239));
+function makeFileLogger(env) {
+    const logPath = (env["SETUP_SOLDR_LOG"] ?? "").trim();
+    if (!logPath)
+        return null;
+    return (line) => {
+        try {
+            fs.appendFileSync(logPath, line + "\n", "utf8");
+        }
+        catch {
+            // best-effort
+        }
+    };
+}
+const FALSY_VALUES = new Set(["0", "false", "no", "off"]);
+// Per-process fallback start epoch (seconds since epoch), mirrors the
+// _FALLBACK_START semantics in log_utils.py: captured once at module load.
+const FALLBACK_START_SECONDS = Date.now() / 1000;
+function timestampsEnabled(env) {
+    const raw = env["SETUP_SOLDR_TIMESTAMPS"] ?? "true";
+    const value = raw.trim().toLowerCase();
+    return !FALSY_VALUES.has(value);
+}
+function startEpoch(env) {
+    const raw = (env["SETUP_SOLDR_LOG_START_EPOCH"] ?? "").trim();
+    if (raw) {
+        const parsed = Number(raw);
+        if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
+            return parsed;
+        }
+    }
+    return FALLBACK_START_SECONDS;
+}
+function elapsedPrefix(env) {
+    const now = Date.now() / 1000;
+    const elapsed = Math.max(0, Math.floor(now - startEpoch(env)));
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+function formatLine(env, message) {
+    if (timestampsEnabled(env)) {
+        return `${elapsedPrefix(env)} ${message}`;
+    }
+    return message;
+}
+/**
+ * Build a Logger that:
+ *   - prefixes elapsed time when SETUP_SOLDR_TIMESTAMPS is truthy
+ *   - writes warnings/errors via @actions/core's annotated channels
+ *   - writes the rest to stdout via core.info()
+ *   - optionally appends each log/info line to SETUP_SOLDR_LOG file
+ */
+function createLogger(env = process.env) {
+    const fileLog = makeFileLogger(env);
+    return {
+        info(msg) {
+            // Use stdout directly so the message reaches the runner log without
+            // being annotated as info; mirrors log_utils.log() behavior.
+            process.stdout.write(`${msg}\n`);
+            if (fileLog)
+                fileLog(msg);
+        },
+        warning(msg) {
+            core.warning(msg);
+        },
+        error(msg) {
+            core.error(msg);
+        },
+        debug(msg) {
+            core.debug(msg);
+        },
+        log(msg) {
+            const formatted = formatLine(env, msg);
+            process.stdout.write(`${formatted}\n`);
+            if (fileLog)
+                fileLog(formatted);
+        },
+    };
+}
+/**
+ * Mirror of log_utils.color_force_environment(): produce the set of env vars
+ * to inject when timestamps are enabled and NO_COLOR is not already set.
+ * Returns only the keys that should be added (caller decides how to merge).
+ */
+function colorForceEnvironment(env) {
+    const additions = {};
+    if (!timestampsEnabled(env)) {
+        return additions;
+    }
+    if (env["NO_COLOR"] !== undefined) {
+        return additions;
+    }
+    if (env["CARGO_TERM_COLOR"] === undefined) {
+        additions["CARGO_TERM_COLOR"] = "always";
+    }
+    if (env["CLICOLOR_FORCE"] === undefined) {
+        additions["CLICOLOR_FORCE"] = "1";
+    }
+    if (env["FORCE_COLOR"] === undefined) {
+        additions["FORCE_COLOR"] = "1";
+    }
+    return additions;
+}
+/**
+ * Test/library helper: format a single line using the supplied env.
+ * Exported so cache-keys/resolve-setup can reuse the elapsed prefix logic
+ * without instantiating a Logger.
+ */
+function formatLogLine(env, message) {
+    return formatLine(env, message);
+}
+/**
+ * Test helper: report whether the given env enables timestamped output.
+ */
+function isTimestampsEnabled(env) {
+    return timestampsEnabled(env);
+}
+
+
+/***/ }),
+
+/***/ 335:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var restError_exports = {};
+__export(restError_exports, {
+  RestError: () => RestError,
+  isRestError: () => isRestError
+});
+module.exports = __toCommonJS(restError_exports);
+var import_ts_http_runtime = __nccwpck_require__(86);
+const RestError = import_ts_http_runtime.RestError;
+function isRestError(e) {
+  return (0, import_ts_http_runtime.isRestError)(e);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 336:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { finished, PassThrough } = __nccwpck_require__(126)
+const {
+  InvalidArgumentError,
+  InvalidReturnValueError,
+  RequestAbortedError
+} = __nccwpck_require__(459)
+const util = __nccwpck_require__(66)
+const { getResolveErrorBodyCallback } = __nccwpck_require__(182)
+const { AsyncResource } = __nccwpck_require__(402)
+const { addSignal, removeSignal } = __nccwpck_require__(100)
+
+class StreamHandler extends AsyncResource {
+  constructor (opts, factory, callback) {
+    if (!opts || typeof opts !== 'object') {
+      throw new InvalidArgumentError('invalid opts')
+    }
+
+    const { signal, method, opaque, body, onInfo, responseHeaders, throwOnError } = opts
+
+    try {
+      if (typeof callback !== 'function') {
+        throw new InvalidArgumentError('invalid callback')
+      }
+
+      if (typeof factory !== 'function') {
+        throw new InvalidArgumentError('invalid factory')
+      }
+
+      if (signal && typeof signal.on !== 'function' && typeof signal.addEventListener !== 'function') {
+        throw new InvalidArgumentError('signal must be an EventEmitter or EventTarget')
+      }
+
+      if (method === 'CONNECT') {
+        throw new InvalidArgumentError('invalid method')
+      }
+
+      if (onInfo && typeof onInfo !== 'function') {
+        throw new InvalidArgumentError('invalid onInfo callback')
+      }
+
+      super('UNDICI_STREAM')
+    } catch (err) {
+      if (util.isStream(body)) {
+        util.destroy(body.on('error', util.nop), err)
+      }
+      throw err
+    }
+
+    this.responseHeaders = responseHeaders || null
+    this.opaque = opaque || null
+    this.factory = factory
+    this.callback = callback
+    this.res = null
+    this.abort = null
+    this.context = null
+    this.trailers = null
+    this.body = body
+    this.onInfo = onInfo || null
+    this.throwOnError = throwOnError || false
+
+    if (util.isStream(body)) {
+      body.on('error', (err) => {
+        this.onError(err)
+      })
+    }
+
+    addSignal(this, signal)
+  }
+
+  onConnect (abort, context) {
+    if (!this.callback) {
+      throw new RequestAbortedError()
+    }
+
+    this.abort = abort
+    this.context = context
+  }
+
+  onHeaders (statusCode, rawHeaders, resume, statusMessage) {
+    const { factory, opaque, context, callback, responseHeaders } = this
+
+    const headers = responseHeaders === 'raw' ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders)
+
+    if (statusCode < 200) {
+      if (this.onInfo) {
+        this.onInfo({ statusCode, headers })
+      }
+      return
+    }
+
+    this.factory = null
+
+    let res
+
+    if (this.throwOnError && statusCode >= 400) {
+      const parsedHeaders = responseHeaders === 'raw' ? util.parseHeaders(rawHeaders) : headers
+      const contentType = parsedHeaders['content-type']
+      res = new PassThrough()
+
+      this.callback = null
+      this.runInAsyncScope(getResolveErrorBodyCallback, null,
+        { callback, body: res, contentType, statusCode, statusMessage, headers }
+      )
+    } else {
+      if (factory === null) {
+        return
+      }
+
+      res = this.runInAsyncScope(factory, null, {
+        statusCode,
+        headers,
+        opaque,
+        context
+      })
+
+      if (
+        !res ||
+        typeof res.write !== 'function' ||
+        typeof res.end !== 'function' ||
+        typeof res.on !== 'function'
+      ) {
+        throw new InvalidReturnValueError('expected Writable')
+      }
+
+      // TODO: Avoid finished. It registers an unnecessary amount of listeners.
+      finished(res, { readable: false }, (err) => {
+        const { callback, res, opaque, trailers, abort } = this
+
+        this.res = null
+        if (err || !res.readable) {
+          util.destroy(res, err)
+        }
+
+        this.callback = null
+        this.runInAsyncScope(callback, null, err || null, { opaque, trailers })
+
+        if (err) {
+          abort()
+        }
+      })
+    }
+
+    res.on('drain', resume)
+
+    this.res = res
+
+    const needDrain = res.writableNeedDrain !== undefined
+      ? res.writableNeedDrain
+      : res._writableState && res._writableState.needDrain
+
+    return needDrain !== true
+  }
+
+  onData (chunk) {
+    const { res } = this
+
+    return res ? res.write(chunk) : true
+  }
+
+  onComplete (trailers) {
+    const { res } = this
+
+    removeSignal(this)
+
+    if (!res) {
+      return
+    }
+
+    this.trailers = util.parseHeaders(trailers)
+
+    res.end()
+  }
+
+  onError (err) {
+    const { res, callback, opaque, body } = this
+
+    removeSignal(this)
+
+    this.factory = null
+
+    if (res) {
+      this.res = null
+      util.destroy(res, err)
+    } else if (callback) {
+      this.callback = null
+      queueMicrotask(() => {
+        this.runInAsyncScope(callback, null, err, { opaque })
+      })
+    }
+
+    if (body) {
+      this.body = null
+      util.destroy(body, err)
+    }
+  }
+}
+
+function stream (opts, factory, callback) {
+  if (callback === undefined) {
+    return new Promise((resolve, reject) => {
+      stream.call(this, opts, factory, (err, data) => {
+        return err ? reject(err) : resolve(data)
+      })
+    })
+  }
+
+  try {
+    this.dispatch(opts, new StreamHandler(opts, factory, callback))
+  } catch (err) {
+    if (typeof callback !== 'function') {
+      throw err
+    }
+    const opaque = opts && opts.opaque
+    queueMicrotask(() => callback(err, { opaque }))
+  }
+}
+
+module.exports = stream
+
+
+/***/ }),
+
+/***/ 337:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BlockBlobImpl = void 0;
+const tslib_1 = __nccwpck_require__(209);
+const coreClient = tslib_1.__importStar(__nccwpck_require__(412));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(173));
+const Parameters = tslib_1.__importStar(__nccwpck_require__(62));
+/** Class containing BlockBlob operations. */
+class BlockBlobImpl {
+    client;
+    /**
+     * Initialize a new instance of the class BlockBlob class.
+     * @param client Reference to the service client
+     */
+    constructor(client) {
+        this.client = client;
+    }
+    /**
+     * The Upload Block Blob operation updates the content of an existing block blob. Updating an existing
+     * block blob overwrites any existing metadata on the blob. Partial updates are not supported with Put
+     * Blob; the content of the existing blob is overwritten with the content of the new blob. To perform a
+     * partial update of the content of a block blob, use the Put Block List operation.
+     * @param contentLength The length of the request.
+     * @param body Initial data
+     * @param options The options parameters.
+     */
+    upload(contentLength, body, options) {
+        return this.client.sendOperationRequest({ contentLength, body, options }, uploadOperationSpec);
+    }
+    /**
+     * The Put Blob from URL operation creates a new Block Blob where the contents of the blob are read
+     * from a given URL.  This API is supported beginning with the 2020-04-08 version. Partial updates are
+     * not supported with Put Blob from URL; the content of an existing blob is overwritten with the
+     * content of the new blob.  To perform partial updates to a block blob’s contents using a source URL,
+     * use the Put Block from URL API in conjunction with Put Block List.
+     * @param contentLength The length of the request.
+     * @param copySource Specifies the name of the source page blob snapshot. This value is a URL of up to
+     *                   2 KB in length that specifies a page blob snapshot. The value should be URL-encoded as it would
+     *                   appear in a request URI. The source blob must either be public or must be authenticated via a shared
+     *                   access signature.
+     * @param options The options parameters.
+     */
+    putBlobFromUrl(contentLength, copySource, options) {
+        return this.client.sendOperationRequest({ contentLength, copySource, options }, putBlobFromUrlOperationSpec);
+    }
+    /**
+     * The Stage Block operation creates a new block to be committed as part of a blob
+     * @param blockId A valid Base64 string value that identifies the block. Prior to encoding, the string
+     *                must be less than or equal to 64 bytes in size. For a given blob, the length of the value specified
+     *                for the blockid parameter must be the same size for each block.
+     * @param contentLength The length of the request.
+     * @param body Initial data
+     * @param options The options parameters.
+     */
+    stageBlock(blockId, contentLength, body, options) {
+        return this.client.sendOperationRequest({ blockId, contentLength, body, options }, stageBlockOperationSpec);
+    }
+    /**
+     * The Stage Block operation creates a new block to be committed as part of a blob where the contents
+     * are read from a URL.
+     * @param blockId A valid Base64 string value that identifies the block. Prior to encoding, the string
+     *                must be less than or equal to 64 bytes in size. For a given blob, the length of the value specified
+     *                for the blockid parameter must be the same size for each block.
+     * @param contentLength The length of the request.
+     * @param sourceUrl Specify a URL to the copy source.
+     * @param options The options parameters.
+     */
+    stageBlockFromURL(blockId, contentLength, sourceUrl, options) {
+        return this.client.sendOperationRequest({ blockId, contentLength, sourceUrl, options }, stageBlockFromURLOperationSpec);
+    }
+    /**
+     * The Commit Block List operation writes a blob by specifying the list of block IDs that make up the
+     * blob. In order to be written as part of a blob, a block must have been successfully written to the
+     * server in a prior Put Block operation. You can call Put Block List to update a blob by uploading
+     * only those blocks that have changed, then committing the new and existing blocks together. You can
+     * do this by specifying whether to commit a block from the committed block list or from the
+     * uncommitted block list, or to commit the most recently uploaded version of the block, whichever list
+     * it may belong to.
+     * @param blocks Blob Blocks.
+     * @param options The options parameters.
+     */
+    commitBlockList(blocks, options) {
+        return this.client.sendOperationRequest({ blocks, options }, commitBlockListOperationSpec);
+    }
+    /**
+     * The Get Block List operation retrieves the list of blocks that have been uploaded as part of a block
+     * blob
+     * @param listType Specifies whether to return the list of committed blocks, the list of uncommitted
+     *                 blocks, or both lists together.
+     * @param options The options parameters.
+     */
+    getBlockList(listType, options) {
+        return this.client.sendOperationRequest({ listType, options }, getBlockListOperationSpec);
+    }
+}
+exports.BlockBlobImpl = BlockBlobImpl;
+// Operation Specifications
+const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
+const uploadOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.BlockBlobUploadHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.BlockBlobUploadExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.body1,
+    queryParameters: [Parameters.timeoutInSeconds],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.contentLength,
+        Parameters.metadata,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.blobCacheControl,
+        Parameters.blobContentType,
+        Parameters.blobContentMD5,
+        Parameters.blobContentEncoding,
+        Parameters.blobContentLanguage,
+        Parameters.blobContentDisposition,
+        Parameters.immutabilityPolicyExpiry,
+        Parameters.immutabilityPolicyMode,
+        Parameters.encryptionScope,
+        Parameters.tier,
+        Parameters.blobTagsString,
+        Parameters.legalHold1,
+        Parameters.transactionalContentMD5,
+        Parameters.transactionalContentCrc64,
+        Parameters.contentType1,
+        Parameters.accept2,
+        Parameters.blobType2,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "binary",
+    serializer: xmlSerializer,
+};
+const putBlobFromUrlOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.BlockBlobPutBlobFromUrlHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.BlockBlobPutBlobFromUrlExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.timeoutInSeconds],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.contentLength,
+        Parameters.metadata,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.blobCacheControl,
+        Parameters.blobContentType,
+        Parameters.blobContentMD5,
+        Parameters.blobContentEncoding,
+        Parameters.blobContentLanguage,
+        Parameters.blobContentDisposition,
+        Parameters.encryptionScope,
+        Parameters.tier,
+        Parameters.sourceIfModifiedSince,
+        Parameters.sourceIfUnmodifiedSince,
+        Parameters.sourceIfMatch,
+        Parameters.sourceIfNoneMatch,
+        Parameters.sourceIfTags,
+        Parameters.copySource,
+        Parameters.blobTagsString,
+        Parameters.sourceContentMD5,
+        Parameters.copySourceAuthorization,
+        Parameters.copySourceTags,
+        Parameters.fileRequestIntent,
+        Parameters.transactionalContentMD5,
+        Parameters.blobType2,
+        Parameters.copySourceBlobProperties,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const stageBlockOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.BlockBlobStageBlockHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.BlockBlobStageBlockExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.body1,
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.comp24,
+        Parameters.blockId,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.contentLength,
+        Parameters.leaseId,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.encryptionScope,
+        Parameters.transactionalContentMD5,
+        Parameters.transactionalContentCrc64,
+        Parameters.contentType1,
+        Parameters.accept2,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "binary",
+    serializer: xmlSerializer,
+};
+const stageBlockFromURLOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.BlockBlobStageBlockFromURLHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.BlockBlobStageBlockFromURLExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.comp24,
+        Parameters.blockId,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.contentLength,
+        Parameters.leaseId,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.encryptionScope,
+        Parameters.sourceIfModifiedSince,
+        Parameters.sourceIfUnmodifiedSince,
+        Parameters.sourceIfMatch,
+        Parameters.sourceIfNoneMatch,
+        Parameters.sourceContentMD5,
+        Parameters.copySourceAuthorization,
+        Parameters.fileRequestIntent,
+        Parameters.sourceUrl,
+        Parameters.sourceContentCrc64,
+        Parameters.sourceRange1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const commitBlockListOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.BlockBlobCommitBlockListHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.BlockBlobCommitBlockListExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.blocks,
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp25],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.contentType,
+        Parameters.accept,
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.metadata,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.blobCacheControl,
+        Parameters.blobContentType,
+        Parameters.blobContentMD5,
+        Parameters.blobContentEncoding,
+        Parameters.blobContentLanguage,
+        Parameters.blobContentDisposition,
+        Parameters.immutabilityPolicyExpiry,
+        Parameters.immutabilityPolicyMode,
+        Parameters.encryptionScope,
+        Parameters.tier,
+        Parameters.blobTagsString,
+        Parameters.legalHold1,
+        Parameters.transactionalContentMD5,
+        Parameters.transactionalContentCrc64,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "xml",
+    serializer: xmlSerializer,
+};
+const getBlockListOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.BlockList,
+            headersMapper: Mappers.BlockBlobGetBlockListHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.BlockBlobGetBlockListExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.snapshot,
+        Parameters.comp25,
+        Parameters.listType,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.leaseId,
+        Parameters.ifTags,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+//# sourceMappingURL=blockBlob.js.map
+
+/***/ }),
+
+/***/ 338:
+/***/ ((module) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var decompressResponsePolicy_exports = {};
+__export(decompressResponsePolicy_exports, {
+  decompressResponsePolicy: () => decompressResponsePolicy,
+  decompressResponsePolicyName: () => decompressResponsePolicyName
+});
+module.exports = __toCommonJS(decompressResponsePolicy_exports);
+const decompressResponsePolicyName = "decompressResponsePolicy";
+function decompressResponsePolicy() {
+  return {
+    name: decompressResponsePolicyName,
+    async sendRequest(request, next) {
+      if (request.method !== "HEAD") {
+        request.headers.set("Accept-Encoding", "gzip,deflate");
+      }
+      return next(request);
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=decompressResponsePolicy.js.map
+
+
+/***/ }),
+
+/***/ 339:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GenericPollOperation = void 0;
+const operation_js_1 = __nccwpck_require__(49);
+const logger_js_1 = __nccwpck_require__(184);
+const createStateProxy = () => ({
+    initState: (config) => ({ config, isStarted: true }),
+    setCanceled: (state) => (state.isCancelled = true),
+    setError: (state, error) => (state.error = error),
+    setResult: (state, result) => (state.result = result),
+    setRunning: (state) => (state.isStarted = true),
+    setSucceeded: (state) => (state.isCompleted = true),
+    setFailed: () => {
+        /** empty body */
+    },
+    getError: (state) => state.error,
+    getResult: (state) => state.result,
+    isCanceled: (state) => !!state.isCancelled,
+    isFailed: (state) => !!state.error,
+    isRunning: (state) => !!state.isStarted,
+    isSucceeded: (state) => Boolean(state.isCompleted && !state.isCancelled && !state.error),
+});
+class GenericPollOperation {
+    constructor(state, lro, setErrorAsResult, lroResourceLocationConfig, processResult, updateState, isDone) {
+        this.state = state;
+        this.lro = lro;
+        this.setErrorAsResult = setErrorAsResult;
+        this.lroResourceLocationConfig = lroResourceLocationConfig;
+        this.processResult = processResult;
+        this.updateState = updateState;
+        this.isDone = isDone;
+    }
+    setPollerConfig(pollerConfig) {
+        this.pollerConfig = pollerConfig;
+    }
+    async update(options) {
+        var _a;
+        const stateProxy = createStateProxy();
+        if (!this.state.isStarted) {
+            this.state = Object.assign(Object.assign({}, this.state), (await (0, operation_js_1.initHttpOperation)({
+                lro: this.lro,
+                stateProxy,
+                resourceLocationConfig: this.lroResourceLocationConfig,
+                processResult: this.processResult,
+                setErrorAsResult: this.setErrorAsResult,
+            })));
+        }
+        const updateState = this.updateState;
+        const isDone = this.isDone;
+        if (!this.state.isCompleted && this.state.error === undefined) {
+            await (0, operation_js_1.pollHttpOperation)({
+                lro: this.lro,
+                state: this.state,
+                stateProxy,
+                processResult: this.processResult,
+                updateState: updateState
+                    ? (state, { rawResponse }) => updateState(state, rawResponse)
+                    : undefined,
+                isDone: isDone
+                    ? ({ flatResponse }, state) => isDone(flatResponse, state)
+                    : undefined,
+                options,
+                setDelay: (intervalInMs) => {
+                    this.pollerConfig.intervalInMs = intervalInMs;
+                },
+                setErrorAsResult: this.setErrorAsResult,
+            });
+        }
+        (_a = options === null || options === void 0 ? void 0 : options.fireProgress) === null || _a === void 0 ? void 0 : _a.call(options, this.state);
+        return this;
+    }
+    async cancel() {
+        logger_js_1.logger.error("`cancelOperation` is deprecated because it wasn't implemented");
+        return this;
+    }
+    /**
+     * Serializes the Poller operation.
+     */
+    toString() {
+        return JSON.stringify({
+            state: this.state,
+        });
+    }
+}
+exports.GenericPollOperation = GenericPollOperation;
+//# sourceMappingURL=operation.js.map
+
+/***/ }),
+
+/***/ 340:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ipRangeToString = ipRangeToString;
+/**
+ * Generate SasIPRange format string. For example:
+ *
+ * "8.8.8.8" or "1.1.1.1-255.255.255.255"
+ *
+ * @param ipRange -
+ */
+function ipRangeToString(ipRange) {
+    return ipRange.end ? `${ipRange.start}-${ipRange.end}` : ipRange.start;
+}
+//# sourceMappingURL=SasIPRange.js.map
+
+/***/ }),
+
+/***/ 341:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var userAgentPolicy_exports = {};
+__export(userAgentPolicy_exports, {
+  userAgentPolicy: () => userAgentPolicy,
+  userAgentPolicyName: () => userAgentPolicyName
+});
+module.exports = __toCommonJS(userAgentPolicy_exports);
+var import_userAgent = __nccwpck_require__(246);
+const UserAgentHeaderName = (0, import_userAgent.getUserAgentHeaderName)();
+const userAgentPolicyName = "userAgentPolicy";
+function userAgentPolicy(options = {}) {
+  const userAgentValue = (0, import_userAgent.getUserAgentValue)(options.userAgentPrefix);
+  return {
+    name: userAgentPolicyName,
+    async sendRequest(request, next) {
+      if (!request.headers.has(UserAgentHeaderName)) {
+        request.headers.set(UserAgentHeaderName, await userAgentValue);
+      }
+      return next(request);
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=userAgentPolicy.js.map
+
+
+/***/ }),
+
+/***/ 342:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getUserAgentString = void 0;
+// eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+const packageJson = __nccwpck_require__(440);
+/**
+ * Ensure that this User Agent String is used in all HTTP calls so that we can monitor telemetry between different versions of this package
+ */
+function getUserAgentString() {
+    return `@actions/cache-${packageJson.version}`;
+}
+exports.getUserAgentString = getUserAgentString;
+//# sourceMappingURL=user-agent.js.map
+
+/***/ }),
+
+/***/ 343:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BufferScheduler = void 0;
+const events_1 = __nccwpck_require__(441);
+const PooledBuffer_js_1 = __nccwpck_require__(350);
+/**
+ * This class accepts a Node.js Readable stream as input, and keeps reading data
+ * from the stream into the internal buffer structure, until it reaches maxBuffers.
+ * Every available buffer will try to trigger outgoingHandler.
+ *
+ * The internal buffer structure includes an incoming buffer array, and a outgoing
+ * buffer array. The incoming buffer array includes the "empty" buffers can be filled
+ * with new incoming data. The outgoing array includes the filled buffers to be
+ * handled by outgoingHandler. Every above buffer size is defined by parameter bufferSize.
+ *
+ * NUM_OF_ALL_BUFFERS = BUFFERS_IN_INCOMING + BUFFERS_IN_OUTGOING + BUFFERS_UNDER_HANDLING
+ *
+ * NUM_OF_ALL_BUFFERS lesser than or equal to maxBuffers
+ *
+ * PERFORMANCE IMPROVEMENT TIPS:
+ * 1. Input stream highWaterMark is better to set a same value with bufferSize
+ *    parameter, which will avoid Buffer.concat() operations.
+ * 2. concurrency should set a smaller value than maxBuffers, which is helpful to
+ *    reduce the possibility when a outgoing handler waits for the stream data.
+ *    in this situation, outgoing handlers are blocked.
+ *    Outgoing queue shouldn't be empty.
+ */
+class BufferScheduler {
+    /**
+     * Size of buffers in incoming and outgoing queues. This class will try to align
+     * data read from Readable stream into buffer chunks with bufferSize defined.
+     */
+    bufferSize;
+    /**
+     * How many buffers can be created or maintained.
+     */
+    maxBuffers;
+    /**
+     * A Node.js Readable stream.
+     */
+    readable;
+    /**
+     * OutgoingHandler is an async function triggered by BufferScheduler when there
+     * are available buffers in outgoing array.
+     */
+    outgoingHandler;
+    /**
+     * An internal event emitter.
+     */
+    emitter = new events_1.EventEmitter();
+    /**
+     * Concurrency of executing outgoingHandlers. (0 lesser than concurrency lesser than or equal to maxBuffers)
+     */
+    concurrency;
+    /**
+     * An internal offset marker to track data offset in bytes of next outgoingHandler.
+     */
+    offset = 0;
+    /**
+     * An internal marker to track whether stream is end.
+     */
+    isStreamEnd = false;
+    /**
+     * An internal marker to track whether stream or outgoingHandler returns error.
+     */
+    isError = false;
+    /**
+     * How many handlers are executing.
+     */
+    executingOutgoingHandlers = 0;
+    /**
+     * Encoding of the input Readable stream which has string data type instead of Buffer.
+     */
+    encoding;
+    /**
+     * How many buffers have been allocated.
+     */
+    numBuffers = 0;
+    /**
+     * Because this class doesn't know how much data every time stream pops, which
+     * is defined by highWaterMarker of the stream. So BufferScheduler will cache
+     * data received from the stream, when data in unresolvedDataArray exceeds the
+     * blockSize defined, it will try to concat a blockSize of buffer, fill into available
+     * buffers from incoming and push to outgoing array.
+     */
+    unresolvedDataArray = [];
+    /**
+     * How much data consisted in unresolvedDataArray.
+     */
+    unresolvedLength = 0;
+    /**
+     * The array includes all the available buffers can be used to fill data from stream.
+     */
+    incoming = [];
+    /**
+     * The array (queue) includes all the buffers filled from stream data.
+     */
+    outgoing = [];
+    /**
+     * Creates an instance of BufferScheduler.
+     *
+     * @param readable - A Node.js Readable stream
+     * @param bufferSize - Buffer size of every maintained buffer
+     * @param maxBuffers - How many buffers can be allocated
+     * @param outgoingHandler - An async function scheduled to be
+     *                                          triggered when a buffer fully filled
+     *                                          with stream data
+     * @param concurrency - Concurrency of executing outgoingHandlers (&gt;0)
+     * @param encoding - [Optional] Encoding of Readable stream when it's a string stream
+     */
+    constructor(readable, bufferSize, maxBuffers, outgoingHandler, concurrency, encoding) {
+        if (bufferSize <= 0) {
+            throw new RangeError(`bufferSize must be larger than 0, current is ${bufferSize}`);
+        }
+        if (maxBuffers <= 0) {
+            throw new RangeError(`maxBuffers must be larger than 0, current is ${maxBuffers}`);
+        }
+        if (concurrency <= 0) {
+            throw new RangeError(`concurrency must be larger than 0, current is ${concurrency}`);
+        }
+        this.bufferSize = bufferSize;
+        this.maxBuffers = maxBuffers;
+        this.readable = readable;
+        this.outgoingHandler = outgoingHandler;
+        this.concurrency = concurrency;
+        this.encoding = encoding;
+    }
+    /**
+     * Start the scheduler, will return error when stream of any of the outgoingHandlers
+     * returns error.
+     *
+     */
+    async do() {
+        return new Promise((resolve, reject) => {
+            this.readable.on("data", (data) => {
+                data = typeof data === "string" ? Buffer.from(data, this.encoding) : data;
+                this.appendUnresolvedData(data);
+                if (!this.resolveData()) {
+                    this.readable.pause();
+                }
+            });
+            this.readable.on("error", (err) => {
+                this.emitter.emit("error", err);
+            });
+            this.readable.on("end", () => {
+                this.isStreamEnd = true;
+                this.emitter.emit("checkEnd");
+            });
+            this.emitter.on("error", (err) => {
+                this.isError = true;
+                this.readable.pause();
+                reject(err);
+            });
+            this.emitter.on("checkEnd", () => {
+                if (this.outgoing.length > 0) {
+                    this.triggerOutgoingHandlers();
+                    return;
+                }
+                if (this.isStreamEnd && this.executingOutgoingHandlers === 0) {
+                    if (this.unresolvedLength > 0 && this.unresolvedLength < this.bufferSize) {
+                        const buffer = this.shiftBufferFromUnresolvedDataArray();
+                        this.outgoingHandler(() => buffer.getReadableStream(), buffer.size, this.offset)
+                            .then(resolve)
+                            .catch(reject);
+                    }
+                    else if (this.unresolvedLength >= this.bufferSize) {
+                        return;
+                    }
+                    else {
+                        resolve();
+                    }
+                }
+            });
+        });
+    }
+    /**
+     * Insert a new data into unresolved array.
+     *
+     * @param data -
+     */
+    appendUnresolvedData(data) {
+        this.unresolvedDataArray.push(data);
+        this.unresolvedLength += data.length;
+    }
+    /**
+     * Try to shift a buffer with size in blockSize. The buffer returned may be less
+     * than blockSize when data in unresolvedDataArray is less than bufferSize.
+     *
+     */
+    shiftBufferFromUnresolvedDataArray(buffer) {
+        if (!buffer) {
+            buffer = new PooledBuffer_js_1.PooledBuffer(this.bufferSize, this.unresolvedDataArray, this.unresolvedLength);
+        }
+        else {
+            buffer.fill(this.unresolvedDataArray, this.unresolvedLength);
+        }
+        this.unresolvedLength -= buffer.size;
+        return buffer;
+    }
+    /**
+     * Resolve data in unresolvedDataArray. For every buffer with size in blockSize
+     * shifted, it will try to get (or allocate a buffer) from incoming, and fill it,
+     * then push it into outgoing to be handled by outgoing handler.
+     *
+     * Return false when available buffers in incoming are not enough, else true.
+     *
+     * @returns Return false when buffers in incoming are not enough, else true.
+     */
+    resolveData() {
+        while (this.unresolvedLength >= this.bufferSize) {
+            let buffer;
+            if (this.incoming.length > 0) {
+                buffer = this.incoming.shift();
+                this.shiftBufferFromUnresolvedDataArray(buffer);
+            }
+            else {
+                if (this.numBuffers < this.maxBuffers) {
+                    buffer = this.shiftBufferFromUnresolvedDataArray();
+                    this.numBuffers++;
+                }
+                else {
+                    // No available buffer, wait for buffer returned
+                    return false;
+                }
+            }
+            this.outgoing.push(buffer);
+            this.triggerOutgoingHandlers();
+        }
+        return true;
+    }
+    /**
+     * Try to trigger a outgoing handler for every buffer in outgoing. Stop when
+     * concurrency reaches.
+     */
+    async triggerOutgoingHandlers() {
+        let buffer;
+        do {
+            if (this.executingOutgoingHandlers >= this.concurrency) {
+                return;
+            }
+            buffer = this.outgoing.shift();
+            if (buffer) {
+                this.triggerOutgoingHandler(buffer);
+            }
+        } while (buffer);
+    }
+    /**
+     * Trigger a outgoing handler for a buffer shifted from outgoing.
+     *
+     * @param buffer -
+     */
+    async triggerOutgoingHandler(buffer) {
+        const bufferLength = buffer.size;
+        this.executingOutgoingHandlers++;
+        this.offset += bufferLength;
+        try {
+            await this.outgoingHandler(() => buffer.getReadableStream(), bufferLength, this.offset - bufferLength);
+        }
+        catch (err) {
+            this.emitter.emit("error", err);
+            return;
+        }
+        this.executingOutgoingHandlers--;
+        this.reuseBuffer(buffer);
+        this.emitter.emit("checkEnd");
+    }
+    /**
+     * Return buffer used by outgoing handler into incoming.
+     *
+     * @param buffer -
+     */
+    reuseBuffer(buffer) {
+        this.incoming.push(buffer);
+        if (!this.isError && this.resolveData() && !this.isStreamEnd) {
+            this.readable.resume();
+        }
+    }
+}
+exports.BufferScheduler = BufferScheduler;
+//# sourceMappingURL=BufferScheduler.js.map
+
+/***/ }),
+
+/***/ 344:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { Blob, File: NativeFile } = __nccwpck_require__(115)
+const { types } = __nccwpck_require__(119)
+const { kState } = __nccwpck_require__(13)
+const { isBlobLike } = __nccwpck_require__(485)
+const { webidl } = __nccwpck_require__(429)
+const { parseMIMEType, serializeAMimeType } = __nccwpck_require__(23)
+const { kEnumerableProperty } = __nccwpck_require__(66)
+const encoder = new TextEncoder()
+
+class File extends Blob {
+  constructor (fileBits, fileName, options = {}) {
+    // The File constructor is invoked with two or three parameters, depending
+    // on whether the optional dictionary parameter is used. When the File()
+    // constructor is invoked, user agents must run the following steps:
+    webidl.argumentLengthCheck(arguments, 2, { header: 'File constructor' })
+
+    fileBits = webidl.converters['sequence<BlobPart>'](fileBits)
+    fileName = webidl.converters.USVString(fileName)
+    options = webidl.converters.FilePropertyBag(options)
+
+    // 1. Let bytes be the result of processing blob parts given fileBits and
+    // options.
+    // Note: Blob handles this for us
+
+    // 2. Let n be the fileName argument to the constructor.
+    const n = fileName
+
+    // 3. Process FilePropertyBag dictionary argument by running the following
+    // substeps:
+
+    //    1. If the type member is provided and is not the empty string, let t
+    //    be set to the type dictionary member. If t contains any characters
+    //    outside the range U+0020 to U+007E, then set t to the empty string
+    //    and return from these substeps.
+    //    2. Convert every character in t to ASCII lowercase.
+    let t = options.type
+    let d
+
+    // eslint-disable-next-line no-labels
+    substep: {
+      if (t) {
+        t = parseMIMEType(t)
+
+        if (t === 'failure') {
+          t = ''
+          // eslint-disable-next-line no-labels
+          break substep
+        }
+
+        t = serializeAMimeType(t).toLowerCase()
+      }
+
+      //    3. If the lastModified member is provided, let d be set to the
+      //    lastModified dictionary member. If it is not provided, set d to the
+      //    current date and time represented as the number of milliseconds since
+      //    the Unix Epoch (which is the equivalent of Date.now() [ECMA-262]).
+      d = options.lastModified
+    }
+
+    // 4. Return a new File object F such that:
+    // F refers to the bytes byte sequence.
+    // F.size is set to the number of total bytes in bytes.
+    // F.name is set to n.
+    // F.type is set to t.
+    // F.lastModified is set to d.
+
+    super(processBlobParts(fileBits, options), { type: t })
+    this[kState] = {
+      name: n,
+      lastModified: d,
+      type: t
+    }
+  }
+
+  get name () {
+    webidl.brandCheck(this, File)
+
+    return this[kState].name
+  }
+
+  get lastModified () {
+    webidl.brandCheck(this, File)
+
+    return this[kState].lastModified
+  }
+
+  get type () {
+    webidl.brandCheck(this, File)
+
+    return this[kState].type
+  }
+}
+
+class FileLike {
+  constructor (blobLike, fileName, options = {}) {
+    // TODO: argument idl type check
+
+    // The File constructor is invoked with two or three parameters, depending
+    // on whether the optional dictionary parameter is used. When the File()
+    // constructor is invoked, user agents must run the following steps:
+
+    // 1. Let bytes be the result of processing blob parts given fileBits and
+    // options.
+
+    // 2. Let n be the fileName argument to the constructor.
+    const n = fileName
+
+    // 3. Process FilePropertyBag dictionary argument by running the following
+    // substeps:
+
+    //    1. If the type member is provided and is not the empty string, let t
+    //    be set to the type dictionary member. If t contains any characters
+    //    outside the range U+0020 to U+007E, then set t to the empty string
+    //    and return from these substeps.
+    //    TODO
+    const t = options.type
+
+    //    2. Convert every character in t to ASCII lowercase.
+    //    TODO
+
+    //    3. If the lastModified member is provided, let d be set to the
+    //    lastModified dictionary member. If it is not provided, set d to the
+    //    current date and time represented as the number of milliseconds since
+    //    the Unix Epoch (which is the equivalent of Date.now() [ECMA-262]).
+    const d = options.lastModified ?? Date.now()
+
+    // 4. Return a new File object F such that:
+    // F refers to the bytes byte sequence.
+    // F.size is set to the number of total bytes in bytes.
+    // F.name is set to n.
+    // F.type is set to t.
+    // F.lastModified is set to d.
+
+    this[kState] = {
+      blobLike,
+      name: n,
+      type: t,
+      lastModified: d
+    }
+  }
+
+  stream (...args) {
+    webidl.brandCheck(this, FileLike)
+
+    return this[kState].blobLike.stream(...args)
+  }
+
+  arrayBuffer (...args) {
+    webidl.brandCheck(this, FileLike)
+
+    return this[kState].blobLike.arrayBuffer(...args)
+  }
+
+  slice (...args) {
+    webidl.brandCheck(this, FileLike)
+
+    return this[kState].blobLike.slice(...args)
+  }
+
+  text (...args) {
+    webidl.brandCheck(this, FileLike)
+
+    return this[kState].blobLike.text(...args)
+  }
+
+  get size () {
+    webidl.brandCheck(this, FileLike)
+
+    return this[kState].blobLike.size
+  }
+
+  get type () {
+    webidl.brandCheck(this, FileLike)
+
+    return this[kState].blobLike.type
+  }
+
+  get name () {
+    webidl.brandCheck(this, FileLike)
+
+    return this[kState].name
+  }
+
+  get lastModified () {
+    webidl.brandCheck(this, FileLike)
+
+    return this[kState].lastModified
+  }
+
+  get [Symbol.toStringTag] () {
+    return 'File'
+  }
+}
+
+Object.defineProperties(File.prototype, {
+  [Symbol.toStringTag]: {
+    value: 'File',
+    configurable: true
+  },
+  name: kEnumerableProperty,
+  lastModified: kEnumerableProperty
+})
+
+webidl.converters.Blob = webidl.interfaceConverter(Blob)
+
+webidl.converters.BlobPart = function (V, opts) {
+  if (webidl.util.Type(V) === 'Object') {
+    if (isBlobLike(V)) {
+      return webidl.converters.Blob(V, { strict: false })
+    }
+
+    if (
+      ArrayBuffer.isView(V) ||
+      types.isAnyArrayBuffer(V)
+    ) {
+      return webidl.converters.BufferSource(V, opts)
+    }
+  }
+
+  return webidl.converters.USVString(V, opts)
+}
+
+webidl.converters['sequence<BlobPart>'] = webidl.sequenceConverter(
+  webidl.converters.BlobPart
+)
+
+// https://www.w3.org/TR/FileAPI/#dfn-FilePropertyBag
+webidl.converters.FilePropertyBag = webidl.dictionaryConverter([
+  {
+    key: 'lastModified',
+    converter: webidl.converters['long long'],
+    get defaultValue () {
+      return Date.now()
+    }
+  },
+  {
+    key: 'type',
+    converter: webidl.converters.DOMString,
+    defaultValue: ''
+  },
+  {
+    key: 'endings',
+    converter: (value) => {
+      value = webidl.converters.DOMString(value)
+      value = value.toLowerCase()
+
+      if (value !== 'native') {
+        value = 'transparent'
+      }
+
+      return value
+    },
+    defaultValue: 'transparent'
+  }
+])
+
+/**
+ * @see https://www.w3.org/TR/FileAPI/#process-blob-parts
+ * @param {(NodeJS.TypedArray|Blob|string)[]} parts
+ * @param {{ type: string, endings: string }} options
+ */
+function processBlobParts (parts, options) {
+  // 1. Let bytes be an empty sequence of bytes.
+  /** @type {NodeJS.TypedArray[]} */
+  const bytes = []
+
+  // 2. For each element in parts:
+  for (const element of parts) {
+    // 1. If element is a USVString, run the following substeps:
+    if (typeof element === 'string') {
+      // 1. Let s be element.
+      let s = element
+
+      // 2. If the endings member of options is "native", set s
+      //    to the result of converting line endings to native
+      //    of element.
+      if (options.endings === 'native') {
+        s = convertLineEndingsNative(s)
+      }
+
+      // 3. Append the result of UTF-8 encoding s to bytes.
+      bytes.push(encoder.encode(s))
+    } else if (
+      types.isAnyArrayBuffer(element) ||
+      types.isTypedArray(element)
+    ) {
+      // 2. If element is a BufferSource, get a copy of the
+      //    bytes held by the buffer source, and append those
+      //    bytes to bytes.
+      if (!element.buffer) { // ArrayBuffer
+        bytes.push(new Uint8Array(element))
+      } else {
+        bytes.push(
+          new Uint8Array(element.buffer, element.byteOffset, element.byteLength)
+        )
+      }
+    } else if (isBlobLike(element)) {
+      // 3. If element is a Blob, append the bytes it represents
+      //    to bytes.
+      bytes.push(element)
+    }
+  }
+
+  // 3. Return bytes.
+  return bytes
+}
+
+/**
+ * @see https://www.w3.org/TR/FileAPI/#convert-line-endings-to-native
+ * @param {string} s
+ */
+function convertLineEndingsNative (s) {
+  // 1. Let native line ending be be the code point U+000A LF.
+  let nativeLineEnding = '\n'
+
+  // 2. If the underlying platform’s conventions are to
+  //    represent newlines as a carriage return and line feed
+  //    sequence, set native line ending to the code point
+  //    U+000D CR followed by the code point U+000A LF.
+  if (process.platform === 'win32') {
+    nativeLineEnding = '\r\n'
+  }
+
+  return s.replace(/\r?\n/g, nativeLineEnding)
+}
+
+// If this function is moved to ./util.js, some tools (such as
+// rollup) will warn about circular dependencies. See:
+// https://github.com/nodejs/undici/issues/1629
+function isFileLike (object) {
+  return (
+    (NativeFile && object instanceof NativeFile) ||
+    object instanceof File || (
+      object &&
+      (typeof object.stream === 'function' ||
+      typeof object.arrayBuffer === 'function') &&
+      object[Symbol.toStringTag] === 'File'
+    )
+  )
+}
+
+module.exports = { File, FileLike, isFileLike }
+
+
+/***/ }),
+
+/***/ 345:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const diagnosticsChannel = __nccwpck_require__(137)
+const { uid, states } = __nccwpck_require__(437)
+const {
+  kReadyState,
+  kSentClose,
+  kByteParser,
+  kReceivedClose
+} = __nccwpck_require__(95)
+const { fireEvent, failWebsocketConnection } = __nccwpck_require__(54)
+const { CloseEvent } = __nccwpck_require__(240)
+const { makeRequest } = __nccwpck_require__(81)
+const { fetching } = __nccwpck_require__(423)
+const { Headers } = __nccwpck_require__(484)
+const { getGlobalDispatcher } = __nccwpck_require__(355)
+const { kHeadersList } = __nccwpck_require__(188)
+
+const channels = {}
+channels.open = diagnosticsChannel.channel('undici:websocket:open')
+channels.close = diagnosticsChannel.channel('undici:websocket:close')
+channels.socketError = diagnosticsChannel.channel('undici:websocket:socket_error')
+
+/** @type {import('crypto')} */
+let crypto
+try {
+  crypto = __nccwpck_require__(279)
+} catch {
+
+}
+
+/**
+ * @see https://websockets.spec.whatwg.org/#concept-websocket-establish
+ * @param {URL} url
+ * @param {string|string[]} protocols
+ * @param {import('./websocket').WebSocket} ws
+ * @param {(response: any) => void} onEstablish
+ * @param {Partial<import('../../types/websocket').WebSocketInit>} options
+ */
+function establishWebSocketConnection (url, protocols, ws, onEstablish, options) {
+  // 1. Let requestURL be a copy of url, with its scheme set to "http", if url’s
+  //    scheme is "ws", and to "https" otherwise.
+  const requestURL = url
+
+  requestURL.protocol = url.protocol === 'ws:' ? 'http:' : 'https:'
+
+  // 2. Let request be a new request, whose URL is requestURL, client is client,
+  //    service-workers mode is "none", referrer is "no-referrer", mode is
+  //    "websocket", credentials mode is "include", cache mode is "no-store" ,
+  //    and redirect mode is "error".
+  const request = makeRequest({
+    urlList: [requestURL],
+    serviceWorkers: 'none',
+    referrer: 'no-referrer',
+    mode: 'websocket',
+    credentials: 'include',
+    cache: 'no-store',
+    redirect: 'error'
+  })
+
+  // Note: undici extension, allow setting custom headers.
+  if (options.headers) {
+    const headersList = new Headers(options.headers)[kHeadersList]
+
+    request.headersList = headersList
+  }
+
+  // 3. Append (`Upgrade`, `websocket`) to request’s header list.
+  // 4. Append (`Connection`, `Upgrade`) to request’s header list.
+  // Note: both of these are handled by undici currently.
+  // https://github.com/nodejs/undici/blob/68c269c4144c446f3f1220951338daef4a6b5ec4/lib/client.js#L1397
+
+  // 5. Let keyValue be a nonce consisting of a randomly selected
+  //    16-byte value that has been forgiving-base64-encoded and
+  //    isomorphic encoded.
+  const keyValue = crypto.randomBytes(16).toString('base64')
+
+  // 6. Append (`Sec-WebSocket-Key`, keyValue) to request’s
+  //    header list.
+  request.headersList.append('sec-websocket-key', keyValue)
+
+  // 7. Append (`Sec-WebSocket-Version`, `13`) to request’s
+  //    header list.
+  request.headersList.append('sec-websocket-version', '13')
+
+  // 8. For each protocol in protocols, combine
+  //    (`Sec-WebSocket-Protocol`, protocol) in request’s header
+  //    list.
+  for (const protocol of protocols) {
+    request.headersList.append('sec-websocket-protocol', protocol)
+  }
+
+  // 9. Let permessageDeflate be a user-agent defined
+  //    "permessage-deflate" extension header value.
+  // https://github.com/mozilla/gecko-dev/blob/ce78234f5e653a5d3916813ff990f053510227bc/netwerk/protocol/websocket/WebSocketChannel.cpp#L2673
+  // TODO: enable once permessage-deflate is supported
+  const permessageDeflate = '' // 'permessage-deflate; 15'
+
+  // 10. Append (`Sec-WebSocket-Extensions`, permessageDeflate) to
+  //     request’s header list.
+  // request.headersList.append('sec-websocket-extensions', permessageDeflate)
+
+  // 11. Fetch request with useParallelQueue set to true, and
+  //     processResponse given response being these steps:
+  const controller = fetching({
+    request,
+    useParallelQueue: true,
+    dispatcher: options.dispatcher ?? getGlobalDispatcher(),
+    processResponse (response) {
+      // 1. If response is a network error or its status is not 101,
+      //    fail the WebSocket connection.
+      if (response.type === 'error' || response.status !== 101) {
+        failWebsocketConnection(ws, 'Received network error or non-101 status code.')
+        return
+      }
+
+      // 2. If protocols is not the empty list and extracting header
+      //    list values given `Sec-WebSocket-Protocol` and response’s
+      //    header list results in null, failure, or the empty byte
+      //    sequence, then fail the WebSocket connection.
+      if (protocols.length !== 0 && !response.headersList.get('Sec-WebSocket-Protocol')) {
+        failWebsocketConnection(ws, 'Server did not respond with sent protocols.')
+        return
+      }
+
+      // 3. Follow the requirements stated step 2 to step 6, inclusive,
+      //    of the last set of steps in section 4.1 of The WebSocket
+      //    Protocol to validate response. This either results in fail
+      //    the WebSocket connection or the WebSocket connection is
+      //    established.
+
+      // 2. If the response lacks an |Upgrade| header field or the |Upgrade|
+      //    header field contains a value that is not an ASCII case-
+      //    insensitive match for the value "websocket", the client MUST
+      //    _Fail the WebSocket Connection_.
+      if (response.headersList.get('Upgrade')?.toLowerCase() !== 'websocket') {
+        failWebsocketConnection(ws, 'Server did not set Upgrade header to "websocket".')
+        return
+      }
+
+      // 3. If the response lacks a |Connection| header field or the
+      //    |Connection| header field doesn't contain a token that is an
+      //    ASCII case-insensitive match for the value "Upgrade", the client
+      //    MUST _Fail the WebSocket Connection_.
+      if (response.headersList.get('Connection')?.toLowerCase() !== 'upgrade') {
+        failWebsocketConnection(ws, 'Server did not set Connection header to "upgrade".')
+        return
+      }
+
+      // 4. If the response lacks a |Sec-WebSocket-Accept| header field or
+      //    the |Sec-WebSocket-Accept| contains a value other than the
+      //    base64-encoded SHA-1 of the concatenation of the |Sec-WebSocket-
+      //    Key| (as a string, not base64-decoded) with the string "258EAFA5-
+      //    E914-47DA-95CA-C5AB0DC85B11" but ignoring any leading and
+      //    trailing whitespace, the client MUST _Fail the WebSocket
+      //    Connection_.
+      const secWSAccept = response.headersList.get('Sec-WebSocket-Accept')
+      const digest = crypto.createHash('sha1').update(keyValue + uid).digest('base64')
+      if (secWSAccept !== digest) {
+        failWebsocketConnection(ws, 'Incorrect hash received in Sec-WebSocket-Accept header.')
+        return
+      }
+
+      // 5. If the response includes a |Sec-WebSocket-Extensions| header
+      //    field and this header field indicates the use of an extension
+      //    that was not present in the client's handshake (the server has
+      //    indicated an extension not requested by the client), the client
+      //    MUST _Fail the WebSocket Connection_.  (The parsing of this
+      //    header field to determine which extensions are requested is
+      //    discussed in Section 9.1.)
+      const secExtension = response.headersList.get('Sec-WebSocket-Extensions')
+
+      if (secExtension !== null && secExtension !== permessageDeflate) {
+        failWebsocketConnection(ws, 'Received different permessage-deflate than the one set.')
+        return
+      }
+
+      // 6. If the response includes a |Sec-WebSocket-Protocol| header field
+      //    and this header field indicates the use of a subprotocol that was
+      //    not present in the client's handshake (the server has indicated a
+      //    subprotocol not requested by the client), the client MUST _Fail
+      //    the WebSocket Connection_.
+      const secProtocol = response.headersList.get('Sec-WebSocket-Protocol')
+
+      if (secProtocol !== null && secProtocol !== request.headersList.get('Sec-WebSocket-Protocol')) {
+        failWebsocketConnection(ws, 'Protocol was not set in the opening handshake.')
+        return
+      }
+
+      response.socket.on('data', onSocketData)
+      response.socket.on('close', onSocketClose)
+      response.socket.on('error', onSocketError)
+
+      if (channels.open.hasSubscribers) {
+        channels.open.publish({
+          address: response.socket.address(),
+          protocol: secProtocol,
+          extensions: secExtension
+        })
+      }
+
+      onEstablish(response)
+    }
+  })
+
+  return controller
+}
+
+/**
+ * @param {Buffer} chunk
+ */
+function onSocketData (chunk) {
+  if (!this.ws[kByteParser].write(chunk)) {
+    this.pause()
+  }
+}
+
+/**
+ * @see https://websockets.spec.whatwg.org/#feedback-from-the-protocol
+ * @see https://datatracker.ietf.org/doc/html/rfc6455#section-7.1.4
+ */
+function onSocketClose () {
+  const { ws } = this
+
+  // If the TCP connection was closed after the
+  // WebSocket closing handshake was completed, the WebSocket connection
+  // is said to have been closed _cleanly_.
+  const wasClean = ws[kSentClose] && ws[kReceivedClose]
+
+  let code = 1005
+  let reason = ''
+
+  const result = ws[kByteParser].closingInfo
+
+  if (result) {
+    code = result.code ?? 1005
+    reason = result.reason
+  } else if (!ws[kSentClose]) {
+    // If _The WebSocket
+    // Connection is Closed_ and no Close control frame was received by the
+    // endpoint (such as could occur if the underlying transport connection
+    // is lost), _The WebSocket Connection Close Code_ is considered to be
+    // 1006.
+    code = 1006
+  }
+
+  // 1. Change the ready state to CLOSED (3).
+  ws[kReadyState] = states.CLOSED
+
+  // 2. If the user agent was required to fail the WebSocket
+  //    connection, or if the WebSocket connection was closed
+  //    after being flagged as full, fire an event named error
+  //    at the WebSocket object.
+  // TODO
+
+  // 3. Fire an event named close at the WebSocket object,
+  //    using CloseEvent, with the wasClean attribute
+  //    initialized to true if the connection closed cleanly
+  //    and false otherwise, the code attribute initialized to
+  //    the WebSocket connection close code, and the reason
+  //    attribute initialized to the result of applying UTF-8
+  //    decode without BOM to the WebSocket connection close
+  //    reason.
+  fireEvent('close', ws, CloseEvent, {
+    wasClean, code, reason
+  })
+
+  if (channels.close.hasSubscribers) {
+    channels.close.publish({
+      websocket: ws,
+      code,
+      reason
+    })
+  }
+}
+
+function onSocketError (error) {
+  const { ws } = this
+
+  ws[kReadyState] = states.CLOSING
+
+  if (channels.socketError.hasSubscribers) {
+    channels.socketError.publish(error)
+  }
+
+  this.destroy()
+}
+
+module.exports = {
+  establishWebSocketConnection
+}
+
+
+/***/ }),
+
+/***/ 346:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = (flag, argv = process.argv) => {
+	const prefix = flag.startsWith('-') ? '' : (flag.length === 1 ? '-' : '--');
+	const position = argv.indexOf(prefix + flag);
+	const terminatorPosition = argv.indexOf('--');
+	return position !== -1 && (terminatorPosition === -1 || position < terminatorPosition);
+};
+
+
+/***/ }),
+
+/***/ 347:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var restError_exports = {};
+__export(restError_exports, {
+  createRestError: () => createRestError
+});
+module.exports = __toCommonJS(restError_exports);
+var import_restError = __nccwpck_require__(417);
+var import_httpHeaders = __nccwpck_require__(456);
+function createRestError(messageOrResponse, response) {
+  const resp = typeof messageOrResponse === "string" ? response : messageOrResponse;
+  const internalError = resp.body?.error ?? resp.body;
+  const message = typeof messageOrResponse === "string" ? messageOrResponse : internalError?.message ?? `Unexpected status code: ${resp.status}`;
+  return new import_restError.RestError(message, {
+    statusCode: statusCodeToNumber(resp.status),
+    code: internalError?.code,
+    request: resp.request,
+    response: toPipelineResponse(resp)
+  });
+}
+function toPipelineResponse(response) {
+  return {
+    headers: (0, import_httpHeaders.createHttpHeaders)(response.headers),
+    request: response.request,
+    status: statusCodeToNumber(response.status) ?? -1
+  };
+}
+function statusCodeToNumber(statusCode) {
+  const status = Number.parseInt(statusCode);
+  return Number.isNaN(status) ? void 0 : status;
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=restError.js.map
+
+
+/***/ }),
+
+/***/ 348:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const DispatcherBase = __nccwpck_require__(59)
+const FixedQueue = __nccwpck_require__(189)
+const { kConnected, kSize, kRunning, kPending, kQueued, kBusy, kFree, kUrl, kClose, kDestroy, kDispatch } = __nccwpck_require__(188)
+const PoolStats = __nccwpck_require__(20)
+
+const kClients = Symbol('clients')
+const kNeedDrain = Symbol('needDrain')
+const kQueue = Symbol('queue')
+const kClosedResolve = Symbol('closed resolve')
+const kOnDrain = Symbol('onDrain')
+const kOnConnect = Symbol('onConnect')
+const kOnDisconnect = Symbol('onDisconnect')
+const kOnConnectionError = Symbol('onConnectionError')
+const kGetDispatcher = Symbol('get dispatcher')
+const kAddClient = Symbol('add client')
+const kRemoveClient = Symbol('remove client')
+const kStats = Symbol('stats')
+
+class PoolBase extends DispatcherBase {
+  constructor () {
+    super()
+
+    this[kQueue] = new FixedQueue()
+    this[kClients] = []
+    this[kQueued] = 0
+
+    const pool = this
+
+    this[kOnDrain] = function onDrain (origin, targets) {
+      const queue = pool[kQueue]
+
+      let needDrain = false
+
+      while (!needDrain) {
+        const item = queue.shift()
+        if (!item) {
+          break
+        }
+        pool[kQueued]--
+        needDrain = !this.dispatch(item.opts, item.handler)
+      }
+
+      this[kNeedDrain] = needDrain
+
+      if (!this[kNeedDrain] && pool[kNeedDrain]) {
+        pool[kNeedDrain] = false
+        pool.emit('drain', origin, [pool, ...targets])
+      }
+
+      if (pool[kClosedResolve] && queue.isEmpty()) {
+        Promise
+          .all(pool[kClients].map(c => c.close()))
+          .then(pool[kClosedResolve])
+      }
+    }
+
+    this[kOnConnect] = (origin, targets) => {
+      pool.emit('connect', origin, [pool, ...targets])
+    }
+
+    this[kOnDisconnect] = (origin, targets, err) => {
+      pool.emit('disconnect', origin, [pool, ...targets], err)
+    }
+
+    this[kOnConnectionError] = (origin, targets, err) => {
+      pool.emit('connectionError', origin, [pool, ...targets], err)
+    }
+
+    this[kStats] = new PoolStats(this)
+  }
+
+  get [kBusy] () {
+    return this[kNeedDrain]
+  }
+
+  get [kConnected] () {
+    return this[kClients].filter(client => client[kConnected]).length
+  }
+
+  get [kFree] () {
+    return this[kClients].filter(client => client[kConnected] && !client[kNeedDrain]).length
+  }
+
+  get [kPending] () {
+    let ret = this[kQueued]
+    for (const { [kPending]: pending } of this[kClients]) {
+      ret += pending
+    }
+    return ret
+  }
+
+  get [kRunning] () {
+    let ret = 0
+    for (const { [kRunning]: running } of this[kClients]) {
+      ret += running
+    }
+    return ret
+  }
+
+  get [kSize] () {
+    let ret = this[kQueued]
+    for (const { [kSize]: size } of this[kClients]) {
+      ret += size
+    }
+    return ret
+  }
+
+  get stats () {
+    return this[kStats]
+  }
+
+  async [kClose] () {
+    if (this[kQueue].isEmpty()) {
+      return Promise.all(this[kClients].map(c => c.close()))
+    } else {
+      return new Promise((resolve) => {
+        this[kClosedResolve] = resolve
+      })
+    }
+  }
+
+  async [kDestroy] (err) {
+    while (true) {
+      const item = this[kQueue].shift()
+      if (!item) {
+        break
+      }
+      item.handler.onError(err)
+    }
+
+    return Promise.all(this[kClients].map(c => c.destroy(err)))
+  }
+
+  [kDispatch] (opts, handler) {
+    const dispatcher = this[kGetDispatcher]()
+
+    if (!dispatcher) {
+      this[kNeedDrain] = true
+      this[kQueue].push({ opts, handler })
+      this[kQueued]++
+    } else if (!dispatcher.dispatch(opts, handler)) {
+      dispatcher[kNeedDrain] = true
+      this[kNeedDrain] = !this[kGetDispatcher]()
+    }
+
+    return !this[kNeedDrain]
+  }
+
+  [kAddClient] (client) {
+    client
+      .on('drain', this[kOnDrain])
+      .on('connect', this[kOnConnect])
+      .on('disconnect', this[kOnDisconnect])
+      .on('connectionError', this[kOnConnectionError])
+
+    this[kClients].push(client)
+
+    if (this[kNeedDrain]) {
+      process.nextTick(() => {
+        if (this[kNeedDrain]) {
+          this[kOnDrain](client[kUrl], [this, client])
+        }
+      })
+    }
+
+    return this
+  }
+
+  [kRemoveClient] (client) {
+    client.close(() => {
+      const idx = this[kClients].indexOf(client)
+      if (idx !== -1) {
+        this[kClients].splice(idx, 1)
+      }
+    })
+
+    this[kNeedDrain] = this[kClients].some(dispatcher => (
+      !dispatcher[kNeedDrain] &&
+      dispatcher.closed !== true &&
+      dispatcher.destroyed !== true
+    ))
+  }
+}
+
+module.exports = {
+  PoolBase,
+  kClients,
+  kNeedDrain,
+  kAddClient,
+  kRemoveClient,
+  kGetDispatcher
+}
+
+
+/***/ }),
+
+/***/ 349:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TracingContextImpl = exports.knownContextKeys = void 0;
+exports.createTracingContext = createTracingContext;
+/** @internal */
+exports.knownContextKeys = {
+    span: Symbol.for("@azure/core-tracing span"),
+    namespace: Symbol.for("@azure/core-tracing namespace"),
+};
+/**
+ * Creates a new {@link TracingContext} with the given options.
+ * @param options - A set of known keys that may be set on the context.
+ * @returns A new {@link TracingContext} with the given options.
+ *
+ * @internal
+ */
+function createTracingContext(options = {}) {
+    let context = new TracingContextImpl(options.parentContext);
+    if (options.span) {
+        context = context.setValue(exports.knownContextKeys.span, options.span);
+    }
+    if (options.namespace) {
+        context = context.setValue(exports.knownContextKeys.namespace, options.namespace);
+    }
+    return context;
+}
+/** @internal */
+class TracingContextImpl {
+    _contextMap;
+    constructor(initialContext) {
+        this._contextMap =
+            initialContext instanceof TracingContextImpl
+                ? new Map(initialContext._contextMap)
+                : new Map();
+    }
+    setValue(key, value) {
+        const newContext = new TracingContextImpl(this);
+        newContext._contextMap.set(key, value);
+        return newContext;
+    }
+    getValue(key) {
+        return this._contextMap.get(key);
+    }
+    deleteValue(key) {
+        const newContext = new TracingContextImpl(this);
+        newContext._contextMap.delete(key);
+        return newContext;
+    }
+}
+exports.TracingContextImpl = TracingContextImpl;
+//# sourceMappingURL=tracingContext.js.map
+
+/***/ }),
+
+/***/ 350:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PooledBuffer = void 0;
+const tslib_1 = __nccwpck_require__(209);
+const BuffersStream_js_1 = __nccwpck_require__(363);
+const node_buffer_1 = tslib_1.__importDefault(__nccwpck_require__(254));
+/**
+ * maxBufferLength is max size of each buffer in the pooled buffers.
+ */
+const maxBufferLength = node_buffer_1.default.constants.MAX_LENGTH;
+/**
+ * This class provides a buffer container which conceptually has no hard size limit.
+ * It accepts a capacity, an array of input buffers and the total length of input data.
+ * It will allocate an internal "buffer" of the capacity and fill the data in the input buffers
+ * into the internal "buffer" serially with respect to the total length.
+ * Then by calling PooledBuffer.getReadableStream(), you can get a readable stream
+ * assembled from all the data in the internal "buffer".
+ */
+class PooledBuffer {
+    /**
+     * Internal buffers used to keep the data.
+     * Each buffer has a length of the maxBufferLength except last one.
+     */
+    buffers = [];
+    /**
+     * The total size of internal buffers.
+     */
+    capacity;
+    /**
+     * The total size of data contained in internal buffers.
+     */
+    _size;
+    /**
+     * The size of the data contained in the pooled buffers.
+     */
+    get size() {
+        return this._size;
+    }
+    constructor(capacity, buffers, totalLength) {
+        this.capacity = capacity;
+        this._size = 0;
+        // allocate
+        const bufferNum = Math.ceil(capacity / maxBufferLength);
+        for (let i = 0; i < bufferNum; i++) {
+            let len = i === bufferNum - 1 ? capacity % maxBufferLength : maxBufferLength;
+            if (len === 0) {
+                len = maxBufferLength;
+            }
+            this.buffers.push(Buffer.allocUnsafe(len));
+        }
+        if (buffers) {
+            this.fill(buffers, totalLength);
+        }
+    }
+    /**
+     * Fill the internal buffers with data in the input buffers serially
+     * with respect to the total length and the total capacity of the internal buffers.
+     * Data copied will be shift out of the input buffers.
+     *
+     * @param buffers - Input buffers containing the data to be filled in the pooled buffer
+     * @param totalLength - Total length of the data to be filled in.
+     *
+     */
+    fill(buffers, totalLength) {
+        this._size = Math.min(this.capacity, totalLength);
+        let i = 0, j = 0, targetOffset = 0, sourceOffset = 0, totalCopiedNum = 0;
+        while (totalCopiedNum < this._size) {
+            const source = buffers[i];
+            const target = this.buffers[j];
+            const copiedNum = source.copy(target, targetOffset, sourceOffset);
+            totalCopiedNum += copiedNum;
+            sourceOffset += copiedNum;
+            targetOffset += copiedNum;
+            if (sourceOffset === source.length) {
+                i++;
+                sourceOffset = 0;
+            }
+            if (targetOffset === target.length) {
+                j++;
+                targetOffset = 0;
+            }
+        }
+        // clear copied from source buffers
+        buffers.splice(0, i);
+        if (buffers.length > 0) {
+            buffers[0] = buffers[0].slice(sourceOffset);
+        }
+    }
+    /**
+     * Get the readable stream assembled from all the data in the internal buffers.
+     *
+     */
+    getReadableStream() {
+        return new BuffersStream_js_1.BuffersStream(this.buffers, this.size);
+    }
+}
+exports.PooledBuffer = PooledBuffer;
+//# sourceMappingURL=PooledBuffer.js.map
+
+/***/ }),
+
+/***/ 351:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var defaultHttpClient_exports = {};
+__export(defaultHttpClient_exports, {
+  createDefaultHttpClient: () => createDefaultHttpClient
+});
+module.exports = __toCommonJS(defaultHttpClient_exports);
+var import_nodeHttpClient = __nccwpck_require__(414);
+function createDefaultHttpClient() {
+  return (0, import_nodeHttpClient.createNodeHttpClient)();
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=defaultHttpClient.js.map
+
+
+/***/ }),
+
+/***/ 352:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { AsyncResource } = __nccwpck_require__(402)
+const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(459)
+const util = __nccwpck_require__(66)
+const { addSignal, removeSignal } = __nccwpck_require__(100)
+
+class ConnectHandler extends AsyncResource {
+  constructor (opts, callback) {
+    if (!opts || typeof opts !== 'object') {
+      throw new InvalidArgumentError('invalid opts')
+    }
+
+    if (typeof callback !== 'function') {
+      throw new InvalidArgumentError('invalid callback')
+    }
+
+    const { signal, opaque, responseHeaders } = opts
+
+    if (signal && typeof signal.on !== 'function' && typeof signal.addEventListener !== 'function') {
+      throw new InvalidArgumentError('signal must be an EventEmitter or EventTarget')
+    }
+
+    super('UNDICI_CONNECT')
+
+    this.opaque = opaque || null
+    this.responseHeaders = responseHeaders || null
+    this.callback = callback
+    this.abort = null
+
+    addSignal(this, signal)
+  }
+
+  onConnect (abort, context) {
+    if (!this.callback) {
+      throw new RequestAbortedError()
+    }
+
+    this.abort = abort
+    this.context = context
+  }
+
+  onHeaders () {
+    throw new SocketError('bad connect', null)
+  }
+
+  onUpgrade (statusCode, rawHeaders, socket) {
+    const { callback, opaque, context } = this
+
+    removeSignal(this)
+
+    this.callback = null
+
+    let headers = rawHeaders
+    // Indicates is an HTTP2Session
+    if (headers != null) {
+      headers = this.responseHeaders === 'raw' ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders)
+    }
+
+    this.runInAsyncScope(callback, null, null, {
+      statusCode,
+      headers,
+      socket,
+      opaque,
+      context
+    })
+  }
+
+  onError (err) {
+    const { callback, opaque } = this
+
+    removeSignal(this)
+
+    if (callback) {
+      this.callback = null
+      queueMicrotask(() => {
+        this.runInAsyncScope(callback, null, err, { opaque })
+      })
+    }
+  }
+}
+
+function connect (opts, callback) {
+  if (callback === undefined) {
+    return new Promise((resolve, reject) => {
+      connect.call(this, opts, (err, data) => {
+        return err ? reject(err) : resolve(data)
+      })
+    })
+  }
+
+  try {
+    const connectHandler = new ConnectHandler(opts, callback)
+    this.dispatch({ ...opts, method: 'CONNECT' }, connectHandler)
+  } catch (err) {
+    if (typeof callback !== 'function') {
+      throw err
+    }
+    const opaque = opts && opts.opaque
+    queueMicrotask(() => callback(err, { opaque }))
+  }
+}
+
+module.exports = connect
+
+
+/***/ }),
+
+/***/ 353:
+/***/ ((module) => {
+
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var w = d * 7;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} [options]
+ * @throws {Error} throw an error if val is not a non-empty string or a number
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function (val, options) {
+  options = options || {};
+  var type = typeof val;
+  if (type === 'string' && val.length > 0) {
+    return parse(val);
+  } else if (type === 'number' && isFinite(val)) {
+    return options.long ? fmtLong(val) : fmtShort(val);
+  }
+  throw new Error(
+    'val is not a non-empty string or a valid number. val=' +
+      JSON.stringify(val)
+  );
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = String(str);
+  if (str.length > 100) {
+    return;
+  }
+  var match = /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
+    str
+  );
+  if (!match) {
+    return;
+  }
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtShort(ms) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return Math.round(ms / d) + 'd';
+  }
+  if (msAbs >= h) {
+    return Math.round(ms / h) + 'h';
+  }
+  if (msAbs >= m) {
+    return Math.round(ms / m) + 'm';
+  }
+  if (msAbs >= s) {
+    return Math.round(ms / s) + 's';
+  }
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtLong(ms) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+  return ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
+}
+
+
+/***/ }),
+
+/***/ 354:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:util");
+
+/***/ }),
+
+/***/ 355:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+// We include a version number for the Dispatcher API. In case of breaking changes,
+// this version number must be increased to avoid conflicts.
+const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
+const { InvalidArgumentError } = __nccwpck_require__(459)
+const Agent = __nccwpck_require__(5)
+
+if (getGlobalDispatcher() === undefined) {
+  setGlobalDispatcher(new Agent())
+}
+
+function setGlobalDispatcher (agent) {
+  if (!agent || typeof agent.dispatch !== 'function') {
+    throw new InvalidArgumentError('Argument agent must implement Agent')
+  }
+  Object.defineProperty(globalThis, globalDispatcher, {
+    value: agent,
+    writable: true,
+    enumerable: false,
+    configurable: false
+  })
+}
+
+function getGlobalDispatcher () {
+  return globalThis[globalDispatcher]
+}
+
+module.exports = {
+  setGlobalDispatcher,
+  getGlobalDispatcher
+}
+
+
+/***/ }),
+
+/***/ 356:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { kClients } = __nccwpck_require__(188)
+const Agent = __nccwpck_require__(5)
+const {
+  kAgent,
+  kMockAgentSet,
+  kMockAgentGet,
+  kDispatches,
+  kIsMockActive,
+  kNetConnect,
+  kGetNetConnect,
+  kOptions,
+  kFactory
+} = __nccwpck_require__(442)
+const MockClient = __nccwpck_require__(192)
+const MockPool = __nccwpck_require__(330)
+const { matchValue, buildMockOptions } = __nccwpck_require__(7)
+const { InvalidArgumentError, UndiciError } = __nccwpck_require__(459)
+const Dispatcher = __nccwpck_require__(449)
+const Pluralizer = __nccwpck_require__(244)
+const PendingInterceptorsFormatter = __nccwpck_require__(224)
+
+class FakeWeakRef {
+  constructor (value) {
+    this.value = value
+  }
+
+  deref () {
+    return this.value
+  }
+}
+
+class MockAgent extends Dispatcher {
+  constructor (opts) {
+    super(opts)
+
+    this[kNetConnect] = true
+    this[kIsMockActive] = true
+
+    // Instantiate Agent and encapsulate
+    if ((opts && opts.agent && typeof opts.agent.dispatch !== 'function')) {
+      throw new InvalidArgumentError('Argument opts.agent must implement Agent')
+    }
+    const agent = opts && opts.agent ? opts.agent : new Agent(opts)
+    this[kAgent] = agent
+
+    this[kClients] = agent[kClients]
+    this[kOptions] = buildMockOptions(opts)
+  }
+
+  get (origin) {
+    let dispatcher = this[kMockAgentGet](origin)
+
+    if (!dispatcher) {
+      dispatcher = this[kFactory](origin)
+      this[kMockAgentSet](origin, dispatcher)
+    }
+    return dispatcher
+  }
+
+  dispatch (opts, handler) {
+    // Call MockAgent.get to perform additional setup before dispatching as normal
+    this.get(opts.origin)
+    return this[kAgent].dispatch(opts, handler)
+  }
+
+  async close () {
+    await this[kAgent].close()
+    this[kClients].clear()
+  }
+
+  deactivate () {
+    this[kIsMockActive] = false
+  }
+
+  activate () {
+    this[kIsMockActive] = true
+  }
+
+  enableNetConnect (matcher) {
+    if (typeof matcher === 'string' || typeof matcher === 'function' || matcher instanceof RegExp) {
+      if (Array.isArray(this[kNetConnect])) {
+        this[kNetConnect].push(matcher)
+      } else {
+        this[kNetConnect] = [matcher]
+      }
+    } else if (typeof matcher === 'undefined') {
+      this[kNetConnect] = true
+    } else {
+      throw new InvalidArgumentError('Unsupported matcher. Must be one of String|Function|RegExp.')
+    }
+  }
+
+  disableNetConnect () {
+    this[kNetConnect] = false
+  }
+
+  // This is required to bypass issues caused by using global symbols - see:
+  // https://github.com/nodejs/undici/issues/1447
+  get isMockActive () {
+    return this[kIsMockActive]
+  }
+
+  [kMockAgentSet] (origin, dispatcher) {
+    this[kClients].set(origin, new FakeWeakRef(dispatcher))
+  }
+
+  [kFactory] (origin) {
+    const mockOptions = Object.assign({ agent: this }, this[kOptions])
+    return this[kOptions] && this[kOptions].connections === 1
+      ? new MockClient(origin, mockOptions)
+      : new MockPool(origin, mockOptions)
+  }
+
+  [kMockAgentGet] (origin) {
+    // First check if we can immediately find it
+    const ref = this[kClients].get(origin)
+    if (ref) {
+      return ref.deref()
+    }
+
+    // If the origin is not a string create a dummy parent pool and return to user
+    if (typeof origin !== 'string') {
+      const dispatcher = this[kFactory]('http://localhost:9999')
+      this[kMockAgentSet](origin, dispatcher)
+      return dispatcher
+    }
+
+    // If we match, create a pool and assign the same dispatches
+    for (const [keyMatcher, nonExplicitRef] of Array.from(this[kClients])) {
+      const nonExplicitDispatcher = nonExplicitRef.deref()
+      if (nonExplicitDispatcher && typeof keyMatcher !== 'string' && matchValue(keyMatcher, origin)) {
+        const dispatcher = this[kFactory](origin)
+        this[kMockAgentSet](origin, dispatcher)
+        dispatcher[kDispatches] = nonExplicitDispatcher[kDispatches]
+        return dispatcher
+      }
+    }
+  }
+
+  [kGetNetConnect] () {
+    return this[kNetConnect]
+  }
+
+  pendingInterceptors () {
+    const mockAgentClients = this[kClients]
+
+    return Array.from(mockAgentClients.entries())
+      .flatMap(([origin, scope]) => scope.deref()[kDispatches].map(dispatch => ({ ...dispatch, origin })))
+      .filter(({ pending }) => pending)
+  }
+
+  assertNoPendingInterceptors ({ pendingInterceptorsFormatter = new PendingInterceptorsFormatter() } = {}) {
+    const pending = this.pendingInterceptors()
+
+    if (pending.length === 0) {
+      return
+    }
+
+    const pluralizer = new Pluralizer('interceptor', 'interceptors').pluralize(pending.length)
+
+    throw new UndiciError(`
+${pluralizer.count} ${pluralizer.noun} ${pluralizer.is} pending:
+
+${pendingInterceptorsFormatter.format(pending)}
+`.trim())
+  }
+}
+
+module.exports = MockAgent
+
+
+/***/ }),
+
+/***/ 357:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var tlsPolicy_exports = {};
+__export(tlsPolicy_exports, {
+  tlsPolicy: () => tlsPolicy,
+  tlsPolicyName: () => tlsPolicyName
+});
+module.exports = __toCommonJS(tlsPolicy_exports);
+var import_policies = __nccwpck_require__(275);
+const tlsPolicyName = import_policies.tlsPolicyName;
+function tlsPolicy(tlsSettings) {
+  return (0, import_policies.tlsPolicy)(tlsSettings);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 358:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AccountSASServices = void 0;
+/**
+ * ONLY AVAILABLE IN NODE.JS RUNTIME.
+ *
+ * This is a helper class to construct a string representing the services accessible by an AccountSAS. Setting a value
+ * to true means that any SAS which uses these permissions will grant access to that service. Once all the
+ * values are set, this should be serialized with toString and set as the services field on an
+ * {@link AccountSASSignatureValues} object. It is possible to construct the services string without this class, but
+ * the order of the services is particular and this class guarantees correctness.
+ */
+class AccountSASServices {
+    /**
+     * Creates an {@link AccountSASServices} from the specified services string. This method will throw an
+     * Error if it encounters a character that does not correspond to a valid service.
+     *
+     * @param services -
+     */
+    static parse(services) {
+        const accountSASServices = new AccountSASServices();
+        for (const c of services) {
+            switch (c) {
+                case "b":
+                    accountSASServices.blob = true;
+                    break;
+                case "f":
+                    accountSASServices.file = true;
+                    break;
+                case "q":
+                    accountSASServices.queue = true;
+                    break;
+                case "t":
+                    accountSASServices.table = true;
+                    break;
+                default:
+                    throw new RangeError(`Invalid service character: ${c}`);
+            }
+        }
+        return accountSASServices;
+    }
+    /**
+     * Permission to access blob resources granted.
+     */
+    blob = false;
+    /**
+     * Permission to access file resources granted.
+     */
+    file = false;
+    /**
+     * Permission to access queue resources granted.
+     */
+    queue = false;
+    /**
+     * Permission to access table resources granted.
+     */
+    table = false;
+    /**
+     * Converts the given services to a string.
+     *
+     */
+    toString() {
+        const services = [];
+        if (this.blob) {
+            services.push("b");
+        }
+        if (this.table) {
+            services.push("t");
+        }
+        if (this.queue) {
+            services.push("q");
+        }
+        if (this.file) {
+            services.push("f");
+        }
+        return services.join("");
+    }
+}
+exports.AccountSASServices = AccountSASServices;
+//# sourceMappingURL=AccountSASServices.js.map
+
+/***/ }),
+
+/***/ 359:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var bearerAuthenticationPolicy_exports = {};
+__export(bearerAuthenticationPolicy_exports, {
+  bearerAuthenticationPolicy: () => bearerAuthenticationPolicy,
+  bearerAuthenticationPolicyName: () => bearerAuthenticationPolicyName
+});
+module.exports = __toCommonJS(bearerAuthenticationPolicy_exports);
+var import_checkInsecureConnection = __nccwpck_require__(408);
+const bearerAuthenticationPolicyName = "bearerAuthenticationPolicy";
+function bearerAuthenticationPolicy(options) {
+  return {
+    name: bearerAuthenticationPolicyName,
+    async sendRequest(request, next) {
+      (0, import_checkInsecureConnection.ensureSecureConnection)(request, options);
+      const scheme = (request.authSchemes ?? options.authSchemes)?.find(
+        (x) => x.kind === "http" && x.scheme === "bearer"
+      );
+      if (!scheme) {
+        return next(request);
+      }
+      const token = await options.credential.getBearerToken({
+        abortSignal: request.abortSignal
+      });
+      request.headers.set("Authorization", `Bearer ${token}`);
+      return next(request);
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=bearerAuthenticationPolicy.js.map
+
+
+/***/ }),
+
+/***/ 360:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const {
+  BalancedPoolMissingUpstreamError,
+  InvalidArgumentError
+} = __nccwpck_require__(459)
+const {
+  PoolBase,
+  kClients,
+  kNeedDrain,
+  kAddClient,
+  kRemoveClient,
+  kGetDispatcher
+} = __nccwpck_require__(348)
+const Pool = __nccwpck_require__(321)
+const { kUrl, kInterceptors } = __nccwpck_require__(188)
+const { parseOrigin } = __nccwpck_require__(66)
+const kFactory = Symbol('factory')
+
+const kOptions = Symbol('options')
+const kGreatestCommonDivisor = Symbol('kGreatestCommonDivisor')
+const kCurrentWeight = Symbol('kCurrentWeight')
+const kIndex = Symbol('kIndex')
+const kWeight = Symbol('kWeight')
+const kMaxWeightPerServer = Symbol('kMaxWeightPerServer')
+const kErrorPenalty = Symbol('kErrorPenalty')
+
+function getGreatestCommonDivisor (a, b) {
+  if (b === 0) return a
+  return getGreatestCommonDivisor(b, a % b)
+}
+
+function defaultFactory (origin, opts) {
+  return new Pool(origin, opts)
+}
+
+class BalancedPool extends PoolBase {
+  constructor (upstreams = [], { factory = defaultFactory, ...opts } = {}) {
+    super()
+
+    this[kOptions] = opts
+    this[kIndex] = -1
+    this[kCurrentWeight] = 0
+
+    this[kMaxWeightPerServer] = this[kOptions].maxWeightPerServer || 100
+    this[kErrorPenalty] = this[kOptions].errorPenalty || 15
+
+    if (!Array.isArray(upstreams)) {
+      upstreams = [upstreams]
+    }
+
+    if (typeof factory !== 'function') {
+      throw new InvalidArgumentError('factory must be a function.')
+    }
+
+    this[kInterceptors] = opts.interceptors && opts.interceptors.BalancedPool && Array.isArray(opts.interceptors.BalancedPool)
+      ? opts.interceptors.BalancedPool
+      : []
+    this[kFactory] = factory
+
+    for (const upstream of upstreams) {
+      this.addUpstream(upstream)
+    }
+    this._updateBalancedPoolStats()
+  }
+
+  addUpstream (upstream) {
+    const upstreamOrigin = parseOrigin(upstream).origin
+
+    if (this[kClients].find((pool) => (
+      pool[kUrl].origin === upstreamOrigin &&
+      pool.closed !== true &&
+      pool.destroyed !== true
+    ))) {
+      return this
+    }
+    const pool = this[kFactory](upstreamOrigin, Object.assign({}, this[kOptions]))
+
+    this[kAddClient](pool)
+    pool.on('connect', () => {
+      pool[kWeight] = Math.min(this[kMaxWeightPerServer], pool[kWeight] + this[kErrorPenalty])
+    })
+
+    pool.on('connectionError', () => {
+      pool[kWeight] = Math.max(1, pool[kWeight] - this[kErrorPenalty])
+      this._updateBalancedPoolStats()
+    })
+
+    pool.on('disconnect', (...args) => {
+      const err = args[2]
+      if (err && err.code === 'UND_ERR_SOCKET') {
+        // decrease the weight of the pool.
+        pool[kWeight] = Math.max(1, pool[kWeight] - this[kErrorPenalty])
+        this._updateBalancedPoolStats()
+      }
+    })
+
+    for (const client of this[kClients]) {
+      client[kWeight] = this[kMaxWeightPerServer]
+    }
+
+    this._updateBalancedPoolStats()
+
+    return this
+  }
+
+  _updateBalancedPoolStats () {
+    this[kGreatestCommonDivisor] = this[kClients].map(p => p[kWeight]).reduce(getGreatestCommonDivisor, 0)
+  }
+
+  removeUpstream (upstream) {
+    const upstreamOrigin = parseOrigin(upstream).origin
+
+    const pool = this[kClients].find((pool) => (
+      pool[kUrl].origin === upstreamOrigin &&
+      pool.closed !== true &&
+      pool.destroyed !== true
+    ))
+
+    if (pool) {
+      this[kRemoveClient](pool)
+    }
+
+    return this
+  }
+
+  get upstreams () {
+    return this[kClients]
+      .filter(dispatcher => dispatcher.closed !== true && dispatcher.destroyed !== true)
+      .map((p) => p[kUrl].origin)
+  }
+
+  [kGetDispatcher] () {
+    // We validate that pools is greater than 0,
+    // otherwise we would have to wait until an upstream
+    // is added, which might never happen.
+    if (this[kClients].length === 0) {
+      throw new BalancedPoolMissingUpstreamError()
+    }
+
+    const dispatcher = this[kClients].find(dispatcher => (
+      !dispatcher[kNeedDrain] &&
+      dispatcher.closed !== true &&
+      dispatcher.destroyed !== true
+    ))
+
+    if (!dispatcher) {
+      return
+    }
+
+    const allClientsBusy = this[kClients].map(pool => pool[kNeedDrain]).reduce((a, b) => a && b, true)
+
+    if (allClientsBusy) {
+      return
+    }
+
+    let counter = 0
+
+    let maxWeightIndex = this[kClients].findIndex(pool => !pool[kNeedDrain])
+
+    while (counter++ < this[kClients].length) {
+      this[kIndex] = (this[kIndex] + 1) % this[kClients].length
+      const pool = this[kClients][this[kIndex]]
+
+      // find pool index with the largest weight
+      if (pool[kWeight] > this[kClients][maxWeightIndex][kWeight] && !pool[kNeedDrain]) {
+        maxWeightIndex = this[kIndex]
+      }
+
+      // decrease the current weight every `this[kClients].length`.
+      if (this[kIndex] === 0) {
+        // Set the current weight to the next lower weight.
+        this[kCurrentWeight] = this[kCurrentWeight] - this[kGreatestCommonDivisor]
+
+        if (this[kCurrentWeight] <= 0) {
+          this[kCurrentWeight] = this[kMaxWeightPerServer]
+        }
+      }
+      if (pool[kWeight] >= this[kCurrentWeight] && (!pool[kNeedDrain])) {
+        return pool
+      }
+    }
+
+    this[kCurrentWeight] = this[kClients][maxWeightIndex][kWeight]
+    this[kIndex] = maxWeightIndex
+    return this[kClients][maxWeightIndex]
+  }
+}
+
+module.exports = BalancedPool
+
+
+/***/ }),
+
+/***/ 361:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:os");
+
+/***/ }),
+
+/***/ 362:
+/***/ ((module) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var operationOptionHelpers_exports = {};
+__export(operationOptionHelpers_exports, {
+  operationOptionsToRequestParameters: () => operationOptionsToRequestParameters
+});
+module.exports = __toCommonJS(operationOptionHelpers_exports);
+function operationOptionsToRequestParameters(options) {
+  return {
+    allowInsecureConnection: options.requestOptions?.allowInsecureConnection,
+    timeout: options.requestOptions?.timeout,
+    skipUrlEncoding: options.requestOptions?.skipUrlEncoding,
+    abortSignal: options.abortSignal,
+    onUploadProgress: options.requestOptions?.onUploadProgress,
+    onDownloadProgress: options.requestOptions?.onDownloadProgress,
+    headers: { ...options.requestOptions?.headers },
+    onResponse: options.onResponse
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=operationOptionHelpers.js.map
+
+
+/***/ }),
+
+/***/ 363:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BuffersStream = void 0;
+const node_stream_1 = __nccwpck_require__(403);
+/**
+ * This class generates a readable stream from the data in an array of buffers.
+ */
+class BuffersStream extends node_stream_1.Readable {
+    buffers;
+    byteLength;
+    /**
+     * The offset of data to be read in the current buffer.
+     */
+    byteOffsetInCurrentBuffer;
+    /**
+     * The index of buffer to be read in the array of buffers.
+     */
+    bufferIndex;
+    /**
+     * The total length of data already read.
+     */
+    pushedBytesLength;
+    /**
+     * Creates an instance of BuffersStream that will emit the data
+     * contained in the array of buffers.
+     *
+     * @param buffers - Array of buffers containing the data
+     * @param byteLength - The total length of data contained in the buffers
+     */
+    constructor(buffers, byteLength, options) {
+        super(options);
+        this.buffers = buffers;
+        this.byteLength = byteLength;
+        this.byteOffsetInCurrentBuffer = 0;
+        this.bufferIndex = 0;
+        this.pushedBytesLength = 0;
+        // check byteLength is no larger than buffers[] total length
+        let buffersLength = 0;
+        for (const buf of this.buffers) {
+            buffersLength += buf.byteLength;
+        }
+        if (buffersLength < this.byteLength) {
+            throw new Error("Data size shouldn't be larger than the total length of buffers.");
+        }
+    }
+    /**
+     * Internal _read() that will be called when the stream wants to pull more data in.
+     *
+     * @param size - Optional. The size of data to be read
+     */
+    _read(size) {
+        if (this.pushedBytesLength >= this.byteLength) {
+            this.push(null);
+        }
+        if (!size) {
+            size = this.readableHighWaterMark;
+        }
+        const outBuffers = [];
+        let i = 0;
+        while (i < size && this.pushedBytesLength < this.byteLength) {
+            // The last buffer may be longer than the data it contains.
+            const remainingDataInAllBuffers = this.byteLength - this.pushedBytesLength;
+            const remainingCapacityInThisBuffer = this.buffers[this.bufferIndex].byteLength - this.byteOffsetInCurrentBuffer;
+            const remaining = Math.min(remainingCapacityInThisBuffer, remainingDataInAllBuffers);
+            if (remaining > size - i) {
+                // chunkSize = size - i
+                const end = this.byteOffsetInCurrentBuffer + size - i;
+                outBuffers.push(this.buffers[this.bufferIndex].slice(this.byteOffsetInCurrentBuffer, end));
+                this.pushedBytesLength += size - i;
+                this.byteOffsetInCurrentBuffer = end;
+                i = size;
+                break;
+            }
+            else {
+                // chunkSize = remaining
+                const end = this.byteOffsetInCurrentBuffer + remaining;
+                outBuffers.push(this.buffers[this.bufferIndex].slice(this.byteOffsetInCurrentBuffer, end));
+                if (remaining === remainingCapacityInThisBuffer) {
+                    // this.buffers[this.bufferIndex] used up, shift to next one
+                    this.byteOffsetInCurrentBuffer = 0;
+                    this.bufferIndex++;
+                }
+                else {
+                    this.byteOffsetInCurrentBuffer = end;
+                }
+                this.pushedBytesLength += remaining;
+                i += remaining;
+            }
+        }
+        if (outBuffers.length > 1) {
+            this.push(Buffer.concat(outBuffers));
+        }
+        else if (outBuffers.length === 1) {
+            this.push(outBuffers[0]);
+        }
+    }
+}
+exports.BuffersStream = BuffersStream;
+//# sourceMappingURL=BuffersStream.js.map
 
 /***/ }),
 
@@ -66217,7 +66224,7 @@ const BlobBatchClient_js_1 = __nccwpck_require__(379);
 const StorageClient_js_1 = __nccwpck_require__(427);
 const AccountSASPermissions_js_1 = __nccwpck_require__(55);
 const AccountSASSignatureValues_js_1 = __nccwpck_require__(277);
-const AccountSASServices_js_1 = __nccwpck_require__(357);
+const AccountSASServices_js_1 = __nccwpck_require__(358);
 /**
  * A BlobServiceClient represents a Client to the Azure Storage Blob service allowing you
  * to manipulate blob containers.
@@ -67321,7 +67328,7 @@ exports.createDefaultTracingSpan = createDefaultTracingSpan;
 exports.createDefaultInstrumenter = createDefaultInstrumenter;
 exports.useInstrumenter = useInstrumenter;
 exports.getInstrumenter = getInstrumenter;
-const tracingContext_js_1 = __nccwpck_require__(348);
+const tracingContext_js_1 = __nccwpck_require__(349);
 const state_js_1 = __nccwpck_require__(93);
 function createDefaultTracingSpan() {
     return {
@@ -68434,7 +68441,7 @@ function getBlobServiceAccountAudience(storageAccountName) {
 
 
 const WritableStream = (__nccwpck_require__(403).Writable)
-const { inherits } = __nccwpck_require__(353)
+const { inherits } = __nccwpck_require__(354)
 const Dicer = __nccwpck_require__(11)
 
 const MultipartParser = __nccwpck_require__(0)
@@ -70242,7 +70249,7 @@ __export(userAgentPlatform_exports, {
   setPlatformSpecificData: () => setPlatformSpecificData
 });
 module.exports = __toCommonJS(userAgentPlatform_exports);
-var import_node_os = __toESM(__nccwpck_require__(360));
+var import_node_os = __toESM(__nccwpck_require__(361));
 var import_node_process = __toESM(__nccwpck_require__(227));
 function getHeaderName() {
   return "User-Agent";
@@ -70749,7 +70756,7 @@ module.exports = upgrade
 
 const os = __nccwpck_require__(89);
 const tty = __nccwpck_require__(175);
-const hasFlag = __nccwpck_require__(345);
+const hasFlag = __nccwpck_require__(346);
 
 const {env} = process;
 
@@ -72178,7 +72185,7 @@ tslib_1.__exportStar(__nccwpck_require__(61), exports);
 tslib_1.__exportStar(__nccwpck_require__(197), exports);
 tslib_1.__exportStar(__nccwpck_require__(55), exports);
 tslib_1.__exportStar(__nccwpck_require__(2), exports);
-tslib_1.__exportStar(__nccwpck_require__(357), exports);
+tslib_1.__exportStar(__nccwpck_require__(358), exports);
 var AccountSASSignatureValues_js_1 = __nccwpck_require__(277);
 Object.defineProperty(exports, "generateAccountSASQueryParameters", ({ enumerable: true, get: function () { return AccountSASSignatureValues_js_1.generateAccountSASQueryParameters; } }));
 tslib_1.__exportStar(__nccwpck_require__(318), exports);
@@ -72753,7 +72760,7 @@ const { Readable, pipeline } = __nccwpck_require__(126)
 const { addAbortListener, isErrored, isReadable, nodeMajor, nodeMinor } = __nccwpck_require__(66)
 const { dataURLProcessor, serializeAMimeType } = __nccwpck_require__(23)
 const { TransformStream } = __nccwpck_require__(247)
-const { getGlobalDispatcher } = __nccwpck_require__(354)
+const { getGlobalDispatcher } = __nccwpck_require__(355)
 const { webidl } = __nccwpck_require__(429)
 const { STATUS_CODES } = __nccwpck_require__(314)
 const GET_OR_HEAD = ['GET', 'HEAD']
@@ -79867,7 +79874,7 @@ function createHttpHeaders(rawHeaders) {
 /***/ 457:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-var concatMap = __nccwpck_require__(332);
+var concatMap = __nccwpck_require__(333);
 var balanced = __nccwpck_require__(127);
 
 module.exports = expandTop;
@@ -80109,8 +80116,8 @@ __export(log_exports, {
   log: () => log
 });
 module.exports = __toCommonJS(log_exports);
-var import_node_os = __nccwpck_require__(360);
-var import_node_util = __toESM(__nccwpck_require__(353));
+var import_node_os = __nccwpck_require__(361);
+var import_node_util = __toESM(__nccwpck_require__(354));
 var import_node_process = __toESM(__nccwpck_require__(227));
 function log(message, ...args) {
   import_node_process.default.stderr.write(`${import_node_util.default.format(message, ...args)}${import_node_os.EOL}`);
@@ -80822,13 +80829,13 @@ __export(clientHelpers_exports, {
   getCachedDefaultHttpsClient: () => getCachedDefaultHttpsClient
 });
 module.exports = __toCommonJS(clientHelpers_exports);
-var import_defaultHttpClient = __nccwpck_require__(350);
+var import_defaultHttpClient = __nccwpck_require__(351);
 var import_createPipelineFromOptions = __nccwpck_require__(301);
 var import_apiVersionPolicy = __nccwpck_require__(218);
 var import_credentials = __nccwpck_require__(181);
 var import_apiKeyAuthenticationPolicy = __nccwpck_require__(84);
 var import_basicAuthenticationPolicy = __nccwpck_require__(147);
-var import_bearerAuthenticationPolicy = __nccwpck_require__(358);
+var import_bearerAuthenticationPolicy = __nccwpck_require__(359);
 var import_oauth2AuthenticationPolicy = __nccwpck_require__(322);
 let cachedHttpClient;
 function createDefaultPipeline(options = {}) {
@@ -82139,7 +82146,7 @@ const rpc_output_stream_1 = __nccwpck_require__(293);
 const rpc_options_1 = __nccwpck_require__(281);
 const unary_call_1 = __nccwpck_require__(53);
 const server_streaming_call_1 = __nccwpck_require__(424);
-const client_streaming_call_1 = __nccwpck_require__(331);
+const client_streaming_call_1 = __nccwpck_require__(332);
 const duplex_streaming_call_1 = __nccwpck_require__(292);
 /**
  * Transport for testing.
@@ -84649,7 +84656,7 @@ function createEmptyPipeline() {
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SASQueryParameters = exports.SASProtocol = void 0;
-const SasIPRange_js_1 = __nccwpck_require__(339);
+const SasIPRange_js_1 = __nccwpck_require__(340);
 const utils_common_js_1 = __nccwpck_require__(149);
 /**
  * Protocols for generated SAS.
@@ -85735,7 +85742,7 @@ function makeBlobBeginCopyFromURLPollOperation(state) {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(363);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(331);
 /******/ 	module.exports = __webpack_exports__;
 /******/
 /******/ })()
