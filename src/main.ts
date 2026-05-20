@@ -22,6 +22,11 @@ import { ensureShims } from "./lib/ensure-shims.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
+import {
+  replaySourceMtimes,
+  readSnapshotFile,
+  SNAPSHOT_FILENAME,
+} from "./lib/source-mtime-snapshot.js";
 import type { ActionContext, ResolveResult } from "./lib/types.js";
 
 function writeCacheKeysManifest(
@@ -155,6 +160,7 @@ export async function run(): Promise<void> {
   core.saveState("resolveResult", JSON.stringify(result));
   core.saveState("buildCacheMode", result.buildCache.mode);
   core.saveState("logging", logging ? "true" : "false");
+  core.saveState("preserveSourceMtimes", isTruthy(inputs.preserveSourceMtimes) ? "true" : "false");
 
   const statsMode = result.stats;
   const debugMode = result.debugMode;
@@ -280,6 +286,37 @@ export async function run(): Promise<void> {
             `build-cache decompress failed: ${err instanceof Error ? err.message : String(err)}`,
           );
         }
+      }
+    }
+    // Source-mtime replay (preserve-source-mtimes opt-in). post.ts dropped
+    // a `setup-soldr-source-mtimes.json` sidecar inside the build-cache
+    // dir on the cold side; if it's present after decompress, walk it and
+    // set each matching source file's mtime to what cold saw. The replay
+    // is gated by (size, content-hash) match so we never overwrite a
+    // genuinely modified file's mtime — that would underbuild.
+    if (isTruthy(inputs.preserveSourceMtimes) && restore.hit) {
+      const snapshotPath = path.join(buildCachePath, SNAPSHOT_FILENAME);
+      const snapshot = readSnapshotFile(snapshotPath);
+      if (snapshot) {
+        const rt0 = Date.now();
+        try {
+          const rr = await replaySourceMtimes({
+            workspace: ctx.workspace,
+            snapshot,
+            log: (msg) => logger.log(msg),
+          });
+          logger.log(
+            `source-mtime-replay: applied=${rr.applied} skipped_missing=${rr.skipped_missing} ` +
+              `skipped_modified=${rr.skipped_modified} skipped_size_mismatch=${rr.skipped_size_mismatch} ` +
+              `total=${rr.total} elapsed_ms=${Date.now() - rt0}`,
+          );
+        } catch (err) {
+          logger.log(
+            `source-mtime-replay: failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      } else {
+        logger.log(`source-mtime-replay: snapshot file not found at ${snapshotPath}, skipping`);
       }
     }
     statsCollector.record({

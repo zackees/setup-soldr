@@ -51,5 +51,6 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     cacheShutdownOnIdle: get("cache-shutdown-on-idle"),
     rustBacktrace: get("rust-backtrace"),
     logging: get("logging"),
+    preserveSourceMtimes: get("preserve-source-mtimes"),
   };
 }

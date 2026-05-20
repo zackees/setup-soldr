@@ -18,6 +18,11 @@ import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
+import {
+  snapshotSourceMtimes,
+  writeSnapshotFile,
+  SNAPSHOT_FILENAME,
+} from "./lib/source-mtime-snapshot.js";
 import type { CompileCacheStatsMode, ResolveResult, StatsMode } from "./lib/types.js";
 
 type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
@@ -676,6 +681,36 @@ export async function run(): Promise<void> {
     soldrPath: process.env["SOLDR_BINARY"]?.trim() || undefined,
     log,
   });
+
+  // Source-mtime snapshot (preserve-source-mtimes opt-in). Walk tracked
+  // sources, capture each (mtime, size, content-hash), and drop the JSON
+  // INSIDE the build-cache directory so it gets bundled into the same
+  // tar.zst the build-cache save will upload. main.ts replays the
+  // mtimes on warm after the build-cache decompresses, gated on each
+  // file's content matching what we snapshotted here.
+  const preserveSourceMtimes = core.getState("preserveSourceMtimes") === "true";
+  if (preserveSourceMtimes && restoreState.buildCacheEnabled) {
+    const t0 = Date.now();
+    try {
+      const r = await snapshotSourceMtimes({ workspace: result.workspace, log });
+      const out = path.join(result.buildCache.path, SNAPSHOT_FILENAME);
+      try {
+        fs.mkdirSync(path.dirname(out), { recursive: true });
+        writeSnapshotFile(r.snapshot, out);
+        log(
+          `source-mtime-snapshot: wrote ${out} scanned=${r.scanned} hashed=${r.hashed} skipped=${r.skipped} elapsed_ms=${Date.now() - t0}`,
+        );
+      } catch (err) {
+        log(
+          `source-mtime-snapshot: failed to write ${out}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    } catch (err) {
+      log(
+        `source-mtime-snapshot: scan failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
 
   // Build cache
   const buildSaveStart = Date.now();

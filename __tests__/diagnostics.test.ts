@@ -54,6 +54,7 @@ function fixtureRawInputs(): RawInputs {
     cacheShutdownOnIdle: "",
     rustBacktrace: "1",
     logging: "true",
+    preserveSourceMtimes: "false",
   };
 }
 

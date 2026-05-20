@@ -192,6 +192,7 @@ jobs:
           shims: "true"
           compile-cache-stats: detailed
           logging: "true"
+          preserve-source-mtimes: "true"
 
       - name: Show cache plan
         shell: bash
@@ -315,6 +316,7 @@ jobs:
           shims: "true"
           compile-cache-stats: detailed
           logging: "true"
+          preserve-source-mtimes: "true"
 
       - name: Show cache plan
         shell: bash
