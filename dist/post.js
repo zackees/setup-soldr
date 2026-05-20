@@ -21,8 +21,8 @@ const Dicer = __nccwpck_require__(11)
 
 const parseParams = __nccwpck_require__(186)
 const decodeText = __nccwpck_require__(266)
-const basename = __nccwpck_require__(448)
-const getLimit = __nccwpck_require__(454)
+const basename = __nccwpck_require__(449)
+const getLimit = __nccwpck_require__(455)
 
 const RE_BOUNDARY = /^boundary$/i
 const RE_FIELD = /^form-data$/i
@@ -839,7 +839,7 @@ exports.SearchState = SearchState;
 "use strict";
 
 
-const { InvalidArgumentError } = __nccwpck_require__(459)
+const { InvalidArgumentError } = __nccwpck_require__(460)
 const { kClients, kRunning, kClose, kDestroy, kDispatch, kInterceptors } = __nccwpck_require__(189)
 const DispatcherBase = __nccwpck_require__(59)
 const Pool = __nccwpck_require__(322)
@@ -3082,7 +3082,7 @@ var reflection_equals_1 = __nccwpck_require__(433);
 Object.defineProperty(exports, "reflectionEquals", ({ enumerable: true, get: function () { return reflection_equals_1.reflectionEquals; } }));
 var reflection_binary_reader_1 = __nccwpck_require__(384);
 Object.defineProperty(exports, "ReflectionBinaryReader", ({ enumerable: true, get: function () { return reflection_binary_reader_1.ReflectionBinaryReader; } }));
-var reflection_binary_writer_1 = __nccwpck_require__(180);
+var reflection_binary_writer_1 = __nccwpck_require__(179);
 Object.defineProperty(exports, "ReflectionBinaryWriter", ({ enumerable: true, get: function () { return reflection_binary_writer_1.ReflectionBinaryWriter; } }));
 var reflection_json_reader_1 = __nccwpck_require__(327);
 Object.defineProperty(exports, "ReflectionJsonReader", ({ enumerable: true, get: function () { return reflection_json_reader_1.ReflectionJsonReader; } }));
@@ -3107,7 +3107,7 @@ Object.defineProperty(exports, "isEnumObject", ({ enumerable: true, get: functio
 var lower_camel_case_1 = __nccwpck_require__(426);
 Object.defineProperty(exports, "lowerCamelCase", ({ enumerable: true, get: function () { return lower_camel_case_1.lowerCamelCase; } }));
 // assertion functions are exported for plugin, may also be useful to user
-var assert_1 = __nccwpck_require__(455);
+var assert_1 = __nccwpck_require__(456);
 Object.defineProperty(exports, "assert", ({ enumerable: true, get: function () { return assert_1.assert; } }));
 Object.defineProperty(exports, "assertNever", ({ enumerable: true, get: function () { return assert_1.assertNever; } }));
 Object.defineProperty(exports, "assertInt32", ({ enumerable: true, get: function () { return assert_1.assertInt32; } }));
@@ -4536,7 +4536,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppendBlobImpl = void 0;
 const tslib_1 = __nccwpck_require__(209);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(412));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(174));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(173));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(62));
 /** Class containing AppendBlob operations. */
 class AppendBlobImpl {
@@ -6772,7 +6772,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlobImpl = void 0;
 const tslib_1 = __nccwpck_require__(209);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(412));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(174));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(173));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(62));
 /** Class containing Blob operations. */
 class BlobImpl {
@@ -7845,7 +7845,7 @@ exports.StorageBrowserPolicy = void 0;
 const RequestPolicy_js_1 = __nccwpck_require__(44);
 const core_util_1 = __nccwpck_require__(12);
 const constants_js_1 = __nccwpck_require__(34);
-const utils_common_js_1 = __nccwpck_require__(445);
+const utils_common_js_1 = __nccwpck_require__(446);
 /**
  * StorageBrowserPolicy will handle differences between Node.js and browser runtime, including:
  *
@@ -9451,12 +9451,12 @@ exports.internalCacheTwirpClient = internalCacheTwirpClient;
 "use strict";
 
 
-const Dispatcher = __nccwpck_require__(449)
+const Dispatcher = __nccwpck_require__(450)
 const {
   ClientDestroyedError,
   ClientClosedError,
   InvalidArgumentError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const { kDestroy, kClose, kDispatch, kInterceptors } = __nccwpck_require__(189)
 
 const kDestroyed = Symbol('destroyed')
@@ -9727,13 +9727,13 @@ const core_rest_pipeline_1 = __nccwpck_require__(98);
 const core_util_1 = __nccwpck_require__(12);
 const core_auth_1 = __nccwpck_require__(483);
 const storage_common_1 = __nccwpck_require__(267);
-const Pipeline_js_1 = __nccwpck_require__(177);
+const Pipeline_js_1 = __nccwpck_require__(176);
 const StorageClient_js_1 = __nccwpck_require__(427);
 const tracing_js_1 = __nccwpck_require__(29);
 const utils_common_js_1 = __nccwpck_require__(149);
 const BlobSASSignatureValues_js_1 = __nccwpck_require__(65);
 const BlobLeaseClient_js_1 = __nccwpck_require__(198);
-const Clients_js_1 = __nccwpck_require__(179);
+const Clients_js_1 = __nccwpck_require__(178);
 const BlobBatchClient_js_1 = __nccwpck_require__(379);
 /**
  * A ContainerClient represents a URL to the Azure Storage container allowing you to manipulate its blobs.
@@ -11036,7 +11036,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.action3 = exports.action2 = exports.leaseId1 = exports.action1 = exports.proposedLeaseId = exports.duration = exports.action = exports.comp10 = exports.sourceLeaseId = exports.sourceContainerName = exports.comp9 = exports.deletedContainerVersion = exports.deletedContainerName = exports.comp8 = exports.containerAcl = exports.comp7 = exports.comp6 = exports.ifUnmodifiedSince = exports.ifModifiedSince = exports.leaseId = exports.preventEncryptionScopeOverride = exports.defaultEncryptionScope = exports.access = exports.metadata = exports.restype2 = exports.where = exports.comp5 = exports.multipartContentType = exports.contentLength = exports.comp4 = exports.body = exports.restype1 = exports.comp3 = exports.keyInfo = exports.include = exports.maxPageSize = exports.marker = exports.prefix = exports.comp2 = exports.comp1 = exports.accept1 = exports.requestId = exports.version = exports.timeoutInSeconds = exports.comp = exports.restype = exports.url = exports.accept = exports.blobServiceProperties = exports.contentType = void 0;
 exports.copySourceTags = exports.copySourceAuthorization = exports.sourceContentMD5 = exports.xMsRequiresSync = exports.legalHold1 = exports.sealBlob = exports.blobTagsString = exports.copySource = exports.sourceIfTags = exports.sourceIfNoneMatch = exports.sourceIfMatch = exports.sourceIfUnmodifiedSince = exports.sourceIfModifiedSince = exports.rehydratePriority = exports.tier = exports.comp14 = exports.encryptionScope = exports.legalHold = exports.comp13 = exports.immutabilityPolicyMode = exports.immutabilityPolicyExpiry = exports.comp12 = exports.blobContentDisposition = exports.blobContentLanguage = exports.blobContentEncoding = exports.blobContentMD5 = exports.blobContentType = exports.blobCacheControl = exports.expiresOn = exports.expiryOptions = exports.comp11 = exports.blobDeleteType = exports.deleteSnapshots = exports.ifTags = exports.ifNoneMatch = exports.ifMatch = exports.encryptionAlgorithm = exports.encryptionKeySha256 = exports.encryptionKey = exports.rangeGetContentCRC64 = exports.rangeGetContentMD5 = exports.range = exports.versionId = exports.snapshot = exports.delimiter = exports.startFrom = exports.include1 = exports.proposedLeaseId1 = exports.action4 = exports.breakPeriod = void 0;
 exports.listType = exports.comp25 = exports.blocks = exports.blockId = exports.comp24 = exports.copySourceBlobProperties = exports.blobType2 = exports.comp23 = exports.sourceRange1 = exports.appendPosition = exports.maxSize = exports.comp22 = exports.blobType1 = exports.comp21 = exports.sequenceNumberAction = exports.prevSnapshotUrl = exports.prevsnapshot = exports.comp20 = exports.range1 = exports.sourceContentCrc64 = exports.sourceRange = exports.sourceUrl = exports.pageWrite1 = exports.ifSequenceNumberEqualTo = exports.ifSequenceNumberLessThan = exports.ifSequenceNumberLessThanOrEqualTo = exports.pageWrite = exports.comp19 = exports.accept2 = exports.body1 = exports.contentType1 = exports.blobSequenceNumber = exports.blobContentLength = exports.blobType = exports.transactionalContentCrc64 = exports.transactionalContentMD5 = exports.tags = exports.ifNoneMatch1 = exports.ifMatch1 = exports.ifUnmodifiedSince1 = exports.ifModifiedSince1 = exports.comp18 = exports.comp17 = exports.queryRequest = exports.tier1 = exports.comp16 = exports.copyId = exports.copyActionAbortConstant = exports.comp15 = exports.fileRequestIntent = void 0;
-const mappers_js_1 = __nccwpck_require__(174);
+const mappers_js_1 = __nccwpck_require__(173);
 exports.contentType = {
     parameterPath: ["options", "contentType"],
     mapper: {
@@ -12745,7 +12745,7 @@ exports.generateBlobSASQueryParameters = generateBlobSASQueryParameters;
 exports.generateBlobSASQueryParametersInternal = generateBlobSASQueryParametersInternal;
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-const BlobSASPermissions_js_1 = __nccwpck_require__(473);
+const BlobSASPermissions_js_1 = __nccwpck_require__(474);
 const ContainerSASPermissions_js_1 = __nccwpck_require__(269);
 const storage_common_1 = __nccwpck_require__(267);
 const SasIPRange_js_1 = __nccwpck_require__(340);
@@ -13422,8 +13422,8 @@ const assert = __nccwpck_require__(494)
 const { kDestroyed, kBodyUsed } = __nccwpck_require__(189)
 const { IncomingMessage } = __nccwpck_require__(315)
 const stream = __nccwpck_require__(126)
-const net = __nccwpck_require__(478)
-const { InvalidArgumentError } = __nccwpck_require__(459)
+const net = __nccwpck_require__(479)
+const { InvalidArgumentError } = __nccwpck_require__(460)
 const { Blob } = __nccwpck_require__(115)
 const nodeUtil = __nccwpck_require__(119)
 const { stringify } = __nccwpck_require__(125)
@@ -13976,7 +13976,7 @@ __export(logPolicy_exports, {
   logPolicyName: () => logPolicyName
 });
 module.exports = __toCommonJS(logPolicy_exports);
-var import_log = __nccwpck_require__(178);
+var import_log = __nccwpck_require__(177);
 var import_policies = __nccwpck_require__(275);
 const logPolicyName = import_policies.logPolicyName;
 function logPolicy(options = {}) {
@@ -14203,7 +14203,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StatsCollector = void 0;
 const fs = __importStar(__nccwpck_require__(105));
-const path = __importStar(__nccwpck_require__(477));
+const path = __importStar(__nccwpck_require__(478));
 const core = __importStar(__nccwpck_require__(431));
 function fmtBytes(n) {
     if (n === null)
@@ -14820,12 +14820,12 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getRuntimeToken = exports.getCacheVersion = exports.assertDefined = exports.getGnuTarPathOnWindows = exports.getCacheFileName = exports.getCompressionMethod = exports.unlinkFile = exports.resolvePaths = exports.getArchiveFileSizeInBytes = exports.createTempDirectory = void 0;
 const core = __importStar(__nccwpck_require__(431));
 const exec = __importStar(__nccwpck_require__(16));
-const glob = __importStar(__nccwpck_require__(164));
+const glob = __importStar(__nccwpck_require__(163));
 const io = __importStar(__nccwpck_require__(282));
 const crypto = __importStar(__nccwpck_require__(279));
 const fs = __importStar(__nccwpck_require__(498));
 const path = __importStar(__nccwpck_require__(238));
-const semver = __importStar(__nccwpck_require__(173));
+const semver = __importStar(__nccwpck_require__(172));
 const util = __importStar(__nccwpck_require__(119));
 const constants_1 = __nccwpck_require__(43);
 const versionSalt = '1.0';
@@ -15015,8 +15015,8 @@ exports.storageSharedKeyCredentialPolicyName = void 0;
 exports.storageSharedKeyCredentialPolicy = storageSharedKeyCredentialPolicy;
 const node_crypto_1 = __nccwpck_require__(265);
 const constants_js_1 = __nccwpck_require__(34);
-const utils_common_js_1 = __nccwpck_require__(445);
-const SharedKeyComparator_js_1 = __nccwpck_require__(171);
+const utils_common_js_1 = __nccwpck_require__(446);
+const SharedKeyComparator_js_1 = __nccwpck_require__(170);
 /**
  * The programmatic identifier of the storageSharedKeyCredentialPolicy.
  */
@@ -15198,7 +15198,7 @@ exports.listTrackedFiles = listTrackedFiles;
 exports.normalizeWorkspace = normalizeWorkspace;
 exports.normalizeSourceMtime = normalizeSourceMtime;
 const fs = __importStar(__nccwpck_require__(239));
-const path = __importStar(__nccwpck_require__(477));
+const path = __importStar(__nccwpck_require__(478));
 const exec = __importStar(__nccwpck_require__(16));
 const log_utils_js_1 = __nccwpck_require__(334);
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
@@ -15499,10 +15499,10 @@ module.exports = {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageRetryPolicy = void 0;
 exports.NewRetryPolicyFactory = NewRetryPolicyFactory;
-const abort_controller_1 = __nccwpck_require__(465);
+const abort_controller_1 = __nccwpck_require__(466);
 const RequestPolicy_js_1 = __nccwpck_require__(44);
 const constants_js_1 = __nccwpck_require__(34);
-const utils_common_js_1 = __nccwpck_require__(445);
+const utils_common_js_1 = __nccwpck_require__(446);
 const log_js_1 = __nccwpck_require__(15);
 const StorageRetryPolicyType_js_1 = __nccwpck_require__(392);
 /**
@@ -16723,7 +16723,7 @@ exports.deserializationPolicyName = void 0;
 exports.deserializationPolicy = deserializationPolicy;
 const interfaces_js_1 = __nccwpck_require__(96);
 const core_rest_pipeline_1 = __nccwpck_require__(98);
-const serializer_js_1 = __nccwpck_require__(451);
+const serializer_js_1 = __nccwpck_require__(452);
 const operationHelpers_js_1 = __nccwpck_require__(405);
 const defaultJsonContentTypes = ["application/json", "text/json"];
 const defaultXmlContentTypes = ["application/xml", "application/atom+xml"];
@@ -17015,7 +17015,7 @@ function apiKeyAuthenticationPolicy(options) {
 /* global WebAssembly */
 
 const assert = __nccwpck_require__(494)
-const net = __nccwpck_require__(478)
+const net = __nccwpck_require__(479)
 const http = __nccwpck_require__(315)
 const { pipeline } = __nccwpck_require__(126)
 const util = __nccwpck_require__(66)
@@ -17035,7 +17035,7 @@ const {
   HTTPParserError,
   ResponseExceededMaxSizeError,
   ClientDestroyedError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const buildConnector = __nccwpck_require__(256)
 const {
   kUrl,
@@ -19337,7 +19337,7 @@ __export(src_exports, {
 module.exports = __toCommonJS(src_exports);
 var import_AbortError = __nccwpck_require__(9);
 var import_logger = __nccwpck_require__(236);
-var import_httpHeaders = __nccwpck_require__(456);
+var import_httpHeaders = __nccwpck_require__(457);
 var import_pipelineRequest = __nccwpck_require__(111);
 var import_pipeline = __nccwpck_require__(492);
 var import_restError = __nccwpck_require__(417);
@@ -19363,7 +19363,7 @@ exports.ReflectionJsonWriter = void 0;
 const base64_1 = __nccwpck_require__(290);
 const pb_long_1 = __nccwpck_require__(113);
 const reflection_info_1 = __nccwpck_require__(425);
-const assert_1 = __nccwpck_require__(455);
+const assert_1 = __nccwpck_require__(456);
 /**
  * Writes proto3 messages in canonical JSON format using reflection
  * information.
@@ -20623,7 +20623,7 @@ var import_exponentialRetryPolicy = __nccwpck_require__(370);
 var import_setClientRequestIdPolicy = __nccwpck_require__(145);
 var import_logPolicy = __nccwpck_require__(68);
 var import_multipartPolicy = __nccwpck_require__(262);
-var import_proxyPolicy = __nccwpck_require__(444);
+var import_proxyPolicy = __nccwpck_require__(445);
 var import_redirectPolicy = __nccwpck_require__(325);
 var import_systemErrorRetryPolicy = __nccwpck_require__(211);
 var import_throttlingRetryPolicy = __nccwpck_require__(21);
@@ -20704,7 +20704,7 @@ function logPolicy(options = {}) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const { addAbortListener } = __nccwpck_require__(66)
-const { RequestAbortedError } = __nccwpck_require__(459)
+const { RequestAbortedError } = __nccwpck_require__(460)
 
 const kListener = Symbol('kListener')
 const kSignal = Symbol('kSignal')
@@ -20807,7 +20807,7 @@ const {
   InvalidArgumentError,
   InvalidReturnValueError,
   RequestAbortedError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const util = __nccwpck_require__(66)
 const { AsyncResource } = __nccwpck_require__(402)
 const { addSignal, removeSignal } = __nccwpck_require__(100)
@@ -21075,7 +21075,7 @@ exports.logger = (0, logger_1.createClientLogger)("storage-blob");
 
 const EventEmitter = (__nccwpck_require__(139).EventEmitter)
 const inherits = (__nccwpck_require__(354).inherits)
-const getLimit = __nccwpck_require__(454)
+const getLimit = __nccwpck_require__(455)
 
 const StreamSearch = __nccwpck_require__(110)
 
@@ -21509,7 +21509,7 @@ function objectHasProperty(thing, property) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseCAEChallenge = parseCAEChallenge;
 exports.authorizeRequestOnClaimChallenge = authorizeRequestOnClaimChallenge;
-const log_js_1 = __nccwpck_require__(452);
+const log_js_1 = __nccwpck_require__(453);
 const base64_js_1 = __nccwpck_require__(410);
 /**
  * Converts: `Bearer a="b", c="d", Bearer d="e", f="g"`.
@@ -21893,7 +21893,7 @@ __export(pipelineRequest_exports, {
   createPipelineRequest: () => createPipelineRequest
 });
 module.exports = __toCommonJS(pipelineRequest_exports);
-var import_httpHeaders = __nccwpck_require__(456);
+var import_httpHeaders = __nccwpck_require__(457);
 var import_uuidUtils = __nccwpck_require__(371);
 class PipelineRequestImpl {
   url;
@@ -22609,7 +22609,7 @@ var path = (function () { try { return __nccwpck_require__(238) } catch (e) {}}(
 minimatch.sep = path.sep
 
 var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
-var expand = __nccwpck_require__(457)
+var expand = __nccwpck_require__(458)
 
 var plTypes = {
   '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},
@@ -23646,11 +23646,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.argStringToArray = exports.ToolRunner = void 0;
 const os = __importStar(__nccwpck_require__(89));
 const events = __importStar(__nccwpck_require__(441));
-const child = __importStar(__nccwpck_require__(160));
+const child = __importStar(__nccwpck_require__(159));
 const path = __importStar(__nccwpck_require__(238));
 const io = __importStar(__nccwpck_require__(282));
 const ioUtil = __importStar(__nccwpck_require__(216));
-const timers_1 = __nccwpck_require__(479);
+const timers_1 = __nccwpck_require__(480);
 /* eslint-disable @typescript-eslint/unbound-method */
 const IS_WINDOWS = process.platform === 'win32';
 /*
@@ -24244,9 +24244,9 @@ class ExecState extends events.EventEmitter {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageSharedKeyCredentialPolicy = void 0;
 const constants_js_1 = __nccwpck_require__(34);
-const utils_common_js_1 = __nccwpck_require__(445);
+const utils_common_js_1 = __nccwpck_require__(446);
 const CredentialPolicy_js_1 = __nccwpck_require__(296);
-const SharedKeyComparator_js_1 = __nccwpck_require__(171);
+const SharedKeyComparator_js_1 = __nccwpck_require__(170);
 /**
  * StorageSharedKeyCredentialPolicy is a policy used to sign HTTP request with a shared key.
  */
@@ -24420,7 +24420,7 @@ module.exports = {
 
 const assert = __nccwpck_require__(494)
 const { Readable } = __nccwpck_require__(126)
-const { RequestAbortedError, NotSupportedError, InvalidArgumentError } = __nccwpck_require__(459)
+const { RequestAbortedError, NotSupportedError, InvalidArgumentError } = __nccwpck_require__(460)
 const util = __nccwpck_require__(66)
 const { ReadableStreamFrom, toUSVString } = __nccwpck_require__(66)
 
@@ -24859,8 +24859,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HttpsProxyAgent = void 0;
-const net = __importStar(__nccwpck_require__(478));
-const tls = __importStar(__nccwpck_require__(475));
+const net = __importStar(__nccwpck_require__(479));
+const tls = __importStar(__nccwpck_require__(476));
 const assert_1 = __importDefault(__nccwpck_require__(494));
 const debug_1 = __importDefault(__nccwpck_require__(484));
 const agent_base_1 = __nccwpck_require__(231);
@@ -25303,7 +25303,7 @@ const {
   kContentLength,
   kMockDispatch
 } = __nccwpck_require__(442)
-const { InvalidArgumentError } = __nccwpck_require__(459)
+const { InvalidArgumentError } = __nccwpck_require__(460)
 const { buildURL } = __nccwpck_require__(66)
 
 /**
@@ -25699,7 +25699,7 @@ async function parseXML(str, opts = {}) {
 "use strict";
 
 
-module.exports.request = __nccwpck_require__(480)
+module.exports.request = __nccwpck_require__(481)
 module.exports.stream = __nccwpck_require__(336)
 module.exports.pipeline = __nccwpck_require__(102)
 module.exports.upgrade = __nccwpck_require__(406)
@@ -26326,8 +26326,8 @@ __export(internal_exports, {
   uint8ArrayToString: () => import_bytesEncoding.uint8ArrayToString
 });
 module.exports = __toCommonJS(internal_exports);
-var import_delay = __nccwpck_require__(446);
-var import_random = __nccwpck_require__(476);
+var import_delay = __nccwpck_require__(447);
+var import_random = __nccwpck_require__(477);
 var import_object = __nccwpck_require__(140);
 var import_error = __nccwpck_require__(148);
 var import_sha256 = __nccwpck_require__(194);
@@ -28174,8 +28174,8 @@ function createTokenCycler(credential, tokenCyclerOptions) {
 
 
 const Client = __nccwpck_require__(85)
-const Dispatcher = __nccwpck_require__(449)
-const errors = __nccwpck_require__(459)
+const Dispatcher = __nccwpck_require__(450)
+const errors = __nccwpck_require__(460)
 const Pool = __nccwpck_require__(322)
 const BalancedPool = __nccwpck_require__(360)
 const Agent = __nccwpck_require__(5)
@@ -28190,7 +28190,7 @@ const mockErrors = __nccwpck_require__(223)
 const ProxyAgent = __nccwpck_require__(326)
 const RetryHandler = __nccwpck_require__(264)
 const { getGlobalDispatcher, setGlobalDispatcher } = __nccwpck_require__(355)
-const DecoratorHandler = __nccwpck_require__(447)
+const DecoratorHandler = __nccwpck_require__(448)
 const RedirectHandler = __nccwpck_require__(368)
 const createRedirectInterceptor = __nccwpck_require__(245)
 
@@ -28343,113 +28343,6 @@ module.exports.mockErrors = mockErrors
 /***/ }),
 
 /***/ 159:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Cache-daemon shutdown helper. Called by the post step when
-// `shutdown-cache-on-exit: true`. The point is to flush and close the
-// zccache/soldr daemons BEFORE the build-cache tarball is written so
-// open file handles aren't holding partially-written entries on disk
-// when actions/cache packs them up.
-//
-// Every shutdown attempt is best-effort: missing binaries, non-zero
-// exits, and exec errors are logged and ignored. Failing the post step
-// over a daemon cleanup hiccup would lose the user's cache save, which
-// is the opposite of what we want.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.shutdownCacheDaemons = shutdownCacheDaemons;
-const exec = __importStar(__nccwpck_require__(16));
-const io = __importStar(__nccwpck_require__(282));
-async function exists(cmd) {
-    try {
-        await io.which(cmd, true);
-        return true;
-    }
-    catch {
-        return false;
-    }
-}
-async function runShutdown(target, log) {
-    const isAbsolute = /^[\\/]/.test(target.cmd) || /^[A-Za-z]:[\\/]/.test(target.cmd);
-    if (!isAbsolute && !(await exists(target.cmd))) {
-        log(`shutdown-cache: ${target.label}: '${target.cmd}' not on PATH, skipping`);
-        return { status: "skipped", code: null };
-    }
-    log(`shutdown-cache: ${target.label}: $ ${target.cmd} ${target.args.join(" ")}`);
-    try {
-        const code = await exec.exec(target.cmd, target.args, {
-            ignoreReturnCode: true,
-            silent: false,
-        });
-        if (code !== 0) {
-            log(`shutdown-cache: ${target.label}: exit ${code} (ignored — best-effort shutdown)`);
-        }
-        return { status: "ran", code };
-    }
-    catch (err) {
-        log(`shutdown-cache: ${target.label}: spawn failed (${err instanceof Error ? err.message : String(err)}); ignoring`);
-        return { status: "skipped", code: null };
-    }
-}
-/**
- * Ask any running cache daemons to stop. Best-effort, never throws.
- *
- * Order:
- *   1. zccache --stop-server (sccache CLI convention; zccache is forked
- *      from sccache and follows the same flag).
- *   2. <soldrPath> stop, if a soldr binary path was provided and exists.
- *
- * The post step calls this BEFORE saving the build-cache tarball so
- * the daemon has a chance to flush in-memory state and release file
- * locks; the cache pack then sees a quiescent on-disk view.
- */
-async function shutdownCacheDaemons(opts) {
-    const { soldrPath, log } = opts;
-    log("shutdown-cache: requesting daemon shutdown (shutdown-cache-on-exit=true)");
-    await runShutdown({ label: "zccache", cmd: "zccache", args: ["--stop-server"] }, log);
-    if (soldrPath) {
-        await runShutdown({ label: "soldr", cmd: soldrPath, args: ["stop"] }, log);
-    }
-}
-
-
-/***/ }),
-
-/***/ 160:
 /***/ ((module) => {
 
 "use strict";
@@ -28457,7 +28350,7 @@ module.exports = require("child_process");
 
 /***/ }),
 
-/***/ 161:
+/***/ 160:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -28808,7 +28701,7 @@ function formatRollupsSection(report) {
 
 /***/ }),
 
-/***/ 162:
+/***/ 161:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -28823,7 +28716,7 @@ function formatRollupsSection(report) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const tslib_1 = __nccwpck_require__(209);
 tslib_1.__exportStar(__nccwpck_require__(114), exports);
-tslib_1.__exportStar(__nccwpck_require__(175), exports);
+tslib_1.__exportStar(__nccwpck_require__(174), exports);
 tslib_1.__exportStar(__nccwpck_require__(118), exports);
 tslib_1.__exportStar(__nccwpck_require__(303), exports);
 tslib_1.__exportStar(__nccwpck_require__(202), exports);
@@ -28832,7 +28725,7 @@ tslib_1.__exportStar(__nccwpck_require__(261), exports);
 
 /***/ }),
 
-/***/ 163:
+/***/ 162:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -28842,12 +28735,12 @@ tslib_1.__exportStar(__nccwpck_require__(261), exports);
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.storageRetryPolicyName = void 0;
 exports.storageRetryPolicy = storageRetryPolicy;
-const abort_controller_1 = __nccwpck_require__(465);
+const abort_controller_1 = __nccwpck_require__(466);
 const core_rest_pipeline_1 = __nccwpck_require__(98);
 const core_util_1 = __nccwpck_require__(12);
 const StorageRetryPolicyFactory_js_1 = __nccwpck_require__(312);
 const constants_js_1 = __nccwpck_require__(34);
-const utils_common_js_1 = __nccwpck_require__(445);
+const utils_common_js_1 = __nccwpck_require__(446);
 const log_js_1 = __nccwpck_require__(15);
 /**
  * Name of the {@link storageRetryPolicy}
@@ -29007,7 +28900,7 @@ function storageRetryPolicy(options = {}) {
 
 /***/ }),
 
-/***/ 164:
+/***/ 163:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -29040,7 +28933,7 @@ exports.create = create;
 
 /***/ }),
 
-/***/ 165:
+/***/ 164:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -29094,7 +28987,7 @@ exports.UserDelegationKeyCredential = UserDelegationKeyCredential;
 
 /***/ }),
 
-/***/ 166:
+/***/ 165:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -29121,7 +29014,7 @@ __export(multipartPolicy_exports, {
 });
 module.exports = __toCommonJS(multipartPolicy_exports);
 var import_bytesEncoding = __nccwpck_require__(276);
-var import_typeGuards = __nccwpck_require__(467);
+var import_typeGuards = __nccwpck_require__(468);
 var import_uuidUtils = __nccwpck_require__(371);
 var import_concat = __nccwpck_require__(291);
 function generateBoundary() {
@@ -29232,7 +29125,7 @@ function multipartPolicy() {
 
 /***/ }),
 
-/***/ 167:
+/***/ 166:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -29359,7 +29252,7 @@ function requestToOptions(request) {
 
 /***/ }),
 
-/***/ 168:
+/***/ 167:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -29371,7 +29264,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 169:
+/***/ 168:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -29380,13 +29273,13 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 // Note: we do not use `export * from ...` to help tree shakers,
 // webpack verbose output hints that this should be useful
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-var service_type_1 = __nccwpck_require__(450);
+var service_type_1 = __nccwpck_require__(451);
 Object.defineProperty(exports, "ServiceType", ({ enumerable: true, get: function () { return service_type_1.ServiceType; } }));
 var reflection_info_1 = __nccwpck_require__(495);
 Object.defineProperty(exports, "readMethodOptions", ({ enumerable: true, get: function () { return reflection_info_1.readMethodOptions; } }));
 Object.defineProperty(exports, "readMethodOption", ({ enumerable: true, get: function () { return reflection_info_1.readMethodOption; } }));
 Object.defineProperty(exports, "readServiceOption", ({ enumerable: true, get: function () { return reflection_info_1.readServiceOption; } }));
-var rpc_error_1 = __nccwpck_require__(170);
+var rpc_error_1 = __nccwpck_require__(169);
 Object.defineProperty(exports, "RpcError", ({ enumerable: true, get: function () { return rpc_error_1.RpcError; } }));
 var rpc_options_1 = __nccwpck_require__(281);
 Object.defineProperty(exports, "mergeRpcOptions", ({ enumerable: true, get: function () { return rpc_options_1.mergeRpcOptions; } }));
@@ -29417,7 +29310,7 @@ Object.defineProperty(exports, "ServerCallContextController", ({ enumerable: tru
 
 /***/ }),
 
-/***/ 170:
+/***/ 169:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -29461,7 +29354,7 @@ exports.RpcError = RpcError;
 
 /***/ }),
 
-/***/ 171:
+/***/ 170:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -29544,7 +29437,7 @@ function isLessThan(lhs, rhs) {
 
 /***/ }),
 
-/***/ 172:
+/***/ 171:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -29584,7 +29477,7 @@ exports.LroEngine = LroEngine;
 
 /***/ }),
 
-/***/ 173:
+/***/ 172:
 /***/ ((module, exports) => {
 
 exports = module.exports = SemVer
@@ -31234,7 +31127,7 @@ function coerce (version, options) {
 
 /***/ }),
 
-/***/ 174:
+/***/ 173:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -39577,7 +39470,7 @@ exports.BlockBlobGetBlockListExceptionHeaders = {
 
 /***/ }),
 
-/***/ 175:
+/***/ 174:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -39594,7 +39487,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 176:
+/***/ 175:
 /***/ ((module) => {
 
 "use strict";
@@ -39602,7 +39495,7 @@ module.exports = require("tty");
 
 /***/ }),
 
-/***/ 177:
+/***/ 176:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -39886,7 +39779,7 @@ function isCoreHttpPolicyFactory(factory) {
 
 /***/ }),
 
-/***/ 178:
+/***/ 177:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -39919,7 +39812,7 @@ const logger = (0, import_logger.createClientLogger)("core-rest-pipeline");
 
 /***/ }),
 
-/***/ 179:
+/***/ 178:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -39937,7 +39830,7 @@ const BlobQueryResponse_js_1 = __nccwpck_require__(195);
 const storage_common_1 = __nccwpck_require__(267);
 const models_js_1 = __nccwpck_require__(390);
 const PageBlobRangeResponse_js_1 = __nccwpck_require__(27);
-const Pipeline_js_1 = __nccwpck_require__(177);
+const Pipeline_js_1 = __nccwpck_require__(176);
 const BlobStartCopyFromUrlPoller_js_1 = __nccwpck_require__(501);
 const Range_js_1 = __nccwpck_require__(101);
 const StorageClient_js_1 = __nccwpck_require__(427);
@@ -42778,7 +42671,7 @@ exports.PageBlobClient = PageBlobClient;
 
 /***/ }),
 
-/***/ 180:
+/***/ 179:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -42787,7 +42680,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ReflectionBinaryWriter = void 0;
 const binary_format_contract_1 = __nccwpck_require__(318);
 const reflection_info_1 = __nccwpck_require__(425);
-const assert_1 = __nccwpck_require__(455);
+const assert_1 = __nccwpck_require__(456);
 const pb_long_1 = __nccwpck_require__(113);
 /**
  * Writes proto3 messages in binary format using reflection information.
@@ -43019,7 +42912,7 @@ exports.ReflectionBinaryWriter = ReflectionBinaryWriter;
 
 /***/ }),
 
-/***/ 181:
+/***/ 180:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -43100,6 +42993,167 @@ module.exports = {
 
 /***/ }),
 
+/***/ 181:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Cache-daemon shutdown helper. Called by the post step when
+// `shutdown-cache-on-exit: true`. The point is to flush and close the
+// zccache/soldr daemons BEFORE the build-cache tarball is written so
+// open file handles aren't holding partially-written entries on disk
+// when actions/cache packs them up, and so the depgraph save (per
+// zackees/zccache#262) has a chance to run before the runner's orphan
+// cleanup SIGKILLs the daemon.
+//
+// Every shutdown attempt is best-effort: missing binaries, non-zero
+// exits, and exec errors are logged and ignored. Failing the post step
+// over a daemon cleanup hiccup would lose the user's cache save, which
+// is the opposite of what we want.
+//
+// Ordering rationale:
+//   1. `soldr cache shutdown` (when available; zackees/soldr#379) is the
+//      preferred path. It handles binary resolution, session-end, depgraph
+//      flush, log archive, and synchronous daemon exit in a single call.
+//   2. `zccache --stop-server` (PATH-resolved) is the fallback for older
+//      soldr versions that don't yet expose `cache shutdown`. Works only
+//      when zccache happens to be on PATH at post-step time; if not, we
+//      log and accept the orphan-kill path.
+//
+// We deliberately do NOT fall back to `soldr stop`: that subcommand does
+// not exist, and soldr interprets unknown subcommand names as a tool-fetch
+// request (e.g. `soldr stop` is read as "fetch and run a tool called
+// `stop` from `misaka10987/stop`"). See zackees/setup-soldr#126.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.shutdownCacheDaemons = shutdownCacheDaemons;
+const exec = __importStar(__nccwpck_require__(16));
+const io = __importStar(__nccwpck_require__(282));
+async function exists(cmd) {
+    try {
+        await io.which(cmd, true);
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
+async function runShutdown(target, log) {
+    const isAbsolute = /^[\\/]/.test(target.cmd) || /^[A-Za-z]:[\\/]/.test(target.cmd);
+    if (!isAbsolute && !(await exists(target.cmd))) {
+        log(`shutdown-cache: ${target.label}: '${target.cmd}' not on PATH, skipping`);
+        return { status: "skipped", code: null, stderr: "" };
+    }
+    log(`shutdown-cache: ${target.label}: $ ${target.cmd} ${target.args.join(" ")}`);
+    let stderrBuf = "";
+    try {
+        const code = await exec.exec(target.cmd, target.args, {
+            ignoreReturnCode: true,
+            silent: false,
+            listeners: {
+                stderr: (data) => {
+                    stderrBuf += data.toString();
+                },
+            },
+        });
+        if (code !== 0) {
+            log(`shutdown-cache: ${target.label}: exit ${code} (ignored — best-effort shutdown)`);
+        }
+        return { status: "ran", code, stderr: stderrBuf };
+    }
+    catch (err) {
+        log(`shutdown-cache: ${target.label}: spawn failed (${err instanceof Error ? err.message : String(err)}); ignoring`);
+        return { status: "skipped", code: null, stderr: "" };
+    }
+}
+/**
+ * Detect whether a non-zero exit from `soldr cache shutdown` indicates the
+ * subcommand simply doesn't exist on this soldr version — vs a real shutdown
+ * failure on a soldr that DOES support the command. Used to decide whether
+ * to fall back to direct zccache.
+ */
+function looksLikeUnknownSubcommand(stderr) {
+    const s = stderr.toLowerCase();
+    return (s.includes("unrecognized subcommand") ||
+        s.includes("unknown subcommand") ||
+        s.includes("invalid subcommand") ||
+        // soldr's "fetch unknown tool" fallback path (older versions):
+        s.includes("tool not found") ||
+        s.includes("no release found"));
+}
+/**
+ * Ask any running cache daemons to stop. Best-effort, never throws.
+ *
+ * Preferred path: `<soldrPath> cache shutdown` (zackees/soldr#379). Falls
+ * back to `zccache --stop-server` (PATH-resolved) if soldr doesn't support
+ * the subcommand or no soldr path was provided.
+ *
+ * The post step calls this BEFORE saving the build-cache tarball so the
+ * daemon has a chance to flush in-memory state (incl. the dep graph per
+ * zackees/zccache#262) and release file locks; the cache pack then sees a
+ * quiescent on-disk view.
+ */
+async function shutdownCacheDaemons(opts) {
+    const { soldrPath, log } = opts;
+    log("shutdown-cache: requesting daemon shutdown (shutdown-cache-on-exit=true)");
+    // Path 1: soldr-mediated shutdown (preferred, post-#379).
+    if (soldrPath) {
+        const result = await runShutdown({ label: "soldr", cmd: soldrPath, args: ["cache", "shutdown"] }, log);
+        if (result.status === "ran" && result.code === 0) {
+            // Clean shutdown via soldr — done.
+            return;
+        }
+        if (result.status === "ran" && !looksLikeUnknownSubcommand(result.stderr)) {
+            // soldr DID handle the call (the subcommand exists) but reported an
+            // error. Don't fall back to direct zccache — soldr's error is the
+            // authoritative one, and falling back could double-trigger work.
+            log(`shutdown-cache: soldr cache shutdown returned non-zero with a recognized command; not falling back`);
+            return;
+        }
+        // Otherwise the subcommand isn't supported on this soldr version; fall
+        // through to the direct zccache path.
+        log(`shutdown-cache: soldr cache shutdown not supported on this soldr version; falling back to direct zccache`);
+    }
+    // Path 2: direct zccache stop (fallback when soldr#379 hasn't shipped, or
+    // when no soldr path is available).
+    await runShutdown({ label: "zccache", cmd: "zccache", args: ["--stop-server"] }, log);
+}
+
+
+/***/ }),
+
 /***/ 182:
 /***/ ((module) => {
 
@@ -43153,7 +43207,7 @@ function isApiKeyCredential(credential) {
 const assert = __nccwpck_require__(494)
 const {
   ResponseStatusCodeError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const { toUSVString } = __nccwpck_require__(66)
 
 async function getResolveErrorBodyCallback ({ callback, body, contentType, statusCode, statusMessage, headers }) {
@@ -43572,7 +43626,7 @@ __export(auxiliaryAuthenticationHeaderPolicy_exports, {
 });
 module.exports = __toCommonJS(auxiliaryAuthenticationHeaderPolicy_exports);
 var import_tokenCycler = __nccwpck_require__(157);
-var import_log = __nccwpck_require__(178);
+var import_log = __nccwpck_require__(177);
 const auxiliaryAuthenticationHeaderPolicyName = "auxiliaryAuthenticationHeaderPolicy";
 const AUTHORIZATION_AUXILIARY_HEADER = "x-ms-authorization-auxiliary";
 async function sendAuthorizeRequest(options) {
@@ -43906,7 +43960,7 @@ const {
 } = __nccwpck_require__(442)
 const { MockInterceptor } = __nccwpck_require__(131)
 const Symbols = __nccwpck_require__(189)
-const { InvalidArgumentError } = __nccwpck_require__(459)
+const { InvalidArgumentError } = __nccwpck_require__(460)
 
 /**
  * MockClient provides an API that extends the Client to influence the mockDispatches.
@@ -44004,7 +44058,7 @@ async function computeSha256Hash(content, encoding) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlobQueryResponse = void 0;
 const core_util_1 = __nccwpck_require__(12);
-const BlobQuickQueryStream_js_1 = __nccwpck_require__(471);
+const BlobQuickQueryStream_js_1 = __nccwpck_require__(472);
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
  *
@@ -45083,7 +45137,7 @@ exports.storageBrowserPolicyName = void 0;
 exports.storageBrowserPolicy = storageBrowserPolicy;
 const core_util_1 = __nccwpck_require__(12);
 const constants_js_1 = __nccwpck_require__(34);
-const utils_common_js_1 = __nccwpck_require__(445);
+const utils_common_js_1 = __nccwpck_require__(446);
 /**
  * The programmatic identifier of the StorageBrowserPolicy.
  */
@@ -45428,7 +45482,7 @@ __export(getClient_exports, {
   getClient: () => getClient
 });
 module.exports = __toCommonJS(getClient_exports);
-var import_clientHelpers = __nccwpck_require__(462);
+var import_clientHelpers = __nccwpck_require__(463);
 var import_sendRequest = __nccwpck_require__(422);
 var import_urlHelpers = __nccwpck_require__(310);
 var import_checkEnvironment = __nccwpck_require__(411);
@@ -46800,7 +46854,7 @@ __export(bearerTokenAuthenticationPolicy_exports, {
 });
 module.exports = __toCommonJS(bearerTokenAuthenticationPolicy_exports);
 var import_tokenCycler = __nccwpck_require__(157);
-var import_log = __nccwpck_require__(178);
+var import_log = __nccwpck_require__(177);
 var import_restError = __nccwpck_require__(335);
 const bearerTokenAuthenticationPolicyName = "bearerTokenAuthenticationPolicy";
 async function trySendRequest(request, next) {
@@ -47044,7 +47098,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContainerImpl = void 0;
 const tslib_1 = __nccwpck_require__(209);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(412));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(174));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(173));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(62));
 /** Class containing Container operations. */
 class ContainerImpl {
@@ -48039,8 +48093,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HttpProxyAgent = void 0;
-const net = __importStar(__nccwpck_require__(478));
-const tls = __importStar(__nccwpck_require__(475));
+const net = __importStar(__nccwpck_require__(479));
+const tls = __importStar(__nccwpck_require__(476));
 const debug_1 = __importDefault(__nccwpck_require__(484));
 const events_1 = __nccwpck_require__(441);
 const agent_base_1 = __nccwpck_require__(231);
@@ -48708,7 +48762,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ServiceImpl = void 0;
 const tslib_1 = __nccwpck_require__(209);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(412));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(174));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(173));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(62));
 /** Class containing Service operations. */
 class ServiceImpl {
@@ -49071,7 +49125,7 @@ function agentPolicy(agent) {
 "use strict";
 
 
-const { UndiciError } = __nccwpck_require__(459)
+const { UndiciError } = __nccwpck_require__(460)
 
 class MockNotMatchedError extends UndiciError {
   constructor (message) {
@@ -49625,7 +49679,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Agent = void 0;
-const net = __importStar(__nccwpck_require__(478));
+const net = __importStar(__nccwpck_require__(479));
 const http = __importStar(__nccwpck_require__(315));
 const https_1 = __nccwpck_require__(67);
 __exportStar(__nccwpck_require__(156), exports);
@@ -49864,7 +49918,7 @@ function createHttpHeaders(rawHeaders) {
 // Licensed under the MIT license.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LroEngine = void 0;
-var lroEngine_js_1 = __nccwpck_require__(172);
+var lroEngine_js_1 = __nccwpck_require__(171);
 Object.defineProperty(exports, "LroEngine", ({ enumerable: true, get: function () { return lroEngine_js_1.LroEngine; } }));
 //# sourceMappingURL=index.js.map
 
@@ -50433,7 +50487,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BinaryWriter = exports.binaryWriteOptions = void 0;
 const pb_long_1 = __nccwpck_require__(113);
 const goog_varint_1 = __nccwpck_require__(197);
-const assert_1 = __nccwpck_require__(455);
+const assert_1 = __nccwpck_require__(456);
 const defaultsWrite = {
     writeUnknownFields: true,
     writerFactory: () => new BinaryWriter(),
@@ -50674,7 +50728,7 @@ exports.BinaryWriter = BinaryWriter;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AvroReadableFromStream = void 0;
 const AvroReadable_js_1 = __nccwpck_require__(365);
-const abort_controller_1 = __nccwpck_require__(466);
+const abort_controller_1 = __nccwpck_require__(467);
 const buffer_1 = __nccwpck_require__(115);
 const ABORT_ERROR = new abort_controller_1.AbortError("Reading from the avro stream was aborted.");
 class AvroReadableFromStream extends AvroReadable_js_1.AvroReadable {
@@ -50996,7 +51050,7 @@ function wrapAbortSignalLikePolicy() {
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createAbortablePromise = createAbortablePromise;
-const abort_controller_1 = __nccwpck_require__(464);
+const abort_controller_1 = __nccwpck_require__(465);
 /**
  * Creates an abortable promise.
  * @param buildPromise - A function that takes the resolve and reject functions as parameters.
@@ -51388,10 +51442,10 @@ exports.getDownloadOptions = getDownloadOptions;
 "use strict";
 
 
-const net = __nccwpck_require__(478)
+const net = __nccwpck_require__(479)
 const assert = __nccwpck_require__(494)
 const util = __nccwpck_require__(66)
-const { InvalidArgumentError, ConnectTimeoutError } = __nccwpck_require__(459)
+const { InvalidArgumentError, ConnectTimeoutError } = __nccwpck_require__(460)
 
 let tls // include tls conditionally since it is not always available
 
@@ -51474,7 +51528,7 @@ function buildConnector ({ allowH2, maxCachedSessions, socketPath, timeout, ...o
     let socket
     if (protocol === 'https:') {
       if (!tls) {
-        tls = __nccwpck_require__(475)
+        tls = __nccwpck_require__(476)
       }
       servername = servername || options.servername || util.getServerName(host) || null
 
@@ -51663,7 +51717,7 @@ exports.redactValue = redactValue;
 exports.dumpDiagnostics = dumpDiagnostics;
 exports.loggingEnabled = loggingEnabled;
 const fs = __importStar(__nccwpck_require__(239));
-const compile_journal_js_1 = __nccwpck_require__(161);
+const compile_journal_js_1 = __nccwpck_require__(160);
 const ENV_KEY_PREFIXES = [
     "INPUT_",
     "SOLDR_",
@@ -51957,9 +52011,9 @@ __export(multipart_exports, {
 });
 module.exports = __toCommonJS(multipart_exports);
 var import_restError = __nccwpck_require__(417);
-var import_httpHeaders = __nccwpck_require__(456);
+var import_httpHeaders = __nccwpck_require__(457);
 var import_bytesEncoding = __nccwpck_require__(276);
-var import_typeGuards = __nccwpck_require__(467);
+var import_typeGuards = __nccwpck_require__(468);
 function getHeaderValue(descriptor, headerName) {
   if (descriptor.headers) {
     const actualHeaderName = Object.keys(descriptor.headers).find(
@@ -52237,7 +52291,7 @@ exports.listEnumNumbers = listEnumNumbers;
 const assert = __nccwpck_require__(494)
 
 const { kRetryHandlerDefaultRetry } = __nccwpck_require__(189)
-const { RequestRetryError } = __nccwpck_require__(459)
+const { RequestRetryError } = __nccwpck_require__(460)
 const { isDisturbed, parseHeaders, parseRangeHeader } = __nccwpck_require__(66)
 
 function calculateRetryAfterHeader (retryAfter) {
@@ -52729,11 +52783,11 @@ tslib_1.__exportStar(__nccwpck_require__(90), exports);
 tslib_1.__exportStar(__nccwpck_require__(296), exports);
 tslib_1.__exportStar(__nccwpck_require__(200), exports);
 tslib_1.__exportStar(__nccwpck_require__(435), exports);
-tslib_1.__exportStar(__nccwpck_require__(163), exports);
+tslib_1.__exportStar(__nccwpck_require__(162), exports);
 tslib_1.__exportStar(__nccwpck_require__(122), exports);
 tslib_1.__exportStar(__nccwpck_require__(75), exports);
 tslib_1.__exportStar(__nccwpck_require__(400), exports);
-tslib_1.__exportStar(__nccwpck_require__(165), exports);
+tslib_1.__exportStar(__nccwpck_require__(164), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
@@ -53026,7 +53080,7 @@ var import_decompressResponsePolicy = __nccwpck_require__(229);
 var import_defaultRetryPolicy = __nccwpck_require__(52);
 var import_formDataPolicy = __nccwpck_require__(259);
 var import_core_util = __nccwpck_require__(12);
-var import_proxyPolicy = __nccwpck_require__(444);
+var import_proxyPolicy = __nccwpck_require__(445);
 var import_setClientRequestIdPolicy = __nccwpck_require__(145);
 var import_agentPolicy = __nccwpck_require__(222);
 var import_tlsPolicy = __nccwpck_require__(357);
@@ -53081,7 +53135,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PageBlobImpl = void 0;
 const tslib_1 = __nccwpck_require__(209);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(412));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(174));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(173));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(62));
 /** Class containing PageBlob operations. */
 class PageBlobImpl {
@@ -53698,7 +53752,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createClientPipeline = createClientPipeline;
 const deserializationPolicy_js_1 = __nccwpck_require__(83);
 const core_rest_pipeline_1 = __nccwpck_require__(98);
-const serializationPolicy_js_1 = __nccwpck_require__(460);
+const serializationPolicy_js_1 = __nccwpck_require__(461);
 /**
  * Creates a new Pipeline for use with a Service Client.
  * Adds in deserializationPolicy by default.
@@ -54443,7 +54497,7 @@ var import_systemErrorRetryPolicy = __nccwpck_require__(26);
 var import_throttlingRetryPolicy = __nccwpck_require__(490);
 var import_formDataPolicy = __nccwpck_require__(324);
 var import_logPolicy = __nccwpck_require__(99);
-var import_multipartPolicy = __nccwpck_require__(166);
+var import_multipartPolicy = __nccwpck_require__(165);
 var import_proxyPolicy = __nccwpck_require__(37);
 var import_redirectPolicy = __nccwpck_require__(304);
 var import_tlsPolicy = __nccwpck_require__(213);
@@ -55417,7 +55471,7 @@ exports.detectCompressMagic = detectCompressMagic;
 exports.decompressCache = decompressCache;
 exports.compressCache = compressCache;
 const fs = __importStar(__nccwpck_require__(105));
-const path = __importStar(__nccwpck_require__(477));
+const path = __importStar(__nccwpck_require__(478));
 const core = __importStar(__nccwpck_require__(431));
 const exec = __importStar(__nccwpck_require__(16));
 const io = __importStar(__nccwpck_require__(282));
@@ -55689,7 +55743,7 @@ const tslib_1 = __nccwpck_require__(209);
 tslib_1.__exportStar(__nccwpck_require__(443), exports);
 var storageClient_js_1 = __nccwpck_require__(419);
 Object.defineProperty(exports, "StorageClient", ({ enumerable: true, get: function () { return storageClient_js_1.StorageClient; } }));
-tslib_1.__exportStar(__nccwpck_require__(162), exports);
+tslib_1.__exportStar(__nccwpck_require__(161), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
@@ -55753,7 +55807,7 @@ exports.AzureKeyCredential = AzureKeyCredential;
 const {
   InvalidArgumentError,
   NotSupportedError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const assert = __nccwpck_require__(494)
 const { kHTTP2BuildRequest, kHTTP2CopyHeaders, kHTTP1BuildRequest } = __nccwpck_require__(189)
 const util = __nccwpck_require__(66)
@@ -56273,8 +56327,8 @@ const {
 } = __nccwpck_require__(95)
 const { isEstablished, isClosing, isValidSubprotocol, failWebsocketConnection, fireEvent } = __nccwpck_require__(54)
 const { establishWebSocketConnection } = __nccwpck_require__(345)
-const { WebsocketFrameSend } = __nccwpck_require__(181)
-const { ByteParser } = __nccwpck_require__(453)
+const { WebsocketFrameSend } = __nccwpck_require__(180)
+const { ByteParser } = __nccwpck_require__(454)
 const { kEnumerableProperty, isBlobLike } = __nccwpck_require__(66)
 const { getGlobalDispatcher } = __nccwpck_require__(355)
 const { types } = __nccwpck_require__(119)
@@ -57387,7 +57441,7 @@ __export(concat_exports, {
 });
 module.exports = __toCommonJS(concat_exports);
 var import_stream = __nccwpck_require__(126);
-var import_typeGuards = __nccwpck_require__(467);
+var import_typeGuards = __nccwpck_require__(468);
 async function* streamAsyncIterator() {
   const reader = this.getReader();
   try {
@@ -58415,7 +58469,7 @@ const httpClientCache_js_1 = __nccwpck_require__(376);
 const operationHelpers_js_1 = __nccwpck_require__(405);
 const urlHelpers_js_1 = __nccwpck_require__(228);
 const interfaceHelpers_js_1 = __nccwpck_require__(377);
-const log_js_1 = __nccwpck_require__(452);
+const log_js_1 = __nccwpck_require__(453);
 /**
  * Initializes a new instance of the ServiceClient.
  */
@@ -58618,7 +58672,7 @@ var import_checkEnvironment = __nccwpck_require__(411);
 var import_proxyPolicy = __nccwpck_require__(37);
 var import_agentPolicy = __nccwpck_require__(436);
 var import_tlsPolicy = __nccwpck_require__(213);
-var import_multipartPolicy = __nccwpck_require__(166);
+var import_multipartPolicy = __nccwpck_require__(165);
 function createPipelineFromOptions(options) {
   const pipeline = (0, import_pipeline.createEmptyPipeline)();
   if (import_checkEnvironment.isNodeLike) {
@@ -59578,9 +59632,9 @@ const core_auth_1 = __nccwpck_require__(483);
 const core_rest_pipeline_1 = __nccwpck_require__(98);
 const core_util_2 = __nccwpck_require__(12);
 const storage_common_1 = __nccwpck_require__(267);
-const Clients_js_1 = __nccwpck_require__(179);
+const Clients_js_1 = __nccwpck_require__(178);
 const Mutex_js_1 = __nccwpck_require__(487);
-const Pipeline_js_1 = __nccwpck_require__(177);
+const Pipeline_js_1 = __nccwpck_require__(176);
 const utils_common_js_1 = __nccwpck_require__(149);
 const core_xml_1 = __nccwpck_require__(188);
 const constants_js_1 = __nccwpck_require__(143);
@@ -59897,7 +59951,7 @@ module.exports = __toCommonJS(tracingPolicy_exports);
 var import_core_tracing = __nccwpck_require__(79);
 var import_constants = __nccwpck_require__(154);
 var import_userAgent = __nccwpck_require__(280);
-var import_log = __nccwpck_require__(178);
+var import_log = __nccwpck_require__(177);
 var import_core_util = __nccwpck_require__(12);
 var import_restError = __nccwpck_require__(335);
 var import_util = __nccwpck_require__(141);
@@ -60030,7 +60084,7 @@ const {
 const Client = __nccwpck_require__(85)
 const {
   InvalidArgumentError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const util = __nccwpck_require__(66)
 const { kUrl, kInterceptors } = __nccwpck_require__(189)
 const buildConnector = __nccwpck_require__(256)
@@ -60210,7 +60264,7 @@ __export(formDataPolicy_exports, {
 module.exports = __toCommonJS(formDataPolicy_exports);
 var import_bytesEncoding = __nccwpck_require__(276);
 var import_checkEnvironment = __nccwpck_require__(411);
-var import_httpHeaders = __nccwpck_require__(456);
+var import_httpHeaders = __nccwpck_require__(457);
 const formDataPolicyName = "formDataPolicy";
 function formDataToFormDataMap(formData) {
   const formDataMap = {};
@@ -60346,7 +60400,7 @@ const { URL } = __nccwpck_require__(82)
 const Agent = __nccwpck_require__(5)
 const Pool = __nccwpck_require__(322)
 const DispatcherBase = __nccwpck_require__(59)
-const { InvalidArgumentError, RequestAbortedError } = __nccwpck_require__(459)
+const { InvalidArgumentError, RequestAbortedError } = __nccwpck_require__(460)
 const buildConnector = __nccwpck_require__(256)
 
 const kAgent = Symbol('proxy agent')
@@ -60543,7 +60597,7 @@ const json_typings_1 = __nccwpck_require__(372);
 const base64_1 = __nccwpck_require__(290);
 const reflection_info_1 = __nccwpck_require__(425);
 const pb_long_1 = __nccwpck_require__(113);
-const assert_1 = __nccwpck_require__(455);
+const assert_1 = __nccwpck_require__(456);
 const reflection_long_convert_1 = __nccwpck_require__(153);
 /**
  * Reads proto3 messages in canonical JSON format using reflection information.
@@ -61338,7 +61392,7 @@ const {
 } = __nccwpck_require__(442)
 const { MockInterceptor } = __nccwpck_require__(131)
 const Symbols = __nccwpck_require__(189)
-const { InvalidArgumentError } = __nccwpck_require__(459)
+const { InvalidArgumentError } = __nccwpck_require__(460)
 
 /**
  * MockPool provides an API that extends the Pool to influence the mockDispatches.
@@ -61682,7 +61736,7 @@ const {
   InvalidArgumentError,
   InvalidReturnValueError,
   RequestAbortedError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const util = __nccwpck_require__(66)
 const { getResolveErrorBodyCallback } = __nccwpck_require__(183)
 const { AsyncResource } = __nccwpck_require__(402)
@@ -61915,7 +61969,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlockBlobImpl = void 0;
 const tslib_1 = __nccwpck_require__(209);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(412));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(174));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(173));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(62));
 /** Class containing BlockBlob operations. */
 class BlockBlobImpl {
@@ -63492,7 +63546,7 @@ __export(restError_exports, {
 });
 module.exports = __toCommonJS(restError_exports);
 var import_restError = __nccwpck_require__(417);
-var import_httpHeaders = __nccwpck_require__(456);
+var import_httpHeaders = __nccwpck_require__(457);
 function createRestError(messageOrResponse, response) {
   const resp = typeof messageOrResponse === "string" ? response : messageOrResponse;
   const internalError = resp.body?.error ?? resp.body;
@@ -63934,7 +63988,7 @@ function createDefaultHttpClient() {
 
 
 const { AsyncResource } = __nccwpck_require__(402)
-const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(459)
+const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(460)
 const util = __nccwpck_require__(66)
 const { addSignal, removeSignal } = __nccwpck_require__(100)
 
@@ -64225,7 +64279,7 @@ module.exports = require("node:util");
 // We include a version number for the Dispatcher API. In case of breaking changes,
 // this version number must be increased to avoid conflicts.
 const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-const { InvalidArgumentError } = __nccwpck_require__(459)
+const { InvalidArgumentError } = __nccwpck_require__(460)
 const Agent = __nccwpck_require__(5)
 
 if (getGlobalDispatcher() === undefined) {
@@ -64278,8 +64332,8 @@ const {
 const MockClient = __nccwpck_require__(193)
 const MockPool = __nccwpck_require__(331)
 const { matchValue, buildMockOptions } = __nccwpck_require__(7)
-const { InvalidArgumentError, UndiciError } = __nccwpck_require__(459)
-const Dispatcher = __nccwpck_require__(449)
+const { InvalidArgumentError, UndiciError } = __nccwpck_require__(460)
+const Dispatcher = __nccwpck_require__(450)
 const Pluralizer = __nccwpck_require__(244)
 const PendingInterceptorsFormatter = __nccwpck_require__(224)
 
@@ -64624,7 +64678,7 @@ function bearerAuthenticationPolicy(options) {
 const {
   BalancedPoolMissingUpstreamError,
   InvalidArgumentError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const {
   PoolBase,
   kClients,
@@ -65244,7 +65298,7 @@ function userAgentPolicy(options = {}) {
 const util = __nccwpck_require__(66)
 const { kBodyUsed } = __nccwpck_require__(189)
 const assert = __nccwpck_require__(494)
-const { InvalidArgumentError } = __nccwpck_require__(459)
+const { InvalidArgumentError } = __nccwpck_require__(460)
 const EE = __nccwpck_require__(441)
 
 const redirectableStatusCodes = [300, 301, 302, 303, 307, 308]
@@ -65622,7 +65676,7 @@ __export(exponentialRetryStrategy_exports, {
   isSystemError: () => isSystemError
 });
 module.exports = __toCommonJS(exponentialRetryStrategy_exports);
-var import_delay = __nccwpck_require__(446);
+var import_delay = __nccwpck_require__(447);
 var import_throttlingRetryStrategy = __nccwpck_require__(33);
 const DEFAULT_CLIENT_RETRY_INTERVAL = 1e3;
 const DEFAULT_CLIENT_MAX_RETRY_INTERVAL = 1e3 * 64;
@@ -65802,7 +65856,7 @@ function getCachedDefaultHttpClient() {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getStreamingResponseStatusCodes = getStreamingResponseStatusCodes;
 exports.getPathStringFromParameter = getPathStringFromParameter;
-const serializer_js_1 = __nccwpck_require__(451);
+const serializer_js_1 = __nccwpck_require__(452);
 /**
  * Gets the list of status codes for streaming responses.
  * @internal
@@ -65852,7 +65906,7 @@ exports.BlobServiceClient = void 0;
 const core_auth_1 = __nccwpck_require__(483);
 const core_rest_pipeline_1 = __nccwpck_require__(98);
 const core_util_1 = __nccwpck_require__(12);
-const Pipeline_js_1 = __nccwpck_require__(177);
+const Pipeline_js_1 = __nccwpck_require__(176);
 const ContainerClient_js_1 = __nccwpck_require__(61);
 const utils_common_js_1 = __nccwpck_require__(149);
 const storage_common_1 = __nccwpck_require__(267);
@@ -66570,7 +66624,7 @@ const BlobBatch_js_1 = __nccwpck_require__(319);
 const tracing_js_1 = __nccwpck_require__(29);
 const storage_common_1 = __nccwpck_require__(267);
 const StorageContextClient_js_1 = __nccwpck_require__(257);
-const Pipeline_js_1 = __nccwpck_require__(177);
+const Pipeline_js_1 = __nccwpck_require__(176);
 const utils_common_js_1 = __nccwpck_require__(149);
 /**
  * A BlobBatchClient allows you to make batched requests to the Azure Storage Blob service.
@@ -66746,7 +66800,7 @@ exports.BlobBatchClient = BlobBatchClient;
 
 const Decoder = __nccwpck_require__(40)
 const decodeText = __nccwpck_require__(266)
-const getLimit = __nccwpck_require__(454)
+const getLimit = __nccwpck_require__(455)
 
 const RE_CHARSET = /^charset$/i
 
@@ -67096,7 +67150,7 @@ exports.replaySourceMtimes = replaySourceMtimes;
 exports.writeSnapshotFile = writeSnapshotFile;
 exports.readSnapshotFile = readSnapshotFile;
 const fs = __importStar(__nccwpck_require__(239));
-const path = __importStar(__nccwpck_require__(477));
+const path = __importStar(__nccwpck_require__(478));
 const node_crypto_1 = __nccwpck_require__(265);
 const normalize_source_mtime_js_1 = __nccwpck_require__(76);
 exports.SNAPSHOT_FILENAME = "setup-soldr-source-mtimes.json";
@@ -68538,7 +68592,7 @@ exports.CacheService = exports.GetCacheEntryDownloadURLResponse = exports.GetCac
 // @generated by protobuf-ts 2.9.1 with parameter long_type_string,client_none,generate_dependencies
 // @generated from protobuf file "results/api/v1/cache.proto" (package "github.actions.results.api.v1", syntax proto3)
 // tslint:disable
-const runtime_rpc_1 = __nccwpck_require__(169);
+const runtime_rpc_1 = __nccwpck_require__(168);
 const runtime_1 = __nccwpck_require__(17);
 const runtime_2 = __nccwpck_require__(17);
 const runtime_3 = __nccwpck_require__(17);
@@ -69340,7 +69394,7 @@ exports.BlobDownloadResponse = void 0;
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 const core_util_1 = __nccwpck_require__(12);
-const RetriableReadableStream_js_1 = __nccwpck_require__(463);
+const RetriableReadableStream_js_1 = __nccwpck_require__(464);
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
  *
@@ -69987,7 +70041,7 @@ const globOptionsHelper = __importStar(__nccwpck_require__(388));
 const path = __importStar(__nccwpck_require__(238));
 const patternHelper = __importStar(__nccwpck_require__(41));
 const internal_match_kind_1 = __nccwpck_require__(496);
-const internal_pattern_1 = __nccwpck_require__(472);
+const internal_pattern_1 = __nccwpck_require__(473);
 const internal_search_state_1 = __nccwpck_require__(4);
 const IS_WINDOWS = process.platform === 'win32';
 class DefaultGlobber {
@@ -70280,7 +70334,7 @@ function getOperationRequestInfo(request) {
 "use strict";
 
 
-const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(459)
+const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(460)
 const { AsyncResource } = __nccwpck_require__(402)
 const util = __nccwpck_require__(66)
 const { addSignal, removeSignal } = __nccwpck_require__(100)
@@ -70393,7 +70447,7 @@ module.exports = upgrade
 "use strict";
 
 const os = __nccwpck_require__(89);
-const tty = __nccwpck_require__(176);
+const tty = __nccwpck_require__(175);
 const hasFlag = __nccwpck_require__(346);
 
 const {env} = process;
@@ -70770,7 +70824,7 @@ const isReactNative = typeof navigator !== "undefined" && navigator?.product ===
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.authorizeRequestOnTenantChallenge = exports.authorizeRequestOnClaimChallenge = exports.serializationPolicyName = exports.serializationPolicy = exports.deserializationPolicyName = exports.deserializationPolicy = exports.XML_CHARKEY = exports.XML_ATTRKEY = exports.createClientPipeline = exports.ServiceClient = exports.MapperTypeNames = exports.createSerializer = void 0;
-var serializer_js_1 = __nccwpck_require__(451);
+var serializer_js_1 = __nccwpck_require__(452);
 Object.defineProperty(exports, "createSerializer", ({ enumerable: true, get: function () { return serializer_js_1.createSerializer; } }));
 Object.defineProperty(exports, "MapperTypeNames", ({ enumerable: true, get: function () { return serializer_js_1.MapperTypeNames; } }));
 var serviceClient_js_1 = __nccwpck_require__(301);
@@ -70783,12 +70837,12 @@ Object.defineProperty(exports, "XML_CHARKEY", ({ enumerable: true, get: function
 var deserializationPolicy_js_1 = __nccwpck_require__(83);
 Object.defineProperty(exports, "deserializationPolicy", ({ enumerable: true, get: function () { return deserializationPolicy_js_1.deserializationPolicy; } }));
 Object.defineProperty(exports, "deserializationPolicyName", ({ enumerable: true, get: function () { return deserializationPolicy_js_1.deserializationPolicyName; } }));
-var serializationPolicy_js_1 = __nccwpck_require__(460);
+var serializationPolicy_js_1 = __nccwpck_require__(461);
 Object.defineProperty(exports, "serializationPolicy", ({ enumerable: true, get: function () { return serializationPolicy_js_1.serializationPolicy; } }));
 Object.defineProperty(exports, "serializationPolicyName", ({ enumerable: true, get: function () { return serializationPolicy_js_1.serializationPolicyName; } }));
 var authorizeRequestOnClaimChallenge_js_1 = __nccwpck_require__(108);
 Object.defineProperty(exports, "authorizeRequestOnClaimChallenge", ({ enumerable: true, get: function () { return authorizeRequestOnClaimChallenge_js_1.authorizeRequestOnClaimChallenge; } }));
-var authorizeRequestOnTenantChallenge_js_1 = __nccwpck_require__(167);
+var authorizeRequestOnTenantChallenge_js_1 = __nccwpck_require__(166);
 Object.defineProperty(exports, "authorizeRequestOnTenantChallenge", ({ enumerable: true, get: function () { return authorizeRequestOnTenantChallenge_js_1.authorizeRequestOnTenantChallenge; } }));
 //# sourceMappingURL=index.js.map
 
@@ -71114,7 +71168,7 @@ var import_node_https = __toESM(__nccwpck_require__(366));
 var import_node_zlib = __toESM(__nccwpck_require__(488));
 var import_node_stream = __nccwpck_require__(403);
 var import_AbortError = __nccwpck_require__(9);
-var import_httpHeaders = __nccwpck_require__(456);
+var import_httpHeaders = __nccwpck_require__(457);
 var import_restError = __nccwpck_require__(417);
 var import_log = __nccwpck_require__(146);
 var import_sanitizer = __nccwpck_require__(117);
@@ -71544,7 +71598,7 @@ exports.prepareKeyValueMessage = exports.issueFileCommand = void 0;
 const crypto = __importStar(__nccwpck_require__(279));
 const fs = __importStar(__nccwpck_require__(498));
 const os = __importStar(__nccwpck_require__(89));
-const utils_1 = __nccwpck_require__(474);
+const utils_1 = __nccwpck_require__(475);
 function issueFileCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
     if (!filePath) {
@@ -71818,7 +71872,7 @@ const tslib_1 = __nccwpck_require__(209);
 const core_rest_pipeline_1 = __nccwpck_require__(98);
 Object.defineProperty(exports, "RestError", ({ enumerable: true, get: function () { return core_rest_pipeline_1.RestError; } }));
 tslib_1.__exportStar(__nccwpck_require__(378), exports);
-tslib_1.__exportStar(__nccwpck_require__(179), exports);
+tslib_1.__exportStar(__nccwpck_require__(178), exports);
 tslib_1.__exportStar(__nccwpck_require__(61), exports);
 tslib_1.__exportStar(__nccwpck_require__(198), exports);
 tslib_1.__exportStar(__nccwpck_require__(55), exports);
@@ -71828,8 +71882,8 @@ var AccountSASSignatureValues_js_1 = __nccwpck_require__(277);
 Object.defineProperty(exports, "generateAccountSASQueryParameters", ({ enumerable: true, get: function () { return AccountSASSignatureValues_js_1.generateAccountSASQueryParameters; } }));
 tslib_1.__exportStar(__nccwpck_require__(319), exports);
 tslib_1.__exportStar(__nccwpck_require__(379), exports);
-tslib_1.__exportStar(__nccwpck_require__(168), exports);
-tslib_1.__exportStar(__nccwpck_require__(473), exports);
+tslib_1.__exportStar(__nccwpck_require__(167), exports);
+tslib_1.__exportStar(__nccwpck_require__(474), exports);
 var BlobSASSignatureValues_js_1 = __nccwpck_require__(65);
 Object.defineProperty(exports, "generateBlobSASQueryParameters", ({ enumerable: true, get: function () { return BlobSASSignatureValues_js_1.generateBlobSASQueryParameters; } }));
 tslib_1.__exportStar(__nccwpck_require__(269), exports);
@@ -71838,7 +71892,7 @@ Object.defineProperty(exports, "BlockBlobTier", ({ enumerable: true, get: functi
 Object.defineProperty(exports, "PremiumPageBlobTier", ({ enumerable: true, get: function () { return models_js_1.PremiumPageBlobTier; } }));
 Object.defineProperty(exports, "StorageBlobAudience", ({ enumerable: true, get: function () { return models_js_1.StorageBlobAudience; } }));
 Object.defineProperty(exports, "getBlobServiceAccountAudience", ({ enumerable: true, get: function () { return models_js_1.getBlobServiceAccountAudience; } }));
-var Pipeline_js_1 = __nccwpck_require__(177);
+var Pipeline_js_1 = __nccwpck_require__(176);
 Object.defineProperty(exports, "Pipeline", ({ enumerable: true, get: function () { return Pipeline_js_1.Pipeline; } }));
 Object.defineProperty(exports, "isPipelineLike", ({ enumerable: true, get: function () { return Pipeline_js_1.isPipelineLike; } }));
 Object.defineProperty(exports, "newPipeline", ({ enumerable: true, get: function () { return Pipeline_js_1.newPipeline; } }));
@@ -72176,10 +72230,10 @@ __export(sendRequest_exports, {
 });
 module.exports = __toCommonJS(sendRequest_exports);
 var import_restError = __nccwpck_require__(417);
-var import_httpHeaders = __nccwpck_require__(456);
+var import_httpHeaders = __nccwpck_require__(457);
 var import_pipelineRequest = __nccwpck_require__(111);
-var import_clientHelpers = __nccwpck_require__(462);
-var import_typeGuards = __nccwpck_require__(467);
+var import_clientHelpers = __nccwpck_require__(463);
+var import_typeGuards = __nccwpck_require__(468);
 var import_multipart = __nccwpck_require__(260);
 async function sendRequest(method, url, pipeline, options = {}, customHttpClient) {
   const httpClient = customHttpClient ?? (0, import_clientHelpers.getCachedDefaultHttpsClient)();
@@ -74766,7 +74820,7 @@ exports.lowerCamelCase = lowerCamelCase;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageClient = void 0;
 const StorageContextClient_js_1 = __nccwpck_require__(257);
-const Pipeline_js_1 = __nccwpck_require__(177);
+const Pipeline_js_1 = __nccwpck_require__(176);
 const utils_common_js_1 = __nccwpck_require__(149);
 /**
  * A StorageClient represents a based URL class for {@link BlobServiceClient}, {@link ContainerClient}
@@ -75555,7 +75609,7 @@ module.exports = {
  * Module dependencies.
  */
 
-const tty = __nccwpck_require__(176);
+const tty = __nccwpck_require__(175);
 const util = __nccwpck_require__(119);
 
 /**
@@ -75859,7 +75913,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.platform = exports.toPlatformPath = exports.toWin32Path = exports.toPosixPath = exports.markdownSummary = exports.summary = exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
 const command_1 = __nccwpck_require__(500);
 const file_command_1 = __nccwpck_require__(416);
-const utils_1 = __nccwpck_require__(474);
+const utils_1 = __nccwpck_require__(475);
 const os = __importStar(__nccwpck_require__(89));
 const path = __importStar(__nccwpck_require__(238));
 const oidc_utils_1 = __nccwpck_require__(129);
@@ -76484,7 +76538,7 @@ __export(debug_exports, {
   default: () => debug_default
 });
 module.exports = __toCommonJS(debug_exports);
-var import_log = __nccwpck_require__(458);
+var import_log = __nccwpck_require__(459);
 const debugEnvVariable = typeof process !== "undefined" && process.env && process.env.DEBUG || void 0;
 let enabledString;
 let enabledNamespaces = [];
@@ -77250,6 +77304,781 @@ var KnownStorageErrorCode;
 /***/ }),
 
 /***/ 444:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// setup-soldr post-job entry point. Owned by Agent 2.
+//
+// Runs in the post-job phase via action.yml's `post: dist/post.js`. This is
+// the architectural fix for zackees/setup-soldr#70 — it lets us tar+zstd
+// the build-cache (and optionally cargo-registry) directories BEFORE
+// @actions/cache's post-save uploads them, so the wire format is zstd on
+// every platform (including Windows-x64 where actions/cache@v5 still
+// falls back to gzip).
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.buildFinalCacheSummary = buildFinalCacheSummary;
+exports.formatFinalCacheSummaryMarkdown = formatFinalCacheSummaryMarkdown;
+exports.run = run;
+const fs = __importStar(__nccwpck_require__(239));
+const path = __importStar(__nccwpck_require__(478));
+const node_child_process_1 = __nccwpck_require__(191);
+const core = __importStar(__nccwpck_require__(431));
+const cache = __importStar(__nccwpck_require__(207));
+const cache_compress_js_1 = __nccwpck_require__(284);
+const log_utils_js_1 = __nccwpck_require__(334);
+const shutdown_cache_js_1 = __nccwpck_require__(181);
+const stats_collector_js_1 = __nccwpck_require__(71);
+const diagnostics_js_1 = __nccwpck_require__(258);
+const raw_inputs_js_1 = __nccwpck_require__(152);
+const source_mtime_snapshot_js_1 = __nccwpck_require__(383);
+function dirExists(p) {
+    try {
+        return fs.statSync(p).isDirectory();
+    }
+    catch {
+        return false;
+    }
+}
+function fileExists(p) {
+    try {
+        return fs.statSync(p).isFile();
+    }
+    catch {
+        return false;
+    }
+}
+function stateBool(name, fallback = false) {
+    const value = core.getState(name).trim().toLowerCase();
+    if (value === "true")
+        return true;
+    if (value === "false")
+        return false;
+    return fallback;
+}
+function readRestoreState() {
+    return {
+        setupCacheEnabled: stateBool("setupCacheEnabled"),
+        setupCacheExactHit: stateBool("setupCacheExactHit"),
+        setupCacheMatchedKey: core.getState("setupCacheMatchedKey"),
+        targetCacheEnabled: stateBool("targetCacheEnabled"),
+        targetCacheExactHit: stateBool("targetCacheExactHit"),
+        targetCacheMatchedKey: core.getState("targetCacheMatchedKey"),
+        buildCacheEnabled: stateBool("buildCacheEnabled"),
+        buildCacheExactHit: stateBool("buildCacheExactHit"),
+        buildCacheMatchedKey: core.getState("buildCacheMatchedKey"),
+        cargoRegistryCacheEnabled: stateBool("cargoRegistryCacheEnabled"),
+        cargoRegistryCacheExactHit: stateBool("cargoRegistryCacheExactHit"),
+        cargoRegistryCacheMatchedKey: core.getState("cargoRegistryCacheMatchedKey"),
+    };
+}
+function disabledSave() {
+    return { status: "disabled" };
+}
+function notManagedSave() {
+    return { status: "not-managed-in-post" };
+}
+function restoreStatus(enabled, exactHit, matchedKey) {
+    if (!enabled)
+        return "disabled";
+    if (exactHit)
+        return "exact-hit";
+    if (matchedKey.trim())
+        return "restore-key-hit";
+    return "miss";
+}
+async function saveOne(opts) {
+    const { cacheDir, codec, level, key, matchedKey, label, debug, log } = opts;
+    const withBytes = (r) => Object.assign(r, { archiveBytes: null });
+    if (!dirExists(cacheDir)) {
+        log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
+        return withBytes({ status: "missing-dir-skip", cache_dir: cacheDir });
+    }
+    if (matchedKey === key) {
+        log(`${label}: exact cache hit on ${key}, skipping save`);
+        return withBytes({ status: "exact-hit-skip", cache_dir: cacheDir });
+    }
+    let archiveBytes = null;
+    let archivePath = null;
+    try {
+        const result = await (0, cache_compress_js_1.compressCache)({ cacheDir, codec, level, debug, log });
+        archivePath = result.archivePath;
+        archiveBytes = result.archiveBytes || null;
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        log(`${label}: compression failed: ${message}`);
+        return withBytes({ status: "failed", cache_dir: cacheDir, error: message });
+    }
+    const pathsToSave = archivePath ? [archivePath] : [cacheDir];
+    try {
+        const id = await cache.saveCache(pathsToSave, key);
+        log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"}`);
+        return {
+            status: "saved",
+            cache_dir: cacheDir,
+            archive_path: archivePath ?? undefined,
+            saved_paths: pathsToSave,
+            cache_id: id,
+            archiveBytes,
+        };
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        log(`${label}: save failed: ${message}`);
+        return {
+            status: "failed",
+            cache_dir: cacheDir,
+            archive_path: archivePath ?? undefined,
+            saved_paths: pathsToSave,
+            error: message,
+            archiveBytes,
+        };
+    }
+}
+function cacheLayerSummary(opts) {
+    const matchedKey = opts.matchedKey.trim();
+    return {
+        enabled: opts.enabled,
+        key: opts.key,
+        matched_key: matchedKey,
+        exact_hit: opts.enabled ? opts.exactHit : false,
+        restore_status: restoreStatus(opts.enabled, opts.exactHit, matchedKey),
+        save: opts.save,
+    };
+}
+function readSoldrCacheReport(soldrBinary, passthrough) {
+    if (passthrough) {
+        // Short-circuit when the main step installed a passthrough stub
+        // (enable=false). Skips spawning a .cmd on Windows (where
+        // child_process.spawnSync can't launch shell scripts directly) and
+        // documents the passthrough state in the post-step summary.
+        return {
+            status: "ok",
+            soldr_version: "passthrough",
+            report: {
+                notes: ["setup-soldr enable=false: soldr passthrough stub"],
+                last_session: null,
+                rollups: null,
+            },
+        };
+    }
+    if (!soldrBinary || !fileExists(soldrBinary)) {
+        return {
+            status: "missing-binary",
+            error: soldrBinary === undefined
+                ? "SOLDR_BINARY env var not set"
+                : `soldr binary at ${soldrBinary} does not exist`,
+        };
+    }
+    // Use spawnSync so the post step has no async dependencies. The
+    // report subcommand is fast (sub-100ms) — never worth pulling in
+    // @actions/exec just for one shell-out.
+    const child = (0, node_child_process_1.spawnSync)(soldrBinary, ["cache", "report", "--json"], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        windowsHide: true,
+    });
+    if (child.error) {
+        return {
+            status: "error",
+            error: `failed to spawn soldr: ${child.error.message}`,
+        };
+    }
+    const stdout = (child.stdout || "").trim();
+    const stderr = (child.stderr || "").trim();
+    if (child.status !== 0) {
+        const combined = `${stderr}\n${stdout}`;
+        if (/unrecognized subcommand|invalid value for|unknown sub[- ]?command/i.test(combined) &&
+            /\breport\b/.test(combined)) {
+            return {
+                status: "unsupported",
+                error: stderr || stdout || `soldr exited ${child.status}`,
+            };
+        }
+        return {
+            status: "error",
+            error: stderr || stdout || `soldr exited ${child.status}`,
+        };
+    }
+    let report;
+    try {
+        const parsed = JSON.parse(stdout);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return {
+                status: "error",
+                error: "soldr cache report --json returned a non-object payload",
+            };
+        }
+        report = parsed;
+    }
+    catch (err) {
+        return {
+            status: "error",
+            error: `failed to parse soldr cache report JSON: ${err instanceof Error ? err.message : String(err)}`,
+        };
+    }
+    const soldrVersion = typeof report["soldr_version"] === "string" ? report["soldr_version"] : undefined;
+    const zccacheVersion = typeof report["managed_zccache_version"] === "string"
+        ? report["managed_zccache_version"]
+        : undefined;
+    return {
+        status: "ok",
+        soldr_version: soldrVersion,
+        managed_zccache_version: zccacheVersion,
+        report,
+    };
+}
+function readZccacheSessionSummary(buildCachePath) {
+    const statsPath = path.join(buildCachePath, "logs", "last-session-stats.json");
+    if (!fileExists(statsPath)) {
+        return { stats_path: statsPath, present: false, status: "missing" };
+    }
+    try {
+        const parsed = JSON.parse(fs.readFileSync(statsPath, "utf8"));
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return {
+                stats_path: statsPath,
+                present: true,
+                status: "invalid",
+                error: "stats JSON was not an object",
+            };
+        }
+        const stats = parsed;
+        const status = typeof stats["status"] === "string" ? stats["status"] : "unknown";
+        return { stats_path: statsPath, present: true, status, stats };
+    }
+    catch (err) {
+        return {
+            stats_path: statsPath,
+            present: true,
+            status: "invalid",
+            error: err instanceof Error ? err.message : String(err),
+        };
+    }
+}
+function buildFinalCacheSummary(result, state, saves, passthrough = false) {
+    return {
+        schema_version: 1,
+        setup_cache: cacheLayerSummary({
+            enabled: state.setupCacheEnabled,
+            key: result.setupCache.key,
+            exactHit: state.setupCacheExactHit,
+            matchedKey: state.setupCacheMatchedKey,
+            save: notManagedSave(),
+        }),
+        target_cache: cacheLayerSummary({
+            enabled: state.targetCacheEnabled,
+            key: result.targetCache.key,
+            exactHit: state.targetCacheExactHit,
+            matchedKey: state.targetCacheMatchedKey,
+            save: notManagedSave(),
+        }),
+        build_cache: cacheLayerSummary({
+            enabled: state.buildCacheEnabled,
+            key: result.buildCache.key,
+            exactHit: state.buildCacheExactHit,
+            matchedKey: state.buildCacheMatchedKey,
+            save: saves.buildCache,
+        }),
+        cargo_registry_cache: cacheLayerSummary({
+            enabled: state.cargoRegistryCacheEnabled,
+            key: result.cargoRegistryCache.key,
+            exactHit: state.cargoRegistryCacheExactHit,
+            matchedKey: state.cargoRegistryCacheMatchedKey,
+            save: saves.cargoRegistryCache,
+        }),
+        zccache_session: readZccacheSessionSummary(result.buildCache.path),
+        compile_cache_report: readSoldrCacheReport(process.env["SOLDR_BINARY"]?.trim(), passthrough),
+    };
+}
+function numberStat(stats, key) {
+    const value = stats?.[key];
+    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+function zccacheOneLine(summary) {
+    if (!summary.present)
+        return `missing (${summary.stats_path})`;
+    if (summary.status !== "ok") {
+        return summary.error ? `${summary.status} (${summary.error})` : summary.status;
+    }
+    const hits = numberStat(summary.stats, "hits") ?? 0;
+    const misses = numberStat(summary.stats, "misses") ?? 0;
+    const compilations = numberStat(summary.stats, "compilations") ?? hits + misses;
+    const nonCacheable = numberStat(summary.stats, "non_cacheable") ?? 0;
+    const errors = numberStat(summary.stats, "errors") ?? 0;
+    const hitRate = numberStat(summary.stats, "hit_rate");
+    const hitRateText = hitRate === undefined ? "n/a" : `${(hitRate * 100).toFixed(1)}%`;
+    return `hits=${hits} misses=${misses} compilations=${compilations} non_cacheable=${nonCacheable} errors=${errors} hit_rate=${hitRateText}`;
+}
+function restoreText(layer) {
+    if (!layer.enabled)
+        return "disabled";
+    if (layer.restore_status === "exact-hit")
+        return "exact hit";
+    if (layer.restore_status === "restore-key-hit")
+        return "restore-key hit";
+    return "miss";
+}
+function saveText(save) {
+    switch (save.status) {
+        case "saved":
+            return save.cache_id === undefined ? "saved" : `saved id=${save.cache_id}`;
+        case "exact-hit-skip":
+            return "skipped exact hit";
+        case "missing-dir-skip":
+            return "skipped missing dir";
+        case "failed":
+            return save.error ? `failed: ${save.error}` : "failed";
+        case "disabled":
+            return "disabled";
+        case "not-managed-in-post":
+            return "not managed in post";
+    }
+}
+function markdownCell(value) {
+    return value.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+}
+function tableRow(label, layer) {
+    return [
+        label,
+        restoreText(layer),
+        layer.key,
+        layer.matched_key || "",
+        saveText(layer.save),
+    ]
+        .map(markdownCell)
+        .join(" | ");
+}
+function fmtBytes(n) {
+    if (n >= 1_073_741_824)
+        return `${(n / 1_073_741_824).toFixed(1)} GB`;
+    if (n >= 1_048_576)
+        return `${(n / 1_048_576).toFixed(1)} MB`;
+    if (n >= 1_024)
+        return `${(n / 1_024).toFixed(1)} KB`;
+    return `${n} B`;
+}
+function setCompileCacheOutputs(report, mode) {
+    core.setOutput("compile-cache-session-status", report.status);
+    if (report.status !== "ok" || !report.report)
+        return;
+    core.setOutput("compile-cache-summary-json", JSON.stringify(report.report));
+    const lastSession = report.report["last_session"];
+    if (lastSession) {
+        const hits = numberStat(lastSession, "hits") ?? 0;
+        const misses = numberStat(lastSession, "misses") ?? 0;
+        const compilations = numberStat(lastSession, "compilations") ?? hits + misses;
+        const hitRate = numberStat(lastSession, "hit_rate");
+        const timeSavedMs = numberStat(lastSession, "time_saved_ms");
+        const bytesRead = numberStat(lastSession, "bytes_read");
+        const bytesWritten = numberStat(lastSession, "bytes_written");
+        core.setOutput("compile-cache-hits", String(hits));
+        core.setOutput("compile-cache-misses", String(misses));
+        core.setOutput("compile-cache-compilations", String(compilations));
+        if (hitRate !== undefined)
+            core.setOutput("compile-cache-hit-rate", String(hitRate));
+        if (timeSavedMs !== undefined)
+            core.setOutput("compile-cache-time-saved-ms", String(timeSavedMs));
+        if (bytesRead !== undefined)
+            core.setOutput("compile-cache-bytes-read", String(bytesRead));
+        if (bytesWritten !== undefined)
+            core.setOutput("compile-cache-bytes-written", String(bytesWritten));
+    }
+    if (mode === "detailed") {
+        const rollups = report.report["rollups"];
+        if (rollups)
+            core.setOutput("compile-cache-rollups-json", JSON.stringify(rollups));
+    }
+}
+function compileCacheReportSection(report, mode) {
+    if (mode === "none")
+        return [];
+    const lines = ["", "### Compile cache (zccache)", ""];
+    if (report.status !== "ok" || !report.report) {
+        lines.push(`| Status | ${markdownCell(report.status)} |`);
+        if (report.error)
+            lines.push(`| Detail | ${markdownCell(report.error)} |`);
+        return lines;
+    }
+    const body = report.report;
+    const lastSession = body["last_session"] ?? null;
+    const rollups = body["rollups"] ?? null;
+    if (lastSession) {
+        const hits = numberStat(lastSession, "hits") ?? 0;
+        const misses = numberStat(lastSession, "misses") ?? 0;
+        const compilations = numberStat(lastSession, "compilations") ?? hits + misses;
+        const rate = numberStat(lastSession, "hit_rate");
+        const rateText = rate === undefined ? "n/a" : `${(rate * 100).toFixed(1)}%`;
+        const saved = numberStat(lastSession, "time_saved_ms");
+        const bytesRead = numberStat(lastSession, "bytes_read");
+        const bytesWritten = numberStat(lastSession, "bytes_written");
+        lines.push("| Metric | Value |", "| --- | --- |");
+        lines.push(`| Compilations | ${compilations} |`);
+        lines.push(`| Hits | ${hits} |`);
+        lines.push(`| Misses | ${misses} |`);
+        lines.push(`| Hit rate | ${rateText} |`);
+        if (saved !== undefined)
+            lines.push(`| Time saved (est.) | ${(saved / 1000).toFixed(1)}s |`);
+        if (bytesRead !== undefined)
+            lines.push(`| Bytes read | ${fmtBytes(bytesRead)} |`);
+        if (bytesWritten !== undefined)
+            lines.push(`| Bytes written | ${fmtBytes(bytesWritten)} |`);
+        if (report.soldr_version)
+            lines.push(`| soldr | ${markdownCell(report.soldr_version)} |`);
+        if (report.managed_zccache_version)
+            lines.push(`| zccache | ${markdownCell(report.managed_zccache_version)} |`);
+    }
+    else {
+        lines.push("_(no last\\_session yet — run a cache-enabled build first)_");
+    }
+    if (mode === "detailed" && rollups) {
+        const byExt = rollups["by_extension"];
+        if (byExt && typeof byExt === "object" && !Array.isArray(byExt)) {
+            const rows = Object.entries(byExt);
+            if (rows.length > 0) {
+                lines.push("", "#### By output extension", "");
+                lines.push("| Extension | Hits | Misses | Total ms |", "| --- | --- | --- | --- |");
+                for (const [ext, bucket] of rows) {
+                    const b = bucket ?? {};
+                    const h = numberStat(b, "hits") ?? 0;
+                    const m = numberStat(b, "misses") ?? 0;
+                    const t = numberStat(b, "total_ms") ?? 0;
+                    lines.push(`| ${markdownCell(ext)} | ${h} | ${m} | ${t} |`);
+                }
+            }
+        }
+        const byTool = rollups["by_tool_total_ms"];
+        if (byTool && typeof byTool === "object" && !Array.isArray(byTool)) {
+            const rows = Object.entries(byTool)
+                .map(([tool, ms]) => [tool, typeof ms === "number" ? ms : 0])
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            if (rows.length > 0) {
+                lines.push("", "#### By tool (wall-clock)", "");
+                lines.push("| Tool | ms |", "| --- | --- |");
+                for (const [tool, ms] of rows) {
+                    lines.push(`| ${markdownCell(tool)} | ${ms} |`);
+                }
+            }
+        }
+    }
+    const notes = body["notes"];
+    if (Array.isArray(notes) && notes.length > 0) {
+        lines.push("", "<details><summary>Notes from soldr</summary>", "");
+        for (const note of notes) {
+            if (typeof note === "string")
+                lines.push(`- ${markdownCell(note)}`);
+        }
+        lines.push("", "</details>");
+    }
+    return lines;
+}
+function formatFinalCacheSummaryMarkdown(summary, compileCacheStats = "summarize") {
+    const lines = [
+        "## setup-soldr final cache summary",
+        "",
+        "| Layer | Restore | Primary key | Matched key | Save |",
+        "| --- | --- | --- | --- | --- |",
+        `| ${tableRow("setup cache", summary.setup_cache)} |`,
+        `| ${tableRow("target cache", summary.target_cache)} |`,
+        `| ${tableRow("build cache", summary.build_cache)} |`,
+        `| ${tableRow("cargo registry cache", summary.cargo_registry_cache)} |`,
+        "",
+        "### zccache session",
+        "",
+        `- Stats: ${zccacheOneLine(summary.zccache_session)}`,
+        `- Stats file: ${summary.zccache_session.stats_path}`,
+        ...compileCacheReportSection(summary.compile_cache_report, compileCacheStats),
+        "",
+        "<details><summary>Final cache summary JSON</summary>",
+        "",
+        "```json",
+        JSON.stringify(summary, null, 2),
+        "```",
+        "",
+        "</details>",
+        "",
+    ];
+    return `${lines.join("\n")}\n`;
+}
+function logFinalCacheSummary(summary, log) {
+    log(`final cache summary: setup=${restoreText(summary.setup_cache)} target=${restoreText(summary.target_cache)} ` +
+        `build=${restoreText(summary.build_cache)}/${saveText(summary.build_cache.save)} ` +
+        `cargo-registry=${restoreText(summary.cargo_registry_cache)}/${saveText(summary.cargo_registry_cache.save)}`);
+    log(`final zccache session stats: ${zccacheOneLine(summary.zccache_session)}`);
+    log(`compile cache report: ${compileCacheReportOneLine(summary.compile_cache_report)}`);
+}
+function compileCacheReportOneLine(report) {
+    if (report.status !== "ok" || !report.report) {
+        return report.error ? `${report.status} (${report.error})` : report.status;
+    }
+    const lastSession = report.report["last_session"];
+    if (!lastSession) {
+        return `ok (no last_session yet, soldr ${report.soldr_version ?? "?"})`;
+    }
+    const hits = numberStat(lastSession, "hits") ?? 0;
+    const misses = numberStat(lastSession, "misses") ?? 0;
+    const rate = numberStat(lastSession, "hit_rate");
+    const rateText = rate === undefined ? "n/a" : `${(rate * 100).toFixed(1)}%`;
+    return `ok hits=${hits} misses=${misses} hit_rate=${rateText} soldr=${report.soldr_version ?? "?"}`;
+}
+function writeCompileCacheReportFile(report, runnerTemp, log) {
+    if (!runnerTemp)
+        return undefined;
+    const outPath = path.join(runnerTemp, "setup-soldr-compile-cache-report.json");
+    try {
+        fs.writeFileSync(outPath, JSON.stringify(report, null, 2), "utf8");
+        return outPath;
+    }
+    catch (err) {
+        log(`post: failed to write compile-cache-report.json: ${err instanceof Error ? err.message : String(err)}`);
+        return undefined;
+    }
+}
+function writeStepSummary(markdown, log) {
+    const summaryPath = process.env["GITHUB_STEP_SUMMARY"]?.trim();
+    if (!summaryPath)
+        return;
+    try {
+        fs.appendFileSync(summaryPath, markdown, "utf8");
+    }
+    catch (err) {
+        log(`post: failed to write GitHub step summary: ${err instanceof Error ? err.message : String(err)}`);
+    }
+}
+async function run() {
+    const logger = (0, log_utils_js_1.createLogger)(process.env);
+    const log = (msg) => logger.log(msg);
+    const state = core.getState("resolveResult");
+    if (!state) {
+        log("post: no resolve state available, exiting");
+        return;
+    }
+    let result;
+    try {
+        result = JSON.parse(state);
+    }
+    catch (err) {
+        log(`post: failed to parse resolve state: ${err instanceof Error ? err.message : String(err)}`);
+        return;
+    }
+    const buildCacheMatched = core.getState("buildCacheMatchedKey");
+    const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
+    const passthrough = stateBool("setupSoldrPassthrough");
+    const restoreState = readRestoreState();
+    const statsMode = (core.getState("statsMode") || "summarize");
+    const compileCacheStats = (core.getState("compileCacheStats") || "summarize");
+    const runnerTemp = core.getState("runnerTemp") || "";
+    const debugMode = result.debugMode ?? false;
+    const debugLog = debugMode ? log : () => undefined;
+    const postCollector = new stats_collector_js_1.StatsCollector();
+    // Always stop long-running cache daemons before packing the build
+    // cache so file locks release and the tarball reflects a quiescent
+    // on-disk view. Best-effort; failures are logged, not raised.
+    await (0, shutdown_cache_js_1.shutdownCacheDaemons)({
+        soldrPath: process.env["SOLDR_BINARY"]?.trim() || undefined,
+        log,
+    });
+    // Source-mtime snapshot (preserve-source-mtimes opt-in). Walk tracked
+    // sources, capture each (mtime, size, content-hash), and drop the JSON
+    // INSIDE the build-cache directory so it gets bundled into the same
+    // tar.zst the build-cache save will upload. main.ts replays the
+    // mtimes on warm after the build-cache decompresses, gated on each
+    // file's content matching what we snapshotted here.
+    const preserveSourceMtimes = core.getState("preserveSourceMtimes") === "true";
+    if (preserveSourceMtimes && restoreState.buildCacheEnabled) {
+        const t0 = Date.now();
+        // The "project root" — where the Cargo workspace being built actually
+        // lives — is the parent of the resolved target-dir, NOT result.workspace
+        // (which is GITHUB_WORKSPACE — usually the outer checkout containing
+        // the action itself plus one or more sub-repos). For the demo,
+        // result.workspace=/home/runner/work/setup-soldr/setup-soldr but the
+        // zccache project being built is at .../setup-soldr/zccache.
+        const projectRoot = path.dirname(result.targetCache.targetPath);
+        try {
+            const r = await (0, source_mtime_snapshot_js_1.snapshotSourceMtimes)({ workspace: projectRoot, log });
+            const out = path.join(result.buildCache.path, source_mtime_snapshot_js_1.SNAPSHOT_FILENAME);
+            try {
+                fs.mkdirSync(path.dirname(out), { recursive: true });
+                (0, source_mtime_snapshot_js_1.writeSnapshotFile)(r.snapshot, out);
+                log(`source-mtime-snapshot: wrote ${out} scanned=${r.scanned} hashed=${r.hashed} skipped=${r.skipped} elapsed_ms=${Date.now() - t0}`);
+            }
+            catch (err) {
+                log(`source-mtime-snapshot: failed to write ${out}: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
+        catch (err) {
+            log(`source-mtime-snapshot: scan failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+    // Build cache
+    const buildSaveStart = Date.now();
+    const buildSave = restoreState.buildCacheEnabled
+        ? await saveOne({
+            cacheDir: result.buildCache.path,
+            codec: result.targetCacheCompress,
+            level: result.targetCacheCompressLevel,
+            key: result.buildCache.key,
+            matchedKey: buildCacheMatched,
+            label: "build-cache",
+            debug: debugMode,
+            log: debugLog,
+        })
+        : Object.assign(disabledSave(), { archiveBytes: null });
+    if (buildSave.status === "saved") {
+        postCollector.record({
+            label: "build-cache", operation: "save", hit: false,
+            key: result.buildCache.key, matchedKey: buildCacheMatched, restoreKeys: [],
+            archiveBytes: buildSave.archiveBytes, inflatedBytes: null, fileCount: null,
+            durationMs: Date.now() - buildSaveStart, timestamp: new Date().toISOString(),
+        });
+    }
+    // Cargo registry cache (only when enabled)
+    let cargoRegistrySave = Object.assign(disabledSave(), { archiveBytes: null });
+    if (result.cargoRegistryCache.enabled) {
+        const regSaveStart = Date.now();
+        cargoRegistrySave = await saveOne({
+            cacheDir: result.cargoRegistryCache.path,
+            codec: result.targetCacheCompress,
+            level: result.targetCacheCompressLevel,
+            key: result.cargoRegistryCache.key,
+            matchedKey: registryMatched,
+            label: "cargo-registry-cache",
+            debug: debugMode,
+            log: debugLog,
+        });
+        if (cargoRegistrySave.status === "saved") {
+            postCollector.record({
+                label: "cargo-registry", operation: "save", hit: false,
+                key: result.cargoRegistryCache.key, matchedKey: registryMatched, restoreKeys: [],
+                archiveBytes: cargoRegistrySave.archiveBytes, inflatedBytes: null, fileCount: null,
+                durationMs: Date.now() - regSaveStart, timestamp: new Date().toISOString(),
+            });
+        }
+    }
+    const finalSummary = buildFinalCacheSummary(result, restoreState, {
+        buildCache: buildSave,
+        cargoRegistryCache: cargoRegistrySave,
+    }, passthrough);
+    logFinalCacheSummary(finalSummary, log);
+    if (compileCacheStats !== "none") {
+        setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);
+    }
+    writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary, compileCacheStats), log);
+    const reportPath = writeCompileCacheReportFile(finalSummary.compile_cache_report, runnerTemp, log);
+    if (reportPath) {
+        log(`compile-cache-report.json written to ${reportPath}`);
+    }
+    // Note: setup-soldr-cache-keys.txt is written in main.ts (right after
+    // resolveSetup) so workflow steps that run between main and post —
+    // notably actions/upload-artifact — can read it. Re-write it here
+    // anyway as a safety net in case main.ts crashed before writing.
+    if (runnerTemp) {
+        writeCacheKeysManifestFromSummary(finalSummary, runnerTemp, log);
+    }
+    // Append save ops to detailed session log if requested
+    if (statsMode === "detailed" && runnerTemp) {
+        try {
+            await postCollector.appendSavesToSessionLog(runnerTemp);
+        }
+        catch (err) {
+            log(`post: stats log append failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+    // Optional verbose diagnostic dump. Gated on `logging: true` which
+    // main.ts persists into action state.
+    const loggingState = core.getState("logging");
+    if ((0, diagnostics_js_1.loggingEnabled)(loggingState)) {
+        const rawInputs = (0, raw_inputs_js_1.readRawInputs)(process.env);
+        // zccache writes its per-rustc-invocation JSONL journal under the
+        // build-cache directory (which == ZCCACHE_CACHE_DIR per
+        // resolve-setup.ts's env exports). When `logging: true` is on we
+        // surface its contents so the reader can answer "warm reported 0
+        // hits — why did each lookup miss" without another build.
+        const journalPath = path.join(result.buildCache.path, "logs", "last-session.jsonl");
+        // Forward the verbatim `report` field from `soldr cache report --json`
+        // so dumpDiagnostics can format its `rollups` (per-extension /
+        // per-crate / slowest_entries) breakdown.
+        const cacheReport = finalSummary.compile_cache_report.report;
+        (0, diagnostics_js_1.dumpDiagnostics)({
+            phase: "post",
+            env: process.env,
+            rawInputs,
+            result,
+            cacheOutcomes: postCollector.snapshot(),
+            finalSummary: finalSummary,
+            journalPath,
+            cacheReport,
+            logger,
+            stepSummaryPath: process.env["GITHUB_STEP_SUMMARY"]?.trim() || undefined,
+        });
+    }
+}
+function writeCacheKeysManifestFromSummary(summary, runnerTemp, log) {
+    const keys = [
+        summary.setup_cache.key,
+        summary.build_cache.key,
+        summary.target_cache.key,
+        summary.cargo_registry_cache.key,
+    ].filter((k) => Boolean(k));
+    if (keys.length === 0)
+        return;
+    const outPath = path.join(runnerTemp, "setup-soldr-cache-keys.txt");
+    try {
+        fs.writeFileSync(outPath, keys.join("\n") + "\n", "utf8");
+        log(`cache-keys manifest written to ${outPath} (${keys.length} keys)`);
+    }
+    catch (err) {
+        log(`post: failed to write cache-keys manifest: ${err instanceof Error ? err.message : String(err)}`);
+    }
+}
+// See main.ts for the rationale behind the test-import escape hatch.
+if (typeof process !== "undefined" &&
+    !process.env["SETUP_SOLDR_TEST_IMPORT"]) {
+    run().catch((err) => {
+        const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
+        core.warning(`setup-soldr post-job step failed: ${message}`);
+    });
+}
+
+
+/***/ }),
+
+/***/ 445:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -77290,7 +78119,7 @@ function proxyPolicy(proxySettings, options) {
 
 /***/ }),
 
-/***/ 445:
+/***/ 446:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -77870,7 +78699,7 @@ function assertResponse(response) {
 
 /***/ }),
 
-/***/ 446:
+/***/ 447:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -77895,7 +78724,7 @@ __export(delay_exports, {
   calculateRetryDelay: () => calculateRetryDelay
 });
 module.exports = __toCommonJS(delay_exports);
-var import_random = __nccwpck_require__(476);
+var import_random = __nccwpck_require__(477);
 function calculateRetryDelay(retryAttempt, config) {
   const exponentialDelay = config.retryDelayInMs * Math.pow(2, retryAttempt);
   const clampedDelay = Math.min(config.maxRetryDelayInMs, exponentialDelay);
@@ -77909,7 +78738,7 @@ function calculateRetryDelay(retryAttempt, config) {
 
 /***/ }),
 
-/***/ 447:
+/***/ 448:
 /***/ ((module) => {
 
 "use strict";
@@ -77952,7 +78781,7 @@ module.exports = class DecoratorHandler {
 
 /***/ }),
 
-/***/ 448:
+/***/ 449:
 /***/ ((module) => {
 
 "use strict";
@@ -77974,7 +78803,7 @@ module.exports = function basename (path) {
 
 /***/ }),
 
-/***/ 449:
+/***/ 450:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -78001,7 +78830,7 @@ module.exports = Dispatcher
 
 /***/ }),
 
-/***/ 450:
+/***/ 451:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -78021,7 +78850,7 @@ exports.ServiceType = ServiceType;
 
 /***/ }),
 
-/***/ 451:
+/***/ 452:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -78954,7 +79783,7 @@ exports.MapperTypeNames = {
 
 /***/ }),
 
-/***/ 452:
+/***/ 453:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -78969,7 +79798,7 @@ exports.logger = (0, logger_1.createClientLogger)("core-client");
 
 /***/ }),
 
-/***/ 453:
+/***/ 454:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -78980,7 +79809,7 @@ const diagnosticsChannel = __nccwpck_require__(137)
 const { parserStates, opcodes, states, emptyBuffer } = __nccwpck_require__(437)
 const { kReadyState, kSentClose, kResponse, kReceivedClose } = __nccwpck_require__(95)
 const { isValidStatusCode, failWebsocketConnection, websocketMessageReceived } = __nccwpck_require__(54)
-const { WebsocketFrameSend } = __nccwpck_require__(181)
+const { WebsocketFrameSend } = __nccwpck_require__(180)
 
 // This code was influenced by ws released under the MIT license.
 // Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
@@ -79321,7 +80150,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 454:
+/***/ 455:
 /***/ ((module) => {
 
 "use strict";
@@ -79345,7 +80174,7 @@ module.exports = function getLimit (limits, name, defaultLimit) {
 
 /***/ }),
 
-/***/ 455:
+/***/ 456:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -79396,7 +80225,7 @@ exports.assertFloat32 = assertFloat32;
 
 /***/ }),
 
-/***/ 456:
+/***/ 457:
 /***/ ((module) => {
 
 var __defProp = Object.defineProperty;
@@ -79509,7 +80338,7 @@ function createHttpHeaders(rawHeaders) {
 
 /***/ }),
 
-/***/ 457:
+/***/ 458:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var concatMap = __nccwpck_require__(333);
@@ -79719,7 +80548,7 @@ function expand(str, max, isTop) {
 
 /***/ }),
 
-/***/ 458:
+/***/ 459:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __create = Object.create;
@@ -79767,7 +80596,7 @@ function log(message, ...args) {
 
 /***/ }),
 
-/***/ 459:
+/***/ 460:
 /***/ ((module) => {
 
 "use strict";
@@ -80005,7 +80834,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 460:
+/***/ 461:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -80019,7 +80848,7 @@ exports.serializeHeaders = serializeHeaders;
 exports.serializeRequestBody = serializeRequestBody;
 const interfaces_js_1 = __nccwpck_require__(96);
 const operationHelpers_js_1 = __nccwpck_require__(405);
-const serializer_js_1 = __nccwpck_require__(451);
+const serializer_js_1 = __nccwpck_require__(452);
 const interfaceHelpers_js_1 = __nccwpck_require__(377);
 /**
  * The programmatic identifier of the serializationPolicy.
@@ -80169,14 +80998,14 @@ function prepareXMLRootList(obj, elementName, xmlNamespaceKey, xmlNamespace) {
 
 /***/ }),
 
-/***/ 461:
+/***/ 462:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 
-var net = __nccwpck_require__(478);
-var tls = __nccwpck_require__(475);
+var net = __nccwpck_require__(479);
+var tls = __nccwpck_require__(476);
 var http = __nccwpck_require__(315);
 var https = __nccwpck_require__(67);
 var events = __nccwpck_require__(441);
@@ -80441,7 +81270,7 @@ exports.debug = debug; // for test
 
 /***/ }),
 
-/***/ 462:
+/***/ 463:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -80514,7 +81343,7 @@ function getCachedDefaultHttpsClient() {
 
 /***/ }),
 
-/***/ 463:
+/***/ 464:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -80523,7 +81352,7 @@ function getCachedDefaultHttpsClient() {
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.RetriableReadableStream = void 0;
-const abort_controller_1 = __nccwpck_require__(466);
+const abort_controller_1 = __nccwpck_require__(467);
 const node_stream_1 = __nccwpck_require__(403);
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -80652,21 +81481,6 @@ exports.RetriableReadableStream = RetriableReadableStream;
 
 /***/ }),
 
-/***/ 464:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AbortError = void 0;
-var AbortError_js_1 = __nccwpck_require__(470);
-Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function () { return AbortError_js_1.AbortError; } }));
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
 /***/ 465:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -80676,7 +81490,7 @@ Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function 
 // Licensed under the MIT license.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AbortError = void 0;
-var AbortError_js_1 = __nccwpck_require__(468);
+var AbortError_js_1 = __nccwpck_require__(471);
 Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function () { return AbortError_js_1.AbortError; } }));
 //# sourceMappingURL=index.js.map
 
@@ -80698,6 +81512,21 @@ Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function 
 /***/ }),
 
 /***/ 467:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AbortError = void 0;
+var AbortError_js_1 = __nccwpck_require__(470);
+Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function () { return AbortError_js_1.AbortError; } }));
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 468:
 /***/ ((module) => {
 
 var __defProp = Object.defineProperty;
@@ -80747,44 +81576,6 @@ function isBlob(x) {
 0 && (0);
 //# sourceMappingURL=typeGuards.js.map
 
-
-/***/ }),
-
-/***/ 468:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AbortError = void 0;
-/**
- * This error is thrown when an asynchronous operation has been aborted.
- * Check for this error by testing the `name` that the name property of the
- * error matches `"AbortError"`.
- *
- * @example
- * ```ts
- * const controller = new AbortController();
- * controller.abort();
- * try {
- *   doAsyncWork(controller.signal)
- * } catch (e) {
- *   if (e.name === 'AbortError') {
- *     // handle abort error here.
- *   }
- * }
- * ```
- */
-class AbortError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = "AbortError";
-    }
-}
-exports.AbortError = AbortError;
-//# sourceMappingURL=AbortError.js.map
 
 /***/ }),
 
@@ -80865,6 +81656,44 @@ exports.AbortError = AbortError;
 /***/ }),
 
 /***/ 471:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AbortError = void 0;
+/**
+ * This error is thrown when an asynchronous operation has been aborted.
+ * Check for this error by testing the `name` that the name property of the
+ * error matches `"AbortError"`.
+ *
+ * @example
+ * ```ts
+ * const controller = new AbortController();
+ * controller.abort();
+ * try {
+ *   doAsyncWork(controller.signal)
+ * } catch (e) {
+ *   if (e.name === 'AbortError') {
+ *     // handle abort error here.
+ *   }
+ * }
+ * ```
+ */
+class AbortError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "AbortError";
+    }
+}
+exports.AbortError = AbortError;
+//# sourceMappingURL=AbortError.js.map
+
+/***/ }),
+
+/***/ 472:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -80991,7 +81820,7 @@ exports.BlobQuickQueryStream = BlobQuickQueryStream;
 
 /***/ }),
 
-/***/ 472:
+/***/ 473:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -81253,7 +82082,7 @@ exports.Pattern = Pattern;
 
 /***/ }),
 
-/***/ 473:
+/***/ 474:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -81457,7 +82286,7 @@ exports.BlobSASPermissions = BlobSASPermissions;
 
 /***/ }),
 
-/***/ 474:
+/***/ 475:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -81504,7 +82333,7 @@ exports.toCommandProperties = toCommandProperties;
 
 /***/ }),
 
-/***/ 475:
+/***/ 476:
 /***/ ((module) => {
 
 "use strict";
@@ -81512,7 +82341,7 @@ module.exports = require("tls");
 
 /***/ }),
 
-/***/ 476:
+/***/ 477:
 /***/ ((module) => {
 
 var __defProp = Object.defineProperty;
@@ -81550,7 +82379,7 @@ function getRandomIntegerInclusive(min, max) {
 
 /***/ }),
 
-/***/ 477:
+/***/ 478:
 /***/ ((module) => {
 
 "use strict";
@@ -81558,7 +82387,7 @@ module.exports = require("node:path");
 
 /***/ }),
 
-/***/ 478:
+/***/ 479:
 /***/ ((module) => {
 
 "use strict";
@@ -81566,7 +82395,7 @@ module.exports = require("net");
 
 /***/ }),
 
-/***/ 479:
+/***/ 480:
 /***/ ((module) => {
 
 "use strict";
@@ -81574,7 +82403,7 @@ module.exports = require("timers");
 
 /***/ }),
 
-/***/ 480:
+/***/ 481:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -81584,7 +82413,7 @@ const Readable = __nccwpck_require__(124)
 const {
   InvalidArgumentError,
   RequestAbortedError
-} = __nccwpck_require__(459)
+} = __nccwpck_require__(460)
 const util = __nccwpck_require__(66)
 const { getResolveErrorBodyCallback } = __nccwpck_require__(183)
 const { AsyncResource } = __nccwpck_require__(402)
@@ -81762,781 +82591,6 @@ module.exports.RequestHandler = RequestHandler
 
 /***/ }),
 
-/***/ 481:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// setup-soldr post-job entry point. Owned by Agent 2.
-//
-// Runs in the post-job phase via action.yml's `post: dist/post.js`. This is
-// the architectural fix for zackees/setup-soldr#70 — it lets us tar+zstd
-// the build-cache (and optionally cargo-registry) directories BEFORE
-// @actions/cache's post-save uploads them, so the wire format is zstd on
-// every platform (including Windows-x64 where actions/cache@v5 still
-// falls back to gzip).
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.buildFinalCacheSummary = buildFinalCacheSummary;
-exports.formatFinalCacheSummaryMarkdown = formatFinalCacheSummaryMarkdown;
-exports.run = run;
-const fs = __importStar(__nccwpck_require__(239));
-const path = __importStar(__nccwpck_require__(477));
-const node_child_process_1 = __nccwpck_require__(191);
-const core = __importStar(__nccwpck_require__(431));
-const cache = __importStar(__nccwpck_require__(207));
-const cache_compress_js_1 = __nccwpck_require__(284);
-const log_utils_js_1 = __nccwpck_require__(334);
-const shutdown_cache_js_1 = __nccwpck_require__(159);
-const stats_collector_js_1 = __nccwpck_require__(71);
-const diagnostics_js_1 = __nccwpck_require__(258);
-const raw_inputs_js_1 = __nccwpck_require__(152);
-const source_mtime_snapshot_js_1 = __nccwpck_require__(383);
-function dirExists(p) {
-    try {
-        return fs.statSync(p).isDirectory();
-    }
-    catch {
-        return false;
-    }
-}
-function fileExists(p) {
-    try {
-        return fs.statSync(p).isFile();
-    }
-    catch {
-        return false;
-    }
-}
-function stateBool(name, fallback = false) {
-    const value = core.getState(name).trim().toLowerCase();
-    if (value === "true")
-        return true;
-    if (value === "false")
-        return false;
-    return fallback;
-}
-function readRestoreState() {
-    return {
-        setupCacheEnabled: stateBool("setupCacheEnabled"),
-        setupCacheExactHit: stateBool("setupCacheExactHit"),
-        setupCacheMatchedKey: core.getState("setupCacheMatchedKey"),
-        targetCacheEnabled: stateBool("targetCacheEnabled"),
-        targetCacheExactHit: stateBool("targetCacheExactHit"),
-        targetCacheMatchedKey: core.getState("targetCacheMatchedKey"),
-        buildCacheEnabled: stateBool("buildCacheEnabled"),
-        buildCacheExactHit: stateBool("buildCacheExactHit"),
-        buildCacheMatchedKey: core.getState("buildCacheMatchedKey"),
-        cargoRegistryCacheEnabled: stateBool("cargoRegistryCacheEnabled"),
-        cargoRegistryCacheExactHit: stateBool("cargoRegistryCacheExactHit"),
-        cargoRegistryCacheMatchedKey: core.getState("cargoRegistryCacheMatchedKey"),
-    };
-}
-function disabledSave() {
-    return { status: "disabled" };
-}
-function notManagedSave() {
-    return { status: "not-managed-in-post" };
-}
-function restoreStatus(enabled, exactHit, matchedKey) {
-    if (!enabled)
-        return "disabled";
-    if (exactHit)
-        return "exact-hit";
-    if (matchedKey.trim())
-        return "restore-key-hit";
-    return "miss";
-}
-async function saveOne(opts) {
-    const { cacheDir, codec, level, key, matchedKey, label, debug, log } = opts;
-    const withBytes = (r) => Object.assign(r, { archiveBytes: null });
-    if (!dirExists(cacheDir)) {
-        log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
-        return withBytes({ status: "missing-dir-skip", cache_dir: cacheDir });
-    }
-    if (matchedKey === key) {
-        log(`${label}: exact cache hit on ${key}, skipping save`);
-        return withBytes({ status: "exact-hit-skip", cache_dir: cacheDir });
-    }
-    let archiveBytes = null;
-    let archivePath = null;
-    try {
-        const result = await (0, cache_compress_js_1.compressCache)({ cacheDir, codec, level, debug, log });
-        archivePath = result.archivePath;
-        archiveBytes = result.archiveBytes || null;
-    }
-    catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        log(`${label}: compression failed: ${message}`);
-        return withBytes({ status: "failed", cache_dir: cacheDir, error: message });
-    }
-    const pathsToSave = archivePath ? [archivePath] : [cacheDir];
-    try {
-        const id = await cache.saveCache(pathsToSave, key);
-        log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"}`);
-        return {
-            status: "saved",
-            cache_dir: cacheDir,
-            archive_path: archivePath ?? undefined,
-            saved_paths: pathsToSave,
-            cache_id: id,
-            archiveBytes,
-        };
-    }
-    catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        log(`${label}: save failed: ${message}`);
-        return {
-            status: "failed",
-            cache_dir: cacheDir,
-            archive_path: archivePath ?? undefined,
-            saved_paths: pathsToSave,
-            error: message,
-            archiveBytes,
-        };
-    }
-}
-function cacheLayerSummary(opts) {
-    const matchedKey = opts.matchedKey.trim();
-    return {
-        enabled: opts.enabled,
-        key: opts.key,
-        matched_key: matchedKey,
-        exact_hit: opts.enabled ? opts.exactHit : false,
-        restore_status: restoreStatus(opts.enabled, opts.exactHit, matchedKey),
-        save: opts.save,
-    };
-}
-function readSoldrCacheReport(soldrBinary, passthrough) {
-    if (passthrough) {
-        // Short-circuit when the main step installed a passthrough stub
-        // (enable=false). Skips spawning a .cmd on Windows (where
-        // child_process.spawnSync can't launch shell scripts directly) and
-        // documents the passthrough state in the post-step summary.
-        return {
-            status: "ok",
-            soldr_version: "passthrough",
-            report: {
-                notes: ["setup-soldr enable=false: soldr passthrough stub"],
-                last_session: null,
-                rollups: null,
-            },
-        };
-    }
-    if (!soldrBinary || !fileExists(soldrBinary)) {
-        return {
-            status: "missing-binary",
-            error: soldrBinary === undefined
-                ? "SOLDR_BINARY env var not set"
-                : `soldr binary at ${soldrBinary} does not exist`,
-        };
-    }
-    // Use spawnSync so the post step has no async dependencies. The
-    // report subcommand is fast (sub-100ms) — never worth pulling in
-    // @actions/exec just for one shell-out.
-    const child = (0, node_child_process_1.spawnSync)(soldrBinary, ["cache", "report", "--json"], {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-        windowsHide: true,
-    });
-    if (child.error) {
-        return {
-            status: "error",
-            error: `failed to spawn soldr: ${child.error.message}`,
-        };
-    }
-    const stdout = (child.stdout || "").trim();
-    const stderr = (child.stderr || "").trim();
-    if (child.status !== 0) {
-        const combined = `${stderr}\n${stdout}`;
-        if (/unrecognized subcommand|invalid value for|unknown sub[- ]?command/i.test(combined) &&
-            /\breport\b/.test(combined)) {
-            return {
-                status: "unsupported",
-                error: stderr || stdout || `soldr exited ${child.status}`,
-            };
-        }
-        return {
-            status: "error",
-            error: stderr || stdout || `soldr exited ${child.status}`,
-        };
-    }
-    let report;
-    try {
-        const parsed = JSON.parse(stdout);
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-            return {
-                status: "error",
-                error: "soldr cache report --json returned a non-object payload",
-            };
-        }
-        report = parsed;
-    }
-    catch (err) {
-        return {
-            status: "error",
-            error: `failed to parse soldr cache report JSON: ${err instanceof Error ? err.message : String(err)}`,
-        };
-    }
-    const soldrVersion = typeof report["soldr_version"] === "string" ? report["soldr_version"] : undefined;
-    const zccacheVersion = typeof report["managed_zccache_version"] === "string"
-        ? report["managed_zccache_version"]
-        : undefined;
-    return {
-        status: "ok",
-        soldr_version: soldrVersion,
-        managed_zccache_version: zccacheVersion,
-        report,
-    };
-}
-function readZccacheSessionSummary(buildCachePath) {
-    const statsPath = path.join(buildCachePath, "logs", "last-session-stats.json");
-    if (!fileExists(statsPath)) {
-        return { stats_path: statsPath, present: false, status: "missing" };
-    }
-    try {
-        const parsed = JSON.parse(fs.readFileSync(statsPath, "utf8"));
-        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-            return {
-                stats_path: statsPath,
-                present: true,
-                status: "invalid",
-                error: "stats JSON was not an object",
-            };
-        }
-        const stats = parsed;
-        const status = typeof stats["status"] === "string" ? stats["status"] : "unknown";
-        return { stats_path: statsPath, present: true, status, stats };
-    }
-    catch (err) {
-        return {
-            stats_path: statsPath,
-            present: true,
-            status: "invalid",
-            error: err instanceof Error ? err.message : String(err),
-        };
-    }
-}
-function buildFinalCacheSummary(result, state, saves, passthrough = false) {
-    return {
-        schema_version: 1,
-        setup_cache: cacheLayerSummary({
-            enabled: state.setupCacheEnabled,
-            key: result.setupCache.key,
-            exactHit: state.setupCacheExactHit,
-            matchedKey: state.setupCacheMatchedKey,
-            save: notManagedSave(),
-        }),
-        target_cache: cacheLayerSummary({
-            enabled: state.targetCacheEnabled,
-            key: result.targetCache.key,
-            exactHit: state.targetCacheExactHit,
-            matchedKey: state.targetCacheMatchedKey,
-            save: notManagedSave(),
-        }),
-        build_cache: cacheLayerSummary({
-            enabled: state.buildCacheEnabled,
-            key: result.buildCache.key,
-            exactHit: state.buildCacheExactHit,
-            matchedKey: state.buildCacheMatchedKey,
-            save: saves.buildCache,
-        }),
-        cargo_registry_cache: cacheLayerSummary({
-            enabled: state.cargoRegistryCacheEnabled,
-            key: result.cargoRegistryCache.key,
-            exactHit: state.cargoRegistryCacheExactHit,
-            matchedKey: state.cargoRegistryCacheMatchedKey,
-            save: saves.cargoRegistryCache,
-        }),
-        zccache_session: readZccacheSessionSummary(result.buildCache.path),
-        compile_cache_report: readSoldrCacheReport(process.env["SOLDR_BINARY"]?.trim(), passthrough),
-    };
-}
-function numberStat(stats, key) {
-    const value = stats?.[key];
-    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
-}
-function zccacheOneLine(summary) {
-    if (!summary.present)
-        return `missing (${summary.stats_path})`;
-    if (summary.status !== "ok") {
-        return summary.error ? `${summary.status} (${summary.error})` : summary.status;
-    }
-    const hits = numberStat(summary.stats, "hits") ?? 0;
-    const misses = numberStat(summary.stats, "misses") ?? 0;
-    const compilations = numberStat(summary.stats, "compilations") ?? hits + misses;
-    const nonCacheable = numberStat(summary.stats, "non_cacheable") ?? 0;
-    const errors = numberStat(summary.stats, "errors") ?? 0;
-    const hitRate = numberStat(summary.stats, "hit_rate");
-    const hitRateText = hitRate === undefined ? "n/a" : `${(hitRate * 100).toFixed(1)}%`;
-    return `hits=${hits} misses=${misses} compilations=${compilations} non_cacheable=${nonCacheable} errors=${errors} hit_rate=${hitRateText}`;
-}
-function restoreText(layer) {
-    if (!layer.enabled)
-        return "disabled";
-    if (layer.restore_status === "exact-hit")
-        return "exact hit";
-    if (layer.restore_status === "restore-key-hit")
-        return "restore-key hit";
-    return "miss";
-}
-function saveText(save) {
-    switch (save.status) {
-        case "saved":
-            return save.cache_id === undefined ? "saved" : `saved id=${save.cache_id}`;
-        case "exact-hit-skip":
-            return "skipped exact hit";
-        case "missing-dir-skip":
-            return "skipped missing dir";
-        case "failed":
-            return save.error ? `failed: ${save.error}` : "failed";
-        case "disabled":
-            return "disabled";
-        case "not-managed-in-post":
-            return "not managed in post";
-    }
-}
-function markdownCell(value) {
-    return value.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
-}
-function tableRow(label, layer) {
-    return [
-        label,
-        restoreText(layer),
-        layer.key,
-        layer.matched_key || "",
-        saveText(layer.save),
-    ]
-        .map(markdownCell)
-        .join(" | ");
-}
-function fmtBytes(n) {
-    if (n >= 1_073_741_824)
-        return `${(n / 1_073_741_824).toFixed(1)} GB`;
-    if (n >= 1_048_576)
-        return `${(n / 1_048_576).toFixed(1)} MB`;
-    if (n >= 1_024)
-        return `${(n / 1_024).toFixed(1)} KB`;
-    return `${n} B`;
-}
-function setCompileCacheOutputs(report, mode) {
-    core.setOutput("compile-cache-session-status", report.status);
-    if (report.status !== "ok" || !report.report)
-        return;
-    core.setOutput("compile-cache-summary-json", JSON.stringify(report.report));
-    const lastSession = report.report["last_session"];
-    if (lastSession) {
-        const hits = numberStat(lastSession, "hits") ?? 0;
-        const misses = numberStat(lastSession, "misses") ?? 0;
-        const compilations = numberStat(lastSession, "compilations") ?? hits + misses;
-        const hitRate = numberStat(lastSession, "hit_rate");
-        const timeSavedMs = numberStat(lastSession, "time_saved_ms");
-        const bytesRead = numberStat(lastSession, "bytes_read");
-        const bytesWritten = numberStat(lastSession, "bytes_written");
-        core.setOutput("compile-cache-hits", String(hits));
-        core.setOutput("compile-cache-misses", String(misses));
-        core.setOutput("compile-cache-compilations", String(compilations));
-        if (hitRate !== undefined)
-            core.setOutput("compile-cache-hit-rate", String(hitRate));
-        if (timeSavedMs !== undefined)
-            core.setOutput("compile-cache-time-saved-ms", String(timeSavedMs));
-        if (bytesRead !== undefined)
-            core.setOutput("compile-cache-bytes-read", String(bytesRead));
-        if (bytesWritten !== undefined)
-            core.setOutput("compile-cache-bytes-written", String(bytesWritten));
-    }
-    if (mode === "detailed") {
-        const rollups = report.report["rollups"];
-        if (rollups)
-            core.setOutput("compile-cache-rollups-json", JSON.stringify(rollups));
-    }
-}
-function compileCacheReportSection(report, mode) {
-    if (mode === "none")
-        return [];
-    const lines = ["", "### Compile cache (zccache)", ""];
-    if (report.status !== "ok" || !report.report) {
-        lines.push(`| Status | ${markdownCell(report.status)} |`);
-        if (report.error)
-            lines.push(`| Detail | ${markdownCell(report.error)} |`);
-        return lines;
-    }
-    const body = report.report;
-    const lastSession = body["last_session"] ?? null;
-    const rollups = body["rollups"] ?? null;
-    if (lastSession) {
-        const hits = numberStat(lastSession, "hits") ?? 0;
-        const misses = numberStat(lastSession, "misses") ?? 0;
-        const compilations = numberStat(lastSession, "compilations") ?? hits + misses;
-        const rate = numberStat(lastSession, "hit_rate");
-        const rateText = rate === undefined ? "n/a" : `${(rate * 100).toFixed(1)}%`;
-        const saved = numberStat(lastSession, "time_saved_ms");
-        const bytesRead = numberStat(lastSession, "bytes_read");
-        const bytesWritten = numberStat(lastSession, "bytes_written");
-        lines.push("| Metric | Value |", "| --- | --- |");
-        lines.push(`| Compilations | ${compilations} |`);
-        lines.push(`| Hits | ${hits} |`);
-        lines.push(`| Misses | ${misses} |`);
-        lines.push(`| Hit rate | ${rateText} |`);
-        if (saved !== undefined)
-            lines.push(`| Time saved (est.) | ${(saved / 1000).toFixed(1)}s |`);
-        if (bytesRead !== undefined)
-            lines.push(`| Bytes read | ${fmtBytes(bytesRead)} |`);
-        if (bytesWritten !== undefined)
-            lines.push(`| Bytes written | ${fmtBytes(bytesWritten)} |`);
-        if (report.soldr_version)
-            lines.push(`| soldr | ${markdownCell(report.soldr_version)} |`);
-        if (report.managed_zccache_version)
-            lines.push(`| zccache | ${markdownCell(report.managed_zccache_version)} |`);
-    }
-    else {
-        lines.push("_(no last\\_session yet — run a cache-enabled build first)_");
-    }
-    if (mode === "detailed" && rollups) {
-        const byExt = rollups["by_extension"];
-        if (byExt && typeof byExt === "object" && !Array.isArray(byExt)) {
-            const rows = Object.entries(byExt);
-            if (rows.length > 0) {
-                lines.push("", "#### By output extension", "");
-                lines.push("| Extension | Hits | Misses | Total ms |", "| --- | --- | --- | --- |");
-                for (const [ext, bucket] of rows) {
-                    const b = bucket ?? {};
-                    const h = numberStat(b, "hits") ?? 0;
-                    const m = numberStat(b, "misses") ?? 0;
-                    const t = numberStat(b, "total_ms") ?? 0;
-                    lines.push(`| ${markdownCell(ext)} | ${h} | ${m} | ${t} |`);
-                }
-            }
-        }
-        const byTool = rollups["by_tool_total_ms"];
-        if (byTool && typeof byTool === "object" && !Array.isArray(byTool)) {
-            const rows = Object.entries(byTool)
-                .map(([tool, ms]) => [tool, typeof ms === "number" ? ms : 0])
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10);
-            if (rows.length > 0) {
-                lines.push("", "#### By tool (wall-clock)", "");
-                lines.push("| Tool | ms |", "| --- | --- |");
-                for (const [tool, ms] of rows) {
-                    lines.push(`| ${markdownCell(tool)} | ${ms} |`);
-                }
-            }
-        }
-    }
-    const notes = body["notes"];
-    if (Array.isArray(notes) && notes.length > 0) {
-        lines.push("", "<details><summary>Notes from soldr</summary>", "");
-        for (const note of notes) {
-            if (typeof note === "string")
-                lines.push(`- ${markdownCell(note)}`);
-        }
-        lines.push("", "</details>");
-    }
-    return lines;
-}
-function formatFinalCacheSummaryMarkdown(summary, compileCacheStats = "summarize") {
-    const lines = [
-        "## setup-soldr final cache summary",
-        "",
-        "| Layer | Restore | Primary key | Matched key | Save |",
-        "| --- | --- | --- | --- | --- |",
-        `| ${tableRow("setup cache", summary.setup_cache)} |`,
-        `| ${tableRow("target cache", summary.target_cache)} |`,
-        `| ${tableRow("build cache", summary.build_cache)} |`,
-        `| ${tableRow("cargo registry cache", summary.cargo_registry_cache)} |`,
-        "",
-        "### zccache session",
-        "",
-        `- Stats: ${zccacheOneLine(summary.zccache_session)}`,
-        `- Stats file: ${summary.zccache_session.stats_path}`,
-        ...compileCacheReportSection(summary.compile_cache_report, compileCacheStats),
-        "",
-        "<details><summary>Final cache summary JSON</summary>",
-        "",
-        "```json",
-        JSON.stringify(summary, null, 2),
-        "```",
-        "",
-        "</details>",
-        "",
-    ];
-    return `${lines.join("\n")}\n`;
-}
-function logFinalCacheSummary(summary, log) {
-    log(`final cache summary: setup=${restoreText(summary.setup_cache)} target=${restoreText(summary.target_cache)} ` +
-        `build=${restoreText(summary.build_cache)}/${saveText(summary.build_cache.save)} ` +
-        `cargo-registry=${restoreText(summary.cargo_registry_cache)}/${saveText(summary.cargo_registry_cache.save)}`);
-    log(`final zccache session stats: ${zccacheOneLine(summary.zccache_session)}`);
-    log(`compile cache report: ${compileCacheReportOneLine(summary.compile_cache_report)}`);
-}
-function compileCacheReportOneLine(report) {
-    if (report.status !== "ok" || !report.report) {
-        return report.error ? `${report.status} (${report.error})` : report.status;
-    }
-    const lastSession = report.report["last_session"];
-    if (!lastSession) {
-        return `ok (no last_session yet, soldr ${report.soldr_version ?? "?"})`;
-    }
-    const hits = numberStat(lastSession, "hits") ?? 0;
-    const misses = numberStat(lastSession, "misses") ?? 0;
-    const rate = numberStat(lastSession, "hit_rate");
-    const rateText = rate === undefined ? "n/a" : `${(rate * 100).toFixed(1)}%`;
-    return `ok hits=${hits} misses=${misses} hit_rate=${rateText} soldr=${report.soldr_version ?? "?"}`;
-}
-function writeCompileCacheReportFile(report, runnerTemp, log) {
-    if (!runnerTemp)
-        return undefined;
-    const outPath = path.join(runnerTemp, "setup-soldr-compile-cache-report.json");
-    try {
-        fs.writeFileSync(outPath, JSON.stringify(report, null, 2), "utf8");
-        return outPath;
-    }
-    catch (err) {
-        log(`post: failed to write compile-cache-report.json: ${err instanceof Error ? err.message : String(err)}`);
-        return undefined;
-    }
-}
-function writeStepSummary(markdown, log) {
-    const summaryPath = process.env["GITHUB_STEP_SUMMARY"]?.trim();
-    if (!summaryPath)
-        return;
-    try {
-        fs.appendFileSync(summaryPath, markdown, "utf8");
-    }
-    catch (err) {
-        log(`post: failed to write GitHub step summary: ${err instanceof Error ? err.message : String(err)}`);
-    }
-}
-async function run() {
-    const logger = (0, log_utils_js_1.createLogger)(process.env);
-    const log = (msg) => logger.log(msg);
-    const state = core.getState("resolveResult");
-    if (!state) {
-        log("post: no resolve state available, exiting");
-        return;
-    }
-    let result;
-    try {
-        result = JSON.parse(state);
-    }
-    catch (err) {
-        log(`post: failed to parse resolve state: ${err instanceof Error ? err.message : String(err)}`);
-        return;
-    }
-    const buildCacheMatched = core.getState("buildCacheMatchedKey");
-    const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
-    const passthrough = stateBool("setupSoldrPassthrough");
-    const restoreState = readRestoreState();
-    const statsMode = (core.getState("statsMode") || "summarize");
-    const compileCacheStats = (core.getState("compileCacheStats") || "summarize");
-    const runnerTemp = core.getState("runnerTemp") || "";
-    const debugMode = result.debugMode ?? false;
-    const debugLog = debugMode ? log : () => undefined;
-    const postCollector = new stats_collector_js_1.StatsCollector();
-    // Always stop long-running cache daemons before packing the build
-    // cache so file locks release and the tarball reflects a quiescent
-    // on-disk view. Best-effort; failures are logged, not raised.
-    await (0, shutdown_cache_js_1.shutdownCacheDaemons)({
-        soldrPath: process.env["SOLDR_BINARY"]?.trim() || undefined,
-        log,
-    });
-    // Source-mtime snapshot (preserve-source-mtimes opt-in). Walk tracked
-    // sources, capture each (mtime, size, content-hash), and drop the JSON
-    // INSIDE the build-cache directory so it gets bundled into the same
-    // tar.zst the build-cache save will upload. main.ts replays the
-    // mtimes on warm after the build-cache decompresses, gated on each
-    // file's content matching what we snapshotted here.
-    const preserveSourceMtimes = core.getState("preserveSourceMtimes") === "true";
-    if (preserveSourceMtimes && restoreState.buildCacheEnabled) {
-        const t0 = Date.now();
-        // The "project root" — where the Cargo workspace being built actually
-        // lives — is the parent of the resolved target-dir, NOT result.workspace
-        // (which is GITHUB_WORKSPACE — usually the outer checkout containing
-        // the action itself plus one or more sub-repos). For the demo,
-        // result.workspace=/home/runner/work/setup-soldr/setup-soldr but the
-        // zccache project being built is at .../setup-soldr/zccache.
-        const projectRoot = path.dirname(result.targetCache.targetPath);
-        try {
-            const r = await (0, source_mtime_snapshot_js_1.snapshotSourceMtimes)({ workspace: projectRoot, log });
-            const out = path.join(result.buildCache.path, source_mtime_snapshot_js_1.SNAPSHOT_FILENAME);
-            try {
-                fs.mkdirSync(path.dirname(out), { recursive: true });
-                (0, source_mtime_snapshot_js_1.writeSnapshotFile)(r.snapshot, out);
-                log(`source-mtime-snapshot: wrote ${out} scanned=${r.scanned} hashed=${r.hashed} skipped=${r.skipped} elapsed_ms=${Date.now() - t0}`);
-            }
-            catch (err) {
-                log(`source-mtime-snapshot: failed to write ${out}: ${err instanceof Error ? err.message : String(err)}`);
-            }
-        }
-        catch (err) {
-            log(`source-mtime-snapshot: scan failed: ${err instanceof Error ? err.message : String(err)}`);
-        }
-    }
-    // Build cache
-    const buildSaveStart = Date.now();
-    const buildSave = restoreState.buildCacheEnabled
-        ? await saveOne({
-            cacheDir: result.buildCache.path,
-            codec: result.targetCacheCompress,
-            level: result.targetCacheCompressLevel,
-            key: result.buildCache.key,
-            matchedKey: buildCacheMatched,
-            label: "build-cache",
-            debug: debugMode,
-            log: debugLog,
-        })
-        : Object.assign(disabledSave(), { archiveBytes: null });
-    if (buildSave.status === "saved") {
-        postCollector.record({
-            label: "build-cache", operation: "save", hit: false,
-            key: result.buildCache.key, matchedKey: buildCacheMatched, restoreKeys: [],
-            archiveBytes: buildSave.archiveBytes, inflatedBytes: null, fileCount: null,
-            durationMs: Date.now() - buildSaveStart, timestamp: new Date().toISOString(),
-        });
-    }
-    // Cargo registry cache (only when enabled)
-    let cargoRegistrySave = Object.assign(disabledSave(), { archiveBytes: null });
-    if (result.cargoRegistryCache.enabled) {
-        const regSaveStart = Date.now();
-        cargoRegistrySave = await saveOne({
-            cacheDir: result.cargoRegistryCache.path,
-            codec: result.targetCacheCompress,
-            level: result.targetCacheCompressLevel,
-            key: result.cargoRegistryCache.key,
-            matchedKey: registryMatched,
-            label: "cargo-registry-cache",
-            debug: debugMode,
-            log: debugLog,
-        });
-        if (cargoRegistrySave.status === "saved") {
-            postCollector.record({
-                label: "cargo-registry", operation: "save", hit: false,
-                key: result.cargoRegistryCache.key, matchedKey: registryMatched, restoreKeys: [],
-                archiveBytes: cargoRegistrySave.archiveBytes, inflatedBytes: null, fileCount: null,
-                durationMs: Date.now() - regSaveStart, timestamp: new Date().toISOString(),
-            });
-        }
-    }
-    const finalSummary = buildFinalCacheSummary(result, restoreState, {
-        buildCache: buildSave,
-        cargoRegistryCache: cargoRegistrySave,
-    }, passthrough);
-    logFinalCacheSummary(finalSummary, log);
-    if (compileCacheStats !== "none") {
-        setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);
-    }
-    writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary, compileCacheStats), log);
-    const reportPath = writeCompileCacheReportFile(finalSummary.compile_cache_report, runnerTemp, log);
-    if (reportPath) {
-        log(`compile-cache-report.json written to ${reportPath}`);
-    }
-    // Note: setup-soldr-cache-keys.txt is written in main.ts (right after
-    // resolveSetup) so workflow steps that run between main and post —
-    // notably actions/upload-artifact — can read it. Re-write it here
-    // anyway as a safety net in case main.ts crashed before writing.
-    if (runnerTemp) {
-        writeCacheKeysManifestFromSummary(finalSummary, runnerTemp, log);
-    }
-    // Append save ops to detailed session log if requested
-    if (statsMode === "detailed" && runnerTemp) {
-        try {
-            await postCollector.appendSavesToSessionLog(runnerTemp);
-        }
-        catch (err) {
-            log(`post: stats log append failed: ${err instanceof Error ? err.message : String(err)}`);
-        }
-    }
-    // Optional verbose diagnostic dump. Gated on `logging: true` which
-    // main.ts persists into action state.
-    const loggingState = core.getState("logging");
-    if ((0, diagnostics_js_1.loggingEnabled)(loggingState)) {
-        const rawInputs = (0, raw_inputs_js_1.readRawInputs)(process.env);
-        // zccache writes its per-rustc-invocation JSONL journal under the
-        // build-cache directory (which == ZCCACHE_CACHE_DIR per
-        // resolve-setup.ts's env exports). When `logging: true` is on we
-        // surface its contents so the reader can answer "warm reported 0
-        // hits — why did each lookup miss" without another build.
-        const journalPath = path.join(result.buildCache.path, "logs", "last-session.jsonl");
-        // Forward the verbatim `report` field from `soldr cache report --json`
-        // so dumpDiagnostics can format its `rollups` (per-extension /
-        // per-crate / slowest_entries) breakdown.
-        const cacheReport = finalSummary.compile_cache_report.report;
-        (0, diagnostics_js_1.dumpDiagnostics)({
-            phase: "post",
-            env: process.env,
-            rawInputs,
-            result,
-            cacheOutcomes: postCollector.snapshot(),
-            finalSummary: finalSummary,
-            journalPath,
-            cacheReport,
-            logger,
-            stepSummaryPath: process.env["GITHUB_STEP_SUMMARY"]?.trim() || undefined,
-        });
-    }
-}
-function writeCacheKeysManifestFromSummary(summary, runnerTemp, log) {
-    const keys = [
-        summary.setup_cache.key,
-        summary.build_cache.key,
-        summary.target_cache.key,
-        summary.cargo_registry_cache.key,
-    ].filter((k) => Boolean(k));
-    if (keys.length === 0)
-        return;
-    const outPath = path.join(runnerTemp, "setup-soldr-cache-keys.txt");
-    try {
-        fs.writeFileSync(outPath, keys.join("\n") + "\n", "utf8");
-        log(`cache-keys manifest written to ${outPath} (${keys.length} keys)`);
-    }
-    catch (err) {
-        log(`post: failed to write cache-keys manifest: ${err instanceof Error ? err.message : String(err)}`);
-    }
-}
-// See main.ts for the rationale behind the test-import escape hatch.
-if (typeof process !== "undefined" &&
-    !process.env["SETUP_SOLDR_TEST_IMPORT"]) {
-    run().catch((err) => {
-        const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
-        core.warning(`setup-soldr post-job step failed: ${message}`);
-    });
-}
-
-
-/***/ }),
-
 /***/ 482:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -82553,7 +82607,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.TestTransport = void 0;
-const rpc_error_1 = __nccwpck_require__(170);
+const rpc_error_1 = __nccwpck_require__(169);
 const runtime_1 = __nccwpck_require__(17);
 const rpc_output_stream_1 = __nccwpck_require__(294);
 const rpc_options_1 = __nccwpck_require__(281);
@@ -84746,7 +84800,7 @@ module.exports = require("node:zlib");
 /***/ 489:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-module.exports = __nccwpck_require__(461);
+module.exports = __nccwpck_require__(462);
 
 
 /***/ }),
@@ -85545,7 +85599,7 @@ const reflection_type_check_1 = __nccwpck_require__(278);
 const reflection_json_reader_1 = __nccwpck_require__(327);
 const reflection_json_writer_1 = __nccwpck_require__(87);
 const reflection_binary_reader_1 = __nccwpck_require__(384);
-const reflection_binary_writer_1 = __nccwpck_require__(180);
+const reflection_binary_writer_1 = __nccwpck_require__(179);
 const reflection_create_1 = __nccwpck_require__(199);
 const reflection_merge_partial_1 = __nccwpck_require__(132);
 const json_typings_1 = __nccwpck_require__(372);
@@ -85838,7 +85892,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.issue = exports.issueCommand = void 0;
 const os = __importStar(__nccwpck_require__(89));
-const utils_1 = __nccwpck_require__(474);
+const utils_1 = __nccwpck_require__(475);
 /**
  * Commands
  *
@@ -86155,7 +86209,7 @@ function makeBlobBeginCopyFromURLPollOperation(state) {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(481);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(444);
 /******/ 	module.exports = __webpack_exports__;
 /******/
 /******/ })()
