@@ -2,7 +2,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dumpDiagnostics, loggingEnabled } from "../src/lib/diagnostics.js";
+import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "../src/lib/diagnostics.js";
 import type { Logger, RawInputs } from "../src/lib/types.js";
 
 function captureLogger(): { logger: Logger; lines: string[] } {
@@ -175,4 +175,33 @@ test("dumpDiagnostics includes cache_outcomes when provided", () => {
   assert.match(body, /\[cache_outcomes/);
   assert.match(body, /\[save\] build-cache/);
   assert.match(body, /archive_bytes=12345/);
+});
+
+test("dumpDiagnostics includes the [processes] section when processSnapshot is set", () => {
+  const { logger, lines } = captureLogger();
+  dumpDiagnostics({
+    phase: "post",
+    env: {},
+    logger,
+    processSnapshot: {
+      cmd: "ps -eo pid,ppid,user,stat,comm,args",
+      stdout: "  PID  PPID USER     STAT COMMAND COMMAND\n 1234     1 runner   S    bash    /bin/bash\n 5678     1 runner   S    zccache zccache-daemon.42\n",
+      stderr: "",
+      exitCode: 0,
+    },
+  });
+  const body = lines.join("\n");
+  assert.match(body, /\[processes: snapshot via `ps/);
+  assert.match(body, /zccache-daemon\.42/);
+});
+
+test("captureProcessSnapshot returns a snapshot or null on this platform", () => {
+  const snap = captureProcessSnapshot();
+  // Either we got a real snapshot (the common case on any normal dev machine
+  // or CI runner), or we got null because ps/tasklist failed to launch.
+  // Both are valid; the contract is "never throw."
+  if (snap === null) return;
+  assert.ok(typeof snap.cmd === "string" && snap.cmd.length > 0, "cmd field populated");
+  assert.ok(typeof snap.stdout === "string", "stdout field populated");
+  assert.ok(typeof snap.stderr === "string", "stderr field populated");
 });
