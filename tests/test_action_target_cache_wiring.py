@@ -57,6 +57,8 @@ EXPECTED_INPUTS = {
     "debug",
     "cache-shutdown-on-idle",
     "rust-backtrace",
+    "logging",
+    "preserve-source-mtimes",
 }
 
 
