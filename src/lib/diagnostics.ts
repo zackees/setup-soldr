@@ -138,6 +138,15 @@ export interface DumpOptions {
    */
   journalPath?: string;
   /**
+   * When true, after the summarized `[compile_journal]` section, the
+   * dump also emits a `[compile_journal_raw]` section containing the
+   * verbatim JSONL contents of `journalPath` (one line per record,
+   * indented for log readability). Gated by callers on `debug: true`
+   * because the raw stream is large (one record per rustc invocation,
+   * typically hundreds per build).
+   */
+  journalPrintRaw?: boolean;
+  /**
    * Verbatim `report` field returned by `soldr cache report --json`
    * (parsed into `SoldrCacheReportSummary.report`). When present, the
    * post-phase dump also includes the `rollups` (per-extension /
@@ -301,6 +310,30 @@ export function dumpDiagnostics(opts: DumpOptions): void {
       lines.push(
         `  (failed to read ${opts.journalPath}: ${err instanceof Error ? err.message : String(err)})`,
       );
+    }
+
+    // Raw JSONL dump — verbatim file contents under the summary. Only
+    // emitted when the caller opts in (debug=true) because it's huge
+    // (one record per rustc invocation, frequently MBs of output).
+    if (opts.journalPrintRaw) {
+      try {
+        const raw = fs.readFileSync(opts.journalPath, "utf8");
+        const rawLines = raw.split(/\r?\n/).filter((l) => l.length > 0);
+        lines.push(`[compile_journal_raw: verbatim JSONL from ${opts.journalPath} — ${rawLines.length} records]`);
+        for (const rawLine of rawLines) {
+          lines.push(`  ${rawLine}`);
+        }
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === "ENOENT") {
+          // Already noted by the summary section above; no need to repeat.
+        } else {
+          lines.push(`[compile_journal_raw]`);
+          lines.push(
+            `  (failed to read ${opts.journalPath}: ${err instanceof Error ? err.message : String(err)})`,
+          );
+        }
+      }
     }
   }
 
