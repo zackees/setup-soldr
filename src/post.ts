@@ -16,7 +16,7 @@ import { compressCache } from "./lib/cache-compress.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
-import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
+import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
 import {
   snapshotSourceMtimes,
@@ -817,6 +817,10 @@ export async function run(): Promise<void> {
     // so dumpDiagnostics can format its `rollups` (per-extension /
     // per-crate / slowest_entries) breakdown.
     const cacheReport = finalSummary.compile_cache_report.report;
+    // Capture a process snapshot only when debug mode is on — `ps` /
+    // `tasklist` are cheap but the output is large and only useful when
+    // you're investigating cache-state weirdness (e.g. orphan daemons).
+    const processSnapshot = debugMode ? captureProcessSnapshot() ?? undefined : undefined;
     dumpDiagnostics({
       phase: "post",
       env: process.env,
@@ -826,6 +830,7 @@ export async function run(): Promise<void> {
       finalSummary: finalSummary as unknown as Record<string, unknown>,
       journalPath,
       cacheReport,
+      processSnapshot,
       logger,
       stepSummaryPath: process.env["GITHUB_STEP_SUMMARY"]?.trim() || undefined,
     });

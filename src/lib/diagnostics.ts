@@ -13,6 +13,7 @@
 // Token-shaped values are redacted before printing.
 
 import * as fs from "node:fs";
+import { spawnSync } from "node:child_process";
 import {
   formatJournalSection,
   formatRollupsSection,
@@ -143,9 +144,66 @@ export interface DumpOptions {
    * per-crate) breakdown from `zccache analyze --json`.
    */
   cacheReport?: Record<string, unknown>;
+  /**
+   * Pre-captured process snapshot from `captureProcessSnapshot()`. When
+   * provided, the dump appends a `[processes]` section with verbatim
+   * `ps` / `tasklist` output. Used to diagnose orphan zccache-daemon
+   * processes that survive `soldr cache shutdown` and get SIGKILL'd by
+   * the runner's job cleanup. Captured on the caller side (post.ts) so
+   * dumpDiagnostics stays pure for tests.
+   */
+  processSnapshot?: ProcessSnapshot;
   logger: Logger;
   /** When set, also append the dump to this file as a fenced markdown block. */
   stepSummaryPath?: string;
+}
+
+export interface ProcessSnapshot {
+  /** The command line used to produce the snapshot (for log clarity). */
+  cmd: string;
+  /** Verbatim stdout from the listing command. */
+  stdout: string;
+  /** Any stderr captured; usually empty. Printed when non-empty. */
+  stderr: string;
+  /** Exit code from the snapshot command. 0 = success. */
+  exitCode: number | null;
+}
+
+/**
+ * Capture a runtime process snapshot via `ps` (Unix) or `tasklist`
+ * (Windows). Returns null only on an actual exec failure (binary
+ * missing, etc.); a non-zero exit is reported in the result so the
+ * stderr can be inspected.
+ *
+ * Why this lives here: the post step uses it to expose orphan daemons
+ * (e.g. zccache-daemon processes that survive `soldr cache shutdown`
+ * and get SIGKILL'd by the runner) so root-cause analysis doesn't
+ * require another build.
+ */
+export function captureProcessSnapshot(): ProcessSnapshot | null {
+  const isWindows = process.platform === "win32";
+  const cmd = isWindows ? "tasklist" : "ps";
+  // Unix: print pid, ppid, user, state, command-name, full-args.
+  // BSD ps (macOS) supports the same -o keys but uses `command` instead
+  // of `args` — accept both via the column listing.
+  const args = isWindows
+    ? ["/V", "/FO", "CSV", "/NH"]
+    : ["-eo", "pid,ppid,user,stat,comm,args"];
+  try {
+    const result = spawnSync(cmd, args, {
+      encoding: "utf8",
+      maxBuffer: 8 * 1024 * 1024,
+      timeout: 15_000,
+    });
+    return {
+      cmd: `${cmd} ${args.join(" ")}`,
+      stdout: result.stdout ?? "",
+      stderr: result.stderr ?? "",
+      exitCode: result.status,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -253,6 +311,26 @@ export function dumpDiagnostics(opts: DumpOptions): void {
   // FinalCacheSummary shape.
   if (opts.cacheReport) {
     lines.push(...formatRollupsSection(opts.cacheReport));
+  }
+
+  // Process snapshot — captured by the caller via captureProcessSnapshot()
+  // when debug mode is on. Useful for spotting orphan daemons (e.g.
+  // zccache-daemon survivors after `soldr cache shutdown`) that the runner
+  // SIGKILLs at job cleanup.
+  if (opts.processSnapshot) {
+    const snap = opts.processSnapshot;
+    lines.push(`[processes: snapshot via \`${snap.cmd}\` exit=${snap.exitCode ?? "null"}]`);
+    if (snap.stderr.trim().length > 0) {
+      lines.push(`  stderr: ${snap.stderr.trim().replace(/\n+/g, " | ")}`);
+    }
+    const trimmed = snap.stdout.replace(/\r\n/g, "\n").trimEnd();
+    if (trimmed.length === 0) {
+      lines.push("  (no stdout)");
+    } else {
+      for (const line of trimmed.split("\n")) {
+        lines.push(`  ${line}`);
+      }
+    }
   }
 
   lines.push(footer);
