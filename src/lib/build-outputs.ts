@@ -10,9 +10,52 @@ import type { ResolveResult } from "./types.js";
  * Build the $GITHUB_OUTPUT key/value map. Exposed for tests so they
  * can assert byte-for-byte parity with the legacy Python action's
  * `_write_outputs()` call.
+ *
+ * Naming: emits the kebab-case names declared in action.yml so that
+ * `${{ steps.<id>.outputs.<name> }}` references in downstream workflow
+ * steps resolve to non-empty values. zackees/setup-soldr#125 was a
+ * regression where this map used underscored Python-port keys that
+ * never matched the hyphenated action.yml declarations, leaving every
+ * scalar output empty in consuming workflows.
+ *
+ * A handful of underscored aliases are emitted in parallel for
+ * backwards compatibility with internal callers that hard-coded the
+ * old names (none known externally; action.yml only declared the
+ * hyphenated forms). Treat the underscored aliases as legacy — remove
+ * them after a deprecation window once we've confirmed nothing
+ * downstream relies on them.
  */
 export function buildOutputs(result: ResolveResult): Record<string, string> {
-  return {
+  // Canonical kebab-case outputs (these are the ones declared in action.yml
+  // and the names users should reference). Adding a new output? Put it here.
+  const canonical: Record<string, string> = {
+    "enabled": result.enabled ? "true" : "false",
+    "soldr-path": result.soldrPath,
+    "cache-dir": result.cacheRoot,
+    "cache-key": result.setupCache.key,
+    "build-cache-key": result.buildCache.key,
+    "build-cache-path": result.buildCache.path,
+    "build-cache-mode": result.buildCache.mode,
+    "target-cache-key": result.targetCache.key,
+    "target-cache-path": result.targetCache.targetPath,
+    "target-cache-paths": result.targetCache.paths,
+    "target-cache-mode": result.targetCache.effectiveMode,
+    "target-cache-profile": result.targetCache.profile,
+    "target-cache-compress": result.targetCacheCompress,
+    "target-cache-compress-level": result.targetCacheCompressLevel,
+    "target-cache-budget-bytes": result.targetCache.budgetBytes,
+    "target-cache-budget-files": result.targetCache.budgetFiles,
+    "target-lockfile": result.targetCache.lockfilePath,
+    "target-lockfile-hash": result.targetCache.lockfileHash,
+    "shims-dir": result.shimsDir,
+    "toolchain": result.toolchain.channel,
+  };
+
+  // Legacy underscored aliases retained for backwards compatibility with
+  // any consumer that latched onto the old Python-port output names from
+  // before #125 (most of these were never declared in action.yml so
+  // technically undocumented, but free to keep around).
+  const legacy: Record<string, string> = {
     cache_root: result.cacheRoot,
     setup_cache_path: result.setupCache.setupCachePath,
     setup_cache_paths: result.setupCache.paths.join("\n"),
@@ -60,7 +103,7 @@ export function buildOutputs(result: ResolveResult): Record<string, string> {
     toolchain_cache_channel: result.toolchain.cacheChannel,
     toolchain_profile: result.toolchain.profile,
     toolchain_source: result.toolchain.source,
-    toolchain: result.toolchain.channel,
-    enabled: result.enabled ? "true" : "false",
   };
+
+  return { ...legacy, ...canonical };
 }
