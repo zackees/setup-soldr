@@ -29,6 +29,17 @@ import {
 } from "./lib/source-mtime-snapshot.js";
 import type { ActionContext, ResolveResult } from "./lib/types.js";
 
+/**
+ * Map (hit, matchedKey) → workflow-visible restore-status string.
+ * Mirrors post.ts's `RestoreStatus` so both phases emit the same vocabulary
+ * for the `<layer>-cache-restore-status` outputs declared in action.yml.
+ */
+function deriveRestoreStatus(hit: boolean, matchedKey: string): "exact-hit" | "restore-key-hit" | "miss" {
+  if (hit) return "exact-hit";
+  if (matchedKey.trim()) return "restore-key-hit";
+  return "miss";
+}
+
 function writeCacheKeysManifest(
   result: ResolveResult,
   runnerTemp: string,
@@ -199,6 +210,11 @@ export async function run(): Promise<void> {
       logger,
     );
     setupCacheExactHit = restore.hit;
+    // action.yml-declared canonical names (see #125 — these are what
+    // downstream workflows reference). Legacy underscored aliases retained
+    // for backwards compat.
+    core.setOutput("cache-hit", restore.hit ? "true" : "false");
+    core.setOutput("cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
     core.setOutput("setup_cache_hit", restore.hit ? "true" : "false");
     core.setOutput("setup_cache_matched_key", restore.matchedKey);
     core.saveState("setupCacheExactHit", restore.hit ? "true" : "false");
@@ -230,6 +246,8 @@ export async function run(): Promise<void> {
       if (result.targetCache.restoreKeyLockfile) restoreKeys.push(result.targetCache.restoreKeyLockfile);
       const t0 = Date.now();
       const restore = await restoreCacheSafe(targetPaths, result.targetCache.key, restoreKeys, logger);
+      core.setOutput("target-cache-hit", restore.hit ? "true" : "false");
+      core.setOutput("target-cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
       core.setOutput("target_cache_hit", restore.hit ? "true" : "false");
       core.setOutput("target_cache_matched_key", restore.matchedKey);
       core.saveState("targetCacheExactHit", restore.hit ? "true" : "false");
@@ -266,6 +284,8 @@ export async function run(): Promise<void> {
       restoreKeys,
       logger,
     );
+    core.setOutput("build-cache-hit", restore.hit ? "true" : "false");
+    core.setOutput("build-cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
     core.setOutput("build_cache_hit", restore.hit ? "true" : "false");
     core.setOutput("build_cache_matched_key", restore.matchedKey);
     core.saveState("buildCacheExactHit", restore.hit ? "true" : "false");
@@ -405,6 +425,7 @@ export async function run(): Promise<void> {
       [result.cargoRegistryCache.restorePrefix],
       logger,
     );
+    core.setOutput("cargo-registry-cache-hit", restore.hit ? "true" : "false");
     core.setOutput("cargo_registry_cache_hit", restore.hit ? "true" : "false");
     core.saveState("cargoRegistryCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("cargoRegistryCacheMatchedKey", restore.matchedKey);
