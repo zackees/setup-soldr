@@ -126,6 +126,35 @@ What soldr (or any upstream) ships on GitHub Releases is a separate decision fro
 
 Don't bundle non-CI consumers (Docker, manual install, `cargo install`) into a specific decompressor just to optimize the CI cache path.
 
+### Cache-lifetime axis: build the foundation first
+
+Cache layers live on two independent axes — **size** and **lifetime** (how often the key invalidates). Designs that ignore the lifetime axis end up shipping the wrong layer first.
+
+```
+              SHORT-LIVED                     LONG-LIVED
+            (churns on edit)                (churns on release)
+SMALL   ┌─────────────────────────┬─────────────────────────┐
+        │ source-mtime sidecar    │ soldr-mini-cache        │
+        │ compile-journal         │ vendored zstd           │
+        │                         │ toolchain solo-cache    │
+        ├─────────────────────────┼─────────────────────────┤
+LARGE   │ target-cache            │ (rare — most large      │
+        │ build-cache (zccache)   │  artifacts churn fast)  │
+        │ soldr cook output       │                         │
+        └─────────────────────────┴─────────────────────────┘
+```
+
+**Foundation layers live in the long-lived/small quadrant.** They're cheap, hit rate is near-100%, and they form the baseline every subsequent run can assume. Build these first because:
+
+- **They don't depend on heavier layers.** Toolchain solo-cache works whether or not cook is wired in. Cook *needs* a toolchain — without the foundation the heavy layer pays bootstrap cost every cold run, blurring whatever signal it produces.
+- **Measurement is cleaner once the floor exists.** Time a cook-cache hit vs miss against a workflow that already has the foundation, and the deps-compile delta is the only thing moving. Without the foundation, you're measuring `foundation_bootstrap + cook_delta` and can't separate them.
+- **LRU pressure goes the right way.** GitHub Actions Cache is 10 GB per repo with LRU eviction. Small + frequently-hit entries keep their access timestamp warm and survive eviction trivially. Large + short-lived entries (cook tarballs, target trees) compete hard for the same budget — if a heavy layer drives out the foundation, the next cold run pays *both* costs.
+- **Foundation layers don't need users to keep `Cargo.lock` stable** to deliver value. Heavy layers do.
+
+**Anti-pattern**: shipping the biggest absolute win first (cook) without the foundation. The cook tarball is multi-GB and invalidates on any dep update, so its hit rate is workload-dependent. On a repo with active dep churn, cook misses most of the time and pays full cold-deps cost on every miss — *plus* whatever toolchain bootstrap the missing foundation didn't shave off. The combined cold-cold case is slower than a foundation-only setup.
+
+**Rule**: when adding a new cache layer, place it on the size × lifetime grid first. If it lands in the short-lived/large quadrant, the foundation in the long-lived/small quadrant must be in place — otherwise you're optimizing the wrong floor.
+
 ### Prioritization framework for fast-path work
 
 When ranking optimizations, two axes matter:
