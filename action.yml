@@ -305,6 +305,26 @@ inputs:
       JSON sidecar shipped inside the existing build-cache tar.zst.
     required: false
     default: "false"
+  solo-toolchain-cache:
+    description: >
+      Experimental opt-in. When "true", maintain a long-lived,
+      small, per-platform cache that holds only what setup-soldr
+      added to `$RUSTUP_HOME/toolchains/` and `$CARGO_HOME/bin/`
+      on top of the runner image. Save layer short-circuits when
+      the install delta is empty (the common case on hosted
+      runners that already ship rustup + stable). Default "false"
+      while the feature is being validated.
+    required: false
+    default: "false"
+  solo-toolchain-cache-level:
+    description: >
+      zstd compression level for the solo-toolchain-cache archive.
+      Long-lived caches benefit from higher compression because
+      save is rare and restore is constant-time. Default 19; -22
+      buys ~3 MB at 3x save time, not worth it on typical
+      toolchain content. See CLAUDE.md "Compression: zstd -19".
+    required: false
+    default: "19"
 outputs:
   enabled:
     description: >

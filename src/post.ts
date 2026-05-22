@@ -13,6 +13,8 @@ import { spawnSync } from "node:child_process";
 import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { compressCache } from "./lib/cache-compress.js";
+import { saveSoloCache, stageDiffForSave, type RootMap as SoloRootMap } from "./lib/solo-toolchain-cache.js";
+import type { SnapshotDiff } from "./lib/toolchain-snapshot.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
@@ -763,6 +765,83 @@ export async function run(): Promise<void> {
         archiveBytes: cargoRegistrySave.archiveBytes, inflatedBytes: null, fileCount: null,
         durationMs: Date.now() - regSaveStart, timestamp: new Date().toISOString(),
       });
+    }
+  }
+
+  // Solo toolchain cache save. Opt-in via the `solo-toolchain-cache`
+  // input. Skip the save when the install delta is empty (the common
+  // case on hosted runners that already provide the requested
+  // toolchain) — per CLAUDE.md "Default-stable workflows should
+  // produce zero cache writes."
+  const soloEnabled = core.getState("soloToolchainEnabled") === "true";
+  if (soloEnabled) {
+    const soloExactKey = core.getState("soloToolchainExactKey");
+    const soloMatchedKey = core.getState("soloToolchainMatchedKey");
+    const soloExactHit = core.getState("soloToolchainExactHit") === "true";
+    const soloIncrementalEmpty = core.getState("soloToolchainIncrementalEmpty") === "true";
+    const soloSaveDiffPath = core.getState("soloToolchainSaveDiffPath");
+    const soloLevel = core.getState("soloToolchainLevel") || "19";
+    log(
+      `solo-toolchain-cache: post-step exactKey=${soloExactKey} matched=${soloMatchedKey} ` +
+        `exactHit=${soloExactHit} incrementalEmpty=${soloIncrementalEmpty} saveDiffPath=${soloSaveDiffPath}`,
+    );
+    if (soloExactHit && soloIncrementalEmpty) {
+      log("solo-toolchain-cache: exact hit and no install delta — skipping save");
+    } else if (!soloSaveDiffPath || !fs.existsSync(soloSaveDiffPath)) {
+      log("solo-toolchain-cache: no save-diff manifest available, skipping save");
+    } else {
+      try {
+        const manifest = JSON.parse(fs.readFileSync(soloSaveDiffPath, "utf8")) as {
+          added?: SnapshotDiff["added"];
+        };
+        const added = Array.isArray(manifest.added) ? manifest.added : [];
+        if (added.length === 0) {
+          log("solo-toolchain-cache: empty save-diff manifest, skipping save");
+        } else {
+          const soloRootMap: SoloRootMap = {
+            "rustup-toolchains": path.join(result.rustupHome, "toolchains"),
+            "cargo-bin": path.join(result.cargoHome, "bin"),
+          };
+          const stagingDir = path.join(runnerTemp, "setup-soldr-solo-stage-save");
+          const soloSaveStart = Date.now();
+          const staged = await stageDiffForSave(
+            { added, removed: [], changed: [] },
+            soloRootMap,
+            stagingDir,
+          );
+          log(
+            `solo-toolchain-cache: staged ${staged.stagedFiles} files (missing=${staged.missingFiles})`,
+          );
+          const saveResult = await saveSoloCache({
+            stagingDir,
+            key: soloExactKey,
+            level: soloLevel,
+            debug: debugMode,
+            log,
+          });
+          if (saveResult.status === "saved") {
+            postCollector.record({
+              label: "solo-toolchain-cache",
+              operation: "save",
+              hit: false,
+              key: soloExactKey,
+              matchedKey: soloMatchedKey,
+              restoreKeys: [],
+              archiveBytes: saveResult.archiveBytes ?? null,
+              inflatedBytes: saveResult.inflatedBytes ?? null,
+              fileCount: saveResult.fileCount ?? null,
+              durationMs: Date.now() - soloSaveStart,
+              timestamp: new Date().toISOString(),
+            });
+          } else {
+            log(`solo-toolchain-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
+          }
+        }
+      } catch (err) {
+        log(
+          `solo-toolchain-cache: save failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
   }
 
