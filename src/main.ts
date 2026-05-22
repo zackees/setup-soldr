@@ -226,10 +226,23 @@ export async function run(): Promise<void> {
   core.saveState("cargoRegistryCacheExactHit", "false");
   core.saveState("cargoRegistryCacheMatchedKey", "");
 
-  // ---- setup-cache ----
-  await markPhase("setup-cache");
+  // ---- parallel restores ----
+  // setup-cache, target-cache, build-cache, and cargo-registry write to
+  // disjoint paths and have no inter-dependencies, so they run concurrently.
+  // Sequential previously: ~18s on warm runs (setup 0.2s + target 7.7s +
+  // build 5s + cargo-registry 5s). Parallel: ~max(those) ≈ 8s. Saves ~10s.
+  //
+  // Layers that must stay sequential (wired below): solo-toolchain (writes
+  // RUSTUP_HOME, must precede ensureRustToolchain), soldr-mini (writes
+  // install dir, must precede ensureSoldr), cook (writes target/ and needs
+  // the soldr binary). Cargo-registry was previously after-cook — it's been
+  // moved into this parallel block because nothing the soldr install path
+  // touches depends on its hydrated cargo registry state.
+  await markPhase("parallel-restore");
   let setupCacheExactHit = false;
-  if (cacheEnabled && result.setupCache.paths.length > 0) {
+
+  const setupRestorePromise = (async (): Promise<void> => {
+    if (!(cacheEnabled && result.setupCache.paths.length > 0)) return;
     const t0 = Date.now();
     const restore = await restoreCacheSafe(
       result.setupCache.paths,
@@ -238,16 +251,14 @@ export async function run(): Promise<void> {
       logger,
     );
     setupCacheExactHit = restore.hit;
-    // action.yml-declared canonical names (see #125 — these are what
-    // downstream workflows reference). Legacy underscored aliases retained
-    // for backwards compat.
     core.setOutput("cache-hit", restore.hit ? "true" : "false");
     core.setOutput("cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
     core.setOutput("setup_cache_hit", restore.hit ? "true" : "false");
     core.setOutput("setup_cache_matched_key", restore.matchedKey);
     core.saveState("setupCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("setupCacheMatchedKey", restore.matchedKey);
-    // Expose for ensure_rust_toolchain to read via env (the python port did this).
+    // Expose for ensure_rust_toolchain to read via env. Must be visible by
+    // the time toolchain phase runs — guaranteed by the Promise.all below.
     process.env["SETUP_SOLDR_SETUP_CACHE_EXACT_HIT"] = restore.hit ? "true" : "false";
     statsCollector.record({
       label: "setup-cache", operation: "restore", hit: restore.hit,
@@ -257,43 +268,38 @@ export async function run(): Promise<void> {
       durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
     });
     if (debugMode) debugLog(`[debug] setup-cache: hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`);
-  }
-  await finishPhase("setup-cache");
+  })();
 
-  // ---- target-cache ----
-  await markPhase("target-cache");
-  if (result.targetCache.enabled) {
+  const targetRestorePromise = (async (): Promise<void> => {
+    if (!result.targetCache.enabled) return;
     const targetPaths = result.targetCache.paths
       .split(/\r?\n/)
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
-    if (targetPaths.length > 0) {
-      const restoreKeys: string[] = [];
-      if (result.targetCache.restoreKeyParent) restoreKeys.push(result.targetCache.restoreKeyParent);
-      if (result.targetCache.restoreKeyLock) restoreKeys.push(result.targetCache.restoreKeyLock);
-      if (result.targetCache.restoreKeyLockfile) restoreKeys.push(result.targetCache.restoreKeyLockfile);
-      const t0 = Date.now();
-      const restore = await restoreCacheSafe(targetPaths, result.targetCache.key, restoreKeys, logger);
-      core.setOutput("target-cache-hit", restore.hit ? "true" : "false");
-      core.setOutput("target-cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
-      core.setOutput("target_cache_hit", restore.hit ? "true" : "false");
-      core.setOutput("target_cache_matched_key", restore.matchedKey);
-      core.saveState("targetCacheExactHit", restore.hit ? "true" : "false");
-      core.saveState("targetCacheMatchedKey", restore.matchedKey);
-      statsCollector.record({
-        label: "target-cache", operation: "restore", hit: restore.hit,
-        key: result.targetCache.key, matchedKey: restore.matchedKey, restoreKeys,
-        archiveBytes: null, inflatedBytes: null, fileCount: null,
-        durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
-      });
-      if (debugMode) debugLog(`[debug] target-cache: hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`);
-    }
-  }
-  await finishPhase("target-cache");
+    if (targetPaths.length === 0) return;
+    const restoreKeys: string[] = [];
+    if (result.targetCache.restoreKeyParent) restoreKeys.push(result.targetCache.restoreKeyParent);
+    if (result.targetCache.restoreKeyLock) restoreKeys.push(result.targetCache.restoreKeyLock);
+    if (result.targetCache.restoreKeyLockfile) restoreKeys.push(result.targetCache.restoreKeyLockfile);
+    const t0 = Date.now();
+    const restore = await restoreCacheSafe(targetPaths, result.targetCache.key, restoreKeys, logger);
+    core.setOutput("target-cache-hit", restore.hit ? "true" : "false");
+    core.setOutput("target-cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
+    core.setOutput("target_cache_hit", restore.hit ? "true" : "false");
+    core.setOutput("target_cache_matched_key", restore.matchedKey);
+    core.saveState("targetCacheExactHit", restore.hit ? "true" : "false");
+    core.saveState("targetCacheMatchedKey", restore.matchedKey);
+    statsCollector.record({
+      label: "target-cache", operation: "restore", hit: restore.hit,
+      key: result.targetCache.key, matchedKey: restore.matchedKey, restoreKeys,
+      archiveBytes: null, inflatedBytes: null, fileCount: null,
+      durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
+    });
+    if (debugMode) debugLog(`[debug] target-cache: hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`);
+  })();
 
-  // ---- build-cache ----
-  await markPhase("build-cache");
-  if (buildCacheEnabled) {
+  const buildRestorePromise = (async (): Promise<void> => {
+    if (!buildCacheEnabled) return;
     const buildCachePath = result.buildCache.path;
     const archivePath = `${buildCachePath}.tar.zst`;
     const restoreKeys: string[] = [];
@@ -377,14 +383,73 @@ export async function run(): Promise<void> {
       archiveBytes: buildArchiveBytes, inflatedBytes: buildInflatedBytes, fileCount: buildFileCount,
       durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
     });
-  }
-  await finishPhase("build-cache");
+  })();
+
+  // Cargo-registry restore moved here from after-cook. It writes only
+  // $CARGO_HOME/registry/ and has no dependency on soldr being installed;
+  // running it in parallel with target+build trims its ~5s off the critical
+  // path.
+  const cargoRegistryRestorePromise = (async (): Promise<void> => {
+    if (!result.cargoRegistryCache.enabled) return;
+    const registryArchive = `${result.cargoRegistryCache.path}.tar.zst`;
+    const t0 = Date.now();
+    const restore = await restoreCacheSafe(
+      [registryArchive],
+      result.cargoRegistryCache.key,
+      [result.cargoRegistryCache.restorePrefix],
+      logger,
+    );
+    core.setOutput("cargo-registry-cache-hit", restore.hit ? "true" : "false");
+    core.setOutput("cargo_registry_cache_hit", restore.hit ? "true" : "false");
+    core.saveState("cargoRegistryCacheExactHit", restore.hit ? "true" : "false");
+    core.saveState("cargoRegistryCacheMatchedKey", restore.matchedKey);
+    let regArchiveBytes: number | null = null;
+    let regInflatedBytes: number | null = null;
+    let regFileCount: number | null = null;
+    if (fileExists(registryArchive)) {
+      const magic = await detectCompressMagic(registryArchive);
+      if (magic === "zstd" || magic === "gzip") {
+        try {
+          const dr = await decompressCache({
+            archivePath: registryArchive,
+            targetDir: result.cargoRegistryCache.path,
+            debug: debugMode, log: debugLog,
+          });
+          regArchiveBytes = dr.archiveBytes;
+          regInflatedBytes = dr.inflatedBytes;
+          regFileCount = dr.fileCount;
+        } catch (err) {
+          logger.log(
+            `cargo-registry decompress failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+    }
+    statsCollector.record({
+      label: "cargo-registry", operation: "restore", hit: restore.hit,
+      key: result.cargoRegistryCache.key, matchedKey: restore.matchedKey,
+      restoreKeys: [result.cargoRegistryCache.restorePrefix],
+      archiveBytes: regArchiveBytes, inflatedBytes: regInflatedBytes, fileCount: regFileCount,
+      durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
+    });
+  })();
+
+  // Promise.all — each IIFE wraps its own errors via restoreCacheSafe and
+  // try/catches, so this should only see rejections for genuine programming
+  // bugs.
+  await Promise.all([
+    setupRestorePromise,
+    targetRestorePromise,
+    buildRestorePromise,
+    cargoRegistryRestorePromise,
+  ]);
+  await finishPhase("parallel-restore");
 
   // ---- target-tree-cache (full mode) ----
-  await markPhase("target-tree");
   // The bundle path is included in target-cache restore paths above when full
   // mode is requested, so there's no separate restore here. We keep the phase
   // marker for parity with the composite step ordering.
+  await markPhase("target-tree");
   await finishPhase("target-tree");
 
   // ---- toolchain ----
@@ -718,54 +783,6 @@ export async function run(): Promise<void> {
     core.saveState("cookEnabled", "false");
   }
   await finishPhase("cook");
-
-  // ---- cargo-registry restore (if requested) ----
-  if (result.cargoRegistryCache.enabled) {
-    const registryArchive = `${result.cargoRegistryCache.path}.tar.zst`;
-    const t0 = Date.now();
-    // Match the single-path save (post.ts:`pathsToSave = [archivePath]`) so
-    // the @actions/cache version hashes agree and the restore can find the
-    // entry. See the build-cache restore comment above for details.
-    const restore = await restoreCacheSafe(
-      [registryArchive],
-      result.cargoRegistryCache.key,
-      [result.cargoRegistryCache.restorePrefix],
-      logger,
-    );
-    core.setOutput("cargo-registry-cache-hit", restore.hit ? "true" : "false");
-    core.setOutput("cargo_registry_cache_hit", restore.hit ? "true" : "false");
-    core.saveState("cargoRegistryCacheExactHit", restore.hit ? "true" : "false");
-    core.saveState("cargoRegistryCacheMatchedKey", restore.matchedKey);
-    let regArchiveBytes: number | null = null;
-    let regInflatedBytes: number | null = null;
-    let regFileCount: number | null = null;
-    if (fileExists(registryArchive)) {
-      const magic = await detectCompressMagic(registryArchive);
-      if (magic === "zstd" || magic === "gzip") {
-        try {
-          const dr = await decompressCache({
-            archivePath: registryArchive,
-            targetDir: result.cargoRegistryCache.path,
-            debug: debugMode, log: debugLog,
-          });
-          regArchiveBytes = dr.archiveBytes;
-          regInflatedBytes = dr.inflatedBytes;
-          regFileCount = dr.fileCount;
-        } catch (err) {
-          logger.log(
-            `cargo-registry decompress failed: ${err instanceof Error ? err.message : String(err)}`,
-          );
-        }
-      }
-    }
-    statsCollector.record({
-      label: "cargo-registry", operation: "restore", hit: restore.hit,
-      key: result.cargoRegistryCache.key, matchedKey: restore.matchedKey,
-      restoreKeys: [result.cargoRegistryCache.restorePrefix],
-      archiveBytes: regArchiveBytes, inflatedBytes: regInflatedBytes, fileCount: regFileCount,
-      durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
-    });
-  }
 
   // ---- shared-target warning ----
   await detectSharedTargetWarning({
