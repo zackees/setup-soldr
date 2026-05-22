@@ -361,6 +361,7 @@ export function buildFinalCacheSummary(
   saves: {
     buildCache: CacheSaveResult;
     cargoRegistryCache: CacheSaveResult;
+    targetCache: CacheSaveResult;
   },
   passthrough = false,
 ): FinalCacheSummary {
@@ -378,7 +379,7 @@ export function buildFinalCacheSummary(
       key: result.targetCache.key,
       exactHit: state.targetCacheExactHit,
       matchedKey: state.targetCacheMatchedKey,
-      save: notManagedSave(),
+      save: saves.targetCache,
     }),
     build_cache: cacheLayerSummary({
       enabled: state.buildCacheEnabled,
@@ -746,6 +747,117 @@ export async function run(): Promise<void> {
     });
   }
 
+  // Target cache. Previously slotted as `notManagedSave()` in the
+  // finalSummary — i.e. restored in main.ts but never saved here. That
+  // meant every commit cold-rebuilt `target/` (or the rust-plan bundle)
+  // because no entry was ever written for the restore-key prefix to
+  // fall back to. This block fixes the gap.
+  //
+  // Behavior:
+  // - Skip when target-cache layer is disabled (`target-cache: false`
+  //   or umbrella `cache: false`).
+  // - Skip on exact-hit (re-saving the same content under the same key
+  //   wastes time and triggers @actions/cache's "reservation already
+  //   exists" path).
+  // - Use `cache.saveCache` directly with the multi-path array (one
+  //   path in `thin`/`once` modes, two in `full`). @actions/cache will
+  //   tar+compress with its default codec — we don't route through
+  //   compressCache because target-cache may legitimately carry
+  //   multiple roots and compressCache is single-dir-shaped.
+  // - Paths array must match the one passed to restoreCache in main.ts
+  //   (the @actions/cache "version" hash depends on it — same gotcha
+  //   that bit cook-cache in #141).
+  let targetCacheSave: CacheSaveResult & { archiveBytes: number | null } = Object.assign(
+    disabledSave(),
+    { archiveBytes: null as number | null },
+  );
+  if (restoreState.targetCacheEnabled) {
+    const targetPaths = result.targetCache.paths
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    const targetKey = result.targetCache.key;
+    const targetMatched = restoreState.targetCacheMatchedKey;
+    if (targetPaths.length === 0) {
+      log("target-cache: no paths configured, skipping save");
+      targetCacheSave = Object.assign(
+        { status: "missing-dir-skip" as const, cache_dir: "(no paths)" },
+        { archiveBytes: null as number | null },
+      );
+    } else if (restoreState.targetCacheExactHit) {
+      log(`target-cache: exact cache hit on ${targetKey}, skipping save`);
+      targetCacheSave = Object.assign(
+        { status: "exact-hit-skip" as const, cache_dir: targetPaths.join(",") },
+        { archiveBytes: null as number | null },
+      );
+    } else {
+      const existingPaths = targetPaths.filter((p) => fs.existsSync(p));
+      if (existingPaths.length === 0) {
+        log(`target-cache: none of the configured paths exist on disk (${targetPaths.join(", ")}), skipping save`);
+        targetCacheSave = Object.assign(
+          { status: "missing-dir-skip" as const, cache_dir: targetPaths.join(",") },
+          { archiveBytes: null as number | null },
+        );
+      } else {
+        const targetSaveStart = Date.now();
+        try {
+          const id = await cache.saveCache(existingPaths, targetKey);
+          if (id <= 0) {
+            log(
+              `target-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +
+                `job already saved key=${targetKey}`,
+            );
+            targetCacheSave = Object.assign(
+              {
+                status: "failed" as const,
+                cache_dir: existingPaths.join(","),
+                saved_paths: existingPaths,
+                error: `saveCache returned id=${id} (reserve failed; race or quota)`,
+              },
+              { archiveBytes: null as number | null },
+            );
+          } else {
+            log(`target-cache: saved cache id=${id} key=${targetKey} paths=${existingPaths.join(",")}`);
+            targetCacheSave = Object.assign(
+              {
+                status: "saved" as const,
+                cache_dir: existingPaths.join(","),
+                saved_paths: existingPaths,
+                cache_id: id,
+              },
+              { archiveBytes: null as number | null },
+            );
+            postCollector.record({
+              label: "target-cache",
+              operation: "save",
+              hit: false,
+              key: targetKey,
+              matchedKey: targetMatched,
+              restoreKeys: [],
+              archiveBytes: null,
+              inflatedBytes: null,
+              fileCount: null,
+              durationMs: Date.now() - targetSaveStart,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          log(`target-cache: save failed: ${message}`);
+          targetCacheSave = Object.assign(
+            {
+              status: "failed" as const,
+              cache_dir: existingPaths.join(","),
+              saved_paths: existingPaths,
+              error: message,
+            },
+            { archiveBytes: null as number | null },
+          );
+        }
+      }
+    }
+  }
+
   // Cargo registry cache (only when enabled)
   let cargoRegistrySave = Object.assign(disabledSave(), { archiveBytes: null as number | null });
   if (result.cargoRegistryCache.enabled) {
@@ -962,6 +1074,7 @@ export async function run(): Promise<void> {
     {
       buildCache: buildSave,
       cargoRegistryCache: cargoRegistrySave,
+      targetCache: targetCacheSave,
     },
     passthrough,
   );
