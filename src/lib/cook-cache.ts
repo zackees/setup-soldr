@@ -77,7 +77,7 @@ export interface CookSaveOpts {
 }
 
 export interface CookSaveResult {
-  status: "saved" | "skipped-missing-target" | "skipped-empty" | "failed";
+  status: "saved" | "skipped-race" | "skipped-missing-target" | "skipped-empty" | "failed";
   cacheId?: number;
   archiveBytes?: number;
   inflatedBytes?: number;
@@ -273,6 +273,24 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
   }
   try {
     const id = await cache.saveCache([archivePath], exactKey);
+    if (id <= 0) {
+      // @actions/cache returns -1 when reserveCache fails — typically
+      // because the key already exists (parallel job got there first)
+      // or the cache budget is exhausted. Not an error: future runs
+      // will hit the entry the other job saved.
+      log(
+        `cook-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +
+          `job already saved key=${exactKey} or repo cache budget is exhausted`,
+      );
+      return {
+        status: "skipped-race",
+        cacheId: id,
+        archiveBytes,
+        inflatedBytes,
+        fileCount,
+        archivePath,
+      };
+    }
     log(`cook-cache: saved id=${id} key=${exactKey} archive=${archivePath}`);
     return {
       status: "saved",
