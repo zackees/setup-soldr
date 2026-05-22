@@ -71,6 +71,8 @@ export interface RawInputs {
   preserveSourceMtimes: string;
   soloToolchainCache: string;
   soloToolchainCacheLevel: string;
+  prebuildDeps: string;
+  prebuildDepsFlags: string;
 }
 
 /**

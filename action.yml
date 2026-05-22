@@ -325,6 +325,37 @@ inputs:
       toolchain content. See CLAUDE.md "Compression: zstd -19".
     required: false
     default: "19"
+  prebuild-deps:
+    description: >
+      Pre-build dependencies via `soldr cook` (cargo-chef pattern)
+      before the workflow's own cargo invocations. When the cache
+      hits on the Cargo.lock hash, target/deps/ is pre-warmed so
+      the user's first build starts hot. Default "cargo-chef".
+      Set to "none" to skip. Other values reserved for future
+      strategies.
+
+      Cache key is content-addressable on
+      (os, arch, libc, rustc_release, flags_hash, Cargo.lock hash,
+      soldr_version) — same Cargo.lock hits across branches with
+      zero parent-ladder logic. See CLAUDE.md "Cache-lifetime
+      axis".
+
+      Skipped when `cache: false` or no Cargo.lock is found.
+      Failures are logged but never fail the action — the user's
+      normal cargo build still runs and succeeds.
+    required: false
+    default: "cargo-chef"
+  prebuild-deps-flags:
+    description: >
+      Additional flags forwarded to `soldr cook`. Default
+      "--release" matches the typical CI scenario. Pass empty to
+      use cook's debug-profile default. Examples:
+      "--release --target x86_64-unknown-linux-musl",
+      "--profile release-lto", "--workspace". These flags are
+      hashed into the cache key — different flags = different
+      cache entry.
+    required: false
+    default: "--release"
 outputs:
   enabled:
     description: >
