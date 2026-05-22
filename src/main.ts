@@ -21,6 +21,12 @@ import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js
 import { ensureShims } from "./lib/ensure-shims.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { StatsCollector } from "./lib/stats-collector.js";
+import {
+  walkSnapshot,
+  diffSnapshots,
+  diffStats,
+  serializeManifest,
+} from "./lib/toolchain-snapshot.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import {
   replaySourceMtimes,
@@ -360,8 +366,42 @@ export async function run(): Promise<void> {
   await finishPhase("target-tree");
 
   // ---- toolchain ----
+  // Snapshot $RUSTUP_HOME/toolchains/ + $CARGO_HOME/bin/ around the
+  // toolchain install so we can see which inodes setup-soldr added on
+  // top of the runner image. Measurement only — no cache writes. See
+  // CLAUDE.md "Detect-then-cache: only save the delta" for the rule
+  // this is preparing to enforce.
   await markPhase("toolchain");
+  const snapshotRoots = [
+    path.join(result.rustupHome, "toolchains"),
+    path.join(result.cargoHome, "bin"),
+  ];
+  const baselineSnapshot = await walkSnapshot(snapshotRoots);
   await ensureRustToolchain({ resolveResult: result, setupCacheExactHit });
+  const postInstallSnapshot = await walkSnapshot(snapshotRoots);
+  const toolchainDiff = diffSnapshots(baselineSnapshot, postInstallSnapshot);
+  const toolchainDiffStats = diffStats(toolchainDiff);
+  const fmtMB = (bytes: number): string =>
+    bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)}KB` : `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+  logger.log(
+    `toolchain-snapshot: added=${toolchainDiffStats.addedFiles} files (${fmtMB(toolchainDiffStats.addedBytes)}) ` +
+      `changed=${toolchainDiffStats.changedFiles} removed=${toolchainDiffStats.removedFiles}`,
+  );
+  if (ctx.runnerTemp) {
+    const manifestPath = path.join(ctx.runnerTemp, "setup-soldr-toolchain-diff.json");
+    try {
+      await fs.promises.writeFile(
+        manifestPath,
+        serializeManifest(toolchainDiff, toolchainDiffStats),
+        "utf8",
+      );
+      logger.log(`toolchain-snapshot: manifest at ${manifestPath}`);
+    } catch (err) {
+      logger.log(
+        `toolchain-snapshot: manifest write failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
   await finishPhase("toolchain");
 
   // ---- install soldr ----

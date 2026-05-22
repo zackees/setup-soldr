@@ -246,6 +246,15 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+      - name: Upload toolchain diff manifest (cold)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-diff-cold-build
+          path: ${{ runner.temp }}/setup-soldr-toolchain-diff.json
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Upload zccache logs (cold)
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -382,6 +391,15 @@ jobs:
         with:
           name: cache-keys-warm-build
           path: ${{ runner.temp }}/setup-soldr-cache-keys.txt
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload toolchain diff manifest (warm)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolchain-diff-warm-build
+          path: ${{ runner.temp }}/setup-soldr-toolchain-diff.json
           if-no-files-found: warn
           retention-days: 7
 
