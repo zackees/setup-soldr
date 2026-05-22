@@ -59,6 +59,8 @@ EXPECTED_INPUTS = {
     "rust-backtrace",
     "logging",
     "preserve-source-mtimes",
+    "solo-toolchain-cache",
+    "solo-toolchain-cache-level",
 }
 
 

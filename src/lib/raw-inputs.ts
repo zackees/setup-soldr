@@ -52,5 +52,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     rustBacktrace: get("rust-backtrace"),
     logging: get("logging"),
     preserveSourceMtimes: get("preserve-source-mtimes"),
+    soloToolchainCache: get("solo-toolchain-cache"),
+    soloToolchainCacheLevel: get("solo-toolchain-cache-level"),
   };
 }

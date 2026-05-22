@@ -55,6 +55,8 @@ function fixtureRawInputs(): RawInputs {
     rustBacktrace: "1",
     logging: "true",
     preserveSourceMtimes: "false",
+    soloToolchainCache: "",
+    soloToolchainCacheLevel: "",
   };
 }
 

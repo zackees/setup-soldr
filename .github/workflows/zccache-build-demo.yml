@@ -195,6 +195,7 @@ jobs:
           compile-cache-stats: detailed
           logging: "true"
           preserve-source-mtimes: "true"
+          solo-toolchain-cache: "true"
 
       - name: Show cache plan
         shell: bash
@@ -252,6 +253,15 @@ jobs:
         with:
           name: toolchain-diff-cold-build
           path: ${{ runner.temp }}/setup-soldr-toolchain-diff.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload solo-toolchain-cache save-diff (cold)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: solo-toolchain-save-diff-cold
+          path: ${{ runner.temp }}/setup-soldr-solo-save-diff.json
           if-no-files-found: warn
           retention-days: 7
 
@@ -343,6 +353,7 @@ jobs:
           compile-cache-stats: detailed
           logging: "true"
           preserve-source-mtimes: "true"
+          solo-toolchain-cache: "true"
 
       - name: Show cache plan
         shell: bash
@@ -400,6 +411,15 @@ jobs:
         with:
           name: toolchain-diff-warm-build
           path: ${{ runner.temp }}/setup-soldr-toolchain-diff.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload solo-toolchain-cache save-diff (warm)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: solo-toolchain-save-diff-warm
+          path: ${{ runner.temp }}/setup-soldr-solo-save-diff.json
           if-no-files-found: warn
           retention-days: 7
 

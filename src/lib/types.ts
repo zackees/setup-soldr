@@ -69,6 +69,8 @@ export interface RawInputs {
   rustBacktrace: string;
   logging: string;
   preserveSourceMtimes: string;
+  soloToolchainCache: string;
+  soloToolchainCacheLevel: string;
 }
 
 /**

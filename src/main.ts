@@ -27,6 +27,14 @@ import {
   diffStats,
   serializeManifest,
 } from "./lib/toolchain-snapshot.js";
+import {
+  buildSoloCacheKeys,
+  detectLibc,
+  hashStringArray,
+  restoreSoloCache,
+  verifyRestoredToolchain,
+  type RootMap as SoloRootMap,
+} from "./lib/solo-toolchain-cache.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import {
   replaySourceMtimes,
@@ -368,19 +376,120 @@ export async function run(): Promise<void> {
   // ---- toolchain ----
   // Snapshot $RUSTUP_HOME/toolchains/ + $CARGO_HOME/bin/ around the
   // toolchain install so we can see which inodes setup-soldr added on
-  // top of the runner image. Measurement only — no cache writes. See
-  // CLAUDE.md "Detect-then-cache: only save the delta" for the rule
-  // this is preparing to enforce.
+  // top of the runner image. When solo-toolchain-cache is opted in, a
+  // third snapshot is taken *before* the cache restore so the saved
+  // tarball captures the full above-runner state — not just the
+  // post-restore delta. See CLAUDE.md "Detect-then-cache" + "Cache-
+  // lifetime axis".
   await markPhase("toolchain");
   const snapshotRoots = [
     path.join(result.rustupHome, "toolchains"),
     path.join(result.cargoHome, "bin"),
   ];
+  const soloRootMap: SoloRootMap = {
+    "rustup-toolchains": snapshotRoots[0] as string,
+    "cargo-bin": snapshotRoots[1] as string,
+  };
+  const soloEnabled = isTruthy(inputs.soloToolchainCache);
+  const soloLevel = (inputs.soloToolchainCacheLevel.trim() || "19");
+  let soloKeys: ReturnType<typeof buildSoloCacheKeys> | null = null;
+  let soloMatchedKey = "";
+  let soloExactHit = false;
+  // Pre-restore snapshot — only needed when solo cache is enabled, so
+  // we can compute the full save-diff (post-install vs runner-image,
+  // not vs post-restore baseline).
+  const preRestoreSnapshot = soloEnabled ? await walkSnapshot(snapshotRoots) : null;
+  if (soloEnabled) {
+    soloKeys = buildSoloCacheKeys({
+      runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
+      runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
+      libc: detectLibc(),
+      rustcRelease: result.toolchain.cacheChannel.trim() || result.toolchain.channel.trim(),
+      componentsHash: hashStringArray(result.toolchain.components),
+      targetsHash: hashStringArray(result.toolchain.targets),
+      soldrVersion: result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim() || "unset",
+    });
+    logger.log(`solo-toolchain-cache: key=${soloKeys.exact}`);
+    const restoreT0 = Date.now();
+    const stagingDir = path.join(ctx.runnerTemp, "setup-soldr-solo-cache");
+    const restored = await restoreSoloCache({
+      keys: soloKeys,
+      rootMap: soloRootMap,
+      stagingDir,
+      log: (msg) => logger.log(msg),
+    });
+    soloMatchedKey = restored.matchedKey;
+    let verifiedMatch = true;
+    if (restored.verified && restored.matchedKey) {
+      const expected = result.toolchain.cacheChannel.trim();
+      // The rustup home is set up so `rustc` will resolve through the
+      // restored toolchain dir. Use `rustc` from PATH (rustup shim) or
+      // the cargo bin one.
+      const rustcCmd = process.platform === "win32" ? "rustc.exe" : "rustc";
+      const verify = await verifyRestoredToolchain({
+        expectedRelease: expected,
+        rustcCommand: rustcCmd,
+        log: (msg) => logger.log(msg),
+      });
+      verifiedMatch = verify.match;
+    }
+    soloExactHit = restored.hit && verifiedMatch;
+    core.saveState("soloToolchainEnabled", "true");
+    core.saveState("soloToolchainExactKey", soloKeys.exact);
+    core.saveState("soloToolchainMatchedKey", soloMatchedKey);
+    core.saveState("soloToolchainExactHit", soloExactHit ? "true" : "false");
+    core.saveState("soloToolchainLevel", soloLevel);
+    statsCollector.record({
+      label: "solo-toolchain-cache",
+      operation: "restore",
+      hit: soloExactHit,
+      key: soloKeys.exact,
+      matchedKey: soloMatchedKey,
+      restoreKeys: soloKeys.fallbacks,
+      archiveBytes: restored.restoredBytes || null,
+      inflatedBytes: null,
+      fileCount: null,
+      durationMs: Date.now() - restoreT0,
+      timestamp: new Date().toISOString(),
+    });
+  } else {
+    core.saveState("soloToolchainEnabled", "false");
+  }
   const baselineSnapshot = await walkSnapshot(snapshotRoots);
   await ensureRustToolchain({ resolveResult: result, setupCacheExactHit });
   const postInstallSnapshot = await walkSnapshot(snapshotRoots);
   const toolchainDiff = diffSnapshots(baselineSnapshot, postInstallSnapshot);
   const toolchainDiffStats = diffStats(toolchainDiff);
+  // When solo cache is enabled, also compute the save-diff (post-install
+  // vs pre-restore) so post.ts has the full above-runner manifest to tar.
+  if (soloEnabled && preRestoreSnapshot && ctx.runnerTemp) {
+    const saveDiff = diffSnapshots(preRestoreSnapshot, postInstallSnapshot);
+    const saveDiffStats = diffStats(saveDiff);
+    const saveDiffPath = path.join(ctx.runnerTemp, "setup-soldr-solo-save-diff.json");
+    try {
+      await fs.promises.writeFile(
+        saveDiffPath,
+        serializeManifest(saveDiff, saveDiffStats),
+        "utf8",
+      );
+      core.saveState("soloToolchainSaveDiffPath", saveDiffPath);
+      core.saveState("soloToolchainIncrementalEmpty", toolchainDiff.added.length === 0 ? "true" : "false");
+      logger.log(
+        `solo-toolchain-cache: save-diff added=${saveDiffStats.addedFiles} files (${
+          saveDiffStats.addedBytes < 1024 * 1024
+            ? `${(saveDiffStats.addedBytes / 1024).toFixed(1)}KB`
+            : `${(saveDiffStats.addedBytes / 1024 / 1024).toFixed(1)}MB`
+        }) ` +
+          `incremental-empty=${toolchainDiff.added.length === 0}`,
+      );
+    } catch (err) {
+      logger.log(
+        `solo-toolchain-cache: save-diff write failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+    }
+  }
   const fmtMB = (bytes: number): string =>
     bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)}KB` : `${(bytes / 1024 / 1024).toFixed(1)}MB`;
   logger.log(
