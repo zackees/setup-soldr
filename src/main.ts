@@ -598,7 +598,12 @@ export async function run(): Promise<void> {
     });
     const projectRoot = path.dirname(result.targetCache.targetPath);
     const cookTargetDir = result.targetCache.targetPath;
-    const cookArchive = path.join(ctx.runnerTemp || os.tmpdir(), "setup-soldr-cook.tar.zst");
+    // CRITICAL: archive path must match what compressCache will write to
+    // during save (`${cacheDir}.tar.zst` — see cache-compress.ts:220).
+    // @actions/cache hashes the `paths` array into a "version" key — save
+    // and restore MUST pass the same array or the lookup misses even when
+    // the entry exists. Mirrors the build-cache pattern at main.ts:280.
+    const cookArchive = `${cookTargetDir}.tar.zst`;
     logger.log(`cook: key=${cookKey} project=${projectRoot} target=${cookTargetDir}`);
     const cookT0 = Date.now();
     const restore = await restoreCookCache({
