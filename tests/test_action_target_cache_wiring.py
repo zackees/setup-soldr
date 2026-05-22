@@ -61,6 +61,8 @@ EXPECTED_INPUTS = {
     "preserve-source-mtimes",
     "solo-toolchain-cache",
     "solo-toolchain-cache-level",
+    "prebuild-deps",
+    "prebuild-deps-flags",
 }
 
 

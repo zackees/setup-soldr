@@ -35,6 +35,15 @@ import {
   verifyRestoredToolchain,
   type RootMap as SoloRootMap,
 } from "./lib/solo-toolchain-cache.js";
+import {
+  buildCookCacheKey,
+  decideCookGate,
+  hashCookFlags,
+  canonicalizeCookFlags,
+  parseCookFlags,
+  restoreCookCache,
+  runCook,
+} from "./lib/cook-cache.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import {
   replaySourceMtimes,
@@ -560,6 +569,84 @@ export async function run(): Promise<void> {
     core.setOutput("soldr_version", "passthrough");
   }
   await finishPhase("verify");
+
+  // ---- cook (prebuild-deps via cargo-chef) ----
+  // Long-lived deps tarball keyed on Cargo.lock content. Restores
+  // target/deps/ before the user's build so the first compile starts
+  // warm. Gated on Cargo.lock presence + cache umbrella + enable flag.
+  // Failures here are logged but never fail the action — the user's
+  // own cargo build will still work without the cooked deps.
+  await markPhase("cook");
+  const cookGate = decideCookGate({
+    prebuildDeps: inputs.prebuildDeps,
+    cacheUmbrella: cacheEnabled,
+    lockfilePath: result.targetCache.lockfilePath,
+  });
+  if (cookGate.enabled && result.enabled) {
+    const cookFlags = canonicalizeCookFlags(parseCookFlags(inputs.prebuildDepsFlags));
+    const flagsHash = hashCookFlags(cookFlags);
+    const lockHash = result.targetCache.lockfileHash || "no-lock";
+    const cookKey = buildCookCacheKey({
+      runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
+      runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
+      libc: detectLibc(),
+      rustcRelease: result.toolchain.cacheChannel.trim() || result.toolchain.channel.trim(),
+      flagsHash,
+      lockHash,
+      soldrVersion:
+        result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim() || "unset",
+    });
+    const projectRoot = path.dirname(result.targetCache.targetPath);
+    const cookTargetDir = result.targetCache.targetPath;
+    const cookArchive = path.join(ctx.runnerTemp || os.tmpdir(), "setup-soldr-cook.tar.zst");
+    logger.log(`cook: key=${cookKey} project=${projectRoot} target=${cookTargetDir}`);
+    const cookT0 = Date.now();
+    const restore = await restoreCookCache({
+      exactKey: cookKey,
+      archivePath: cookArchive,
+      targetDir: cookTargetDir,
+      longWindow: 27,
+      debug: debugMode,
+      log: (msg) => logger.log(msg),
+    });
+    let cookRan = false;
+    if (!restore.hit) {
+      const runRes = await runCook({
+        soldrBinary: result.soldrPath,
+        projectRoot,
+        flags: cookFlags,
+        log: (msg) => logger.log(msg),
+      });
+      cookRan = runRes.exitCode === 0;
+    } else {
+      logger.log("cook: cache hit - skipping cook run, target/deps already warm");
+    }
+    core.saveState("cookEnabled", "true");
+    core.saveState("cookExactKey", cookKey);
+    core.saveState("cookMatchedKey", restore.matchedKey);
+    core.saveState("cookHit", restore.hit ? "true" : "false");
+    core.saveState("cookRan", cookRan ? "true" : "false");
+    core.saveState("cookTargetDir", cookTargetDir);
+    core.saveState("cookLongWindow", "27");
+    core.saveState("cookCompressLevel", "19");
+    statsCollector.record({
+      label: "cook-cache",
+      operation: "restore",
+      hit: restore.hit,
+      key: cookKey,
+      matchedKey: restore.matchedKey,
+      restoreKeys: [],
+      archiveBytes: restore.archiveBytes || null,
+      inflatedBytes: null,
+      fileCount: null,
+      durationMs: Date.now() - cookT0,
+      timestamp: new Date().toISOString(),
+    });
+  } else {
+    logger.log(`cook: skipped - ${cookGate.reason}`);
+    core.saveState("cookEnabled", "false");
+  }
+  await finishPhase("cook");
 
   // ---- cargo-registry restore (if requested) ----
   if (result.cargoRegistryCache.enabled) {

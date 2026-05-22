@@ -122,8 +122,16 @@ export async function decompressCache(opts: {
   targetDir: string;
   debug?: boolean;
   log?: (msg: string) => void;
+  /**
+   * Pass-through to zstd's `--long=<n>` flag. Required when decompressing an
+   * archive that was compressed with `--long` (otherwise zstd refuses with
+   * "Frame requires too much memory"). Default unset → zstd's 8 MB window.
+   * Long mode also needs `--memory=...` reflected if very large; we set
+   * `--memory` to match `1 << longWindow` for symmetry.
+   */
+  longWindow?: number;
 }): Promise<DecompressResult> {
-  const { archivePath, targetDir, debug = false, log = (): void => undefined } = opts;
+  const { archivePath, targetDir, debug = false, log = (): void => undefined, longWindow } = opts;
   // Ensure both <targetDir> exists (zccache may have already populated it)
   // and the extract root (which is the parent) is writable.
   await ensureDir(targetDir);
@@ -143,15 +151,18 @@ export async function decompressCache(opts: {
     await exec.exec("tar", ["-xzf", archivePath, "-C", extractRoot]);
   } else if (magic === "zstd") {
     const zstdPath = await io.which("zstd", false);
+    const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
     if (!zstdPath) {
-      if (debug) log(`[debug] decompress cmd (fallback): tar --zstd -xf ${archivePath} -C ${extractRoot}`);
-      // Fall back: many tars know how to decode zstd themselves (--zstd).
-      await exec.exec("tar", ["--zstd", "-xf", archivePath, "-C", extractRoot]);
+      if (debug) log(`[debug] decompress cmd (fallback): tar --use-compress-program "zstd -d${longFlag.length ? ` --long=${longWindow}` : ""}" -xf ${archivePath} -C ${extractRoot}`);
+      // Fall back: route the decompression through tar's --use-compress-program
+      // so we can pass through --long when the archive needs it. tar --zstd
+      // doesn't accept extra zstd flags directly.
+      const program = longFlag.length ? `zstd -d --long=${longWindow}` : "zstd -d";
+      await exec.exec("tar", ["--use-compress-program", program, "-xf", archivePath, "-C", extractRoot]);
     } else {
-      if (debug) log(`[debug] decompress cmd: zstd -d -c ${archivePath} | tar -xf - -C ${extractRoot}`);
-      // tar -xf - reads from stdin; we pipe `zstd -d -c <archive>` into it.
+      if (debug) log(`[debug] decompress cmd: zstd -d ${longFlag.join(" ")} -c ${archivePath} | tar -xf - -C ${extractRoot}`);
       await runPipe(
-        [zstdPath, ["-d", "-c", archivePath]],
+        [zstdPath, ["-d", ...longFlag, "-c", archivePath]],
         ["tar", ["-xf", "-", "-C", extractRoot]],
       );
     }
@@ -187,8 +198,20 @@ export async function compressCache(opts: {
   level: string;
   debug?: boolean;
   log?: (msg: string) => void;
+  /**
+   * Pass-through to zstd's `--long=<n>` flag. 27 = 128 MB window — needed
+   * to capture cross-crate redundancy in large `target/deps/` trees. Default
+   * unset → 8 MB window. Pair with the same `longWindow` on decompressCache.
+   */
+  longWindow?: number;
+  /**
+   * Pass-through to zstd's `--ultra` flag. Required for levels 20–22.
+   * Default unset → zstd refuses levels above 19. We don't currently use
+   * ultra anywhere; included for completeness.
+   */
+  ultra?: boolean;
 }): Promise<CompressResult> {
-  const { cacheDir, codec, level, debug = false, log = (): void => undefined } = opts;
+  const { cacheDir, codec, level, debug = false, log = (): void => undefined, longWindow, ultra } = opts;
   const nullResult: CompressResult = { archivePath: null, archiveBytes: 0, inflatedBytes: null, fileCount: null };
 
   if (codec === "none") return nullResult;
@@ -223,11 +246,13 @@ export async function compressCache(opts: {
 
   const levelNumeric = parseLevel(level);
   const levelFlag = `-${levelNumeric}`;
+  const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
+  const ultraFlag = ultra || levelNumeric >= 20 ? ["--ultra"] : [];
 
-  if (debug) log(`[debug] compress cmd: tar -cf - -C ${parent} ${basename} | zstd -T0 ${levelFlag} -o ${archivePath}`);
+  if (debug) log(`[debug] compress cmd: tar -cf - -C ${parent} ${basename} | zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`);
   await runPipe(
     ["tar", ["-cf", "-", "-C", parent, basename]],
-    [zstdPath, ["-T0", levelFlag, "-o", archivePath]],
+    [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]],
   );
 
   let archiveBytes = 0;
