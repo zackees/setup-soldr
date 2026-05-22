@@ -73,6 +73,7 @@ export interface RawInputs {
   soloToolchainCacheLevel: string;
   prebuildDeps: string;
   prebuildDepsFlags: string;
+  soldrMiniCache: string;
 }
 
 /**
