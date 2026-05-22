@@ -44,6 +44,11 @@ import {
   restoreCookCache,
   runCook,
 } from "./lib/cook-cache.js";
+import {
+  buildMiniCacheKey,
+  isEligibleForMiniCache,
+  restoreMiniCache,
+} from "./lib/soldr-mini-cache.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import {
   replaySourceMtimes,
@@ -523,8 +528,69 @@ export async function run(): Promise<void> {
   await finishPhase("toolchain");
 
   // ---- install soldr ----
+  // Try the soldr-mini-cache before ensureSoldr fires the GH Releases fetch.
+  // On hit, the install dir is pre-populated and ensureSoldr's existing
+  // installedVersion() check short-circuits. On miss, ensureSoldr does its
+  // normal fetch and post.ts saves to the mini-cache.
   await markPhase("install");
+  const miniEnabled = !isFalsy(inputs.soldrMiniCache.trim() || "true");
+  const miniInstallDir = path.dirname(result.soldrPath);
+  const miniArchive = `${miniInstallDir}.tar.zst`;
+  let miniHit = false;
+  let miniKey = "";
+  if (miniEnabled) {
+    const eligibility = isEligibleForMiniCache({
+      hasRef: Boolean(result.soldrRef.trim()),
+      enable: result.enabled,
+      resolvedVersion: result.soldrVersionResolved || result.soldrVersionRequested,
+    });
+    if (eligibility.eligible) {
+      const version = result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim();
+      miniKey = buildMiniCacheKey({
+        runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
+        runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
+        libc: detectLibc(),
+        soldrVersion: version,
+      });
+      logger.log(`soldr-mini-cache: key=${miniKey} installDir=${miniInstallDir}`);
+      const miniT0 = Date.now();
+      const restore = await restoreMiniCache({
+        exactKey: miniKey,
+        installDir: miniInstallDir,
+        archivePath: miniArchive,
+        longWindow: 27,
+        debug: debugMode,
+        log: (msg) => logger.log(msg),
+      });
+      miniHit = restore.hit;
+      statsCollector.record({
+        label: "soldr-mini-cache",
+        operation: "restore",
+        hit: restore.hit,
+        key: miniKey,
+        matchedKey: restore.matchedKey,
+        restoreKeys: [],
+        archiveBytes: restore.archiveBytes || null,
+        inflatedBytes: null,
+        fileCount: null,
+        durationMs: Date.now() - miniT0,
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      logger.log(`soldr-mini-cache: skipped — ${eligibility.reason}`);
+    }
+  } else {
+    logger.log("soldr-mini-cache: disabled via soldr-mini-cache=false");
+  }
+  core.saveState("soldrMiniEnabled", miniEnabled ? "true" : "false");
+  core.saveState("soldrMiniExactKey", miniKey);
+  core.saveState("soldrMiniHit", miniHit ? "true" : "false");
+  core.saveState("soldrMiniInstallDir", miniInstallDir);
+  core.saveState("soldrMiniArchive", miniArchive);
   if (result.enabled) {
+    // On mini-cache hit, ensureSoldr's installedVersion() check sees the
+    // restored binary at the expected path with the expected version and
+    // short-circuits — no GH fetch.
     await ensureSoldr({ resolveResult: result, githubToken: ctx.githubToken });
   } else {
     installPassthrough({

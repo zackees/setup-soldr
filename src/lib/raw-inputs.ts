@@ -56,5 +56,6 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     soloToolchainCacheLevel: get("solo-toolchain-cache-level"),
     prebuildDeps: get("prebuild-deps"),
     prebuildDepsFlags: get("prebuild-deps-flags"),
+    soldrMiniCache: get("soldr-mini-cache"),
   };
 }

@@ -63,6 +63,7 @@ EXPECTED_INPUTS = {
     "solo-toolchain-cache-level",
     "prebuild-deps",
     "prebuild-deps-flags",
+    "soldr-mini-cache",
 }
 
 

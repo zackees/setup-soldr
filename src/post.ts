@@ -16,6 +16,7 @@ import { compressCache } from "./lib/cache-compress.js";
 import { saveSoloCache, stageDiffForSave, type RootMap as SoloRootMap } from "./lib/solo-toolchain-cache.js";
 import type { SnapshotDiff } from "./lib/toolchain-snapshot.js";
 import { saveCookCache } from "./lib/cook-cache.js";
+import { saveMiniCache } from "./lib/soldr-mini-cache.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
@@ -896,6 +897,61 @@ export async function run(): Promise<void> {
         }
       } catch (err) {
         log(`cook-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  }
+
+  // Soldr-mini-cache save. Default-on; skipped when restore already hit
+  // (binary is byte-identical, no point re-saving), when disabled, or
+  // when running in passthrough mode.
+  const soldrMiniEnabled = core.getState("soldrMiniEnabled") === "true";
+  if (soldrMiniEnabled && !passthrough) {
+    const miniHit = core.getState("soldrMiniHit") === "true";
+    const miniExactKey = core.getState("soldrMiniExactKey");
+    const miniInstallDir = core.getState("soldrMiniInstallDir");
+    const miniArchive = core.getState("soldrMiniArchive");
+    log(
+      `soldr-mini-cache: post-step key=${miniExactKey} hit=${miniHit} installDir=${miniInstallDir}`,
+    );
+    if (miniHit) {
+      log("soldr-mini-cache: exact hit — skipping save");
+    } else if (!miniExactKey) {
+      log("soldr-mini-cache: no key (ineligible at main-time) — skipping save");
+    } else if (!miniInstallDir || !fs.existsSync(miniInstallDir)) {
+      log(`soldr-mini-cache: install dir ${miniInstallDir} missing — skipping save`);
+    } else {
+      const miniSaveStart = Date.now();
+      try {
+        const saveResult = await saveMiniCache({
+          installDir: miniInstallDir,
+          archivePath: miniArchive,
+          exactKey: miniExactKey,
+          level: "19",
+          longWindow: 27,
+          debug: debugMode,
+          log,
+        });
+        if (saveResult.status === "saved") {
+          postCollector.record({
+            label: "soldr-mini-cache",
+            operation: "save",
+            hit: false,
+            key: miniExactKey,
+            matchedKey: "",
+            restoreKeys: [],
+            archiveBytes: saveResult.archiveBytes ?? null,
+            inflatedBytes: saveResult.inflatedBytes ?? null,
+            fileCount: saveResult.fileCount ?? null,
+            durationMs: Date.now() - miniSaveStart,
+            timestamp: new Date().toISOString(),
+          });
+        } else {
+          log(
+            `soldr-mini-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`,
+          );
+        }
+      } catch (err) {
+        log(`soldr-mini-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
   }

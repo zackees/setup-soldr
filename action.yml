@@ -356,6 +356,20 @@ inputs:
       cache entry.
     required: false
     default: "--release"
+  soldr-mini-cache:
+    description: >
+      Cache the soldr binary in its own tiny long-lived layer,
+      keyed only on (version, os, arch, libc). Avoids re-downloading
+      from GitHub Releases when other cache layers (which mix in
+      toolchain hash + cache-key-suffix) invalidate but the soldr
+      binary itself is unchanged. Default "true". Set "false" to
+      disable.
+
+      Skipped automatically when `enable: false` or `ref` is set
+      (rebuilding from source — binary content depends on commit
+      not version).
+    required: false
+    default: "true"
 outputs:
   enabled:
     description: >

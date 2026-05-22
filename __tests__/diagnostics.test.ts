@@ -59,6 +59,7 @@ function fixtureRawInputs(): RawInputs {
     soloToolchainCacheLevel: "",
     prebuildDeps: "cargo-chef",
     prebuildDepsFlags: "--release",
+    soldrMiniCache: "true",
   };
 }
 
