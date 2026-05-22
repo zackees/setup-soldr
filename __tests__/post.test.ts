@@ -101,6 +101,7 @@ test("final cache summary includes zccache stats and cache layer outcomes", asyn
       {
         buildCache: { status: "saved", cache_id: 42 },
         cargoRegistryCache: { status: "disabled" },
+        targetCache: { status: "disabled" },
       },
     );
 
@@ -153,6 +154,7 @@ test("compile_cache_report reports missing-binary when SOLDR_BINARY is unset", a
       {
         buildCache: { status: "disabled" },
         cargoRegistryCache: { status: "disabled" },
+        targetCache: { status: "disabled" },
       },
     );
     assert.equal(summary.compile_cache_report.status, "missing-binary");
@@ -242,6 +244,7 @@ test("compile_cache_report parses a fake soldr cache report --json output", { sk
       {
         buildCache: { status: "disabled" },
         cargoRegistryCache: { status: "disabled" },
+        targetCache: { status: "disabled" },
       },
     );
     assert.equal(summary.compile_cache_report.status, "ok");
