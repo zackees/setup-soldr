@@ -21,7 +21,7 @@ function captureLogger(): { logger: Logger; lines: string[] } {
 function fixtureRawInputs(): RawInputs {
   return {
     enable: "true",
-    version: "0.7.26",
+    version: "0.7.28",
     repo: "zackees/soldr",
     ref: "",
     cache: "true",
@@ -108,7 +108,7 @@ test("dumpDiagnostics includes parsed RawInputs", () => {
   const body = lines.join("\n");
   assert.match(body, /\[raw_inputs/);
   assert.match(body, /cacheKeySuffix="zccache-demo"/);
-  assert.match(body, /version="0\.7\.26"/);
+  assert.match(body, /version="0\.7\.28"/);
 });
 
 test("dumpDiagnostics redacts token-shaped env values", () => {
