@@ -155,6 +155,38 @@ LARGE   │ target-cache            │ (rare — most large      │
 
 **Rule**: when adding a new cache layer, place it on the size × lifetime grid first. If it lands in the short-lived/large quadrant, the foundation in the long-lived/small quadrant must be in place — otherwise you're optimizing the wrong floor.
 
+### Parallelism scheduling: big-with-small, never big-with-big
+
+When multiple cache restores run concurrently they contend on three resources: network ingress, CPU (zstd decoding), and disk write bandwidth. The bottleneck on hosted runners is **disk write**, not network. Cross-stream network contention is mild (TCP fairly shares the ~500 Mbps Azure ingress); decompress contention is real (multiple `tar | zstd` processes fighting for the same SSD write queue).
+
+Empirical evidence from PRs #144 (4-way parallel block, +9 s saved), #145 (added cook → 5-way parallel, **-13 s regression**), #148 (cook restore as background promise overlapping with sequential install steps, +7 s saved):
+
+| Scheduling | Cook participates with | Result |
+|---|---|---|
+| 4-way parallel block (#144) | small/medium archives (setup, target-cache thin, build-cache zccache state ~200 MB, cargo-registry ~140 MB) — total ~600 MB compressed | works: max-of-parallel wins, contention mild |
+| 5-way parallel including cook (#145) | adds cook's 214 MB compressed / **2.5 GB inflated** to the mix | breaks: every layer ~50% slower, net regression |
+| Cook bg-promise overlapping install (#148) | cook (large) runs concurrent with rust install, soldr install, shims, verify — all sub-second, no significant disk writes | works: cook's wall-clock hides behind sequential install steps |
+
+**Rule**: parallelize **big-with-small**, never **big-with-big**. When two restores both write multi-GB tar trees, they will fight for disk bandwidth and the wall-clock max grows enough to erase the parallel savings. Schedule the largest decompress so it overlaps with non-disk-heavy work (process spawns, version checks, small file extractions).
+
+### Empirical archive sizes for setup-soldr layers
+
+Reference data measured on the zccache project on `ubuntu-24.04`, post the 0.7.30 era (May 2026):
+
+| Layer | Compressed | Restore wall clock (warm exact-hit, in 4-way parallel block) |
+|---|---:|---:|
+| setup-cache | tiny (metadata) | <1 s |
+| cargo-registry | ~138 MB | ~12 s |
+| build-cache (zccache state) | ~198 MB | ~16 s |
+| cook-cache (deps target/) | ~214 MB → ~2.5 GB inflated | ~12 s (bg) / ~7 s (sequential alone) |
+| target-cache (rust-plan bundle, `once` mode) | **~1.5 GB** | ~30 s |
+| soldr-mini-cache | ~2 MB | <1 s |
+| solo-toolchain-cache | typically empty diff | <1 s |
+
+Total warm-build wall clock on the demo workflow: ~116 s (down from 161 s baseline). For a production user without `logging: true` (no diagnostic dump), estimated ~50 s.
+
+The target-cache bundle is unexpectedly large given the "rust-plan only" framing — tracked at soldr#461.
+
 ### Prioritization framework for fast-path work
 
 When ranking optimizations, two axes matter:
