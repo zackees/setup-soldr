@@ -13,9 +13,10 @@ import * as tc from "@actions/tool-cache";
 import { createLogger } from "./log-utils.js";
 import type { ResolveResult } from "./types.js";
 
+type ArchiveExt = "tar.zst" | "tar.gz" | "zip";
+
 interface TargetInfo {
   target: string;
-  archiveExt: "tar.gz" | "zip";
   binaryName: string;
 }
 
@@ -27,13 +28,13 @@ function detectTarget(): TargetInfo {
   else throw new Error(`unsupported architecture: ${machine}`);
 
   if (process.platform === "linux") {
-    return { target: `${arch}-unknown-linux-gnu`, archiveExt: "tar.gz", binaryName: "soldr" };
+    return { target: `${arch}-unknown-linux-gnu`, binaryName: "soldr" };
   }
   if (process.platform === "darwin") {
-    return { target: `${arch}-apple-darwin`, archiveExt: "tar.gz", binaryName: "soldr" };
+    return { target: `${arch}-apple-darwin`, binaryName: "soldr" };
   }
   if (process.platform === "win32") {
-    return { target: `${arch}-pc-windows-msvc`, archiveExt: "zip", binaryName: "soldr.exe" };
+    return { target: `${arch}-pc-windows-msvc`, binaryName: "soldr.exe" };
   }
   throw new Error(`unsupported operating system: ${process.platform}`);
 }
@@ -161,18 +162,27 @@ function sourceInstallMatches(
   );
 }
 
-function selectAsset(release: Record<string, unknown>, target: string, archiveExt: string): { name: string; url: string } {
+function selectAsset(
+  release: Record<string, unknown>,
+  target: string,
+): { name: string; url: string; archiveExt: ArchiveExt } {
   const assets = release["assets"];
   if (!Array.isArray(assets)) throw new Error("release payload has no assets array");
-  const suffix = `.${archiveExt}`;
-  for (const asset of assets) {
-    if (typeof asset !== "object" || asset === null) continue;
-    const a = asset as Record<string, unknown>;
-    const name = typeof a["name"] === "string" ? (a["name"] as string) : "";
-    if (name.includes(target) && name.endsWith(suffix)) {
-      const url = a["browser_download_url"];
-      if (typeof url !== "string") continue;
-      return { name, url };
+  // Preference order: tar.zst (newer releases — soldr 0.7.30+ ships these
+  // for every platform including Windows MSVC), tar.gz (older Linux/macOS),
+  // zip (older Windows). First-match wins per extension class.
+  const extPreference: ArchiveExt[] = ["tar.zst", "tar.gz", "zip"];
+  for (const ext of extPreference) {
+    const suffix = `.${ext}`;
+    for (const asset of assets) {
+      if (typeof asset !== "object" || asset === null) continue;
+      const a = asset as Record<string, unknown>;
+      const name = typeof a["name"] === "string" ? (a["name"] as string) : "";
+      if (name.includes(target) && name.endsWith(suffix)) {
+        const url = a["browser_download_url"];
+        if (typeof url !== "string") continue;
+        return { name, url, archiveExt: ext };
+      }
     }
   }
   throw new Error(`no release asset found for target ${target}`);
@@ -180,15 +190,25 @@ function selectAsset(release: Record<string, unknown>, target: string, archiveEx
 
 async function extractBinary(
   archivePath: string,
-  archiveExt: "tar.gz" | "zip",
+  archiveExt: ArchiveExt,
   binaryName: string,
   outDir: string,
 ): Promise<string> {
   fs.mkdirSync(outDir, { recursive: true });
   if (archiveExt === "zip") {
     await tc.extractZip(archivePath, outDir);
-  } else {
+  } else if (archiveExt === "tar.gz") {
     await tc.extractTar(archivePath, outDir, "xz");
+  } else {
+    // tar.zst — use tar's --zstd flag. Modern tar on hosted runners (GNU
+    // tar 1.34+ on Linux, gnutar on macOS, bsdtar 3.6+ on Windows) all
+    // accept --zstd; for older systems we fall back to
+    // --use-compress-program=zstd.
+    try {
+      await tc.extractTar(archivePath, outDir, ["--zstd", "-x"]);
+    } catch {
+      await tc.extractTar(archivePath, outDir, ["--use-compress-program", "zstd -d", "-x"]);
+    }
   }
   const found = findFile(outDir, binaryName);
   if (!found) throw new Error(`downloaded archive did not contain ${binaryName}`);
@@ -299,7 +319,7 @@ export async function ensureSoldr(opts: {
 
   const installDir = path.dirname(resolveResult.soldrPath);
   fs.mkdirSync(installDir, { recursive: true });
-  const { target, archiveExt, binaryName } = detectTarget();
+  const { target, binaryName } = detectTarget();
   const binaryPath = path.join(installDir, binaryName);
   const requestedRef = resolveResult.soldrRef.trim();
   const requestedVersion = resolveResult.soldrVersionRequested.trim();
@@ -350,7 +370,7 @@ export async function ensureSoldr(opts: {
 
   log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
   const release = await fetchRelease(repo, resolvedVersion, githubToken);
-  const { name: assetName, url: downloadUrl } = selectAsset(release, target, archiveExt);
+  const { name: assetName, url: downloadUrl, archiveExt } = selectAsset(release, target);
   const tagName = typeof release["tag_name"] === "string" ? (release["tag_name"] as string) : resolvedVersion;
 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-release-"));
