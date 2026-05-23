@@ -51251,7 +51251,7 @@ exports.BinaryWriter = BinaryWriter;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AvroReadableFromStream = void 0;
 const AvroReadable_js_1 = __nccwpck_require__(367);
-const abort_controller_1 = __nccwpck_require__(467);
+const abort_controller_1 = __nccwpck_require__(469);
 const buffer_1 = __nccwpck_require__(116);
 const ABORT_ERROR = new abort_controller_1.AbortError("Reading from the avro stream was aborted.");
 class AvroReadableFromStream extends AvroReadable_js_1.AvroReadable {
@@ -51573,7 +51573,7 @@ function wrapAbortSignalLikePolicy() {
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createAbortablePromise = createAbortablePromise;
-const abort_controller_1 = __nccwpck_require__(469);
+const abort_controller_1 = __nccwpck_require__(467);
 /**
  * Creates an abortable promise.
  * @param buildPromise - A function that takes the resolve and reject functions as parameters.
@@ -82053,7 +82053,7 @@ function getCachedDefaultHttpsClient() {
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.RetriableReadableStream = void 0;
-const abort_controller_1 = __nccwpck_require__(467);
+const abort_controller_1 = __nccwpck_require__(469);
 const node_stream_1 = __nccwpck_require__(405);
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
