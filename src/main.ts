@@ -462,6 +462,58 @@ export async function run(): Promise<void> {
   await markPhase("target-tree");
   await finishPhase("target-tree");
 
+  // Kick off soldr-mini-cache restore in the background. Same pattern as
+  // cook below: small, no inter-dependencies (writes to a fresh install
+  // dir, no toolchain or workspace state), so it overlaps with the
+  // toolchain phase that follows. Saves ~600 ms per warm run. Kept out
+  // of the BIG parallel-restore block above because the install phase
+  // needs to commit state-save side effects in a fixed order (state
+  // entries persist across pre/post and downstream readers expect them
+  // by the time `ensureSoldr` runs).
+  const miniEnabled = !isFalsy(inputs.soldrMiniCache.trim() || "true");
+  const miniInstallDir = path.dirname(result.soldrPath);
+  const miniArchive = `${miniInstallDir}.tar.zst`;
+  let miniHit = false;
+  let miniKey = "";
+  let miniSkipReason = "";
+  let miniRestorePromise: Promise<{
+    hit: boolean;
+    matchedKey: string;
+    archiveBytes: number;
+    durationMs: number;
+  }> | null = null;
+  if (miniEnabled) {
+    const eligibility = isEligibleForMiniCache({
+      hasRef: Boolean(result.soldrRef.trim()),
+      enable: result.enabled,
+      resolvedVersion: result.soldrVersionResolved || result.soldrVersionRequested,
+    });
+    if (eligibility.eligible) {
+      const version = result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim();
+      miniKey = buildMiniCacheKey({
+        runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
+        runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
+        libc: detectLibc(),
+        soldrVersion: version,
+      });
+      logger.log(`soldr-mini-cache: key=${miniKey} installDir=${miniInstallDir} (background)`);
+      const miniT0 = Date.now();
+      miniRestorePromise = (async () => {
+        const restore = await restoreMiniCache({
+          exactKey: miniKey,
+          installDir: miniInstallDir,
+          archivePath: miniArchive,
+          longWindow: 27,
+          debug: debugMode,
+          log: (msg) => logger.log(msg),
+        });
+        return { ...restore, durationMs: Date.now() - miniT0 };
+      })();
+    } else {
+      miniSkipReason = eligibility.reason;
+    }
+  }
+
   // Kick off cook restore in the background. It overlaps with the
   // sequential toolchain + soldr install + shims + verify steps that
   // follow. By the time the cook phase runs, the restore is done — we
@@ -678,58 +730,29 @@ export async function run(): Promise<void> {
   await finishPhase("toolchain");
 
   // ---- install soldr ----
-  // Try the soldr-mini-cache before ensureSoldr fires the GH Releases fetch.
-  // On hit, the install dir is pre-populated and ensureSoldr's existing
-  // installedVersion() check short-circuits. On miss, ensureSoldr does its
-  // normal fetch and post.ts saves to the mini-cache.
+  // soldr-mini-cache was kicked off as a background promise after the
+  // parallel-restore block; await it here so the restored binary is on
+  // disk by the time ensureSoldr's installedVersion() check runs.
   await markPhase("install");
-  const miniEnabled = !isFalsy(inputs.soldrMiniCache.trim() || "true");
-  const miniInstallDir = path.dirname(result.soldrPath);
-  const miniArchive = `${miniInstallDir}.tar.zst`;
-  let miniHit = false;
-  let miniKey = "";
-  if (miniEnabled) {
-    const eligibility = isEligibleForMiniCache({
-      hasRef: Boolean(result.soldrRef.trim()),
-      enable: result.enabled,
-      resolvedVersion: result.soldrVersionResolved || result.soldrVersionRequested,
+  if (miniRestorePromise) {
+    const restore = await miniRestorePromise;
+    miniHit = restore.hit;
+    statsCollector.record({
+      label: "soldr-mini-cache",
+      operation: "restore",
+      hit: restore.hit,
+      key: miniKey,
+      matchedKey: restore.matchedKey,
+      restoreKeys: [],
+      archiveBytes: restore.archiveBytes || null,
+      inflatedBytes: null,
+      fileCount: null,
+      durationMs: restore.durationMs,
+      timestamp: new Date().toISOString(),
     });
-    if (eligibility.eligible) {
-      const version = result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim();
-      miniKey = buildMiniCacheKey({
-        runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
-        runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
-        libc: detectLibc(),
-        soldrVersion: version,
-      });
-      logger.log(`soldr-mini-cache: key=${miniKey} installDir=${miniInstallDir}`);
-      const miniT0 = Date.now();
-      const restore = await restoreMiniCache({
-        exactKey: miniKey,
-        installDir: miniInstallDir,
-        archivePath: miniArchive,
-        longWindow: 27,
-        debug: debugMode,
-        log: (msg) => logger.log(msg),
-      });
-      miniHit = restore.hit;
-      statsCollector.record({
-        label: "soldr-mini-cache",
-        operation: "restore",
-        hit: restore.hit,
-        key: miniKey,
-        matchedKey: restore.matchedKey,
-        restoreKeys: [],
-        archiveBytes: restore.archiveBytes || null,
-        inflatedBytes: null,
-        fileCount: null,
-        durationMs: Date.now() - miniT0,
-        timestamp: new Date().toISOString(),
-      });
-    } else {
-      logger.log(`soldr-mini-cache: skipped — ${eligibility.reason}`);
-    }
-  } else {
+  } else if (miniSkipReason) {
+    logger.log(`soldr-mini-cache: skipped — ${miniSkipReason}`);
+  } else if (!miniEnabled) {
     logger.log("soldr-mini-cache: disabled via soldr-mini-cache=false");
   }
   core.saveState("soldrMiniEnabled", miniEnabled ? "true" : "false");
