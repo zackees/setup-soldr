@@ -240,6 +240,12 @@ export async function run(): Promise<void> {
   // touches depends on its hydrated cargo registry state.
   await markPhase("parallel-restore");
   let setupCacheExactHit = false;
+  // Capture target-cache hit status so we can skip the redundant cook restore.
+  // target-cache (full prior build, ~1.5 GB) contains compiled deps; cook-cache
+  // (~2.5 GB inflated) also contains compiled deps. When target-cache exact-hits
+  // we have a fully-warm target/ — cook restore would just overwrite identical
+  // content. Skipping saves ~5 s per warm run.
+  let targetCacheExactHit = false;
 
   const setupRestorePromise = (async (): Promise<void> => {
     if (!(cacheEnabled && result.setupCache.paths.length > 0)) return;
@@ -289,6 +295,7 @@ export async function run(): Promise<void> {
     core.setOutput("target_cache_matched_key", restore.matchedKey);
     core.saveState("targetCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("targetCacheMatchedKey", restore.matchedKey);
+    targetCacheExactHit = restore.hit;
     statsCollector.record({
       label: "target-cache", operation: "restore", hit: restore.hit,
       key: result.targetCache.key, matchedKey: restore.matchedKey, restoreKeys,
@@ -481,7 +488,13 @@ export async function run(): Promise<void> {
   let cookArchive = "";
   let cookRestoreT0 = Date.now();
   let cookRestorePromise: Promise<{ hit: boolean; matchedKey: string; archiveBytes: number }> | null = null;
-  if (cookActive) {
+  // Skip cook restore when target-cache already exact-hit: target-cache
+  // contains the full prior compiled tree (including deps), so cook restore
+  // would just overwrite identical content. ~5 s saved per warm-exact-hit run.
+  // When target-cache miss/fallback, cook still acts as the dep-warming
+  // fallback (which is exactly what cook was designed for).
+  const cookSkippedDueToTargetHit = cookActive && targetCacheExactHit;
+  if (cookActive && !cookSkippedDueToTargetHit) {
     cookFlags = canonicalizeCookFlags(parseCookFlags(inputs.prebuildDepsFlags));
     const flagsHash = hashCookFlags(cookFlags);
     const lockHash = result.targetCache.lockfileHash || "no-lock";
@@ -802,6 +815,11 @@ export async function run(): Promise<void> {
     core.saveState("cookTargetDir", cookTargetDir);
     core.saveState("cookLongWindow", "27");
     core.saveState("cookCompressLevel", "19");
+  } else if (cookSkippedDueToTargetHit) {
+    logger.log(
+      "cook: skipped - target-cache exact-hit already provides fully-warm target/ (no redundant restore needed)",
+    );
+    core.saveState("cookEnabled", "false");
   } else {
     logger.log(`cook: skipped - ${cookGate.reason}`);
     core.saveState("cookEnabled", "false");
