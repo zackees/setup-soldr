@@ -226,15 +226,63 @@ export async function run(): Promise<void> {
   core.saveState("cargoRegistryCacheExactHit", "false");
   core.saveState("cargoRegistryCacheMatchedKey", "");
 
+  // Pre-compute cook key + paths so cook restore can join the parallel
+  // block when safe. Cook RUN still happens in the cook phase later
+  // (it needs the soldr binary). Cook RESTORE just untars an archive
+  // into target/ — no soldr dependency.
+  const cookGate = decideCookGate({
+    prebuildDeps: inputs.prebuildDeps,
+    cacheUmbrella: cacheEnabled,
+    lockfilePath: result.targetCache.lockfilePath,
+  });
+  const cookEnabled = cookGate.enabled && result.enabled;
+  let cookFlags: string[] = [];
+  let cookKey = "";
+  let cookProjectRoot = "";
+  let cookTargetDir = "";
+  let cookArchive = "";
+  if (cookEnabled) {
+    cookFlags = canonicalizeCookFlags(parseCookFlags(inputs.prebuildDepsFlags));
+    const flagsHash = hashCookFlags(cookFlags);
+    const lockHash = result.targetCache.lockfileHash || "no-lock";
+    cookKey = buildCookCacheKey({
+      runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
+      runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
+      libc: detectLibc(),
+      rustcRelease: result.toolchain.cacheChannel.trim() || result.toolchain.channel.trim(),
+      flagsHash,
+      lockHash,
+      soldrVersion:
+        result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim() || "unset",
+    });
+    cookProjectRoot = path.dirname(result.targetCache.targetPath);
+    cookTargetDir = result.targetCache.targetPath;
+    cookArchive = `${cookTargetDir}.tar.zst`;
+  }
+  // Cook restore can race with target-cache restore when target-cache is
+  // configured to write to target/ (i.e. `build-cache-mode: full`). In all
+  // other modes (`once`/`thin`), target-cache writes only the rust-plan
+  // bundle to a separate path — no conflict. Gate the parallel-join on
+  // path disjointness.
+  const targetCachePathsList = result.targetCache.paths
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  const cookCanParallelize =
+    cookEnabled &&
+    !targetCachePathsList.some((p) => path.resolve(p) === path.resolve(cookTargetDir));
+  let cookRestoreResultParallel: { hit: boolean; matchedKey: string; archiveBytes: number } | null = null;
+
   // ---- parallel restores ----
-  // setup-cache, target-cache, build-cache, and cargo-registry write to
-  // disjoint paths and have no inter-dependencies, so they run concurrently.
-  // Sequential previously: ~18s on warm runs (setup 0.2s + target 7.7s +
-  // build 5s + cargo-registry 5s). Parallel: ~max(those) ≈ 8s. Saves ~10s.
+  // setup-cache, target-cache, build-cache, cargo-registry, and (conditionally)
+  // cook-cache write to disjoint paths and have no inter-dependencies, so they
+  // run concurrently. Sequential previously: ~18s on warm runs. Parallel: ~8s.
+  // Cook restore joins when target-cache doesn't write target/ (i.e. modes
+  // other than `full`) — saves another ~5s when applicable.
   //
   // Layers that must stay sequential (wired below): solo-toolchain (writes
   // RUSTUP_HOME, must precede ensureRustToolchain), soldr-mini (writes
-  // install dir, must precede ensureSoldr), cook (writes target/ and needs
+  // install dir, must precede ensureSoldr), cook RUN (needs
   // the soldr binary). Cargo-registry was previously after-cook — it's been
   // moved into this parallel block because nothing the soldr install path
   // touches depends on its hydrated cargo registry state.
@@ -434,6 +482,31 @@ export async function run(): Promise<void> {
     });
   })();
 
+  // Cook restore — joins the parallel block when target-cache won't be
+  // writing to the same target/ dir. See the gate computed above. When
+  // we skip this IIFE, the cook phase falls back to its sequential
+  // restore later.
+  const cookRestorePromise = (async (): Promise<void> => {
+    if (!cookCanParallelize) return;
+    logger.log(`cook: key=${cookKey} project=${cookProjectRoot} target=${cookTargetDir}`);
+    const t0 = Date.now();
+    const restore = await restoreCookCache({
+      exactKey: cookKey,
+      archivePath: cookArchive,
+      targetDir: cookTargetDir,
+      longWindow: 27,
+      debug: debugMode,
+      log: (msg) => logger.log(msg),
+    });
+    cookRestoreResultParallel = restore;
+    statsCollector.record({
+      label: "cook-cache", operation: "restore", hit: restore.hit,
+      key: cookKey, matchedKey: restore.matchedKey, restoreKeys: [],
+      archiveBytes: restore.archiveBytes || null, inflatedBytes: null, fileCount: null,
+      durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
+    });
+  })();
+
   // Promise.all — each IIFE wraps its own errors via restoreCacheSafe and
   // try/catches, so this should only see rejections for genuine programming
   // bugs.
@@ -442,6 +515,7 @@ export async function run(): Promise<void> {
     targetRestorePromise,
     buildRestorePromise,
     cargoRegistryRestorePromise,
+    cookRestorePromise,
   ]);
   await finishPhase("parallel-restore");
 
@@ -702,54 +776,50 @@ export async function run(): Promise<void> {
   await finishPhase("verify");
 
   // ---- cook (prebuild-deps via cargo-chef) ----
-  // Long-lived deps tarball keyed on Cargo.lock content. Restores
-  // target/deps/ before the user's build so the first compile starts
-  // warm. Gated on Cargo.lock presence + cache umbrella + enable flag.
+  // Long-lived deps tarball keyed on Cargo.lock content. When safe (see
+  // the cook gate above) the RESTORE happens in the parallel block; we
+  // pick up its result here and only run the actual cook step if the
+  // restore missed. In `build-cache-mode: full` workflows the restore
+  // can't safely parallelize, so we do it here sequentially.
   // Failures here are logged but never fail the action — the user's
   // own cargo build will still work without the cooked deps.
   await markPhase("cook");
-  const cookGate = decideCookGate({
-    prebuildDeps: inputs.prebuildDeps,
-    cacheUmbrella: cacheEnabled,
-    lockfilePath: result.targetCache.lockfilePath,
-  });
-  if (cookGate.enabled && result.enabled) {
-    const cookFlags = canonicalizeCookFlags(parseCookFlags(inputs.prebuildDepsFlags));
-    const flagsHash = hashCookFlags(cookFlags);
-    const lockHash = result.targetCache.lockfileHash || "no-lock";
-    const cookKey = buildCookCacheKey({
-      runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
-      runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
-      libc: detectLibc(),
-      rustcRelease: result.toolchain.cacheChannel.trim() || result.toolchain.channel.trim(),
-      flagsHash,
-      lockHash,
-      soldrVersion:
-        result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim() || "unset",
-    });
-    const projectRoot = path.dirname(result.targetCache.targetPath);
-    const cookTargetDir = result.targetCache.targetPath;
-    // CRITICAL: archive path must match what compressCache will write to
-    // during save (`${cacheDir}.tar.zst` — see cache-compress.ts:220).
-    // @actions/cache hashes the `paths` array into a "version" key — save
-    // and restore MUST pass the same array or the lookup misses even when
-    // the entry exists. Mirrors the build-cache pattern at main.ts:280.
-    const cookArchive = `${cookTargetDir}.tar.zst`;
-    logger.log(`cook: key=${cookKey} project=${projectRoot} target=${cookTargetDir}`);
-    const cookT0 = Date.now();
-    const restore = await restoreCookCache({
-      exactKey: cookKey,
-      archivePath: cookArchive,
-      targetDir: cookTargetDir,
-      longWindow: 27,
-      debug: debugMode,
-      log: (msg) => logger.log(msg),
-    });
+  if (cookEnabled) {
+    let restore: { hit: boolean; matchedKey: string; archiveBytes: number };
+    if (cookRestoreResultParallel) {
+      restore = cookRestoreResultParallel;
+    } else {
+      // Sequential fallback path — used when target-cache writes to the same
+      // target/ dir (mode: full) and we couldn't safely parallelize.
+      logger.log(`cook: key=${cookKey} project=${cookProjectRoot} target=${cookTargetDir}`);
+      const cookT0 = Date.now();
+      restore = await restoreCookCache({
+        exactKey: cookKey,
+        archivePath: cookArchive,
+        targetDir: cookTargetDir,
+        longWindow: 27,
+        debug: debugMode,
+        log: (msg) => logger.log(msg),
+      });
+      statsCollector.record({
+        label: "cook-cache",
+        operation: "restore",
+        hit: restore.hit,
+        key: cookKey,
+        matchedKey: restore.matchedKey,
+        restoreKeys: [],
+        archiveBytes: restore.archiveBytes || null,
+        inflatedBytes: null,
+        fileCount: null,
+        durationMs: Date.now() - cookT0,
+        timestamp: new Date().toISOString(),
+      });
+    }
     let cookRan = false;
     if (!restore.hit) {
       const runRes = await runCook({
         soldrBinary: result.soldrPath,
-        projectRoot,
+        projectRoot: cookProjectRoot,
         flags: cookFlags,
         log: (msg) => logger.log(msg),
       });
@@ -765,19 +835,6 @@ export async function run(): Promise<void> {
     core.saveState("cookTargetDir", cookTargetDir);
     core.saveState("cookLongWindow", "27");
     core.saveState("cookCompressLevel", "19");
-    statsCollector.record({
-      label: "cook-cache",
-      operation: "restore",
-      hit: restore.hit,
-      key: cookKey,
-      matchedKey: restore.matchedKey,
-      restoreKeys: [],
-      archiveBytes: restore.archiveBytes || null,
-      inflatedBytes: null,
-      fileCount: null,
-      durationMs: Date.now() - cookT0,
-      timestamp: new Date().toISOString(),
-    });
   } else {
     logger.log(`cook: skipped - ${cookGate.reason}`);
     core.saveState("cookEnabled", "false");
