@@ -179,13 +179,23 @@ Reference data measured on the zccache project on `ubuntu-24.04`, post the 0.7.3
 | cargo-registry | ~138 MB | ~12 s |
 | build-cache (zccache state) | ~198 MB | ~16 s |
 | cook-cache (deps target/) | ~214 MB → ~2.5 GB inflated | ~12 s (bg) / ~7 s (sequential alone) |
-| target-cache (rust-plan bundle, `once` mode) | **~1.5 GB** | ~30 s |
+| target-cache (rust-plan bundle, `once` mode) | **~1.5-1.6 GB** | ~30-80 s (varies with bundle content) |
 | soldr-mini-cache | ~2 MB | <1 s |
 | solo-toolchain-cache | typically empty diff | <1 s |
+| Post Setup Soldr step (after #153, `journal-print-raw: false`) | — | ~5 s |
+| Post Setup Soldr step (debug:true + raw dump, pre-#153) | — | ~58 s |
 
-Total warm-build wall clock on the demo workflow: ~116 s (down from 161 s baseline). For a production user without `logging: true` (no diagnostic dump), estimated ~50 s.
+Total warm-build wall clock on the demo workflow: ~94 s after #153 (was ~116 s after #148, 161 s baseline). For a production user without `logging: true` and `journal-print-raw: false`, estimated ~50 s.
 
 The target-cache bundle is unexpectedly large given the "rust-plan only" framing — tracked at soldr#461.
+
+#### Cost of diagnostic dumps in the post step
+
+The post-phase `dumpDiagnostics` writes a `[compile_journal_raw]` section verbatim to stdout when gated on. Each per-rustc record is ~3-5 KB; a typical warm zccache demo build emits ~6900 records ≈ 20-30 MB of stdout. GitHub Actions' log writer becomes the bottleneck — observed cost is ~30-50 s of Post Setup Soldr wall clock for the dump alone.
+
+`journal-print-raw` (added in #153) decouples the raw dump from `debug:true`. Demo workflow sets it to "false" because it already uploads `${ZCCACHE_CACHE_DIR}/logs/` as the `zccache-logs-*` artifact — stdout dump is purely redundant on that path. Other workflows that don't upload the JSONL artifact and want forensic data should keep the default (`debug:true` → raw dump on).
+
+**Rule for future post-step features that emit per-record data**: gate them on a *named* input, not on `debug:true`. The "debug means everything" semantics conflate fast diagnostics (archive sizes, ratios) with slow ones (per-record streams), making the demo's diagnostic budget binary instead of granular.
 
 ### Prioritization framework for fast-path work
 
