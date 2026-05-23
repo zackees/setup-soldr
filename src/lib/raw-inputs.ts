@@ -57,5 +57,6 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     prebuildDeps: get("prebuild-deps"),
     prebuildDepsFlags: get("prebuild-deps-flags"),
     soldrMiniCache: get("soldr-mini-cache"),
+    journalPrintRaw: get("journal-print-raw"),
   };
 }

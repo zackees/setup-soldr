@@ -74,6 +74,7 @@ export interface RawInputs {
   prebuildDeps: string;
   prebuildDepsFlags: string;
   soldrMiniCache: string;
+  journalPrintRaw: string;
 }
 
 /**

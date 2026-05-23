@@ -64,6 +64,7 @@ EXPECTED_INPUTS = {
     "prebuild-deps",
     "prebuild-deps-flags",
     "soldr-mini-cache",
+    "journal-print-raw",
 }
 
 

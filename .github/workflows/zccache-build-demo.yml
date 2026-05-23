@@ -191,6 +191,11 @@ jobs:
           repo: zackees/soldr
           stats: detailed
           debug: "true"
+          # Per-rustc-invocation JSONL stream is uploaded as
+          # `zccache-logs-*` artifact below; suppressing the redundant
+          # stdout dump (thousands of records, 20-30 MB) shaves ~30-50 s
+          # off the post step on hosted ubuntu runners.
+          journal-print-raw: "false"
           shims: "true"
           compile-cache-stats: detailed
           logging: "true"
@@ -349,6 +354,11 @@ jobs:
           repo: zackees/soldr
           stats: detailed
           debug: "true"
+          # Per-rustc-invocation JSONL stream is uploaded as
+          # `zccache-logs-*` artifact below; suppressing the redundant
+          # stdout dump (thousands of records, 20-30 MB) shaves ~30-50 s
+          # off the post step on hosted ubuntu runners.
+          journal-print-raw: "false"
           shims: "true"
           compile-cache-stats: detailed
           logging: "true"
