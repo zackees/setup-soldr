@@ -167,6 +167,14 @@ function disabledSave(): CacheSaveResult {
   return { status: "disabled" };
 }
 
+// setup-cache is intentionally restore-only. Its restore is kept so the
+// action's `cache-hit` output (wired from setupCacheExactHit in main.ts)
+// retains its public contract for downstream workflows, but the save path
+// is permanently inert: the soldr binary moved to soldr-mini-cache (#142)
+// and the rustup toolchain state moved to solo-toolchain-cache (#139),
+// both of which are content-addressable and coarser-keyed. Wiring a save
+// here would re-introduce a duplicate path and defeat those layers' LRU
+// access pattern. See setup-soldr#151 for the full decision rationale.
 function notManagedSave(): CacheSaveResult {
   return { status: "not-managed-in-post" };
 }
