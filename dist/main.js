@@ -478,8 +478,8 @@ const stream = __importStar(__nccwpck_require__(130));
 const util = __importStar(__nccwpck_require__(123));
 const utils = __importStar(__nccwpck_require__(76));
 const constants_1 = __nccwpck_require__(45);
-const requestUtils_1 = __nccwpck_require__(261);
-const abort_controller_1 = __nccwpck_require__(229);
+const requestUtils_1 = __nccwpck_require__(262);
+const abort_controller_1 = __nccwpck_require__(230);
 /**
  * Pipes the body of a HTTP response to a stream
  *
@@ -845,7 +845,7 @@ const DispatcherBase = __nccwpck_require__(62)
 const Pool = __nccwpck_require__(338)
 const Client = __nccwpck_require__(88)
 const util = __nccwpck_require__(69)
-const createRedirectInterceptor = __nccwpck_require__(255)
+const createRedirectInterceptor = __nccwpck_require__(256)
 const { WeakRef, FinalizationRegistry } = __nccwpck_require__(415)()
 
 const kOnConnect = Symbol('onConnect')
@@ -1071,7 +1071,7 @@ function isNamedKeyCredential(credential) {
 "use strict";
 
 
-const { MockNotMatchedError } = __nccwpck_require__(233)
+const { MockNotMatchedError } = __nccwpck_require__(234)
 const {
   kDispatches,
   kMockAgent,
@@ -2734,15 +2734,15 @@ exports.isObject = isObject;
 exports.randomUUID = randomUUID;
 exports.uint8ArrayToString = uint8ArrayToString;
 exports.stringToUint8Array = stringToUint8Array;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const tspRuntime = tslib_1.__importStar(__nccwpck_require__(146));
 var aborterUtils_js_1 = __nccwpck_require__(100);
 Object.defineProperty(exports, "cancelablePromiseRace", ({ enumerable: true, get: function () { return aborterUtils_js_1.cancelablePromiseRace; } }));
-var createAbortablePromise_js_1 = __nccwpck_require__(260);
+var createAbortablePromise_js_1 = __nccwpck_require__(261);
 Object.defineProperty(exports, "createAbortablePromise", ({ enumerable: true, get: function () { return createAbortablePromise_js_1.createAbortablePromise; } }));
 var delay_js_1 = __nccwpck_require__(113);
 Object.defineProperty(exports, "delay", ({ enumerable: true, get: function () { return delay_js_1.delay; } }));
-var error_js_1 = __nccwpck_require__(213);
+var error_js_1 = __nccwpck_require__(214);
 Object.defineProperty(exports, "getErrorMessage", ({ enumerable: true, get: function () { return error_js_1.getErrorMessage; } }));
 var typeGuards_js_1 = __nccwpck_require__(110);
 Object.defineProperty(exports, "isDefined", ({ enumerable: true, get: function () { return typeGuards_js_1.isDefined; } }));
@@ -2920,7 +2920,7 @@ module.exports = __toCommonJS(retryPolicy_exports);
 var import_helpers = __nccwpck_require__(456);
 var import_restError = __nccwpck_require__(445);
 var import_AbortError = __nccwpck_require__(10);
-var import_logger = __nccwpck_require__(246);
+var import_logger = __nccwpck_require__(247);
 var import_constants = __nccwpck_require__(48);
 const retryPolicyLogger = (0, import_logger.createClientLogger)("ts-http-runtime retryPolicy");
 const retryPolicyName = "retryPolicy";
@@ -3170,7 +3170,7 @@ var base64_1 = __nccwpck_require__(304);
 Object.defineProperty(exports, "base64decode", ({ enumerable: true, get: function () { return base64_1.base64decode; } }));
 Object.defineProperty(exports, "base64encode", ({ enumerable: true, get: function () { return base64_1.base64encode; } }));
 // UTF8 encoding
-var protobufjs_utf8_1 = __nccwpck_require__(347);
+var protobufjs_utf8_1 = __nccwpck_require__(346);
 Object.defineProperty(exports, "utf8read", ({ enumerable: true, get: function () { return protobufjs_utf8_1.utf8read; } }));
 // Binary format contracts, options for reading and writing, for example
 var binary_format_contract_1 = __nccwpck_require__(333);
@@ -3182,7 +3182,7 @@ var binary_reader_1 = __nccwpck_require__(134);
 Object.defineProperty(exports, "BinaryReader", ({ enumerable: true, get: function () { return binary_reader_1.BinaryReader; } }));
 Object.defineProperty(exports, "binaryReadOptions", ({ enumerable: true, get: function () { return binary_reader_1.binaryReadOptions; } }));
 // Standard IBinaryWriter implementation
-var binary_writer_1 = __nccwpck_require__(251);
+var binary_writer_1 = __nccwpck_require__(252);
 Object.defineProperty(exports, "BinaryWriter", ({ enumerable: true, get: function () { return binary_writer_1.BinaryWriter; } }));
 Object.defineProperty(exports, "binaryWriteOptions", ({ enumerable: true, get: function () { return binary_writer_1.binaryWriteOptions; } }));
 // Int64 and UInt64 implementations required for the binary format
@@ -3190,7 +3190,7 @@ var pb_long_1 = __nccwpck_require__(117);
 Object.defineProperty(exports, "PbLong", ({ enumerable: true, get: function () { return pb_long_1.PbLong; } }));
 Object.defineProperty(exports, "PbULong", ({ enumerable: true, get: function () { return pb_long_1.PbULong; } }));
 // JSON format contracts, options for reading and writing, for example
-var json_format_contract_1 = __nccwpck_require__(242);
+var json_format_contract_1 = __nccwpck_require__(243);
 Object.defineProperty(exports, "jsonReadOptions", ({ enumerable: true, get: function () { return json_format_contract_1.jsonReadOptions; } }));
 Object.defineProperty(exports, "jsonWriteOptions", ({ enumerable: true, get: function () { return json_format_contract_1.jsonWriteOptions; } }));
 Object.defineProperty(exports, "mergeJsonOptions", ({ enumerable: true, get: function () { return json_format_contract_1.mergeJsonOptions; } }));
@@ -3212,7 +3212,7 @@ Object.defineProperty(exports, "readMessageOption", ({ enumerable: true, get: fu
 // Message operations via reflection
 var reflection_type_check_1 = __nccwpck_require__(291);
 Object.defineProperty(exports, "ReflectionTypeCheck", ({ enumerable: true, get: function () { return reflection_type_check_1.ReflectionTypeCheck; } }));
-var reflection_create_1 = __nccwpck_require__(206);
+var reflection_create_1 = __nccwpck_require__(207);
 Object.defineProperty(exports, "reflectionCreate", ({ enumerable: true, get: function () { return reflection_create_1.reflectionCreate; } }));
 var reflection_scalar_default_1 = __nccwpck_require__(463);
 Object.defineProperty(exports, "reflectionScalarDefault", ({ enumerable: true, get: function () { return reflection_scalar_default_1.reflectionScalarDefault; } }));
@@ -3224,7 +3224,7 @@ var reflection_binary_reader_1 = __nccwpck_require__(409);
 Object.defineProperty(exports, "ReflectionBinaryReader", ({ enumerable: true, get: function () { return reflection_binary_reader_1.ReflectionBinaryReader; } }));
 var reflection_binary_writer_1 = __nccwpck_require__(186);
 Object.defineProperty(exports, "ReflectionBinaryWriter", ({ enumerable: true, get: function () { return reflection_binary_writer_1.ReflectionBinaryWriter; } }));
-var reflection_json_reader_1 = __nccwpck_require__(345);
+var reflection_json_reader_1 = __nccwpck_require__(344);
 Object.defineProperty(exports, "ReflectionJsonReader", ({ enumerable: true, get: function () { return reflection_json_reader_1.ReflectionJsonReader; } }));
 var reflection_json_writer_1 = __nccwpck_require__(90);
 Object.defineProperty(exports, "ReflectionJsonWriter", ({ enumerable: true, get: function () { return reflection_json_writer_1.ReflectionJsonWriter; } }));
@@ -3421,7 +3421,7 @@ const {
   createDeferredPromise,
   fullyReadBody
 } = __nccwpck_require__(518)
-const { FormData } = __nccwpck_require__(208)
+const { FormData } = __nccwpck_require__(209)
 const { kState } = __nccwpck_require__(15)
 const { webidl } = __nccwpck_require__(457)
 const { DOMException, structuredClone } = __nccwpck_require__(30)
@@ -3429,7 +3429,7 @@ const { Blob, File: NativeFile } = __nccwpck_require__(119)
 const { kBodyUsed } = __nccwpck_require__(196)
 const assert = __nccwpck_require__(527)
 const { isErrored } = __nccwpck_require__(69)
-const { isUint8Array, isArrayBuffer } = __nccwpck_require__(199)
+const { isUint8Array, isArrayBuffer } = __nccwpck_require__(200)
 const { File: UndiciFile } = __nccwpck_require__(365)
 const { parseMIMEType, serializeAMimeType } = __nccwpck_require__(25)
 
@@ -3451,7 +3451,7 @@ const textDecoder = new TextDecoder()
 // https://fetch.spec.whatwg.org/#concept-bodyinit-extract
 function extractBody (object, keepalive = false) {
   if (!ReadableStream) {
-    ReadableStream = (__nccwpck_require__(257).ReadableStream)
+    ReadableStream = (__nccwpck_require__(258).ReadableStream)
   }
 
   // 1. Let stream be null.
@@ -3672,7 +3672,7 @@ function extractBody (object, keepalive = false) {
 function safelyExtractBody (object, keepalive = false) {
   if (!ReadableStream) {
     // istanbul ignore next
-    ReadableStream = (__nccwpck_require__(257).ReadableStream)
+    ReadableStream = (__nccwpck_require__(258).ReadableStream)
   }
 
   // To safely extract a body and a `Content-Type` value from
@@ -4674,7 +4674,7 @@ module.exports = {
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppendBlobImpl = void 0;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(440));
 const Mappers = tslib_1.__importStar(__nccwpck_require__(180));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(65));
@@ -5379,9 +5379,9 @@ const utils = __importStar(__nccwpck_require__(76));
 const uploadUtils_1 = __nccwpck_require__(160);
 const downloadUtils_1 = __nccwpck_require__(3);
 const options_1 = __nccwpck_require__(266);
-const requestUtils_1 = __nccwpck_require__(261);
+const requestUtils_1 = __nccwpck_require__(262);
 const config_1 = __nccwpck_require__(37);
-const user_agent_1 = __nccwpck_require__(363);
+const user_agent_1 = __nccwpck_require__(362);
 function getCacheApiUrl(resource) {
     const baseUrl = (0, config_1.getCacheServiceURL)();
     if (!baseUrl) {
@@ -5836,7 +5836,7 @@ __export(proxyPolicy_exports, {
 });
 module.exports = __toCommonJS(proxyPolicy_exports);
 var import_https_proxy_agent = __nccwpck_require__(132);
-var import_http_proxy_agent = __nccwpck_require__(225);
+var import_http_proxy_agent = __nccwpck_require__(226);
 var import_log = __nccwpck_require__(151);
 const HTTPS_PROXY = "HTTPS_PROXY";
 const HTTP_PROXY = "HTTP_PROXY";
@@ -6030,14 +6030,14 @@ const {
 } = __nccwpck_require__(30)
 const { kState, kHeaders, kGuard, kRealm } = __nccwpck_require__(15)
 const { webidl } = __nccwpck_require__(457)
-const { FormData } = __nccwpck_require__(208)
+const { FormData } = __nccwpck_require__(209)
 const { getGlobalOrigin } = __nccwpck_require__(139)
 const { URLSerializer } = __nccwpck_require__(25)
 const { kHeadersList, kConstruct } = __nccwpck_require__(196)
 const assert = __nccwpck_require__(527)
 const { types } = __nccwpck_require__(123)
 
-const ReadableStream = globalThis.ReadableStream || (__nccwpck_require__(257).ReadableStream)
+const ReadableStream = globalThis.ReadableStream || (__nccwpck_require__(258).ReadableStream)
 const textEncoder = new TextEncoder('utf-8')
 
 // https://fetch.spec.whatwg.org/#response-class
@@ -6671,7 +6671,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.partialMatch = exports.match = exports.getSearchPaths = void 0;
-const pathHelper = __importStar(__nccwpck_require__(223));
+const pathHelper = __importStar(__nccwpck_require__(224));
 const internal_match_kind_1 = __nccwpck_require__(529);
 const IS_WINDOWS = process.platform === 'win32';
 /**
@@ -6910,7 +6910,7 @@ exports.BaseRequestPolicy = BaseRequestPolicy;
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlobImpl = void 0;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(440));
 const Mappers = tslib_1.__importStar(__nccwpck_require__(180));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(65));
@@ -8982,7 +8982,7 @@ exports.UnaryCall = UnaryCall;
 
 const { kReadyState, kController, kResponse, kBinaryType, kWebSocketURL } = __nccwpck_require__(98)
 const { states, opcodes } = __nccwpck_require__(466)
-const { MessageEvent, ErrorEvent } = __nccwpck_require__(250)
+const { MessageEvent, ErrorEvent } = __nccwpck_require__(251)
 
 /* globals Blob */
 
@@ -9464,7 +9464,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.internalCacheTwirpClient = void 0;
 const core_1 = __nccwpck_require__(460);
-const user_agent_1 = __nccwpck_require__(363);
+const user_agent_1 = __nccwpck_require__(362);
 const errors_1 = __nccwpck_require__(306);
 const config_1 = __nccwpck_require__(37);
 const cacheUtils_1 = __nccwpck_require__(76);
@@ -9903,7 +9903,7 @@ const StorageClient_js_1 = __nccwpck_require__(455);
 const tracing_js_1 = __nccwpck_require__(31);
 const utils_common_js_1 = __nccwpck_require__(154);
 const BlobSASSignatureValues_js_1 = __nccwpck_require__(68);
-const BlobLeaseClient_js_1 = __nccwpck_require__(205);
+const BlobLeaseClient_js_1 = __nccwpck_require__(206);
 const Clients_js_1 = __nccwpck_require__(185);
 const BlobBatchClient_js_1 = __nccwpck_require__(403);
 /**
@@ -12919,7 +12919,7 @@ exports.generateBlobSASQueryParametersInternal = generateBlobSASQueryParametersI
 const BlobSASPermissions_js_1 = __nccwpck_require__(503);
 const ContainerSASPermissions_js_1 = __nccwpck_require__(281);
 const storage_common_1 = __nccwpck_require__(278);
-const SasIPRange_js_1 = __nccwpck_require__(361);
+const SasIPRange_js_1 = __nccwpck_require__(360);
 const SASQueryParameters_js_1 = __nccwpck_require__(526);
 const constants_js_1 = __nccwpck_require__(148);
 const utils_common_js_1 = __nccwpck_require__(154);
@@ -13967,7 +13967,7 @@ async function * convertIterableToBuffer (iterable) {
 let ReadableStream
 function ReadableStreamFrom (iterable) {
   if (!ReadableStream) {
-    ReadableStream = (__nccwpck_require__(257).ReadableStream)
+    ReadableStream = (__nccwpck_require__(258).ReadableStream)
   }
 
   if (ReadableStream.from) {
@@ -14194,11 +14194,11 @@ __export(src_exports, {
   toHttpHeadersLike: () => import_util.toHttpHeadersLike
 });
 module.exports = __toCommonJS(src_exports);
-var import_extendedClient = __nccwpck_require__(216);
+var import_extendedClient = __nccwpck_require__(217);
 var import_response = __nccwpck_require__(413);
 var import_requestPolicyFactoryPolicy = __nccwpck_require__(63);
 var import_disableKeepAlivePolicy = __nccwpck_require__(8);
-var import_httpClientAdapter = __nccwpck_require__(211);
+var import_httpClientAdapter = __nccwpck_require__(212);
 var import_util = __nccwpck_require__(109);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
@@ -14995,7 +14995,7 @@ const glob = __importStar(__nccwpck_require__(168));
 const io = __importStar(__nccwpck_require__(296));
 const crypto = __importStar(__nccwpck_require__(292));
 const fs = __importStar(__nccwpck_require__(532));
-const path = __importStar(__nccwpck_require__(248));
+const path = __importStar(__nccwpck_require__(249));
 const semver = __importStar(__nccwpck_require__(179));
 const util = __importStar(__nccwpck_require__(123));
 const constants_1 = __nccwpck_require__(45);
@@ -15368,10 +15368,10 @@ exports.isGitRepo = isGitRepo;
 exports.listTrackedFiles = listTrackedFiles;
 exports.normalizeWorkspace = normalizeWorkspace;
 exports.normalizeSourceMtime = normalizeSourceMtime;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const path = __importStar(__nccwpck_require__(508));
 const exec = __importStar(__nccwpck_require__(18));
-const log_utils_js_1 = __nccwpck_require__(354);
+const log_utils_js_1 = __nccwpck_require__(353);
 const TRUTHY = new Set(["1", "true", "yes", "on"]);
 // Globs evaluated against the repo-relative POSIX path of each tracked file.
 const INCLUDE_GLOBS = [
@@ -15902,7 +15902,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createTracingClient = exports.useInstrumenter = void 0;
 var instrumenter_js_1 = __nccwpck_require__(407);
 Object.defineProperty(exports, "useInstrumenter", ({ enumerable: true, get: function () { return instrumenter_js_1.useInstrumenter; } }));
-var tracingClient_js_1 = __nccwpck_require__(349);
+var tracingClient_js_1 = __nccwpck_require__(348);
 Object.defineProperty(exports, "createTracingClient", ({ enumerable: true, get: function () { return tracingClient_js_1.createTracingClient; } }));
 //# sourceMappingURL=index.js.map
 
@@ -16443,7 +16443,7 @@ class Request {
 
       // 2. Set finalBody to the result of creating a proxy for inputBody.
       if (!TransformStream) {
-        TransformStream = (__nccwpck_require__(257).TransformStream)
+        TransformStream = (__nccwpck_require__(258).TransformStream)
       }
 
       // https://streams.spec.whatwg.org/#readablestream-create-a-proxy
@@ -17666,7 +17666,7 @@ function onHTTP2GoAway (code) {
 }
 
 const constants = __nccwpck_require__(449)
-const createRedirectInterceptor = __nccwpck_require__(255)
+const createRedirectInterceptor = __nccwpck_require__(256)
 const EMPTY_BUF = Buffer.alloc(0)
 
 async function lazyllhttp () {
@@ -19507,14 +19507,14 @@ __export(src_exports, {
 });
 module.exports = __toCommonJS(src_exports);
 var import_AbortError = __nccwpck_require__(10);
-var import_logger = __nccwpck_require__(246);
+var import_logger = __nccwpck_require__(247);
 var import_httpHeaders = __nccwpck_require__(485);
 var import_pipelineRequest = __nccwpck_require__(115);
 var import_pipeline = __nccwpck_require__(525);
 var import_restError = __nccwpck_require__(445);
 var import_bytesEncoding = __nccwpck_require__(288);
 var import_defaultHttpClient = __nccwpck_require__(373);
-var import_getClient = __nccwpck_require__(210);
+var import_getClient = __nccwpck_require__(211);
 var import_operationOptionHelpers = __nccwpck_require__(384);
 var import_restError2 = __nccwpck_require__(369);
 // Annotate the CommonJS export names for ESM import in node:
@@ -20783,31 +20783,31 @@ __export(src_exports, {
   userAgentPolicyName: () => import_userAgentPolicy.userAgentPolicyName
 });
 module.exports = __toCommonJS(src_exports);
-var import_pipeline = __nccwpck_require__(245);
+var import_pipeline = __nccwpck_require__(246);
 var import_createPipelineFromOptions = __nccwpck_require__(282);
-var import_defaultHttpClient = __nccwpck_require__(236);
-var import_httpHeaders = __nccwpck_require__(243);
+var import_defaultHttpClient = __nccwpck_require__(237);
+var import_httpHeaders = __nccwpck_require__(244);
 var import_pipelineRequest = __nccwpck_require__(20);
-var import_restError = __nccwpck_require__(355);
-var import_decompressResponsePolicy = __nccwpck_require__(239);
+var import_restError = __nccwpck_require__(354);
+var import_decompressResponsePolicy = __nccwpck_require__(240);
 var import_exponentialRetryPolicy = __nccwpck_require__(393);
 var import_setClientRequestIdPolicy = __nccwpck_require__(150);
 var import_logPolicy = __nccwpck_require__(71);
 var import_multipartPolicy = __nccwpck_require__(273);
 var import_proxyPolicy = __nccwpck_require__(473);
-var import_redirectPolicy = __nccwpck_require__(342);
-var import_systemErrorRetryPolicy = __nccwpck_require__(220);
+var import_redirectPolicy = __nccwpck_require__(341);
+var import_systemErrorRetryPolicy = __nccwpck_require__(221);
 var import_throttlingRetryPolicy = __nccwpck_require__(23);
-var import_retryPolicy = __nccwpck_require__(212);
+var import_retryPolicy = __nccwpck_require__(213);
 var import_tracingPolicy = __nccwpck_require__(336);
 var import_defaultRetryPolicy = __nccwpck_require__(55);
 var import_userAgentPolicy = __nccwpck_require__(390);
 var import_tlsPolicy = __nccwpck_require__(379);
 var import_formDataPolicy = __nccwpck_require__(270);
-var import_bearerTokenAuthenticationPolicy = __nccwpck_require__(218);
-var import_ndJsonPolicy = __nccwpck_require__(240);
+var import_bearerTokenAuthenticationPolicy = __nccwpck_require__(219);
+var import_ndJsonPolicy = __nccwpck_require__(241);
 var import_auxiliaryAuthenticationHeaderPolicy = __nccwpck_require__(194);
-var import_agentPolicy = __nccwpck_require__(232);
+var import_agentPolicy = __nccwpck_require__(233);
 var import_file = __nccwpck_require__(327);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
@@ -21726,8 +21726,8 @@ exports.redactValue = redactValue;
 exports.captureProcessSnapshot = captureProcessSnapshot;
 exports.dumpDiagnostics = dumpDiagnostics;
 exports.loggingEnabled = loggingEnabled;
-const fs = __importStar(__nccwpck_require__(249));
-const node_child_process_1 = __nccwpck_require__(198);
+const fs = __importStar(__nccwpck_require__(250));
+const node_child_process_1 = __nccwpck_require__(199);
 const compile_journal_js_1 = __nccwpck_require__(535);
 const ENV_KEY_PREFIXES = [
     "INPUT_",
@@ -22131,7 +22131,7 @@ async function authorizeRequestOnClaimChallenge(onChallengeOptions) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.delay = delay;
 exports.calculateRetryDelay = calculateRetryDelay;
-const createAbortablePromise_js_1 = __nccwpck_require__(260);
+const createAbortablePromise_js_1 = __nccwpck_require__(261);
 const util_1 = __nccwpck_require__(146);
 const StandardAbortMessage = "The delay was aborted.";
 /**
@@ -22523,7 +22523,7 @@ __export(userAgentPlatform_exports, {
 });
 module.exports = __toCommonJS(userAgentPlatform_exports);
 var import_node_os = __toESM(__nccwpck_require__(383));
-var import_node_process = __toESM(__nccwpck_require__(237));
+var import_node_process = __toESM(__nccwpck_require__(238));
 function getHeaderName() {
   return "User-Agent";
 }
@@ -22553,7 +22553,7 @@ async function setPlatformSpecificData(map) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PbLong = exports.PbULong = exports.detectBi = void 0;
-const goog_varint_1 = __nccwpck_require__(204);
+const goog_varint_1 = __nccwpck_require__(205);
 let BI;
 function detectBi() {
     const dv = new DataView(new ArrayBuffer(8));
@@ -22846,8 +22846,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Path = void 0;
-const path = __importStar(__nccwpck_require__(248));
-const pathHelper = __importStar(__nccwpck_require__(223));
+const path = __importStar(__nccwpck_require__(249));
+const pathHelper = __importStar(__nccwpck_require__(224));
 const assert_1 = __importDefault(__nccwpck_require__(527));
 const IS_WINDOWS = process.platform === 'win32';
 /**
@@ -23142,7 +23142,7 @@ module.exports = require("util");
 module.exports = minimatch
 minimatch.Minimatch = Minimatch
 
-var path = (function () { try { return __nccwpck_require__(248) } catch (e) {}}()) || {
+var path = (function () { try { return __nccwpck_require__(249) } catch (e) {}}()) || {
   sep: '/'
 }
 minimatch.sep = path.sep
@@ -24186,9 +24186,9 @@ exports.argStringToArray = exports.ToolRunner = void 0;
 const os = __importStar(__nccwpck_require__(92));
 const events = __importStar(__nccwpck_require__(470));
 const child = __importStar(__nccwpck_require__(164));
-const path = __importStar(__nccwpck_require__(248));
+const path = __importStar(__nccwpck_require__(249));
 const io = __importStar(__nccwpck_require__(296));
-const ioUtil = __importStar(__nccwpck_require__(226));
+const ioUtil = __importStar(__nccwpck_require__(227));
 const timers_1 = __nccwpck_require__(510);
 /* eslint-disable @typescript-eslint/unbound-method */
 const IS_WINDOWS = process.platform === 'win32';
@@ -25402,7 +25402,7 @@ const net = __importStar(__nccwpck_require__(509));
 const tls = __importStar(__nccwpck_require__(506));
 const assert_1 = __importDefault(__nccwpck_require__(527));
 const debug_1 = __importDefault(__nccwpck_require__(516));
-const agent_base_1 = __nccwpck_require__(241);
+const agent_base_1 = __nccwpck_require__(242);
 const url_1 = __nccwpck_require__(85);
 const parse_proxy_response_1 = __nccwpck_require__(420);
 const debug = (0, debug_1.default)('https-proxy-agent');
@@ -25645,7 +25645,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BinaryReader = exports.binaryReadOptions = void 0;
 const binary_format_contract_1 = __nccwpck_require__(333);
 const pb_long_1 = __nccwpck_require__(117);
-const goog_varint_1 = __nccwpck_require__(204);
+const goog_varint_1 = __nccwpck_require__(205);
 const defaultsRead = {
     readUnknownField: true,
     readerFactory: bytes => new BinaryReader(bytes),
@@ -26239,7 +26239,7 @@ async function parseXML(str, opts = {}) {
 
 
 module.exports.request = __nccwpck_require__(511)
-module.exports.stream = __nccwpck_require__(356)
+module.exports.stream = __nccwpck_require__(355)
 module.exports.pipeline = __nccwpck_require__(105)
 module.exports.upgrade = __nccwpck_require__(434)
 module.exports.connect = __nccwpck_require__(374)
@@ -26937,7 +26937,7 @@ var import_delay = __nccwpck_require__(475);
 var import_random = __nccwpck_require__(507);
 var import_object = __nccwpck_require__(144);
 var import_error = __nccwpck_require__(153);
-var import_sha256 = __nccwpck_require__(201);
+var import_sha256 = __nccwpck_require__(202);
 var import_uuidUtils = __nccwpck_require__(394);
 var import_checkEnvironment = __nccwpck_require__(439);
 var import_bytesEncoding = __nccwpck_require__(288);
@@ -26974,7 +26974,7 @@ __export(internal_exports, {
   createLoggerContext: () => import_logger.createLoggerContext
 });
 module.exports = __toCommonJS(internal_exports);
-var import_logger = __nccwpck_require__(246);
+var import_logger = __nccwpck_require__(247);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
 //# sourceMappingURL=internal.js.map
@@ -27295,7 +27295,7 @@ __export(log_exports, {
   logger: () => logger
 });
 module.exports = __toCommonJS(log_exports);
-var import_logger = __nccwpck_require__(246);
+var import_logger = __nccwpck_require__(247);
 const logger = (0, import_logger.createClientLogger)("ts-http-runtime");
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
@@ -28323,10 +28323,10 @@ exports.buildMiniCacheKey = buildMiniCacheKey;
 exports.restoreMiniCache = restoreMiniCache;
 exports.saveMiniCache = saveMiniCache;
 exports.isEligibleForMiniCache = isEligibleForMiniCache;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const fsp = __importStar(__nccwpck_require__(108));
 const path = __importStar(__nccwpck_require__(508));
-const cache = __importStar(__nccwpck_require__(215));
+const cache = __importStar(__nccwpck_require__(216));
 const cache_compress_js_1 = __nccwpck_require__(493);
 const MINI_KEY_PREFIX = "soldr-mini";
 /**
@@ -28968,16 +28968,16 @@ const util = __nccwpck_require__(69)
 const { InvalidArgumentError } = errors
 const api = __nccwpck_require__(138)
 const buildConnector = __nccwpck_require__(267)
-const MockClient = __nccwpck_require__(200)
+const MockClient = __nccwpck_require__(201)
 const MockAgent = __nccwpck_require__(378)
-const MockPool = __nccwpck_require__(351)
-const mockErrors = __nccwpck_require__(233)
-const ProxyAgent = __nccwpck_require__(343)
+const MockPool = __nccwpck_require__(350)
+const mockErrors = __nccwpck_require__(234)
+const ProxyAgent = __nccwpck_require__(342)
 const RetryHandler = __nccwpck_require__(275)
 const { getGlobalDispatcher, setGlobalDispatcher } = __nccwpck_require__(377)
 const DecoratorHandler = __nccwpck_require__(476)
 const RedirectHandler = __nccwpck_require__(391)
-const createRedirectInterceptor = __nccwpck_require__(255)
+const createRedirectInterceptor = __nccwpck_require__(256)
 
 let hasCrypto
 try {
@@ -29076,7 +29076,7 @@ if (util.nodeMajor > 16 || (util.nodeMajor === 16 && util.nodeMinor >= 8)) {
   module.exports.Headers = __nccwpck_require__(517).Headers
   module.exports.Response = __nccwpck_require__(41).Response
   module.exports.Request = __nccwpck_require__(84).Request
-  module.exports.FormData = __nccwpck_require__(208).FormData
+  module.exports.FormData = __nccwpck_require__(209).FormData
   module.exports.File = __nccwpck_require__(365).File
   module.exports.FileReader = __nccwpck_require__(94).FileReader
 
@@ -29214,7 +29214,7 @@ exports.setupCachePaths = setupCachePaths;
 exports.setupCacheLayout = setupCacheLayout;
 exports.pathForOutput = pathForOutput;
 const node_crypto_1 = __nccwpck_require__(276);
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const path = __importStar(__nccwpck_require__(508));
 const TARGET_CACHE_PROFILES = ["thin-v1", "thin-v2"];
 const TARGET_CACHE_BOOL_TRUE = new Set(["true", "1", "yes", "on"]);
@@ -29604,12 +29604,12 @@ function pathForOutput(workspace, p) {
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 tslib_1.__exportStar(__nccwpck_require__(118), exports);
 tslib_1.__exportStar(__nccwpck_require__(181), exports);
 tslib_1.__exportStar(__nccwpck_require__(122), exports);
 tslib_1.__exportStar(__nccwpck_require__(317), exports);
-tslib_1.__exportStar(__nccwpck_require__(209), exports);
+tslib_1.__exportStar(__nccwpck_require__(210), exports);
 tslib_1.__exportStar(__nccwpck_require__(272), exports);
 //# sourceMappingURL=index.js.map
 
@@ -29938,11 +29938,11 @@ exports.saveCookCache = saveCookCache;
 exports.parseCookFlags = parseCookFlags;
 exports.canonicalizeCookFlags = canonicalizeCookFlags;
 const node_crypto_1 = __nccwpck_require__(276);
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const fsp = __importStar(__nccwpck_require__(108));
 const path = __importStar(__nccwpck_require__(508));
 const exec = __importStar(__nccwpck_require__(18));
-const cache = __importStar(__nccwpck_require__(215));
+const cache = __importStar(__nccwpck_require__(216));
 const cache_compress_js_1 = __nccwpck_require__(493);
 const COOK_KEY_PREFIX = "cook";
 /**
@@ -30542,7 +30542,7 @@ Object.defineProperty(exports, "Deferred", ({ enumerable: true, get: function ()
 Object.defineProperty(exports, "DeferredState", ({ enumerable: true, get: function () { return deferred_1.DeferredState; } }));
 var duplex_streaming_call_1 = __nccwpck_require__(307);
 Object.defineProperty(exports, "DuplexStreamingCall", ({ enumerable: true, get: function () { return duplex_streaming_call_1.DuplexStreamingCall; } }));
-var client_streaming_call_1 = __nccwpck_require__(352);
+var client_streaming_call_1 = __nccwpck_require__(351);
 Object.defineProperty(exports, "ClientStreamingCall", ({ enumerable: true, get: function () { return client_streaming_call_1.ClientStreamingCall; } }));
 var server_streaming_call_1 = __nccwpck_require__(452);
 Object.defineProperty(exports, "ServerStreamingCall", ({ enumerable: true, get: function () { return server_streaming_call_1.ServerStreamingCall; } }));
@@ -30696,7 +30696,7 @@ function isLessThan(lhs, rhs) {
 // Licensed under the MIT license.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LroEngine = void 0;
-const operation_js_1 = __nccwpck_require__(359);
+const operation_js_1 = __nccwpck_require__(358);
 const constants_js_1 = __nccwpck_require__(60);
 const poller_js_1 = __nccwpck_require__(75);
 const operation_js_2 = __nccwpck_require__(140);
@@ -41076,7 +41076,7 @@ const core_auth_1 = __nccwpck_require__(515);
 const core_util_1 = __nccwpck_require__(14);
 const core_util_2 = __nccwpck_require__(14);
 const BlobDownloadResponse_js_1 = __nccwpck_require__(427);
-const BlobQueryResponse_js_1 = __nccwpck_require__(202);
+const BlobQueryResponse_js_1 = __nccwpck_require__(203);
 const storage_common_1 = __nccwpck_require__(278);
 const models_js_1 = __nccwpck_require__(416);
 const PageBlobRangeResponse_js_1 = __nccwpck_require__(29);
@@ -41089,9 +41089,9 @@ const storage_common_2 = __nccwpck_require__(278);
 const constants_js_1 = __nccwpck_require__(148);
 const tracing_js_1 = __nccwpck_require__(31);
 const utils_common_js_1 = __nccwpck_require__(154);
-const utils_js_1 = __nccwpck_require__(203);
+const utils_js_1 = __nccwpck_require__(204);
 const BlobSASSignatureValues_js_1 = __nccwpck_require__(68);
-const BlobLeaseClient_js_1 = __nccwpck_require__(205);
+const BlobLeaseClient_js_1 = __nccwpck_require__(206);
 /**
  * A BlobClient represents a URL to an Azure Storage blob; the blob may be a block blob,
  * append blob, or page blob.
@@ -44339,17 +44339,17 @@ exports.resolveSetup = resolveSetup;
 exports.applyResolveResult = applyResolveResult;
 const os = __importStar(__nccwpck_require__(383));
 const path = __importStar(__nccwpck_require__(508));
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const core = __importStar(__nccwpck_require__(460));
 const cache_keys_js_1 = __nccwpck_require__(165);
-const log_utils_js_1 = __nccwpck_require__(354);
+const log_utils_js_1 = __nccwpck_require__(353);
 const detect_musl_cc_js_1 = __nccwpck_require__(504);
 Object.defineProperty(exports, "detectMuslCcEnv", ({ enumerable: true, get: function () { return detect_musl_cc_js_1.detectMuslCcEnv; } }));
 const build_outputs_js_1 = __nccwpck_require__(269);
 Object.defineProperty(exports, "buildOutputs", ({ enumerable: true, get: function () { return build_outputs_js_1.buildOutputs; } }));
-const raw_inputs_js_1 = __nccwpck_require__(344);
+const raw_inputs_js_1 = __nccwpck_require__(343);
 Object.defineProperty(exports, "readRawInputs", ({ enumerable: true, get: function () { return raw_inputs_js_1.readRawInputs; } }));
-const input_parsers_js_1 = __nccwpck_require__(214);
+const input_parsers_js_1 = __nccwpck_require__(215);
 Object.defineProperty(exports, "detectUserLinkerEnv", ({ enumerable: true, get: function () { return input_parsers_js_1.detectUserLinkerEnv; } }));
 Object.defineProperty(exports, "parseCacheShutdownOnIdleSeconds", ({ enumerable: true, get: function () { return input_parsers_js_1.parseCacheShutdownOnIdleSeconds; } }));
 Object.defineProperty(exports, "parseRustBacktrace", ({ enumerable: true, get: function () { return input_parsers_js_1.parseRustBacktrace; } }));
@@ -45645,7588 +45645,6 @@ module.exports = class FixedQueue {
 /***/ }),
 
 /***/ 198:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:child_process");
-
-/***/ }),
-
-/***/ 199:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("util/types");
-
-/***/ }),
-
-/***/ 200:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { promisify } = __nccwpck_require__(123)
-const Client = __nccwpck_require__(88)
-const { buildMockDispatch } = __nccwpck_require__(7)
-const {
-  kDispatches,
-  kMockAgent,
-  kClose,
-  kOriginalClose,
-  kOrigin,
-  kOriginalDispatch,
-  kConnected
-} = __nccwpck_require__(471)
-const { MockInterceptor } = __nccwpck_require__(135)
-const Symbols = __nccwpck_require__(196)
-const { InvalidArgumentError } = __nccwpck_require__(488)
-
-/**
- * MockClient provides an API that extends the Client to influence the mockDispatches.
- */
-class MockClient extends Client {
-  constructor (origin, opts) {
-    super(origin, opts)
-
-    if (!opts || !opts.agent || typeof opts.agent.dispatch !== 'function') {
-      throw new InvalidArgumentError('Argument opts.agent must implement Agent')
-    }
-
-    this[kMockAgent] = opts.agent
-    this[kOrigin] = origin
-    this[kDispatches] = []
-    this[kConnected] = 1
-    this[kOriginalDispatch] = this.dispatch
-    this[kOriginalClose] = this.close.bind(this)
-
-    this.dispatch = buildMockDispatch.call(this)
-    this.close = this[kClose]
-  }
-
-  get [Symbols.kConnected] () {
-    return this[kConnected]
-  }
-
-  /**
-   * Sets up the base interceptor for mocking replies from undici.
-   */
-  intercept (opts) {
-    return new MockInterceptor(opts, this[kDispatches])
-  }
-
-  async [kClose] () {
-    await promisify(this[kOriginalClose])()
-    this[kConnected] = 0
-    this[kMockAgent][Symbols.kClients].delete(this[kOrigin])
-  }
-}
-
-module.exports = MockClient
-
-
-/***/ }),
-
-/***/ 201:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var sha256_exports = {};
-__export(sha256_exports, {
-  computeSha256Hash: () => computeSha256Hash,
-  computeSha256Hmac: () => computeSha256Hmac
-});
-module.exports = __toCommonJS(sha256_exports);
-var import_node_crypto = __nccwpck_require__(276);
-async function computeSha256Hmac(key, stringToSign, encoding) {
-  const decodedKey = Buffer.from(key, "base64");
-  return (0, import_node_crypto.createHmac)("sha256", decodedKey).update(stringToSign).digest(encoding);
-}
-async function computeSha256Hash(content, encoding) {
-  return (0, import_node_crypto.createHash)("sha256").update(content).digest(encoding);
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=sha256.js.map
-
-
-/***/ }),
-
-/***/ 202:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BlobQueryResponse = void 0;
-const core_util_1 = __nccwpck_require__(14);
-const BlobQuickQueryStream_js_1 = __nccwpck_require__(501);
-/**
- * ONLY AVAILABLE IN NODE.JS RUNTIME.
- *
- * BlobQueryResponse implements BlobDownloadResponseModel interface, and in Node.js runtime it will
- * parse avro data returned by blob query.
- */
-class BlobQueryResponse {
-    /**
-     * Indicates that the service supports
-     * requests for partial file content.
-     *
-     * @readonly
-     */
-    get acceptRanges() {
-        return this.originalResponse.acceptRanges;
-    }
-    /**
-     * Returns if it was previously specified
-     * for the file.
-     *
-     * @readonly
-     */
-    get cacheControl() {
-        return this.originalResponse.cacheControl;
-    }
-    /**
-     * Returns the value that was specified
-     * for the 'x-ms-content-disposition' header and specifies how to process the
-     * response.
-     *
-     * @readonly
-     */
-    get contentDisposition() {
-        return this.originalResponse.contentDisposition;
-    }
-    /**
-     * Returns the value that was specified
-     * for the Content-Encoding request header.
-     *
-     * @readonly
-     */
-    get contentEncoding() {
-        return this.originalResponse.contentEncoding;
-    }
-    /**
-     * Returns the value that was specified
-     * for the Content-Language request header.
-     *
-     * @readonly
-     */
-    get contentLanguage() {
-        return this.originalResponse.contentLanguage;
-    }
-    /**
-     * The current sequence number for a
-     * page blob. This header is not returned for block blobs or append blobs.
-     *
-     * @readonly
-     */
-    get blobSequenceNumber() {
-        return this.originalResponse.blobSequenceNumber;
-    }
-    /**
-     * The blob's type. Possible values include:
-     * 'BlockBlob', 'PageBlob', 'AppendBlob'.
-     *
-     * @readonly
-     */
-    get blobType() {
-        return this.originalResponse.blobType;
-    }
-    /**
-     * The number of bytes present in the
-     * response body.
-     *
-     * @readonly
-     */
-    get contentLength() {
-        return this.originalResponse.contentLength;
-    }
-    /**
-     * If the file has an MD5 hash and the
-     * request is to read the full file, this response header is returned so that
-     * the client can check for message content integrity. If the request is to
-     * read a specified range and the 'x-ms-range-get-content-md5' is set to
-     * true, then the request returns an MD5 hash for the range, as long as the
-     * range size is less than or equal to 4 MB. If neither of these sets of
-     * conditions is true, then no value is returned for the 'Content-MD5'
-     * header.
-     *
-     * @readonly
-     */
-    get contentMD5() {
-        return this.originalResponse.contentMD5;
-    }
-    /**
-     * Indicates the range of bytes returned if
-     * the client requested a subset of the file by setting the Range request
-     * header.
-     *
-     * @readonly
-     */
-    get contentRange() {
-        return this.originalResponse.contentRange;
-    }
-    /**
-     * The content type specified for the file.
-     * The default content type is 'application/octet-stream'
-     *
-     * @readonly
-     */
-    get contentType() {
-        return this.originalResponse.contentType;
-    }
-    /**
-     * Conclusion time of the last attempted
-     * Copy File operation where this file was the destination file. This value
-     * can specify the time of a completed, aborted, or failed copy attempt.
-     *
-     * @readonly
-     */
-    get copyCompletedOn() {
-        return undefined;
-    }
-    /**
-     * String identifier for the last attempted Copy
-     * File operation where this file was the destination file.
-     *
-     * @readonly
-     */
-    get copyId() {
-        return this.originalResponse.copyId;
-    }
-    /**
-     * Contains the number of bytes copied and
-     * the total bytes in the source in the last attempted Copy File operation
-     * where this file was the destination file. Can show between 0 and
-     * Content-Length bytes copied.
-     *
-     * @readonly
-     */
-    get copyProgress() {
-        return this.originalResponse.copyProgress;
-    }
-    /**
-     * URL up to 2KB in length that specifies the
-     * source file used in the last attempted Copy File operation where this file
-     * was the destination file.
-     *
-     * @readonly
-     */
-    get copySource() {
-        return this.originalResponse.copySource;
-    }
-    /**
-     * State of the copy operation
-     * identified by 'x-ms-copy-id'. Possible values include: 'pending',
-     * 'success', 'aborted', 'failed'
-     *
-     * @readonly
-     */
-    get copyStatus() {
-        return this.originalResponse.copyStatus;
-    }
-    /**
-     * Only appears when
-     * x-ms-copy-status is failed or pending. Describes cause of fatal or
-     * non-fatal copy operation failure.
-     *
-     * @readonly
-     */
-    get copyStatusDescription() {
-        return this.originalResponse.copyStatusDescription;
-    }
-    /**
-     * When a blob is leased,
-     * specifies whether the lease is of infinite or fixed duration. Possible
-     * values include: 'infinite', 'fixed'.
-     *
-     * @readonly
-     */
-    get leaseDuration() {
-        return this.originalResponse.leaseDuration;
-    }
-    /**
-     * Lease state of the blob. Possible
-     * values include: 'available', 'leased', 'expired', 'breaking', 'broken'.
-     *
-     * @readonly
-     */
-    get leaseState() {
-        return this.originalResponse.leaseState;
-    }
-    /**
-     * The current lease status of the
-     * blob. Possible values include: 'locked', 'unlocked'.
-     *
-     * @readonly
-     */
-    get leaseStatus() {
-        return this.originalResponse.leaseStatus;
-    }
-    /**
-     * A UTC date/time value generated by the service that
-     * indicates the time at which the response was initiated.
-     *
-     * @readonly
-     */
-    get date() {
-        return this.originalResponse.date;
-    }
-    /**
-     * The number of committed blocks
-     * present in the blob. This header is returned only for append blobs.
-     *
-     * @readonly
-     */
-    get blobCommittedBlockCount() {
-        return this.originalResponse.blobCommittedBlockCount;
-    }
-    /**
-     * The ETag contains a value that you can use to
-     * perform operations conditionally, in quotes.
-     *
-     * @readonly
-     */
-    get etag() {
-        return this.originalResponse.etag;
-    }
-    /**
-     * The error code.
-     *
-     * @readonly
-     */
-    get errorCode() {
-        return this.originalResponse.errorCode;
-    }
-    /**
-     * The value of this header is set to
-     * true if the file data and application metadata are completely encrypted
-     * using the specified algorithm. Otherwise, the value is set to false (when
-     * the file is unencrypted, or if only parts of the file/application metadata
-     * are encrypted).
-     *
-     * @readonly
-     */
-    get isServerEncrypted() {
-        return this.originalResponse.isServerEncrypted;
-    }
-    /**
-     * If the blob has a MD5 hash, and if
-     * request contains range header (Range or x-ms-range), this response header
-     * is returned with the value of the whole blob's MD5 value. This value may
-     * or may not be equal to the value returned in Content-MD5 header, with the
-     * latter calculated from the requested range.
-     *
-     * @readonly
-     */
-    get blobContentMD5() {
-        return this.originalResponse.blobContentMD5;
-    }
-    /**
-     * Returns the date and time the file was last
-     * modified. Any operation that modifies the file or its properties updates
-     * the last modified time.
-     *
-     * @readonly
-     */
-    get lastModified() {
-        return this.originalResponse.lastModified;
-    }
-    /**
-     * A name-value pair
-     * to associate with a file storage object.
-     *
-     * @readonly
-     */
-    get metadata() {
-        return this.originalResponse.metadata;
-    }
-    /**
-     * This header uniquely identifies the request
-     * that was made and can be used for troubleshooting the request.
-     *
-     * @readonly
-     */
-    get requestId() {
-        return this.originalResponse.requestId;
-    }
-    /**
-     * If a client request id header is sent in the request, this header will be present in the
-     * response with the same value.
-     *
-     * @readonly
-     */
-    get clientRequestId() {
-        return this.originalResponse.clientRequestId;
-    }
-    /**
-     * Indicates the version of the File service used
-     * to execute the request.
-     *
-     * @readonly
-     */
-    get version() {
-        return this.originalResponse.version;
-    }
-    /**
-     * The SHA-256 hash of the encryption key used to encrypt the blob. This value is only returned
-     * when the blob was encrypted with a customer-provided key.
-     *
-     * @readonly
-     */
-    get encryptionKeySha256() {
-        return this.originalResponse.encryptionKeySha256;
-    }
-    /**
-     * If the request is to read a specified range and the x-ms-range-get-content-crc64 is set to
-     * true, then the request returns a crc64 for the range, as long as the range size is less than
-     * or equal to 4 MB. If both x-ms-range-get-content-crc64 & x-ms-range-get-content-md5 is
-     * specified in the same request, it will fail with 400(Bad Request)
-     */
-    get contentCrc64() {
-        return this.originalResponse.contentCrc64;
-    }
-    /**
-     * The response body as a browser Blob.
-     * Always undefined in node.js.
-     *
-     * @readonly
-     */
-    get blobBody() {
-        return undefined;
-    }
-    /**
-     * The response body as a node.js Readable stream.
-     * Always undefined in the browser.
-     *
-     * It will parse avor data returned by blob query.
-     *
-     * @readonly
-     */
-    get readableStreamBody() {
-        return core_util_1.isNodeLike ? this.blobDownloadStream : undefined;
-    }
-    /**
-     * The HTTP response.
-     */
-    get _response() {
-        return this.originalResponse._response;
-    }
-    originalResponse;
-    blobDownloadStream;
-    /**
-     * Creates an instance of BlobQueryResponse.
-     *
-     * @param originalResponse -
-     * @param options -
-     */
-    constructor(originalResponse, options = {}) {
-        this.originalResponse = originalResponse;
-        this.blobDownloadStream = new BlobQuickQueryStream_js_1.BlobQuickQueryStream(this.originalResponse.readableStreamBody, options);
-    }
-}
-exports.BlobQueryResponse = BlobQueryResponse;
-//# sourceMappingURL=BlobQueryResponse.js.map
-
-/***/ }),
-
-/***/ 203:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.fsCreateReadStream = exports.fsStat = void 0;
-exports.streamToBuffer = streamToBuffer;
-exports.streamToBuffer2 = streamToBuffer2;
-exports.streamToBuffer3 = streamToBuffer3;
-exports.readStreamToLocalFile = readStreamToLocalFile;
-const tslib_1 = __nccwpck_require__(217);
-const node_fs_1 = tslib_1.__importDefault(__nccwpck_require__(249));
-const node_util_1 = tslib_1.__importDefault(__nccwpck_require__(376));
-const constants_js_1 = __nccwpck_require__(148);
-/**
- * Reads a readable stream into buffer. Fill the buffer from offset to end.
- *
- * @param stream - A Node.js Readable stream
- * @param buffer - Buffer to be filled, length must greater than or equal to offset
- * @param offset - From which position in the buffer to be filled, inclusive
- * @param end - To which position in the buffer to be filled, exclusive
- * @param encoding - Encoding of the Readable stream
- */
-async function streamToBuffer(stream, buffer, offset, end, encoding) {
-    let pos = 0; // Position in stream
-    const count = end - offset; // Total amount of data needed in stream
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error(`The operation cannot be completed in timeout.`)), constants_js_1.REQUEST_TIMEOUT);
-        stream.on("readable", () => {
-            if (pos >= count) {
-                clearTimeout(timeout);
-                resolve();
-                return;
-            }
-            let chunk = stream.read();
-            if (!chunk) {
-                return;
-            }
-            if (typeof chunk === "string") {
-                chunk = Buffer.from(chunk, encoding);
-            }
-            // How much data needed in this chunk
-            const chunkLength = pos + chunk.length > count ? count - pos : chunk.length;
-            buffer.fill(chunk.slice(0, chunkLength), offset + pos, offset + pos + chunkLength);
-            pos += chunkLength;
-        });
-        stream.on("end", () => {
-            clearTimeout(timeout);
-            if (pos < count) {
-                reject(new Error(`Stream drains before getting enough data needed. Data read: ${pos}, data need: ${count}`));
-            }
-            resolve();
-        });
-        stream.on("error", (msg) => {
-            clearTimeout(timeout);
-            reject(msg);
-        });
-    });
-}
-/**
- * Reads a readable stream into buffer entirely.
- *
- * @param stream - A Node.js Readable stream
- * @param buffer - Buffer to be filled, length must greater than or equal to offset
- * @param encoding - Encoding of the Readable stream
- * @returns with the count of bytes read.
- * @throws `RangeError` If buffer size is not big enough.
- */
-async function streamToBuffer2(stream, buffer, encoding) {
-    let pos = 0; // Position in stream
-    const bufferSize = buffer.length;
-    return new Promise((resolve, reject) => {
-        stream.on("readable", () => {
-            let chunk = stream.read();
-            if (!chunk) {
-                return;
-            }
-            if (typeof chunk === "string") {
-                chunk = Buffer.from(chunk, encoding);
-            }
-            if (pos + chunk.length > bufferSize) {
-                reject(new Error(`Stream exceeds buffer size. Buffer size: ${bufferSize}`));
-                return;
-            }
-            buffer.fill(chunk, pos, pos + chunk.length);
-            pos += chunk.length;
-        });
-        stream.on("end", () => {
-            resolve(pos);
-        });
-        stream.on("error", reject);
-    });
-}
-/**
- * Reads a readable stream into a buffer.
- *
- * @param stream - A Node.js Readable stream
- * @param encoding - Encoding of the Readable stream
- * @returns with the count of bytes read.
- */
-async function streamToBuffer3(readableStream, encoding) {
-    return new Promise((resolve, reject) => {
-        const chunks = [];
-        readableStream.on("data", (data) => {
-            chunks.push(typeof data === "string" ? Buffer.from(data, encoding) : data);
-        });
-        readableStream.on("end", () => {
-            resolve(Buffer.concat(chunks));
-        });
-        readableStream.on("error", reject);
-    });
-}
-/**
- * ONLY AVAILABLE IN NODE.JS RUNTIME.
- *
- * Writes the content of a readstream to a local file. Returns a Promise which is completed after the file handle is closed.
- *
- * @param rs - The read stream.
- * @param file - Destination file path.
- */
-async function readStreamToLocalFile(rs, file) {
-    return new Promise((resolve, reject) => {
-        const ws = node_fs_1.default.createWriteStream(file);
-        rs.on("error", (err) => {
-            reject(err);
-        });
-        ws.on("error", (err) => {
-            reject(err);
-        });
-        ws.on("close", resolve);
-        rs.pipe(ws);
-    });
-}
-/**
- * ONLY AVAILABLE IN NODE.JS RUNTIME.
- *
- * Promisified version of fs.stat().
- */
-exports.fsStat = node_util_1.default.promisify(node_fs_1.default.stat);
-exports.fsCreateReadStream = node_fs_1.default.createReadStream;
-//# sourceMappingURL=utils.js.map
-
-/***/ }),
-
-/***/ 204:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright 2008 Google Inc.  All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-// * Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-// * Redistributions in binary form must reproduce the above
-// copyright notice, this list of conditions and the following disclaimer
-// in the documentation and/or other materials provided with the
-// distribution.
-// * Neither the name of Google Inc. nor the names of its
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Code generated by the Protocol Buffer compiler is owned by the owner
-// of the input file used when generating it.  This code is not
-// standalone and requires a support library to be linked with it.  This
-// support library is itself covered by the above license.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.varint32read = exports.varint32write = exports.int64toString = exports.int64fromString = exports.varint64write = exports.varint64read = void 0;
-/**
- * Read a 64 bit varint as two JS numbers.
- *
- * Returns tuple:
- * [0]: low bits
- * [0]: high bits
- *
- * Copyright 2008 Google Inc.  All rights reserved.
- *
- * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/buffer_decoder.js#L175
- */
-function varint64read() {
-    let lowBits = 0;
-    let highBits = 0;
-    for (let shift = 0; shift < 28; shift += 7) {
-        let b = this.buf[this.pos++];
-        lowBits |= (b & 0x7F) << shift;
-        if ((b & 0x80) == 0) {
-            this.assertBounds();
-            return [lowBits, highBits];
-        }
-    }
-    let middleByte = this.buf[this.pos++];
-    // last four bits of the first 32 bit number
-    lowBits |= (middleByte & 0x0F) << 28;
-    // 3 upper bits are part of the next 32 bit number
-    highBits = (middleByte & 0x70) >> 4;
-    if ((middleByte & 0x80) == 0) {
-        this.assertBounds();
-        return [lowBits, highBits];
-    }
-    for (let shift = 3; shift <= 31; shift += 7) {
-        let b = this.buf[this.pos++];
-        highBits |= (b & 0x7F) << shift;
-        if ((b & 0x80) == 0) {
-            this.assertBounds();
-            return [lowBits, highBits];
-        }
-    }
-    throw new Error('invalid varint');
-}
-exports.varint64read = varint64read;
-/**
- * Write a 64 bit varint, given as two JS numbers, to the given bytes array.
- *
- * Copyright 2008 Google Inc.  All rights reserved.
- *
- * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/writer.js#L344
- */
-function varint64write(lo, hi, bytes) {
-    for (let i = 0; i < 28; i = i + 7) {
-        const shift = lo >>> i;
-        const hasNext = !((shift >>> 7) == 0 && hi == 0);
-        const byte = (hasNext ? shift | 0x80 : shift) & 0xFF;
-        bytes.push(byte);
-        if (!hasNext) {
-            return;
-        }
-    }
-    const splitBits = ((lo >>> 28) & 0x0F) | ((hi & 0x07) << 4);
-    const hasMoreBits = !((hi >> 3) == 0);
-    bytes.push((hasMoreBits ? splitBits | 0x80 : splitBits) & 0xFF);
-    if (!hasMoreBits) {
-        return;
-    }
-    for (let i = 3; i < 31; i = i + 7) {
-        const shift = hi >>> i;
-        const hasNext = !((shift >>> 7) == 0);
-        const byte = (hasNext ? shift | 0x80 : shift) & 0xFF;
-        bytes.push(byte);
-        if (!hasNext) {
-            return;
-        }
-    }
-    bytes.push((hi >>> 31) & 0x01);
-}
-exports.varint64write = varint64write;
-// constants for binary math
-const TWO_PWR_32_DBL = (1 << 16) * (1 << 16);
-/**
- * Parse decimal string of 64 bit integer value as two JS numbers.
- *
- * Returns tuple:
- * [0]: minus sign?
- * [1]: low bits
- * [2]: high bits
- *
- * Copyright 2008 Google Inc.
- */
-function int64fromString(dec) {
-    // Check for minus sign.
-    let minus = dec[0] == '-';
-    if (minus)
-        dec = dec.slice(1);
-    // Work 6 decimal digits at a time, acting like we're converting base 1e6
-    // digits to binary. This is safe to do with floating point math because
-    // Number.isSafeInteger(ALL_32_BITS * 1e6) == true.
-    const base = 1e6;
-    let lowBits = 0;
-    let highBits = 0;
-    function add1e6digit(begin, end) {
-        // Note: Number('') is 0.
-        const digit1e6 = Number(dec.slice(begin, end));
-        highBits *= base;
-        lowBits = lowBits * base + digit1e6;
-        // Carry bits from lowBits to highBits
-        if (lowBits >= TWO_PWR_32_DBL) {
-            highBits = highBits + ((lowBits / TWO_PWR_32_DBL) | 0);
-            lowBits = lowBits % TWO_PWR_32_DBL;
-        }
-    }
-    add1e6digit(-24, -18);
-    add1e6digit(-18, -12);
-    add1e6digit(-12, -6);
-    add1e6digit(-6);
-    return [minus, lowBits, highBits];
-}
-exports.int64fromString = int64fromString;
-/**
- * Format 64 bit integer value (as two JS numbers) to decimal string.
- *
- * Copyright 2008 Google Inc.
- */
-function int64toString(bitsLow, bitsHigh) {
-    // Skip the expensive conversion if the number is small enough to use the
-    // built-in conversions.
-    if ((bitsHigh >>> 0) <= 0x1FFFFF) {
-        return '' + (TWO_PWR_32_DBL * bitsHigh + (bitsLow >>> 0));
-    }
-    // What this code is doing is essentially converting the input number from
-    // base-2 to base-1e7, which allows us to represent the 64-bit range with
-    // only 3 (very large) digits. Those digits are then trivial to convert to
-    // a base-10 string.
-    // The magic numbers used here are -
-    // 2^24 = 16777216 = (1,6777216) in base-1e7.
-    // 2^48 = 281474976710656 = (2,8147497,6710656) in base-1e7.
-    // Split 32:32 representation into 16:24:24 representation so our
-    // intermediate digits don't overflow.
-    let low = bitsLow & 0xFFFFFF;
-    let mid = (((bitsLow >>> 24) | (bitsHigh << 8)) >>> 0) & 0xFFFFFF;
-    let high = (bitsHigh >> 16) & 0xFFFF;
-    // Assemble our three base-1e7 digits, ignoring carries. The maximum
-    // value in a digit at this step is representable as a 48-bit integer, which
-    // can be stored in a 64-bit floating point number.
-    let digitA = low + (mid * 6777216) + (high * 6710656);
-    let digitB = mid + (high * 8147497);
-    let digitC = (high * 2);
-    // Apply carries from A to B and from B to C.
-    let base = 10000000;
-    if (digitA >= base) {
-        digitB += Math.floor(digitA / base);
-        digitA %= base;
-    }
-    if (digitB >= base) {
-        digitC += Math.floor(digitB / base);
-        digitB %= base;
-    }
-    // Convert base-1e7 digits to base-10, with optional leading zeroes.
-    function decimalFrom1e7(digit1e7, needLeadingZeros) {
-        let partial = digit1e7 ? String(digit1e7) : '';
-        if (needLeadingZeros) {
-            return '0000000'.slice(partial.length) + partial;
-        }
-        return partial;
-    }
-    return decimalFrom1e7(digitC, /*needLeadingZeros=*/ 0) +
-        decimalFrom1e7(digitB, /*needLeadingZeros=*/ digitC) +
-        // If the final 1e7 digit didn't need leading zeros, we would have
-        // returned via the trivial code path at the top.
-        decimalFrom1e7(digitA, /*needLeadingZeros=*/ 1);
-}
-exports.int64toString = int64toString;
-/**
- * Write a 32 bit varint, signed or unsigned. Same as `varint64write(0, value, bytes)`
- *
- * Copyright 2008 Google Inc.  All rights reserved.
- *
- * See https://github.com/protocolbuffers/protobuf/blob/1b18833f4f2a2f681f4e4a25cdf3b0a43115ec26/js/binary/encoder.js#L144
- */
-function varint32write(value, bytes) {
-    if (value >= 0) {
-        // write value as varint 32
-        while (value > 0x7f) {
-            bytes.push((value & 0x7f) | 0x80);
-            value = value >>> 7;
-        }
-        bytes.push(value);
-    }
-    else {
-        for (let i = 0; i < 9; i++) {
-            bytes.push(value & 127 | 128);
-            value = value >> 7;
-        }
-        bytes.push(1);
-    }
-}
-exports.varint32write = varint32write;
-/**
- * Read an unsigned 32 bit varint.
- *
- * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/buffer_decoder.js#L220
- */
-function varint32read() {
-    let b = this.buf[this.pos++];
-    let result = b & 0x7F;
-    if ((b & 0x80) == 0) {
-        this.assertBounds();
-        return result;
-    }
-    b = this.buf[this.pos++];
-    result |= (b & 0x7F) << 7;
-    if ((b & 0x80) == 0) {
-        this.assertBounds();
-        return result;
-    }
-    b = this.buf[this.pos++];
-    result |= (b & 0x7F) << 14;
-    if ((b & 0x80) == 0) {
-        this.assertBounds();
-        return result;
-    }
-    b = this.buf[this.pos++];
-    result |= (b & 0x7F) << 21;
-    if ((b & 0x80) == 0) {
-        this.assertBounds();
-        return result;
-    }
-    // Extract only last 4 bits
-    b = this.buf[this.pos++];
-    result |= (b & 0x0F) << 28;
-    for (let readBytes = 5; ((b & 0x80) !== 0) && readBytes < 10; readBytes++)
-        b = this.buf[this.pos++];
-    if ((b & 0x80) != 0)
-        throw new Error('invalid varint');
-    this.assertBounds();
-    // Result can have 32 bits, convert it to unsigned
-    return result >>> 0;
-}
-exports.varint32read = varint32read;
-
-
-/***/ }),
-
-/***/ 205:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BlobLeaseClient = void 0;
-const core_util_1 = __nccwpck_require__(14);
-const constants_js_1 = __nccwpck_require__(148);
-const tracing_js_1 = __nccwpck_require__(31);
-const utils_common_js_1 = __nccwpck_require__(154);
-/**
- * A client that manages leases for a {@link ContainerClient} or a {@link BlobClient}.
- */
-class BlobLeaseClient {
-    _leaseId;
-    _url;
-    _containerOrBlobOperation;
-    _isContainer;
-    /**
-     * Gets the lease Id.
-     *
-     * @readonly
-     */
-    get leaseId() {
-        return this._leaseId;
-    }
-    /**
-     * Gets the url.
-     *
-     * @readonly
-     */
-    get url() {
-        return this._url;
-    }
-    /**
-     * Creates an instance of BlobLeaseClient.
-     * @param client - The client to make the lease operation requests.
-     * @param leaseId - Initial proposed lease id.
-     */
-    constructor(client, leaseId) {
-        const clientContext = client.storageClientContext;
-        this._url = client.url;
-        if (client.name === undefined) {
-            this._isContainer = true;
-            this._containerOrBlobOperation = clientContext.container;
-        }
-        else {
-            this._isContainer = false;
-            this._containerOrBlobOperation = clientContext.blob;
-        }
-        if (!leaseId) {
-            leaseId = (0, core_util_1.randomUUID)();
-        }
-        this._leaseId = leaseId;
-    }
-    /**
-     * Establishes and manages a lock on a container for delete operations, or on a blob
-     * for write and delete operations.
-     * The lock duration can be 15 to 60 seconds, or can be infinite.
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
-     * and
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
-     *
-     * @param duration - Must be between 15 to 60 seconds, or infinite (-1)
-     * @param options - option to configure lease management operations.
-     * @returns Response data for acquire lease operation.
-     */
-    async acquireLease(duration, options = {}) {
-        if (this._isContainer &&
-            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
-                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
-                options.conditions?.tagConditions)) {
-            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
-        }
-        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-acquireLease", options, async (updatedOptions) => {
-            return (0, utils_common_js_1.assertResponse)(await this._containerOrBlobOperation.acquireLease({
-                abortSignal: options.abortSignal,
-                duration,
-                modifiedAccessConditions: {
-                    ...options.conditions,
-                    ifTags: options.conditions?.tagConditions,
-                },
-                proposedLeaseId: this._leaseId,
-                tracingOptions: updatedOptions.tracingOptions,
-            }));
-        });
-    }
-    /**
-     * To change the ID of the lease.
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
-     * and
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
-     *
-     * @param proposedLeaseId - the proposed new lease Id.
-     * @param options - option to configure lease management operations.
-     * @returns Response data for change lease operation.
-     */
-    async changeLease(proposedLeaseId, options = {}) {
-        if (this._isContainer &&
-            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
-                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
-                options.conditions?.tagConditions)) {
-            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
-        }
-        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-changeLease", options, async (updatedOptions) => {
-            const response = (0, utils_common_js_1.assertResponse)(await this._containerOrBlobOperation.changeLease(this._leaseId, proposedLeaseId, {
-                abortSignal: options.abortSignal,
-                modifiedAccessConditions: {
-                    ...options.conditions,
-                    ifTags: options.conditions?.tagConditions,
-                },
-                tracingOptions: updatedOptions.tracingOptions,
-            }));
-            this._leaseId = proposedLeaseId;
-            return response;
-        });
-    }
-    /**
-     * To free the lease if it is no longer needed so that another client may
-     * immediately acquire a lease against the container or the blob.
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
-     * and
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
-     *
-     * @param options - option to configure lease management operations.
-     * @returns Response data for release lease operation.
-     */
-    async releaseLease(options = {}) {
-        if (this._isContainer &&
-            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
-                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
-                options.conditions?.tagConditions)) {
-            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
-        }
-        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-releaseLease", options, async (updatedOptions) => {
-            return (0, utils_common_js_1.assertResponse)(await this._containerOrBlobOperation.releaseLease(this._leaseId, {
-                abortSignal: options.abortSignal,
-                modifiedAccessConditions: {
-                    ...options.conditions,
-                    ifTags: options.conditions?.tagConditions,
-                },
-                tracingOptions: updatedOptions.tracingOptions,
-            }));
-        });
-    }
-    /**
-     * To renew the lease.
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
-     * and
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
-     *
-     * @param options - Optional option to configure lease management operations.
-     * @returns Response data for renew lease operation.
-     */
-    async renewLease(options = {}) {
-        if (this._isContainer &&
-            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
-                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
-                options.conditions?.tagConditions)) {
-            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
-        }
-        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-renewLease", options, async (updatedOptions) => {
-            return this._containerOrBlobOperation.renewLease(this._leaseId, {
-                abortSignal: options.abortSignal,
-                modifiedAccessConditions: {
-                    ...options.conditions,
-                    ifTags: options.conditions?.tagConditions,
-                },
-                tracingOptions: updatedOptions.tracingOptions,
-            });
-        });
-    }
-    /**
-     * To end the lease but ensure that another client cannot acquire a new lease
-     * until the current lease period has expired.
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
-     * and
-     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
-     *
-     * @param breakPeriod - Break period
-     * @param options - Optional options to configure lease management operations.
-     * @returns Response data for break lease operation.
-     */
-    async breakLease(breakPeriod, options = {}) {
-        if (this._isContainer &&
-            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
-                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
-                options.conditions?.tagConditions)) {
-            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
-        }
-        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-breakLease", options, async (updatedOptions) => {
-            const operationOptions = {
-                abortSignal: options.abortSignal,
-                breakPeriod,
-                modifiedAccessConditions: {
-                    ...options.conditions,
-                    ifTags: options.conditions?.tagConditions,
-                },
-                tracingOptions: updatedOptions.tracingOptions,
-            };
-            return (0, utils_common_js_1.assertResponse)(await this._containerOrBlobOperation.breakLease(operationOptions));
-        });
-    }
-}
-exports.BlobLeaseClient = BlobLeaseClient;
-//# sourceMappingURL=BlobLeaseClient.js.map
-
-/***/ }),
-
-/***/ 206:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.reflectionCreate = void 0;
-const reflection_scalar_default_1 = __nccwpck_require__(463);
-const message_type_contract_1 = __nccwpck_require__(406);
-/**
- * Creates an instance of the generic message, using the field
- * information.
- */
-function reflectionCreate(type) {
-    /**
-     * This ternary can be removed in the next major version.
-     * The `Object.create()` code path utilizes a new `messagePrototype`
-     * property on the `IMessageType` which has this same `MESSAGE_TYPE`
-     * non-enumerable property on it. Doing it this way means that we only
-     * pay the cost of `Object.defineProperty()` once per `IMessageType`
-     * class of once per "instance". The falsy code path is only provided
-     * for backwards compatibility in cases where the runtime library is
-     * updated without also updating the generated code.
-     */
-    const msg = type.messagePrototype
-        ? Object.create(type.messagePrototype)
-        : Object.defineProperty({}, message_type_contract_1.MESSAGE_TYPE, { value: type });
-    for (let field of type.fields) {
-        let name = field.localName;
-        if (field.opt)
-            continue;
-        if (field.oneof)
-            msg[field.oneof] = { oneofKind: undefined };
-        else if (field.repeat)
-            msg[name] = [];
-        else
-            switch (field.kind) {
-                case "scalar":
-                    msg[name] = reflection_scalar_default_1.reflectionScalarDefault(field.T, field.L);
-                    break;
-                case "enum":
-                    // we require 0 to be default value for all enums
-                    msg[name] = 0;
-                    break;
-                case "map":
-                    msg[name] = {};
-                    break;
-            }
-    }
-    return msg;
-}
-exports.reflectionCreate = reflectionCreate;
-
-
-/***/ }),
-
-/***/ 207:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.storageBrowserPolicyName = void 0;
-exports.storageBrowserPolicy = storageBrowserPolicy;
-const core_util_1 = __nccwpck_require__(14);
-const constants_js_1 = __nccwpck_require__(36);
-const utils_common_js_1 = __nccwpck_require__(474);
-/**
- * The programmatic identifier of the StorageBrowserPolicy.
- */
-exports.storageBrowserPolicyName = "storageBrowserPolicy";
-/**
- * storageBrowserPolicy is a policy used to prevent browsers from caching requests
- * and to remove cookies and explicit content-length headers.
- */
-function storageBrowserPolicy() {
-    return {
-        name: exports.storageBrowserPolicyName,
-        async sendRequest(request, next) {
-            if (core_util_1.isNodeLike) {
-                return next(request);
-            }
-            if (request.method === "GET" || request.method === "HEAD") {
-                request.url = (0, utils_common_js_1.setURLParameter)(request.url, constants_js_1.URLConstants.Parameters.FORCE_BROWSER_NO_CACHE, new Date().getTime().toString());
-            }
-            request.headers.delete(constants_js_1.HeaderConstants.COOKIE);
-            // According to XHR standards, content-length should be fully controlled by browsers
-            request.headers.delete(constants_js_1.HeaderConstants.CONTENT_LENGTH);
-            return next(request);
-        },
-    };
-}
-//# sourceMappingURL=StorageBrowserPolicyV2.js.map
-
-/***/ }),
-
-/***/ 208:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { isBlobLike, toUSVString, makeIterator } = __nccwpck_require__(518)
-const { kState } = __nccwpck_require__(15)
-const { File: UndiciFile, FileLike, isFileLike } = __nccwpck_require__(365)
-const { webidl } = __nccwpck_require__(457)
-const { Blob, File: NativeFile } = __nccwpck_require__(119)
-
-/** @type {globalThis['File']} */
-const File = NativeFile ?? UndiciFile
-
-// https://xhr.spec.whatwg.org/#formdata
-class FormData {
-  constructor (form) {
-    if (form !== undefined) {
-      throw webidl.errors.conversionFailed({
-        prefix: 'FormData constructor',
-        argument: 'Argument 1',
-        types: ['undefined']
-      })
-    }
-
-    this[kState] = []
-  }
-
-  append (name, value, filename = undefined) {
-    webidl.brandCheck(this, FormData)
-
-    webidl.argumentLengthCheck(arguments, 2, { header: 'FormData.append' })
-
-    if (arguments.length === 3 && !isBlobLike(value)) {
-      throw new TypeError(
-        "Failed to execute 'append' on 'FormData': parameter 2 is not of type 'Blob'"
-      )
-    }
-
-    // 1. Let value be value if given; otherwise blobValue.
-
-    name = webidl.converters.USVString(name)
-    value = isBlobLike(value)
-      ? webidl.converters.Blob(value, { strict: false })
-      : webidl.converters.USVString(value)
-    filename = arguments.length === 3
-      ? webidl.converters.USVString(filename)
-      : undefined
-
-    // 2. Let entry be the result of creating an entry with
-    // name, value, and filename if given.
-    const entry = makeEntry(name, value, filename)
-
-    // 3. Append entry to this’s entry list.
-    this[kState].push(entry)
-  }
-
-  delete (name) {
-    webidl.brandCheck(this, FormData)
-
-    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.delete' })
-
-    name = webidl.converters.USVString(name)
-
-    // The delete(name) method steps are to remove all entries whose name
-    // is name from this’s entry list.
-    this[kState] = this[kState].filter(entry => entry.name !== name)
-  }
-
-  get (name) {
-    webidl.brandCheck(this, FormData)
-
-    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.get' })
-
-    name = webidl.converters.USVString(name)
-
-    // 1. If there is no entry whose name is name in this’s entry list,
-    // then return null.
-    const idx = this[kState].findIndex((entry) => entry.name === name)
-    if (idx === -1) {
-      return null
-    }
-
-    // 2. Return the value of the first entry whose name is name from
-    // this’s entry list.
-    return this[kState][idx].value
-  }
-
-  getAll (name) {
-    webidl.brandCheck(this, FormData)
-
-    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.getAll' })
-
-    name = webidl.converters.USVString(name)
-
-    // 1. If there is no entry whose name is name in this’s entry list,
-    // then return the empty list.
-    // 2. Return the values of all entries whose name is name, in order,
-    // from this’s entry list.
-    return this[kState]
-      .filter((entry) => entry.name === name)
-      .map((entry) => entry.value)
-  }
-
-  has (name) {
-    webidl.brandCheck(this, FormData)
-
-    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.has' })
-
-    name = webidl.converters.USVString(name)
-
-    // The has(name) method steps are to return true if there is an entry
-    // whose name is name in this’s entry list; otherwise false.
-    return this[kState].findIndex((entry) => entry.name === name) !== -1
-  }
-
-  set (name, value, filename = undefined) {
-    webidl.brandCheck(this, FormData)
-
-    webidl.argumentLengthCheck(arguments, 2, { header: 'FormData.set' })
-
-    if (arguments.length === 3 && !isBlobLike(value)) {
-      throw new TypeError(
-        "Failed to execute 'set' on 'FormData': parameter 2 is not of type 'Blob'"
-      )
-    }
-
-    // The set(name, value) and set(name, blobValue, filename) method steps
-    // are:
-
-    // 1. Let value be value if given; otherwise blobValue.
-
-    name = webidl.converters.USVString(name)
-    value = isBlobLike(value)
-      ? webidl.converters.Blob(value, { strict: false })
-      : webidl.converters.USVString(value)
-    filename = arguments.length === 3
-      ? toUSVString(filename)
-      : undefined
-
-    // 2. Let entry be the result of creating an entry with name, value, and
-    // filename if given.
-    const entry = makeEntry(name, value, filename)
-
-    // 3. If there are entries in this’s entry list whose name is name, then
-    // replace the first such entry with entry and remove the others.
-    const idx = this[kState].findIndex((entry) => entry.name === name)
-    if (idx !== -1) {
-      this[kState] = [
-        ...this[kState].slice(0, idx),
-        entry,
-        ...this[kState].slice(idx + 1).filter((entry) => entry.name !== name)
-      ]
-    } else {
-      // 4. Otherwise, append entry to this’s entry list.
-      this[kState].push(entry)
-    }
-  }
-
-  entries () {
-    webidl.brandCheck(this, FormData)
-
-    return makeIterator(
-      () => this[kState].map(pair => [pair.name, pair.value]),
-      'FormData',
-      'key+value'
-    )
-  }
-
-  keys () {
-    webidl.brandCheck(this, FormData)
-
-    return makeIterator(
-      () => this[kState].map(pair => [pair.name, pair.value]),
-      'FormData',
-      'key'
-    )
-  }
-
-  values () {
-    webidl.brandCheck(this, FormData)
-
-    return makeIterator(
-      () => this[kState].map(pair => [pair.name, pair.value]),
-      'FormData',
-      'value'
-    )
-  }
-
-  /**
-   * @param {(value: string, key: string, self: FormData) => void} callbackFn
-   * @param {unknown} thisArg
-   */
-  forEach (callbackFn, thisArg = globalThis) {
-    webidl.brandCheck(this, FormData)
-
-    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.forEach' })
-
-    if (typeof callbackFn !== 'function') {
-      throw new TypeError(
-        "Failed to execute 'forEach' on 'FormData': parameter 1 is not of type 'Function'."
-      )
-    }
-
-    for (const [key, value] of this) {
-      callbackFn.apply(thisArg, [value, key, this])
-    }
-  }
-}
-
-FormData.prototype[Symbol.iterator] = FormData.prototype.entries
-
-Object.defineProperties(FormData.prototype, {
-  [Symbol.toStringTag]: {
-    value: 'FormData',
-    configurable: true
-  }
-})
-
-/**
- * @see https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#create-an-entry
- * @param {string} name
- * @param {string|Blob} value
- * @param {?string} filename
- * @returns
- */
-function makeEntry (name, value, filename) {
-  // 1. Set name to the result of converting name into a scalar value string.
-  // "To convert a string into a scalar value string, replace any surrogates
-  //  with U+FFFD."
-  // see: https://nodejs.org/dist/latest-v18.x/docs/api/buffer.html#buftostringencoding-start-end
-  name = Buffer.from(name).toString('utf8')
-
-  // 2. If value is a string, then set value to the result of converting
-  //    value into a scalar value string.
-  if (typeof value === 'string') {
-    value = Buffer.from(value).toString('utf8')
-  } else {
-    // 3. Otherwise:
-
-    // 1. If value is not a File object, then set value to a new File object,
-    //    representing the same bytes, whose name attribute value is "blob"
-    if (!isFileLike(value)) {
-      value = value instanceof Blob
-        ? new File([value], 'blob', { type: value.type })
-        : new FileLike(value, 'blob', { type: value.type })
-    }
-
-    // 2. If filename is given, then set value to a new File object,
-    //    representing the same bytes, whose name attribute is filename.
-    if (filename !== undefined) {
-      /** @type {FilePropertyBag} */
-      const options = {
-        type: value.type,
-        lastModified: value.lastModified
-      }
-
-      value = (NativeFile && value instanceof NativeFile) || value instanceof UndiciFile
-        ? new File([value], filename, options)
-        : new FileLike(value, filename, options)
-    }
-  }
-
-  // 4. Return an entry whose name is name and whose value is value.
-  return { name, value }
-}
-
-module.exports = { FormData }
-
-
-/***/ }),
-
-/***/ 209:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=appendBlob.js.map
-
-/***/ }),
-
-/***/ 210:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var getClient_exports = {};
-__export(getClient_exports, {
-  getClient: () => getClient
-});
-module.exports = __toCommonJS(getClient_exports);
-var import_clientHelpers = __nccwpck_require__(491);
-var import_sendRequest = __nccwpck_require__(450);
-var import_urlHelpers = __nccwpck_require__(324);
-var import_checkEnvironment = __nccwpck_require__(439);
-function getClient(endpoint, clientOptions = {}) {
-  const pipeline = clientOptions.pipeline ?? (0, import_clientHelpers.createDefaultPipeline)(clientOptions);
-  if (clientOptions.additionalPolicies?.length) {
-    for (const { policy, position } of clientOptions.additionalPolicies) {
-      const afterPhase = position === "perRetry" ? "Sign" : void 0;
-      pipeline.addPolicy(policy, {
-        afterPhase
-      });
-    }
-  }
-  const { allowInsecureConnection, httpClient } = clientOptions;
-  const endpointUrl = clientOptions.endpoint ?? endpoint;
-  const client = (path, ...args) => {
-    const getUrl = (requestOptions) => (0, import_urlHelpers.buildRequestUrl)(endpointUrl, path, args, { allowInsecureConnection, ...requestOptions });
-    return {
-      get: (requestOptions = {}) => {
-        return buildOperation(
-          "GET",
-          getUrl(requestOptions),
-          pipeline,
-          requestOptions,
-          allowInsecureConnection,
-          httpClient
-        );
-      },
-      post: (requestOptions = {}) => {
-        return buildOperation(
-          "POST",
-          getUrl(requestOptions),
-          pipeline,
-          requestOptions,
-          allowInsecureConnection,
-          httpClient
-        );
-      },
-      put: (requestOptions = {}) => {
-        return buildOperation(
-          "PUT",
-          getUrl(requestOptions),
-          pipeline,
-          requestOptions,
-          allowInsecureConnection,
-          httpClient
-        );
-      },
-      patch: (requestOptions = {}) => {
-        return buildOperation(
-          "PATCH",
-          getUrl(requestOptions),
-          pipeline,
-          requestOptions,
-          allowInsecureConnection,
-          httpClient
-        );
-      },
-      delete: (requestOptions = {}) => {
-        return buildOperation(
-          "DELETE",
-          getUrl(requestOptions),
-          pipeline,
-          requestOptions,
-          allowInsecureConnection,
-          httpClient
-        );
-      },
-      head: (requestOptions = {}) => {
-        return buildOperation(
-          "HEAD",
-          getUrl(requestOptions),
-          pipeline,
-          requestOptions,
-          allowInsecureConnection,
-          httpClient
-        );
-      },
-      options: (requestOptions = {}) => {
-        return buildOperation(
-          "OPTIONS",
-          getUrl(requestOptions),
-          pipeline,
-          requestOptions,
-          allowInsecureConnection,
-          httpClient
-        );
-      },
-      trace: (requestOptions = {}) => {
-        return buildOperation(
-          "TRACE",
-          getUrl(requestOptions),
-          pipeline,
-          requestOptions,
-          allowInsecureConnection,
-          httpClient
-        );
-      }
-    };
-  };
-  return {
-    path: client,
-    pathUnchecked: client,
-    pipeline
-  };
-}
-function buildOperation(method, url, pipeline, options, allowInsecureConnection, httpClient) {
-  allowInsecureConnection = options.allowInsecureConnection ?? allowInsecureConnection;
-  return {
-    then: function(onFulfilled, onrejected) {
-      return (0, import_sendRequest.sendRequest)(
-        method,
-        url,
-        pipeline,
-        { ...options, allowInsecureConnection },
-        httpClient
-      ).then(onFulfilled, onrejected);
-    },
-    async asBrowserStream() {
-      if (import_checkEnvironment.isNodeLike) {
-        throw new Error(
-          "`asBrowserStream` is supported only in the browser environment. Use `asNodeStream` instead to obtain the response body stream. If you require a Web stream of the response in Node, consider using `Readable.toWeb` on the result of `asNodeStream`."
-        );
-      } else {
-        return (0, import_sendRequest.sendRequest)(
-          method,
-          url,
-          pipeline,
-          { ...options, allowInsecureConnection, responseAsStream: true },
-          httpClient
-        );
-      }
-    },
-    async asNodeStream() {
-      if (import_checkEnvironment.isNodeLike) {
-        return (0, import_sendRequest.sendRequest)(
-          method,
-          url,
-          pipeline,
-          { ...options, allowInsecureConnection, responseAsStream: true },
-          httpClient
-        );
-      } else {
-        throw new Error(
-          "`isNodeStream` is not supported in the browser environment. Use `asBrowserStream` to obtain the response body stream."
-        );
-      }
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=getClient.js.map
-
-
-/***/ }),
-
-/***/ 211:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var httpClientAdapter_exports = {};
-__export(httpClientAdapter_exports, {
-  convertHttpClient: () => convertHttpClient
-});
-module.exports = __toCommonJS(httpClientAdapter_exports);
-var import_response = __nccwpck_require__(413);
-var import_util = __nccwpck_require__(109);
-function convertHttpClient(requestPolicyClient) {
-  return {
-    sendRequest: async (request) => {
-      const response = await requestPolicyClient.sendRequest(
-        (0, import_util.toWebResourceLike)(request, { createProxy: true })
-      );
-      return (0, import_response.toPipelineResponse)(response);
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=httpClientAdapter.js.map
-
-
-/***/ }),
-
-/***/ 212:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var retryPolicy_exports = {};
-__export(retryPolicy_exports, {
-  retryPolicy: () => retryPolicy
-});
-module.exports = __toCommonJS(retryPolicy_exports);
-var import_logger = __nccwpck_require__(44);
-var import_constants = __nccwpck_require__(159);
-var import_policies = __nccwpck_require__(287);
-const retryPolicyLogger = (0, import_logger.createClientLogger)("core-rest-pipeline retryPolicy");
-function retryPolicy(strategies, options = { maxRetries: import_constants.DEFAULT_RETRY_POLICY_COUNT }) {
-  return (0, import_policies.retryPolicy)(strategies, {
-    logger: retryPolicyLogger,
-    ...options
-  });
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 213:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getErrorMessage = getErrorMessage;
-const util_1 = __nccwpck_require__(146);
-/**
- * Given what is thought to be an error object, return the message if possible.
- * If the message is missing, returns a stringified version of the input.
- * @param e - Something thrown from a try block
- * @returns The error message or a string of the input
- */
-function getErrorMessage(e) {
-    if ((0, util_1.isError)(e)) {
-        return e.message;
-    }
-    else {
-        let stringified;
-        try {
-            if (typeof e === "object" && e) {
-                stringified = JSON.stringify(e);
-            }
-            else {
-                stringified = String(e);
-            }
-        }
-        catch (err) {
-            stringified = "[unable to stringify input]";
-        }
-        return `Unknown error ${stringified}`;
-    }
-}
-//# sourceMappingURL=error.js.map
-
-/***/ }),
-
-/***/ 214:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Pure input parsers / normalizers. Each one takes a raw string from
-// action.yml inputs (or env) and returns either a normalized value, a
-// detection result, or throws with a user-actionable message.
-//
-// Split out of resolve-setup.ts so the orchestration module stays
-// focused on cache-key derivation and side-effecting work.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseCacheShutdownOnIdleSeconds = parseCacheShutdownOnIdleSeconds;
-exports.detectUserLinkerEnv = detectUserLinkerEnv;
-exports.parseRustBacktrace = parseRustBacktrace;
-exports.normalizeStatsMode = normalizeStatsMode;
-exports.normalizeCompileCacheStats = normalizeCompileCacheStats;
-/**
- * Parse the `cache-shutdown-on-idle` input into a seconds count.
- *
- * Accepts:
- *   - "" / "0" / "off" / "false" / "no" → null (disabled)
- *   - bare integer ("30")               → that many seconds
- *   - "<N>s" / "<N>m" / "<N>h"          → seconds / minutes / hours
- *
- * Throws on any other value so misspellings ("30sec", "thirty") surface
- * loudly at action start rather than silently being treated as "off".
- */
-function parseCacheShutdownOnIdleSeconds(raw) {
-    const value = raw.trim().toLowerCase();
-    if (value === "" || value === "0" || value === "off" || value === "false" || value === "no") {
-        return null;
-    }
-    const m = value.match(/^(\d+)\s*(s|m|h)?$/);
-    if (!m) {
-        throw new Error(`invalid 'cache-shutdown-on-idle' input: '${raw}'. ` +
-            "Expected <seconds>, <N>s, <N>m, <N>h, or empty/off/false to disable.");
-    }
-    const n = parseInt(m[1], 10);
-    if (!Number.isFinite(n) || n < 0) {
-        throw new Error(`invalid 'cache-shutdown-on-idle' input: '${raw}'.`);
-    }
-    const unit = m[2] ?? "s";
-    if (unit === "s")
-        return n;
-    if (unit === "m")
-        return n * 60;
-    return n * 3600;
-}
-/**
- * Detect cross-compile env vars the user has already set that soldr's
- * `linker: fast` default would silently overwrite (CARGO_TARGET_<TRIPLE>_LINKER
- * and CARGO_TARGET_<TRIPLE>_RUSTFLAGS). Returns the list of `NAME=value`
- * strings to surface in the deferral log. See issue #108.
- */
-function detectUserLinkerEnv(env) {
-    const hits = [];
-    for (const [name, raw] of Object.entries(env)) {
-        if (raw === undefined || raw === "")
-            continue;
-        if (!name.startsWith("CARGO_TARGET_"))
-            continue;
-        if (name.endsWith("_LINKER") || name.endsWith("_RUSTFLAGS")) {
-            hits.push(`${name}=${raw}`);
-        }
-    }
-    hits.sort();
-    return hits;
-}
-/**
- * Parse the `rust-backtrace` input into the literal value to export as
- * `RUST_BACKTRACE`, or `null` to skip the export entirely.
- *
- * Accepts:
- *   - "1" / "true" / "on" / "yes" → "1" (trimmed backtrace; default)
- *   - "full"                      → "full" (full stack incl. std internals)
- *   - "" / "0" / "false" / "off" / "no" → null (don't export)
- *
- * Throws on anything else so typos surface at action start.
- */
-function parseRustBacktrace(raw) {
-    const value = raw.trim().toLowerCase();
-    if (value === "" || value === "0" || value === "false" || value === "off" || value === "no") {
-        return null;
-    }
-    if (value === "1" || value === "true" || value === "on" || value === "yes")
-        return "1";
-    if (value === "full")
-        return "full";
-    throw new Error(`invalid 'rust-backtrace' input: '${raw}'. ` +
-        "Expected 1/true/on/yes, full, or 0/false/off/no/'' to disable.");
-}
-function normalizeStatsMode(raw) {
-    const v = raw.trim().toLowerCase();
-    if (v === "none" || v === "summarize" || v === "detailed")
-        return v;
-    return "summarize";
-}
-function normalizeCompileCacheStats(raw) {
-    const v = raw.trim().toLowerCase();
-    if (v === "none")
-        return "none";
-    if (v === "detailed" || v === "insights")
-        return "detailed";
-    return "summarize";
-}
-
-
-/***/ }),
-
-/***/ 215:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.saveCache = exports.restoreCache = exports.isFeatureAvailable = exports.FinalizeCacheError = exports.ReserveCacheError = exports.ValidationError = void 0;
-const core = __importStar(__nccwpck_require__(460));
-const path = __importStar(__nccwpck_require__(248));
-const utils = __importStar(__nccwpck_require__(76));
-const cacheHttpClient = __importStar(__nccwpck_require__(34));
-const cacheTwirpClient = __importStar(__nccwpck_require__(61));
-const config_1 = __nccwpck_require__(37);
-const tar_1 = __nccwpck_require__(441);
-const http_client_1 = __nccwpck_require__(286);
-class ValidationError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ValidationError';
-        Object.setPrototypeOf(this, ValidationError.prototype);
-    }
-}
-exports.ValidationError = ValidationError;
-class ReserveCacheError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ReserveCacheError';
-        Object.setPrototypeOf(this, ReserveCacheError.prototype);
-    }
-}
-exports.ReserveCacheError = ReserveCacheError;
-class FinalizeCacheError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'FinalizeCacheError';
-        Object.setPrototypeOf(this, FinalizeCacheError.prototype);
-    }
-}
-exports.FinalizeCacheError = FinalizeCacheError;
-function checkPaths(paths) {
-    if (!paths || paths.length === 0) {
-        throw new ValidationError(`Path Validation Error: At least one directory or file path is required`);
-    }
-}
-function checkKey(key) {
-    if (key.length > 512) {
-        throw new ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
-    }
-    const regex = /^[^,]*$/;
-    if (!regex.test(key)) {
-        throw new ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
-    }
-}
-/**
- * isFeatureAvailable to check the presence of Actions cache service
- *
- * @returns boolean return true if Actions cache service feature is available, otherwise false
- */
-function isFeatureAvailable() {
-    const cacheServiceVersion = (0, config_1.getCacheServiceVersion)();
-    // Check availability based on cache service version
-    switch (cacheServiceVersion) {
-        case 'v2':
-            // For v2, we need ACTIONS_RESULTS_URL
-            return !!process.env['ACTIONS_RESULTS_URL'];
-        case 'v1':
-        default:
-            // For v1, we only need ACTIONS_CACHE_URL
-            return !!process.env['ACTIONS_CACHE_URL'];
-    }
-}
-exports.isFeatureAvailable = isFeatureAvailable;
-/**
- * Restores cache from keys
- *
- * @param paths a list of file paths to restore from the cache
- * @param primaryKey an explicit key for restoring the cache. Lookup is done with prefix matching.
- * @param restoreKeys an optional ordered list of keys to use for restoring the cache if no cache hit occurred for primaryKey
- * @param downloadOptions cache download options
- * @param enableCrossOsArchive an optional boolean enabled to restore on windows any cache created on any platform
- * @returns string returns the key for the cache hit, otherwise returns undefined
- */
-function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const cacheServiceVersion = (0, config_1.getCacheServiceVersion)();
-        core.debug(`Cache service version: ${cacheServiceVersion}`);
-        checkPaths(paths);
-        switch (cacheServiceVersion) {
-            case 'v2':
-                return yield restoreCacheV2(paths, primaryKey, restoreKeys, options, enableCrossOsArchive);
-            case 'v1':
-            default:
-                return yield restoreCacheV1(paths, primaryKey, restoreKeys, options, enableCrossOsArchive);
-        }
-    });
-}
-exports.restoreCache = restoreCache;
-/**
- * Restores cache using the legacy Cache Service
- *
- * @param paths a list of file paths to restore from the cache
- * @param primaryKey an explicit key for restoring the cache. Lookup is done with prefix matching.
- * @param restoreKeys an optional ordered list of keys to use for restoring the cache if no cache hit occurred for primaryKey
- * @param options cache download options
- * @param enableCrossOsArchive an optional boolean enabled to restore on Windows any cache created on any platform
- * @returns string returns the key for the cache hit, otherwise returns undefined
- */
-function restoreCacheV1(paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
-    return __awaiter(this, void 0, void 0, function* () {
-        restoreKeys = restoreKeys || [];
-        const keys = [primaryKey, ...restoreKeys];
-        core.debug('Resolved Keys:');
-        core.debug(JSON.stringify(keys));
-        if (keys.length > 10) {
-            throw new ValidationError(`Key Validation Error: Keys are limited to a maximum of 10.`);
-        }
-        for (const key of keys) {
-            checkKey(key);
-        }
-        const compressionMethod = yield utils.getCompressionMethod();
-        let archivePath = '';
-        try {
-            // path are needed to compute version
-            const cacheEntry = yield cacheHttpClient.getCacheEntry(keys, paths, {
-                compressionMethod,
-                enableCrossOsArchive
-            });
-            if (!(cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.archiveLocation)) {
-                // Cache not found
-                return undefined;
-            }
-            if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
-                core.info('Lookup only - skipping download');
-                return cacheEntry.cacheKey;
-            }
-            archivePath = path.join(yield utils.createTempDirectory(), utils.getCacheFileName(compressionMethod));
-            core.debug(`Archive Path: ${archivePath}`);
-            // Download the cache from the cache entry
-            yield cacheHttpClient.downloadCache(cacheEntry.archiveLocation, archivePath, options);
-            if (core.isDebug()) {
-                yield (0, tar_1.listTar)(archivePath, compressionMethod);
-            }
-            const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-            core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
-            yield (0, tar_1.extractTar)(archivePath, compressionMethod);
-            core.info('Cache restored successfully');
-            return cacheEntry.cacheKey;
-        }
-        catch (error) {
-            const typedError = error;
-            if (typedError.name === ValidationError.name) {
-                throw error;
-            }
-            else {
-                // warn on cache restore failure and continue build
-                // Log server errors (5xx) as errors, all other errors as warnings
-                if (typedError instanceof http_client_1.HttpClientError &&
-                    typeof typedError.statusCode === 'number' &&
-                    typedError.statusCode >= 500) {
-                    core.error(`Failed to restore: ${error.message}`);
-                }
-                else {
-                    core.warning(`Failed to restore: ${error.message}`);
-                }
-            }
-        }
-        finally {
-            // Try to delete the archive to save space
-            try {
-                yield utils.unlinkFile(archivePath);
-            }
-            catch (error) {
-                core.debug(`Failed to delete archive: ${error}`);
-            }
-        }
-        return undefined;
-    });
-}
-/**
- * Restores cache using Cache Service v2
- *
- * @param paths a list of file paths to restore from the cache
- * @param primaryKey an explicit key for restoring the cache. Lookup is done with prefix matching
- * @param restoreKeys an optional ordered list of keys to use for restoring the cache if no cache hit occurred for primaryKey
- * @param downloadOptions cache download options
- * @param enableCrossOsArchive an optional boolean enabled to restore on windows any cache created on any platform
- * @returns string returns the key for the cache hit, otherwise returns undefined
- */
-function restoreCacheV2(paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Override UploadOptions to force the use of Azure
-        options = Object.assign(Object.assign({}, options), { useAzureSdk: true });
-        restoreKeys = restoreKeys || [];
-        const keys = [primaryKey, ...restoreKeys];
-        core.debug('Resolved Keys:');
-        core.debug(JSON.stringify(keys));
-        if (keys.length > 10) {
-            throw new ValidationError(`Key Validation Error: Keys are limited to a maximum of 10.`);
-        }
-        for (const key of keys) {
-            checkKey(key);
-        }
-        let archivePath = '';
-        try {
-            const twirpClient = cacheTwirpClient.internalCacheTwirpClient();
-            const compressionMethod = yield utils.getCompressionMethod();
-            const request = {
-                key: primaryKey,
-                restoreKeys,
-                version: utils.getCacheVersion(paths, compressionMethod, enableCrossOsArchive)
-            };
-            const response = yield twirpClient.GetCacheEntryDownloadURL(request);
-            if (!response.ok) {
-                core.debug(`Cache not found for version ${request.version} of keys: ${keys.join(', ')}`);
-                return undefined;
-            }
-            const isRestoreKeyMatch = request.key !== response.matchedKey;
-            if (isRestoreKeyMatch) {
-                core.info(`Cache hit for restore-key: ${response.matchedKey}`);
-            }
-            else {
-                core.info(`Cache hit for: ${response.matchedKey}`);
-            }
-            if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
-                core.info('Lookup only - skipping download');
-                return response.matchedKey;
-            }
-            archivePath = path.join(yield utils.createTempDirectory(), utils.getCacheFileName(compressionMethod));
-            core.debug(`Archive path: ${archivePath}`);
-            core.debug(`Starting download of archive to: ${archivePath}`);
-            yield cacheHttpClient.downloadCache(response.signedDownloadUrl, archivePath, options);
-            const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-            core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
-            if (core.isDebug()) {
-                yield (0, tar_1.listTar)(archivePath, compressionMethod);
-            }
-            yield (0, tar_1.extractTar)(archivePath, compressionMethod);
-            core.info('Cache restored successfully');
-            return response.matchedKey;
-        }
-        catch (error) {
-            const typedError = error;
-            if (typedError.name === ValidationError.name) {
-                throw error;
-            }
-            else {
-                // Supress all non-validation cache related errors because caching should be optional
-                // Log server errors (5xx) as errors, all other errors as warnings
-                if (typedError instanceof http_client_1.HttpClientError &&
-                    typeof typedError.statusCode === 'number' &&
-                    typedError.statusCode >= 500) {
-                    core.error(`Failed to restore: ${error.message}`);
-                }
-                else {
-                    core.warning(`Failed to restore: ${error.message}`);
-                }
-            }
-        }
-        finally {
-            try {
-                if (archivePath) {
-                    yield utils.unlinkFile(archivePath);
-                }
-            }
-            catch (error) {
-                core.debug(`Failed to delete archive: ${error}`);
-            }
-        }
-        return undefined;
-    });
-}
-/**
- * Saves a list of files with the specified key
- *
- * @param paths a list of file paths to be cached
- * @param key an explicit key for restoring the cache
- * @param enableCrossOsArchive an optional boolean enabled to save cache on windows which could be restored on any platform
- * @param options cache upload options
- * @returns number returns cacheId if the cache was saved successfully and throws an error if save fails
- */
-function saveCache(paths, key, options, enableCrossOsArchive = false) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const cacheServiceVersion = (0, config_1.getCacheServiceVersion)();
-        core.debug(`Cache service version: ${cacheServiceVersion}`);
-        checkPaths(paths);
-        checkKey(key);
-        switch (cacheServiceVersion) {
-            case 'v2':
-                return yield saveCacheV2(paths, key, options, enableCrossOsArchive);
-            case 'v1':
-            default:
-                return yield saveCacheV1(paths, key, options, enableCrossOsArchive);
-        }
-    });
-}
-exports.saveCache = saveCache;
-/**
- * Save cache using the legacy Cache Service
- *
- * @param paths
- * @param key
- * @param options
- * @param enableCrossOsArchive
- * @returns
- */
-function saveCacheV1(paths, key, options, enableCrossOsArchive = false) {
-    var _a, _b, _c, _d, _e;
-    return __awaiter(this, void 0, void 0, function* () {
-        const compressionMethod = yield utils.getCompressionMethod();
-        let cacheId = -1;
-        const cachePaths = yield utils.resolvePaths(paths);
-        core.debug('Cache Paths:');
-        core.debug(`${JSON.stringify(cachePaths)}`);
-        if (cachePaths.length === 0) {
-            throw new Error(`Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.`);
-        }
-        const archiveFolder = yield utils.createTempDirectory();
-        const archivePath = path.join(archiveFolder, utils.getCacheFileName(compressionMethod));
-        core.debug(`Archive Path: ${archivePath}`);
-        try {
-            yield (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
-            if (core.isDebug()) {
-                yield (0, tar_1.listTar)(archivePath, compressionMethod);
-            }
-            const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
-            const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-            core.debug(`File Size: ${archiveFileSize}`);
-            // For GHES, this check will take place in ReserveCache API with enterprise file size limit
-            if (archiveFileSize > fileSizeLimit && !(0, config_1.isGhes)()) {
-                throw new Error(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`);
-            }
-            core.debug('Reserving Cache');
-            const reserveCacheResponse = yield cacheHttpClient.reserveCache(key, paths, {
-                compressionMethod,
-                enableCrossOsArchive,
-                cacheSize: archiveFileSize
-            });
-            if ((_a = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.result) === null || _a === void 0 ? void 0 : _a.cacheId) {
-                cacheId = (_b = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.result) === null || _b === void 0 ? void 0 : _b.cacheId;
-            }
-            else if ((reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.statusCode) === 400) {
-                throw new Error((_d = (_c = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _c === void 0 ? void 0 : _c.message) !== null && _d !== void 0 ? _d : `Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`);
-            }
-            else {
-                throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache. More details: ${(_e = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _e === void 0 ? void 0 : _e.message}`);
-            }
-            core.debug(`Saving Cache (ID: ${cacheId})`);
-            yield cacheHttpClient.saveCache(cacheId, archivePath, '', options);
-        }
-        catch (error) {
-            const typedError = error;
-            if (typedError.name === ValidationError.name) {
-                throw error;
-            }
-            else if (typedError.name === ReserveCacheError.name) {
-                core.info(`Failed to save: ${typedError.message}`);
-            }
-            else {
-                // Log server errors (5xx) as errors, all other errors as warnings
-                if (typedError instanceof http_client_1.HttpClientError &&
-                    typeof typedError.statusCode === 'number' &&
-                    typedError.statusCode >= 500) {
-                    core.error(`Failed to save: ${typedError.message}`);
-                }
-                else {
-                    core.warning(`Failed to save: ${typedError.message}`);
-                }
-            }
-        }
-        finally {
-            // Try to delete the archive to save space
-            try {
-                yield utils.unlinkFile(archivePath);
-            }
-            catch (error) {
-                core.debug(`Failed to delete archive: ${error}`);
-            }
-        }
-        return cacheId;
-    });
-}
-/**
- * Save cache using Cache Service v2
- *
- * @param paths a list of file paths to restore from the cache
- * @param key an explicit key for restoring the cache
- * @param options cache upload options
- * @param enableCrossOsArchive an optional boolean enabled to save cache on windows which could be restored on any platform
- * @returns
- */
-function saveCacheV2(paths, key, options, enableCrossOsArchive = false) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Override UploadOptions to force the use of Azure
-        // ...options goes first because we want to override the default values
-        // set in UploadOptions with these specific figures
-        options = Object.assign(Object.assign({}, options), { uploadChunkSize: 64 * 1024 * 1024, uploadConcurrency: 8, useAzureSdk: true });
-        const compressionMethod = yield utils.getCompressionMethod();
-        const twirpClient = cacheTwirpClient.internalCacheTwirpClient();
-        let cacheId = -1;
-        const cachePaths = yield utils.resolvePaths(paths);
-        core.debug('Cache Paths:');
-        core.debug(`${JSON.stringify(cachePaths)}`);
-        if (cachePaths.length === 0) {
-            throw new Error(`Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.`);
-        }
-        const archiveFolder = yield utils.createTempDirectory();
-        const archivePath = path.join(archiveFolder, utils.getCacheFileName(compressionMethod));
-        core.debug(`Archive Path: ${archivePath}`);
-        try {
-            yield (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
-            if (core.isDebug()) {
-                yield (0, tar_1.listTar)(archivePath, compressionMethod);
-            }
-            const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
-            core.debug(`File Size: ${archiveFileSize}`);
-            // Set the archive size in the options, will be used to display the upload progress
-            options.archiveSizeBytes = archiveFileSize;
-            core.debug('Reserving Cache');
-            const version = utils.getCacheVersion(paths, compressionMethod, enableCrossOsArchive);
-            const request = {
-                key,
-                version
-            };
-            let signedUploadUrl;
-            try {
-                const response = yield twirpClient.CreateCacheEntry(request);
-                if (!response.ok) {
-                    if (response.message) {
-                        core.warning(`Cache reservation failed: ${response.message}`);
-                    }
-                    throw new Error(response.message || 'Response was not ok');
-                }
-                signedUploadUrl = response.signedUploadUrl;
-            }
-            catch (error) {
-                core.debug(`Failed to reserve cache: ${error}`);
-                throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache.`);
-            }
-            core.debug(`Attempting to upload cache located at: ${archivePath}`);
-            yield cacheHttpClient.saveCache(cacheId, archivePath, signedUploadUrl, options);
-            const finalizeRequest = {
-                key,
-                version,
-                sizeBytes: `${archiveFileSize}`
-            };
-            const finalizeResponse = yield twirpClient.FinalizeCacheEntryUpload(finalizeRequest);
-            core.debug(`FinalizeCacheEntryUploadResponse: ${finalizeResponse.ok}`);
-            if (!finalizeResponse.ok) {
-                if (finalizeResponse.message) {
-                    throw new FinalizeCacheError(finalizeResponse.message);
-                }
-                throw new Error(`Unable to finalize cache with key ${key}, another job may be finalizing this cache.`);
-            }
-            cacheId = parseInt(finalizeResponse.entryId);
-        }
-        catch (error) {
-            const typedError = error;
-            if (typedError.name === ValidationError.name) {
-                throw error;
-            }
-            else if (typedError.name === ReserveCacheError.name) {
-                core.info(`Failed to save: ${typedError.message}`);
-            }
-            else if (typedError.name === FinalizeCacheError.name) {
-                core.warning(typedError.message);
-            }
-            else {
-                // Log server errors (5xx) as errors, all other errors as warnings
-                if (typedError instanceof http_client_1.HttpClientError &&
-                    typeof typedError.statusCode === 'number' &&
-                    typedError.statusCode >= 500) {
-                    core.error(`Failed to save: ${typedError.message}`);
-                }
-                else {
-                    core.warning(`Failed to save: ${typedError.message}`);
-                }
-            }
-        }
-        finally {
-            // Try to delete the archive to save space
-            try {
-                yield utils.unlinkFile(archivePath);
-            }
-            catch (error) {
-                core.debug(`Failed to delete archive: ${error}`);
-            }
-        }
-        return cacheId;
-    });
-}
-//# sourceMappingURL=cache.js.map
-
-/***/ }),
-
-/***/ 216:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var extendedClient_exports = {};
-__export(extendedClient_exports, {
-  ExtendedServiceClient: () => ExtendedServiceClient
-});
-module.exports = __toCommonJS(extendedClient_exports);
-var import_disableKeepAlivePolicy = __nccwpck_require__(8);
-var import_core_rest_pipeline = __nccwpck_require__(101);
-var import_core_client = __nccwpck_require__(440);
-var import_response = __nccwpck_require__(413);
-class ExtendedServiceClient extends import_core_client.ServiceClient {
-  constructor(options) {
-    super(options);
-    if (options.keepAliveOptions?.enable === false && !(0, import_disableKeepAlivePolicy.pipelineContainsDisableKeepAlivePolicy)(this.pipeline)) {
-      this.pipeline.addPolicy((0, import_disableKeepAlivePolicy.createDisableKeepAlivePolicy)());
-    }
-    if (options.redirectOptions?.handleRedirects === false) {
-      this.pipeline.removePolicy({
-        name: import_core_rest_pipeline.redirectPolicyName
-      });
-    }
-  }
-  /**
-   * Compatible send operation request function.
-   *
-   * @param operationArguments - Operation arguments
-   * @param operationSpec - Operation Spec
-   * @returns
-   */
-  async sendOperationRequest(operationArguments, operationSpec) {
-    const userProvidedCallBack = operationArguments?.options?.onResponse;
-    let lastResponse;
-    function onResponse(rawResponse, flatResponse, error) {
-      lastResponse = rawResponse;
-      if (userProvidedCallBack) {
-        userProvidedCallBack(rawResponse, flatResponse, error);
-      }
-    }
-    operationArguments.options = {
-      ...operationArguments.options,
-      onResponse
-    };
-    const result = await super.sendOperationRequest(operationArguments, operationSpec);
-    if (lastResponse) {
-      Object.defineProperty(result, "_response", {
-        value: (0, import_response.toCompatResponse)(lastResponse)
-      });
-    }
-    return result;
-  }
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=extendedClient.js.map
-
-
-/***/ }),
-
-/***/ 217:
-/***/ ((module) => {
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global global, define, Symbol, Reflect, Promise, SuppressedError, Iterator */
-var __extends;
-var __assign;
-var __rest;
-var __decorate;
-var __param;
-var __esDecorate;
-var __runInitializers;
-var __propKey;
-var __setFunctionName;
-var __metadata;
-var __awaiter;
-var __generator;
-var __exportStar;
-var __values;
-var __read;
-var __spread;
-var __spreadArrays;
-var __spreadArray;
-var __await;
-var __asyncGenerator;
-var __asyncDelegator;
-var __asyncValues;
-var __makeTemplateObject;
-var __importStar;
-var __importDefault;
-var __classPrivateFieldGet;
-var __classPrivateFieldSet;
-var __classPrivateFieldIn;
-var __createBinding;
-var __addDisposableResource;
-var __disposeResources;
-var __rewriteRelativeImportExtension;
-(function (factory) {
-    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
-    if (typeof define === "function" && define.amd) {
-        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
-    }
-    else if ( true && typeof module.exports === "object") {
-        factory(createExporter(root, createExporter(module.exports)));
-    }
-    else {
-        factory(createExporter(root));
-    }
-    function createExporter(exports, previous) {
-        if (exports !== root) {
-            if (typeof Object.create === "function") {
-                Object.defineProperty(exports, "__esModule", { value: true });
-            }
-            else {
-                exports.__esModule = true;
-            }
-        }
-        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
-    }
-})
-(function (exporter) {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-
-    __extends = function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-
-    __assign = Object.assign || function (t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-
-    __rest = function (s, e) {
-        var t = {};
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-            t[p] = s[p];
-        if (s != null && typeof Object.getOwnPropertySymbols === "function")
-            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                    t[p[i]] = s[p[i]];
-            }
-        return t;
-    };
-
-    __decorate = function (decorators, target, key, desc) {
-        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-        return c > 3 && r && Object.defineProperty(target, key, r), r;
-    };
-
-    __param = function (paramIndex, decorator) {
-        return function (target, key) { decorator(target, key, paramIndex); }
-    };
-
-    __esDecorate = function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
-        function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
-        var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
-        var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
-        var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
-        var _, done = false;
-        for (var i = decorators.length - 1; i >= 0; i--) {
-            var context = {};
-            for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
-            for (var p in contextIn.access) context.access[p] = contextIn.access[p];
-            context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
-            var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
-            if (kind === "accessor") {
-                if (result === void 0) continue;
-                if (result === null || typeof result !== "object") throw new TypeError("Object expected");
-                if (_ = accept(result.get)) descriptor.get = _;
-                if (_ = accept(result.set)) descriptor.set = _;
-                if (_ = accept(result.init)) initializers.unshift(_);
-            }
-            else if (_ = accept(result)) {
-                if (kind === "field") initializers.unshift(_);
-                else descriptor[key] = _;
-            }
-        }
-        if (target) Object.defineProperty(target, contextIn.name, descriptor);
-        done = true;
-    };
-
-    __runInitializers = function (thisArg, initializers, value) {
-        var useValue = arguments.length > 2;
-        for (var i = 0; i < initializers.length; i++) {
-            value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
-        }
-        return useValue ? value : void 0;
-    };
-
-    __propKey = function (x) {
-        return typeof x === "symbol" ? x : "".concat(x);
-    };
-
-    __setFunctionName = function (f, name, prefix) {
-        if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
-        return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
-    };
-
-    __metadata = function (metadataKey, metadataValue) {
-        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
-    };
-
-    __awaiter = function (thisArg, _arguments, P, generator) {
-        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-        return new (P || (P = Promise))(function (resolve, reject) {
-            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-            step((generator = generator.apply(thisArg, _arguments || [])).next());
-        });
-    };
-
-    __generator = function (thisArg, body) {
-        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
-        return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-        function verb(n) { return function (v) { return step([n, v]); }; }
-        function step(op) {
-            if (f) throw new TypeError("Generator is already executing.");
-            while (g && (g = 0, op[0] && (_ = 0)), _) try {
-                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-                if (y = 0, t) op = [op[0] & 2, t.value];
-                switch (op[0]) {
-                    case 0: case 1: t = op; break;
-                    case 4: _.label++; return { value: op[1], done: false };
-                    case 5: _.label++; y = op[1]; op = [0]; continue;
-                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                    default:
-                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                        if (t[2]) _.ops.pop();
-                        _.trys.pop(); continue;
-                }
-                op = body.call(thisArg, _);
-            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-        }
-    };
-
-    __exportStar = function(m, o) {
-        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
-    };
-
-    __createBinding = Object.create ? (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-            desc = { enumerable: true, get: function() { return m[k]; } };
-        }
-        Object.defineProperty(o, k2, desc);
-    }) : (function(o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-    });
-
-    __values = function (o) {
-        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-        if (m) return m.call(o);
-        if (o && typeof o.length === "number") return {
-            next: function () {
-                if (o && i >= o.length) o = void 0;
-                return { value: o && o[i++], done: !o };
-            }
-        };
-        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-    };
-
-    __read = function (o, n) {
-        var m = typeof Symbol === "function" && o[Symbol.iterator];
-        if (!m) return o;
-        var i = m.call(o), r, ar = [], e;
-        try {
-            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-        }
-        catch (error) { e = { error: error }; }
-        finally {
-            try {
-                if (r && !r.done && (m = i["return"])) m.call(i);
-            }
-            finally { if (e) throw e.error; }
-        }
-        return ar;
-    };
-
-    /** @deprecated */
-    __spread = function () {
-        for (var ar = [], i = 0; i < arguments.length; i++)
-            ar = ar.concat(__read(arguments[i]));
-        return ar;
-    };
-
-    /** @deprecated */
-    __spreadArrays = function () {
-        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-        for (var r = Array(s), k = 0, i = 0; i < il; i++)
-            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-                r[k] = a[j];
-        return r;
-    };
-
-    __spreadArray = function (to, from, pack) {
-        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-            if (ar || !(i in from)) {
-                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-                ar[i] = from[i];
-            }
-        }
-        return to.concat(ar || Array.prototype.slice.call(from));
-    };
-
-    __await = function (v) {
-        return this instanceof __await ? (this.v = v, this) : new __await(v);
-    };
-
-    __asyncGenerator = function (thisArg, _arguments, generator) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var g = generator.apply(thisArg, _arguments || []), i, q = [];
-        return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function () { return this; }, i;
-        function awaitReturn(f) { return function (v) { return Promise.resolve(v).then(f, reject); }; }
-        function verb(n, f) { if (g[n]) { i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; if (f) i[n] = f(i[n]); } }
-        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
-        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
-        function fulfill(value) { resume("next", value); }
-        function reject(value) { resume("throw", value); }
-        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
-    };
-
-    __asyncDelegator = function (o) {
-        var i, p;
-        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
-        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: false } : f ? f(v) : v; } : f; }
-    };
-
-    __asyncValues = function (o) {
-        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-        var m = o[Symbol.asyncIterator], i;
-        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-    };
-
-    __makeTemplateObject = function (cooked, raw) {
-        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
-        return cooked;
-    };
-
-    var __setModuleDefault = Object.create ? (function(o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-    }) : function(o, v) {
-        o["default"] = v;
-    };
-
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-
-    __importStar = function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-
-    __importDefault = function (mod) {
-        return (mod && mod.__esModule) ? mod : { "default": mod };
-    };
-
-    __classPrivateFieldGet = function (receiver, state, kind, f) {
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-    };
-
-    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
-        if (kind === "m") throw new TypeError("Private method is not writable");
-        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-    };
-
-    __classPrivateFieldIn = function (state, receiver) {
-        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
-        return typeof state === "function" ? receiver === state : state.has(receiver);
-    };
-
-    __addDisposableResource = function (env, value, async) {
-        if (value !== null && value !== void 0) {
-            if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
-            var dispose, inner;
-            if (async) {
-                if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
-                dispose = value[Symbol.asyncDispose];
-            }
-            if (dispose === void 0) {
-                if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
-                dispose = value[Symbol.dispose];
-                if (async) inner = dispose;
-            }
-            if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
-            if (inner) dispose = function() { try { inner.call(this); } catch (e) { return Promise.reject(e); } };
-            env.stack.push({ value: value, dispose: dispose, async: async });
-        }
-        else if (async) {
-            env.stack.push({ async: true });
-        }
-        return value;
-    };
-
-    var _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-        var e = new Error(message);
-        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-    };
-
-    __disposeResources = function (env) {
-        function fail(e) {
-            env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
-            env.hasError = true;
-        }
-        var r, s = 0;
-        function next() {
-            while (r = env.stack.pop()) {
-                try {
-                    if (!r.async && s === 1) return s = 0, env.stack.push(r), Promise.resolve().then(next);
-                    if (r.dispose) {
-                        var result = r.dispose.call(r.value);
-                        if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) { fail(e); return next(); });
-                    }
-                    else s |= 1;
-                }
-                catch (e) {
-                    fail(e);
-                }
-            }
-            if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
-            if (env.hasError) throw env.error;
-        }
-        return next();
-    };
-
-    __rewriteRelativeImportExtension = function (path, preserveJsx) {
-        if (typeof path === "string" && /^\.\.?\//.test(path)) {
-            return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function (m, tsx, d, ext, cm) {
-                return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : (d + ext + "." + cm.toLowerCase() + "js");
-            });
-        }
-        return path;
-    };
-
-    exporter("__extends", __extends);
-    exporter("__assign", __assign);
-    exporter("__rest", __rest);
-    exporter("__decorate", __decorate);
-    exporter("__param", __param);
-    exporter("__esDecorate", __esDecorate);
-    exporter("__runInitializers", __runInitializers);
-    exporter("__propKey", __propKey);
-    exporter("__setFunctionName", __setFunctionName);
-    exporter("__metadata", __metadata);
-    exporter("__awaiter", __awaiter);
-    exporter("__generator", __generator);
-    exporter("__exportStar", __exportStar);
-    exporter("__createBinding", __createBinding);
-    exporter("__values", __values);
-    exporter("__read", __read);
-    exporter("__spread", __spread);
-    exporter("__spreadArrays", __spreadArrays);
-    exporter("__spreadArray", __spreadArray);
-    exporter("__await", __await);
-    exporter("__asyncGenerator", __asyncGenerator);
-    exporter("__asyncDelegator", __asyncDelegator);
-    exporter("__asyncValues", __asyncValues);
-    exporter("__makeTemplateObject", __makeTemplateObject);
-    exporter("__importStar", __importStar);
-    exporter("__importDefault", __importDefault);
-    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
-    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
-    exporter("__classPrivateFieldIn", __classPrivateFieldIn);
-    exporter("__addDisposableResource", __addDisposableResource);
-    exporter("__disposeResources", __disposeResources);
-    exporter("__rewriteRelativeImportExtension", __rewriteRelativeImportExtension);
-});
-
-0 && (0);
-
-
-/***/ }),
-
-/***/ 218:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var bearerTokenAuthenticationPolicy_exports = {};
-__export(bearerTokenAuthenticationPolicy_exports, {
-  bearerTokenAuthenticationPolicy: () => bearerTokenAuthenticationPolicy,
-  bearerTokenAuthenticationPolicyName: () => bearerTokenAuthenticationPolicyName,
-  parseChallenges: () => parseChallenges
-});
-module.exports = __toCommonJS(bearerTokenAuthenticationPolicy_exports);
-var import_tokenCycler = __nccwpck_require__(162);
-var import_log = __nccwpck_require__(184);
-var import_restError = __nccwpck_require__(355);
-const bearerTokenAuthenticationPolicyName = "bearerTokenAuthenticationPolicy";
-async function trySendRequest(request, next) {
-  try {
-    return [await next(request), void 0];
-  } catch (e) {
-    if ((0, import_restError.isRestError)(e) && e.response) {
-      return [e.response, e];
-    } else {
-      throw e;
-    }
-  }
-}
-async function defaultAuthorizeRequest(options) {
-  const { scopes, getAccessToken, request } = options;
-  const getTokenOptions = {
-    abortSignal: request.abortSignal,
-    tracingOptions: request.tracingOptions,
-    enableCae: true
-  };
-  const accessToken = await getAccessToken(scopes, getTokenOptions);
-  if (accessToken) {
-    options.request.headers.set("Authorization", `Bearer ${accessToken.token}`);
-  }
-}
-function isChallengeResponse(response) {
-  return response.status === 401 && response.headers.has("WWW-Authenticate");
-}
-async function authorizeRequestOnCaeChallenge(onChallengeOptions, caeClaims) {
-  const { scopes } = onChallengeOptions;
-  const accessToken = await onChallengeOptions.getAccessToken(scopes, {
-    enableCae: true,
-    claims: caeClaims
-  });
-  if (!accessToken) {
-    return false;
-  }
-  onChallengeOptions.request.headers.set(
-    "Authorization",
-    `${accessToken.tokenType ?? "Bearer"} ${accessToken.token}`
-  );
-  return true;
-}
-function bearerTokenAuthenticationPolicy(options) {
-  const { credential, scopes, challengeCallbacks } = options;
-  const logger = options.logger || import_log.logger;
-  const callbacks = {
-    authorizeRequest: challengeCallbacks?.authorizeRequest?.bind(challengeCallbacks) ?? defaultAuthorizeRequest,
-    authorizeRequestOnChallenge: challengeCallbacks?.authorizeRequestOnChallenge?.bind(challengeCallbacks)
-  };
-  const getAccessToken = credential ? (0, import_tokenCycler.createTokenCycler)(
-    credential
-    /* , options */
-  ) : () => Promise.resolve(null);
-  return {
-    name: bearerTokenAuthenticationPolicyName,
-    /**
-     * If there's no challenge parameter:
-     * - It will try to retrieve the token using the cache, or the credential's getToken.
-     * - Then it will try the next policy with or without the retrieved token.
-     *
-     * It uses the challenge parameters to:
-     * - Skip a first attempt to get the token from the credential if there's no cached token,
-     *   since it expects the token to be retrievable only after the challenge.
-     * - Prepare the outgoing request if the `prepareRequest` method has been provided.
-     * - Send an initial request to receive the challenge if it fails.
-     * - Process a challenge if the response contains it.
-     * - Retrieve a token with the challenge information, then re-send the request.
-     */
-    async sendRequest(request, next) {
-      if (!request.url.toLowerCase().startsWith("https://")) {
-        throw new Error(
-          "Bearer token authentication is not permitted for non-TLS protected (non-https) URLs."
-        );
-      }
-      await callbacks.authorizeRequest({
-        scopes: Array.isArray(scopes) ? scopes : [scopes],
-        request,
-        getAccessToken,
-        logger
-      });
-      let response;
-      let error;
-      let shouldSendRequest;
-      [response, error] = await trySendRequest(request, next);
-      if (isChallengeResponse(response)) {
-        let claims = getCaeChallengeClaims(response.headers.get("WWW-Authenticate"));
-        if (claims) {
-          let parsedClaim;
-          try {
-            parsedClaim = atob(claims);
-          } catch (e) {
-            logger.warning(
-              `The WWW-Authenticate header contains "claims" that cannot be parsed. Unable to perform the Continuous Access Evaluation authentication flow. Unparsable claims: ${claims}`
-            );
-            return response;
-          }
-          shouldSendRequest = await authorizeRequestOnCaeChallenge(
-            {
-              scopes: Array.isArray(scopes) ? scopes : [scopes],
-              response,
-              request,
-              getAccessToken,
-              logger
-            },
-            parsedClaim
-          );
-          if (shouldSendRequest) {
-            [response, error] = await trySendRequest(request, next);
-          }
-        } else if (callbacks.authorizeRequestOnChallenge) {
-          shouldSendRequest = await callbacks.authorizeRequestOnChallenge({
-            scopes: Array.isArray(scopes) ? scopes : [scopes],
-            request,
-            response,
-            getAccessToken,
-            logger
-          });
-          if (shouldSendRequest) {
-            [response, error] = await trySendRequest(request, next);
-          }
-          if (isChallengeResponse(response)) {
-            claims = getCaeChallengeClaims(response.headers.get("WWW-Authenticate"));
-            if (claims) {
-              let parsedClaim;
-              try {
-                parsedClaim = atob(claims);
-              } catch (e) {
-                logger.warning(
-                  `The WWW-Authenticate header contains "claims" that cannot be parsed. Unable to perform the Continuous Access Evaluation authentication flow. Unparsable claims: ${claims}`
-                );
-                return response;
-              }
-              shouldSendRequest = await authorizeRequestOnCaeChallenge(
-                {
-                  scopes: Array.isArray(scopes) ? scopes : [scopes],
-                  response,
-                  request,
-                  getAccessToken,
-                  logger
-                },
-                parsedClaim
-              );
-              if (shouldSendRequest) {
-                [response, error] = await trySendRequest(request, next);
-              }
-            }
-          }
-        }
-      }
-      if (error) {
-        throw error;
-      } else {
-        return response;
-      }
-    }
-  };
-}
-function parseChallenges(challenges) {
-  const challengeRegex = /(\w+)\s+((?:\w+=(?:"[^"]*"|[^,]*),?\s*)+)/g;
-  const paramRegex = /(\w+)="([^"]*)"/g;
-  const parsedChallenges = [];
-  let match;
-  while ((match = challengeRegex.exec(challenges)) !== null) {
-    const scheme = match[1];
-    const paramsString = match[2];
-    const params = {};
-    let paramMatch;
-    while ((paramMatch = paramRegex.exec(paramsString)) !== null) {
-      params[paramMatch[1]] = paramMatch[2];
-    }
-    parsedChallenges.push({ scheme, params });
-  }
-  return parsedChallenges;
-}
-function getCaeChallengeClaims(challenges) {
-  if (!challenges) {
-    return;
-  }
-  const parsedChallenges = parseChallenges(challenges);
-  return parsedChallenges.find(
-    (x) => x.scheme === "Bearer" && x.params.claims && x.params.error === "insufficient_claims"
-  )?.params.claims;
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 219:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Shared target/ warning detector. Owned by Agent 2.
-//
-// Port of .github/actions/setup-soldr/detect_shared_target_warning.py.
-// Emits a ::warning:: when the user's target-dir already contains compiled
-// artifacts (a `deps/*.rmeta` file) and the build-cache is in 'once' mode +
-// the target-cache is enabled. This warns workflow authors that a subsequent
-// `soldr cargo build` may trip on a stale rust-plan.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.targetDirHasCompiledArtifacts = targetDirHasCompiledArtifacts;
-exports.shouldEmitSharedTargetWarning = shouldEmitSharedTargetWarning;
-exports.detectSharedTargetWarning = detectSharedTargetWarning;
-const fs = __importStar(__nccwpck_require__(249));
-const path = __importStar(__nccwpck_require__(508));
-const core = __importStar(__nccwpck_require__(460));
-const log_utils_js_1 = __nccwpck_require__(354);
-const WARNING_MESSAGE = "setup-soldr detected a pre-populated shared target directory; a " +
-    "subsequent `soldr cargo build` using the same `--target-dir` may fail " +
-    "with a missing .rmeta error - see README 'Known limitations'.";
-/**
- * Recursively scan `dir` for any `deps/` subdirectory containing a `.rmeta`
- * file. Returns true on the first match. Stops the walk early.
- */
-function targetDirHasCompiledArtifacts(targetDir) {
-    let stat;
-    try {
-        stat = fs.statSync(targetDir);
-    }
-    catch {
-        return false;
-    }
-    if (!stat.isDirectory())
-        return false;
-    return scanForDepsRmeta(targetDir);
-}
-function scanForDepsRmeta(root) {
-    const stack = [root];
-    while (stack.length > 0) {
-        const dir = stack.pop();
-        let entries;
-        try {
-            entries = fs.readdirSync(dir, { withFileTypes: true });
-        }
-        catch {
-            continue;
-        }
-        for (const entry of entries) {
-            if (!entry.isDirectory())
-                continue;
-            const sub = path.join(dir, entry.name);
-            if (entry.name === "deps") {
-                if (depsDirHasRmeta(sub))
-                    return true;
-            }
-            stack.push(sub);
-        }
-    }
-    return false;
-}
-function depsDirHasRmeta(depsDir) {
-    let entries;
-    try {
-        entries = fs.readdirSync(depsDir, { withFileTypes: true });
-    }
-    catch {
-        return false;
-    }
-    for (const entry of entries) {
-        if (entry.isFile() && entry.name.endsWith(".rmeta"))
-            return true;
-    }
-    return false;
-}
-function shouldEmitSharedTargetWarning(opts) {
-    if (!opts.buildCacheEnabled)
-        return false;
-    if ((opts.buildCacheMode ?? "").trim().toLowerCase() !== "once")
-        return false;
-    if (!opts.targetCacheEnabled)
-        return false;
-    return targetDirHasCompiledArtifacts(opts.targetDir);
-}
-async function detectSharedTargetWarning(opts) {
-    const logger = (0, log_utils_js_1.createLogger)(process.env);
-    const targetDir = (opts.targetDir ?? "").trim();
-    if (!targetDir) {
-        logger.log("shared-target-dir check skipped: no target dir resolved");
-        return;
-    }
-    if (shouldEmitSharedTargetWarning({
-        buildCacheEnabled: opts.buildCacheEnabled,
-        buildCacheMode: opts.buildCacheMode,
-        targetCacheEnabled: opts.effectiveTargetCacheEnabled,
-        targetDir,
-    })) {
-        core.warning(WARNING_MESSAGE);
-        logger.log(`shared-target-dir warning emitted for target_dir=${targetDir} build_cache_mode=${opts.buildCacheMode}`);
-    }
-    else {
-        logger.log(`shared-target-dir check clean for target_dir=${targetDir} ` +
-            `build_cache_mode=${opts.buildCacheMode} ` +
-            `build_cache_enabled=${opts.buildCacheEnabled} ` +
-            `target_cache_enabled=${opts.effectiveTargetCacheEnabled}`);
-    }
-}
-
-
-/***/ }),
-
-/***/ 220:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var systemErrorRetryPolicy_exports = {};
-__export(systemErrorRetryPolicy_exports, {
-  systemErrorRetryPolicy: () => systemErrorRetryPolicy,
-  systemErrorRetryPolicyName: () => systemErrorRetryPolicyName
-});
-module.exports = __toCommonJS(systemErrorRetryPolicy_exports);
-var import_policies = __nccwpck_require__(287);
-const systemErrorRetryPolicyName = import_policies.systemErrorRetryPolicyName;
-function systemErrorRetryPolicy(options = {}) {
-  return (0, import_policies.systemErrorRetryPolicy)(options);
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 221:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ContainerImpl = void 0;
-const tslib_1 = __nccwpck_require__(217);
-const coreClient = tslib_1.__importStar(__nccwpck_require__(440));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(180));
-const Parameters = tslib_1.__importStar(__nccwpck_require__(65));
-/** Class containing Container operations. */
-class ContainerImpl {
-    client;
-    /**
-     * Initialize a new instance of the class Container class.
-     * @param client Reference to the service client
-     */
-    constructor(client) {
-        this.client = client;
-    }
-    /**
-     * creates a new container under the specified account. If the container with the same name already
-     * exists, the operation fails
-     * @param options The options parameters.
-     */
-    create(options) {
-        return this.client.sendOperationRequest({ options }, createOperationSpec);
-    }
-    /**
-     * returns all user-defined metadata and system properties for the specified container. The data
-     * returned does not include the container's list of blobs
-     * @param options The options parameters.
-     */
-    getProperties(options) {
-        return this.client.sendOperationRequest({ options }, getPropertiesOperationSpec);
-    }
-    /**
-     * operation marks the specified container for deletion. The container and any blobs contained within
-     * it are later deleted during garbage collection
-     * @param options The options parameters.
-     */
-    delete(options) {
-        return this.client.sendOperationRequest({ options }, deleteOperationSpec);
-    }
-    /**
-     * operation sets one or more user-defined name-value pairs for the specified container.
-     * @param options The options parameters.
-     */
-    setMetadata(options) {
-        return this.client.sendOperationRequest({ options }, setMetadataOperationSpec);
-    }
-    /**
-     * gets the permissions for the specified container. The permissions indicate whether container data
-     * may be accessed publicly.
-     * @param options The options parameters.
-     */
-    getAccessPolicy(options) {
-        return this.client.sendOperationRequest({ options }, getAccessPolicyOperationSpec);
-    }
-    /**
-     * sets the permissions for the specified container. The permissions indicate whether blobs in a
-     * container may be accessed publicly.
-     * @param options The options parameters.
-     */
-    setAccessPolicy(options) {
-        return this.client.sendOperationRequest({ options }, setAccessPolicyOperationSpec);
-    }
-    /**
-     * Restores a previously-deleted container.
-     * @param options The options parameters.
-     */
-    restore(options) {
-        return this.client.sendOperationRequest({ options }, restoreOperationSpec);
-    }
-    /**
-     * Renames an existing container.
-     * @param sourceContainerName Required.  Specifies the name of the container to rename.
-     * @param options The options parameters.
-     */
-    rename(sourceContainerName, options) {
-        return this.client.sendOperationRequest({ sourceContainerName, options }, renameOperationSpec);
-    }
-    /**
-     * The Batch operation allows multiple API calls to be embedded into a single HTTP request.
-     * @param contentLength The length of the request.
-     * @param multipartContentType Required. The value of this header must be multipart/mixed with a batch
-     *                             boundary. Example header value: multipart/mixed; boundary=batch_<GUID>
-     * @param body Initial data
-     * @param options The options parameters.
-     */
-    submitBatch(contentLength, multipartContentType, body, options) {
-        return this.client.sendOperationRequest({ contentLength, multipartContentType, body, options }, submitBatchOperationSpec);
-    }
-    /**
-     * The Filter Blobs operation enables callers to list blobs in a container whose tags match a given
-     * search expression.  Filter blobs searches within the given container.
-     * @param options The options parameters.
-     */
-    filterBlobs(options) {
-        return this.client.sendOperationRequest({ options }, filterBlobsOperationSpec);
-    }
-    /**
-     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
-     * be 15 to 60 seconds, or can be infinite
-     * @param options The options parameters.
-     */
-    acquireLease(options) {
-        return this.client.sendOperationRequest({ options }, acquireLeaseOperationSpec);
-    }
-    /**
-     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
-     * be 15 to 60 seconds, or can be infinite
-     * @param leaseId Specifies the current lease ID on the resource.
-     * @param options The options parameters.
-     */
-    releaseLease(leaseId, options) {
-        return this.client.sendOperationRequest({ leaseId, options }, releaseLeaseOperationSpec);
-    }
-    /**
-     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
-     * be 15 to 60 seconds, or can be infinite
-     * @param leaseId Specifies the current lease ID on the resource.
-     * @param options The options parameters.
-     */
-    renewLease(leaseId, options) {
-        return this.client.sendOperationRequest({ leaseId, options }, renewLeaseOperationSpec);
-    }
-    /**
-     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
-     * be 15 to 60 seconds, or can be infinite
-     * @param options The options parameters.
-     */
-    breakLease(options) {
-        return this.client.sendOperationRequest({ options }, breakLeaseOperationSpec);
-    }
-    /**
-     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
-     * be 15 to 60 seconds, or can be infinite
-     * @param leaseId Specifies the current lease ID on the resource.
-     * @param proposedLeaseId Proposed lease ID, in a GUID string format. The Blob service returns 400
-     *                        (Invalid request) if the proposed lease ID is not in the correct format. See Guid Constructor
-     *                        (String) for a list of valid GUID string formats.
-     * @param options The options parameters.
-     */
-    changeLease(leaseId, proposedLeaseId, options) {
-        return this.client.sendOperationRequest({ leaseId, proposedLeaseId, options }, changeLeaseOperationSpec);
-    }
-    /**
-     * [Update] The List Blobs operation returns a list of the blobs under the specified container
-     * @param options The options parameters.
-     */
-    listBlobFlatSegment(options) {
-        return this.client.sendOperationRequest({ options }, listBlobFlatSegmentOperationSpec);
-    }
-    /**
-     * [Update] The List Blobs operation returns a list of the blobs under the specified container
-     * @param delimiter When the request includes this parameter, the operation returns a BlobPrefix
-     *                  element in the response body that acts as a placeholder for all blobs whose names begin with the
-     *                  same substring up to the appearance of the delimiter character. The delimiter may be a single
-     *                  character or a string.
-     * @param options The options parameters.
-     */
-    listBlobHierarchySegment(delimiter, options) {
-        return this.client.sendOperationRequest({ delimiter, options }, listBlobHierarchySegmentOperationSpec);
-    }
-    /**
-     * Returns the sku name and account kind
-     * @param options The options parameters.
-     */
-    getAccountInfo(options) {
-        return this.client.sendOperationRequest({ options }, getAccountInfoOperationSpec);
-    }
-}
-exports.ContainerImpl = ContainerImpl;
-// Operation Specifications
-const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
-const createOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.ContainerCreateHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerCreateExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.metadata,
-        Parameters.access,
-        Parameters.defaultEncryptionScope,
-        Parameters.preventEncryptionScopeOverride,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const getPropertiesOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            headersMapper: Mappers.ContainerGetPropertiesHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerGetPropertiesExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.leaseId,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const deleteOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "DELETE",
-    responses: {
-        202: {
-            headersMapper: Mappers.ContainerDeleteHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerDeleteExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const setMetadataOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        200: {
-            headersMapper: Mappers.ContainerSetMetadataHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerSetMetadataExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp6,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.metadata,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const getAccessPolicyOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: {
-                type: {
-                    name: "Sequence",
-                    element: {
-                        type: { name: "Composite", className: "SignedIdentifier" },
-                    },
-                },
-                serializedName: "SignedIdentifiers",
-                xmlName: "SignedIdentifiers",
-                xmlIsWrapped: true,
-                xmlElementName: "SignedIdentifier",
-            },
-            headersMapper: Mappers.ContainerGetAccessPolicyHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerGetAccessPolicyExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp7,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.leaseId,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const setAccessPolicyOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        200: {
-            headersMapper: Mappers.ContainerSetAccessPolicyHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerSetAccessPolicyExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.containerAcl,
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp7,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.contentType,
-        Parameters.accept,
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.access,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "xml",
-    serializer: xmlSerializer,
-};
-const restoreOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.ContainerRestoreHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerRestoreExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp8,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.deletedContainerName,
-        Parameters.deletedContainerVersion,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const renameOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        200: {
-            headersMapper: Mappers.ContainerRenameHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerRenameExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp9,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.sourceContainerName,
-        Parameters.sourceLeaseId,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const submitBatchOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "POST",
-    responses: {
-        202: {
-            bodyMapper: {
-                type: { name: "Stream" },
-                serializedName: "parsedResponse",
-            },
-            headersMapper: Mappers.ContainerSubmitBatchHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerSubmitBatchExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.body,
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.comp4,
-        Parameters.restype2,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.accept,
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.contentLength,
-        Parameters.multipartContentType,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "xml",
-    serializer: xmlSerializer,
-};
-const filterBlobsOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.FilterBlobSegment,
-            headersMapper: Mappers.ContainerFilterBlobsHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerFilterBlobsExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.marker,
-        Parameters.maxPageSize,
-        Parameters.comp5,
-        Parameters.where,
-        Parameters.restype2,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const acquireLeaseOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.ContainerAcquireLeaseHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerAcquireLeaseExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp10,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.action,
-        Parameters.duration,
-        Parameters.proposedLeaseId,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const releaseLeaseOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        200: {
-            headersMapper: Mappers.ContainerReleaseLeaseHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerReleaseLeaseExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp10,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.action1,
-        Parameters.leaseId1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const renewLeaseOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        200: {
-            headersMapper: Mappers.ContainerRenewLeaseHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerRenewLeaseExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp10,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.leaseId1,
-        Parameters.action2,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const breakLeaseOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        202: {
-            headersMapper: Mappers.ContainerBreakLeaseHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerBreakLeaseExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp10,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.action3,
-        Parameters.breakPeriod,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const changeLeaseOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "PUT",
-    responses: {
-        200: {
-            headersMapper: Mappers.ContainerChangeLeaseHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerChangeLeaseExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.restype2,
-        Parameters.comp10,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.leaseId1,
-        Parameters.action4,
-        Parameters.proposedLeaseId1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const listBlobFlatSegmentOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.ListBlobsFlatSegmentResponse,
-            headersMapper: Mappers.ContainerListBlobFlatSegmentHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerListBlobFlatSegmentExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.comp2,
-        Parameters.prefix,
-        Parameters.marker,
-        Parameters.maxPageSize,
-        Parameters.restype2,
-        Parameters.include1,
-        Parameters.startFrom,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const listBlobHierarchySegmentOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.ListBlobsHierarchySegmentResponse,
-            headersMapper: Mappers.ContainerListBlobHierarchySegmentHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerListBlobHierarchySegmentExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.comp2,
-        Parameters.prefix,
-        Parameters.marker,
-        Parameters.maxPageSize,
-        Parameters.restype2,
-        Parameters.include1,
-        Parameters.startFrom,
-        Parameters.delimiter,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const getAccountInfoOperationSpec = {
-    path: "/{containerName}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            headersMapper: Mappers.ContainerGetAccountInfoHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ContainerGetAccountInfoExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.comp,
-        Parameters.timeoutInSeconds,
-        Parameters.restype1,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-//# sourceMappingURL=container.js.map
-
-/***/ }),
-
-/***/ 222:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var tlsPolicy_exports = {};
-__export(tlsPolicy_exports, {
-  tlsPolicy: () => tlsPolicy,
-  tlsPolicyName: () => tlsPolicyName
-});
-module.exports = __toCommonJS(tlsPolicy_exports);
-const tlsPolicyName = "tlsPolicy";
-function tlsPolicy(tlsSettings) {
-  return {
-    name: tlsPolicyName,
-    sendRequest: async (req, next) => {
-      if (!req.tlsSettings) {
-        req.tlsSettings = tlsSettings;
-      }
-      return next(req);
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=tlsPolicy.js.map
-
-
-/***/ }),
-
-/***/ 223:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.safeTrimTrailingSeparator = exports.normalizeSeparators = exports.hasRoot = exports.hasAbsoluteRoot = exports.ensureAbsoluteRoot = exports.dirname = void 0;
-const path = __importStar(__nccwpck_require__(248));
-const assert_1 = __importDefault(__nccwpck_require__(527));
-const IS_WINDOWS = process.platform === 'win32';
-/**
- * Similar to path.dirname except normalizes the path separators and slightly better handling for Windows UNC paths.
- *
- * For example, on Linux/macOS:
- * - `/               => /`
- * - `/hello          => /`
- *
- * For example, on Windows:
- * - `C:\             => C:\`
- * - `C:\hello        => C:\`
- * - `C:              => C:`
- * - `C:hello         => C:`
- * - `\               => \`
- * - `\hello          => \`
- * - `\\hello         => \\hello`
- * - `\\hello\world   => \\hello\world`
- */
-function dirname(p) {
-    // Normalize slashes and trim unnecessary trailing slash
-    p = safeTrimTrailingSeparator(p);
-    // Windows UNC root, e.g. \\hello or \\hello\world
-    if (IS_WINDOWS && /^\\\\[^\\]+(\\[^\\]+)?$/.test(p)) {
-        return p;
-    }
-    // Get dirname
-    let result = path.dirname(p);
-    // Trim trailing slash for Windows UNC root, e.g. \\hello\world\
-    if (IS_WINDOWS && /^\\\\[^\\]+\\[^\\]+\\$/.test(result)) {
-        result = safeTrimTrailingSeparator(result);
-    }
-    return result;
-}
-exports.dirname = dirname;
-/**
- * Roots the path if not already rooted. On Windows, relative roots like `\`
- * or `C:` are expanded based on the current working directory.
- */
-function ensureAbsoluteRoot(root, itemPath) {
-    assert_1.default(root, `ensureAbsoluteRoot parameter 'root' must not be empty`);
-    assert_1.default(itemPath, `ensureAbsoluteRoot parameter 'itemPath' must not be empty`);
-    // Already rooted
-    if (hasAbsoluteRoot(itemPath)) {
-        return itemPath;
-    }
-    // Windows
-    if (IS_WINDOWS) {
-        // Check for itemPath like C: or C:foo
-        if (itemPath.match(/^[A-Z]:[^\\/]|^[A-Z]:$/i)) {
-            let cwd = process.cwd();
-            assert_1.default(cwd.match(/^[A-Z]:\\/i), `Expected current directory to start with an absolute drive root. Actual '${cwd}'`);
-            // Drive letter matches cwd? Expand to cwd
-            if (itemPath[0].toUpperCase() === cwd[0].toUpperCase()) {
-                // Drive only, e.g. C:
-                if (itemPath.length === 2) {
-                    // Preserve specified drive letter case (upper or lower)
-                    return `${itemPath[0]}:\\${cwd.substr(3)}`;
-                }
-                // Drive + path, e.g. C:foo
-                else {
-                    if (!cwd.endsWith('\\')) {
-                        cwd += '\\';
-                    }
-                    // Preserve specified drive letter case (upper or lower)
-                    return `${itemPath[0]}:\\${cwd.substr(3)}${itemPath.substr(2)}`;
-                }
-            }
-            // Different drive
-            else {
-                return `${itemPath[0]}:\\${itemPath.substr(2)}`;
-            }
-        }
-        // Check for itemPath like \ or \foo
-        else if (normalizeSeparators(itemPath).match(/^\\$|^\\[^\\]/)) {
-            const cwd = process.cwd();
-            assert_1.default(cwd.match(/^[A-Z]:\\/i), `Expected current directory to start with an absolute drive root. Actual '${cwd}'`);
-            return `${cwd[0]}:\\${itemPath.substr(1)}`;
-        }
-    }
-    assert_1.default(hasAbsoluteRoot(root), `ensureAbsoluteRoot parameter 'root' must have an absolute root`);
-    // Otherwise ensure root ends with a separator
-    if (root.endsWith('/') || (IS_WINDOWS && root.endsWith('\\'))) {
-        // Intentionally empty
-    }
-    else {
-        // Append separator
-        root += path.sep;
-    }
-    return root + itemPath;
-}
-exports.ensureAbsoluteRoot = ensureAbsoluteRoot;
-/**
- * On Linux/macOS, true if path starts with `/`. On Windows, true for paths like:
- * `\\hello\share` and `C:\hello` (and using alternate separator).
- */
-function hasAbsoluteRoot(itemPath) {
-    assert_1.default(itemPath, `hasAbsoluteRoot parameter 'itemPath' must not be empty`);
-    // Normalize separators
-    itemPath = normalizeSeparators(itemPath);
-    // Windows
-    if (IS_WINDOWS) {
-        // E.g. \\hello\share or C:\hello
-        return itemPath.startsWith('\\\\') || /^[A-Z]:\\/i.test(itemPath);
-    }
-    // E.g. /hello
-    return itemPath.startsWith('/');
-}
-exports.hasAbsoluteRoot = hasAbsoluteRoot;
-/**
- * On Linux/macOS, true if path starts with `/`. On Windows, true for paths like:
- * `\`, `\hello`, `\\hello\share`, `C:`, and `C:\hello` (and using alternate separator).
- */
-function hasRoot(itemPath) {
-    assert_1.default(itemPath, `isRooted parameter 'itemPath' must not be empty`);
-    // Normalize separators
-    itemPath = normalizeSeparators(itemPath);
-    // Windows
-    if (IS_WINDOWS) {
-        // E.g. \ or \hello or \\hello
-        // E.g. C: or C:\hello
-        return itemPath.startsWith('\\') || /^[A-Z]:/i.test(itemPath);
-    }
-    // E.g. /hello
-    return itemPath.startsWith('/');
-}
-exports.hasRoot = hasRoot;
-/**
- * Removes redundant slashes and converts `/` to `\` on Windows
- */
-function normalizeSeparators(p) {
-    p = p || '';
-    // Windows
-    if (IS_WINDOWS) {
-        // Convert slashes on Windows
-        p = p.replace(/\//g, '\\');
-        // Remove redundant slashes
-        const isUnc = /^\\\\+[^\\]/.test(p); // e.g. \\hello
-        return (isUnc ? '\\' : '') + p.replace(/\\\\+/g, '\\'); // preserve leading \\ for UNC
-    }
-    // Remove redundant slashes
-    return p.replace(/\/\/+/g, '/');
-}
-exports.normalizeSeparators = normalizeSeparators;
-/**
- * Normalizes the path separators and trims the trailing separator (when safe).
- * For example, `/foo/ => /foo` but `/ => /`
- */
-function safeTrimTrailingSeparator(p) {
-    // Short-circuit if empty
-    if (!p) {
-        return '';
-    }
-    // Normalize separators
-    p = normalizeSeparators(p);
-    // No trailing slash
-    if (!p.endsWith(path.sep)) {
-        return p;
-    }
-    // Check '/' on Linux/macOS and '\' on Windows
-    if (p === path.sep) {
-        return p;
-    }
-    // On Windows check if drive root. E.g. C:\
-    if (IS_WINDOWS && /^[A-Z]:\\$/i.test(p)) {
-        return p;
-    }
-    // Otherwise trim trailing slash
-    return p.substr(0, p.length - 1);
-}
-exports.safeTrimTrailingSeparator = safeTrimTrailingSeparator;
-//# sourceMappingURL=internal-path-helper.js.map
-
-/***/ }),
-
-/***/ 224:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-module.exports = __nccwpck_require__(289)
-module.exports.async = __nccwpck_require__(412)
-module.exports.stream = __nccwpck_require__(421)
-module.exports.prettyError = __nccwpck_require__(280)
-
-
-/***/ }),
-
-/***/ 225:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.HttpProxyAgent = void 0;
-const net = __importStar(__nccwpck_require__(509));
-const tls = __importStar(__nccwpck_require__(506));
-const debug_1 = __importDefault(__nccwpck_require__(516));
-const events_1 = __nccwpck_require__(470);
-const agent_base_1 = __nccwpck_require__(241);
-const url_1 = __nccwpck_require__(85);
-const debug = (0, debug_1.default)('http-proxy-agent');
-/**
- * The `HttpProxyAgent` implements an HTTP Agent subclass that connects
- * to the specified "HTTP proxy server" in order to proxy HTTP requests.
- */
-class HttpProxyAgent extends agent_base_1.Agent {
-    constructor(proxy, opts) {
-        super(opts);
-        this.proxy = typeof proxy === 'string' ? new url_1.URL(proxy) : proxy;
-        this.proxyHeaders = opts?.headers ?? {};
-        debug('Creating new HttpProxyAgent instance: %o', this.proxy.href);
-        // Trim off the brackets from IPv6 addresses
-        const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, '');
-        const port = this.proxy.port
-            ? parseInt(this.proxy.port, 10)
-            : this.proxy.protocol === 'https:'
-                ? 443
-                : 80;
-        this.connectOpts = {
-            ...(opts ? omit(opts, 'headers') : null),
-            host,
-            port,
-        };
-    }
-    addRequest(req, opts) {
-        req._header = null;
-        this.setRequestProps(req, opts);
-        // @ts-expect-error `addRequest()` isn't defined in `@types/node`
-        super.addRequest(req, opts);
-    }
-    setRequestProps(req, opts) {
-        const { proxy } = this;
-        const protocol = opts.secureEndpoint ? 'https:' : 'http:';
-        const hostname = req.getHeader('host') || 'localhost';
-        const base = `${protocol}//${hostname}`;
-        const url = new url_1.URL(req.path, base);
-        if (opts.port !== 80) {
-            url.port = String(opts.port);
-        }
-        // Change the `http.ClientRequest` instance's "path" field
-        // to the absolute path of the URL that will be requested.
-        req.path = String(url);
-        // Inject the `Proxy-Authorization` header if necessary.
-        const headers = typeof this.proxyHeaders === 'function'
-            ? this.proxyHeaders()
-            : { ...this.proxyHeaders };
-        if (proxy.username || proxy.password) {
-            const auth = `${decodeURIComponent(proxy.username)}:${decodeURIComponent(proxy.password)}`;
-            headers['Proxy-Authorization'] = `Basic ${Buffer.from(auth).toString('base64')}`;
-        }
-        if (!headers['Proxy-Connection']) {
-            headers['Proxy-Connection'] = this.keepAlive
-                ? 'Keep-Alive'
-                : 'close';
-        }
-        for (const name of Object.keys(headers)) {
-            const value = headers[name];
-            if (value) {
-                req.setHeader(name, value);
-            }
-        }
-    }
-    async connect(req, opts) {
-        req._header = null;
-        if (!req.path.includes('://')) {
-            this.setRequestProps(req, opts);
-        }
-        // At this point, the http ClientRequest's internal `_header` field
-        // might have already been set. If this is the case then we'll need
-        // to re-generate the string since we just changed the `req.path`.
-        let first;
-        let endOfHeaders;
-        debug('Regenerating stored HTTP header string for request');
-        req._implicitHeader();
-        if (req.outputData && req.outputData.length > 0) {
-            debug('Patching connection write() output buffer with updated header');
-            first = req.outputData[0].data;
-            endOfHeaders = first.indexOf('\r\n\r\n') + 4;
-            req.outputData[0].data =
-                req._header + first.substring(endOfHeaders);
-            debug('Output buffer: %o', req.outputData[0].data);
-        }
-        // Create a socket connection to the proxy server.
-        let socket;
-        if (this.proxy.protocol === 'https:') {
-            debug('Creating `tls.Socket`: %o', this.connectOpts);
-            socket = tls.connect(this.connectOpts);
-        }
-        else {
-            debug('Creating `net.Socket`: %o', this.connectOpts);
-            socket = net.connect(this.connectOpts);
-        }
-        // Wait for the socket's `connect` event, so that this `callback()`
-        // function throws instead of the `http` request machinery. This is
-        // important for i.e. `PacProxyAgent` which determines a failed proxy
-        // connection via the `callback()` function throwing.
-        await (0, events_1.once)(socket, 'connect');
-        return socket;
-    }
-}
-HttpProxyAgent.protocols = ['http', 'https'];
-exports.HttpProxyAgent = HttpProxyAgent;
-function omit(obj, ...keys) {
-    const ret = {};
-    let key;
-    for (key in obj) {
-        if (!keys.includes(key)) {
-            ret[key] = obj[key];
-        }
-    }
-    return ret;
-}
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 226:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getCmdPath = exports.tryGetExecutablePath = exports.isRooted = exports.isDirectory = exports.exists = exports.READONLY = exports.UV_FS_O_EXLOCK = exports.IS_WINDOWS = exports.unlink = exports.symlink = exports.stat = exports.rmdir = exports.rm = exports.rename = exports.readlink = exports.readdir = exports.open = exports.mkdir = exports.lstat = exports.copyFile = exports.chmod = void 0;
-const fs = __importStar(__nccwpck_require__(532));
-const path = __importStar(__nccwpck_require__(248));
-_a = fs.promises
-// export const {open} = 'fs'
-, exports.chmod = _a.chmod, exports.copyFile = _a.copyFile, exports.lstat = _a.lstat, exports.mkdir = _a.mkdir, exports.open = _a.open, exports.readdir = _a.readdir, exports.readlink = _a.readlink, exports.rename = _a.rename, exports.rm = _a.rm, exports.rmdir = _a.rmdir, exports.stat = _a.stat, exports.symlink = _a.symlink, exports.unlink = _a.unlink;
-// export const {open} = 'fs'
-exports.IS_WINDOWS = process.platform === 'win32';
-// See https://github.com/nodejs/node/blob/d0153aee367422d0858105abec186da4dff0a0c5/deps/uv/include/uv/win.h#L691
-exports.UV_FS_O_EXLOCK = 0x10000000;
-exports.READONLY = fs.constants.O_RDONLY;
-function exists(fsPath) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield exports.stat(fsPath);
-        }
-        catch (err) {
-            if (err.code === 'ENOENT') {
-                return false;
-            }
-            throw err;
-        }
-        return true;
-    });
-}
-exports.exists = exists;
-function isDirectory(fsPath, useStat = false) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const stats = useStat ? yield exports.stat(fsPath) : yield exports.lstat(fsPath);
-        return stats.isDirectory();
-    });
-}
-exports.isDirectory = isDirectory;
-/**
- * On OSX/Linux, true if path starts with '/'. On Windows, true for paths like:
- * \, \hello, \\hello\share, C:, and C:\hello (and corresponding alternate separator cases).
- */
-function isRooted(p) {
-    p = normalizeSeparators(p);
-    if (!p) {
-        throw new Error('isRooted() parameter "p" cannot be empty');
-    }
-    if (exports.IS_WINDOWS) {
-        return (p.startsWith('\\') || /^[A-Z]:/i.test(p) // e.g. \ or \hello or \\hello
-        ); // e.g. C: or C:\hello
-    }
-    return p.startsWith('/');
-}
-exports.isRooted = isRooted;
-/**
- * Best effort attempt to determine whether a file exists and is executable.
- * @param filePath    file path to check
- * @param extensions  additional file extensions to try
- * @return if file exists and is executable, returns the file path. otherwise empty string.
- */
-function tryGetExecutablePath(filePath, extensions) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let stats = undefined;
-        try {
-            // test file exists
-            stats = yield exports.stat(filePath);
-        }
-        catch (err) {
-            if (err.code !== 'ENOENT') {
-                // eslint-disable-next-line no-console
-                console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
-            }
-        }
-        if (stats && stats.isFile()) {
-            if (exports.IS_WINDOWS) {
-                // on Windows, test for valid extension
-                const upperExt = path.extname(filePath).toUpperCase();
-                if (extensions.some(validExt => validExt.toUpperCase() === upperExt)) {
-                    return filePath;
-                }
-            }
-            else {
-                if (isUnixExecutable(stats)) {
-                    return filePath;
-                }
-            }
-        }
-        // try each extension
-        const originalFilePath = filePath;
-        for (const extension of extensions) {
-            filePath = originalFilePath + extension;
-            stats = undefined;
-            try {
-                stats = yield exports.stat(filePath);
-            }
-            catch (err) {
-                if (err.code !== 'ENOENT') {
-                    // eslint-disable-next-line no-console
-                    console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
-                }
-            }
-            if (stats && stats.isFile()) {
-                if (exports.IS_WINDOWS) {
-                    // preserve the case of the actual file (since an extension was appended)
-                    try {
-                        const directory = path.dirname(filePath);
-                        const upperName = path.basename(filePath).toUpperCase();
-                        for (const actualName of yield exports.readdir(directory)) {
-                            if (upperName === actualName.toUpperCase()) {
-                                filePath = path.join(directory, actualName);
-                                break;
-                            }
-                        }
-                    }
-                    catch (err) {
-                        // eslint-disable-next-line no-console
-                        console.log(`Unexpected error attempting to determine the actual case of the file '${filePath}': ${err}`);
-                    }
-                    return filePath;
-                }
-                else {
-                    if (isUnixExecutable(stats)) {
-                        return filePath;
-                    }
-                }
-            }
-        }
-        return '';
-    });
-}
-exports.tryGetExecutablePath = tryGetExecutablePath;
-function normalizeSeparators(p) {
-    p = p || '';
-    if (exports.IS_WINDOWS) {
-        // convert slashes on Windows
-        p = p.replace(/\//g, '\\');
-        // remove redundant slashes
-        return p.replace(/\\\\+/g, '\\');
-    }
-    // remove redundant slashes
-    return p.replace(/\/\/+/g, '/');
-}
-// on Mac/Linux, test the execute bit
-//     R   W  X  R  W X R W X
-//   256 128 64 32 16 8 4 2 1
-function isUnixExecutable(stats) {
-    return ((stats.mode & 1) > 0 ||
-        ((stats.mode & 8) > 0 && stats.gid === process.getgid()) ||
-        ((stats.mode & 64) > 0 && stats.uid === process.getuid()));
-}
-// Get the path of cmd.exe in windows
-function getCmdPath() {
-    var _a;
-    return (_a = process.env['COMSPEC']) !== null && _a !== void 0 ? _a : `cmd.exe`;
-}
-exports.getCmdPath = getCmdPath;
-//# sourceMappingURL=io-util.js.map
-
-/***/ }),
-
-/***/ 227:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createHttpPoller = void 0;
-const tslib_1 = __nccwpck_require__(217);
-var poller_js_1 = __nccwpck_require__(320);
-Object.defineProperty(exports, "createHttpPoller", ({ enumerable: true, get: function () { return poller_js_1.createHttpPoller; } }));
-/**
- * This can be uncommented to expose the protocol-agnostic poller
- */
-// export {
-//   BuildCreatePollerOptions,
-//   Operation,
-//   CreatePollerOptions,
-//   OperationConfig,
-//   RestorableOperationState,
-// } from "./poller/models";
-// export { buildCreatePoller } from "./poller/poller";
-/** legacy */
-tslib_1.__exportStar(__nccwpck_require__(244), exports);
-tslib_1.__exportStar(__nccwpck_require__(75), exports);
-tslib_1.__exportStar(__nccwpck_require__(40), exports);
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 228:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var apiVersionPolicy_exports = {};
-__export(apiVersionPolicy_exports, {
-  apiVersionPolicy: () => apiVersionPolicy,
-  apiVersionPolicyName: () => apiVersionPolicyName
-});
-module.exports = __toCommonJS(apiVersionPolicy_exports);
-const apiVersionPolicyName = "ApiVersionPolicy";
-function apiVersionPolicy(options) {
-  return {
-    name: apiVersionPolicyName,
-    sendRequest: (req, next) => {
-      const url = new URL(req.url);
-      if (!url.searchParams.get("api-version") && options.apiVersion) {
-        req.url = `${req.url}${Array.from(url.searchParams.keys()).length > 0 ? "&" : "?"}api-version=${options.apiVersion}`;
-      }
-      return next(req);
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=apiVersionPolicy.js.map
-
-
-/***/ }),
-
-/***/ 229:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-/// <reference path="../shims-public.d.ts" />
-const listenersMap = new WeakMap();
-const abortedMap = new WeakMap();
-/**
- * An aborter instance implements AbortSignal interface, can abort HTTP requests.
- *
- * - Call AbortSignal.none to create a new AbortSignal instance that cannot be cancelled.
- * Use `AbortSignal.none` when you are required to pass a cancellation token but the operation
- * cannot or will not ever be cancelled.
- *
- * @example
- * Abort without timeout
- * ```ts
- * await doAsyncWork(AbortSignal.none);
- * ```
- */
-class AbortSignal {
-    constructor() {
-        /**
-         * onabort event listener.
-         */
-        this.onabort = null;
-        listenersMap.set(this, []);
-        abortedMap.set(this, false);
-    }
-    /**
-     * Status of whether aborted or not.
-     *
-     * @readonly
-     */
-    get aborted() {
-        if (!abortedMap.has(this)) {
-            throw new TypeError("Expected `this` to be an instance of AbortSignal.");
-        }
-        return abortedMap.get(this);
-    }
-    /**
-     * Creates a new AbortSignal instance that will never be aborted.
-     *
-     * @readonly
-     */
-    static get none() {
-        return new AbortSignal();
-    }
-    /**
-     * Added new "abort" event listener, only support "abort" event.
-     *
-     * @param _type - Only support "abort" event
-     * @param listener - The listener to be added
-     */
-    addEventListener(
-    // tslint:disable-next-line:variable-name
-    _type, listener) {
-        if (!listenersMap.has(this)) {
-            throw new TypeError("Expected `this` to be an instance of AbortSignal.");
-        }
-        const listeners = listenersMap.get(this);
-        listeners.push(listener);
-    }
-    /**
-     * Remove "abort" event listener, only support "abort" event.
-     *
-     * @param _type - Only support "abort" event
-     * @param listener - The listener to be removed
-     */
-    removeEventListener(
-    // tslint:disable-next-line:variable-name
-    _type, listener) {
-        if (!listenersMap.has(this)) {
-            throw new TypeError("Expected `this` to be an instance of AbortSignal.");
-        }
-        const listeners = listenersMap.get(this);
-        const index = listeners.indexOf(listener);
-        if (index > -1) {
-            listeners.splice(index, 1);
-        }
-    }
-    /**
-     * Dispatches a synthetic event to the AbortSignal.
-     */
-    dispatchEvent(_event) {
-        throw new Error("This is a stub dispatchEvent implementation that should not be used.  It only exists for type-checking purposes.");
-    }
-}
-/**
- * Helper to trigger an abort event immediately, the onabort and all abort event listeners will be triggered.
- * Will try to trigger abort event for all linked AbortSignal nodes.
- *
- * - If there is a timeout, the timer will be cancelled.
- * - If aborted is true, nothing will happen.
- *
- * @internal
- */
-// eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
-function abortSignal(signal) {
-    if (signal.aborted) {
-        return;
-    }
-    if (signal.onabort) {
-        signal.onabort.call(signal);
-    }
-    const listeners = listenersMap.get(signal);
-    if (listeners) {
-        // Create a copy of listeners so mutations to the array
-        // (e.g. via removeListener calls) don't affect the listeners
-        // we invoke.
-        listeners.slice().forEach((listener) => {
-            listener.call(signal, { type: "abort" });
-        });
-    }
-    abortedMap.set(signal, true);
-}
-
-// Copyright (c) Microsoft Corporation.
-/**
- * This error is thrown when an asynchronous operation has been aborted.
- * Check for this error by testing the `name` that the name property of the
- * error matches `"AbortError"`.
- *
- * @example
- * ```ts
- * const controller = new AbortController();
- * controller.abort();
- * try {
- *   doAsyncWork(controller.signal)
- * } catch (e) {
- *   if (e.name === 'AbortError') {
- *     // handle abort error here.
- *   }
- * }
- * ```
- */
-class AbortError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = "AbortError";
-    }
-}
-/**
- * An AbortController provides an AbortSignal and the associated controls to signal
- * that an asynchronous operation should be aborted.
- *
- * @example
- * Abort an operation when another event fires
- * ```ts
- * const controller = new AbortController();
- * const signal = controller.signal;
- * doAsyncWork(signal);
- * button.addEventListener('click', () => controller.abort());
- * ```
- *
- * @example
- * Share aborter cross multiple operations in 30s
- * ```ts
- * // Upload the same data to 2 different data centers at the same time,
- * // abort another when any of them is finished
- * const controller = AbortController.withTimeout(30 * 1000);
- * doAsyncWork(controller.signal).then(controller.abort);
- * doAsyncWork(controller.signal).then(controller.abort);
- *```
- *
- * @example
- * Cascaded aborting
- * ```ts
- * // All operations can't take more than 30 seconds
- * const aborter = Aborter.timeout(30 * 1000);
- *
- * // Following 2 operations can't take more than 25 seconds
- * await doAsyncWork(aborter.withTimeout(25 * 1000));
- * await doAsyncWork(aborter.withTimeout(25 * 1000));
- * ```
- */
-class AbortController {
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    constructor(parentSignals) {
-        this._signal = new AbortSignal();
-        if (!parentSignals) {
-            return;
-        }
-        // coerce parentSignals into an array
-        if (!Array.isArray(parentSignals)) {
-            // eslint-disable-next-line prefer-rest-params
-            parentSignals = arguments;
-        }
-        for (const parentSignal of parentSignals) {
-            // if the parent signal has already had abort() called,
-            // then call abort on this signal as well.
-            if (parentSignal.aborted) {
-                this.abort();
-            }
-            else {
-                // when the parent signal aborts, this signal should as well.
-                parentSignal.addEventListener("abort", () => {
-                    this.abort();
-                });
-            }
-        }
-    }
-    /**
-     * The AbortSignal associated with this controller that will signal aborted
-     * when the abort method is called on this controller.
-     *
-     * @readonly
-     */
-    get signal() {
-        return this._signal;
-    }
-    /**
-     * Signal that any operations passed this controller's associated abort signal
-     * to cancel any remaining work and throw an `AbortError`.
-     */
-    abort() {
-        abortSignal(this._signal);
-    }
-    /**
-     * Creates a new AbortSignal instance that will abort after the provided ms.
-     * @param ms - Elapsed time in milliseconds to trigger an abort.
-     */
-    static timeout(ms) {
-        const signal = new AbortSignal();
-        const timer = setTimeout(abortSignal, ms, signal);
-        // Prevent the active Timer from keeping the Node.js event loop active.
-        if (typeof timer.unref === "function") {
-            timer.unref();
-        }
-        return signal;
-    }
-}
-
-exports.AbortController = AbortController;
-exports.AbortError = AbortError;
-exports.AbortSignal = AbortSignal;
-//# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 230:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AVRO_SCHEMA_KEY = exports.AVRO_CODEC_KEY = exports.AVRO_INIT_BYTES = exports.AVRO_SYNC_MARKER_SIZE = void 0;
-exports.AVRO_SYNC_MARKER_SIZE = 16;
-exports.AVRO_INIT_BYTES = new Uint8Array([79, 98, 106, 1]);
-exports.AVRO_CODEC_KEY = "avro.codec";
-exports.AVRO_SCHEMA_KEY = "avro.schema";
-//# sourceMappingURL=AvroConstants.js.map
-
-/***/ }),
-
-/***/ 231:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ServiceImpl = void 0;
-const tslib_1 = __nccwpck_require__(217);
-const coreClient = tslib_1.__importStar(__nccwpck_require__(440));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(180));
-const Parameters = tslib_1.__importStar(__nccwpck_require__(65));
-/** Class containing Service operations. */
-class ServiceImpl {
-    client;
-    /**
-     * Initialize a new instance of the class Service class.
-     * @param client Reference to the service client
-     */
-    constructor(client) {
-        this.client = client;
-    }
-    /**
-     * Sets properties for a storage account's Blob service endpoint, including properties for Storage
-     * Analytics and CORS (Cross-Origin Resource Sharing) rules
-     * @param blobServiceProperties The StorageService properties.
-     * @param options The options parameters.
-     */
-    setProperties(blobServiceProperties, options) {
-        return this.client.sendOperationRequest({ blobServiceProperties, options }, setPropertiesOperationSpec);
-    }
-    /**
-     * gets the properties of a storage account's Blob service, including properties for Storage Analytics
-     * and CORS (Cross-Origin Resource Sharing) rules.
-     * @param options The options parameters.
-     */
-    getProperties(options) {
-        return this.client.sendOperationRequest({ options }, getPropertiesOperationSpec);
-    }
-    /**
-     * Retrieves statistics related to replication for the Blob service. It is only available on the
-     * secondary location endpoint when read-access geo-redundant replication is enabled for the storage
-     * account.
-     * @param options The options parameters.
-     */
-    getStatistics(options) {
-        return this.client.sendOperationRequest({ options }, getStatisticsOperationSpec);
-    }
-    /**
-     * The List Containers Segment operation returns a list of the containers under the specified account
-     * @param options The options parameters.
-     */
-    listContainersSegment(options) {
-        return this.client.sendOperationRequest({ options }, listContainersSegmentOperationSpec);
-    }
-    /**
-     * Retrieves a user delegation key for the Blob service. This is only a valid operation when using
-     * bearer token authentication.
-     * @param keyInfo Key information
-     * @param options The options parameters.
-     */
-    getUserDelegationKey(keyInfo, options) {
-        return this.client.sendOperationRequest({ keyInfo, options }, getUserDelegationKeyOperationSpec);
-    }
-    /**
-     * Returns the sku name and account kind
-     * @param options The options parameters.
-     */
-    getAccountInfo(options) {
-        return this.client.sendOperationRequest({ options }, getAccountInfoOperationSpec);
-    }
-    /**
-     * The Batch operation allows multiple API calls to be embedded into a single HTTP request.
-     * @param contentLength The length of the request.
-     * @param multipartContentType Required. The value of this header must be multipart/mixed with a batch
-     *                             boundary. Example header value: multipart/mixed; boundary=batch_<GUID>
-     * @param body Initial data
-     * @param options The options parameters.
-     */
-    submitBatch(contentLength, multipartContentType, body, options) {
-        return this.client.sendOperationRequest({ contentLength, multipartContentType, body, options }, submitBatchOperationSpec);
-    }
-    /**
-     * The Filter Blobs operation enables callers to list blobs across all containers whose tags match a
-     * given search expression.  Filter blobs searches across all containers within a storage account but
-     * can be scoped within the expression to a single container.
-     * @param options The options parameters.
-     */
-    filterBlobs(options) {
-        return this.client.sendOperationRequest({ options }, filterBlobsOperationSpec);
-    }
-}
-exports.ServiceImpl = ServiceImpl;
-// Operation Specifications
-const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
-const setPropertiesOperationSpec = {
-    path: "/",
-    httpMethod: "PUT",
-    responses: {
-        202: {
-            headersMapper: Mappers.ServiceSetPropertiesHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ServiceSetPropertiesExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.blobServiceProperties,
-    queryParameters: [
-        Parameters.restype,
-        Parameters.comp,
-        Parameters.timeoutInSeconds,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.contentType,
-        Parameters.accept,
-        Parameters.version,
-        Parameters.requestId,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "xml",
-    serializer: xmlSerializer,
-};
-const getPropertiesOperationSpec = {
-    path: "/",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.BlobServiceProperties,
-            headersMapper: Mappers.ServiceGetPropertiesHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ServiceGetPropertiesExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.restype,
-        Parameters.comp,
-        Parameters.timeoutInSeconds,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const getStatisticsOperationSpec = {
-    path: "/",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.BlobServiceStatistics,
-            headersMapper: Mappers.ServiceGetStatisticsHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ServiceGetStatisticsExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.restype,
-        Parameters.timeoutInSeconds,
-        Parameters.comp1,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const listContainersSegmentOperationSpec = {
-    path: "/",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.ListContainersSegmentResponse,
-            headersMapper: Mappers.ServiceListContainersSegmentHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ServiceListContainersSegmentExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.comp2,
-        Parameters.prefix,
-        Parameters.marker,
-        Parameters.maxPageSize,
-        Parameters.include,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const getUserDelegationKeyOperationSpec = {
-    path: "/",
-    httpMethod: "POST",
-    responses: {
-        200: {
-            bodyMapper: Mappers.UserDelegationKey,
-            headersMapper: Mappers.ServiceGetUserDelegationKeyHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ServiceGetUserDelegationKeyExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.keyInfo,
-    queryParameters: [
-        Parameters.restype,
-        Parameters.timeoutInSeconds,
-        Parameters.comp3,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.contentType,
-        Parameters.accept,
-        Parameters.version,
-        Parameters.requestId,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "xml",
-    serializer: xmlSerializer,
-};
-const getAccountInfoOperationSpec = {
-    path: "/",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            headersMapper: Mappers.ServiceGetAccountInfoHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ServiceGetAccountInfoExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.comp,
-        Parameters.timeoutInSeconds,
-        Parameters.restype1,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const submitBatchOperationSpec = {
-    path: "/",
-    httpMethod: "POST",
-    responses: {
-        202: {
-            bodyMapper: {
-                type: { name: "Stream" },
-                serializedName: "parsedResponse",
-            },
-            headersMapper: Mappers.ServiceSubmitBatchHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ServiceSubmitBatchExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.body,
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp4],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.accept,
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.contentLength,
-        Parameters.multipartContentType,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "xml",
-    serializer: xmlSerializer,
-};
-const filterBlobsOperationSpec = {
-    path: "/",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.FilterBlobSegment,
-            headersMapper: Mappers.ServiceFilterBlobsHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.ServiceFilterBlobsExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.marker,
-        Parameters.maxPageSize,
-        Parameters.comp5,
-        Parameters.where,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-//# sourceMappingURL=service.js.map
-
-/***/ }),
-
-/***/ 232:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var agentPolicy_exports = {};
-__export(agentPolicy_exports, {
-  agentPolicy: () => agentPolicy,
-  agentPolicyName: () => agentPolicyName
-});
-module.exports = __toCommonJS(agentPolicy_exports);
-var import_policies = __nccwpck_require__(287);
-const agentPolicyName = import_policies.agentPolicyName;
-function agentPolicy(agent) {
-  return (0, import_policies.agentPolicy)(agent);
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 233:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { UndiciError } = __nccwpck_require__(488)
-
-class MockNotMatchedError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, MockNotMatchedError)
-    this.name = 'MockNotMatchedError'
-    this.message = message || 'The request does not match any registered mock dispatches'
-    this.code = 'UND_MOCK_ERR_MOCK_NOT_MATCHED'
-  }
-}
-
-module.exports = {
-  MockNotMatchedError
-}
-
-
-/***/ }),
-
-/***/ 234:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { Transform } = __nccwpck_require__(130)
-const { Console } = __nccwpck_require__(32)
-
-/**
- * Gets the output of `console.table(…)` as a string.
- */
-module.exports = class PendingInterceptorsFormatter {
-  constructor ({ disableColors } = {}) {
-    this.transform = new Transform({
-      transform (chunk, _enc, cb) {
-        cb(null, chunk)
-      }
-    })
-
-    this.logger = new Console({
-      stdout: this.transform,
-      inspectOptions: {
-        colors: !disableColors && !process.env.CI
-      }
-    })
-  }
-
-  format (pendingInterceptors) {
-    const withPrettyHeaders = pendingInterceptors.map(
-      ({ method, path, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
-        Method: method,
-        Origin: origin,
-        Path: path,
-        'Status code': statusCode,
-        Persistent: persist ? '✅' : '❌',
-        Invocations: timesInvoked,
-        Remaining: persist ? Infinity : times - timesInvoked
-      }))
-
-    this.logger.table(withPrettyHeaders)
-    return this.transform.read().toString()
-  }
-}
-
-
-/***/ }),
-
-/***/ 235:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CacheMetadata = void 0;
-const runtime_1 = __nccwpck_require__(19);
-const runtime_2 = __nccwpck_require__(19);
-const runtime_3 = __nccwpck_require__(19);
-const runtime_4 = __nccwpck_require__(19);
-const runtime_5 = __nccwpck_require__(19);
-const cachescope_1 = __nccwpck_require__(397);
-// @generated message type with reflection information, may provide speed optimized methods
-class CacheMetadata$Type extends runtime_5.MessageType {
-    constructor() {
-        super("github.actions.results.entities.v1.CacheMetadata", [
-            { no: 1, name: "repository_id", kind: "scalar", T: 3 /*ScalarType.INT64*/ },
-            { no: 2, name: "scope", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => cachescope_1.CacheScope }
-        ]);
-    }
-    create(value) {
-        const message = { repositoryId: "0", scope: [] };
-        globalThis.Object.defineProperty(message, runtime_4.MESSAGE_TYPE, { enumerable: false, value: this });
-        if (value !== undefined)
-            (0, runtime_3.reflectionMergePartial)(this, message, value);
-        return message;
-    }
-    internalBinaryRead(reader, length, options, target) {
-        let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
-            switch (fieldNo) {
-                case /* int64 repository_id */ 1:
-                    message.repositoryId = reader.int64().toString();
-                    break;
-                case /* repeated github.actions.results.entities.v1.CacheScope scope */ 2:
-                    message.scope.push(cachescope_1.CacheScope.internalBinaryRead(reader, reader.uint32(), options));
-                    break;
-                default:
-                    let u = options.readUnknownField;
-                    if (u === "throw")
-                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
-                    let d = reader.skip(wireType);
-                    if (u !== false)
-                        (u === true ? runtime_2.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
-            }
-        }
-        return message;
-    }
-    internalBinaryWrite(message, writer, options) {
-        /* int64 repository_id = 1; */
-        if (message.repositoryId !== "0")
-            writer.tag(1, runtime_1.WireType.Varint).int64(message.repositoryId);
-        /* repeated github.actions.results.entities.v1.CacheScope scope = 2; */
-        for (let i = 0; i < message.scope.length; i++)
-            cachescope_1.CacheScope.internalBinaryWrite(message.scope[i], writer.tag(2, runtime_1.WireType.LengthDelimited).fork(), options).join();
-        let u = options.writeUnknownFields;
-        if (u !== false)
-            (u == true ? runtime_2.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
-        return writer;
-    }
-}
-/**
- * @generated MessageType for protobuf message github.actions.results.entities.v1.CacheMetadata
- */
-exports.CacheMetadata = new CacheMetadata$Type();
-//# sourceMappingURL=cachemetadata.js.map
-
-/***/ }),
-
-/***/ 236:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var defaultHttpClient_exports = {};
-__export(defaultHttpClient_exports, {
-  createDefaultHttpClient: () => createDefaultHttpClient
-});
-module.exports = __toCommonJS(defaultHttpClient_exports);
-var import_ts_http_runtime = __nccwpck_require__(89);
-var import_wrapAbortSignal = __nccwpck_require__(446);
-function createDefaultHttpClient() {
-  const client = (0, import_ts_http_runtime.createDefaultHttpClient)();
-  return {
-    async sendRequest(request) {
-      const { abortSignal, cleanup } = request.abortSignal ? (0, import_wrapAbortSignal.wrapAbortSignalLike)(request.abortSignal) : {};
-      try {
-        request.abortSignal = abortSignal;
-        return await client.sendRequest(request);
-      } finally {
-        cleanup?.();
-      }
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 237:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:process");
-
-/***/ }),
-
-/***/ 238:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getRequestUrl = getRequestUrl;
-exports.appendQueryParams = appendQueryParams;
-const operationHelpers_js_1 = __nccwpck_require__(433);
-const interfaceHelpers_js_1 = __nccwpck_require__(400);
-const CollectionFormatToDelimiterMap = {
-    CSV: ",",
-    SSV: " ",
-    Multi: "Multi",
-    TSV: "\t",
-    Pipes: "|",
-};
-function getRequestUrl(baseUri, operationSpec, operationArguments, fallbackObject) {
-    const urlReplacements = calculateUrlReplacements(operationSpec, operationArguments, fallbackObject);
-    let isAbsolutePath = false;
-    let requestUrl = replaceAll(baseUri, urlReplacements);
-    if (operationSpec.path) {
-        let path = replaceAll(operationSpec.path, urlReplacements);
-        // QUIRK: sometimes we get a path component like /{nextLink}
-        // which may be a fully formed URL with a leading /. In that case, we should
-        // remove the leading /
-        if (operationSpec.path === "/{nextLink}" && path.startsWith("/")) {
-            path = path.substring(1);
-        }
-        // QUIRK: sometimes we get a path component like {nextLink}
-        // which may be a fully formed URL. In that case, we should
-        // ignore the baseUri.
-        if (isAbsoluteUrl(path)) {
-            requestUrl = path;
-            isAbsolutePath = true;
-        }
-        else {
-            requestUrl = appendPath(requestUrl, path);
-        }
-    }
-    const { queryParams, sequenceParams } = calculateQueryParameters(operationSpec, operationArguments, fallbackObject);
-    /**
-     * Notice that this call sets the `noOverwrite` parameter to true if the `requestUrl`
-     * is an absolute path. This ensures that existing query parameter values in `requestUrl`
-     * do not get overwritten. On the other hand when `requestUrl` is not absolute path, it
-     * is still being built so there is nothing to overwrite.
-     */
-    requestUrl = appendQueryParams(requestUrl, queryParams, sequenceParams, isAbsolutePath);
-    return requestUrl;
-}
-function replaceAll(input, replacements) {
-    let result = input;
-    for (const [searchValue, replaceValue] of replacements) {
-        result = result.split(searchValue).join(replaceValue);
-    }
-    return result;
-}
-function calculateUrlReplacements(operationSpec, operationArguments, fallbackObject) {
-    const result = new Map();
-    if (operationSpec.urlParameters?.length) {
-        for (const urlParameter of operationSpec.urlParameters) {
-            let urlParameterValue = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, urlParameter, fallbackObject);
-            const parameterPathString = (0, interfaceHelpers_js_1.getPathStringFromParameter)(urlParameter);
-            urlParameterValue = operationSpec.serializer.serialize(urlParameter.mapper, urlParameterValue, parameterPathString);
-            if (!urlParameter.skipEncoding) {
-                urlParameterValue = encodeURIComponent(urlParameterValue);
-            }
-            result.set(`{${urlParameter.mapper.serializedName || parameterPathString}}`, urlParameterValue);
-        }
-    }
-    return result;
-}
-function isAbsoluteUrl(url) {
-    return url.includes("://");
-}
-function appendPath(url, pathToAppend) {
-    if (!pathToAppend) {
-        return url;
-    }
-    const parsedUrl = new URL(url);
-    let newPath = parsedUrl.pathname;
-    if (!newPath.endsWith("/")) {
-        newPath = `${newPath}/`;
-    }
-    if (pathToAppend.startsWith("/")) {
-        pathToAppend = pathToAppend.substring(1);
-    }
-    const searchStart = pathToAppend.indexOf("?");
-    if (searchStart !== -1) {
-        const path = pathToAppend.substring(0, searchStart);
-        const search = pathToAppend.substring(searchStart + 1);
-        newPath = newPath + path;
-        if (search) {
-            parsedUrl.search = parsedUrl.search ? `${parsedUrl.search}&${search}` : search;
-        }
-    }
-    else {
-        newPath = newPath + pathToAppend;
-    }
-    parsedUrl.pathname = newPath;
-    return parsedUrl.toString();
-}
-function calculateQueryParameters(operationSpec, operationArguments, fallbackObject) {
-    const result = new Map();
-    const sequenceParams = new Set();
-    if (operationSpec.queryParameters?.length) {
-        for (const queryParameter of operationSpec.queryParameters) {
-            if (queryParameter.mapper.type.name === "Sequence" && queryParameter.mapper.serializedName) {
-                sequenceParams.add(queryParameter.mapper.serializedName);
-            }
-            let queryParameterValue = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, queryParameter, fallbackObject);
-            if ((queryParameterValue !== undefined && queryParameterValue !== null) ||
-                queryParameter.mapper.required) {
-                queryParameterValue = operationSpec.serializer.serialize(queryParameter.mapper, queryParameterValue, (0, interfaceHelpers_js_1.getPathStringFromParameter)(queryParameter));
-                const delimiter = queryParameter.collectionFormat
-                    ? CollectionFormatToDelimiterMap[queryParameter.collectionFormat]
-                    : "";
-                if (Array.isArray(queryParameterValue)) {
-                    // replace null and undefined
-                    queryParameterValue = queryParameterValue.map((item) => {
-                        if (item === null || item === undefined) {
-                            return "";
-                        }
-                        return item;
-                    });
-                }
-                if (queryParameter.collectionFormat === "Multi" && queryParameterValue.length === 0) {
-                    continue;
-                }
-                else if (Array.isArray(queryParameterValue) &&
-                    (queryParameter.collectionFormat === "SSV" || queryParameter.collectionFormat === "TSV")) {
-                    queryParameterValue = queryParameterValue.join(delimiter);
-                }
-                if (!queryParameter.skipEncoding) {
-                    if (Array.isArray(queryParameterValue)) {
-                        queryParameterValue = queryParameterValue.map((item) => {
-                            return encodeURIComponent(item);
-                        });
-                    }
-                    else {
-                        queryParameterValue = encodeURIComponent(queryParameterValue);
-                    }
-                }
-                // Join pipes and CSV *after* encoding, or the server will be upset.
-                if (Array.isArray(queryParameterValue) &&
-                    (queryParameter.collectionFormat === "CSV" || queryParameter.collectionFormat === "Pipes")) {
-                    queryParameterValue = queryParameterValue.join(delimiter);
-                }
-                result.set(queryParameter.mapper.serializedName || (0, interfaceHelpers_js_1.getPathStringFromParameter)(queryParameter), queryParameterValue);
-            }
-        }
-    }
-    return {
-        queryParams: result,
-        sequenceParams,
-    };
-}
-function simpleParseQueryParams(queryString) {
-    const result = new Map();
-    if (!queryString || queryString[0] !== "?") {
-        return result;
-    }
-    // remove the leading ?
-    queryString = queryString.slice(1);
-    const pairs = queryString.split("&");
-    for (const pair of pairs) {
-        const [name, value] = pair.split("=", 2);
-        const existingValue = result.get(name);
-        if (existingValue) {
-            if (Array.isArray(existingValue)) {
-                existingValue.push(value);
-            }
-            else {
-                result.set(name, [existingValue, value]);
-            }
-        }
-        else {
-            result.set(name, value);
-        }
-    }
-    return result;
-}
-/** @internal */
-function appendQueryParams(url, queryParams, sequenceParams, noOverwrite = false) {
-    if (queryParams.size === 0) {
-        return url;
-    }
-    const parsedUrl = new URL(url);
-    // QUIRK: parsedUrl.searchParams will have their name/value pairs decoded, which
-    // can change their meaning to the server, such as in the case of a SAS signature.
-    // To avoid accidentally un-encoding a query param, we parse the key/values ourselves
-    const combinedParams = simpleParseQueryParams(parsedUrl.search);
-    for (const [name, value] of queryParams) {
-        const existingValue = combinedParams.get(name);
-        if (Array.isArray(existingValue)) {
-            if (Array.isArray(value)) {
-                existingValue.push(...value);
-                const valueSet = new Set(existingValue);
-                combinedParams.set(name, Array.from(valueSet));
-            }
-            else {
-                existingValue.push(value);
-            }
-        }
-        else if (existingValue) {
-            if (Array.isArray(value)) {
-                value.unshift(existingValue);
-            }
-            else if (sequenceParams.has(name)) {
-                combinedParams.set(name, [existingValue, value]);
-            }
-            if (!noOverwrite) {
-                combinedParams.set(name, value);
-            }
-        }
-        else {
-            combinedParams.set(name, value);
-        }
-    }
-    const searchPieces = [];
-    for (const [name, value] of combinedParams) {
-        if (typeof value === "string") {
-            searchPieces.push(`${name}=${value}`);
-        }
-        else if (Array.isArray(value)) {
-            // QUIRK: If we get an array of values, include multiple key/value pairs
-            for (const subValue of value) {
-                searchPieces.push(`${name}=${subValue}`);
-            }
-        }
-        else {
-            searchPieces.push(`${name}=${value}`);
-        }
-    }
-    // QUIRK: we have to set search manually as searchParams will encode comma when it shouldn't.
-    parsedUrl.search = searchPieces.length ? `?${searchPieces.join("&")}` : "";
-    return parsedUrl.toString();
-}
-//# sourceMappingURL=urlHelpers.js.map
-
-/***/ }),
-
-/***/ 239:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var decompressResponsePolicy_exports = {};
-__export(decompressResponsePolicy_exports, {
-  decompressResponsePolicy: () => decompressResponsePolicy,
-  decompressResponsePolicyName: () => decompressResponsePolicyName
-});
-module.exports = __toCommonJS(decompressResponsePolicy_exports);
-var import_policies = __nccwpck_require__(287);
-const decompressResponsePolicyName = import_policies.decompressResponsePolicyName;
-function decompressResponsePolicy() {
-  return (0, import_policies.decompressResponsePolicy)();
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 240:
-/***/ ((module) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var ndJsonPolicy_exports = {};
-__export(ndJsonPolicy_exports, {
-  ndJsonPolicy: () => ndJsonPolicy,
-  ndJsonPolicyName: () => ndJsonPolicyName
-});
-module.exports = __toCommonJS(ndJsonPolicy_exports);
-const ndJsonPolicyName = "ndJsonPolicy";
-function ndJsonPolicy() {
-  return {
-    name: ndJsonPolicyName,
-    async sendRequest(request, next) {
-      if (typeof request.body === "string" && request.body.startsWith("[")) {
-        const body = JSON.parse(request.body);
-        if (Array.isArray(body)) {
-          request.body = body.map((item) => JSON.stringify(item) + "\n").join("");
-        }
-      }
-      return next(request);
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 241:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Agent = void 0;
-const net = __importStar(__nccwpck_require__(509));
-const http = __importStar(__nccwpck_require__(329));
-const https_1 = __nccwpck_require__(70);
-__exportStar(__nccwpck_require__(161), exports);
-const INTERNAL = Symbol('AgentBaseInternalState');
-class Agent extends http.Agent {
-    constructor(opts) {
-        super(opts);
-        this[INTERNAL] = {};
-    }
-    /**
-     * Determine whether this is an `http` or `https` request.
-     */
-    isSecureEndpoint(options) {
-        if (options) {
-            // First check the `secureEndpoint` property explicitly, since this
-            // means that a parent `Agent` is "passing through" to this instance.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if (typeof options.secureEndpoint === 'boolean') {
-                return options.secureEndpoint;
-            }
-            // If no explicit `secure` endpoint, check if `protocol` property is
-            // set. This will usually be the case since using a full string URL
-            // or `URL` instance should be the most common usage.
-            if (typeof options.protocol === 'string') {
-                return options.protocol === 'https:';
-            }
-        }
-        // Finally, if no `protocol` property was set, then fall back to
-        // checking the stack trace of the current call stack, and try to
-        // detect the "https" module.
-        const { stack } = new Error();
-        if (typeof stack !== 'string')
-            return false;
-        return stack
-            .split('\n')
-            .some((l) => l.indexOf('(https.js:') !== -1 ||
-            l.indexOf('node:https:') !== -1);
-    }
-    // In order to support async signatures in `connect()` and Node's native
-    // connection pooling in `http.Agent`, the array of sockets for each origin
-    // has to be updated synchronously. This is so the length of the array is
-    // accurate when `addRequest()` is next called. We achieve this by creating a
-    // fake socket and adding it to `sockets[origin]` and incrementing
-    // `totalSocketCount`.
-    incrementSockets(name) {
-        // If `maxSockets` and `maxTotalSockets` are both Infinity then there is no
-        // need to create a fake socket because Node.js native connection pooling
-        // will never be invoked.
-        if (this.maxSockets === Infinity && this.maxTotalSockets === Infinity) {
-            return null;
-        }
-        // All instances of `sockets` are expected TypeScript errors. The
-        // alternative is to add it as a private property of this class but that
-        // will break TypeScript subclassing.
-        if (!this.sockets[name]) {
-            // @ts-expect-error `sockets` is readonly in `@types/node`
-            this.sockets[name] = [];
-        }
-        const fakeSocket = new net.Socket({ writable: false });
-        this.sockets[name].push(fakeSocket);
-        // @ts-expect-error `totalSocketCount` isn't defined in `@types/node`
-        this.totalSocketCount++;
-        return fakeSocket;
-    }
-    decrementSockets(name, socket) {
-        if (!this.sockets[name] || socket === null) {
-            return;
-        }
-        const sockets = this.sockets[name];
-        const index = sockets.indexOf(socket);
-        if (index !== -1) {
-            sockets.splice(index, 1);
-            // @ts-expect-error  `totalSocketCount` isn't defined in `@types/node`
-            this.totalSocketCount--;
-            if (sockets.length === 0) {
-                // @ts-expect-error `sockets` is readonly in `@types/node`
-                delete this.sockets[name];
-            }
-        }
-    }
-    // In order to properly update the socket pool, we need to call `getName()` on
-    // the core `https.Agent` if it is a secureEndpoint.
-    getName(options) {
-        const secureEndpoint = this.isSecureEndpoint(options);
-        if (secureEndpoint) {
-            // @ts-expect-error `getName()` isn't defined in `@types/node`
-            return https_1.Agent.prototype.getName.call(this, options);
-        }
-        // @ts-expect-error `getName()` isn't defined in `@types/node`
-        return super.getName(options);
-    }
-    createSocket(req, options, cb) {
-        const connectOpts = {
-            ...options,
-            secureEndpoint: this.isSecureEndpoint(options),
-        };
-        const name = this.getName(connectOpts);
-        const fakeSocket = this.incrementSockets(name);
-        Promise.resolve()
-            .then(() => this.connect(req, connectOpts))
-            .then((socket) => {
-            this.decrementSockets(name, fakeSocket);
-            if (socket instanceof http.Agent) {
-                try {
-                    // @ts-expect-error `addRequest()` isn't defined in `@types/node`
-                    return socket.addRequest(req, connectOpts);
-                }
-                catch (err) {
-                    return cb(err);
-                }
-            }
-            this[INTERNAL].currentSocket = socket;
-            // @ts-expect-error `createSocket()` isn't defined in `@types/node`
-            super.createSocket(req, options, cb);
-        }, (err) => {
-            this.decrementSockets(name, fakeSocket);
-            cb(err);
-        });
-    }
-    createConnection() {
-        const socket = this[INTERNAL].currentSocket;
-        this[INTERNAL].currentSocket = undefined;
-        if (!socket) {
-            throw new Error('No socket was returned in the `connect()` function');
-        }
-        return socket;
-    }
-    get defaultPort() {
-        return (this[INTERNAL].defaultPort ??
-            (this.protocol === 'https:' ? 443 : 80));
-    }
-    set defaultPort(v) {
-        if (this[INTERNAL]) {
-            this[INTERNAL].defaultPort = v;
-        }
-    }
-    get protocol() {
-        return (this[INTERNAL].protocol ??
-            (this.isSecureEndpoint() ? 'https:' : 'http:'));
-    }
-    set protocol(v) {
-        if (this[INTERNAL]) {
-            this[INTERNAL].protocol = v;
-        }
-    }
-}
-exports.Agent = Agent;
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 242:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.mergeJsonOptions = exports.jsonWriteOptions = exports.jsonReadOptions = void 0;
-const defaultsWrite = {
-    emitDefaultValues: false,
-    enumAsInteger: false,
-    useProtoFieldName: false,
-    prettySpaces: 0,
-}, defaultsRead = {
-    ignoreUnknownFields: false,
-};
-/**
- * Make options for reading JSON data from partial options.
- */
-function jsonReadOptions(options) {
-    return options ? Object.assign(Object.assign({}, defaultsRead), options) : defaultsRead;
-}
-exports.jsonReadOptions = jsonReadOptions;
-/**
- * Make options for writing JSON data from partial options.
- */
-function jsonWriteOptions(options) {
-    return options ? Object.assign(Object.assign({}, defaultsWrite), options) : defaultsWrite;
-}
-exports.jsonWriteOptions = jsonWriteOptions;
-/**
- * Merges JSON write or read options. Later values override earlier values. Type registries are merged.
- */
-function mergeJsonOptions(a, b) {
-    var _a, _b;
-    let c = Object.assign(Object.assign({}, a), b);
-    c.typeRegistry = [...((_a = a === null || a === void 0 ? void 0 : a.typeRegistry) !== null && _a !== void 0 ? _a : []), ...((_b = b === null || b === void 0 ? void 0 : b.typeRegistry) !== null && _b !== void 0 ? _b : [])];
-    return c;
-}
-exports.mergeJsonOptions = mergeJsonOptions;
-
-
-/***/ }),
-
-/***/ 243:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var httpHeaders_exports = {};
-__export(httpHeaders_exports, {
-  createHttpHeaders: () => createHttpHeaders
-});
-module.exports = __toCommonJS(httpHeaders_exports);
-var import_ts_http_runtime = __nccwpck_require__(89);
-function createHttpHeaders(rawHeaders) {
-  return (0, import_ts_http_runtime.createHttpHeaders)(rawHeaders);
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 244:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LroEngine = void 0;
-var lroEngine_js_1 = __nccwpck_require__(178);
-Object.defineProperty(exports, "LroEngine", ({ enumerable: true, get: function () { return lroEngine_js_1.LroEngine; } }));
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 245:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var pipeline_exports = {};
-__export(pipeline_exports, {
-  createEmptyPipeline: () => createEmptyPipeline
-});
-module.exports = __toCommonJS(pipeline_exports);
-var import_ts_http_runtime = __nccwpck_require__(89);
-function createEmptyPipeline() {
-  return (0, import_ts_http_runtime.createEmptyPipeline)();
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 246:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var logger_exports = {};
-__export(logger_exports, {
-  TypeSpecRuntimeLogger: () => TypeSpecRuntimeLogger,
-  createClientLogger: () => createClientLogger,
-  createLoggerContext: () => createLoggerContext,
-  getLogLevel: () => getLogLevel,
-  setLogLevel: () => setLogLevel
-});
-module.exports = __toCommonJS(logger_exports);
-var import_debug = __toESM(__nccwpck_require__(467));
-const TYPESPEC_RUNTIME_LOG_LEVELS = ["verbose", "info", "warning", "error"];
-const levelMap = {
-  verbose: 400,
-  info: 300,
-  warning: 200,
-  error: 100
-};
-function patchLogMethod(parent, child) {
-  child.log = (...args) => {
-    parent.log(...args);
-  };
-}
-function isTypeSpecRuntimeLogLevel(level) {
-  return TYPESPEC_RUNTIME_LOG_LEVELS.includes(level);
-}
-function createLoggerContext(options) {
-  const registeredLoggers = /* @__PURE__ */ new Set();
-  const logLevelFromEnv = typeof process !== "undefined" && process.env && process.env[options.logLevelEnvVarName] || void 0;
-  let logLevel;
-  const clientLogger = (0, import_debug.default)(options.namespace);
-  clientLogger.log = (...args) => {
-    import_debug.default.log(...args);
-  };
-  function contextSetLogLevel(level) {
-    if (level && !isTypeSpecRuntimeLogLevel(level)) {
-      throw new Error(
-        `Unknown log level '${level}'. Acceptable values: ${TYPESPEC_RUNTIME_LOG_LEVELS.join(",")}`
-      );
-    }
-    logLevel = level;
-    const enabledNamespaces = [];
-    for (const logger of registeredLoggers) {
-      if (shouldEnable(logger)) {
-        enabledNamespaces.push(logger.namespace);
-      }
-    }
-    import_debug.default.enable(enabledNamespaces.join(","));
-  }
-  if (logLevelFromEnv) {
-    if (isTypeSpecRuntimeLogLevel(logLevelFromEnv)) {
-      contextSetLogLevel(logLevelFromEnv);
-    } else {
-      console.error(
-        `${options.logLevelEnvVarName} set to unknown log level '${logLevelFromEnv}'; logging is not enabled. Acceptable values: ${TYPESPEC_RUNTIME_LOG_LEVELS.join(
-          ", "
-        )}.`
-      );
-    }
-  }
-  function shouldEnable(logger) {
-    return Boolean(logLevel && levelMap[logger.level] <= levelMap[logLevel]);
-  }
-  function createLogger(parent, level) {
-    const logger = Object.assign(parent.extend(level), {
-      level
-    });
-    patchLogMethod(parent, logger);
-    if (shouldEnable(logger)) {
-      const enabledNamespaces = import_debug.default.disable();
-      import_debug.default.enable(enabledNamespaces + "," + logger.namespace);
-    }
-    registeredLoggers.add(logger);
-    return logger;
-  }
-  function contextGetLogLevel() {
-    return logLevel;
-  }
-  function contextCreateClientLogger(namespace) {
-    const clientRootLogger = clientLogger.extend(namespace);
-    patchLogMethod(clientLogger, clientRootLogger);
-    return {
-      error: createLogger(clientRootLogger, "error"),
-      warning: createLogger(clientRootLogger, "warning"),
-      info: createLogger(clientRootLogger, "info"),
-      verbose: createLogger(clientRootLogger, "verbose")
-    };
-  }
-  return {
-    setLogLevel: contextSetLogLevel,
-    getLogLevel: contextGetLogLevel,
-    createClientLogger: contextCreateClientLogger,
-    logger: clientLogger
-  };
-}
-const context = createLoggerContext({
-  logLevelEnvVarName: "TYPESPEC_RUNTIME_LOG_LEVEL",
-  namespace: "typeSpecRuntime"
-});
-const TypeSpecRuntimeLogger = context.logger;
-function setLogLevel(logLevel) {
-  context.setLogLevel(logLevel);
-}
-function getLogLevel() {
-  return context.getLogLevel();
-}
-function createClientLogger(namespace) {
-  return context.createClientLogger(namespace);
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=logger.js.map
-
-
-/***/ }),
-
-/***/ 247:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isBearerToken = isBearerToken;
-exports.isPopToken = isPopToken;
-exports.isTokenCredential = isTokenCredential;
-/**
- * @internal
- * @param accessToken - Access token
- * @returns Whether a token is bearer type or not
- */
-function isBearerToken(accessToken) {
-    return !accessToken.tokenType || accessToken.tokenType === "Bearer";
-}
-/**
- * @internal
- * @param accessToken - Access token
- * @returns Whether a token is Pop token or not
- */
-function isPopToken(accessToken) {
-    return accessToken.tokenType === "pop";
-}
-/**
- * Tests an object to determine whether it implements TokenCredential.
- *
- * @param credential - The assumed TokenCredential to be tested.
- */
-function isTokenCredential(credential) {
-    // Check for an object with a 'getToken' function and possibly with
-    // a 'signRequest' function.  We do this check to make sure that
-    // a ServiceClientCredentials implementor (like TokenClientCredentials
-    // in ms-rest-nodeauth) doesn't get mistaken for a TokenCredential if
-    // it doesn't actually implement TokenCredential also.
-    const castCredential = credential;
-    return (castCredential &&
-        typeof castCredential.getToken === "function" &&
-        (castCredential.signRequest === undefined || castCredential.getToken.length > 0));
-}
-//# sourceMappingURL=tokenCredential.js.map
-
-/***/ }),
-
-/***/ 248:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("path");
-
-/***/ }),
-
-/***/ 249:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:fs");
-
-/***/ }),
-
-/***/ 250:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { webidl } = __nccwpck_require__(457)
-const { kEnumerableProperty } = __nccwpck_require__(69)
-const { MessagePort } = __nccwpck_require__(319)
-
-/**
- * @see https://html.spec.whatwg.org/multipage/comms.html#messageevent
- */
-class MessageEvent extends Event {
-  #eventInit
-
-  constructor (type, eventInitDict = {}) {
-    webidl.argumentLengthCheck(arguments, 1, { header: 'MessageEvent constructor' })
-
-    type = webidl.converters.DOMString(type)
-    eventInitDict = webidl.converters.MessageEventInit(eventInitDict)
-
-    super(type, eventInitDict)
-
-    this.#eventInit = eventInitDict
-  }
-
-  get data () {
-    webidl.brandCheck(this, MessageEvent)
-
-    return this.#eventInit.data
-  }
-
-  get origin () {
-    webidl.brandCheck(this, MessageEvent)
-
-    return this.#eventInit.origin
-  }
-
-  get lastEventId () {
-    webidl.brandCheck(this, MessageEvent)
-
-    return this.#eventInit.lastEventId
-  }
-
-  get source () {
-    webidl.brandCheck(this, MessageEvent)
-
-    return this.#eventInit.source
-  }
-
-  get ports () {
-    webidl.brandCheck(this, MessageEvent)
-
-    if (!Object.isFrozen(this.#eventInit.ports)) {
-      Object.freeze(this.#eventInit.ports)
-    }
-
-    return this.#eventInit.ports
-  }
-
-  initMessageEvent (
-    type,
-    bubbles = false,
-    cancelable = false,
-    data = null,
-    origin = '',
-    lastEventId = '',
-    source = null,
-    ports = []
-  ) {
-    webidl.brandCheck(this, MessageEvent)
-
-    webidl.argumentLengthCheck(arguments, 1, { header: 'MessageEvent.initMessageEvent' })
-
-    return new MessageEvent(type, {
-      bubbles, cancelable, data, origin, lastEventId, source, ports
-    })
-  }
-}
-
-/**
- * @see https://websockets.spec.whatwg.org/#the-closeevent-interface
- */
-class CloseEvent extends Event {
-  #eventInit
-
-  constructor (type, eventInitDict = {}) {
-    webidl.argumentLengthCheck(arguments, 1, { header: 'CloseEvent constructor' })
-
-    type = webidl.converters.DOMString(type)
-    eventInitDict = webidl.converters.CloseEventInit(eventInitDict)
-
-    super(type, eventInitDict)
-
-    this.#eventInit = eventInitDict
-  }
-
-  get wasClean () {
-    webidl.brandCheck(this, CloseEvent)
-
-    return this.#eventInit.wasClean
-  }
-
-  get code () {
-    webidl.brandCheck(this, CloseEvent)
-
-    return this.#eventInit.code
-  }
-
-  get reason () {
-    webidl.brandCheck(this, CloseEvent)
-
-    return this.#eventInit.reason
-  }
-}
-
-// https://html.spec.whatwg.org/multipage/webappapis.html#the-errorevent-interface
-class ErrorEvent extends Event {
-  #eventInit
-
-  constructor (type, eventInitDict) {
-    webidl.argumentLengthCheck(arguments, 1, { header: 'ErrorEvent constructor' })
-
-    super(type, eventInitDict)
-
-    type = webidl.converters.DOMString(type)
-    eventInitDict = webidl.converters.ErrorEventInit(eventInitDict ?? {})
-
-    this.#eventInit = eventInitDict
-  }
-
-  get message () {
-    webidl.brandCheck(this, ErrorEvent)
-
-    return this.#eventInit.message
-  }
-
-  get filename () {
-    webidl.brandCheck(this, ErrorEvent)
-
-    return this.#eventInit.filename
-  }
-
-  get lineno () {
-    webidl.brandCheck(this, ErrorEvent)
-
-    return this.#eventInit.lineno
-  }
-
-  get colno () {
-    webidl.brandCheck(this, ErrorEvent)
-
-    return this.#eventInit.colno
-  }
-
-  get error () {
-    webidl.brandCheck(this, ErrorEvent)
-
-    return this.#eventInit.error
-  }
-}
-
-Object.defineProperties(MessageEvent.prototype, {
-  [Symbol.toStringTag]: {
-    value: 'MessageEvent',
-    configurable: true
-  },
-  data: kEnumerableProperty,
-  origin: kEnumerableProperty,
-  lastEventId: kEnumerableProperty,
-  source: kEnumerableProperty,
-  ports: kEnumerableProperty,
-  initMessageEvent: kEnumerableProperty
-})
-
-Object.defineProperties(CloseEvent.prototype, {
-  [Symbol.toStringTag]: {
-    value: 'CloseEvent',
-    configurable: true
-  },
-  reason: kEnumerableProperty,
-  code: kEnumerableProperty,
-  wasClean: kEnumerableProperty
-})
-
-Object.defineProperties(ErrorEvent.prototype, {
-  [Symbol.toStringTag]: {
-    value: 'ErrorEvent',
-    configurable: true
-  },
-  message: kEnumerableProperty,
-  filename: kEnumerableProperty,
-  lineno: kEnumerableProperty,
-  colno: kEnumerableProperty,
-  error: kEnumerableProperty
-})
-
-webidl.converters.MessagePort = webidl.interfaceConverter(MessagePort)
-
-webidl.converters['sequence<MessagePort>'] = webidl.sequenceConverter(
-  webidl.converters.MessagePort
-)
-
-const eventInit = [
-  {
-    key: 'bubbles',
-    converter: webidl.converters.boolean,
-    defaultValue: false
-  },
-  {
-    key: 'cancelable',
-    converter: webidl.converters.boolean,
-    defaultValue: false
-  },
-  {
-    key: 'composed',
-    converter: webidl.converters.boolean,
-    defaultValue: false
-  }
-]
-
-webidl.converters.MessageEventInit = webidl.dictionaryConverter([
-  ...eventInit,
-  {
-    key: 'data',
-    converter: webidl.converters.any,
-    defaultValue: null
-  },
-  {
-    key: 'origin',
-    converter: webidl.converters.USVString,
-    defaultValue: ''
-  },
-  {
-    key: 'lastEventId',
-    converter: webidl.converters.DOMString,
-    defaultValue: ''
-  },
-  {
-    key: 'source',
-    // Node doesn't implement WindowProxy or ServiceWorker, so the only
-    // valid value for source is a MessagePort.
-    converter: webidl.nullableConverter(webidl.converters.MessagePort),
-    defaultValue: null
-  },
-  {
-    key: 'ports',
-    converter: webidl.converters['sequence<MessagePort>'],
-    get defaultValue () {
-      return []
-    }
-  }
-])
-
-webidl.converters.CloseEventInit = webidl.dictionaryConverter([
-  ...eventInit,
-  {
-    key: 'wasClean',
-    converter: webidl.converters.boolean,
-    defaultValue: false
-  },
-  {
-    key: 'code',
-    converter: webidl.converters['unsigned short'],
-    defaultValue: 0
-  },
-  {
-    key: 'reason',
-    converter: webidl.converters.USVString,
-    defaultValue: ''
-  }
-])
-
-webidl.converters.ErrorEventInit = webidl.dictionaryConverter([
-  ...eventInit,
-  {
-    key: 'message',
-    converter: webidl.converters.DOMString,
-    defaultValue: ''
-  },
-  {
-    key: 'filename',
-    converter: webidl.converters.USVString,
-    defaultValue: ''
-  },
-  {
-    key: 'lineno',
-    converter: webidl.converters['unsigned long'],
-    defaultValue: 0
-  },
-  {
-    key: 'colno',
-    converter: webidl.converters['unsigned long'],
-    defaultValue: 0
-  },
-  {
-    key: 'error',
-    converter: webidl.converters.any
-  }
-])
-
-module.exports = {
-  MessageEvent,
-  CloseEvent,
-  ErrorEvent
-}
-
-
-/***/ }),
-
-/***/ 251:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BinaryWriter = exports.binaryWriteOptions = void 0;
-const pb_long_1 = __nccwpck_require__(117);
-const goog_varint_1 = __nccwpck_require__(204);
-const assert_1 = __nccwpck_require__(484);
-const defaultsWrite = {
-    writeUnknownFields: true,
-    writerFactory: () => new BinaryWriter(),
-};
-/**
- * Make options for writing binary data form partial options.
- */
-function binaryWriteOptions(options) {
-    return options ? Object.assign(Object.assign({}, defaultsWrite), options) : defaultsWrite;
-}
-exports.binaryWriteOptions = binaryWriteOptions;
-class BinaryWriter {
-    constructor(textEncoder) {
-        /**
-         * Previous fork states.
-         */
-        this.stack = [];
-        this.textEncoder = textEncoder !== null && textEncoder !== void 0 ? textEncoder : new TextEncoder();
-        this.chunks = [];
-        this.buf = [];
-    }
-    /**
-     * Return all bytes written and reset this writer.
-     */
-    finish() {
-        this.chunks.push(new Uint8Array(this.buf)); // flush the buffer
-        let len = 0;
-        for (let i = 0; i < this.chunks.length; i++)
-            len += this.chunks[i].length;
-        let bytes = new Uint8Array(len);
-        let offset = 0;
-        for (let i = 0; i < this.chunks.length; i++) {
-            bytes.set(this.chunks[i], offset);
-            offset += this.chunks[i].length;
-        }
-        this.chunks = [];
-        return bytes;
-    }
-    /**
-     * Start a new fork for length-delimited data like a message
-     * or a packed repeated field.
-     *
-     * Must be joined later with `join()`.
-     */
-    fork() {
-        this.stack.push({ chunks: this.chunks, buf: this.buf });
-        this.chunks = [];
-        this.buf = [];
-        return this;
-    }
-    /**
-     * Join the last fork. Write its length and bytes, then
-     * return to the previous state.
-     */
-    join() {
-        // get chunk of fork
-        let chunk = this.finish();
-        // restore previous state
-        let prev = this.stack.pop();
-        if (!prev)
-            throw new Error('invalid state, fork stack empty');
-        this.chunks = prev.chunks;
-        this.buf = prev.buf;
-        // write length of chunk as varint
-        this.uint32(chunk.byteLength);
-        return this.raw(chunk);
-    }
-    /**
-     * Writes a tag (field number and wire type).
-     *
-     * Equivalent to `uint32( (fieldNo << 3 | type) >>> 0 )`.
-     *
-     * Generated code should compute the tag ahead of time and call `uint32()`.
-     */
-    tag(fieldNo, type) {
-        return this.uint32((fieldNo << 3 | type) >>> 0);
-    }
-    /**
-     * Write a chunk of raw bytes.
-     */
-    raw(chunk) {
-        if (this.buf.length) {
-            this.chunks.push(new Uint8Array(this.buf));
-            this.buf = [];
-        }
-        this.chunks.push(chunk);
-        return this;
-    }
-    /**
-     * Write a `uint32` value, an unsigned 32 bit varint.
-     */
-    uint32(value) {
-        assert_1.assertUInt32(value);
-        // write value as varint 32, inlined for speed
-        while (value > 0x7f) {
-            this.buf.push((value & 0x7f) | 0x80);
-            value = value >>> 7;
-        }
-        this.buf.push(value);
-        return this;
-    }
-    /**
-     * Write a `int32` value, a signed 32 bit varint.
-     */
-    int32(value) {
-        assert_1.assertInt32(value);
-        goog_varint_1.varint32write(value, this.buf);
-        return this;
-    }
-    /**
-     * Write a `bool` value, a variant.
-     */
-    bool(value) {
-        this.buf.push(value ? 1 : 0);
-        return this;
-    }
-    /**
-     * Write a `bytes` value, length-delimited arbitrary data.
-     */
-    bytes(value) {
-        this.uint32(value.byteLength); // write length of chunk as varint
-        return this.raw(value);
-    }
-    /**
-     * Write a `string` value, length-delimited data converted to UTF-8 text.
-     */
-    string(value) {
-        let chunk = this.textEncoder.encode(value);
-        this.uint32(chunk.byteLength); // write length of chunk as varint
-        return this.raw(chunk);
-    }
-    /**
-     * Write a `float` value, 32-bit floating point number.
-     */
-    float(value) {
-        assert_1.assertFloat32(value);
-        let chunk = new Uint8Array(4);
-        new DataView(chunk.buffer).setFloat32(0, value, true);
-        return this.raw(chunk);
-    }
-    /**
-     * Write a `double` value, a 64-bit floating point number.
-     */
-    double(value) {
-        let chunk = new Uint8Array(8);
-        new DataView(chunk.buffer).setFloat64(0, value, true);
-        return this.raw(chunk);
-    }
-    /**
-     * Write a `fixed32` value, an unsigned, fixed-length 32-bit integer.
-     */
-    fixed32(value) {
-        assert_1.assertUInt32(value);
-        let chunk = new Uint8Array(4);
-        new DataView(chunk.buffer).setUint32(0, value, true);
-        return this.raw(chunk);
-    }
-    /**
-     * Write a `sfixed32` value, a signed, fixed-length 32-bit integer.
-     */
-    sfixed32(value) {
-        assert_1.assertInt32(value);
-        let chunk = new Uint8Array(4);
-        new DataView(chunk.buffer).setInt32(0, value, true);
-        return this.raw(chunk);
-    }
-    /**
-     * Write a `sint32` value, a signed, zigzag-encoded 32-bit varint.
-     */
-    sint32(value) {
-        assert_1.assertInt32(value);
-        // zigzag encode
-        value = ((value << 1) ^ (value >> 31)) >>> 0;
-        goog_varint_1.varint32write(value, this.buf);
-        return this;
-    }
-    /**
-     * Write a `fixed64` value, a signed, fixed-length 64-bit integer.
-     */
-    sfixed64(value) {
-        let chunk = new Uint8Array(8);
-        let view = new DataView(chunk.buffer);
-        let long = pb_long_1.PbLong.from(value);
-        view.setInt32(0, long.lo, true);
-        view.setInt32(4, long.hi, true);
-        return this.raw(chunk);
-    }
-    /**
-     * Write a `fixed64` value, an unsigned, fixed-length 64 bit integer.
-     */
-    fixed64(value) {
-        let chunk = new Uint8Array(8);
-        let view = new DataView(chunk.buffer);
-        let long = pb_long_1.PbULong.from(value);
-        view.setInt32(0, long.lo, true);
-        view.setInt32(4, long.hi, true);
-        return this.raw(chunk);
-    }
-    /**
-     * Write a `int64` value, a signed 64-bit varint.
-     */
-    int64(value) {
-        let long = pb_long_1.PbLong.from(value);
-        goog_varint_1.varint64write(long.lo, long.hi, this.buf);
-        return this;
-    }
-    /**
-     * Write a `sint64` value, a signed, zig-zag-encoded 64-bit varint.
-     */
-    sint64(value) {
-        let long = pb_long_1.PbLong.from(value),
-        // zigzag encode
-        sign = long.hi >> 31, lo = (long.lo << 1) ^ sign, hi = ((long.hi << 1) | (long.lo >>> 31)) ^ sign;
-        goog_varint_1.varint64write(lo, hi, this.buf);
-        return this;
-    }
-    /**
-     * Write a `uint64` value, an unsigned 64-bit varint.
-     */
-    uint64(value) {
-        let long = pb_long_1.PbULong.from(value);
-        goog_varint_1.varint64write(long.lo, long.hi, this.buf);
-        return this;
-    }
-}
-exports.BinaryWriter = BinaryWriter;
-
-
-/***/ }),
-
-/***/ 252:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AvroReadableFromStream = void 0;
-const AvroReadable_js_1 = __nccwpck_require__(388);
-const abort_controller_1 = __nccwpck_require__(496);
-const buffer_1 = __nccwpck_require__(119);
-const ABORT_ERROR = new abort_controller_1.AbortError("Reading from the avro stream was aborted.");
-class AvroReadableFromStream extends AvroReadable_js_1.AvroReadable {
-    _position;
-    _readable;
-    toUint8Array(data) {
-        if (typeof data === "string") {
-            return buffer_1.Buffer.from(data);
-        }
-        return data;
-    }
-    constructor(readable) {
-        super();
-        this._readable = readable;
-        this._position = 0;
-    }
-    get position() {
-        return this._position;
-    }
-    async read(size, options = {}) {
-        if (options.abortSignal?.aborted) {
-            throw ABORT_ERROR;
-        }
-        if (size < 0) {
-            throw new Error(`size parameter should be positive: ${size}`);
-        }
-        if (size === 0) {
-            return new Uint8Array();
-        }
-        if (!this._readable.readable) {
-            throw new Error("Stream no longer readable.");
-        }
-        // See if there is already enough data.
-        const chunk = this._readable.read(size);
-        if (chunk) {
-            this._position += chunk.length;
-            // chunk.length maybe less than desired size if the stream ends.
-            return this.toUint8Array(chunk);
-        }
-        else {
-            // register callback to wait for enough data to read
-            return new Promise((resolve, reject) => {
-                /* eslint-disable @typescript-eslint/no-use-before-define */
-                const cleanUp = () => {
-                    this._readable.removeListener("readable", readableCallback);
-                    this._readable.removeListener("error", rejectCallback);
-                    this._readable.removeListener("end", rejectCallback);
-                    this._readable.removeListener("close", rejectCallback);
-                    if (options.abortSignal) {
-                        options.abortSignal.removeEventListener("abort", abortHandler);
-                    }
-                };
-                const readableCallback = () => {
-                    const callbackChunk = this._readable.read(size);
-                    if (callbackChunk) {
-                        this._position += callbackChunk.length;
-                        cleanUp();
-                        // callbackChunk.length maybe less than desired size if the stream ends.
-                        resolve(this.toUint8Array(callbackChunk));
-                    }
-                };
-                const rejectCallback = () => {
-                    cleanUp();
-                    reject();
-                };
-                const abortHandler = () => {
-                    cleanUp();
-                    reject(ABORT_ERROR);
-                };
-                this._readable.on("readable", readableCallback);
-                this._readable.once("error", rejectCallback);
-                this._readable.once("end", rejectCallback);
-                this._readable.once("close", rejectCallback);
-                if (options.abortSignal) {
-                    options.abortSignal.addEventListener("abort", abortHandler);
-                }
-                /* eslint-enable @typescript-eslint/no-use-before-define */
-            });
-        }
-    }
-}
-exports.AvroReadableFromStream = AvroReadableFromStream;
-//# sourceMappingURL=AvroReadableFromStream.js.map
-
-/***/ }),
-
-/***/ 253:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getCachedDefaultHttpClient = getCachedDefaultHttpClient;
-const core_rest_pipeline_1 = __nccwpck_require__(101);
-let _defaultHttpClient;
-function getCachedDefaultHttpClient() {
-    if (!_defaultHttpClient) {
-        _defaultHttpClient = (0, core_rest_pipeline_1.createDefaultHttpClient)();
-    }
-    return _defaultHttpClient;
-}
-//# sourceMappingURL=cache.js.map
-
-/***/ }),
-
-/***/ 254:
-/***/ ((module) => {
-
-"use strict";
-
-
-const singulars = {
-  pronoun: 'it',
-  is: 'is',
-  was: 'was',
-  this: 'this'
-}
-
-const plurals = {
-  pronoun: 'they',
-  is: 'are',
-  was: 'were',
-  this: 'these'
-}
-
-module.exports = class Pluralizer {
-  constructor (singular, plural) {
-    this.singular = singular
-    this.plural = plural
-  }
-
-  pluralize (count) {
-    const one = count === 1
-    const keys = one ? singulars : plurals
-    const noun = one ? this.singular : this.plural
-    return { ...keys, count, noun }
-  }
-}
-
-
-/***/ }),
-
-/***/ 255:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const RedirectHandler = __nccwpck_require__(391)
-
-function createRedirectInterceptor ({ maxRedirections: defaultMaxRedirections }) {
-  return (dispatch) => {
-    return function Intercept (opts, handler) {
-      const { maxRedirections = defaultMaxRedirections } = opts
-
-      if (!maxRedirections) {
-        return dispatch(opts, handler)
-      }
-
-      const redirectHandler = new RedirectHandler(dispatch, maxRedirections, opts, handler)
-      opts = { ...opts, maxRedirections: 0 } // Stop sub dispatcher from also redirecting.
-      return dispatch(opts, redirectHandler)
-    }
-  }
-}
-
-module.exports = createRedirectInterceptor
-
-
-/***/ }),
-
-/***/ 256:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var userAgent_exports = {};
-__export(userAgent_exports, {
-  getUserAgentHeaderName: () => getUserAgentHeaderName,
-  getUserAgentValue: () => getUserAgentValue
-});
-module.exports = __toCommonJS(userAgent_exports);
-var import_userAgentPlatform = __nccwpck_require__(429);
-var import_constants = __nccwpck_require__(48);
-function getUserAgentString(telemetryInfo) {
-  const parts = [];
-  for (const [key, value] of telemetryInfo) {
-    const token = value ? `${key}/${value}` : key;
-    parts.push(token);
-  }
-  return parts.join(" ");
-}
-function getUserAgentHeaderName() {
-  return (0, import_userAgentPlatform.getHeaderName)();
-}
-async function getUserAgentValue(prefix) {
-  const runtimeInfo = /* @__PURE__ */ new Map();
-  runtimeInfo.set("ts-http-runtime", import_constants.SDK_VERSION);
-  await (0, import_userAgentPlatform.setPlatformSpecificData)(runtimeInfo);
-  const defaultAgent = getUserAgentString(runtimeInfo);
-  const userAgentValue = prefix ? `${prefix} ${defaultAgent}` : defaultAgent;
-  return userAgentValue;
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=userAgent.js.map
-
-
-/***/ }),
-
-/***/ 257:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("stream/web");
-
-/***/ }),
-
-/***/ 258:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getBodyAsText = getBodyAsText;
-exports.utf8ByteLength = utf8ByteLength;
-const utils_js_1 = __nccwpck_require__(203);
-const constants_js_1 = __nccwpck_require__(148);
-async function getBodyAsText(batchResponse) {
-    let buffer = Buffer.alloc(constants_js_1.BATCH_MAX_PAYLOAD_IN_BYTES);
-    const responseLength = await (0, utils_js_1.streamToBuffer2)(batchResponse.readableStreamBody, buffer);
-    // Slice the buffer to trim the empty ending.
-    buffer = buffer.slice(0, responseLength);
-    return buffer.toString();
-}
-function utf8ByteLength(str) {
-    return Buffer.byteLength(str);
-}
-//# sourceMappingURL=BatchUtils.js.map
-
-/***/ }),
-
-/***/ 259:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var wrapAbortSignalLikePolicy_exports = {};
-__export(wrapAbortSignalLikePolicy_exports, {
-  wrapAbortSignalLikePolicy: () => wrapAbortSignalLikePolicy,
-  wrapAbortSignalLikePolicyName: () => wrapAbortSignalLikePolicyName
-});
-module.exports = __toCommonJS(wrapAbortSignalLikePolicy_exports);
-var import_wrapAbortSignal = __nccwpck_require__(446);
-const wrapAbortSignalLikePolicyName = "wrapAbortSignalLikePolicy";
-function wrapAbortSignalLikePolicy() {
-  return {
-    name: wrapAbortSignalLikePolicyName,
-    sendRequest: async (request, next) => {
-      if (!request.abortSignal) {
-        return next(request);
-      }
-      const { abortSignal, cleanup } = (0, import_wrapAbortSignal.wrapAbortSignalLike)(request.abortSignal);
-      request.abortSignal = abortSignal;
-      try {
-        return await next(request);
-      } finally {
-        cleanup?.();
-      }
-    }
-  };
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 260:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createAbortablePromise = createAbortablePromise;
-const abort_controller_1 = __nccwpck_require__(494);
-/**
- * Creates an abortable promise.
- * @param buildPromise - A function that takes the resolve and reject functions as parameters.
- * @param options - The options for the abortable promise.
- * @returns A promise that can be aborted.
- */
-function createAbortablePromise(buildPromise, options) {
-    const { cleanupBeforeAbort, abortSignal, abortErrorMsg } = options ?? {};
-    return new Promise((resolve, reject) => {
-        function rejectOnAbort() {
-            reject(new abort_controller_1.AbortError(abortErrorMsg ?? "The operation was aborted."));
-        }
-        function removeListeners() {
-            abortSignal?.removeEventListener("abort", onAbort);
-        }
-        function onAbort() {
-            cleanupBeforeAbort?.();
-            removeListeners();
-            rejectOnAbort();
-        }
-        if (abortSignal?.aborted) {
-            return rejectOnAbort();
-        }
-        try {
-            buildPromise((x) => {
-                removeListeners();
-                resolve(x);
-            }, (x) => {
-                removeListeners();
-                reject(x);
-            });
-        }
-        catch (err) {
-            reject(err);
-        }
-        abortSignal?.addEventListener("abort", onAbort);
-    });
-}
-//# sourceMappingURL=createAbortablePromise.js.map
-
-/***/ }),
-
-/***/ 261:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.retryHttpClientResponse = exports.retryTypedResponse = exports.retry = exports.isRetryableStatusCode = exports.isServerErrorStatusCode = exports.isSuccessStatusCode = void 0;
-const core = __importStar(__nccwpck_require__(460));
-const http_client_1 = __nccwpck_require__(286);
-const constants_1 = __nccwpck_require__(45);
-function isSuccessStatusCode(statusCode) {
-    if (!statusCode) {
-        return false;
-    }
-    return statusCode >= 200 && statusCode < 300;
-}
-exports.isSuccessStatusCode = isSuccessStatusCode;
-function isServerErrorStatusCode(statusCode) {
-    if (!statusCode) {
-        return true;
-    }
-    return statusCode >= 500;
-}
-exports.isServerErrorStatusCode = isServerErrorStatusCode;
-function isRetryableStatusCode(statusCode) {
-    if (!statusCode) {
-        return false;
-    }
-    const retryableStatusCodes = [
-        http_client_1.HttpCodes.BadGateway,
-        http_client_1.HttpCodes.ServiceUnavailable,
-        http_client_1.HttpCodes.GatewayTimeout
-    ];
-    return retryableStatusCodes.includes(statusCode);
-}
-exports.isRetryableStatusCode = isRetryableStatusCode;
-function sleep(milliseconds) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise(resolve => setTimeout(resolve, milliseconds));
-    });
-}
-function retry(name, method, getStatusCode, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay, onError = undefined) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let errorMessage = '';
-        let attempt = 1;
-        while (attempt <= maxAttempts) {
-            let response = undefined;
-            let statusCode = undefined;
-            let isRetryable = false;
-            try {
-                response = yield method();
-            }
-            catch (error) {
-                if (onError) {
-                    response = onError(error);
-                }
-                isRetryable = true;
-                errorMessage = error.message;
-            }
-            if (response) {
-                statusCode = getStatusCode(response);
-                if (!isServerErrorStatusCode(statusCode)) {
-                    return response;
-                }
-            }
-            if (statusCode) {
-                isRetryable = isRetryableStatusCode(statusCode);
-                errorMessage = `Cache service responded with ${statusCode}`;
-            }
-            core.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
-            if (!isRetryable) {
-                core.debug(`${name} - Error is not retryable`);
-                break;
-            }
-            yield sleep(delay);
-            attempt++;
-        }
-        throw Error(`${name} failed: ${errorMessage}`);
-    });
-}
-exports.retry = retry;
-function retryTypedResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return yield retry(name, method, (response) => response.statusCode, maxAttempts, delay,
-        // If the error object contains the statusCode property, extract it and return
-        // an TypedResponse<T> so it can be processed by the retry logic.
-        (error) => {
-            if (error instanceof http_client_1.HttpClientError) {
-                return {
-                    statusCode: error.statusCode,
-                    result: null,
-                    headers: {},
-                    error
-                };
-            }
-            else {
-                return undefined;
-            }
-        });
-    });
-}
-exports.retryTypedResponse = retryTypedResponse;
-function retryHttpClientResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return yield retry(name, method, (response) => response.message.statusCode, maxAttempts, delay);
-    });
-}
-exports.retryHttpClientResponse = retryHttpClientResponse;
-//# sourceMappingURL=requestUtils.js.map
-
-/***/ }),
-
-/***/ 262:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -53271,20 +45689,20 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const os = __importStar(__nccwpck_require__(383));
 const path = __importStar(__nccwpck_require__(508));
 const core = __importStar(__nccwpck_require__(460));
-const cache = __importStar(__nccwpck_require__(215));
-const log_utils_js_1 = __nccwpck_require__(354);
+const cache = __importStar(__nccwpck_require__(216));
+const log_utils_js_1 = __nccwpck_require__(353);
 const resolve_setup_js_1 = __nccwpck_require__(189);
 const phase_timing_js_1 = __nccwpck_require__(337);
 const ensure_rust_toolchain_js_1 = __nccwpck_require__(512);
-const ensure_soldr_js_1 = __nccwpck_require__(340);
-const verify_soldr_js_1 = __nccwpck_require__(360);
+const ensure_soldr_js_1 = __nccwpck_require__(364);
+const verify_soldr_js_1 = __nccwpck_require__(359);
 const install_passthrough_js_1 = __nccwpck_require__(514);
 const normalize_source_mtime_js_1 = __nccwpck_require__(79);
-const detect_shared_target_warning_js_1 = __nccwpck_require__(219);
+const detect_shared_target_warning_js_1 = __nccwpck_require__(220);
 const ensure_shims_js_1 = __nccwpck_require__(530);
 const cache_compress_js_1 = __nccwpck_require__(493);
 const stats_collector_js_1 = __nccwpck_require__(74);
@@ -54020,6 +46438,7588 @@ if (typeof process !== "undefined" &&
     });
 }
 
+
+/***/ }),
+
+/***/ 199:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:child_process");
+
+/***/ }),
+
+/***/ 200:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("util/types");
+
+/***/ }),
+
+/***/ 201:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { promisify } = __nccwpck_require__(123)
+const Client = __nccwpck_require__(88)
+const { buildMockDispatch } = __nccwpck_require__(7)
+const {
+  kDispatches,
+  kMockAgent,
+  kClose,
+  kOriginalClose,
+  kOrigin,
+  kOriginalDispatch,
+  kConnected
+} = __nccwpck_require__(471)
+const { MockInterceptor } = __nccwpck_require__(135)
+const Symbols = __nccwpck_require__(196)
+const { InvalidArgumentError } = __nccwpck_require__(488)
+
+/**
+ * MockClient provides an API that extends the Client to influence the mockDispatches.
+ */
+class MockClient extends Client {
+  constructor (origin, opts) {
+    super(origin, opts)
+
+    if (!opts || !opts.agent || typeof opts.agent.dispatch !== 'function') {
+      throw new InvalidArgumentError('Argument opts.agent must implement Agent')
+    }
+
+    this[kMockAgent] = opts.agent
+    this[kOrigin] = origin
+    this[kDispatches] = []
+    this[kConnected] = 1
+    this[kOriginalDispatch] = this.dispatch
+    this[kOriginalClose] = this.close.bind(this)
+
+    this.dispatch = buildMockDispatch.call(this)
+    this.close = this[kClose]
+  }
+
+  get [Symbols.kConnected] () {
+    return this[kConnected]
+  }
+
+  /**
+   * Sets up the base interceptor for mocking replies from undici.
+   */
+  intercept (opts) {
+    return new MockInterceptor(opts, this[kDispatches])
+  }
+
+  async [kClose] () {
+    await promisify(this[kOriginalClose])()
+    this[kConnected] = 0
+    this[kMockAgent][Symbols.kClients].delete(this[kOrigin])
+  }
+}
+
+module.exports = MockClient
+
+
+/***/ }),
+
+/***/ 202:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var sha256_exports = {};
+__export(sha256_exports, {
+  computeSha256Hash: () => computeSha256Hash,
+  computeSha256Hmac: () => computeSha256Hmac
+});
+module.exports = __toCommonJS(sha256_exports);
+var import_node_crypto = __nccwpck_require__(276);
+async function computeSha256Hmac(key, stringToSign, encoding) {
+  const decodedKey = Buffer.from(key, "base64");
+  return (0, import_node_crypto.createHmac)("sha256", decodedKey).update(stringToSign).digest(encoding);
+}
+async function computeSha256Hash(content, encoding) {
+  return (0, import_node_crypto.createHash)("sha256").update(content).digest(encoding);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=sha256.js.map
+
+
+/***/ }),
+
+/***/ 203:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BlobQueryResponse = void 0;
+const core_util_1 = __nccwpck_require__(14);
+const BlobQuickQueryStream_js_1 = __nccwpck_require__(501);
+/**
+ * ONLY AVAILABLE IN NODE.JS RUNTIME.
+ *
+ * BlobQueryResponse implements BlobDownloadResponseModel interface, and in Node.js runtime it will
+ * parse avro data returned by blob query.
+ */
+class BlobQueryResponse {
+    /**
+     * Indicates that the service supports
+     * requests for partial file content.
+     *
+     * @readonly
+     */
+    get acceptRanges() {
+        return this.originalResponse.acceptRanges;
+    }
+    /**
+     * Returns if it was previously specified
+     * for the file.
+     *
+     * @readonly
+     */
+    get cacheControl() {
+        return this.originalResponse.cacheControl;
+    }
+    /**
+     * Returns the value that was specified
+     * for the 'x-ms-content-disposition' header and specifies how to process the
+     * response.
+     *
+     * @readonly
+     */
+    get contentDisposition() {
+        return this.originalResponse.contentDisposition;
+    }
+    /**
+     * Returns the value that was specified
+     * for the Content-Encoding request header.
+     *
+     * @readonly
+     */
+    get contentEncoding() {
+        return this.originalResponse.contentEncoding;
+    }
+    /**
+     * Returns the value that was specified
+     * for the Content-Language request header.
+     *
+     * @readonly
+     */
+    get contentLanguage() {
+        return this.originalResponse.contentLanguage;
+    }
+    /**
+     * The current sequence number for a
+     * page blob. This header is not returned for block blobs or append blobs.
+     *
+     * @readonly
+     */
+    get blobSequenceNumber() {
+        return this.originalResponse.blobSequenceNumber;
+    }
+    /**
+     * The blob's type. Possible values include:
+     * 'BlockBlob', 'PageBlob', 'AppendBlob'.
+     *
+     * @readonly
+     */
+    get blobType() {
+        return this.originalResponse.blobType;
+    }
+    /**
+     * The number of bytes present in the
+     * response body.
+     *
+     * @readonly
+     */
+    get contentLength() {
+        return this.originalResponse.contentLength;
+    }
+    /**
+     * If the file has an MD5 hash and the
+     * request is to read the full file, this response header is returned so that
+     * the client can check for message content integrity. If the request is to
+     * read a specified range and the 'x-ms-range-get-content-md5' is set to
+     * true, then the request returns an MD5 hash for the range, as long as the
+     * range size is less than or equal to 4 MB. If neither of these sets of
+     * conditions is true, then no value is returned for the 'Content-MD5'
+     * header.
+     *
+     * @readonly
+     */
+    get contentMD5() {
+        return this.originalResponse.contentMD5;
+    }
+    /**
+     * Indicates the range of bytes returned if
+     * the client requested a subset of the file by setting the Range request
+     * header.
+     *
+     * @readonly
+     */
+    get contentRange() {
+        return this.originalResponse.contentRange;
+    }
+    /**
+     * The content type specified for the file.
+     * The default content type is 'application/octet-stream'
+     *
+     * @readonly
+     */
+    get contentType() {
+        return this.originalResponse.contentType;
+    }
+    /**
+     * Conclusion time of the last attempted
+     * Copy File operation where this file was the destination file. This value
+     * can specify the time of a completed, aborted, or failed copy attempt.
+     *
+     * @readonly
+     */
+    get copyCompletedOn() {
+        return undefined;
+    }
+    /**
+     * String identifier for the last attempted Copy
+     * File operation where this file was the destination file.
+     *
+     * @readonly
+     */
+    get copyId() {
+        return this.originalResponse.copyId;
+    }
+    /**
+     * Contains the number of bytes copied and
+     * the total bytes in the source in the last attempted Copy File operation
+     * where this file was the destination file. Can show between 0 and
+     * Content-Length bytes copied.
+     *
+     * @readonly
+     */
+    get copyProgress() {
+        return this.originalResponse.copyProgress;
+    }
+    /**
+     * URL up to 2KB in length that specifies the
+     * source file used in the last attempted Copy File operation where this file
+     * was the destination file.
+     *
+     * @readonly
+     */
+    get copySource() {
+        return this.originalResponse.copySource;
+    }
+    /**
+     * State of the copy operation
+     * identified by 'x-ms-copy-id'. Possible values include: 'pending',
+     * 'success', 'aborted', 'failed'
+     *
+     * @readonly
+     */
+    get copyStatus() {
+        return this.originalResponse.copyStatus;
+    }
+    /**
+     * Only appears when
+     * x-ms-copy-status is failed or pending. Describes cause of fatal or
+     * non-fatal copy operation failure.
+     *
+     * @readonly
+     */
+    get copyStatusDescription() {
+        return this.originalResponse.copyStatusDescription;
+    }
+    /**
+     * When a blob is leased,
+     * specifies whether the lease is of infinite or fixed duration. Possible
+     * values include: 'infinite', 'fixed'.
+     *
+     * @readonly
+     */
+    get leaseDuration() {
+        return this.originalResponse.leaseDuration;
+    }
+    /**
+     * Lease state of the blob. Possible
+     * values include: 'available', 'leased', 'expired', 'breaking', 'broken'.
+     *
+     * @readonly
+     */
+    get leaseState() {
+        return this.originalResponse.leaseState;
+    }
+    /**
+     * The current lease status of the
+     * blob. Possible values include: 'locked', 'unlocked'.
+     *
+     * @readonly
+     */
+    get leaseStatus() {
+        return this.originalResponse.leaseStatus;
+    }
+    /**
+     * A UTC date/time value generated by the service that
+     * indicates the time at which the response was initiated.
+     *
+     * @readonly
+     */
+    get date() {
+        return this.originalResponse.date;
+    }
+    /**
+     * The number of committed blocks
+     * present in the blob. This header is returned only for append blobs.
+     *
+     * @readonly
+     */
+    get blobCommittedBlockCount() {
+        return this.originalResponse.blobCommittedBlockCount;
+    }
+    /**
+     * The ETag contains a value that you can use to
+     * perform operations conditionally, in quotes.
+     *
+     * @readonly
+     */
+    get etag() {
+        return this.originalResponse.etag;
+    }
+    /**
+     * The error code.
+     *
+     * @readonly
+     */
+    get errorCode() {
+        return this.originalResponse.errorCode;
+    }
+    /**
+     * The value of this header is set to
+     * true if the file data and application metadata are completely encrypted
+     * using the specified algorithm. Otherwise, the value is set to false (when
+     * the file is unencrypted, or if only parts of the file/application metadata
+     * are encrypted).
+     *
+     * @readonly
+     */
+    get isServerEncrypted() {
+        return this.originalResponse.isServerEncrypted;
+    }
+    /**
+     * If the blob has a MD5 hash, and if
+     * request contains range header (Range or x-ms-range), this response header
+     * is returned with the value of the whole blob's MD5 value. This value may
+     * or may not be equal to the value returned in Content-MD5 header, with the
+     * latter calculated from the requested range.
+     *
+     * @readonly
+     */
+    get blobContentMD5() {
+        return this.originalResponse.blobContentMD5;
+    }
+    /**
+     * Returns the date and time the file was last
+     * modified. Any operation that modifies the file or its properties updates
+     * the last modified time.
+     *
+     * @readonly
+     */
+    get lastModified() {
+        return this.originalResponse.lastModified;
+    }
+    /**
+     * A name-value pair
+     * to associate with a file storage object.
+     *
+     * @readonly
+     */
+    get metadata() {
+        return this.originalResponse.metadata;
+    }
+    /**
+     * This header uniquely identifies the request
+     * that was made and can be used for troubleshooting the request.
+     *
+     * @readonly
+     */
+    get requestId() {
+        return this.originalResponse.requestId;
+    }
+    /**
+     * If a client request id header is sent in the request, this header will be present in the
+     * response with the same value.
+     *
+     * @readonly
+     */
+    get clientRequestId() {
+        return this.originalResponse.clientRequestId;
+    }
+    /**
+     * Indicates the version of the File service used
+     * to execute the request.
+     *
+     * @readonly
+     */
+    get version() {
+        return this.originalResponse.version;
+    }
+    /**
+     * The SHA-256 hash of the encryption key used to encrypt the blob. This value is only returned
+     * when the blob was encrypted with a customer-provided key.
+     *
+     * @readonly
+     */
+    get encryptionKeySha256() {
+        return this.originalResponse.encryptionKeySha256;
+    }
+    /**
+     * If the request is to read a specified range and the x-ms-range-get-content-crc64 is set to
+     * true, then the request returns a crc64 for the range, as long as the range size is less than
+     * or equal to 4 MB. If both x-ms-range-get-content-crc64 & x-ms-range-get-content-md5 is
+     * specified in the same request, it will fail with 400(Bad Request)
+     */
+    get contentCrc64() {
+        return this.originalResponse.contentCrc64;
+    }
+    /**
+     * The response body as a browser Blob.
+     * Always undefined in node.js.
+     *
+     * @readonly
+     */
+    get blobBody() {
+        return undefined;
+    }
+    /**
+     * The response body as a node.js Readable stream.
+     * Always undefined in the browser.
+     *
+     * It will parse avor data returned by blob query.
+     *
+     * @readonly
+     */
+    get readableStreamBody() {
+        return core_util_1.isNodeLike ? this.blobDownloadStream : undefined;
+    }
+    /**
+     * The HTTP response.
+     */
+    get _response() {
+        return this.originalResponse._response;
+    }
+    originalResponse;
+    blobDownloadStream;
+    /**
+     * Creates an instance of BlobQueryResponse.
+     *
+     * @param originalResponse -
+     * @param options -
+     */
+    constructor(originalResponse, options = {}) {
+        this.originalResponse = originalResponse;
+        this.blobDownloadStream = new BlobQuickQueryStream_js_1.BlobQuickQueryStream(this.originalResponse.readableStreamBody, options);
+    }
+}
+exports.BlobQueryResponse = BlobQueryResponse;
+//# sourceMappingURL=BlobQueryResponse.js.map
+
+/***/ }),
+
+/***/ 204:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.fsCreateReadStream = exports.fsStat = void 0;
+exports.streamToBuffer = streamToBuffer;
+exports.streamToBuffer2 = streamToBuffer2;
+exports.streamToBuffer3 = streamToBuffer3;
+exports.readStreamToLocalFile = readStreamToLocalFile;
+const tslib_1 = __nccwpck_require__(218);
+const node_fs_1 = tslib_1.__importDefault(__nccwpck_require__(250));
+const node_util_1 = tslib_1.__importDefault(__nccwpck_require__(376));
+const constants_js_1 = __nccwpck_require__(148);
+/**
+ * Reads a readable stream into buffer. Fill the buffer from offset to end.
+ *
+ * @param stream - A Node.js Readable stream
+ * @param buffer - Buffer to be filled, length must greater than or equal to offset
+ * @param offset - From which position in the buffer to be filled, inclusive
+ * @param end - To which position in the buffer to be filled, exclusive
+ * @param encoding - Encoding of the Readable stream
+ */
+async function streamToBuffer(stream, buffer, offset, end, encoding) {
+    let pos = 0; // Position in stream
+    const count = end - offset; // Total amount of data needed in stream
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error(`The operation cannot be completed in timeout.`)), constants_js_1.REQUEST_TIMEOUT);
+        stream.on("readable", () => {
+            if (pos >= count) {
+                clearTimeout(timeout);
+                resolve();
+                return;
+            }
+            let chunk = stream.read();
+            if (!chunk) {
+                return;
+            }
+            if (typeof chunk === "string") {
+                chunk = Buffer.from(chunk, encoding);
+            }
+            // How much data needed in this chunk
+            const chunkLength = pos + chunk.length > count ? count - pos : chunk.length;
+            buffer.fill(chunk.slice(0, chunkLength), offset + pos, offset + pos + chunkLength);
+            pos += chunkLength;
+        });
+        stream.on("end", () => {
+            clearTimeout(timeout);
+            if (pos < count) {
+                reject(new Error(`Stream drains before getting enough data needed. Data read: ${pos}, data need: ${count}`));
+            }
+            resolve();
+        });
+        stream.on("error", (msg) => {
+            clearTimeout(timeout);
+            reject(msg);
+        });
+    });
+}
+/**
+ * Reads a readable stream into buffer entirely.
+ *
+ * @param stream - A Node.js Readable stream
+ * @param buffer - Buffer to be filled, length must greater than or equal to offset
+ * @param encoding - Encoding of the Readable stream
+ * @returns with the count of bytes read.
+ * @throws `RangeError` If buffer size is not big enough.
+ */
+async function streamToBuffer2(stream, buffer, encoding) {
+    let pos = 0; // Position in stream
+    const bufferSize = buffer.length;
+    return new Promise((resolve, reject) => {
+        stream.on("readable", () => {
+            let chunk = stream.read();
+            if (!chunk) {
+                return;
+            }
+            if (typeof chunk === "string") {
+                chunk = Buffer.from(chunk, encoding);
+            }
+            if (pos + chunk.length > bufferSize) {
+                reject(new Error(`Stream exceeds buffer size. Buffer size: ${bufferSize}`));
+                return;
+            }
+            buffer.fill(chunk, pos, pos + chunk.length);
+            pos += chunk.length;
+        });
+        stream.on("end", () => {
+            resolve(pos);
+        });
+        stream.on("error", reject);
+    });
+}
+/**
+ * Reads a readable stream into a buffer.
+ *
+ * @param stream - A Node.js Readable stream
+ * @param encoding - Encoding of the Readable stream
+ * @returns with the count of bytes read.
+ */
+async function streamToBuffer3(readableStream, encoding) {
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        readableStream.on("data", (data) => {
+            chunks.push(typeof data === "string" ? Buffer.from(data, encoding) : data);
+        });
+        readableStream.on("end", () => {
+            resolve(Buffer.concat(chunks));
+        });
+        readableStream.on("error", reject);
+    });
+}
+/**
+ * ONLY AVAILABLE IN NODE.JS RUNTIME.
+ *
+ * Writes the content of a readstream to a local file. Returns a Promise which is completed after the file handle is closed.
+ *
+ * @param rs - The read stream.
+ * @param file - Destination file path.
+ */
+async function readStreamToLocalFile(rs, file) {
+    return new Promise((resolve, reject) => {
+        const ws = node_fs_1.default.createWriteStream(file);
+        rs.on("error", (err) => {
+            reject(err);
+        });
+        ws.on("error", (err) => {
+            reject(err);
+        });
+        ws.on("close", resolve);
+        rs.pipe(ws);
+    });
+}
+/**
+ * ONLY AVAILABLE IN NODE.JS RUNTIME.
+ *
+ * Promisified version of fs.stat().
+ */
+exports.fsStat = node_util_1.default.promisify(node_fs_1.default.stat);
+exports.fsCreateReadStream = node_fs_1.default.createReadStream;
+//# sourceMappingURL=utils.js.map
+
+/***/ }),
+
+/***/ 205:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright 2008 Google Inc.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// * Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+// * Redistributions in binary form must reproduce the above
+// copyright notice, this list of conditions and the following disclaimer
+// in the documentation and/or other materials provided with the
+// distribution.
+// * Neither the name of Google Inc. nor the names of its
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Code generated by the Protocol Buffer compiler is owned by the owner
+// of the input file used when generating it.  This code is not
+// standalone and requires a support library to be linked with it.  This
+// support library is itself covered by the above license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.varint32read = exports.varint32write = exports.int64toString = exports.int64fromString = exports.varint64write = exports.varint64read = void 0;
+/**
+ * Read a 64 bit varint as two JS numbers.
+ *
+ * Returns tuple:
+ * [0]: low bits
+ * [0]: high bits
+ *
+ * Copyright 2008 Google Inc.  All rights reserved.
+ *
+ * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/buffer_decoder.js#L175
+ */
+function varint64read() {
+    let lowBits = 0;
+    let highBits = 0;
+    for (let shift = 0; shift < 28; shift += 7) {
+        let b = this.buf[this.pos++];
+        lowBits |= (b & 0x7F) << shift;
+        if ((b & 0x80) == 0) {
+            this.assertBounds();
+            return [lowBits, highBits];
+        }
+    }
+    let middleByte = this.buf[this.pos++];
+    // last four bits of the first 32 bit number
+    lowBits |= (middleByte & 0x0F) << 28;
+    // 3 upper bits are part of the next 32 bit number
+    highBits = (middleByte & 0x70) >> 4;
+    if ((middleByte & 0x80) == 0) {
+        this.assertBounds();
+        return [lowBits, highBits];
+    }
+    for (let shift = 3; shift <= 31; shift += 7) {
+        let b = this.buf[this.pos++];
+        highBits |= (b & 0x7F) << shift;
+        if ((b & 0x80) == 0) {
+            this.assertBounds();
+            return [lowBits, highBits];
+        }
+    }
+    throw new Error('invalid varint');
+}
+exports.varint64read = varint64read;
+/**
+ * Write a 64 bit varint, given as two JS numbers, to the given bytes array.
+ *
+ * Copyright 2008 Google Inc.  All rights reserved.
+ *
+ * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/writer.js#L344
+ */
+function varint64write(lo, hi, bytes) {
+    for (let i = 0; i < 28; i = i + 7) {
+        const shift = lo >>> i;
+        const hasNext = !((shift >>> 7) == 0 && hi == 0);
+        const byte = (hasNext ? shift | 0x80 : shift) & 0xFF;
+        bytes.push(byte);
+        if (!hasNext) {
+            return;
+        }
+    }
+    const splitBits = ((lo >>> 28) & 0x0F) | ((hi & 0x07) << 4);
+    const hasMoreBits = !((hi >> 3) == 0);
+    bytes.push((hasMoreBits ? splitBits | 0x80 : splitBits) & 0xFF);
+    if (!hasMoreBits) {
+        return;
+    }
+    for (let i = 3; i < 31; i = i + 7) {
+        const shift = hi >>> i;
+        const hasNext = !((shift >>> 7) == 0);
+        const byte = (hasNext ? shift | 0x80 : shift) & 0xFF;
+        bytes.push(byte);
+        if (!hasNext) {
+            return;
+        }
+    }
+    bytes.push((hi >>> 31) & 0x01);
+}
+exports.varint64write = varint64write;
+// constants for binary math
+const TWO_PWR_32_DBL = (1 << 16) * (1 << 16);
+/**
+ * Parse decimal string of 64 bit integer value as two JS numbers.
+ *
+ * Returns tuple:
+ * [0]: minus sign?
+ * [1]: low bits
+ * [2]: high bits
+ *
+ * Copyright 2008 Google Inc.
+ */
+function int64fromString(dec) {
+    // Check for minus sign.
+    let minus = dec[0] == '-';
+    if (minus)
+        dec = dec.slice(1);
+    // Work 6 decimal digits at a time, acting like we're converting base 1e6
+    // digits to binary. This is safe to do with floating point math because
+    // Number.isSafeInteger(ALL_32_BITS * 1e6) == true.
+    const base = 1e6;
+    let lowBits = 0;
+    let highBits = 0;
+    function add1e6digit(begin, end) {
+        // Note: Number('') is 0.
+        const digit1e6 = Number(dec.slice(begin, end));
+        highBits *= base;
+        lowBits = lowBits * base + digit1e6;
+        // Carry bits from lowBits to highBits
+        if (lowBits >= TWO_PWR_32_DBL) {
+            highBits = highBits + ((lowBits / TWO_PWR_32_DBL) | 0);
+            lowBits = lowBits % TWO_PWR_32_DBL;
+        }
+    }
+    add1e6digit(-24, -18);
+    add1e6digit(-18, -12);
+    add1e6digit(-12, -6);
+    add1e6digit(-6);
+    return [minus, lowBits, highBits];
+}
+exports.int64fromString = int64fromString;
+/**
+ * Format 64 bit integer value (as two JS numbers) to decimal string.
+ *
+ * Copyright 2008 Google Inc.
+ */
+function int64toString(bitsLow, bitsHigh) {
+    // Skip the expensive conversion if the number is small enough to use the
+    // built-in conversions.
+    if ((bitsHigh >>> 0) <= 0x1FFFFF) {
+        return '' + (TWO_PWR_32_DBL * bitsHigh + (bitsLow >>> 0));
+    }
+    // What this code is doing is essentially converting the input number from
+    // base-2 to base-1e7, which allows us to represent the 64-bit range with
+    // only 3 (very large) digits. Those digits are then trivial to convert to
+    // a base-10 string.
+    // The magic numbers used here are -
+    // 2^24 = 16777216 = (1,6777216) in base-1e7.
+    // 2^48 = 281474976710656 = (2,8147497,6710656) in base-1e7.
+    // Split 32:32 representation into 16:24:24 representation so our
+    // intermediate digits don't overflow.
+    let low = bitsLow & 0xFFFFFF;
+    let mid = (((bitsLow >>> 24) | (bitsHigh << 8)) >>> 0) & 0xFFFFFF;
+    let high = (bitsHigh >> 16) & 0xFFFF;
+    // Assemble our three base-1e7 digits, ignoring carries. The maximum
+    // value in a digit at this step is representable as a 48-bit integer, which
+    // can be stored in a 64-bit floating point number.
+    let digitA = low + (mid * 6777216) + (high * 6710656);
+    let digitB = mid + (high * 8147497);
+    let digitC = (high * 2);
+    // Apply carries from A to B and from B to C.
+    let base = 10000000;
+    if (digitA >= base) {
+        digitB += Math.floor(digitA / base);
+        digitA %= base;
+    }
+    if (digitB >= base) {
+        digitC += Math.floor(digitB / base);
+        digitB %= base;
+    }
+    // Convert base-1e7 digits to base-10, with optional leading zeroes.
+    function decimalFrom1e7(digit1e7, needLeadingZeros) {
+        let partial = digit1e7 ? String(digit1e7) : '';
+        if (needLeadingZeros) {
+            return '0000000'.slice(partial.length) + partial;
+        }
+        return partial;
+    }
+    return decimalFrom1e7(digitC, /*needLeadingZeros=*/ 0) +
+        decimalFrom1e7(digitB, /*needLeadingZeros=*/ digitC) +
+        // If the final 1e7 digit didn't need leading zeros, we would have
+        // returned via the trivial code path at the top.
+        decimalFrom1e7(digitA, /*needLeadingZeros=*/ 1);
+}
+exports.int64toString = int64toString;
+/**
+ * Write a 32 bit varint, signed or unsigned. Same as `varint64write(0, value, bytes)`
+ *
+ * Copyright 2008 Google Inc.  All rights reserved.
+ *
+ * See https://github.com/protocolbuffers/protobuf/blob/1b18833f4f2a2f681f4e4a25cdf3b0a43115ec26/js/binary/encoder.js#L144
+ */
+function varint32write(value, bytes) {
+    if (value >= 0) {
+        // write value as varint 32
+        while (value > 0x7f) {
+            bytes.push((value & 0x7f) | 0x80);
+            value = value >>> 7;
+        }
+        bytes.push(value);
+    }
+    else {
+        for (let i = 0; i < 9; i++) {
+            bytes.push(value & 127 | 128);
+            value = value >> 7;
+        }
+        bytes.push(1);
+    }
+}
+exports.varint32write = varint32write;
+/**
+ * Read an unsigned 32 bit varint.
+ *
+ * See https://github.com/protocolbuffers/protobuf/blob/8a71927d74a4ce34efe2d8769fda198f52d20d12/js/experimental/runtime/kernel/buffer_decoder.js#L220
+ */
+function varint32read() {
+    let b = this.buf[this.pos++];
+    let result = b & 0x7F;
+    if ((b & 0x80) == 0) {
+        this.assertBounds();
+        return result;
+    }
+    b = this.buf[this.pos++];
+    result |= (b & 0x7F) << 7;
+    if ((b & 0x80) == 0) {
+        this.assertBounds();
+        return result;
+    }
+    b = this.buf[this.pos++];
+    result |= (b & 0x7F) << 14;
+    if ((b & 0x80) == 0) {
+        this.assertBounds();
+        return result;
+    }
+    b = this.buf[this.pos++];
+    result |= (b & 0x7F) << 21;
+    if ((b & 0x80) == 0) {
+        this.assertBounds();
+        return result;
+    }
+    // Extract only last 4 bits
+    b = this.buf[this.pos++];
+    result |= (b & 0x0F) << 28;
+    for (let readBytes = 5; ((b & 0x80) !== 0) && readBytes < 10; readBytes++)
+        b = this.buf[this.pos++];
+    if ((b & 0x80) != 0)
+        throw new Error('invalid varint');
+    this.assertBounds();
+    // Result can have 32 bits, convert it to unsigned
+    return result >>> 0;
+}
+exports.varint32read = varint32read;
+
+
+/***/ }),
+
+/***/ 206:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BlobLeaseClient = void 0;
+const core_util_1 = __nccwpck_require__(14);
+const constants_js_1 = __nccwpck_require__(148);
+const tracing_js_1 = __nccwpck_require__(31);
+const utils_common_js_1 = __nccwpck_require__(154);
+/**
+ * A client that manages leases for a {@link ContainerClient} or a {@link BlobClient}.
+ */
+class BlobLeaseClient {
+    _leaseId;
+    _url;
+    _containerOrBlobOperation;
+    _isContainer;
+    /**
+     * Gets the lease Id.
+     *
+     * @readonly
+     */
+    get leaseId() {
+        return this._leaseId;
+    }
+    /**
+     * Gets the url.
+     *
+     * @readonly
+     */
+    get url() {
+        return this._url;
+    }
+    /**
+     * Creates an instance of BlobLeaseClient.
+     * @param client - The client to make the lease operation requests.
+     * @param leaseId - Initial proposed lease id.
+     */
+    constructor(client, leaseId) {
+        const clientContext = client.storageClientContext;
+        this._url = client.url;
+        if (client.name === undefined) {
+            this._isContainer = true;
+            this._containerOrBlobOperation = clientContext.container;
+        }
+        else {
+            this._isContainer = false;
+            this._containerOrBlobOperation = clientContext.blob;
+        }
+        if (!leaseId) {
+            leaseId = (0, core_util_1.randomUUID)();
+        }
+        this._leaseId = leaseId;
+    }
+    /**
+     * Establishes and manages a lock on a container for delete operations, or on a blob
+     * for write and delete operations.
+     * The lock duration can be 15 to 60 seconds, or can be infinite.
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
+     * and
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
+     *
+     * @param duration - Must be between 15 to 60 seconds, or infinite (-1)
+     * @param options - option to configure lease management operations.
+     * @returns Response data for acquire lease operation.
+     */
+    async acquireLease(duration, options = {}) {
+        if (this._isContainer &&
+            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
+                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
+                options.conditions?.tagConditions)) {
+            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
+        }
+        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-acquireLease", options, async (updatedOptions) => {
+            return (0, utils_common_js_1.assertResponse)(await this._containerOrBlobOperation.acquireLease({
+                abortSignal: options.abortSignal,
+                duration,
+                modifiedAccessConditions: {
+                    ...options.conditions,
+                    ifTags: options.conditions?.tagConditions,
+                },
+                proposedLeaseId: this._leaseId,
+                tracingOptions: updatedOptions.tracingOptions,
+            }));
+        });
+    }
+    /**
+     * To change the ID of the lease.
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
+     * and
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
+     *
+     * @param proposedLeaseId - the proposed new lease Id.
+     * @param options - option to configure lease management operations.
+     * @returns Response data for change lease operation.
+     */
+    async changeLease(proposedLeaseId, options = {}) {
+        if (this._isContainer &&
+            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
+                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
+                options.conditions?.tagConditions)) {
+            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
+        }
+        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-changeLease", options, async (updatedOptions) => {
+            const response = (0, utils_common_js_1.assertResponse)(await this._containerOrBlobOperation.changeLease(this._leaseId, proposedLeaseId, {
+                abortSignal: options.abortSignal,
+                modifiedAccessConditions: {
+                    ...options.conditions,
+                    ifTags: options.conditions?.tagConditions,
+                },
+                tracingOptions: updatedOptions.tracingOptions,
+            }));
+            this._leaseId = proposedLeaseId;
+            return response;
+        });
+    }
+    /**
+     * To free the lease if it is no longer needed so that another client may
+     * immediately acquire a lease against the container or the blob.
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
+     * and
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
+     *
+     * @param options - option to configure lease management operations.
+     * @returns Response data for release lease operation.
+     */
+    async releaseLease(options = {}) {
+        if (this._isContainer &&
+            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
+                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
+                options.conditions?.tagConditions)) {
+            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
+        }
+        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-releaseLease", options, async (updatedOptions) => {
+            return (0, utils_common_js_1.assertResponse)(await this._containerOrBlobOperation.releaseLease(this._leaseId, {
+                abortSignal: options.abortSignal,
+                modifiedAccessConditions: {
+                    ...options.conditions,
+                    ifTags: options.conditions?.tagConditions,
+                },
+                tracingOptions: updatedOptions.tracingOptions,
+            }));
+        });
+    }
+    /**
+     * To renew the lease.
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
+     * and
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
+     *
+     * @param options - Optional option to configure lease management operations.
+     * @returns Response data for renew lease operation.
+     */
+    async renewLease(options = {}) {
+        if (this._isContainer &&
+            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
+                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
+                options.conditions?.tagConditions)) {
+            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
+        }
+        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-renewLease", options, async (updatedOptions) => {
+            return this._containerOrBlobOperation.renewLease(this._leaseId, {
+                abortSignal: options.abortSignal,
+                modifiedAccessConditions: {
+                    ...options.conditions,
+                    ifTags: options.conditions?.tagConditions,
+                },
+                tracingOptions: updatedOptions.tracingOptions,
+            });
+        });
+    }
+    /**
+     * To end the lease but ensure that another client cannot acquire a new lease
+     * until the current lease period has expired.
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-container
+     * and
+     * @see https://learn.microsoft.com/rest/api/storageservices/lease-blob
+     *
+     * @param breakPeriod - Break period
+     * @param options - Optional options to configure lease management operations.
+     * @returns Response data for break lease operation.
+     */
+    async breakLease(breakPeriod, options = {}) {
+        if (this._isContainer &&
+            ((options.conditions?.ifMatch && options.conditions?.ifMatch !== constants_js_1.ETagNone) ||
+                (options.conditions?.ifNoneMatch && options.conditions?.ifNoneMatch !== constants_js_1.ETagNone) ||
+                options.conditions?.tagConditions)) {
+            throw new RangeError("The IfMatch, IfNoneMatch and tags access conditions are ignored by the service. Values other than undefined or their default values are not acceptable.");
+        }
+        return tracing_js_1.tracingClient.withSpan("BlobLeaseClient-breakLease", options, async (updatedOptions) => {
+            const operationOptions = {
+                abortSignal: options.abortSignal,
+                breakPeriod,
+                modifiedAccessConditions: {
+                    ...options.conditions,
+                    ifTags: options.conditions?.tagConditions,
+                },
+                tracingOptions: updatedOptions.tracingOptions,
+            };
+            return (0, utils_common_js_1.assertResponse)(await this._containerOrBlobOperation.breakLease(operationOptions));
+        });
+    }
+}
+exports.BlobLeaseClient = BlobLeaseClient;
+//# sourceMappingURL=BlobLeaseClient.js.map
+
+/***/ }),
+
+/***/ 207:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.reflectionCreate = void 0;
+const reflection_scalar_default_1 = __nccwpck_require__(463);
+const message_type_contract_1 = __nccwpck_require__(406);
+/**
+ * Creates an instance of the generic message, using the field
+ * information.
+ */
+function reflectionCreate(type) {
+    /**
+     * This ternary can be removed in the next major version.
+     * The `Object.create()` code path utilizes a new `messagePrototype`
+     * property on the `IMessageType` which has this same `MESSAGE_TYPE`
+     * non-enumerable property on it. Doing it this way means that we only
+     * pay the cost of `Object.defineProperty()` once per `IMessageType`
+     * class of once per "instance". The falsy code path is only provided
+     * for backwards compatibility in cases where the runtime library is
+     * updated without also updating the generated code.
+     */
+    const msg = type.messagePrototype
+        ? Object.create(type.messagePrototype)
+        : Object.defineProperty({}, message_type_contract_1.MESSAGE_TYPE, { value: type });
+    for (let field of type.fields) {
+        let name = field.localName;
+        if (field.opt)
+            continue;
+        if (field.oneof)
+            msg[field.oneof] = { oneofKind: undefined };
+        else if (field.repeat)
+            msg[name] = [];
+        else
+            switch (field.kind) {
+                case "scalar":
+                    msg[name] = reflection_scalar_default_1.reflectionScalarDefault(field.T, field.L);
+                    break;
+                case "enum":
+                    // we require 0 to be default value for all enums
+                    msg[name] = 0;
+                    break;
+                case "map":
+                    msg[name] = {};
+                    break;
+            }
+    }
+    return msg;
+}
+exports.reflectionCreate = reflectionCreate;
+
+
+/***/ }),
+
+/***/ 208:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.storageBrowserPolicyName = void 0;
+exports.storageBrowserPolicy = storageBrowserPolicy;
+const core_util_1 = __nccwpck_require__(14);
+const constants_js_1 = __nccwpck_require__(36);
+const utils_common_js_1 = __nccwpck_require__(474);
+/**
+ * The programmatic identifier of the StorageBrowserPolicy.
+ */
+exports.storageBrowserPolicyName = "storageBrowserPolicy";
+/**
+ * storageBrowserPolicy is a policy used to prevent browsers from caching requests
+ * and to remove cookies and explicit content-length headers.
+ */
+function storageBrowserPolicy() {
+    return {
+        name: exports.storageBrowserPolicyName,
+        async sendRequest(request, next) {
+            if (core_util_1.isNodeLike) {
+                return next(request);
+            }
+            if (request.method === "GET" || request.method === "HEAD") {
+                request.url = (0, utils_common_js_1.setURLParameter)(request.url, constants_js_1.URLConstants.Parameters.FORCE_BROWSER_NO_CACHE, new Date().getTime().toString());
+            }
+            request.headers.delete(constants_js_1.HeaderConstants.COOKIE);
+            // According to XHR standards, content-length should be fully controlled by browsers
+            request.headers.delete(constants_js_1.HeaderConstants.CONTENT_LENGTH);
+            return next(request);
+        },
+    };
+}
+//# sourceMappingURL=StorageBrowserPolicyV2.js.map
+
+/***/ }),
+
+/***/ 209:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { isBlobLike, toUSVString, makeIterator } = __nccwpck_require__(518)
+const { kState } = __nccwpck_require__(15)
+const { File: UndiciFile, FileLike, isFileLike } = __nccwpck_require__(365)
+const { webidl } = __nccwpck_require__(457)
+const { Blob, File: NativeFile } = __nccwpck_require__(119)
+
+/** @type {globalThis['File']} */
+const File = NativeFile ?? UndiciFile
+
+// https://xhr.spec.whatwg.org/#formdata
+class FormData {
+  constructor (form) {
+    if (form !== undefined) {
+      throw webidl.errors.conversionFailed({
+        prefix: 'FormData constructor',
+        argument: 'Argument 1',
+        types: ['undefined']
+      })
+    }
+
+    this[kState] = []
+  }
+
+  append (name, value, filename = undefined) {
+    webidl.brandCheck(this, FormData)
+
+    webidl.argumentLengthCheck(arguments, 2, { header: 'FormData.append' })
+
+    if (arguments.length === 3 && !isBlobLike(value)) {
+      throw new TypeError(
+        "Failed to execute 'append' on 'FormData': parameter 2 is not of type 'Blob'"
+      )
+    }
+
+    // 1. Let value be value if given; otherwise blobValue.
+
+    name = webidl.converters.USVString(name)
+    value = isBlobLike(value)
+      ? webidl.converters.Blob(value, { strict: false })
+      : webidl.converters.USVString(value)
+    filename = arguments.length === 3
+      ? webidl.converters.USVString(filename)
+      : undefined
+
+    // 2. Let entry be the result of creating an entry with
+    // name, value, and filename if given.
+    const entry = makeEntry(name, value, filename)
+
+    // 3. Append entry to this’s entry list.
+    this[kState].push(entry)
+  }
+
+  delete (name) {
+    webidl.brandCheck(this, FormData)
+
+    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.delete' })
+
+    name = webidl.converters.USVString(name)
+
+    // The delete(name) method steps are to remove all entries whose name
+    // is name from this’s entry list.
+    this[kState] = this[kState].filter(entry => entry.name !== name)
+  }
+
+  get (name) {
+    webidl.brandCheck(this, FormData)
+
+    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.get' })
+
+    name = webidl.converters.USVString(name)
+
+    // 1. If there is no entry whose name is name in this’s entry list,
+    // then return null.
+    const idx = this[kState].findIndex((entry) => entry.name === name)
+    if (idx === -1) {
+      return null
+    }
+
+    // 2. Return the value of the first entry whose name is name from
+    // this’s entry list.
+    return this[kState][idx].value
+  }
+
+  getAll (name) {
+    webidl.brandCheck(this, FormData)
+
+    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.getAll' })
+
+    name = webidl.converters.USVString(name)
+
+    // 1. If there is no entry whose name is name in this’s entry list,
+    // then return the empty list.
+    // 2. Return the values of all entries whose name is name, in order,
+    // from this’s entry list.
+    return this[kState]
+      .filter((entry) => entry.name === name)
+      .map((entry) => entry.value)
+  }
+
+  has (name) {
+    webidl.brandCheck(this, FormData)
+
+    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.has' })
+
+    name = webidl.converters.USVString(name)
+
+    // The has(name) method steps are to return true if there is an entry
+    // whose name is name in this’s entry list; otherwise false.
+    return this[kState].findIndex((entry) => entry.name === name) !== -1
+  }
+
+  set (name, value, filename = undefined) {
+    webidl.brandCheck(this, FormData)
+
+    webidl.argumentLengthCheck(arguments, 2, { header: 'FormData.set' })
+
+    if (arguments.length === 3 && !isBlobLike(value)) {
+      throw new TypeError(
+        "Failed to execute 'set' on 'FormData': parameter 2 is not of type 'Blob'"
+      )
+    }
+
+    // The set(name, value) and set(name, blobValue, filename) method steps
+    // are:
+
+    // 1. Let value be value if given; otherwise blobValue.
+
+    name = webidl.converters.USVString(name)
+    value = isBlobLike(value)
+      ? webidl.converters.Blob(value, { strict: false })
+      : webidl.converters.USVString(value)
+    filename = arguments.length === 3
+      ? toUSVString(filename)
+      : undefined
+
+    // 2. Let entry be the result of creating an entry with name, value, and
+    // filename if given.
+    const entry = makeEntry(name, value, filename)
+
+    // 3. If there are entries in this’s entry list whose name is name, then
+    // replace the first such entry with entry and remove the others.
+    const idx = this[kState].findIndex((entry) => entry.name === name)
+    if (idx !== -1) {
+      this[kState] = [
+        ...this[kState].slice(0, idx),
+        entry,
+        ...this[kState].slice(idx + 1).filter((entry) => entry.name !== name)
+      ]
+    } else {
+      // 4. Otherwise, append entry to this’s entry list.
+      this[kState].push(entry)
+    }
+  }
+
+  entries () {
+    webidl.brandCheck(this, FormData)
+
+    return makeIterator(
+      () => this[kState].map(pair => [pair.name, pair.value]),
+      'FormData',
+      'key+value'
+    )
+  }
+
+  keys () {
+    webidl.brandCheck(this, FormData)
+
+    return makeIterator(
+      () => this[kState].map(pair => [pair.name, pair.value]),
+      'FormData',
+      'key'
+    )
+  }
+
+  values () {
+    webidl.brandCheck(this, FormData)
+
+    return makeIterator(
+      () => this[kState].map(pair => [pair.name, pair.value]),
+      'FormData',
+      'value'
+    )
+  }
+
+  /**
+   * @param {(value: string, key: string, self: FormData) => void} callbackFn
+   * @param {unknown} thisArg
+   */
+  forEach (callbackFn, thisArg = globalThis) {
+    webidl.brandCheck(this, FormData)
+
+    webidl.argumentLengthCheck(arguments, 1, { header: 'FormData.forEach' })
+
+    if (typeof callbackFn !== 'function') {
+      throw new TypeError(
+        "Failed to execute 'forEach' on 'FormData': parameter 1 is not of type 'Function'."
+      )
+    }
+
+    for (const [key, value] of this) {
+      callbackFn.apply(thisArg, [value, key, this])
+    }
+  }
+}
+
+FormData.prototype[Symbol.iterator] = FormData.prototype.entries
+
+Object.defineProperties(FormData.prototype, {
+  [Symbol.toStringTag]: {
+    value: 'FormData',
+    configurable: true
+  }
+})
+
+/**
+ * @see https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#create-an-entry
+ * @param {string} name
+ * @param {string|Blob} value
+ * @param {?string} filename
+ * @returns
+ */
+function makeEntry (name, value, filename) {
+  // 1. Set name to the result of converting name into a scalar value string.
+  // "To convert a string into a scalar value string, replace any surrogates
+  //  with U+FFFD."
+  // see: https://nodejs.org/dist/latest-v18.x/docs/api/buffer.html#buftostringencoding-start-end
+  name = Buffer.from(name).toString('utf8')
+
+  // 2. If value is a string, then set value to the result of converting
+  //    value into a scalar value string.
+  if (typeof value === 'string') {
+    value = Buffer.from(value).toString('utf8')
+  } else {
+    // 3. Otherwise:
+
+    // 1. If value is not a File object, then set value to a new File object,
+    //    representing the same bytes, whose name attribute value is "blob"
+    if (!isFileLike(value)) {
+      value = value instanceof Blob
+        ? new File([value], 'blob', { type: value.type })
+        : new FileLike(value, 'blob', { type: value.type })
+    }
+
+    // 2. If filename is given, then set value to a new File object,
+    //    representing the same bytes, whose name attribute is filename.
+    if (filename !== undefined) {
+      /** @type {FilePropertyBag} */
+      const options = {
+        type: value.type,
+        lastModified: value.lastModified
+      }
+
+      value = (NativeFile && value instanceof NativeFile) || value instanceof UndiciFile
+        ? new File([value], filename, options)
+        : new FileLike(value, filename, options)
+    }
+  }
+
+  // 4. Return an entry whose name is name and whose value is value.
+  return { name, value }
+}
+
+module.exports = { FormData }
+
+
+/***/ }),
+
+/***/ 210:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=appendBlob.js.map
+
+/***/ }),
+
+/***/ 211:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var getClient_exports = {};
+__export(getClient_exports, {
+  getClient: () => getClient
+});
+module.exports = __toCommonJS(getClient_exports);
+var import_clientHelpers = __nccwpck_require__(491);
+var import_sendRequest = __nccwpck_require__(450);
+var import_urlHelpers = __nccwpck_require__(324);
+var import_checkEnvironment = __nccwpck_require__(439);
+function getClient(endpoint, clientOptions = {}) {
+  const pipeline = clientOptions.pipeline ?? (0, import_clientHelpers.createDefaultPipeline)(clientOptions);
+  if (clientOptions.additionalPolicies?.length) {
+    for (const { policy, position } of clientOptions.additionalPolicies) {
+      const afterPhase = position === "perRetry" ? "Sign" : void 0;
+      pipeline.addPolicy(policy, {
+        afterPhase
+      });
+    }
+  }
+  const { allowInsecureConnection, httpClient } = clientOptions;
+  const endpointUrl = clientOptions.endpoint ?? endpoint;
+  const client = (path, ...args) => {
+    const getUrl = (requestOptions) => (0, import_urlHelpers.buildRequestUrl)(endpointUrl, path, args, { allowInsecureConnection, ...requestOptions });
+    return {
+      get: (requestOptions = {}) => {
+        return buildOperation(
+          "GET",
+          getUrl(requestOptions),
+          pipeline,
+          requestOptions,
+          allowInsecureConnection,
+          httpClient
+        );
+      },
+      post: (requestOptions = {}) => {
+        return buildOperation(
+          "POST",
+          getUrl(requestOptions),
+          pipeline,
+          requestOptions,
+          allowInsecureConnection,
+          httpClient
+        );
+      },
+      put: (requestOptions = {}) => {
+        return buildOperation(
+          "PUT",
+          getUrl(requestOptions),
+          pipeline,
+          requestOptions,
+          allowInsecureConnection,
+          httpClient
+        );
+      },
+      patch: (requestOptions = {}) => {
+        return buildOperation(
+          "PATCH",
+          getUrl(requestOptions),
+          pipeline,
+          requestOptions,
+          allowInsecureConnection,
+          httpClient
+        );
+      },
+      delete: (requestOptions = {}) => {
+        return buildOperation(
+          "DELETE",
+          getUrl(requestOptions),
+          pipeline,
+          requestOptions,
+          allowInsecureConnection,
+          httpClient
+        );
+      },
+      head: (requestOptions = {}) => {
+        return buildOperation(
+          "HEAD",
+          getUrl(requestOptions),
+          pipeline,
+          requestOptions,
+          allowInsecureConnection,
+          httpClient
+        );
+      },
+      options: (requestOptions = {}) => {
+        return buildOperation(
+          "OPTIONS",
+          getUrl(requestOptions),
+          pipeline,
+          requestOptions,
+          allowInsecureConnection,
+          httpClient
+        );
+      },
+      trace: (requestOptions = {}) => {
+        return buildOperation(
+          "TRACE",
+          getUrl(requestOptions),
+          pipeline,
+          requestOptions,
+          allowInsecureConnection,
+          httpClient
+        );
+      }
+    };
+  };
+  return {
+    path: client,
+    pathUnchecked: client,
+    pipeline
+  };
+}
+function buildOperation(method, url, pipeline, options, allowInsecureConnection, httpClient) {
+  allowInsecureConnection = options.allowInsecureConnection ?? allowInsecureConnection;
+  return {
+    then: function(onFulfilled, onrejected) {
+      return (0, import_sendRequest.sendRequest)(
+        method,
+        url,
+        pipeline,
+        { ...options, allowInsecureConnection },
+        httpClient
+      ).then(onFulfilled, onrejected);
+    },
+    async asBrowserStream() {
+      if (import_checkEnvironment.isNodeLike) {
+        throw new Error(
+          "`asBrowserStream` is supported only in the browser environment. Use `asNodeStream` instead to obtain the response body stream. If you require a Web stream of the response in Node, consider using `Readable.toWeb` on the result of `asNodeStream`."
+        );
+      } else {
+        return (0, import_sendRequest.sendRequest)(
+          method,
+          url,
+          pipeline,
+          { ...options, allowInsecureConnection, responseAsStream: true },
+          httpClient
+        );
+      }
+    },
+    async asNodeStream() {
+      if (import_checkEnvironment.isNodeLike) {
+        return (0, import_sendRequest.sendRequest)(
+          method,
+          url,
+          pipeline,
+          { ...options, allowInsecureConnection, responseAsStream: true },
+          httpClient
+        );
+      } else {
+        throw new Error(
+          "`isNodeStream` is not supported in the browser environment. Use `asBrowserStream` to obtain the response body stream."
+        );
+      }
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=getClient.js.map
+
+
+/***/ }),
+
+/***/ 212:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var httpClientAdapter_exports = {};
+__export(httpClientAdapter_exports, {
+  convertHttpClient: () => convertHttpClient
+});
+module.exports = __toCommonJS(httpClientAdapter_exports);
+var import_response = __nccwpck_require__(413);
+var import_util = __nccwpck_require__(109);
+function convertHttpClient(requestPolicyClient) {
+  return {
+    sendRequest: async (request) => {
+      const response = await requestPolicyClient.sendRequest(
+        (0, import_util.toWebResourceLike)(request, { createProxy: true })
+      );
+      return (0, import_response.toPipelineResponse)(response);
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=httpClientAdapter.js.map
+
+
+/***/ }),
+
+/***/ 213:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var retryPolicy_exports = {};
+__export(retryPolicy_exports, {
+  retryPolicy: () => retryPolicy
+});
+module.exports = __toCommonJS(retryPolicy_exports);
+var import_logger = __nccwpck_require__(44);
+var import_constants = __nccwpck_require__(159);
+var import_policies = __nccwpck_require__(287);
+const retryPolicyLogger = (0, import_logger.createClientLogger)("core-rest-pipeline retryPolicy");
+function retryPolicy(strategies, options = { maxRetries: import_constants.DEFAULT_RETRY_POLICY_COUNT }) {
+  return (0, import_policies.retryPolicy)(strategies, {
+    logger: retryPolicyLogger,
+    ...options
+  });
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 214:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getErrorMessage = getErrorMessage;
+const util_1 = __nccwpck_require__(146);
+/**
+ * Given what is thought to be an error object, return the message if possible.
+ * If the message is missing, returns a stringified version of the input.
+ * @param e - Something thrown from a try block
+ * @returns The error message or a string of the input
+ */
+function getErrorMessage(e) {
+    if ((0, util_1.isError)(e)) {
+        return e.message;
+    }
+    else {
+        let stringified;
+        try {
+            if (typeof e === "object" && e) {
+                stringified = JSON.stringify(e);
+            }
+            else {
+                stringified = String(e);
+            }
+        }
+        catch (err) {
+            stringified = "[unable to stringify input]";
+        }
+        return `Unknown error ${stringified}`;
+    }
+}
+//# sourceMappingURL=error.js.map
+
+/***/ }),
+
+/***/ 215:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Pure input parsers / normalizers. Each one takes a raw string from
+// action.yml inputs (or env) and returns either a normalized value, a
+// detection result, or throws with a user-actionable message.
+//
+// Split out of resolve-setup.ts so the orchestration module stays
+// focused on cache-key derivation and side-effecting work.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseCacheShutdownOnIdleSeconds = parseCacheShutdownOnIdleSeconds;
+exports.detectUserLinkerEnv = detectUserLinkerEnv;
+exports.parseRustBacktrace = parseRustBacktrace;
+exports.normalizeStatsMode = normalizeStatsMode;
+exports.normalizeCompileCacheStats = normalizeCompileCacheStats;
+/**
+ * Parse the `cache-shutdown-on-idle` input into a seconds count.
+ *
+ * Accepts:
+ *   - "" / "0" / "off" / "false" / "no" → null (disabled)
+ *   - bare integer ("30")               → that many seconds
+ *   - "<N>s" / "<N>m" / "<N>h"          → seconds / minutes / hours
+ *
+ * Throws on any other value so misspellings ("30sec", "thirty") surface
+ * loudly at action start rather than silently being treated as "off".
+ */
+function parseCacheShutdownOnIdleSeconds(raw) {
+    const value = raw.trim().toLowerCase();
+    if (value === "" || value === "0" || value === "off" || value === "false" || value === "no") {
+        return null;
+    }
+    const m = value.match(/^(\d+)\s*(s|m|h)?$/);
+    if (!m) {
+        throw new Error(`invalid 'cache-shutdown-on-idle' input: '${raw}'. ` +
+            "Expected <seconds>, <N>s, <N>m, <N>h, or empty/off/false to disable.");
+    }
+    const n = parseInt(m[1], 10);
+    if (!Number.isFinite(n) || n < 0) {
+        throw new Error(`invalid 'cache-shutdown-on-idle' input: '${raw}'.`);
+    }
+    const unit = m[2] ?? "s";
+    if (unit === "s")
+        return n;
+    if (unit === "m")
+        return n * 60;
+    return n * 3600;
+}
+/**
+ * Detect cross-compile env vars the user has already set that soldr's
+ * `linker: fast` default would silently overwrite (CARGO_TARGET_<TRIPLE>_LINKER
+ * and CARGO_TARGET_<TRIPLE>_RUSTFLAGS). Returns the list of `NAME=value`
+ * strings to surface in the deferral log. See issue #108.
+ */
+function detectUserLinkerEnv(env) {
+    const hits = [];
+    for (const [name, raw] of Object.entries(env)) {
+        if (raw === undefined || raw === "")
+            continue;
+        if (!name.startsWith("CARGO_TARGET_"))
+            continue;
+        if (name.endsWith("_LINKER") || name.endsWith("_RUSTFLAGS")) {
+            hits.push(`${name}=${raw}`);
+        }
+    }
+    hits.sort();
+    return hits;
+}
+/**
+ * Parse the `rust-backtrace` input into the literal value to export as
+ * `RUST_BACKTRACE`, or `null` to skip the export entirely.
+ *
+ * Accepts:
+ *   - "1" / "true" / "on" / "yes" → "1" (trimmed backtrace; default)
+ *   - "full"                      → "full" (full stack incl. std internals)
+ *   - "" / "0" / "false" / "off" / "no" → null (don't export)
+ *
+ * Throws on anything else so typos surface at action start.
+ */
+function parseRustBacktrace(raw) {
+    const value = raw.trim().toLowerCase();
+    if (value === "" || value === "0" || value === "false" || value === "off" || value === "no") {
+        return null;
+    }
+    if (value === "1" || value === "true" || value === "on" || value === "yes")
+        return "1";
+    if (value === "full")
+        return "full";
+    throw new Error(`invalid 'rust-backtrace' input: '${raw}'. ` +
+        "Expected 1/true/on/yes, full, or 0/false/off/no/'' to disable.");
+}
+function normalizeStatsMode(raw) {
+    const v = raw.trim().toLowerCase();
+    if (v === "none" || v === "summarize" || v === "detailed")
+        return v;
+    return "summarize";
+}
+function normalizeCompileCacheStats(raw) {
+    const v = raw.trim().toLowerCase();
+    if (v === "none")
+        return "none";
+    if (v === "detailed" || v === "insights")
+        return "detailed";
+    return "summarize";
+}
+
+
+/***/ }),
+
+/***/ 216:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.saveCache = exports.restoreCache = exports.isFeatureAvailable = exports.FinalizeCacheError = exports.ReserveCacheError = exports.ValidationError = void 0;
+const core = __importStar(__nccwpck_require__(460));
+const path = __importStar(__nccwpck_require__(249));
+const utils = __importStar(__nccwpck_require__(76));
+const cacheHttpClient = __importStar(__nccwpck_require__(34));
+const cacheTwirpClient = __importStar(__nccwpck_require__(61));
+const config_1 = __nccwpck_require__(37);
+const tar_1 = __nccwpck_require__(441);
+const http_client_1 = __nccwpck_require__(286);
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ValidationError';
+        Object.setPrototypeOf(this, ValidationError.prototype);
+    }
+}
+exports.ValidationError = ValidationError;
+class ReserveCacheError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ReserveCacheError';
+        Object.setPrototypeOf(this, ReserveCacheError.prototype);
+    }
+}
+exports.ReserveCacheError = ReserveCacheError;
+class FinalizeCacheError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'FinalizeCacheError';
+        Object.setPrototypeOf(this, FinalizeCacheError.prototype);
+    }
+}
+exports.FinalizeCacheError = FinalizeCacheError;
+function checkPaths(paths) {
+    if (!paths || paths.length === 0) {
+        throw new ValidationError(`Path Validation Error: At least one directory or file path is required`);
+    }
+}
+function checkKey(key) {
+    if (key.length > 512) {
+        throw new ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
+    }
+    const regex = /^[^,]*$/;
+    if (!regex.test(key)) {
+        throw new ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
+    }
+}
+/**
+ * isFeatureAvailable to check the presence of Actions cache service
+ *
+ * @returns boolean return true if Actions cache service feature is available, otherwise false
+ */
+function isFeatureAvailable() {
+    const cacheServiceVersion = (0, config_1.getCacheServiceVersion)();
+    // Check availability based on cache service version
+    switch (cacheServiceVersion) {
+        case 'v2':
+            // For v2, we need ACTIONS_RESULTS_URL
+            return !!process.env['ACTIONS_RESULTS_URL'];
+        case 'v1':
+        default:
+            // For v1, we only need ACTIONS_CACHE_URL
+            return !!process.env['ACTIONS_CACHE_URL'];
+    }
+}
+exports.isFeatureAvailable = isFeatureAvailable;
+/**
+ * Restores cache from keys
+ *
+ * @param paths a list of file paths to restore from the cache
+ * @param primaryKey an explicit key for restoring the cache. Lookup is done with prefix matching.
+ * @param restoreKeys an optional ordered list of keys to use for restoring the cache if no cache hit occurred for primaryKey
+ * @param downloadOptions cache download options
+ * @param enableCrossOsArchive an optional boolean enabled to restore on windows any cache created on any platform
+ * @returns string returns the key for the cache hit, otherwise returns undefined
+ */
+function restoreCache(paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const cacheServiceVersion = (0, config_1.getCacheServiceVersion)();
+        core.debug(`Cache service version: ${cacheServiceVersion}`);
+        checkPaths(paths);
+        switch (cacheServiceVersion) {
+            case 'v2':
+                return yield restoreCacheV2(paths, primaryKey, restoreKeys, options, enableCrossOsArchive);
+            case 'v1':
+            default:
+                return yield restoreCacheV1(paths, primaryKey, restoreKeys, options, enableCrossOsArchive);
+        }
+    });
+}
+exports.restoreCache = restoreCache;
+/**
+ * Restores cache using the legacy Cache Service
+ *
+ * @param paths a list of file paths to restore from the cache
+ * @param primaryKey an explicit key for restoring the cache. Lookup is done with prefix matching.
+ * @param restoreKeys an optional ordered list of keys to use for restoring the cache if no cache hit occurred for primaryKey
+ * @param options cache download options
+ * @param enableCrossOsArchive an optional boolean enabled to restore on Windows any cache created on any platform
+ * @returns string returns the key for the cache hit, otherwise returns undefined
+ */
+function restoreCacheV1(paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        restoreKeys = restoreKeys || [];
+        const keys = [primaryKey, ...restoreKeys];
+        core.debug('Resolved Keys:');
+        core.debug(JSON.stringify(keys));
+        if (keys.length > 10) {
+            throw new ValidationError(`Key Validation Error: Keys are limited to a maximum of 10.`);
+        }
+        for (const key of keys) {
+            checkKey(key);
+        }
+        const compressionMethod = yield utils.getCompressionMethod();
+        let archivePath = '';
+        try {
+            // path are needed to compute version
+            const cacheEntry = yield cacheHttpClient.getCacheEntry(keys, paths, {
+                compressionMethod,
+                enableCrossOsArchive
+            });
+            if (!(cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.archiveLocation)) {
+                // Cache not found
+                return undefined;
+            }
+            if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
+                core.info('Lookup only - skipping download');
+                return cacheEntry.cacheKey;
+            }
+            archivePath = path.join(yield utils.createTempDirectory(), utils.getCacheFileName(compressionMethod));
+            core.debug(`Archive Path: ${archivePath}`);
+            // Download the cache from the cache entry
+            yield cacheHttpClient.downloadCache(cacheEntry.archiveLocation, archivePath, options);
+            if (core.isDebug()) {
+                yield (0, tar_1.listTar)(archivePath, compressionMethod);
+            }
+            const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+            core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+            yield (0, tar_1.extractTar)(archivePath, compressionMethod);
+            core.info('Cache restored successfully');
+            return cacheEntry.cacheKey;
+        }
+        catch (error) {
+            const typedError = error;
+            if (typedError.name === ValidationError.name) {
+                throw error;
+            }
+            else {
+                // warn on cache restore failure and continue build
+                // Log server errors (5xx) as errors, all other errors as warnings
+                if (typedError instanceof http_client_1.HttpClientError &&
+                    typeof typedError.statusCode === 'number' &&
+                    typedError.statusCode >= 500) {
+                    core.error(`Failed to restore: ${error.message}`);
+                }
+                else {
+                    core.warning(`Failed to restore: ${error.message}`);
+                }
+            }
+        }
+        finally {
+            // Try to delete the archive to save space
+            try {
+                yield utils.unlinkFile(archivePath);
+            }
+            catch (error) {
+                core.debug(`Failed to delete archive: ${error}`);
+            }
+        }
+        return undefined;
+    });
+}
+/**
+ * Restores cache using Cache Service v2
+ *
+ * @param paths a list of file paths to restore from the cache
+ * @param primaryKey an explicit key for restoring the cache. Lookup is done with prefix matching
+ * @param restoreKeys an optional ordered list of keys to use for restoring the cache if no cache hit occurred for primaryKey
+ * @param downloadOptions cache download options
+ * @param enableCrossOsArchive an optional boolean enabled to restore on windows any cache created on any platform
+ * @returns string returns the key for the cache hit, otherwise returns undefined
+ */
+function restoreCacheV2(paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Override UploadOptions to force the use of Azure
+        options = Object.assign(Object.assign({}, options), { useAzureSdk: true });
+        restoreKeys = restoreKeys || [];
+        const keys = [primaryKey, ...restoreKeys];
+        core.debug('Resolved Keys:');
+        core.debug(JSON.stringify(keys));
+        if (keys.length > 10) {
+            throw new ValidationError(`Key Validation Error: Keys are limited to a maximum of 10.`);
+        }
+        for (const key of keys) {
+            checkKey(key);
+        }
+        let archivePath = '';
+        try {
+            const twirpClient = cacheTwirpClient.internalCacheTwirpClient();
+            const compressionMethod = yield utils.getCompressionMethod();
+            const request = {
+                key: primaryKey,
+                restoreKeys,
+                version: utils.getCacheVersion(paths, compressionMethod, enableCrossOsArchive)
+            };
+            const response = yield twirpClient.GetCacheEntryDownloadURL(request);
+            if (!response.ok) {
+                core.debug(`Cache not found for version ${request.version} of keys: ${keys.join(', ')}`);
+                return undefined;
+            }
+            const isRestoreKeyMatch = request.key !== response.matchedKey;
+            if (isRestoreKeyMatch) {
+                core.info(`Cache hit for restore-key: ${response.matchedKey}`);
+            }
+            else {
+                core.info(`Cache hit for: ${response.matchedKey}`);
+            }
+            if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
+                core.info('Lookup only - skipping download');
+                return response.matchedKey;
+            }
+            archivePath = path.join(yield utils.createTempDirectory(), utils.getCacheFileName(compressionMethod));
+            core.debug(`Archive path: ${archivePath}`);
+            core.debug(`Starting download of archive to: ${archivePath}`);
+            yield cacheHttpClient.downloadCache(response.signedDownloadUrl, archivePath, options);
+            const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+            core.info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+            if (core.isDebug()) {
+                yield (0, tar_1.listTar)(archivePath, compressionMethod);
+            }
+            yield (0, tar_1.extractTar)(archivePath, compressionMethod);
+            core.info('Cache restored successfully');
+            return response.matchedKey;
+        }
+        catch (error) {
+            const typedError = error;
+            if (typedError.name === ValidationError.name) {
+                throw error;
+            }
+            else {
+                // Supress all non-validation cache related errors because caching should be optional
+                // Log server errors (5xx) as errors, all other errors as warnings
+                if (typedError instanceof http_client_1.HttpClientError &&
+                    typeof typedError.statusCode === 'number' &&
+                    typedError.statusCode >= 500) {
+                    core.error(`Failed to restore: ${error.message}`);
+                }
+                else {
+                    core.warning(`Failed to restore: ${error.message}`);
+                }
+            }
+        }
+        finally {
+            try {
+                if (archivePath) {
+                    yield utils.unlinkFile(archivePath);
+                }
+            }
+            catch (error) {
+                core.debug(`Failed to delete archive: ${error}`);
+            }
+        }
+        return undefined;
+    });
+}
+/**
+ * Saves a list of files with the specified key
+ *
+ * @param paths a list of file paths to be cached
+ * @param key an explicit key for restoring the cache
+ * @param enableCrossOsArchive an optional boolean enabled to save cache on windows which could be restored on any platform
+ * @param options cache upload options
+ * @returns number returns cacheId if the cache was saved successfully and throws an error if save fails
+ */
+function saveCache(paths, key, options, enableCrossOsArchive = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const cacheServiceVersion = (0, config_1.getCacheServiceVersion)();
+        core.debug(`Cache service version: ${cacheServiceVersion}`);
+        checkPaths(paths);
+        checkKey(key);
+        switch (cacheServiceVersion) {
+            case 'v2':
+                return yield saveCacheV2(paths, key, options, enableCrossOsArchive);
+            case 'v1':
+            default:
+                return yield saveCacheV1(paths, key, options, enableCrossOsArchive);
+        }
+    });
+}
+exports.saveCache = saveCache;
+/**
+ * Save cache using the legacy Cache Service
+ *
+ * @param paths
+ * @param key
+ * @param options
+ * @param enableCrossOsArchive
+ * @returns
+ */
+function saveCacheV1(paths, key, options, enableCrossOsArchive = false) {
+    var _a, _b, _c, _d, _e;
+    return __awaiter(this, void 0, void 0, function* () {
+        const compressionMethod = yield utils.getCompressionMethod();
+        let cacheId = -1;
+        const cachePaths = yield utils.resolvePaths(paths);
+        core.debug('Cache Paths:');
+        core.debug(`${JSON.stringify(cachePaths)}`);
+        if (cachePaths.length === 0) {
+            throw new Error(`Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.`);
+        }
+        const archiveFolder = yield utils.createTempDirectory();
+        const archivePath = path.join(archiveFolder, utils.getCacheFileName(compressionMethod));
+        core.debug(`Archive Path: ${archivePath}`);
+        try {
+            yield (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
+            if (core.isDebug()) {
+                yield (0, tar_1.listTar)(archivePath, compressionMethod);
+            }
+            const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
+            const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+            core.debug(`File Size: ${archiveFileSize}`);
+            // For GHES, this check will take place in ReserveCache API with enterprise file size limit
+            if (archiveFileSize > fileSizeLimit && !(0, config_1.isGhes)()) {
+                throw new Error(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`);
+            }
+            core.debug('Reserving Cache');
+            const reserveCacheResponse = yield cacheHttpClient.reserveCache(key, paths, {
+                compressionMethod,
+                enableCrossOsArchive,
+                cacheSize: archiveFileSize
+            });
+            if ((_a = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.result) === null || _a === void 0 ? void 0 : _a.cacheId) {
+                cacheId = (_b = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.result) === null || _b === void 0 ? void 0 : _b.cacheId;
+            }
+            else if ((reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.statusCode) === 400) {
+                throw new Error((_d = (_c = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _c === void 0 ? void 0 : _c.message) !== null && _d !== void 0 ? _d : `Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`);
+            }
+            else {
+                throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache. More details: ${(_e = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _e === void 0 ? void 0 : _e.message}`);
+            }
+            core.debug(`Saving Cache (ID: ${cacheId})`);
+            yield cacheHttpClient.saveCache(cacheId, archivePath, '', options);
+        }
+        catch (error) {
+            const typedError = error;
+            if (typedError.name === ValidationError.name) {
+                throw error;
+            }
+            else if (typedError.name === ReserveCacheError.name) {
+                core.info(`Failed to save: ${typedError.message}`);
+            }
+            else {
+                // Log server errors (5xx) as errors, all other errors as warnings
+                if (typedError instanceof http_client_1.HttpClientError &&
+                    typeof typedError.statusCode === 'number' &&
+                    typedError.statusCode >= 500) {
+                    core.error(`Failed to save: ${typedError.message}`);
+                }
+                else {
+                    core.warning(`Failed to save: ${typedError.message}`);
+                }
+            }
+        }
+        finally {
+            // Try to delete the archive to save space
+            try {
+                yield utils.unlinkFile(archivePath);
+            }
+            catch (error) {
+                core.debug(`Failed to delete archive: ${error}`);
+            }
+        }
+        return cacheId;
+    });
+}
+/**
+ * Save cache using Cache Service v2
+ *
+ * @param paths a list of file paths to restore from the cache
+ * @param key an explicit key for restoring the cache
+ * @param options cache upload options
+ * @param enableCrossOsArchive an optional boolean enabled to save cache on windows which could be restored on any platform
+ * @returns
+ */
+function saveCacheV2(paths, key, options, enableCrossOsArchive = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Override UploadOptions to force the use of Azure
+        // ...options goes first because we want to override the default values
+        // set in UploadOptions with these specific figures
+        options = Object.assign(Object.assign({}, options), { uploadChunkSize: 64 * 1024 * 1024, uploadConcurrency: 8, useAzureSdk: true });
+        const compressionMethod = yield utils.getCompressionMethod();
+        const twirpClient = cacheTwirpClient.internalCacheTwirpClient();
+        let cacheId = -1;
+        const cachePaths = yield utils.resolvePaths(paths);
+        core.debug('Cache Paths:');
+        core.debug(`${JSON.stringify(cachePaths)}`);
+        if (cachePaths.length === 0) {
+            throw new Error(`Path Validation Error: Path(s) specified in the action for caching do(es) not exist, hence no cache is being saved.`);
+        }
+        const archiveFolder = yield utils.createTempDirectory();
+        const archivePath = path.join(archiveFolder, utils.getCacheFileName(compressionMethod));
+        core.debug(`Archive Path: ${archivePath}`);
+        try {
+            yield (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
+            if (core.isDebug()) {
+                yield (0, tar_1.listTar)(archivePath, compressionMethod);
+            }
+            const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+            core.debug(`File Size: ${archiveFileSize}`);
+            // Set the archive size in the options, will be used to display the upload progress
+            options.archiveSizeBytes = archiveFileSize;
+            core.debug('Reserving Cache');
+            const version = utils.getCacheVersion(paths, compressionMethod, enableCrossOsArchive);
+            const request = {
+                key,
+                version
+            };
+            let signedUploadUrl;
+            try {
+                const response = yield twirpClient.CreateCacheEntry(request);
+                if (!response.ok) {
+                    if (response.message) {
+                        core.warning(`Cache reservation failed: ${response.message}`);
+                    }
+                    throw new Error(response.message || 'Response was not ok');
+                }
+                signedUploadUrl = response.signedUploadUrl;
+            }
+            catch (error) {
+                core.debug(`Failed to reserve cache: ${error}`);
+                throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache.`);
+            }
+            core.debug(`Attempting to upload cache located at: ${archivePath}`);
+            yield cacheHttpClient.saveCache(cacheId, archivePath, signedUploadUrl, options);
+            const finalizeRequest = {
+                key,
+                version,
+                sizeBytes: `${archiveFileSize}`
+            };
+            const finalizeResponse = yield twirpClient.FinalizeCacheEntryUpload(finalizeRequest);
+            core.debug(`FinalizeCacheEntryUploadResponse: ${finalizeResponse.ok}`);
+            if (!finalizeResponse.ok) {
+                if (finalizeResponse.message) {
+                    throw new FinalizeCacheError(finalizeResponse.message);
+                }
+                throw new Error(`Unable to finalize cache with key ${key}, another job may be finalizing this cache.`);
+            }
+            cacheId = parseInt(finalizeResponse.entryId);
+        }
+        catch (error) {
+            const typedError = error;
+            if (typedError.name === ValidationError.name) {
+                throw error;
+            }
+            else if (typedError.name === ReserveCacheError.name) {
+                core.info(`Failed to save: ${typedError.message}`);
+            }
+            else if (typedError.name === FinalizeCacheError.name) {
+                core.warning(typedError.message);
+            }
+            else {
+                // Log server errors (5xx) as errors, all other errors as warnings
+                if (typedError instanceof http_client_1.HttpClientError &&
+                    typeof typedError.statusCode === 'number' &&
+                    typedError.statusCode >= 500) {
+                    core.error(`Failed to save: ${typedError.message}`);
+                }
+                else {
+                    core.warning(`Failed to save: ${typedError.message}`);
+                }
+            }
+        }
+        finally {
+            // Try to delete the archive to save space
+            try {
+                yield utils.unlinkFile(archivePath);
+            }
+            catch (error) {
+                core.debug(`Failed to delete archive: ${error}`);
+            }
+        }
+        return cacheId;
+    });
+}
+//# sourceMappingURL=cache.js.map
+
+/***/ }),
+
+/***/ 217:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var extendedClient_exports = {};
+__export(extendedClient_exports, {
+  ExtendedServiceClient: () => ExtendedServiceClient
+});
+module.exports = __toCommonJS(extendedClient_exports);
+var import_disableKeepAlivePolicy = __nccwpck_require__(8);
+var import_core_rest_pipeline = __nccwpck_require__(101);
+var import_core_client = __nccwpck_require__(440);
+var import_response = __nccwpck_require__(413);
+class ExtendedServiceClient extends import_core_client.ServiceClient {
+  constructor(options) {
+    super(options);
+    if (options.keepAliveOptions?.enable === false && !(0, import_disableKeepAlivePolicy.pipelineContainsDisableKeepAlivePolicy)(this.pipeline)) {
+      this.pipeline.addPolicy((0, import_disableKeepAlivePolicy.createDisableKeepAlivePolicy)());
+    }
+    if (options.redirectOptions?.handleRedirects === false) {
+      this.pipeline.removePolicy({
+        name: import_core_rest_pipeline.redirectPolicyName
+      });
+    }
+  }
+  /**
+   * Compatible send operation request function.
+   *
+   * @param operationArguments - Operation arguments
+   * @param operationSpec - Operation Spec
+   * @returns
+   */
+  async sendOperationRequest(operationArguments, operationSpec) {
+    const userProvidedCallBack = operationArguments?.options?.onResponse;
+    let lastResponse;
+    function onResponse(rawResponse, flatResponse, error) {
+      lastResponse = rawResponse;
+      if (userProvidedCallBack) {
+        userProvidedCallBack(rawResponse, flatResponse, error);
+      }
+    }
+    operationArguments.options = {
+      ...operationArguments.options,
+      onResponse
+    };
+    const result = await super.sendOperationRequest(operationArguments, operationSpec);
+    if (lastResponse) {
+      Object.defineProperty(result, "_response", {
+        value: (0, import_response.toCompatResponse)(lastResponse)
+      });
+    }
+    return result;
+  }
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=extendedClient.js.map
+
+
+/***/ }),
+
+/***/ 218:
+/***/ ((module) => {
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global global, define, Symbol, Reflect, Promise, SuppressedError, Iterator */
+var __extends;
+var __assign;
+var __rest;
+var __decorate;
+var __param;
+var __esDecorate;
+var __runInitializers;
+var __propKey;
+var __setFunctionName;
+var __metadata;
+var __awaiter;
+var __generator;
+var __exportStar;
+var __values;
+var __read;
+var __spread;
+var __spreadArrays;
+var __spreadArray;
+var __await;
+var __asyncGenerator;
+var __asyncDelegator;
+var __asyncValues;
+var __makeTemplateObject;
+var __importStar;
+var __importDefault;
+var __classPrivateFieldGet;
+var __classPrivateFieldSet;
+var __classPrivateFieldIn;
+var __createBinding;
+var __addDisposableResource;
+var __disposeResources;
+var __rewriteRelativeImportExtension;
+(function (factory) {
+    var root = typeof global === "object" ? global : typeof self === "object" ? self : typeof this === "object" ? this : {};
+    if (typeof define === "function" && define.amd) {
+        define("tslib", ["exports"], function (exports) { factory(createExporter(root, createExporter(exports))); });
+    }
+    else if ( true && typeof module.exports === "object") {
+        factory(createExporter(root, createExporter(module.exports)));
+    }
+    else {
+        factory(createExporter(root));
+    }
+    function createExporter(exports, previous) {
+        if (exports !== root) {
+            if (typeof Object.create === "function") {
+                Object.defineProperty(exports, "__esModule", { value: true });
+            }
+            else {
+                exports.__esModule = true;
+            }
+        }
+        return function (id, v) { return exports[id] = previous ? previous(id, v) : v; };
+    }
+})
+(function (exporter) {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+
+    __extends = function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+
+    __assign = Object.assign || function (t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+
+    __rest = function (s, e) {
+        var t = {};
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+            t[p] = s[p];
+        if (s != null && typeof Object.getOwnPropertySymbols === "function")
+            for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+                if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                    t[p[i]] = s[p[i]];
+            }
+        return t;
+    };
+
+    __decorate = function (decorators, target, key, desc) {
+        var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+        if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+        else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+        return c > 3 && r && Object.defineProperty(target, key, r), r;
+    };
+
+    __param = function (paramIndex, decorator) {
+        return function (target, key) { decorator(target, key, paramIndex); }
+    };
+
+    __esDecorate = function (ctor, descriptorIn, decorators, contextIn, initializers, extraInitializers) {
+        function accept(f) { if (f !== void 0 && typeof f !== "function") throw new TypeError("Function expected"); return f; }
+        var kind = contextIn.kind, key = kind === "getter" ? "get" : kind === "setter" ? "set" : "value";
+        var target = !descriptorIn && ctor ? contextIn["static"] ? ctor : ctor.prototype : null;
+        var descriptor = descriptorIn || (target ? Object.getOwnPropertyDescriptor(target, contextIn.name) : {});
+        var _, done = false;
+        for (var i = decorators.length - 1; i >= 0; i--) {
+            var context = {};
+            for (var p in contextIn) context[p] = p === "access" ? {} : contextIn[p];
+            for (var p in contextIn.access) context.access[p] = contextIn.access[p];
+            context.addInitializer = function (f) { if (done) throw new TypeError("Cannot add initializers after decoration has completed"); extraInitializers.push(accept(f || null)); };
+            var result = (0, decorators[i])(kind === "accessor" ? { get: descriptor.get, set: descriptor.set } : descriptor[key], context);
+            if (kind === "accessor") {
+                if (result === void 0) continue;
+                if (result === null || typeof result !== "object") throw new TypeError("Object expected");
+                if (_ = accept(result.get)) descriptor.get = _;
+                if (_ = accept(result.set)) descriptor.set = _;
+                if (_ = accept(result.init)) initializers.unshift(_);
+            }
+            else if (_ = accept(result)) {
+                if (kind === "field") initializers.unshift(_);
+                else descriptor[key] = _;
+            }
+        }
+        if (target) Object.defineProperty(target, contextIn.name, descriptor);
+        done = true;
+    };
+
+    __runInitializers = function (thisArg, initializers, value) {
+        var useValue = arguments.length > 2;
+        for (var i = 0; i < initializers.length; i++) {
+            value = useValue ? initializers[i].call(thisArg, value) : initializers[i].call(thisArg);
+        }
+        return useValue ? value : void 0;
+    };
+
+    __propKey = function (x) {
+        return typeof x === "symbol" ? x : "".concat(x);
+    };
+
+    __setFunctionName = function (f, name, prefix) {
+        if (typeof name === "symbol") name = name.description ? "[".concat(name.description, "]") : "";
+        return Object.defineProperty(f, "name", { configurable: true, value: prefix ? "".concat(prefix, " ", name) : name });
+    };
+
+    __metadata = function (metadataKey, metadataValue) {
+        if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+    };
+
+    __awaiter = function (thisArg, _arguments, P, generator) {
+        function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+        return new (P || (P = Promise))(function (resolve, reject) {
+            function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+            function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+            function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+            step((generator = generator.apply(thisArg, _arguments || [])).next());
+        });
+    };
+
+    __generator = function (thisArg, body) {
+        var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+        return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+        function verb(n) { return function (v) { return step([n, v]); }; }
+        function step(op) {
+            if (f) throw new TypeError("Generator is already executing.");
+            while (g && (g = 0, op[0] && (_ = 0)), _) try {
+                if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+                if (y = 0, t) op = [op[0] & 2, t.value];
+                switch (op[0]) {
+                    case 0: case 1: t = op; break;
+                    case 4: _.label++; return { value: op[1], done: false };
+                    case 5: _.label++; y = op[1]; op = [0]; continue;
+                    case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                    default:
+                        if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                        if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                        if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                        if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                        if (t[2]) _.ops.pop();
+                        _.trys.pop(); continue;
+                }
+                op = body.call(thisArg, _);
+            } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+            if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+        }
+    };
+
+    __exportStar = function(m, o) {
+        for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(o, p)) __createBinding(o, m, p);
+    };
+
+    __createBinding = Object.create ? (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        var desc = Object.getOwnPropertyDescriptor(m, k);
+        if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+            desc = { enumerable: true, get: function() { return m[k]; } };
+        }
+        Object.defineProperty(o, k2, desc);
+    }) : (function(o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        o[k2] = m[k];
+    });
+
+    __values = function (o) {
+        var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+        if (m) return m.call(o);
+        if (o && typeof o.length === "number") return {
+            next: function () {
+                if (o && i >= o.length) o = void 0;
+                return { value: o && o[i++], done: !o };
+            }
+        };
+        throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+    };
+
+    __read = function (o, n) {
+        var m = typeof Symbol === "function" && o[Symbol.iterator];
+        if (!m) return o;
+        var i = m.call(o), r, ar = [], e;
+        try {
+            while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+        }
+        catch (error) { e = { error: error }; }
+        finally {
+            try {
+                if (r && !r.done && (m = i["return"])) m.call(i);
+            }
+            finally { if (e) throw e.error; }
+        }
+        return ar;
+    };
+
+    /** @deprecated */
+    __spread = function () {
+        for (var ar = [], i = 0; i < arguments.length; i++)
+            ar = ar.concat(__read(arguments[i]));
+        return ar;
+    };
+
+    /** @deprecated */
+    __spreadArrays = function () {
+        for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+        for (var r = Array(s), k = 0, i = 0; i < il; i++)
+            for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+                r[k] = a[j];
+        return r;
+    };
+
+    __spreadArray = function (to, from, pack) {
+        if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+            if (ar || !(i in from)) {
+                if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+                ar[i] = from[i];
+            }
+        }
+        return to.concat(ar || Array.prototype.slice.call(from));
+    };
+
+    __await = function (v) {
+        return this instanceof __await ? (this.v = v, this) : new __await(v);
+    };
+
+    __asyncGenerator = function (thisArg, _arguments, generator) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var g = generator.apply(thisArg, _arguments || []), i, q = [];
+        return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function () { return this; }, i;
+        function awaitReturn(f) { return function (v) { return Promise.resolve(v).then(f, reject); }; }
+        function verb(n, f) { if (g[n]) { i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; if (f) i[n] = f(i[n]); } }
+        function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+        function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
+        function fulfill(value) { resume("next", value); }
+        function reject(value) { resume("throw", value); }
+        function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+    };
+
+    __asyncDelegator = function (o) {
+        var i, p;
+        return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+        function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: false } : f ? f(v) : v; } : f; }
+    };
+
+    __asyncValues = function (o) {
+        if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+        var m = o[Symbol.asyncIterator], i;
+        return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+        function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+        function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+    };
+
+    __makeTemplateObject = function (cooked, raw) {
+        if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+        return cooked;
+    };
+
+    var __setModuleDefault = Object.create ? (function(o, v) {
+        Object.defineProperty(o, "default", { enumerable: true, value: v });
+    }) : function(o, v) {
+        o["default"] = v;
+    };
+
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+
+    __importStar = function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+
+    __importDefault = function (mod) {
+        return (mod && mod.__esModule) ? mod : { "default": mod };
+    };
+
+    __classPrivateFieldGet = function (receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    };
+
+    __classPrivateFieldSet = function (receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    };
+
+    __classPrivateFieldIn = function (state, receiver) {
+        if (receiver === null || (typeof receiver !== "object" && typeof receiver !== "function")) throw new TypeError("Cannot use 'in' operator on non-object");
+        return typeof state === "function" ? receiver === state : state.has(receiver);
+    };
+
+    __addDisposableResource = function (env, value, async) {
+        if (value !== null && value !== void 0) {
+            if (typeof value !== "object" && typeof value !== "function") throw new TypeError("Object expected.");
+            var dispose, inner;
+            if (async) {
+                if (!Symbol.asyncDispose) throw new TypeError("Symbol.asyncDispose is not defined.");
+                dispose = value[Symbol.asyncDispose];
+            }
+            if (dispose === void 0) {
+                if (!Symbol.dispose) throw new TypeError("Symbol.dispose is not defined.");
+                dispose = value[Symbol.dispose];
+                if (async) inner = dispose;
+            }
+            if (typeof dispose !== "function") throw new TypeError("Object not disposable.");
+            if (inner) dispose = function() { try { inner.call(this); } catch (e) { return Promise.reject(e); } };
+            env.stack.push({ value: value, dispose: dispose, async: async });
+        }
+        else if (async) {
+            env.stack.push({ async: true });
+        }
+        return value;
+    };
+
+    var _SuppressedError = typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+        var e = new Error(message);
+        return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+    };
+
+    __disposeResources = function (env) {
+        function fail(e) {
+            env.error = env.hasError ? new _SuppressedError(e, env.error, "An error was suppressed during disposal.") : e;
+            env.hasError = true;
+        }
+        var r, s = 0;
+        function next() {
+            while (r = env.stack.pop()) {
+                try {
+                    if (!r.async && s === 1) return s = 0, env.stack.push(r), Promise.resolve().then(next);
+                    if (r.dispose) {
+                        var result = r.dispose.call(r.value);
+                        if (r.async) return s |= 2, Promise.resolve(result).then(next, function(e) { fail(e); return next(); });
+                    }
+                    else s |= 1;
+                }
+                catch (e) {
+                    fail(e);
+                }
+            }
+            if (s === 1) return env.hasError ? Promise.reject(env.error) : Promise.resolve();
+            if (env.hasError) throw env.error;
+        }
+        return next();
+    };
+
+    __rewriteRelativeImportExtension = function (path, preserveJsx) {
+        if (typeof path === "string" && /^\.\.?\//.test(path)) {
+            return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function (m, tsx, d, ext, cm) {
+                return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : (d + ext + "." + cm.toLowerCase() + "js");
+            });
+        }
+        return path;
+    };
+
+    exporter("__extends", __extends);
+    exporter("__assign", __assign);
+    exporter("__rest", __rest);
+    exporter("__decorate", __decorate);
+    exporter("__param", __param);
+    exporter("__esDecorate", __esDecorate);
+    exporter("__runInitializers", __runInitializers);
+    exporter("__propKey", __propKey);
+    exporter("__setFunctionName", __setFunctionName);
+    exporter("__metadata", __metadata);
+    exporter("__awaiter", __awaiter);
+    exporter("__generator", __generator);
+    exporter("__exportStar", __exportStar);
+    exporter("__createBinding", __createBinding);
+    exporter("__values", __values);
+    exporter("__read", __read);
+    exporter("__spread", __spread);
+    exporter("__spreadArrays", __spreadArrays);
+    exporter("__spreadArray", __spreadArray);
+    exporter("__await", __await);
+    exporter("__asyncGenerator", __asyncGenerator);
+    exporter("__asyncDelegator", __asyncDelegator);
+    exporter("__asyncValues", __asyncValues);
+    exporter("__makeTemplateObject", __makeTemplateObject);
+    exporter("__importStar", __importStar);
+    exporter("__importDefault", __importDefault);
+    exporter("__classPrivateFieldGet", __classPrivateFieldGet);
+    exporter("__classPrivateFieldSet", __classPrivateFieldSet);
+    exporter("__classPrivateFieldIn", __classPrivateFieldIn);
+    exporter("__addDisposableResource", __addDisposableResource);
+    exporter("__disposeResources", __disposeResources);
+    exporter("__rewriteRelativeImportExtension", __rewriteRelativeImportExtension);
+});
+
+0 && (0);
+
+
+/***/ }),
+
+/***/ 219:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var bearerTokenAuthenticationPolicy_exports = {};
+__export(bearerTokenAuthenticationPolicy_exports, {
+  bearerTokenAuthenticationPolicy: () => bearerTokenAuthenticationPolicy,
+  bearerTokenAuthenticationPolicyName: () => bearerTokenAuthenticationPolicyName,
+  parseChallenges: () => parseChallenges
+});
+module.exports = __toCommonJS(bearerTokenAuthenticationPolicy_exports);
+var import_tokenCycler = __nccwpck_require__(162);
+var import_log = __nccwpck_require__(184);
+var import_restError = __nccwpck_require__(354);
+const bearerTokenAuthenticationPolicyName = "bearerTokenAuthenticationPolicy";
+async function trySendRequest(request, next) {
+  try {
+    return [await next(request), void 0];
+  } catch (e) {
+    if ((0, import_restError.isRestError)(e) && e.response) {
+      return [e.response, e];
+    } else {
+      throw e;
+    }
+  }
+}
+async function defaultAuthorizeRequest(options) {
+  const { scopes, getAccessToken, request } = options;
+  const getTokenOptions = {
+    abortSignal: request.abortSignal,
+    tracingOptions: request.tracingOptions,
+    enableCae: true
+  };
+  const accessToken = await getAccessToken(scopes, getTokenOptions);
+  if (accessToken) {
+    options.request.headers.set("Authorization", `Bearer ${accessToken.token}`);
+  }
+}
+function isChallengeResponse(response) {
+  return response.status === 401 && response.headers.has("WWW-Authenticate");
+}
+async function authorizeRequestOnCaeChallenge(onChallengeOptions, caeClaims) {
+  const { scopes } = onChallengeOptions;
+  const accessToken = await onChallengeOptions.getAccessToken(scopes, {
+    enableCae: true,
+    claims: caeClaims
+  });
+  if (!accessToken) {
+    return false;
+  }
+  onChallengeOptions.request.headers.set(
+    "Authorization",
+    `${accessToken.tokenType ?? "Bearer"} ${accessToken.token}`
+  );
+  return true;
+}
+function bearerTokenAuthenticationPolicy(options) {
+  const { credential, scopes, challengeCallbacks } = options;
+  const logger = options.logger || import_log.logger;
+  const callbacks = {
+    authorizeRequest: challengeCallbacks?.authorizeRequest?.bind(challengeCallbacks) ?? defaultAuthorizeRequest,
+    authorizeRequestOnChallenge: challengeCallbacks?.authorizeRequestOnChallenge?.bind(challengeCallbacks)
+  };
+  const getAccessToken = credential ? (0, import_tokenCycler.createTokenCycler)(
+    credential
+    /* , options */
+  ) : () => Promise.resolve(null);
+  return {
+    name: bearerTokenAuthenticationPolicyName,
+    /**
+     * If there's no challenge parameter:
+     * - It will try to retrieve the token using the cache, or the credential's getToken.
+     * - Then it will try the next policy with or without the retrieved token.
+     *
+     * It uses the challenge parameters to:
+     * - Skip a first attempt to get the token from the credential if there's no cached token,
+     *   since it expects the token to be retrievable only after the challenge.
+     * - Prepare the outgoing request if the `prepareRequest` method has been provided.
+     * - Send an initial request to receive the challenge if it fails.
+     * - Process a challenge if the response contains it.
+     * - Retrieve a token with the challenge information, then re-send the request.
+     */
+    async sendRequest(request, next) {
+      if (!request.url.toLowerCase().startsWith("https://")) {
+        throw new Error(
+          "Bearer token authentication is not permitted for non-TLS protected (non-https) URLs."
+        );
+      }
+      await callbacks.authorizeRequest({
+        scopes: Array.isArray(scopes) ? scopes : [scopes],
+        request,
+        getAccessToken,
+        logger
+      });
+      let response;
+      let error;
+      let shouldSendRequest;
+      [response, error] = await trySendRequest(request, next);
+      if (isChallengeResponse(response)) {
+        let claims = getCaeChallengeClaims(response.headers.get("WWW-Authenticate"));
+        if (claims) {
+          let parsedClaim;
+          try {
+            parsedClaim = atob(claims);
+          } catch (e) {
+            logger.warning(
+              `The WWW-Authenticate header contains "claims" that cannot be parsed. Unable to perform the Continuous Access Evaluation authentication flow. Unparsable claims: ${claims}`
+            );
+            return response;
+          }
+          shouldSendRequest = await authorizeRequestOnCaeChallenge(
+            {
+              scopes: Array.isArray(scopes) ? scopes : [scopes],
+              response,
+              request,
+              getAccessToken,
+              logger
+            },
+            parsedClaim
+          );
+          if (shouldSendRequest) {
+            [response, error] = await trySendRequest(request, next);
+          }
+        } else if (callbacks.authorizeRequestOnChallenge) {
+          shouldSendRequest = await callbacks.authorizeRequestOnChallenge({
+            scopes: Array.isArray(scopes) ? scopes : [scopes],
+            request,
+            response,
+            getAccessToken,
+            logger
+          });
+          if (shouldSendRequest) {
+            [response, error] = await trySendRequest(request, next);
+          }
+          if (isChallengeResponse(response)) {
+            claims = getCaeChallengeClaims(response.headers.get("WWW-Authenticate"));
+            if (claims) {
+              let parsedClaim;
+              try {
+                parsedClaim = atob(claims);
+              } catch (e) {
+                logger.warning(
+                  `The WWW-Authenticate header contains "claims" that cannot be parsed. Unable to perform the Continuous Access Evaluation authentication flow. Unparsable claims: ${claims}`
+                );
+                return response;
+              }
+              shouldSendRequest = await authorizeRequestOnCaeChallenge(
+                {
+                  scopes: Array.isArray(scopes) ? scopes : [scopes],
+                  response,
+                  request,
+                  getAccessToken,
+                  logger
+                },
+                parsedClaim
+              );
+              if (shouldSendRequest) {
+                [response, error] = await trySendRequest(request, next);
+              }
+            }
+          }
+        }
+      }
+      if (error) {
+        throw error;
+      } else {
+        return response;
+      }
+    }
+  };
+}
+function parseChallenges(challenges) {
+  const challengeRegex = /(\w+)\s+((?:\w+=(?:"[^"]*"|[^,]*),?\s*)+)/g;
+  const paramRegex = /(\w+)="([^"]*)"/g;
+  const parsedChallenges = [];
+  let match;
+  while ((match = challengeRegex.exec(challenges)) !== null) {
+    const scheme = match[1];
+    const paramsString = match[2];
+    const params = {};
+    let paramMatch;
+    while ((paramMatch = paramRegex.exec(paramsString)) !== null) {
+      params[paramMatch[1]] = paramMatch[2];
+    }
+    parsedChallenges.push({ scheme, params });
+  }
+  return parsedChallenges;
+}
+function getCaeChallengeClaims(challenges) {
+  if (!challenges) {
+    return;
+  }
+  const parsedChallenges = parseChallenges(challenges);
+  return parsedChallenges.find(
+    (x) => x.scheme === "Bearer" && x.params.claims && x.params.error === "insufficient_claims"
+  )?.params.claims;
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 220:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Shared target/ warning detector. Owned by Agent 2.
+//
+// Port of .github/actions/setup-soldr/detect_shared_target_warning.py.
+// Emits a ::warning:: when the user's target-dir already contains compiled
+// artifacts (a `deps/*.rmeta` file) and the build-cache is in 'once' mode +
+// the target-cache is enabled. This warns workflow authors that a subsequent
+// `soldr cargo build` may trip on a stale rust-plan.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.targetDirHasCompiledArtifacts = targetDirHasCompiledArtifacts;
+exports.shouldEmitSharedTargetWarning = shouldEmitSharedTargetWarning;
+exports.detectSharedTargetWarning = detectSharedTargetWarning;
+const fs = __importStar(__nccwpck_require__(250));
+const path = __importStar(__nccwpck_require__(508));
+const core = __importStar(__nccwpck_require__(460));
+const log_utils_js_1 = __nccwpck_require__(353);
+const WARNING_MESSAGE = "setup-soldr detected a pre-populated shared target directory; a " +
+    "subsequent `soldr cargo build` using the same `--target-dir` may fail " +
+    "with a missing .rmeta error - see README 'Known limitations'.";
+/**
+ * Recursively scan `dir` for any `deps/` subdirectory containing a `.rmeta`
+ * file. Returns true on the first match. Stops the walk early.
+ */
+function targetDirHasCompiledArtifacts(targetDir) {
+    let stat;
+    try {
+        stat = fs.statSync(targetDir);
+    }
+    catch {
+        return false;
+    }
+    if (!stat.isDirectory())
+        return false;
+    return scanForDepsRmeta(targetDir);
+}
+function scanForDepsRmeta(root) {
+    const stack = [root];
+    while (stack.length > 0) {
+        const dir = stack.pop();
+        let entries;
+        try {
+            entries = fs.readdirSync(dir, { withFileTypes: true });
+        }
+        catch {
+            continue;
+        }
+        for (const entry of entries) {
+            if (!entry.isDirectory())
+                continue;
+            const sub = path.join(dir, entry.name);
+            if (entry.name === "deps") {
+                if (depsDirHasRmeta(sub))
+                    return true;
+            }
+            stack.push(sub);
+        }
+    }
+    return false;
+}
+function depsDirHasRmeta(depsDir) {
+    let entries;
+    try {
+        entries = fs.readdirSync(depsDir, { withFileTypes: true });
+    }
+    catch {
+        return false;
+    }
+    for (const entry of entries) {
+        if (entry.isFile() && entry.name.endsWith(".rmeta"))
+            return true;
+    }
+    return false;
+}
+function shouldEmitSharedTargetWarning(opts) {
+    if (!opts.buildCacheEnabled)
+        return false;
+    if ((opts.buildCacheMode ?? "").trim().toLowerCase() !== "once")
+        return false;
+    if (!opts.targetCacheEnabled)
+        return false;
+    return targetDirHasCompiledArtifacts(opts.targetDir);
+}
+async function detectSharedTargetWarning(opts) {
+    const logger = (0, log_utils_js_1.createLogger)(process.env);
+    const targetDir = (opts.targetDir ?? "").trim();
+    if (!targetDir) {
+        logger.log("shared-target-dir check skipped: no target dir resolved");
+        return;
+    }
+    if (shouldEmitSharedTargetWarning({
+        buildCacheEnabled: opts.buildCacheEnabled,
+        buildCacheMode: opts.buildCacheMode,
+        targetCacheEnabled: opts.effectiveTargetCacheEnabled,
+        targetDir,
+    })) {
+        core.warning(WARNING_MESSAGE);
+        logger.log(`shared-target-dir warning emitted for target_dir=${targetDir} build_cache_mode=${opts.buildCacheMode}`);
+    }
+    else {
+        logger.log(`shared-target-dir check clean for target_dir=${targetDir} ` +
+            `build_cache_mode=${opts.buildCacheMode} ` +
+            `build_cache_enabled=${opts.buildCacheEnabled} ` +
+            `target_cache_enabled=${opts.effectiveTargetCacheEnabled}`);
+    }
+}
+
+
+/***/ }),
+
+/***/ 221:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var systemErrorRetryPolicy_exports = {};
+__export(systemErrorRetryPolicy_exports, {
+  systemErrorRetryPolicy: () => systemErrorRetryPolicy,
+  systemErrorRetryPolicyName: () => systemErrorRetryPolicyName
+});
+module.exports = __toCommonJS(systemErrorRetryPolicy_exports);
+var import_policies = __nccwpck_require__(287);
+const systemErrorRetryPolicyName = import_policies.systemErrorRetryPolicyName;
+function systemErrorRetryPolicy(options = {}) {
+  return (0, import_policies.systemErrorRetryPolicy)(options);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 222:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ContainerImpl = void 0;
+const tslib_1 = __nccwpck_require__(218);
+const coreClient = tslib_1.__importStar(__nccwpck_require__(440));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(180));
+const Parameters = tslib_1.__importStar(__nccwpck_require__(65));
+/** Class containing Container operations. */
+class ContainerImpl {
+    client;
+    /**
+     * Initialize a new instance of the class Container class.
+     * @param client Reference to the service client
+     */
+    constructor(client) {
+        this.client = client;
+    }
+    /**
+     * creates a new container under the specified account. If the container with the same name already
+     * exists, the operation fails
+     * @param options The options parameters.
+     */
+    create(options) {
+        return this.client.sendOperationRequest({ options }, createOperationSpec);
+    }
+    /**
+     * returns all user-defined metadata and system properties for the specified container. The data
+     * returned does not include the container's list of blobs
+     * @param options The options parameters.
+     */
+    getProperties(options) {
+        return this.client.sendOperationRequest({ options }, getPropertiesOperationSpec);
+    }
+    /**
+     * operation marks the specified container for deletion. The container and any blobs contained within
+     * it are later deleted during garbage collection
+     * @param options The options parameters.
+     */
+    delete(options) {
+        return this.client.sendOperationRequest({ options }, deleteOperationSpec);
+    }
+    /**
+     * operation sets one or more user-defined name-value pairs for the specified container.
+     * @param options The options parameters.
+     */
+    setMetadata(options) {
+        return this.client.sendOperationRequest({ options }, setMetadataOperationSpec);
+    }
+    /**
+     * gets the permissions for the specified container. The permissions indicate whether container data
+     * may be accessed publicly.
+     * @param options The options parameters.
+     */
+    getAccessPolicy(options) {
+        return this.client.sendOperationRequest({ options }, getAccessPolicyOperationSpec);
+    }
+    /**
+     * sets the permissions for the specified container. The permissions indicate whether blobs in a
+     * container may be accessed publicly.
+     * @param options The options parameters.
+     */
+    setAccessPolicy(options) {
+        return this.client.sendOperationRequest({ options }, setAccessPolicyOperationSpec);
+    }
+    /**
+     * Restores a previously-deleted container.
+     * @param options The options parameters.
+     */
+    restore(options) {
+        return this.client.sendOperationRequest({ options }, restoreOperationSpec);
+    }
+    /**
+     * Renames an existing container.
+     * @param sourceContainerName Required.  Specifies the name of the container to rename.
+     * @param options The options parameters.
+     */
+    rename(sourceContainerName, options) {
+        return this.client.sendOperationRequest({ sourceContainerName, options }, renameOperationSpec);
+    }
+    /**
+     * The Batch operation allows multiple API calls to be embedded into a single HTTP request.
+     * @param contentLength The length of the request.
+     * @param multipartContentType Required. The value of this header must be multipart/mixed with a batch
+     *                             boundary. Example header value: multipart/mixed; boundary=batch_<GUID>
+     * @param body Initial data
+     * @param options The options parameters.
+     */
+    submitBatch(contentLength, multipartContentType, body, options) {
+        return this.client.sendOperationRequest({ contentLength, multipartContentType, body, options }, submitBatchOperationSpec);
+    }
+    /**
+     * The Filter Blobs operation enables callers to list blobs in a container whose tags match a given
+     * search expression.  Filter blobs searches within the given container.
+     * @param options The options parameters.
+     */
+    filterBlobs(options) {
+        return this.client.sendOperationRequest({ options }, filterBlobsOperationSpec);
+    }
+    /**
+     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
+     * be 15 to 60 seconds, or can be infinite
+     * @param options The options parameters.
+     */
+    acquireLease(options) {
+        return this.client.sendOperationRequest({ options }, acquireLeaseOperationSpec);
+    }
+    /**
+     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
+     * be 15 to 60 seconds, or can be infinite
+     * @param leaseId Specifies the current lease ID on the resource.
+     * @param options The options parameters.
+     */
+    releaseLease(leaseId, options) {
+        return this.client.sendOperationRequest({ leaseId, options }, releaseLeaseOperationSpec);
+    }
+    /**
+     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
+     * be 15 to 60 seconds, or can be infinite
+     * @param leaseId Specifies the current lease ID on the resource.
+     * @param options The options parameters.
+     */
+    renewLease(leaseId, options) {
+        return this.client.sendOperationRequest({ leaseId, options }, renewLeaseOperationSpec);
+    }
+    /**
+     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
+     * be 15 to 60 seconds, or can be infinite
+     * @param options The options parameters.
+     */
+    breakLease(options) {
+        return this.client.sendOperationRequest({ options }, breakLeaseOperationSpec);
+    }
+    /**
+     * [Update] establishes and manages a lock on a container for delete operations. The lock duration can
+     * be 15 to 60 seconds, or can be infinite
+     * @param leaseId Specifies the current lease ID on the resource.
+     * @param proposedLeaseId Proposed lease ID, in a GUID string format. The Blob service returns 400
+     *                        (Invalid request) if the proposed lease ID is not in the correct format. See Guid Constructor
+     *                        (String) for a list of valid GUID string formats.
+     * @param options The options parameters.
+     */
+    changeLease(leaseId, proposedLeaseId, options) {
+        return this.client.sendOperationRequest({ leaseId, proposedLeaseId, options }, changeLeaseOperationSpec);
+    }
+    /**
+     * [Update] The List Blobs operation returns a list of the blobs under the specified container
+     * @param options The options parameters.
+     */
+    listBlobFlatSegment(options) {
+        return this.client.sendOperationRequest({ options }, listBlobFlatSegmentOperationSpec);
+    }
+    /**
+     * [Update] The List Blobs operation returns a list of the blobs under the specified container
+     * @param delimiter When the request includes this parameter, the operation returns a BlobPrefix
+     *                  element in the response body that acts as a placeholder for all blobs whose names begin with the
+     *                  same substring up to the appearance of the delimiter character. The delimiter may be a single
+     *                  character or a string.
+     * @param options The options parameters.
+     */
+    listBlobHierarchySegment(delimiter, options) {
+        return this.client.sendOperationRequest({ delimiter, options }, listBlobHierarchySegmentOperationSpec);
+    }
+    /**
+     * Returns the sku name and account kind
+     * @param options The options parameters.
+     */
+    getAccountInfo(options) {
+        return this.client.sendOperationRequest({ options }, getAccountInfoOperationSpec);
+    }
+}
+exports.ContainerImpl = ContainerImpl;
+// Operation Specifications
+const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
+const createOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.ContainerCreateHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerCreateExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.metadata,
+        Parameters.access,
+        Parameters.defaultEncryptionScope,
+        Parameters.preventEncryptionScopeOverride,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const getPropertiesOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            headersMapper: Mappers.ContainerGetPropertiesHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerGetPropertiesExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.leaseId,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const deleteOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "DELETE",
+    responses: {
+        202: {
+            headersMapper: Mappers.ContainerDeleteHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerDeleteExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.restype2],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const setMetadataOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        200: {
+            headersMapper: Mappers.ContainerSetMetadataHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerSetMetadataExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp6,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.metadata,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const getAccessPolicyOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: {
+                type: {
+                    name: "Sequence",
+                    element: {
+                        type: { name: "Composite", className: "SignedIdentifier" },
+                    },
+                },
+                serializedName: "SignedIdentifiers",
+                xmlName: "SignedIdentifiers",
+                xmlIsWrapped: true,
+                xmlElementName: "SignedIdentifier",
+            },
+            headersMapper: Mappers.ContainerGetAccessPolicyHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerGetAccessPolicyExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp7,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.leaseId,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const setAccessPolicyOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        200: {
+            headersMapper: Mappers.ContainerSetAccessPolicyHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerSetAccessPolicyExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.containerAcl,
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp7,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.contentType,
+        Parameters.accept,
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.access,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "xml",
+    serializer: xmlSerializer,
+};
+const restoreOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.ContainerRestoreHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerRestoreExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp8,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.deletedContainerName,
+        Parameters.deletedContainerVersion,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const renameOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        200: {
+            headersMapper: Mappers.ContainerRenameHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerRenameExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp9,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.sourceContainerName,
+        Parameters.sourceLeaseId,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const submitBatchOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "POST",
+    responses: {
+        202: {
+            bodyMapper: {
+                type: { name: "Stream" },
+                serializedName: "parsedResponse",
+            },
+            headersMapper: Mappers.ContainerSubmitBatchHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerSubmitBatchExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.body,
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.comp4,
+        Parameters.restype2,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.accept,
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.contentLength,
+        Parameters.multipartContentType,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "xml",
+    serializer: xmlSerializer,
+};
+const filterBlobsOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.FilterBlobSegment,
+            headersMapper: Mappers.ContainerFilterBlobsHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerFilterBlobsExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.marker,
+        Parameters.maxPageSize,
+        Parameters.comp5,
+        Parameters.where,
+        Parameters.restype2,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const acquireLeaseOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.ContainerAcquireLeaseHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerAcquireLeaseExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp10,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.action,
+        Parameters.duration,
+        Parameters.proposedLeaseId,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const releaseLeaseOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        200: {
+            headersMapper: Mappers.ContainerReleaseLeaseHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerReleaseLeaseExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp10,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.action1,
+        Parameters.leaseId1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const renewLeaseOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        200: {
+            headersMapper: Mappers.ContainerRenewLeaseHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerRenewLeaseExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp10,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.leaseId1,
+        Parameters.action2,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const breakLeaseOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        202: {
+            headersMapper: Mappers.ContainerBreakLeaseHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerBreakLeaseExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp10,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.action3,
+        Parameters.breakPeriod,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const changeLeaseOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "PUT",
+    responses: {
+        200: {
+            headersMapper: Mappers.ContainerChangeLeaseHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerChangeLeaseExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.restype2,
+        Parameters.comp10,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.leaseId1,
+        Parameters.action4,
+        Parameters.proposedLeaseId1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const listBlobFlatSegmentOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.ListBlobsFlatSegmentResponse,
+            headersMapper: Mappers.ContainerListBlobFlatSegmentHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerListBlobFlatSegmentExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.comp2,
+        Parameters.prefix,
+        Parameters.marker,
+        Parameters.maxPageSize,
+        Parameters.restype2,
+        Parameters.include1,
+        Parameters.startFrom,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const listBlobHierarchySegmentOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.ListBlobsHierarchySegmentResponse,
+            headersMapper: Mappers.ContainerListBlobHierarchySegmentHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerListBlobHierarchySegmentExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.comp2,
+        Parameters.prefix,
+        Parameters.marker,
+        Parameters.maxPageSize,
+        Parameters.restype2,
+        Parameters.include1,
+        Parameters.startFrom,
+        Parameters.delimiter,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const getAccountInfoOperationSpec = {
+    path: "/{containerName}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            headersMapper: Mappers.ContainerGetAccountInfoHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ContainerGetAccountInfoExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.comp,
+        Parameters.timeoutInSeconds,
+        Parameters.restype1,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+//# sourceMappingURL=container.js.map
+
+/***/ }),
+
+/***/ 223:
+/***/ ((module) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var tlsPolicy_exports = {};
+__export(tlsPolicy_exports, {
+  tlsPolicy: () => tlsPolicy,
+  tlsPolicyName: () => tlsPolicyName
+});
+module.exports = __toCommonJS(tlsPolicy_exports);
+const tlsPolicyName = "tlsPolicy";
+function tlsPolicy(tlsSettings) {
+  return {
+    name: tlsPolicyName,
+    sendRequest: async (req, next) => {
+      if (!req.tlsSettings) {
+        req.tlsSettings = tlsSettings;
+      }
+      return next(req);
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=tlsPolicy.js.map
+
+
+/***/ }),
+
+/***/ 224:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.safeTrimTrailingSeparator = exports.normalizeSeparators = exports.hasRoot = exports.hasAbsoluteRoot = exports.ensureAbsoluteRoot = exports.dirname = void 0;
+const path = __importStar(__nccwpck_require__(249));
+const assert_1 = __importDefault(__nccwpck_require__(527));
+const IS_WINDOWS = process.platform === 'win32';
+/**
+ * Similar to path.dirname except normalizes the path separators and slightly better handling for Windows UNC paths.
+ *
+ * For example, on Linux/macOS:
+ * - `/               => /`
+ * - `/hello          => /`
+ *
+ * For example, on Windows:
+ * - `C:\             => C:\`
+ * - `C:\hello        => C:\`
+ * - `C:              => C:`
+ * - `C:hello         => C:`
+ * - `\               => \`
+ * - `\hello          => \`
+ * - `\\hello         => \\hello`
+ * - `\\hello\world   => \\hello\world`
+ */
+function dirname(p) {
+    // Normalize slashes and trim unnecessary trailing slash
+    p = safeTrimTrailingSeparator(p);
+    // Windows UNC root, e.g. \\hello or \\hello\world
+    if (IS_WINDOWS && /^\\\\[^\\]+(\\[^\\]+)?$/.test(p)) {
+        return p;
+    }
+    // Get dirname
+    let result = path.dirname(p);
+    // Trim trailing slash for Windows UNC root, e.g. \\hello\world\
+    if (IS_WINDOWS && /^\\\\[^\\]+\\[^\\]+\\$/.test(result)) {
+        result = safeTrimTrailingSeparator(result);
+    }
+    return result;
+}
+exports.dirname = dirname;
+/**
+ * Roots the path if not already rooted. On Windows, relative roots like `\`
+ * or `C:` are expanded based on the current working directory.
+ */
+function ensureAbsoluteRoot(root, itemPath) {
+    assert_1.default(root, `ensureAbsoluteRoot parameter 'root' must not be empty`);
+    assert_1.default(itemPath, `ensureAbsoluteRoot parameter 'itemPath' must not be empty`);
+    // Already rooted
+    if (hasAbsoluteRoot(itemPath)) {
+        return itemPath;
+    }
+    // Windows
+    if (IS_WINDOWS) {
+        // Check for itemPath like C: or C:foo
+        if (itemPath.match(/^[A-Z]:[^\\/]|^[A-Z]:$/i)) {
+            let cwd = process.cwd();
+            assert_1.default(cwd.match(/^[A-Z]:\\/i), `Expected current directory to start with an absolute drive root. Actual '${cwd}'`);
+            // Drive letter matches cwd? Expand to cwd
+            if (itemPath[0].toUpperCase() === cwd[0].toUpperCase()) {
+                // Drive only, e.g. C:
+                if (itemPath.length === 2) {
+                    // Preserve specified drive letter case (upper or lower)
+                    return `${itemPath[0]}:\\${cwd.substr(3)}`;
+                }
+                // Drive + path, e.g. C:foo
+                else {
+                    if (!cwd.endsWith('\\')) {
+                        cwd += '\\';
+                    }
+                    // Preserve specified drive letter case (upper or lower)
+                    return `${itemPath[0]}:\\${cwd.substr(3)}${itemPath.substr(2)}`;
+                }
+            }
+            // Different drive
+            else {
+                return `${itemPath[0]}:\\${itemPath.substr(2)}`;
+            }
+        }
+        // Check for itemPath like \ or \foo
+        else if (normalizeSeparators(itemPath).match(/^\\$|^\\[^\\]/)) {
+            const cwd = process.cwd();
+            assert_1.default(cwd.match(/^[A-Z]:\\/i), `Expected current directory to start with an absolute drive root. Actual '${cwd}'`);
+            return `${cwd[0]}:\\${itemPath.substr(1)}`;
+        }
+    }
+    assert_1.default(hasAbsoluteRoot(root), `ensureAbsoluteRoot parameter 'root' must have an absolute root`);
+    // Otherwise ensure root ends with a separator
+    if (root.endsWith('/') || (IS_WINDOWS && root.endsWith('\\'))) {
+        // Intentionally empty
+    }
+    else {
+        // Append separator
+        root += path.sep;
+    }
+    return root + itemPath;
+}
+exports.ensureAbsoluteRoot = ensureAbsoluteRoot;
+/**
+ * On Linux/macOS, true if path starts with `/`. On Windows, true for paths like:
+ * `\\hello\share` and `C:\hello` (and using alternate separator).
+ */
+function hasAbsoluteRoot(itemPath) {
+    assert_1.default(itemPath, `hasAbsoluteRoot parameter 'itemPath' must not be empty`);
+    // Normalize separators
+    itemPath = normalizeSeparators(itemPath);
+    // Windows
+    if (IS_WINDOWS) {
+        // E.g. \\hello\share or C:\hello
+        return itemPath.startsWith('\\\\') || /^[A-Z]:\\/i.test(itemPath);
+    }
+    // E.g. /hello
+    return itemPath.startsWith('/');
+}
+exports.hasAbsoluteRoot = hasAbsoluteRoot;
+/**
+ * On Linux/macOS, true if path starts with `/`. On Windows, true for paths like:
+ * `\`, `\hello`, `\\hello\share`, `C:`, and `C:\hello` (and using alternate separator).
+ */
+function hasRoot(itemPath) {
+    assert_1.default(itemPath, `isRooted parameter 'itemPath' must not be empty`);
+    // Normalize separators
+    itemPath = normalizeSeparators(itemPath);
+    // Windows
+    if (IS_WINDOWS) {
+        // E.g. \ or \hello or \\hello
+        // E.g. C: or C:\hello
+        return itemPath.startsWith('\\') || /^[A-Z]:/i.test(itemPath);
+    }
+    // E.g. /hello
+    return itemPath.startsWith('/');
+}
+exports.hasRoot = hasRoot;
+/**
+ * Removes redundant slashes and converts `/` to `\` on Windows
+ */
+function normalizeSeparators(p) {
+    p = p || '';
+    // Windows
+    if (IS_WINDOWS) {
+        // Convert slashes on Windows
+        p = p.replace(/\//g, '\\');
+        // Remove redundant slashes
+        const isUnc = /^\\\\+[^\\]/.test(p); // e.g. \\hello
+        return (isUnc ? '\\' : '') + p.replace(/\\\\+/g, '\\'); // preserve leading \\ for UNC
+    }
+    // Remove redundant slashes
+    return p.replace(/\/\/+/g, '/');
+}
+exports.normalizeSeparators = normalizeSeparators;
+/**
+ * Normalizes the path separators and trims the trailing separator (when safe).
+ * For example, `/foo/ => /foo` but `/ => /`
+ */
+function safeTrimTrailingSeparator(p) {
+    // Short-circuit if empty
+    if (!p) {
+        return '';
+    }
+    // Normalize separators
+    p = normalizeSeparators(p);
+    // No trailing slash
+    if (!p.endsWith(path.sep)) {
+        return p;
+    }
+    // Check '/' on Linux/macOS and '\' on Windows
+    if (p === path.sep) {
+        return p;
+    }
+    // On Windows check if drive root. E.g. C:\
+    if (IS_WINDOWS && /^[A-Z]:\\$/i.test(p)) {
+        return p;
+    }
+    // Otherwise trim trailing slash
+    return p.substr(0, p.length - 1);
+}
+exports.safeTrimTrailingSeparator = safeTrimTrailingSeparator;
+//# sourceMappingURL=internal-path-helper.js.map
+
+/***/ }),
+
+/***/ 225:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+module.exports = __nccwpck_require__(289)
+module.exports.async = __nccwpck_require__(412)
+module.exports.stream = __nccwpck_require__(421)
+module.exports.prettyError = __nccwpck_require__(280)
+
+
+/***/ }),
+
+/***/ 226:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.HttpProxyAgent = void 0;
+const net = __importStar(__nccwpck_require__(509));
+const tls = __importStar(__nccwpck_require__(506));
+const debug_1 = __importDefault(__nccwpck_require__(516));
+const events_1 = __nccwpck_require__(470);
+const agent_base_1 = __nccwpck_require__(242);
+const url_1 = __nccwpck_require__(85);
+const debug = (0, debug_1.default)('http-proxy-agent');
+/**
+ * The `HttpProxyAgent` implements an HTTP Agent subclass that connects
+ * to the specified "HTTP proxy server" in order to proxy HTTP requests.
+ */
+class HttpProxyAgent extends agent_base_1.Agent {
+    constructor(proxy, opts) {
+        super(opts);
+        this.proxy = typeof proxy === 'string' ? new url_1.URL(proxy) : proxy;
+        this.proxyHeaders = opts?.headers ?? {};
+        debug('Creating new HttpProxyAgent instance: %o', this.proxy.href);
+        // Trim off the brackets from IPv6 addresses
+        const host = (this.proxy.hostname || this.proxy.host).replace(/^\[|\]$/g, '');
+        const port = this.proxy.port
+            ? parseInt(this.proxy.port, 10)
+            : this.proxy.protocol === 'https:'
+                ? 443
+                : 80;
+        this.connectOpts = {
+            ...(opts ? omit(opts, 'headers') : null),
+            host,
+            port,
+        };
+    }
+    addRequest(req, opts) {
+        req._header = null;
+        this.setRequestProps(req, opts);
+        // @ts-expect-error `addRequest()` isn't defined in `@types/node`
+        super.addRequest(req, opts);
+    }
+    setRequestProps(req, opts) {
+        const { proxy } = this;
+        const protocol = opts.secureEndpoint ? 'https:' : 'http:';
+        const hostname = req.getHeader('host') || 'localhost';
+        const base = `${protocol}//${hostname}`;
+        const url = new url_1.URL(req.path, base);
+        if (opts.port !== 80) {
+            url.port = String(opts.port);
+        }
+        // Change the `http.ClientRequest` instance's "path" field
+        // to the absolute path of the URL that will be requested.
+        req.path = String(url);
+        // Inject the `Proxy-Authorization` header if necessary.
+        const headers = typeof this.proxyHeaders === 'function'
+            ? this.proxyHeaders()
+            : { ...this.proxyHeaders };
+        if (proxy.username || proxy.password) {
+            const auth = `${decodeURIComponent(proxy.username)}:${decodeURIComponent(proxy.password)}`;
+            headers['Proxy-Authorization'] = `Basic ${Buffer.from(auth).toString('base64')}`;
+        }
+        if (!headers['Proxy-Connection']) {
+            headers['Proxy-Connection'] = this.keepAlive
+                ? 'Keep-Alive'
+                : 'close';
+        }
+        for (const name of Object.keys(headers)) {
+            const value = headers[name];
+            if (value) {
+                req.setHeader(name, value);
+            }
+        }
+    }
+    async connect(req, opts) {
+        req._header = null;
+        if (!req.path.includes('://')) {
+            this.setRequestProps(req, opts);
+        }
+        // At this point, the http ClientRequest's internal `_header` field
+        // might have already been set. If this is the case then we'll need
+        // to re-generate the string since we just changed the `req.path`.
+        let first;
+        let endOfHeaders;
+        debug('Regenerating stored HTTP header string for request');
+        req._implicitHeader();
+        if (req.outputData && req.outputData.length > 0) {
+            debug('Patching connection write() output buffer with updated header');
+            first = req.outputData[0].data;
+            endOfHeaders = first.indexOf('\r\n\r\n') + 4;
+            req.outputData[0].data =
+                req._header + first.substring(endOfHeaders);
+            debug('Output buffer: %o', req.outputData[0].data);
+        }
+        // Create a socket connection to the proxy server.
+        let socket;
+        if (this.proxy.protocol === 'https:') {
+            debug('Creating `tls.Socket`: %o', this.connectOpts);
+            socket = tls.connect(this.connectOpts);
+        }
+        else {
+            debug('Creating `net.Socket`: %o', this.connectOpts);
+            socket = net.connect(this.connectOpts);
+        }
+        // Wait for the socket's `connect` event, so that this `callback()`
+        // function throws instead of the `http` request machinery. This is
+        // important for i.e. `PacProxyAgent` which determines a failed proxy
+        // connection via the `callback()` function throwing.
+        await (0, events_1.once)(socket, 'connect');
+        return socket;
+    }
+}
+HttpProxyAgent.protocols = ['http', 'https'];
+exports.HttpProxyAgent = HttpProxyAgent;
+function omit(obj, ...keys) {
+    const ret = {};
+    let key;
+    for (key in obj) {
+        if (!keys.includes(key)) {
+            ret[key] = obj[key];
+        }
+    }
+    return ret;
+}
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 227:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getCmdPath = exports.tryGetExecutablePath = exports.isRooted = exports.isDirectory = exports.exists = exports.READONLY = exports.UV_FS_O_EXLOCK = exports.IS_WINDOWS = exports.unlink = exports.symlink = exports.stat = exports.rmdir = exports.rm = exports.rename = exports.readlink = exports.readdir = exports.open = exports.mkdir = exports.lstat = exports.copyFile = exports.chmod = void 0;
+const fs = __importStar(__nccwpck_require__(532));
+const path = __importStar(__nccwpck_require__(249));
+_a = fs.promises
+// export const {open} = 'fs'
+, exports.chmod = _a.chmod, exports.copyFile = _a.copyFile, exports.lstat = _a.lstat, exports.mkdir = _a.mkdir, exports.open = _a.open, exports.readdir = _a.readdir, exports.readlink = _a.readlink, exports.rename = _a.rename, exports.rm = _a.rm, exports.rmdir = _a.rmdir, exports.stat = _a.stat, exports.symlink = _a.symlink, exports.unlink = _a.unlink;
+// export const {open} = 'fs'
+exports.IS_WINDOWS = process.platform === 'win32';
+// See https://github.com/nodejs/node/blob/d0153aee367422d0858105abec186da4dff0a0c5/deps/uv/include/uv/win.h#L691
+exports.UV_FS_O_EXLOCK = 0x10000000;
+exports.READONLY = fs.constants.O_RDONLY;
+function exists(fsPath) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield exports.stat(fsPath);
+        }
+        catch (err) {
+            if (err.code === 'ENOENT') {
+                return false;
+            }
+            throw err;
+        }
+        return true;
+    });
+}
+exports.exists = exists;
+function isDirectory(fsPath, useStat = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const stats = useStat ? yield exports.stat(fsPath) : yield exports.lstat(fsPath);
+        return stats.isDirectory();
+    });
+}
+exports.isDirectory = isDirectory;
+/**
+ * On OSX/Linux, true if path starts with '/'. On Windows, true for paths like:
+ * \, \hello, \\hello\share, C:, and C:\hello (and corresponding alternate separator cases).
+ */
+function isRooted(p) {
+    p = normalizeSeparators(p);
+    if (!p) {
+        throw new Error('isRooted() parameter "p" cannot be empty');
+    }
+    if (exports.IS_WINDOWS) {
+        return (p.startsWith('\\') || /^[A-Z]:/i.test(p) // e.g. \ or \hello or \\hello
+        ); // e.g. C: or C:\hello
+    }
+    return p.startsWith('/');
+}
+exports.isRooted = isRooted;
+/**
+ * Best effort attempt to determine whether a file exists and is executable.
+ * @param filePath    file path to check
+ * @param extensions  additional file extensions to try
+ * @return if file exists and is executable, returns the file path. otherwise empty string.
+ */
+function tryGetExecutablePath(filePath, extensions) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let stats = undefined;
+        try {
+            // test file exists
+            stats = yield exports.stat(filePath);
+        }
+        catch (err) {
+            if (err.code !== 'ENOENT') {
+                // eslint-disable-next-line no-console
+                console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
+            }
+        }
+        if (stats && stats.isFile()) {
+            if (exports.IS_WINDOWS) {
+                // on Windows, test for valid extension
+                const upperExt = path.extname(filePath).toUpperCase();
+                if (extensions.some(validExt => validExt.toUpperCase() === upperExt)) {
+                    return filePath;
+                }
+            }
+            else {
+                if (isUnixExecutable(stats)) {
+                    return filePath;
+                }
+            }
+        }
+        // try each extension
+        const originalFilePath = filePath;
+        for (const extension of extensions) {
+            filePath = originalFilePath + extension;
+            stats = undefined;
+            try {
+                stats = yield exports.stat(filePath);
+            }
+            catch (err) {
+                if (err.code !== 'ENOENT') {
+                    // eslint-disable-next-line no-console
+                    console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
+                }
+            }
+            if (stats && stats.isFile()) {
+                if (exports.IS_WINDOWS) {
+                    // preserve the case of the actual file (since an extension was appended)
+                    try {
+                        const directory = path.dirname(filePath);
+                        const upperName = path.basename(filePath).toUpperCase();
+                        for (const actualName of yield exports.readdir(directory)) {
+                            if (upperName === actualName.toUpperCase()) {
+                                filePath = path.join(directory, actualName);
+                                break;
+                            }
+                        }
+                    }
+                    catch (err) {
+                        // eslint-disable-next-line no-console
+                        console.log(`Unexpected error attempting to determine the actual case of the file '${filePath}': ${err}`);
+                    }
+                    return filePath;
+                }
+                else {
+                    if (isUnixExecutable(stats)) {
+                        return filePath;
+                    }
+                }
+            }
+        }
+        return '';
+    });
+}
+exports.tryGetExecutablePath = tryGetExecutablePath;
+function normalizeSeparators(p) {
+    p = p || '';
+    if (exports.IS_WINDOWS) {
+        // convert slashes on Windows
+        p = p.replace(/\//g, '\\');
+        // remove redundant slashes
+        return p.replace(/\\\\+/g, '\\');
+    }
+    // remove redundant slashes
+    return p.replace(/\/\/+/g, '/');
+}
+// on Mac/Linux, test the execute bit
+//     R   W  X  R  W X R W X
+//   256 128 64 32 16 8 4 2 1
+function isUnixExecutable(stats) {
+    return ((stats.mode & 1) > 0 ||
+        ((stats.mode & 8) > 0 && stats.gid === process.getgid()) ||
+        ((stats.mode & 64) > 0 && stats.uid === process.getuid()));
+}
+// Get the path of cmd.exe in windows
+function getCmdPath() {
+    var _a;
+    return (_a = process.env['COMSPEC']) !== null && _a !== void 0 ? _a : `cmd.exe`;
+}
+exports.getCmdPath = getCmdPath;
+//# sourceMappingURL=io-util.js.map
+
+/***/ }),
+
+/***/ 228:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createHttpPoller = void 0;
+const tslib_1 = __nccwpck_require__(218);
+var poller_js_1 = __nccwpck_require__(320);
+Object.defineProperty(exports, "createHttpPoller", ({ enumerable: true, get: function () { return poller_js_1.createHttpPoller; } }));
+/**
+ * This can be uncommented to expose the protocol-agnostic poller
+ */
+// export {
+//   BuildCreatePollerOptions,
+//   Operation,
+//   CreatePollerOptions,
+//   OperationConfig,
+//   RestorableOperationState,
+// } from "./poller/models";
+// export { buildCreatePoller } from "./poller/poller";
+/** legacy */
+tslib_1.__exportStar(__nccwpck_require__(245), exports);
+tslib_1.__exportStar(__nccwpck_require__(75), exports);
+tslib_1.__exportStar(__nccwpck_require__(40), exports);
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 229:
+/***/ ((module) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var apiVersionPolicy_exports = {};
+__export(apiVersionPolicy_exports, {
+  apiVersionPolicy: () => apiVersionPolicy,
+  apiVersionPolicyName: () => apiVersionPolicyName
+});
+module.exports = __toCommonJS(apiVersionPolicy_exports);
+const apiVersionPolicyName = "ApiVersionPolicy";
+function apiVersionPolicy(options) {
+  return {
+    name: apiVersionPolicyName,
+    sendRequest: (req, next) => {
+      const url = new URL(req.url);
+      if (!url.searchParams.get("api-version") && options.apiVersion) {
+        req.url = `${req.url}${Array.from(url.searchParams.keys()).length > 0 ? "&" : "?"}api-version=${options.apiVersion}`;
+      }
+      return next(req);
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=apiVersionPolicy.js.map
+
+
+/***/ }),
+
+/***/ 230:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+/// <reference path="../shims-public.d.ts" />
+const listenersMap = new WeakMap();
+const abortedMap = new WeakMap();
+/**
+ * An aborter instance implements AbortSignal interface, can abort HTTP requests.
+ *
+ * - Call AbortSignal.none to create a new AbortSignal instance that cannot be cancelled.
+ * Use `AbortSignal.none` when you are required to pass a cancellation token but the operation
+ * cannot or will not ever be cancelled.
+ *
+ * @example
+ * Abort without timeout
+ * ```ts
+ * await doAsyncWork(AbortSignal.none);
+ * ```
+ */
+class AbortSignal {
+    constructor() {
+        /**
+         * onabort event listener.
+         */
+        this.onabort = null;
+        listenersMap.set(this, []);
+        abortedMap.set(this, false);
+    }
+    /**
+     * Status of whether aborted or not.
+     *
+     * @readonly
+     */
+    get aborted() {
+        if (!abortedMap.has(this)) {
+            throw new TypeError("Expected `this` to be an instance of AbortSignal.");
+        }
+        return abortedMap.get(this);
+    }
+    /**
+     * Creates a new AbortSignal instance that will never be aborted.
+     *
+     * @readonly
+     */
+    static get none() {
+        return new AbortSignal();
+    }
+    /**
+     * Added new "abort" event listener, only support "abort" event.
+     *
+     * @param _type - Only support "abort" event
+     * @param listener - The listener to be added
+     */
+    addEventListener(
+    // tslint:disable-next-line:variable-name
+    _type, listener) {
+        if (!listenersMap.has(this)) {
+            throw new TypeError("Expected `this` to be an instance of AbortSignal.");
+        }
+        const listeners = listenersMap.get(this);
+        listeners.push(listener);
+    }
+    /**
+     * Remove "abort" event listener, only support "abort" event.
+     *
+     * @param _type - Only support "abort" event
+     * @param listener - The listener to be removed
+     */
+    removeEventListener(
+    // tslint:disable-next-line:variable-name
+    _type, listener) {
+        if (!listenersMap.has(this)) {
+            throw new TypeError("Expected `this` to be an instance of AbortSignal.");
+        }
+        const listeners = listenersMap.get(this);
+        const index = listeners.indexOf(listener);
+        if (index > -1) {
+            listeners.splice(index, 1);
+        }
+    }
+    /**
+     * Dispatches a synthetic event to the AbortSignal.
+     */
+    dispatchEvent(_event) {
+        throw new Error("This is a stub dispatchEvent implementation that should not be used.  It only exists for type-checking purposes.");
+    }
+}
+/**
+ * Helper to trigger an abort event immediately, the onabort and all abort event listeners will be triggered.
+ * Will try to trigger abort event for all linked AbortSignal nodes.
+ *
+ * - If there is a timeout, the timer will be cancelled.
+ * - If aborted is true, nothing will happen.
+ *
+ * @internal
+ */
+// eslint-disable-next-line @azure/azure-sdk/ts-use-interface-parameters
+function abortSignal(signal) {
+    if (signal.aborted) {
+        return;
+    }
+    if (signal.onabort) {
+        signal.onabort.call(signal);
+    }
+    const listeners = listenersMap.get(signal);
+    if (listeners) {
+        // Create a copy of listeners so mutations to the array
+        // (e.g. via removeListener calls) don't affect the listeners
+        // we invoke.
+        listeners.slice().forEach((listener) => {
+            listener.call(signal, { type: "abort" });
+        });
+    }
+    abortedMap.set(signal, true);
+}
+
+// Copyright (c) Microsoft Corporation.
+/**
+ * This error is thrown when an asynchronous operation has been aborted.
+ * Check for this error by testing the `name` that the name property of the
+ * error matches `"AbortError"`.
+ *
+ * @example
+ * ```ts
+ * const controller = new AbortController();
+ * controller.abort();
+ * try {
+ *   doAsyncWork(controller.signal)
+ * } catch (e) {
+ *   if (e.name === 'AbortError') {
+ *     // handle abort error here.
+ *   }
+ * }
+ * ```
+ */
+class AbortError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "AbortError";
+    }
+}
+/**
+ * An AbortController provides an AbortSignal and the associated controls to signal
+ * that an asynchronous operation should be aborted.
+ *
+ * @example
+ * Abort an operation when another event fires
+ * ```ts
+ * const controller = new AbortController();
+ * const signal = controller.signal;
+ * doAsyncWork(signal);
+ * button.addEventListener('click', () => controller.abort());
+ * ```
+ *
+ * @example
+ * Share aborter cross multiple operations in 30s
+ * ```ts
+ * // Upload the same data to 2 different data centers at the same time,
+ * // abort another when any of them is finished
+ * const controller = AbortController.withTimeout(30 * 1000);
+ * doAsyncWork(controller.signal).then(controller.abort);
+ * doAsyncWork(controller.signal).then(controller.abort);
+ *```
+ *
+ * @example
+ * Cascaded aborting
+ * ```ts
+ * // All operations can't take more than 30 seconds
+ * const aborter = Aborter.timeout(30 * 1000);
+ *
+ * // Following 2 operations can't take more than 25 seconds
+ * await doAsyncWork(aborter.withTimeout(25 * 1000));
+ * await doAsyncWork(aborter.withTimeout(25 * 1000));
+ * ```
+ */
+class AbortController {
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+    constructor(parentSignals) {
+        this._signal = new AbortSignal();
+        if (!parentSignals) {
+            return;
+        }
+        // coerce parentSignals into an array
+        if (!Array.isArray(parentSignals)) {
+            // eslint-disable-next-line prefer-rest-params
+            parentSignals = arguments;
+        }
+        for (const parentSignal of parentSignals) {
+            // if the parent signal has already had abort() called,
+            // then call abort on this signal as well.
+            if (parentSignal.aborted) {
+                this.abort();
+            }
+            else {
+                // when the parent signal aborts, this signal should as well.
+                parentSignal.addEventListener("abort", () => {
+                    this.abort();
+                });
+            }
+        }
+    }
+    /**
+     * The AbortSignal associated with this controller that will signal aborted
+     * when the abort method is called on this controller.
+     *
+     * @readonly
+     */
+    get signal() {
+        return this._signal;
+    }
+    /**
+     * Signal that any operations passed this controller's associated abort signal
+     * to cancel any remaining work and throw an `AbortError`.
+     */
+    abort() {
+        abortSignal(this._signal);
+    }
+    /**
+     * Creates a new AbortSignal instance that will abort after the provided ms.
+     * @param ms - Elapsed time in milliseconds to trigger an abort.
+     */
+    static timeout(ms) {
+        const signal = new AbortSignal();
+        const timer = setTimeout(abortSignal, ms, signal);
+        // Prevent the active Timer from keeping the Node.js event loop active.
+        if (typeof timer.unref === "function") {
+            timer.unref();
+        }
+        return signal;
+    }
+}
+
+exports.AbortController = AbortController;
+exports.AbortError = AbortError;
+exports.AbortSignal = AbortSignal;
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
+/***/ 231:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AVRO_SCHEMA_KEY = exports.AVRO_CODEC_KEY = exports.AVRO_INIT_BYTES = exports.AVRO_SYNC_MARKER_SIZE = void 0;
+exports.AVRO_SYNC_MARKER_SIZE = 16;
+exports.AVRO_INIT_BYTES = new Uint8Array([79, 98, 106, 1]);
+exports.AVRO_CODEC_KEY = "avro.codec";
+exports.AVRO_SCHEMA_KEY = "avro.schema";
+//# sourceMappingURL=AvroConstants.js.map
+
+/***/ }),
+
+/***/ 232:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ServiceImpl = void 0;
+const tslib_1 = __nccwpck_require__(218);
+const coreClient = tslib_1.__importStar(__nccwpck_require__(440));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(180));
+const Parameters = tslib_1.__importStar(__nccwpck_require__(65));
+/** Class containing Service operations. */
+class ServiceImpl {
+    client;
+    /**
+     * Initialize a new instance of the class Service class.
+     * @param client Reference to the service client
+     */
+    constructor(client) {
+        this.client = client;
+    }
+    /**
+     * Sets properties for a storage account's Blob service endpoint, including properties for Storage
+     * Analytics and CORS (Cross-Origin Resource Sharing) rules
+     * @param blobServiceProperties The StorageService properties.
+     * @param options The options parameters.
+     */
+    setProperties(blobServiceProperties, options) {
+        return this.client.sendOperationRequest({ blobServiceProperties, options }, setPropertiesOperationSpec);
+    }
+    /**
+     * gets the properties of a storage account's Blob service, including properties for Storage Analytics
+     * and CORS (Cross-Origin Resource Sharing) rules.
+     * @param options The options parameters.
+     */
+    getProperties(options) {
+        return this.client.sendOperationRequest({ options }, getPropertiesOperationSpec);
+    }
+    /**
+     * Retrieves statistics related to replication for the Blob service. It is only available on the
+     * secondary location endpoint when read-access geo-redundant replication is enabled for the storage
+     * account.
+     * @param options The options parameters.
+     */
+    getStatistics(options) {
+        return this.client.sendOperationRequest({ options }, getStatisticsOperationSpec);
+    }
+    /**
+     * The List Containers Segment operation returns a list of the containers under the specified account
+     * @param options The options parameters.
+     */
+    listContainersSegment(options) {
+        return this.client.sendOperationRequest({ options }, listContainersSegmentOperationSpec);
+    }
+    /**
+     * Retrieves a user delegation key for the Blob service. This is only a valid operation when using
+     * bearer token authentication.
+     * @param keyInfo Key information
+     * @param options The options parameters.
+     */
+    getUserDelegationKey(keyInfo, options) {
+        return this.client.sendOperationRequest({ keyInfo, options }, getUserDelegationKeyOperationSpec);
+    }
+    /**
+     * Returns the sku name and account kind
+     * @param options The options parameters.
+     */
+    getAccountInfo(options) {
+        return this.client.sendOperationRequest({ options }, getAccountInfoOperationSpec);
+    }
+    /**
+     * The Batch operation allows multiple API calls to be embedded into a single HTTP request.
+     * @param contentLength The length of the request.
+     * @param multipartContentType Required. The value of this header must be multipart/mixed with a batch
+     *                             boundary. Example header value: multipart/mixed; boundary=batch_<GUID>
+     * @param body Initial data
+     * @param options The options parameters.
+     */
+    submitBatch(contentLength, multipartContentType, body, options) {
+        return this.client.sendOperationRequest({ contentLength, multipartContentType, body, options }, submitBatchOperationSpec);
+    }
+    /**
+     * The Filter Blobs operation enables callers to list blobs across all containers whose tags match a
+     * given search expression.  Filter blobs searches across all containers within a storage account but
+     * can be scoped within the expression to a single container.
+     * @param options The options parameters.
+     */
+    filterBlobs(options) {
+        return this.client.sendOperationRequest({ options }, filterBlobsOperationSpec);
+    }
+}
+exports.ServiceImpl = ServiceImpl;
+// Operation Specifications
+const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
+const setPropertiesOperationSpec = {
+    path: "/",
+    httpMethod: "PUT",
+    responses: {
+        202: {
+            headersMapper: Mappers.ServiceSetPropertiesHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ServiceSetPropertiesExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.blobServiceProperties,
+    queryParameters: [
+        Parameters.restype,
+        Parameters.comp,
+        Parameters.timeoutInSeconds,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.contentType,
+        Parameters.accept,
+        Parameters.version,
+        Parameters.requestId,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "xml",
+    serializer: xmlSerializer,
+};
+const getPropertiesOperationSpec = {
+    path: "/",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.BlobServiceProperties,
+            headersMapper: Mappers.ServiceGetPropertiesHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ServiceGetPropertiesExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.restype,
+        Parameters.comp,
+        Parameters.timeoutInSeconds,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const getStatisticsOperationSpec = {
+    path: "/",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.BlobServiceStatistics,
+            headersMapper: Mappers.ServiceGetStatisticsHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ServiceGetStatisticsExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.restype,
+        Parameters.timeoutInSeconds,
+        Parameters.comp1,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const listContainersSegmentOperationSpec = {
+    path: "/",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.ListContainersSegmentResponse,
+            headersMapper: Mappers.ServiceListContainersSegmentHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ServiceListContainersSegmentExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.comp2,
+        Parameters.prefix,
+        Parameters.marker,
+        Parameters.maxPageSize,
+        Parameters.include,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const getUserDelegationKeyOperationSpec = {
+    path: "/",
+    httpMethod: "POST",
+    responses: {
+        200: {
+            bodyMapper: Mappers.UserDelegationKey,
+            headersMapper: Mappers.ServiceGetUserDelegationKeyHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ServiceGetUserDelegationKeyExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.keyInfo,
+    queryParameters: [
+        Parameters.restype,
+        Parameters.timeoutInSeconds,
+        Parameters.comp3,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.contentType,
+        Parameters.accept,
+        Parameters.version,
+        Parameters.requestId,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "xml",
+    serializer: xmlSerializer,
+};
+const getAccountInfoOperationSpec = {
+    path: "/",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            headersMapper: Mappers.ServiceGetAccountInfoHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ServiceGetAccountInfoExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.comp,
+        Parameters.timeoutInSeconds,
+        Parameters.restype1,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const submitBatchOperationSpec = {
+    path: "/",
+    httpMethod: "POST",
+    responses: {
+        202: {
+            bodyMapper: {
+                type: { name: "Stream" },
+                serializedName: "parsedResponse",
+            },
+            headersMapper: Mappers.ServiceSubmitBatchHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ServiceSubmitBatchExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.body,
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp4],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.accept,
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.contentLength,
+        Parameters.multipartContentType,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "xml",
+    serializer: xmlSerializer,
+};
+const filterBlobsOperationSpec = {
+    path: "/",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.FilterBlobSegment,
+            headersMapper: Mappers.ServiceFilterBlobsHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.ServiceFilterBlobsExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.marker,
+        Parameters.maxPageSize,
+        Parameters.comp5,
+        Parameters.where,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+//# sourceMappingURL=service.js.map
+
+/***/ }),
+
+/***/ 233:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var agentPolicy_exports = {};
+__export(agentPolicy_exports, {
+  agentPolicy: () => agentPolicy,
+  agentPolicyName: () => agentPolicyName
+});
+module.exports = __toCommonJS(agentPolicy_exports);
+var import_policies = __nccwpck_require__(287);
+const agentPolicyName = import_policies.agentPolicyName;
+function agentPolicy(agent) {
+  return (0, import_policies.agentPolicy)(agent);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 234:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { UndiciError } = __nccwpck_require__(488)
+
+class MockNotMatchedError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, MockNotMatchedError)
+    this.name = 'MockNotMatchedError'
+    this.message = message || 'The request does not match any registered mock dispatches'
+    this.code = 'UND_MOCK_ERR_MOCK_NOT_MATCHED'
+  }
+}
+
+module.exports = {
+  MockNotMatchedError
+}
+
+
+/***/ }),
+
+/***/ 235:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { Transform } = __nccwpck_require__(130)
+const { Console } = __nccwpck_require__(32)
+
+/**
+ * Gets the output of `console.table(…)` as a string.
+ */
+module.exports = class PendingInterceptorsFormatter {
+  constructor ({ disableColors } = {}) {
+    this.transform = new Transform({
+      transform (chunk, _enc, cb) {
+        cb(null, chunk)
+      }
+    })
+
+    this.logger = new Console({
+      stdout: this.transform,
+      inspectOptions: {
+        colors: !disableColors && !process.env.CI
+      }
+    })
+  }
+
+  format (pendingInterceptors) {
+    const withPrettyHeaders = pendingInterceptors.map(
+      ({ method, path, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
+        Method: method,
+        Origin: origin,
+        Path: path,
+        'Status code': statusCode,
+        Persistent: persist ? '✅' : '❌',
+        Invocations: timesInvoked,
+        Remaining: persist ? Infinity : times - timesInvoked
+      }))
+
+    this.logger.table(withPrettyHeaders)
+    return this.transform.read().toString()
+  }
+}
+
+
+/***/ }),
+
+/***/ 236:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CacheMetadata = void 0;
+const runtime_1 = __nccwpck_require__(19);
+const runtime_2 = __nccwpck_require__(19);
+const runtime_3 = __nccwpck_require__(19);
+const runtime_4 = __nccwpck_require__(19);
+const runtime_5 = __nccwpck_require__(19);
+const cachescope_1 = __nccwpck_require__(397);
+// @generated message type with reflection information, may provide speed optimized methods
+class CacheMetadata$Type extends runtime_5.MessageType {
+    constructor() {
+        super("github.actions.results.entities.v1.CacheMetadata", [
+            { no: 1, name: "repository_id", kind: "scalar", T: 3 /*ScalarType.INT64*/ },
+            { no: 2, name: "scope", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => cachescope_1.CacheScope }
+        ]);
+    }
+    create(value) {
+        const message = { repositoryId: "0", scope: [] };
+        globalThis.Object.defineProperty(message, runtime_4.MESSAGE_TYPE, { enumerable: false, value: this });
+        if (value !== undefined)
+            (0, runtime_3.reflectionMergePartial)(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader, length, options, target) {
+        let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* int64 repository_id */ 1:
+                    message.repositoryId = reader.int64().toString();
+                    break;
+                case /* repeated github.actions.results.entities.v1.CacheScope scope */ 2:
+                    message.scope.push(cachescope_1.CacheScope.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? runtime_2.UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message, writer, options) {
+        /* int64 repository_id = 1; */
+        if (message.repositoryId !== "0")
+            writer.tag(1, runtime_1.WireType.Varint).int64(message.repositoryId);
+        /* repeated github.actions.results.entities.v1.CacheScope scope = 2; */
+        for (let i = 0; i < message.scope.length; i++)
+            cachescope_1.CacheScope.internalBinaryWrite(message.scope[i], writer.tag(2, runtime_1.WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? runtime_2.UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message github.actions.results.entities.v1.CacheMetadata
+ */
+exports.CacheMetadata = new CacheMetadata$Type();
+//# sourceMappingURL=cachemetadata.js.map
+
+/***/ }),
+
+/***/ 237:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var defaultHttpClient_exports = {};
+__export(defaultHttpClient_exports, {
+  createDefaultHttpClient: () => createDefaultHttpClient
+});
+module.exports = __toCommonJS(defaultHttpClient_exports);
+var import_ts_http_runtime = __nccwpck_require__(89);
+var import_wrapAbortSignal = __nccwpck_require__(446);
+function createDefaultHttpClient() {
+  const client = (0, import_ts_http_runtime.createDefaultHttpClient)();
+  return {
+    async sendRequest(request) {
+      const { abortSignal, cleanup } = request.abortSignal ? (0, import_wrapAbortSignal.wrapAbortSignalLike)(request.abortSignal) : {};
+      try {
+        request.abortSignal = abortSignal;
+        return await client.sendRequest(request);
+      } finally {
+        cleanup?.();
+      }
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 238:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:process");
+
+/***/ }),
+
+/***/ 239:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getRequestUrl = getRequestUrl;
+exports.appendQueryParams = appendQueryParams;
+const operationHelpers_js_1 = __nccwpck_require__(433);
+const interfaceHelpers_js_1 = __nccwpck_require__(400);
+const CollectionFormatToDelimiterMap = {
+    CSV: ",",
+    SSV: " ",
+    Multi: "Multi",
+    TSV: "\t",
+    Pipes: "|",
+};
+function getRequestUrl(baseUri, operationSpec, operationArguments, fallbackObject) {
+    const urlReplacements = calculateUrlReplacements(operationSpec, operationArguments, fallbackObject);
+    let isAbsolutePath = false;
+    let requestUrl = replaceAll(baseUri, urlReplacements);
+    if (operationSpec.path) {
+        let path = replaceAll(operationSpec.path, urlReplacements);
+        // QUIRK: sometimes we get a path component like /{nextLink}
+        // which may be a fully formed URL with a leading /. In that case, we should
+        // remove the leading /
+        if (operationSpec.path === "/{nextLink}" && path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        // QUIRK: sometimes we get a path component like {nextLink}
+        // which may be a fully formed URL. In that case, we should
+        // ignore the baseUri.
+        if (isAbsoluteUrl(path)) {
+            requestUrl = path;
+            isAbsolutePath = true;
+        }
+        else {
+            requestUrl = appendPath(requestUrl, path);
+        }
+    }
+    const { queryParams, sequenceParams } = calculateQueryParameters(operationSpec, operationArguments, fallbackObject);
+    /**
+     * Notice that this call sets the `noOverwrite` parameter to true if the `requestUrl`
+     * is an absolute path. This ensures that existing query parameter values in `requestUrl`
+     * do not get overwritten. On the other hand when `requestUrl` is not absolute path, it
+     * is still being built so there is nothing to overwrite.
+     */
+    requestUrl = appendQueryParams(requestUrl, queryParams, sequenceParams, isAbsolutePath);
+    return requestUrl;
+}
+function replaceAll(input, replacements) {
+    let result = input;
+    for (const [searchValue, replaceValue] of replacements) {
+        result = result.split(searchValue).join(replaceValue);
+    }
+    return result;
+}
+function calculateUrlReplacements(operationSpec, operationArguments, fallbackObject) {
+    const result = new Map();
+    if (operationSpec.urlParameters?.length) {
+        for (const urlParameter of operationSpec.urlParameters) {
+            let urlParameterValue = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, urlParameter, fallbackObject);
+            const parameterPathString = (0, interfaceHelpers_js_1.getPathStringFromParameter)(urlParameter);
+            urlParameterValue = operationSpec.serializer.serialize(urlParameter.mapper, urlParameterValue, parameterPathString);
+            if (!urlParameter.skipEncoding) {
+                urlParameterValue = encodeURIComponent(urlParameterValue);
+            }
+            result.set(`{${urlParameter.mapper.serializedName || parameterPathString}}`, urlParameterValue);
+        }
+    }
+    return result;
+}
+function isAbsoluteUrl(url) {
+    return url.includes("://");
+}
+function appendPath(url, pathToAppend) {
+    if (!pathToAppend) {
+        return url;
+    }
+    const parsedUrl = new URL(url);
+    let newPath = parsedUrl.pathname;
+    if (!newPath.endsWith("/")) {
+        newPath = `${newPath}/`;
+    }
+    if (pathToAppend.startsWith("/")) {
+        pathToAppend = pathToAppend.substring(1);
+    }
+    const searchStart = pathToAppend.indexOf("?");
+    if (searchStart !== -1) {
+        const path = pathToAppend.substring(0, searchStart);
+        const search = pathToAppend.substring(searchStart + 1);
+        newPath = newPath + path;
+        if (search) {
+            parsedUrl.search = parsedUrl.search ? `${parsedUrl.search}&${search}` : search;
+        }
+    }
+    else {
+        newPath = newPath + pathToAppend;
+    }
+    parsedUrl.pathname = newPath;
+    return parsedUrl.toString();
+}
+function calculateQueryParameters(operationSpec, operationArguments, fallbackObject) {
+    const result = new Map();
+    const sequenceParams = new Set();
+    if (operationSpec.queryParameters?.length) {
+        for (const queryParameter of operationSpec.queryParameters) {
+            if (queryParameter.mapper.type.name === "Sequence" && queryParameter.mapper.serializedName) {
+                sequenceParams.add(queryParameter.mapper.serializedName);
+            }
+            let queryParameterValue = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, queryParameter, fallbackObject);
+            if ((queryParameterValue !== undefined && queryParameterValue !== null) ||
+                queryParameter.mapper.required) {
+                queryParameterValue = operationSpec.serializer.serialize(queryParameter.mapper, queryParameterValue, (0, interfaceHelpers_js_1.getPathStringFromParameter)(queryParameter));
+                const delimiter = queryParameter.collectionFormat
+                    ? CollectionFormatToDelimiterMap[queryParameter.collectionFormat]
+                    : "";
+                if (Array.isArray(queryParameterValue)) {
+                    // replace null and undefined
+                    queryParameterValue = queryParameterValue.map((item) => {
+                        if (item === null || item === undefined) {
+                            return "";
+                        }
+                        return item;
+                    });
+                }
+                if (queryParameter.collectionFormat === "Multi" && queryParameterValue.length === 0) {
+                    continue;
+                }
+                else if (Array.isArray(queryParameterValue) &&
+                    (queryParameter.collectionFormat === "SSV" || queryParameter.collectionFormat === "TSV")) {
+                    queryParameterValue = queryParameterValue.join(delimiter);
+                }
+                if (!queryParameter.skipEncoding) {
+                    if (Array.isArray(queryParameterValue)) {
+                        queryParameterValue = queryParameterValue.map((item) => {
+                            return encodeURIComponent(item);
+                        });
+                    }
+                    else {
+                        queryParameterValue = encodeURIComponent(queryParameterValue);
+                    }
+                }
+                // Join pipes and CSV *after* encoding, or the server will be upset.
+                if (Array.isArray(queryParameterValue) &&
+                    (queryParameter.collectionFormat === "CSV" || queryParameter.collectionFormat === "Pipes")) {
+                    queryParameterValue = queryParameterValue.join(delimiter);
+                }
+                result.set(queryParameter.mapper.serializedName || (0, interfaceHelpers_js_1.getPathStringFromParameter)(queryParameter), queryParameterValue);
+            }
+        }
+    }
+    return {
+        queryParams: result,
+        sequenceParams,
+    };
+}
+function simpleParseQueryParams(queryString) {
+    const result = new Map();
+    if (!queryString || queryString[0] !== "?") {
+        return result;
+    }
+    // remove the leading ?
+    queryString = queryString.slice(1);
+    const pairs = queryString.split("&");
+    for (const pair of pairs) {
+        const [name, value] = pair.split("=", 2);
+        const existingValue = result.get(name);
+        if (existingValue) {
+            if (Array.isArray(existingValue)) {
+                existingValue.push(value);
+            }
+            else {
+                result.set(name, [existingValue, value]);
+            }
+        }
+        else {
+            result.set(name, value);
+        }
+    }
+    return result;
+}
+/** @internal */
+function appendQueryParams(url, queryParams, sequenceParams, noOverwrite = false) {
+    if (queryParams.size === 0) {
+        return url;
+    }
+    const parsedUrl = new URL(url);
+    // QUIRK: parsedUrl.searchParams will have their name/value pairs decoded, which
+    // can change their meaning to the server, such as in the case of a SAS signature.
+    // To avoid accidentally un-encoding a query param, we parse the key/values ourselves
+    const combinedParams = simpleParseQueryParams(parsedUrl.search);
+    for (const [name, value] of queryParams) {
+        const existingValue = combinedParams.get(name);
+        if (Array.isArray(existingValue)) {
+            if (Array.isArray(value)) {
+                existingValue.push(...value);
+                const valueSet = new Set(existingValue);
+                combinedParams.set(name, Array.from(valueSet));
+            }
+            else {
+                existingValue.push(value);
+            }
+        }
+        else if (existingValue) {
+            if (Array.isArray(value)) {
+                value.unshift(existingValue);
+            }
+            else if (sequenceParams.has(name)) {
+                combinedParams.set(name, [existingValue, value]);
+            }
+            if (!noOverwrite) {
+                combinedParams.set(name, value);
+            }
+        }
+        else {
+            combinedParams.set(name, value);
+        }
+    }
+    const searchPieces = [];
+    for (const [name, value] of combinedParams) {
+        if (typeof value === "string") {
+            searchPieces.push(`${name}=${value}`);
+        }
+        else if (Array.isArray(value)) {
+            // QUIRK: If we get an array of values, include multiple key/value pairs
+            for (const subValue of value) {
+                searchPieces.push(`${name}=${subValue}`);
+            }
+        }
+        else {
+            searchPieces.push(`${name}=${value}`);
+        }
+    }
+    // QUIRK: we have to set search manually as searchParams will encode comma when it shouldn't.
+    parsedUrl.search = searchPieces.length ? `?${searchPieces.join("&")}` : "";
+    return parsedUrl.toString();
+}
+//# sourceMappingURL=urlHelpers.js.map
+
+/***/ }),
+
+/***/ 240:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var decompressResponsePolicy_exports = {};
+__export(decompressResponsePolicy_exports, {
+  decompressResponsePolicy: () => decompressResponsePolicy,
+  decompressResponsePolicyName: () => decompressResponsePolicyName
+});
+module.exports = __toCommonJS(decompressResponsePolicy_exports);
+var import_policies = __nccwpck_require__(287);
+const decompressResponsePolicyName = import_policies.decompressResponsePolicyName;
+function decompressResponsePolicy() {
+  return (0, import_policies.decompressResponsePolicy)();
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 241:
+/***/ ((module) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var ndJsonPolicy_exports = {};
+__export(ndJsonPolicy_exports, {
+  ndJsonPolicy: () => ndJsonPolicy,
+  ndJsonPolicyName: () => ndJsonPolicyName
+});
+module.exports = __toCommonJS(ndJsonPolicy_exports);
+const ndJsonPolicyName = "ndJsonPolicy";
+function ndJsonPolicy() {
+  return {
+    name: ndJsonPolicyName,
+    async sendRequest(request, next) {
+      if (typeof request.body === "string" && request.body.startsWith("[")) {
+        const body = JSON.parse(request.body);
+        if (Array.isArray(body)) {
+          request.body = body.map((item) => JSON.stringify(item) + "\n").join("");
+        }
+      }
+      return next(request);
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 242:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Agent = void 0;
+const net = __importStar(__nccwpck_require__(509));
+const http = __importStar(__nccwpck_require__(329));
+const https_1 = __nccwpck_require__(70);
+__exportStar(__nccwpck_require__(161), exports);
+const INTERNAL = Symbol('AgentBaseInternalState');
+class Agent extends http.Agent {
+    constructor(opts) {
+        super(opts);
+        this[INTERNAL] = {};
+    }
+    /**
+     * Determine whether this is an `http` or `https` request.
+     */
+    isSecureEndpoint(options) {
+        if (options) {
+            // First check the `secureEndpoint` property explicitly, since this
+            // means that a parent `Agent` is "passing through" to this instance.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (typeof options.secureEndpoint === 'boolean') {
+                return options.secureEndpoint;
+            }
+            // If no explicit `secure` endpoint, check if `protocol` property is
+            // set. This will usually be the case since using a full string URL
+            // or `URL` instance should be the most common usage.
+            if (typeof options.protocol === 'string') {
+                return options.protocol === 'https:';
+            }
+        }
+        // Finally, if no `protocol` property was set, then fall back to
+        // checking the stack trace of the current call stack, and try to
+        // detect the "https" module.
+        const { stack } = new Error();
+        if (typeof stack !== 'string')
+            return false;
+        return stack
+            .split('\n')
+            .some((l) => l.indexOf('(https.js:') !== -1 ||
+            l.indexOf('node:https:') !== -1);
+    }
+    // In order to support async signatures in `connect()` and Node's native
+    // connection pooling in `http.Agent`, the array of sockets for each origin
+    // has to be updated synchronously. This is so the length of the array is
+    // accurate when `addRequest()` is next called. We achieve this by creating a
+    // fake socket and adding it to `sockets[origin]` and incrementing
+    // `totalSocketCount`.
+    incrementSockets(name) {
+        // If `maxSockets` and `maxTotalSockets` are both Infinity then there is no
+        // need to create a fake socket because Node.js native connection pooling
+        // will never be invoked.
+        if (this.maxSockets === Infinity && this.maxTotalSockets === Infinity) {
+            return null;
+        }
+        // All instances of `sockets` are expected TypeScript errors. The
+        // alternative is to add it as a private property of this class but that
+        // will break TypeScript subclassing.
+        if (!this.sockets[name]) {
+            // @ts-expect-error `sockets` is readonly in `@types/node`
+            this.sockets[name] = [];
+        }
+        const fakeSocket = new net.Socket({ writable: false });
+        this.sockets[name].push(fakeSocket);
+        // @ts-expect-error `totalSocketCount` isn't defined in `@types/node`
+        this.totalSocketCount++;
+        return fakeSocket;
+    }
+    decrementSockets(name, socket) {
+        if (!this.sockets[name] || socket === null) {
+            return;
+        }
+        const sockets = this.sockets[name];
+        const index = sockets.indexOf(socket);
+        if (index !== -1) {
+            sockets.splice(index, 1);
+            // @ts-expect-error  `totalSocketCount` isn't defined in `@types/node`
+            this.totalSocketCount--;
+            if (sockets.length === 0) {
+                // @ts-expect-error `sockets` is readonly in `@types/node`
+                delete this.sockets[name];
+            }
+        }
+    }
+    // In order to properly update the socket pool, we need to call `getName()` on
+    // the core `https.Agent` if it is a secureEndpoint.
+    getName(options) {
+        const secureEndpoint = this.isSecureEndpoint(options);
+        if (secureEndpoint) {
+            // @ts-expect-error `getName()` isn't defined in `@types/node`
+            return https_1.Agent.prototype.getName.call(this, options);
+        }
+        // @ts-expect-error `getName()` isn't defined in `@types/node`
+        return super.getName(options);
+    }
+    createSocket(req, options, cb) {
+        const connectOpts = {
+            ...options,
+            secureEndpoint: this.isSecureEndpoint(options),
+        };
+        const name = this.getName(connectOpts);
+        const fakeSocket = this.incrementSockets(name);
+        Promise.resolve()
+            .then(() => this.connect(req, connectOpts))
+            .then((socket) => {
+            this.decrementSockets(name, fakeSocket);
+            if (socket instanceof http.Agent) {
+                try {
+                    // @ts-expect-error `addRequest()` isn't defined in `@types/node`
+                    return socket.addRequest(req, connectOpts);
+                }
+                catch (err) {
+                    return cb(err);
+                }
+            }
+            this[INTERNAL].currentSocket = socket;
+            // @ts-expect-error `createSocket()` isn't defined in `@types/node`
+            super.createSocket(req, options, cb);
+        }, (err) => {
+            this.decrementSockets(name, fakeSocket);
+            cb(err);
+        });
+    }
+    createConnection() {
+        const socket = this[INTERNAL].currentSocket;
+        this[INTERNAL].currentSocket = undefined;
+        if (!socket) {
+            throw new Error('No socket was returned in the `connect()` function');
+        }
+        return socket;
+    }
+    get defaultPort() {
+        return (this[INTERNAL].defaultPort ??
+            (this.protocol === 'https:' ? 443 : 80));
+    }
+    set defaultPort(v) {
+        if (this[INTERNAL]) {
+            this[INTERNAL].defaultPort = v;
+        }
+    }
+    get protocol() {
+        return (this[INTERNAL].protocol ??
+            (this.isSecureEndpoint() ? 'https:' : 'http:'));
+    }
+    set protocol(v) {
+        if (this[INTERNAL]) {
+            this[INTERNAL].protocol = v;
+        }
+    }
+}
+exports.Agent = Agent;
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 243:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.mergeJsonOptions = exports.jsonWriteOptions = exports.jsonReadOptions = void 0;
+const defaultsWrite = {
+    emitDefaultValues: false,
+    enumAsInteger: false,
+    useProtoFieldName: false,
+    prettySpaces: 0,
+}, defaultsRead = {
+    ignoreUnknownFields: false,
+};
+/**
+ * Make options for reading JSON data from partial options.
+ */
+function jsonReadOptions(options) {
+    return options ? Object.assign(Object.assign({}, defaultsRead), options) : defaultsRead;
+}
+exports.jsonReadOptions = jsonReadOptions;
+/**
+ * Make options for writing JSON data from partial options.
+ */
+function jsonWriteOptions(options) {
+    return options ? Object.assign(Object.assign({}, defaultsWrite), options) : defaultsWrite;
+}
+exports.jsonWriteOptions = jsonWriteOptions;
+/**
+ * Merges JSON write or read options. Later values override earlier values. Type registries are merged.
+ */
+function mergeJsonOptions(a, b) {
+    var _a, _b;
+    let c = Object.assign(Object.assign({}, a), b);
+    c.typeRegistry = [...((_a = a === null || a === void 0 ? void 0 : a.typeRegistry) !== null && _a !== void 0 ? _a : []), ...((_b = b === null || b === void 0 ? void 0 : b.typeRegistry) !== null && _b !== void 0 ? _b : [])];
+    return c;
+}
+exports.mergeJsonOptions = mergeJsonOptions;
+
+
+/***/ }),
+
+/***/ 244:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var httpHeaders_exports = {};
+__export(httpHeaders_exports, {
+  createHttpHeaders: () => createHttpHeaders
+});
+module.exports = __toCommonJS(httpHeaders_exports);
+var import_ts_http_runtime = __nccwpck_require__(89);
+function createHttpHeaders(rawHeaders) {
+  return (0, import_ts_http_runtime.createHttpHeaders)(rawHeaders);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 245:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LroEngine = void 0;
+var lroEngine_js_1 = __nccwpck_require__(178);
+Object.defineProperty(exports, "LroEngine", ({ enumerable: true, get: function () { return lroEngine_js_1.LroEngine; } }));
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 246:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var pipeline_exports = {};
+__export(pipeline_exports, {
+  createEmptyPipeline: () => createEmptyPipeline
+});
+module.exports = __toCommonJS(pipeline_exports);
+var import_ts_http_runtime = __nccwpck_require__(89);
+function createEmptyPipeline() {
+  return (0, import_ts_http_runtime.createEmptyPipeline)();
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 247:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var logger_exports = {};
+__export(logger_exports, {
+  TypeSpecRuntimeLogger: () => TypeSpecRuntimeLogger,
+  createClientLogger: () => createClientLogger,
+  createLoggerContext: () => createLoggerContext,
+  getLogLevel: () => getLogLevel,
+  setLogLevel: () => setLogLevel
+});
+module.exports = __toCommonJS(logger_exports);
+var import_debug = __toESM(__nccwpck_require__(467));
+const TYPESPEC_RUNTIME_LOG_LEVELS = ["verbose", "info", "warning", "error"];
+const levelMap = {
+  verbose: 400,
+  info: 300,
+  warning: 200,
+  error: 100
+};
+function patchLogMethod(parent, child) {
+  child.log = (...args) => {
+    parent.log(...args);
+  };
+}
+function isTypeSpecRuntimeLogLevel(level) {
+  return TYPESPEC_RUNTIME_LOG_LEVELS.includes(level);
+}
+function createLoggerContext(options) {
+  const registeredLoggers = /* @__PURE__ */ new Set();
+  const logLevelFromEnv = typeof process !== "undefined" && process.env && process.env[options.logLevelEnvVarName] || void 0;
+  let logLevel;
+  const clientLogger = (0, import_debug.default)(options.namespace);
+  clientLogger.log = (...args) => {
+    import_debug.default.log(...args);
+  };
+  function contextSetLogLevel(level) {
+    if (level && !isTypeSpecRuntimeLogLevel(level)) {
+      throw new Error(
+        `Unknown log level '${level}'. Acceptable values: ${TYPESPEC_RUNTIME_LOG_LEVELS.join(",")}`
+      );
+    }
+    logLevel = level;
+    const enabledNamespaces = [];
+    for (const logger of registeredLoggers) {
+      if (shouldEnable(logger)) {
+        enabledNamespaces.push(logger.namespace);
+      }
+    }
+    import_debug.default.enable(enabledNamespaces.join(","));
+  }
+  if (logLevelFromEnv) {
+    if (isTypeSpecRuntimeLogLevel(logLevelFromEnv)) {
+      contextSetLogLevel(logLevelFromEnv);
+    } else {
+      console.error(
+        `${options.logLevelEnvVarName} set to unknown log level '${logLevelFromEnv}'; logging is not enabled. Acceptable values: ${TYPESPEC_RUNTIME_LOG_LEVELS.join(
+          ", "
+        )}.`
+      );
+    }
+  }
+  function shouldEnable(logger) {
+    return Boolean(logLevel && levelMap[logger.level] <= levelMap[logLevel]);
+  }
+  function createLogger(parent, level) {
+    const logger = Object.assign(parent.extend(level), {
+      level
+    });
+    patchLogMethod(parent, logger);
+    if (shouldEnable(logger)) {
+      const enabledNamespaces = import_debug.default.disable();
+      import_debug.default.enable(enabledNamespaces + "," + logger.namespace);
+    }
+    registeredLoggers.add(logger);
+    return logger;
+  }
+  function contextGetLogLevel() {
+    return logLevel;
+  }
+  function contextCreateClientLogger(namespace) {
+    const clientRootLogger = clientLogger.extend(namespace);
+    patchLogMethod(clientLogger, clientRootLogger);
+    return {
+      error: createLogger(clientRootLogger, "error"),
+      warning: createLogger(clientRootLogger, "warning"),
+      info: createLogger(clientRootLogger, "info"),
+      verbose: createLogger(clientRootLogger, "verbose")
+    };
+  }
+  return {
+    setLogLevel: contextSetLogLevel,
+    getLogLevel: contextGetLogLevel,
+    createClientLogger: contextCreateClientLogger,
+    logger: clientLogger
+  };
+}
+const context = createLoggerContext({
+  logLevelEnvVarName: "TYPESPEC_RUNTIME_LOG_LEVEL",
+  namespace: "typeSpecRuntime"
+});
+const TypeSpecRuntimeLogger = context.logger;
+function setLogLevel(logLevel) {
+  context.setLogLevel(logLevel);
+}
+function getLogLevel() {
+  return context.getLogLevel();
+}
+function createClientLogger(namespace) {
+  return context.createClientLogger(namespace);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=logger.js.map
+
+
+/***/ }),
+
+/***/ 248:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isBearerToken = isBearerToken;
+exports.isPopToken = isPopToken;
+exports.isTokenCredential = isTokenCredential;
+/**
+ * @internal
+ * @param accessToken - Access token
+ * @returns Whether a token is bearer type or not
+ */
+function isBearerToken(accessToken) {
+    return !accessToken.tokenType || accessToken.tokenType === "Bearer";
+}
+/**
+ * @internal
+ * @param accessToken - Access token
+ * @returns Whether a token is Pop token or not
+ */
+function isPopToken(accessToken) {
+    return accessToken.tokenType === "pop";
+}
+/**
+ * Tests an object to determine whether it implements TokenCredential.
+ *
+ * @param credential - The assumed TokenCredential to be tested.
+ */
+function isTokenCredential(credential) {
+    // Check for an object with a 'getToken' function and possibly with
+    // a 'signRequest' function.  We do this check to make sure that
+    // a ServiceClientCredentials implementor (like TokenClientCredentials
+    // in ms-rest-nodeauth) doesn't get mistaken for a TokenCredential if
+    // it doesn't actually implement TokenCredential also.
+    const castCredential = credential;
+    return (castCredential &&
+        typeof castCredential.getToken === "function" &&
+        (castCredential.signRequest === undefined || castCredential.getToken.length > 0));
+}
+//# sourceMappingURL=tokenCredential.js.map
+
+/***/ }),
+
+/***/ 249:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("path");
+
+/***/ }),
+
+/***/ 250:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
+
+/***/ }),
+
+/***/ 251:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { webidl } = __nccwpck_require__(457)
+const { kEnumerableProperty } = __nccwpck_require__(69)
+const { MessagePort } = __nccwpck_require__(319)
+
+/**
+ * @see https://html.spec.whatwg.org/multipage/comms.html#messageevent
+ */
+class MessageEvent extends Event {
+  #eventInit
+
+  constructor (type, eventInitDict = {}) {
+    webidl.argumentLengthCheck(arguments, 1, { header: 'MessageEvent constructor' })
+
+    type = webidl.converters.DOMString(type)
+    eventInitDict = webidl.converters.MessageEventInit(eventInitDict)
+
+    super(type, eventInitDict)
+
+    this.#eventInit = eventInitDict
+  }
+
+  get data () {
+    webidl.brandCheck(this, MessageEvent)
+
+    return this.#eventInit.data
+  }
+
+  get origin () {
+    webidl.brandCheck(this, MessageEvent)
+
+    return this.#eventInit.origin
+  }
+
+  get lastEventId () {
+    webidl.brandCheck(this, MessageEvent)
+
+    return this.#eventInit.lastEventId
+  }
+
+  get source () {
+    webidl.brandCheck(this, MessageEvent)
+
+    return this.#eventInit.source
+  }
+
+  get ports () {
+    webidl.brandCheck(this, MessageEvent)
+
+    if (!Object.isFrozen(this.#eventInit.ports)) {
+      Object.freeze(this.#eventInit.ports)
+    }
+
+    return this.#eventInit.ports
+  }
+
+  initMessageEvent (
+    type,
+    bubbles = false,
+    cancelable = false,
+    data = null,
+    origin = '',
+    lastEventId = '',
+    source = null,
+    ports = []
+  ) {
+    webidl.brandCheck(this, MessageEvent)
+
+    webidl.argumentLengthCheck(arguments, 1, { header: 'MessageEvent.initMessageEvent' })
+
+    return new MessageEvent(type, {
+      bubbles, cancelable, data, origin, lastEventId, source, ports
+    })
+  }
+}
+
+/**
+ * @see https://websockets.spec.whatwg.org/#the-closeevent-interface
+ */
+class CloseEvent extends Event {
+  #eventInit
+
+  constructor (type, eventInitDict = {}) {
+    webidl.argumentLengthCheck(arguments, 1, { header: 'CloseEvent constructor' })
+
+    type = webidl.converters.DOMString(type)
+    eventInitDict = webidl.converters.CloseEventInit(eventInitDict)
+
+    super(type, eventInitDict)
+
+    this.#eventInit = eventInitDict
+  }
+
+  get wasClean () {
+    webidl.brandCheck(this, CloseEvent)
+
+    return this.#eventInit.wasClean
+  }
+
+  get code () {
+    webidl.brandCheck(this, CloseEvent)
+
+    return this.#eventInit.code
+  }
+
+  get reason () {
+    webidl.brandCheck(this, CloseEvent)
+
+    return this.#eventInit.reason
+  }
+}
+
+// https://html.spec.whatwg.org/multipage/webappapis.html#the-errorevent-interface
+class ErrorEvent extends Event {
+  #eventInit
+
+  constructor (type, eventInitDict) {
+    webidl.argumentLengthCheck(arguments, 1, { header: 'ErrorEvent constructor' })
+
+    super(type, eventInitDict)
+
+    type = webidl.converters.DOMString(type)
+    eventInitDict = webidl.converters.ErrorEventInit(eventInitDict ?? {})
+
+    this.#eventInit = eventInitDict
+  }
+
+  get message () {
+    webidl.brandCheck(this, ErrorEvent)
+
+    return this.#eventInit.message
+  }
+
+  get filename () {
+    webidl.brandCheck(this, ErrorEvent)
+
+    return this.#eventInit.filename
+  }
+
+  get lineno () {
+    webidl.brandCheck(this, ErrorEvent)
+
+    return this.#eventInit.lineno
+  }
+
+  get colno () {
+    webidl.brandCheck(this, ErrorEvent)
+
+    return this.#eventInit.colno
+  }
+
+  get error () {
+    webidl.brandCheck(this, ErrorEvent)
+
+    return this.#eventInit.error
+  }
+}
+
+Object.defineProperties(MessageEvent.prototype, {
+  [Symbol.toStringTag]: {
+    value: 'MessageEvent',
+    configurable: true
+  },
+  data: kEnumerableProperty,
+  origin: kEnumerableProperty,
+  lastEventId: kEnumerableProperty,
+  source: kEnumerableProperty,
+  ports: kEnumerableProperty,
+  initMessageEvent: kEnumerableProperty
+})
+
+Object.defineProperties(CloseEvent.prototype, {
+  [Symbol.toStringTag]: {
+    value: 'CloseEvent',
+    configurable: true
+  },
+  reason: kEnumerableProperty,
+  code: kEnumerableProperty,
+  wasClean: kEnumerableProperty
+})
+
+Object.defineProperties(ErrorEvent.prototype, {
+  [Symbol.toStringTag]: {
+    value: 'ErrorEvent',
+    configurable: true
+  },
+  message: kEnumerableProperty,
+  filename: kEnumerableProperty,
+  lineno: kEnumerableProperty,
+  colno: kEnumerableProperty,
+  error: kEnumerableProperty
+})
+
+webidl.converters.MessagePort = webidl.interfaceConverter(MessagePort)
+
+webidl.converters['sequence<MessagePort>'] = webidl.sequenceConverter(
+  webidl.converters.MessagePort
+)
+
+const eventInit = [
+  {
+    key: 'bubbles',
+    converter: webidl.converters.boolean,
+    defaultValue: false
+  },
+  {
+    key: 'cancelable',
+    converter: webidl.converters.boolean,
+    defaultValue: false
+  },
+  {
+    key: 'composed',
+    converter: webidl.converters.boolean,
+    defaultValue: false
+  }
+]
+
+webidl.converters.MessageEventInit = webidl.dictionaryConverter([
+  ...eventInit,
+  {
+    key: 'data',
+    converter: webidl.converters.any,
+    defaultValue: null
+  },
+  {
+    key: 'origin',
+    converter: webidl.converters.USVString,
+    defaultValue: ''
+  },
+  {
+    key: 'lastEventId',
+    converter: webidl.converters.DOMString,
+    defaultValue: ''
+  },
+  {
+    key: 'source',
+    // Node doesn't implement WindowProxy or ServiceWorker, so the only
+    // valid value for source is a MessagePort.
+    converter: webidl.nullableConverter(webidl.converters.MessagePort),
+    defaultValue: null
+  },
+  {
+    key: 'ports',
+    converter: webidl.converters['sequence<MessagePort>'],
+    get defaultValue () {
+      return []
+    }
+  }
+])
+
+webidl.converters.CloseEventInit = webidl.dictionaryConverter([
+  ...eventInit,
+  {
+    key: 'wasClean',
+    converter: webidl.converters.boolean,
+    defaultValue: false
+  },
+  {
+    key: 'code',
+    converter: webidl.converters['unsigned short'],
+    defaultValue: 0
+  },
+  {
+    key: 'reason',
+    converter: webidl.converters.USVString,
+    defaultValue: ''
+  }
+])
+
+webidl.converters.ErrorEventInit = webidl.dictionaryConverter([
+  ...eventInit,
+  {
+    key: 'message',
+    converter: webidl.converters.DOMString,
+    defaultValue: ''
+  },
+  {
+    key: 'filename',
+    converter: webidl.converters.USVString,
+    defaultValue: ''
+  },
+  {
+    key: 'lineno',
+    converter: webidl.converters['unsigned long'],
+    defaultValue: 0
+  },
+  {
+    key: 'colno',
+    converter: webidl.converters['unsigned long'],
+    defaultValue: 0
+  },
+  {
+    key: 'error',
+    converter: webidl.converters.any
+  }
+])
+
+module.exports = {
+  MessageEvent,
+  CloseEvent,
+  ErrorEvent
+}
+
+
+/***/ }),
+
+/***/ 252:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BinaryWriter = exports.binaryWriteOptions = void 0;
+const pb_long_1 = __nccwpck_require__(117);
+const goog_varint_1 = __nccwpck_require__(205);
+const assert_1 = __nccwpck_require__(484);
+const defaultsWrite = {
+    writeUnknownFields: true,
+    writerFactory: () => new BinaryWriter(),
+};
+/**
+ * Make options for writing binary data form partial options.
+ */
+function binaryWriteOptions(options) {
+    return options ? Object.assign(Object.assign({}, defaultsWrite), options) : defaultsWrite;
+}
+exports.binaryWriteOptions = binaryWriteOptions;
+class BinaryWriter {
+    constructor(textEncoder) {
+        /**
+         * Previous fork states.
+         */
+        this.stack = [];
+        this.textEncoder = textEncoder !== null && textEncoder !== void 0 ? textEncoder : new TextEncoder();
+        this.chunks = [];
+        this.buf = [];
+    }
+    /**
+     * Return all bytes written and reset this writer.
+     */
+    finish() {
+        this.chunks.push(new Uint8Array(this.buf)); // flush the buffer
+        let len = 0;
+        for (let i = 0; i < this.chunks.length; i++)
+            len += this.chunks[i].length;
+        let bytes = new Uint8Array(len);
+        let offset = 0;
+        for (let i = 0; i < this.chunks.length; i++) {
+            bytes.set(this.chunks[i], offset);
+            offset += this.chunks[i].length;
+        }
+        this.chunks = [];
+        return bytes;
+    }
+    /**
+     * Start a new fork for length-delimited data like a message
+     * or a packed repeated field.
+     *
+     * Must be joined later with `join()`.
+     */
+    fork() {
+        this.stack.push({ chunks: this.chunks, buf: this.buf });
+        this.chunks = [];
+        this.buf = [];
+        return this;
+    }
+    /**
+     * Join the last fork. Write its length and bytes, then
+     * return to the previous state.
+     */
+    join() {
+        // get chunk of fork
+        let chunk = this.finish();
+        // restore previous state
+        let prev = this.stack.pop();
+        if (!prev)
+            throw new Error('invalid state, fork stack empty');
+        this.chunks = prev.chunks;
+        this.buf = prev.buf;
+        // write length of chunk as varint
+        this.uint32(chunk.byteLength);
+        return this.raw(chunk);
+    }
+    /**
+     * Writes a tag (field number and wire type).
+     *
+     * Equivalent to `uint32( (fieldNo << 3 | type) >>> 0 )`.
+     *
+     * Generated code should compute the tag ahead of time and call `uint32()`.
+     */
+    tag(fieldNo, type) {
+        return this.uint32((fieldNo << 3 | type) >>> 0);
+    }
+    /**
+     * Write a chunk of raw bytes.
+     */
+    raw(chunk) {
+        if (this.buf.length) {
+            this.chunks.push(new Uint8Array(this.buf));
+            this.buf = [];
+        }
+        this.chunks.push(chunk);
+        return this;
+    }
+    /**
+     * Write a `uint32` value, an unsigned 32 bit varint.
+     */
+    uint32(value) {
+        assert_1.assertUInt32(value);
+        // write value as varint 32, inlined for speed
+        while (value > 0x7f) {
+            this.buf.push((value & 0x7f) | 0x80);
+            value = value >>> 7;
+        }
+        this.buf.push(value);
+        return this;
+    }
+    /**
+     * Write a `int32` value, a signed 32 bit varint.
+     */
+    int32(value) {
+        assert_1.assertInt32(value);
+        goog_varint_1.varint32write(value, this.buf);
+        return this;
+    }
+    /**
+     * Write a `bool` value, a variant.
+     */
+    bool(value) {
+        this.buf.push(value ? 1 : 0);
+        return this;
+    }
+    /**
+     * Write a `bytes` value, length-delimited arbitrary data.
+     */
+    bytes(value) {
+        this.uint32(value.byteLength); // write length of chunk as varint
+        return this.raw(value);
+    }
+    /**
+     * Write a `string` value, length-delimited data converted to UTF-8 text.
+     */
+    string(value) {
+        let chunk = this.textEncoder.encode(value);
+        this.uint32(chunk.byteLength); // write length of chunk as varint
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `float` value, 32-bit floating point number.
+     */
+    float(value) {
+        assert_1.assertFloat32(value);
+        let chunk = new Uint8Array(4);
+        new DataView(chunk.buffer).setFloat32(0, value, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `double` value, a 64-bit floating point number.
+     */
+    double(value) {
+        let chunk = new Uint8Array(8);
+        new DataView(chunk.buffer).setFloat64(0, value, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `fixed32` value, an unsigned, fixed-length 32-bit integer.
+     */
+    fixed32(value) {
+        assert_1.assertUInt32(value);
+        let chunk = new Uint8Array(4);
+        new DataView(chunk.buffer).setUint32(0, value, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `sfixed32` value, a signed, fixed-length 32-bit integer.
+     */
+    sfixed32(value) {
+        assert_1.assertInt32(value);
+        let chunk = new Uint8Array(4);
+        new DataView(chunk.buffer).setInt32(0, value, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `sint32` value, a signed, zigzag-encoded 32-bit varint.
+     */
+    sint32(value) {
+        assert_1.assertInt32(value);
+        // zigzag encode
+        value = ((value << 1) ^ (value >> 31)) >>> 0;
+        goog_varint_1.varint32write(value, this.buf);
+        return this;
+    }
+    /**
+     * Write a `fixed64` value, a signed, fixed-length 64-bit integer.
+     */
+    sfixed64(value) {
+        let chunk = new Uint8Array(8);
+        let view = new DataView(chunk.buffer);
+        let long = pb_long_1.PbLong.from(value);
+        view.setInt32(0, long.lo, true);
+        view.setInt32(4, long.hi, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `fixed64` value, an unsigned, fixed-length 64 bit integer.
+     */
+    fixed64(value) {
+        let chunk = new Uint8Array(8);
+        let view = new DataView(chunk.buffer);
+        let long = pb_long_1.PbULong.from(value);
+        view.setInt32(0, long.lo, true);
+        view.setInt32(4, long.hi, true);
+        return this.raw(chunk);
+    }
+    /**
+     * Write a `int64` value, a signed 64-bit varint.
+     */
+    int64(value) {
+        let long = pb_long_1.PbLong.from(value);
+        goog_varint_1.varint64write(long.lo, long.hi, this.buf);
+        return this;
+    }
+    /**
+     * Write a `sint64` value, a signed, zig-zag-encoded 64-bit varint.
+     */
+    sint64(value) {
+        let long = pb_long_1.PbLong.from(value),
+        // zigzag encode
+        sign = long.hi >> 31, lo = (long.lo << 1) ^ sign, hi = ((long.hi << 1) | (long.lo >>> 31)) ^ sign;
+        goog_varint_1.varint64write(lo, hi, this.buf);
+        return this;
+    }
+    /**
+     * Write a `uint64` value, an unsigned 64-bit varint.
+     */
+    uint64(value) {
+        let long = pb_long_1.PbULong.from(value);
+        goog_varint_1.varint64write(long.lo, long.hi, this.buf);
+        return this;
+    }
+}
+exports.BinaryWriter = BinaryWriter;
+
+
+/***/ }),
+
+/***/ 253:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AvroReadableFromStream = void 0;
+const AvroReadable_js_1 = __nccwpck_require__(388);
+const abort_controller_1 = __nccwpck_require__(496);
+const buffer_1 = __nccwpck_require__(119);
+const ABORT_ERROR = new abort_controller_1.AbortError("Reading from the avro stream was aborted.");
+class AvroReadableFromStream extends AvroReadable_js_1.AvroReadable {
+    _position;
+    _readable;
+    toUint8Array(data) {
+        if (typeof data === "string") {
+            return buffer_1.Buffer.from(data);
+        }
+        return data;
+    }
+    constructor(readable) {
+        super();
+        this._readable = readable;
+        this._position = 0;
+    }
+    get position() {
+        return this._position;
+    }
+    async read(size, options = {}) {
+        if (options.abortSignal?.aborted) {
+            throw ABORT_ERROR;
+        }
+        if (size < 0) {
+            throw new Error(`size parameter should be positive: ${size}`);
+        }
+        if (size === 0) {
+            return new Uint8Array();
+        }
+        if (!this._readable.readable) {
+            throw new Error("Stream no longer readable.");
+        }
+        // See if there is already enough data.
+        const chunk = this._readable.read(size);
+        if (chunk) {
+            this._position += chunk.length;
+            // chunk.length maybe less than desired size if the stream ends.
+            return this.toUint8Array(chunk);
+        }
+        else {
+            // register callback to wait for enough data to read
+            return new Promise((resolve, reject) => {
+                /* eslint-disable @typescript-eslint/no-use-before-define */
+                const cleanUp = () => {
+                    this._readable.removeListener("readable", readableCallback);
+                    this._readable.removeListener("error", rejectCallback);
+                    this._readable.removeListener("end", rejectCallback);
+                    this._readable.removeListener("close", rejectCallback);
+                    if (options.abortSignal) {
+                        options.abortSignal.removeEventListener("abort", abortHandler);
+                    }
+                };
+                const readableCallback = () => {
+                    const callbackChunk = this._readable.read(size);
+                    if (callbackChunk) {
+                        this._position += callbackChunk.length;
+                        cleanUp();
+                        // callbackChunk.length maybe less than desired size if the stream ends.
+                        resolve(this.toUint8Array(callbackChunk));
+                    }
+                };
+                const rejectCallback = () => {
+                    cleanUp();
+                    reject();
+                };
+                const abortHandler = () => {
+                    cleanUp();
+                    reject(ABORT_ERROR);
+                };
+                this._readable.on("readable", readableCallback);
+                this._readable.once("error", rejectCallback);
+                this._readable.once("end", rejectCallback);
+                this._readable.once("close", rejectCallback);
+                if (options.abortSignal) {
+                    options.abortSignal.addEventListener("abort", abortHandler);
+                }
+                /* eslint-enable @typescript-eslint/no-use-before-define */
+            });
+        }
+    }
+}
+exports.AvroReadableFromStream = AvroReadableFromStream;
+//# sourceMappingURL=AvroReadableFromStream.js.map
+
+/***/ }),
+
+/***/ 254:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getCachedDefaultHttpClient = getCachedDefaultHttpClient;
+const core_rest_pipeline_1 = __nccwpck_require__(101);
+let _defaultHttpClient;
+function getCachedDefaultHttpClient() {
+    if (!_defaultHttpClient) {
+        _defaultHttpClient = (0, core_rest_pipeline_1.createDefaultHttpClient)();
+    }
+    return _defaultHttpClient;
+}
+//# sourceMappingURL=cache.js.map
+
+/***/ }),
+
+/***/ 255:
+/***/ ((module) => {
+
+"use strict";
+
+
+const singulars = {
+  pronoun: 'it',
+  is: 'is',
+  was: 'was',
+  this: 'this'
+}
+
+const plurals = {
+  pronoun: 'they',
+  is: 'are',
+  was: 'were',
+  this: 'these'
+}
+
+module.exports = class Pluralizer {
+  constructor (singular, plural) {
+    this.singular = singular
+    this.plural = plural
+  }
+
+  pluralize (count) {
+    const one = count === 1
+    const keys = one ? singulars : plurals
+    const noun = one ? this.singular : this.plural
+    return { ...keys, count, noun }
+  }
+}
+
+
+/***/ }),
+
+/***/ 256:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const RedirectHandler = __nccwpck_require__(391)
+
+function createRedirectInterceptor ({ maxRedirections: defaultMaxRedirections }) {
+  return (dispatch) => {
+    return function Intercept (opts, handler) {
+      const { maxRedirections = defaultMaxRedirections } = opts
+
+      if (!maxRedirections) {
+        return dispatch(opts, handler)
+      }
+
+      const redirectHandler = new RedirectHandler(dispatch, maxRedirections, opts, handler)
+      opts = { ...opts, maxRedirections: 0 } // Stop sub dispatcher from also redirecting.
+      return dispatch(opts, redirectHandler)
+    }
+  }
+}
+
+module.exports = createRedirectInterceptor
+
+
+/***/ }),
+
+/***/ 257:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var userAgent_exports = {};
+__export(userAgent_exports, {
+  getUserAgentHeaderName: () => getUserAgentHeaderName,
+  getUserAgentValue: () => getUserAgentValue
+});
+module.exports = __toCommonJS(userAgent_exports);
+var import_userAgentPlatform = __nccwpck_require__(429);
+var import_constants = __nccwpck_require__(48);
+function getUserAgentString(telemetryInfo) {
+  const parts = [];
+  for (const [key, value] of telemetryInfo) {
+    const token = value ? `${key}/${value}` : key;
+    parts.push(token);
+  }
+  return parts.join(" ");
+}
+function getUserAgentHeaderName() {
+  return (0, import_userAgentPlatform.getHeaderName)();
+}
+async function getUserAgentValue(prefix) {
+  const runtimeInfo = /* @__PURE__ */ new Map();
+  runtimeInfo.set("ts-http-runtime", import_constants.SDK_VERSION);
+  await (0, import_userAgentPlatform.setPlatformSpecificData)(runtimeInfo);
+  const defaultAgent = getUserAgentString(runtimeInfo);
+  const userAgentValue = prefix ? `${prefix} ${defaultAgent}` : defaultAgent;
+  return userAgentValue;
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=userAgent.js.map
+
+
+/***/ }),
+
+/***/ 258:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("stream/web");
+
+/***/ }),
+
+/***/ 259:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getBodyAsText = getBodyAsText;
+exports.utf8ByteLength = utf8ByteLength;
+const utils_js_1 = __nccwpck_require__(204);
+const constants_js_1 = __nccwpck_require__(148);
+async function getBodyAsText(batchResponse) {
+    let buffer = Buffer.alloc(constants_js_1.BATCH_MAX_PAYLOAD_IN_BYTES);
+    const responseLength = await (0, utils_js_1.streamToBuffer2)(batchResponse.readableStreamBody, buffer);
+    // Slice the buffer to trim the empty ending.
+    buffer = buffer.slice(0, responseLength);
+    return buffer.toString();
+}
+function utf8ByteLength(str) {
+    return Buffer.byteLength(str);
+}
+//# sourceMappingURL=BatchUtils.js.map
+
+/***/ }),
+
+/***/ 260:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var wrapAbortSignalLikePolicy_exports = {};
+__export(wrapAbortSignalLikePolicy_exports, {
+  wrapAbortSignalLikePolicy: () => wrapAbortSignalLikePolicy,
+  wrapAbortSignalLikePolicyName: () => wrapAbortSignalLikePolicyName
+});
+module.exports = __toCommonJS(wrapAbortSignalLikePolicy_exports);
+var import_wrapAbortSignal = __nccwpck_require__(446);
+const wrapAbortSignalLikePolicyName = "wrapAbortSignalLikePolicy";
+function wrapAbortSignalLikePolicy() {
+  return {
+    name: wrapAbortSignalLikePolicyName,
+    sendRequest: async (request, next) => {
+      if (!request.abortSignal) {
+        return next(request);
+      }
+      const { abortSignal, cleanup } = (0, import_wrapAbortSignal.wrapAbortSignalLike)(request.abortSignal);
+      request.abortSignal = abortSignal;
+      try {
+        return await next(request);
+      } finally {
+        cleanup?.();
+      }
+    }
+  };
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 261:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createAbortablePromise = createAbortablePromise;
+const abort_controller_1 = __nccwpck_require__(494);
+/**
+ * Creates an abortable promise.
+ * @param buildPromise - A function that takes the resolve and reject functions as parameters.
+ * @param options - The options for the abortable promise.
+ * @returns A promise that can be aborted.
+ */
+function createAbortablePromise(buildPromise, options) {
+    const { cleanupBeforeAbort, abortSignal, abortErrorMsg } = options ?? {};
+    return new Promise((resolve, reject) => {
+        function rejectOnAbort() {
+            reject(new abort_controller_1.AbortError(abortErrorMsg ?? "The operation was aborted."));
+        }
+        function removeListeners() {
+            abortSignal?.removeEventListener("abort", onAbort);
+        }
+        function onAbort() {
+            cleanupBeforeAbort?.();
+            removeListeners();
+            rejectOnAbort();
+        }
+        if (abortSignal?.aborted) {
+            return rejectOnAbort();
+        }
+        try {
+            buildPromise((x) => {
+                removeListeners();
+                resolve(x);
+            }, (x) => {
+                removeListeners();
+                reject(x);
+            });
+        }
+        catch (err) {
+            reject(err);
+        }
+        abortSignal?.addEventListener("abort", onAbort);
+    });
+}
+//# sourceMappingURL=createAbortablePromise.js.map
+
+/***/ }),
+
+/***/ 262:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.retryHttpClientResponse = exports.retryTypedResponse = exports.retry = exports.isRetryableStatusCode = exports.isServerErrorStatusCode = exports.isSuccessStatusCode = void 0;
+const core = __importStar(__nccwpck_require__(460));
+const http_client_1 = __nccwpck_require__(286);
+const constants_1 = __nccwpck_require__(45);
+function isSuccessStatusCode(statusCode) {
+    if (!statusCode) {
+        return false;
+    }
+    return statusCode >= 200 && statusCode < 300;
+}
+exports.isSuccessStatusCode = isSuccessStatusCode;
+function isServerErrorStatusCode(statusCode) {
+    if (!statusCode) {
+        return true;
+    }
+    return statusCode >= 500;
+}
+exports.isServerErrorStatusCode = isServerErrorStatusCode;
+function isRetryableStatusCode(statusCode) {
+    if (!statusCode) {
+        return false;
+    }
+    const retryableStatusCodes = [
+        http_client_1.HttpCodes.BadGateway,
+        http_client_1.HttpCodes.ServiceUnavailable,
+        http_client_1.HttpCodes.GatewayTimeout
+    ];
+    return retryableStatusCodes.includes(statusCode);
+}
+exports.isRetryableStatusCode = isRetryableStatusCode;
+function sleep(milliseconds) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise(resolve => setTimeout(resolve, milliseconds));
+    });
+}
+function retry(name, method, getStatusCode, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay, onError = undefined) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let errorMessage = '';
+        let attempt = 1;
+        while (attempt <= maxAttempts) {
+            let response = undefined;
+            let statusCode = undefined;
+            let isRetryable = false;
+            try {
+                response = yield method();
+            }
+            catch (error) {
+                if (onError) {
+                    response = onError(error);
+                }
+                isRetryable = true;
+                errorMessage = error.message;
+            }
+            if (response) {
+                statusCode = getStatusCode(response);
+                if (!isServerErrorStatusCode(statusCode)) {
+                    return response;
+                }
+            }
+            if (statusCode) {
+                isRetryable = isRetryableStatusCode(statusCode);
+                errorMessage = `Cache service responded with ${statusCode}`;
+            }
+            core.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
+            if (!isRetryable) {
+                core.debug(`${name} - Error is not retryable`);
+                break;
+            }
+            yield sleep(delay);
+            attempt++;
+        }
+        throw Error(`${name} failed: ${errorMessage}`);
+    });
+}
+exports.retry = retry;
+function retryTypedResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield retry(name, method, (response) => response.statusCode, maxAttempts, delay,
+        // If the error object contains the statusCode property, extract it and return
+        // an TypedResponse<T> so it can be processed by the retry logic.
+        (error) => {
+            if (error instanceof http_client_1.HttpClientError) {
+                return {
+                    statusCode: error.statusCode,
+                    result: null,
+                    headers: {},
+                    error
+                };
+            }
+            else {
+                return undefined;
+            }
+        });
+    });
+}
+exports.retryTypedResponse = retryTypedResponse;
+function retryHttpClientResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield retry(name, method, (response) => response.message.statusCode, maxAttempts, delay);
+    });
+}
+exports.retryHttpClientResponse = retryHttpClientResponse;
+//# sourceMappingURL=requestUtils.js.map
 
 /***/ }),
 
@@ -55382,9 +55382,9 @@ module.exports = decodeText
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BaseRequestPolicy = exports.getCachedDefaultHttpClient = void 0;
-const tslib_1 = __nccwpck_require__(217);
-tslib_1.__exportStar(__nccwpck_require__(364), exports);
-var cache_js_1 = __nccwpck_require__(253);
+const tslib_1 = __nccwpck_require__(218);
+tslib_1.__exportStar(__nccwpck_require__(363), exports);
+var cache_js_1 = __nccwpck_require__(254);
 Object.defineProperty(exports, "getCachedDefaultHttpClient", ({ enumerable: true, get: function () { return cache_js_1.getCachedDefaultHttpClient; } }));
 tslib_1.__exportStar(__nccwpck_require__(83), exports);
 tslib_1.__exportStar(__nccwpck_require__(155), exports);
@@ -55396,7 +55396,7 @@ var RequestPolicy_js_1 = __nccwpck_require__(46);
 Object.defineProperty(exports, "BaseRequestPolicy", ({ enumerable: true, get: function () { return RequestPolicy_js_1.BaseRequestPolicy; } }));
 tslib_1.__exportStar(__nccwpck_require__(93), exports);
 tslib_1.__exportStar(__nccwpck_require__(310), exports);
-tslib_1.__exportStar(__nccwpck_require__(207), exports);
+tslib_1.__exportStar(__nccwpck_require__(208), exports);
 tslib_1.__exportStar(__nccwpck_require__(464), exports);
 tslib_1.__exportStar(__nccwpck_require__(167), exports);
 tslib_1.__exportStar(__nccwpck_require__(126), exports);
@@ -55420,13 +55420,13 @@ tslib_1.__exportStar(__nccwpck_require__(169), exports);
  * Changes may cause incorrect behavior and will be lost if the code is regenerated.
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tslib_1 = __nccwpck_require__(217);
-tslib_1.__exportStar(__nccwpck_require__(231), exports);
-tslib_1.__exportStar(__nccwpck_require__(221), exports);
+const tslib_1 = __nccwpck_require__(218);
+tslib_1.__exportStar(__nccwpck_require__(232), exports);
+tslib_1.__exportStar(__nccwpck_require__(222), exports);
 tslib_1.__exportStar(__nccwpck_require__(47), exports);
 tslib_1.__exportStar(__nccwpck_require__(283), exports);
 tslib_1.__exportStar(__nccwpck_require__(26), exports);
-tslib_1.__exportStar(__nccwpck_require__(357), exports);
+tslib_1.__exportStar(__nccwpck_require__(356), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
@@ -55728,20 +55728,20 @@ __export(createPipelineFromOptions_exports, {
 });
 module.exports = __toCommonJS(createPipelineFromOptions_exports);
 var import_logPolicy = __nccwpck_require__(71);
-var import_pipeline = __nccwpck_require__(245);
-var import_redirectPolicy = __nccwpck_require__(342);
+var import_pipeline = __nccwpck_require__(246);
+var import_redirectPolicy = __nccwpck_require__(341);
 var import_userAgentPolicy = __nccwpck_require__(390);
 var import_multipartPolicy = __nccwpck_require__(273);
-var import_decompressResponsePolicy = __nccwpck_require__(239);
+var import_decompressResponsePolicy = __nccwpck_require__(240);
 var import_defaultRetryPolicy = __nccwpck_require__(55);
 var import_formDataPolicy = __nccwpck_require__(270);
 var import_core_util = __nccwpck_require__(14);
 var import_proxyPolicy = __nccwpck_require__(473);
 var import_setClientRequestIdPolicy = __nccwpck_require__(150);
-var import_agentPolicy = __nccwpck_require__(232);
+var import_agentPolicy = __nccwpck_require__(233);
 var import_tlsPolicy = __nccwpck_require__(379);
 var import_tracingPolicy = __nccwpck_require__(336);
-var import_wrapAbortSignalLikePolicy = __nccwpck_require__(259);
+var import_wrapAbortSignalLikePolicy = __nccwpck_require__(260);
 function createPipelineFromOptions(options) {
   const pipeline = (0, import_pipeline.createEmptyPipeline)();
   if (import_core_util.isNodeLike) {
@@ -55789,7 +55789,7 @@ function createPipelineFromOptions(options) {
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PageBlobImpl = void 0;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(440));
 const Mappers = tslib_1.__importStar(__nccwpck_require__(180));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(65));
@@ -57145,19 +57145,19 @@ __export(internal_exports, {
 });
 module.exports = __toCommonJS(internal_exports);
 var import_agentPolicy = __nccwpck_require__(465);
-var import_decompressResponsePolicy = __nccwpck_require__(358);
+var import_decompressResponsePolicy = __nccwpck_require__(357);
 var import_defaultRetryPolicy = __nccwpck_require__(325);
 var import_exponentialRetryPolicy = __nccwpck_require__(524);
 var import_retryPolicy = __nccwpck_require__(16);
 var import_systemErrorRetryPolicy = __nccwpck_require__(28);
 var import_throttlingRetryPolicy = __nccwpck_require__(522);
-var import_formDataPolicy = __nccwpck_require__(341);
+var import_formDataPolicy = __nccwpck_require__(340);
 var import_logPolicy = __nccwpck_require__(102);
 var import_multipartPolicy = __nccwpck_require__(171);
 var import_proxyPolicy = __nccwpck_require__(39);
 var import_redirectPolicy = __nccwpck_require__(318);
-var import_tlsPolicy = __nccwpck_require__(222);
-var import_userAgentPolicy = __nccwpck_require__(362);
+var import_tlsPolicy = __nccwpck_require__(223);
+var import_userAgentPolicy = __nccwpck_require__(361);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
 //# sourceMappingURL=internal.js.map
@@ -57211,7 +57211,7 @@ function stringToUint8Array(value, format) {
 
 module.exports = parseString
 
-const TOMLParser = __nccwpck_require__(348)
+const TOMLParser = __nccwpck_require__(347)
 const prettyError = __nccwpck_require__(280)
 
 function parseString (str) {
@@ -57243,7 +57243,7 @@ exports.generateAccountSASQueryParametersInternal = generateAccountSASQueryParam
 const AccountSASPermissions_js_1 = __nccwpck_require__(58);
 const AccountSASResourceTypes_js_1 = __nccwpck_require__(2);
 const AccountSASServices_js_1 = __nccwpck_require__(380);
-const SasIPRange_js_1 = __nccwpck_require__(361);
+const SasIPRange_js_1 = __nccwpck_require__(360);
 const SASQueryParameters_js_1 = __nccwpck_require__(526);
 const constants_js_1 = __nccwpck_require__(148);
 const utils_common_js_1 = __nccwpck_require__(154);
@@ -57775,10 +57775,10 @@ exports.saveSoloCache = saveSoloCache;
 exports.restoreSoloCache = restoreSoloCache;
 exports.verifyRestoredToolchain = verifyRestoredToolchain;
 const node_crypto_1 = __nccwpck_require__(276);
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const fsp = __importStar(__nccwpck_require__(108));
 const path = __importStar(__nccwpck_require__(508));
-const cache = __importStar(__nccwpck_require__(215));
+const cache = __importStar(__nccwpck_require__(216));
 const exec = __importStar(__nccwpck_require__(18));
 const cache_compress_js_1 = __nccwpck_require__(493);
 /**
@@ -58142,8 +58142,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.findInPath = exports.which = exports.mkdirP = exports.rmRF = exports.mv = exports.cp = void 0;
 const assert_1 = __nccwpck_require__(527);
-const path = __importStar(__nccwpck_require__(248));
-const ioUtil = __importStar(__nccwpck_require__(226));
+const path = __importStar(__nccwpck_require__(249));
+const ioUtil = __importStar(__nccwpck_require__(227));
 /**
  * Copies a file or folder.
  * Based off of shelljs - https://github.com/shelljs/shelljs/blob/9237f66c52e5daa40458f94f9565e18e8132f5a6/src/cp.js
@@ -58507,7 +58507,7 @@ exports.maskSecretUrls = maskSecretUrls;
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageClient = void 0;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 tslib_1.__exportStar(__nccwpck_require__(472), exports);
 var storageClient_js_1 = __nccwpck_require__(447);
 Object.defineProperty(exports, "StorageClient", ({ enumerable: true, get: function () { return storageClient_js_1.StorageClient; } }));
@@ -60960,7 +60960,7 @@ exports.BatchResponseParser = void 0;
 const core_rest_pipeline_1 = __nccwpck_require__(101);
 const core_http_compat_1 = __nccwpck_require__(72);
 const constants_js_1 = __nccwpck_require__(148);
-const BatchUtils_js_1 = __nccwpck_require__(258);
+const BatchUtils_js_1 = __nccwpck_require__(259);
 const log_js_1 = __nccwpck_require__(106);
 const HTTP_HEADER_DELIMITER = ": ";
 const SPACE_DELIMITER = " ";
@@ -61539,7 +61539,7 @@ const pipeline_js_1 = __nccwpck_require__(285);
 const utils_js_1 = __nccwpck_require__(313);
 const httpClientCache_js_1 = __nccwpck_require__(399);
 const operationHelpers_js_1 = __nccwpck_require__(433);
-const urlHelpers_js_1 = __nccwpck_require__(238);
+const urlHelpers_js_1 = __nccwpck_require__(239);
 const interfaceHelpers_js_1 = __nccwpck_require__(400);
 const log_js_1 = __nccwpck_require__(481);
 /**
@@ -61736,14 +61736,14 @@ module.exports = __toCommonJS(createPipelineFromOptions_exports);
 var import_logPolicy = __nccwpck_require__(102);
 var import_pipeline = __nccwpck_require__(525);
 var import_redirectPolicy = __nccwpck_require__(318);
-var import_userAgentPolicy = __nccwpck_require__(362);
-var import_decompressResponsePolicy = __nccwpck_require__(358);
+var import_userAgentPolicy = __nccwpck_require__(361);
+var import_decompressResponsePolicy = __nccwpck_require__(357);
 var import_defaultRetryPolicy = __nccwpck_require__(325);
-var import_formDataPolicy = __nccwpck_require__(341);
+var import_formDataPolicy = __nccwpck_require__(340);
 var import_checkEnvironment = __nccwpck_require__(439);
 var import_proxyPolicy = __nccwpck_require__(39);
 var import_agentPolicy = __nccwpck_require__(465);
-var import_tlsPolicy = __nccwpck_require__(222);
+var import_tlsPolicy = __nccwpck_require__(223);
 var import_multipartPolicy = __nccwpck_require__(171);
 function createPipelineFromOptions(options) {
   const pipeline = (0, import_pipeline.createEmptyPipeline)();
@@ -62679,7 +62679,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.toPlatformPath = exports.toWin32Path = exports.toPosixPath = void 0;
-const path = __importStar(__nccwpck_require__(248));
+const path = __importStar(__nccwpck_require__(249));
 /**
  * toPosixPath converts the given path to the posix form. On Windows, \\ will be
  * replaced with /.
@@ -63124,7 +63124,7 @@ var AvroReader_js_1 = __nccwpck_require__(422);
 Object.defineProperty(exports, "AvroReader", ({ enumerable: true, get: function () { return AvroReader_js_1.AvroReader; } }));
 var AvroReadable_js_1 = __nccwpck_require__(388);
 Object.defineProperty(exports, "AvroReadable", ({ enumerable: true, get: function () { return AvroReadable_js_1.AvroReadable; } }));
-var AvroReadableFromStream_js_1 = __nccwpck_require__(252);
+var AvroReadableFromStream_js_1 = __nccwpck_require__(253);
 Object.defineProperty(exports, "AvroReadableFromStream", ({ enumerable: true, get: function () { return AvroReadableFromStream_js_1.AvroReadableFromStream; } }));
 //# sourceMappingURL=index.js.map
 
@@ -63161,7 +63161,7 @@ var import_constants = __nccwpck_require__(159);
 var import_userAgent = __nccwpck_require__(293);
 var import_log = __nccwpck_require__(184);
 var import_core_util = __nccwpck_require__(14);
-var import_restError = __nccwpck_require__(355);
+var import_restError = __nccwpck_require__(354);
 var import_util = __nccwpck_require__(146);
 const tracingPolicyName = "tracingPolicy";
 function tracingPolicy(options = {}) {
@@ -63535,380 +63535,6 @@ function oauth2AuthenticationPolicy(options) {
 /***/ }),
 
 /***/ 340:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Soldr binary installer. Owned by Agent 2.
-//
-// Port of .github/actions/setup-soldr/ensure_soldr.py.
-// Downloads the soldr binary from a GitHub release asset (or builds from a
-// git ref when INPUT_REF is set) and places it under $SOLDR_INSTALL_DIR.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ensureSoldr = ensureSoldr;
-const fs = __importStar(__nccwpck_require__(249));
-const os = __importStar(__nccwpck_require__(383));
-const path = __importStar(__nccwpck_require__(508));
-const core = __importStar(__nccwpck_require__(460));
-const exec = __importStar(__nccwpck_require__(18));
-const tc = __importStar(__nccwpck_require__(523));
-const log_utils_js_1 = __nccwpck_require__(354);
-function detectTarget() {
-    const machine = process.arch;
-    let arch;
-    if (machine === "x64")
-        arch = "x86_64";
-    else if (machine === "arm64")
-        arch = "aarch64";
-    else
-        throw new Error(`unsupported architecture: ${machine}`);
-    if (process.platform === "linux") {
-        return { target: `${arch}-unknown-linux-gnu`, archiveExt: "tar.gz", binaryName: "soldr" };
-    }
-    if (process.platform === "darwin") {
-        return { target: `${arch}-apple-darwin`, archiveExt: "tar.gz", binaryName: "soldr" };
-    }
-    if (process.platform === "win32") {
-        return { target: `${arch}-pc-windows-msvc`, archiveExt: "zip", binaryName: "soldr.exe" };
-    }
-    throw new Error(`unsupported operating system: ${process.platform}`);
-}
-function normalizeVersion(value) {
-    return value.startsWith("v") ? value.slice(1) : value;
-}
-function requestHeaders(githubToken) {
-    const headers = {
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "setup-soldr-action",
-    };
-    if (githubToken.trim()) {
-        headers["Authorization"] = `Bearer ${githubToken.trim()}`;
-    }
-    return headers;
-}
-async function fetchJson(url, githubToken) {
-    const response = await fetch(url, { headers: requestHeaders(githubToken) });
-    if (!response.ok) {
-        throw new Error(`GitHub API returned HTTP ${response.status} for ${url}`);
-    }
-    const payload = (await response.json());
-    if (typeof payload !== "object" || payload === null) {
-        throw new Error(`unexpected JSON payload from ${url}`);
-    }
-    return payload;
-}
-function releaseUrl(repo, version) {
-    if (version) {
-        const tag = version.startsWith("v") ? version : `v${version}`;
-        return `https://api.github.com/repos/${repo}/releases/tags/${tag}`;
-    }
-    return `https://api.github.com/repos/${repo}/releases/latest`;
-}
-async function fetchRelease(repo, version, githubToken) {
-    return await fetchJson(releaseUrl(repo, version), githubToken);
-}
-async function resolveRefCommitSha(repo, ref, githubToken) {
-    const url = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`;
-    const payload = await fetchJson(url, githubToken);
-    const sha = payload["sha"];
-    if (typeof sha !== "string" || !sha) {
-        throw new Error(`failed to resolve commit sha for ${repo}@${ref}`);
-    }
-    return sha;
-}
-async function installedVersion(binaryPath) {
-    if (!fs.existsSync(binaryPath))
-        return null;
-    let stdout = "";
-    const code = await exec.exec(binaryPath, ["version", "--json"], {
-        silent: true,
-        ignoreReturnCode: true,
-        listeners: {
-            stdout: (data) => {
-                stdout += data.toString("utf8");
-            },
-        },
-    });
-    if (code !== 0)
-        return null;
-    try {
-        const payload = JSON.parse(stdout);
-        const v = payload["soldr_version"];
-        return typeof v === "string" ? v : null;
-    }
-    catch {
-        return null;
-    }
-}
-function sourceMetadataPath(installDir) {
-    return path.join(installDir, ".setup-soldr-source.json");
-}
-function loadSourceMetadata(p) {
-    if (!fs.existsSync(p))
-        return null;
-    try {
-        const data = JSON.parse(fs.readFileSync(p, "utf8"));
-        if (typeof data !== "object" || data === null)
-            return null;
-        const out = {};
-        for (const [k, v] of Object.entries(data)) {
-            out[k] = String(v);
-        }
-        return out;
-    }
-    catch {
-        return null;
-    }
-}
-function writeSourceMetadata(p, metadata) {
-    fs.writeFileSync(p, JSON.stringify(metadata, Object.keys(metadata).sort(), 2), "utf8");
-}
-function sourceInstallMatches(installDir, repo, ref, commitSha, target, binaryName) {
-    const binaryPath = path.join(installDir, binaryName);
-    const metadata = loadSourceMetadata(sourceMetadataPath(installDir));
-    if (!metadata || !fs.existsSync(binaryPath))
-        return false;
-    return (metadata.repo === repo &&
-        metadata.ref === ref &&
-        metadata.commit_sha === commitSha &&
-        metadata.target === target &&
-        metadata.binary_name === binaryName);
-}
-function selectAsset(release, target, archiveExt) {
-    const assets = release["assets"];
-    if (!Array.isArray(assets))
-        throw new Error("release payload has no assets array");
-    const suffix = `.${archiveExt}`;
-    for (const asset of assets) {
-        if (typeof asset !== "object" || asset === null)
-            continue;
-        const a = asset;
-        const name = typeof a["name"] === "string" ? a["name"] : "";
-        if (name.includes(target) && name.endsWith(suffix)) {
-            const url = a["browser_download_url"];
-            if (typeof url !== "string")
-                continue;
-            return { name, url };
-        }
-    }
-    throw new Error(`no release asset found for target ${target}`);
-}
-async function extractBinary(archivePath, archiveExt, binaryName, outDir) {
-    fs.mkdirSync(outDir, { recursive: true });
-    if (archiveExt === "zip") {
-        await tc.extractZip(archivePath, outDir);
-    }
-    else {
-        await tc.extractTar(archivePath, outDir, "xz");
-    }
-    const found = findFile(outDir, binaryName);
-    if (!found)
-        throw new Error(`downloaded archive did not contain ${binaryName}`);
-    return found;
-}
-function findFile(root, name) {
-    const stack = [root];
-    while (stack.length > 0) {
-        const dir = stack.pop();
-        let entries;
-        try {
-            entries = fs.readdirSync(dir, { withFileTypes: true });
-        }
-        catch {
-            continue;
-        }
-        for (const e of entries) {
-            const p = path.join(dir, e.name);
-            if (e.isFile() && e.name === name)
-                return p;
-            if (e.isDirectory())
-                stack.push(p);
-        }
-    }
-    return null;
-}
-async function buildFromSource(opts) {
-    const { repo, ref, commitSha, installDir, target, binaryName, githubToken, log } = opts;
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-source-"));
-    try {
-        const archivePath = path.join(tmp, "source.zip");
-        const sourceRoot = path.join(tmp, "source");
-        log(`Downloading soldr source from ${repo}@${ref} (${commitSha})`);
-        const archiveUrl = `https://api.github.com/repos/${repo}/zipball/${commitSha}`;
-        await downloadWithHeaders(archiveUrl, archivePath, requestHeaders(githubToken));
-        fs.mkdirSync(sourceRoot, { recursive: true });
-        await tc.extractZip(archivePath, sourceRoot);
-        const dirs = fs.readdirSync(sourceRoot, { withFileTypes: true }).filter((e) => e.isDirectory());
-        if (dirs.length !== 1) {
-            throw new Error("source archive did not contain exactly one repository root");
-        }
-        const repoRoot = path.join(sourceRoot, dirs[0].name);
-        const buildEnv = {};
-        for (const [k, v] of Object.entries(process.env)) {
-            if (v !== undefined)
-                buildEnv[k] = v;
-        }
-        buildEnv["CARGO_TERM_COLOR"] = buildEnv["CARGO_TERM_COLOR"] ?? "always";
-        log(`Building soldr from source ref ${ref} (${commitSha})`);
-        await exec.exec("cargo", ["build", "--locked", "--bin", "soldr", "--target", target], { cwd: repoRoot, env: buildEnv });
-        const builtBinary = path.join(repoRoot, "target", target, "debug", binaryName);
-        if (!fs.existsSync(builtBinary)) {
-            throw new Error(`built soldr binary not found at ${builtBinary}`);
-        }
-        const destination = path.join(installDir, binaryName);
-        fs.copyFileSync(builtBinary, destination);
-        if (process.platform !== "win32") {
-            fs.chmodSync(destination, 0o755);
-        }
-        writeSourceMetadata(sourceMetadataPath(installDir), {
-            repo,
-            ref,
-            commit_sha: commitSha,
-            target,
-            binary_name: binaryName,
-        });
-        return destination;
-    }
-    finally {
-        try {
-            fs.rmSync(tmp, { recursive: true, force: true });
-        }
-        catch {
-            // best effort cleanup
-        }
-    }
-}
-async function downloadWithHeaders(url, dest, headers) {
-    // tc.downloadTool supports auth/headers via separate args; rather than rely
-    // on that, do a manual fetch+pipe to keep behavior parity with the Python
-    // implementation. We stream to disk to avoid loading large archives in RAM.
-    const response = await fetch(url, { headers });
-    if (!response.ok || !response.body) {
-        throw new Error(`download failed for ${url}: HTTP ${response.status}`);
-    }
-    const buffer = Buffer.from(await response.arrayBuffer());
-    fs.mkdirSync(path.dirname(dest), { recursive: true });
-    fs.writeFileSync(dest, buffer);
-}
-async function ensureSoldr(opts) {
-    const logger = (0, log_utils_js_1.createLogger)(process.env);
-    const log = (msg) => logger.log(msg);
-    const { resolveResult, githubToken } = opts;
-    const installDir = path.dirname(resolveResult.soldrPath);
-    fs.mkdirSync(installDir, { recursive: true });
-    const { target, archiveExt, binaryName } = detectTarget();
-    const binaryPath = path.join(installDir, binaryName);
-    const requestedRef = resolveResult.soldrRef.trim();
-    const requestedVersion = resolveResult.soldrVersionRequested.trim();
-    const repo = resolveResult.soldrRepo.trim() || "zackees/soldr";
-    if (requestedRef) {
-        if (requestedVersion) {
-            log(`Ignoring requested release version ${JSON.stringify(requestedVersion)} because ref is set`);
-        }
-        const commitSha = await resolveRefCommitSha(repo, requestedRef, githubToken);
-        if (sourceInstallMatches(installDir, repo, requestedRef, commitSha, target, binaryName)) {
-            const current = await installedVersion(binaryPath);
-            if (current !== null) {
-                log(`Using cached soldr ${current} built from ${repo}@${requestedRef} (${commitSha})`);
-                core.setOutput("installed_version", current);
-                return;
-            }
-        }
-        const builtPath = await buildFromSource({
-            repo,
-            ref: requestedRef,
-            commitSha,
-            installDir,
-            target,
-            binaryName,
-            githubToken,
-            log,
-        });
-        const current = await installedVersion(builtPath);
-        log(`Installed soldr ${current ?? requestedRef} from ${repo}@${requestedRef} (${commitSha}) at ${builtPath}`);
-        core.setOutput("installed_version", current ?? requestedRef);
-        return;
-    }
-    // Release branch
-    const resolvedVersion = resolveResult.soldrVersionResolved.trim() || requestedVersion;
-    const current = await installedVersion(binaryPath);
-    if (current !== null && resolvedVersion) {
-        if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
-            log(`Using cached soldr ${current} at ${binaryPath}`);
-            core.setOutput("installed_version", current);
-            return;
-        }
-        log(`Cached soldr ${current} does not match requested release ${resolvedVersion}; refreshing`);
-    }
-    log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
-    const release = await fetchRelease(repo, resolvedVersion, githubToken);
-    const { name: assetName, url: downloadUrl } = selectAsset(release, target, archiveExt);
-    const tagName = typeof release["tag_name"] === "string" ? release["tag_name"] : resolvedVersion;
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-release-"));
-    try {
-        const archivePath = path.join(tmp, assetName);
-        const extractDir = path.join(tmp, "extract");
-        log(`Downloading ${assetName}`);
-        await downloadWithHeaders(downloadUrl, archivePath, requestHeaders(githubToken));
-        const sourceBinary = await extractBinary(archivePath, archiveExt, binaryName, extractDir);
-        fs.copyFileSync(sourceBinary, binaryPath);
-        if (process.platform !== "win32") {
-            fs.chmodSync(binaryPath, 0o755);
-        }
-    }
-    finally {
-        try {
-            fs.rmSync(tmp, { recursive: true, force: true });
-        }
-        catch {
-            // best effort cleanup
-        }
-    }
-    const metadataPath = sourceMetadataPath(installDir);
-    if (fs.existsSync(metadataPath))
-        fs.unlinkSync(metadataPath);
-    log(`Installed soldr ${tagName} at ${binaryPath}`);
-    core.setOutput("installed_version", tagName);
-}
-
-
-/***/ }),
-
-/***/ 341:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -64024,7 +63650,7 @@ async function prepareFormData(formData, request) {
 
 /***/ }),
 
-/***/ 342:
+/***/ 341:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -64061,7 +63687,7 @@ function redirectPolicy(options = {}) {
 
 /***/ }),
 
-/***/ 343:
+/***/ 342:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -64258,7 +63884,7 @@ module.exports = ProxyAgent
 
 /***/ }),
 
-/***/ 344:
+/***/ 343:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -64327,7 +63953,7 @@ function readRawInputs(env) {
 
 /***/ }),
 
-/***/ 345:
+/***/ 344:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -64652,7 +64278,7 @@ exports.ReflectionJsonReader = ReflectionJsonReader;
 
 /***/ }),
 
-/***/ 346:
+/***/ 345:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -64942,7 +64568,7 @@ exports.summary = _summary;
 
 /***/ }),
 
-/***/ 347:
+/***/ 346:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -65025,7 +64651,7 @@ exports.utf8read = utf8read;
 
 /***/ }),
 
-/***/ 348:
+/***/ 347:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -65055,7 +64681,7 @@ module.exports.TomlError = TomlError
 const createDateTime = __nccwpck_require__(385)
 const createDateTimeFloat = __nccwpck_require__(172)
 const createDate = __nccwpck_require__(54)
-const createTime = __nccwpck_require__(350)
+const createTime = __nccwpck_require__(349)
 
 const CTRL_I = 0x09
 const CTRL_J = 0x0A
@@ -66412,7 +66038,7 @@ function makeParserClass (Parser) {
 
 /***/ }),
 
-/***/ 349:
+/***/ 348:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -66500,7 +66126,7 @@ function createTracingClient(options) {
 
 /***/ }),
 
-/***/ 350:
+/***/ 349:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -66530,7 +66156,7 @@ module.exports = value => {
 
 /***/ }),
 
-/***/ 351:
+/***/ 350:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -66597,7 +66223,7 @@ module.exports = MockPool
 
 /***/ }),
 
-/***/ 352:
+/***/ 351:
 /***/ (function(__unused_webpack_module, exports) {
 
 "use strict";
@@ -66655,7 +66281,7 @@ exports.ClientStreamingCall = ClientStreamingCall;
 
 /***/ }),
 
-/***/ 353:
+/***/ 352:
 /***/ ((module) => {
 
 module.exports = function (xs, fn) {
@@ -66675,7 +66301,7 @@ var isArray = Array.isArray || function (xs) {
 
 /***/ }),
 
-/***/ 354:
+/***/ 353:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -66724,7 +66350,7 @@ exports.colorForceEnvironment = colorForceEnvironment;
 exports.formatLogLine = formatLogLine;
 exports.isTimestampsEnabled = isTimestampsEnabled;
 const core = __importStar(__nccwpck_require__(460));
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 function makeFileLogger(env) {
     const logPath = (env["SETUP_SOLDR_LOG"] ?? "").trim();
     if (!logPath)
@@ -66846,7 +66472,7 @@ function isTimestampsEnabled(env) {
 
 /***/ }),
 
-/***/ 355:
+/***/ 354:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -66883,7 +66509,7 @@ function isRestError(e) {
 
 /***/ }),
 
-/***/ 356:
+/***/ 355:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -67111,7 +66737,7 @@ module.exports = stream
 
 /***/ }),
 
-/***/ 357:
+/***/ 356:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -67125,7 +66751,7 @@ module.exports = stream
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlockBlobImpl = void 0;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const coreClient = tslib_1.__importStar(__nccwpck_require__(440));
 const Mappers = tslib_1.__importStar(__nccwpck_require__(180));
 const Parameters = tslib_1.__importStar(__nccwpck_require__(65));
@@ -67491,7 +67117,7 @@ const getBlockListOperationSpec = {
 
 /***/ }),
 
-/***/ 358:
+/***/ 357:
 /***/ ((module) => {
 
 var __defProp = Object.defineProperty;
@@ -67536,7 +67162,7 @@ function decompressResponsePolicy() {
 
 /***/ }),
 
-/***/ 359:
+/***/ 358:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -67631,7 +67257,7 @@ exports.GenericPollOperation = GenericPollOperation;
 
 /***/ }),
 
-/***/ 360:
+/***/ 359:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -67678,7 +67304,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.versionTuple = versionTuple;
 exports.verifySoldr = verifySoldr;
 const exec = __importStar(__nccwpck_require__(18));
-const log_utils_js_1 = __nccwpck_require__(354);
+const log_utils_js_1 = __nccwpck_require__(353);
 function versionTuple(value) {
     const cleaned = value.trim().replace(/^v/, "");
     const parts = cleaned.split(".");
@@ -67774,7 +67400,7 @@ async function verifySoldr(opts) {
 
 /***/ }),
 
-/***/ 361:
+/***/ 360:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -67797,7 +67423,7 @@ function ipRangeToString(ipRange) {
 
 /***/ }),
 
-/***/ 362:
+/***/ 361:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -67823,7 +67449,7 @@ __export(userAgentPolicy_exports, {
   userAgentPolicyName: () => userAgentPolicyName
 });
 module.exports = __toCommonJS(userAgentPolicy_exports);
-var import_userAgent = __nccwpck_require__(256);
+var import_userAgent = __nccwpck_require__(257);
 const UserAgentHeaderName = (0, import_userAgent.getUserAgentHeaderName)();
 const userAgentPolicyName = "userAgentPolicy";
 function userAgentPolicy(options = {}) {
@@ -67845,7 +67471,7 @@ function userAgentPolicy(options = {}) {
 
 /***/ }),
 
-/***/ 363:
+/***/ 362:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -67865,7 +67491,7 @@ exports.getUserAgentString = getUserAgentString;
 
 /***/ }),
 
-/***/ 364:
+/***/ 363:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -68151,6 +67777,398 @@ class BufferScheduler {
 }
 exports.BufferScheduler = BufferScheduler;
 //# sourceMappingURL=BufferScheduler.js.map
+
+/***/ }),
+
+/***/ 364:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Soldr binary installer. Owned by Agent 2.
+//
+// Port of .github/actions/setup-soldr/ensure_soldr.py.
+// Downloads the soldr binary from a GitHub release asset (or builds from a
+// git ref when INPUT_REF is set) and places it under $SOLDR_INSTALL_DIR.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ensureSoldr = ensureSoldr;
+const fs = __importStar(__nccwpck_require__(250));
+const os = __importStar(__nccwpck_require__(383));
+const path = __importStar(__nccwpck_require__(508));
+const core = __importStar(__nccwpck_require__(460));
+const exec = __importStar(__nccwpck_require__(18));
+const tc = __importStar(__nccwpck_require__(523));
+const log_utils_js_1 = __nccwpck_require__(353);
+function detectTarget() {
+    const machine = process.arch;
+    let arch;
+    if (machine === "x64")
+        arch = "x86_64";
+    else if (machine === "arm64")
+        arch = "aarch64";
+    else
+        throw new Error(`unsupported architecture: ${machine}`);
+    if (process.platform === "linux") {
+        return { target: `${arch}-unknown-linux-gnu`, binaryName: "soldr" };
+    }
+    if (process.platform === "darwin") {
+        return { target: `${arch}-apple-darwin`, binaryName: "soldr" };
+    }
+    if (process.platform === "win32") {
+        return { target: `${arch}-pc-windows-msvc`, binaryName: "soldr.exe" };
+    }
+    throw new Error(`unsupported operating system: ${process.platform}`);
+}
+function normalizeVersion(value) {
+    return value.startsWith("v") ? value.slice(1) : value;
+}
+function requestHeaders(githubToken) {
+    const headers = {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "setup-soldr-action",
+    };
+    if (githubToken.trim()) {
+        headers["Authorization"] = `Bearer ${githubToken.trim()}`;
+    }
+    return headers;
+}
+async function fetchJson(url, githubToken) {
+    const response = await fetch(url, { headers: requestHeaders(githubToken) });
+    if (!response.ok) {
+        throw new Error(`GitHub API returned HTTP ${response.status} for ${url}`);
+    }
+    const payload = (await response.json());
+    if (typeof payload !== "object" || payload === null) {
+        throw new Error(`unexpected JSON payload from ${url}`);
+    }
+    return payload;
+}
+function releaseUrl(repo, version) {
+    if (version) {
+        const tag = version.startsWith("v") ? version : `v${version}`;
+        return `https://api.github.com/repos/${repo}/releases/tags/${tag}`;
+    }
+    return `https://api.github.com/repos/${repo}/releases/latest`;
+}
+async function fetchRelease(repo, version, githubToken) {
+    return await fetchJson(releaseUrl(repo, version), githubToken);
+}
+async function resolveRefCommitSha(repo, ref, githubToken) {
+    const url = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`;
+    const payload = await fetchJson(url, githubToken);
+    const sha = payload["sha"];
+    if (typeof sha !== "string" || !sha) {
+        throw new Error(`failed to resolve commit sha for ${repo}@${ref}`);
+    }
+    return sha;
+}
+async function installedVersion(binaryPath) {
+    if (!fs.existsSync(binaryPath))
+        return null;
+    let stdout = "";
+    const code = await exec.exec(binaryPath, ["version", "--json"], {
+        silent: true,
+        ignoreReturnCode: true,
+        listeners: {
+            stdout: (data) => {
+                stdout += data.toString("utf8");
+            },
+        },
+    });
+    if (code !== 0)
+        return null;
+    try {
+        const payload = JSON.parse(stdout);
+        const v = payload["soldr_version"];
+        return typeof v === "string" ? v : null;
+    }
+    catch {
+        return null;
+    }
+}
+function sourceMetadataPath(installDir) {
+    return path.join(installDir, ".setup-soldr-source.json");
+}
+function loadSourceMetadata(p) {
+    if (!fs.existsSync(p))
+        return null;
+    try {
+        const data = JSON.parse(fs.readFileSync(p, "utf8"));
+        if (typeof data !== "object" || data === null)
+            return null;
+        const out = {};
+        for (const [k, v] of Object.entries(data)) {
+            out[k] = String(v);
+        }
+        return out;
+    }
+    catch {
+        return null;
+    }
+}
+function writeSourceMetadata(p, metadata) {
+    fs.writeFileSync(p, JSON.stringify(metadata, Object.keys(metadata).sort(), 2), "utf8");
+}
+function sourceInstallMatches(installDir, repo, ref, commitSha, target, binaryName) {
+    const binaryPath = path.join(installDir, binaryName);
+    const metadata = loadSourceMetadata(sourceMetadataPath(installDir));
+    if (!metadata || !fs.existsSync(binaryPath))
+        return false;
+    return (metadata.repo === repo &&
+        metadata.ref === ref &&
+        metadata.commit_sha === commitSha &&
+        metadata.target === target &&
+        metadata.binary_name === binaryName);
+}
+function selectAsset(release, target) {
+    const assets = release["assets"];
+    if (!Array.isArray(assets))
+        throw new Error("release payload has no assets array");
+    // Preference order: tar.zst (newer releases — soldr 0.7.30+ ships these
+    // for every platform including Windows MSVC), tar.gz (older Linux/macOS),
+    // zip (older Windows). First-match wins per extension class.
+    const extPreference = ["tar.zst", "tar.gz", "zip"];
+    for (const ext of extPreference) {
+        const suffix = `.${ext}`;
+        for (const asset of assets) {
+            if (typeof asset !== "object" || asset === null)
+                continue;
+            const a = asset;
+            const name = typeof a["name"] === "string" ? a["name"] : "";
+            if (name.includes(target) && name.endsWith(suffix)) {
+                const url = a["browser_download_url"];
+                if (typeof url !== "string")
+                    continue;
+                return { name, url, archiveExt: ext };
+            }
+        }
+    }
+    throw new Error(`no release asset found for target ${target}`);
+}
+async function extractBinary(archivePath, archiveExt, binaryName, outDir) {
+    fs.mkdirSync(outDir, { recursive: true });
+    if (archiveExt === "zip") {
+        await tc.extractZip(archivePath, outDir);
+    }
+    else if (archiveExt === "tar.gz") {
+        await tc.extractTar(archivePath, outDir, "xz");
+    }
+    else {
+        // tar.zst — use tar's --zstd flag. Modern tar on hosted runners (GNU
+        // tar 1.34+ on Linux, gnutar on macOS, bsdtar 3.6+ on Windows) all
+        // accept --zstd; for older systems we fall back to
+        // --use-compress-program=zstd.
+        try {
+            await tc.extractTar(archivePath, outDir, ["--zstd", "-x"]);
+        }
+        catch {
+            await tc.extractTar(archivePath, outDir, ["--use-compress-program", "zstd -d", "-x"]);
+        }
+    }
+    const found = findFile(outDir, binaryName);
+    if (!found)
+        throw new Error(`downloaded archive did not contain ${binaryName}`);
+    return found;
+}
+function findFile(root, name) {
+    const stack = [root];
+    while (stack.length > 0) {
+        const dir = stack.pop();
+        let entries;
+        try {
+            entries = fs.readdirSync(dir, { withFileTypes: true });
+        }
+        catch {
+            continue;
+        }
+        for (const e of entries) {
+            const p = path.join(dir, e.name);
+            if (e.isFile() && e.name === name)
+                return p;
+            if (e.isDirectory())
+                stack.push(p);
+        }
+    }
+    return null;
+}
+async function buildFromSource(opts) {
+    const { repo, ref, commitSha, installDir, target, binaryName, githubToken, log } = opts;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-source-"));
+    try {
+        const archivePath = path.join(tmp, "source.zip");
+        const sourceRoot = path.join(tmp, "source");
+        log(`Downloading soldr source from ${repo}@${ref} (${commitSha})`);
+        const archiveUrl = `https://api.github.com/repos/${repo}/zipball/${commitSha}`;
+        await downloadWithHeaders(archiveUrl, archivePath, requestHeaders(githubToken));
+        fs.mkdirSync(sourceRoot, { recursive: true });
+        await tc.extractZip(archivePath, sourceRoot);
+        const dirs = fs.readdirSync(sourceRoot, { withFileTypes: true }).filter((e) => e.isDirectory());
+        if (dirs.length !== 1) {
+            throw new Error("source archive did not contain exactly one repository root");
+        }
+        const repoRoot = path.join(sourceRoot, dirs[0].name);
+        const buildEnv = {};
+        for (const [k, v] of Object.entries(process.env)) {
+            if (v !== undefined)
+                buildEnv[k] = v;
+        }
+        buildEnv["CARGO_TERM_COLOR"] = buildEnv["CARGO_TERM_COLOR"] ?? "always";
+        log(`Building soldr from source ref ${ref} (${commitSha})`);
+        await exec.exec("cargo", ["build", "--locked", "--bin", "soldr", "--target", target], { cwd: repoRoot, env: buildEnv });
+        const builtBinary = path.join(repoRoot, "target", target, "debug", binaryName);
+        if (!fs.existsSync(builtBinary)) {
+            throw new Error(`built soldr binary not found at ${builtBinary}`);
+        }
+        const destination = path.join(installDir, binaryName);
+        fs.copyFileSync(builtBinary, destination);
+        if (process.platform !== "win32") {
+            fs.chmodSync(destination, 0o755);
+        }
+        writeSourceMetadata(sourceMetadataPath(installDir), {
+            repo,
+            ref,
+            commit_sha: commitSha,
+            target,
+            binary_name: binaryName,
+        });
+        return destination;
+    }
+    finally {
+        try {
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
+        catch {
+            // best effort cleanup
+        }
+    }
+}
+async function downloadWithHeaders(url, dest, headers) {
+    // tc.downloadTool supports auth/headers via separate args; rather than rely
+    // on that, do a manual fetch+pipe to keep behavior parity with the Python
+    // implementation. We stream to disk to avoid loading large archives in RAM.
+    const response = await fetch(url, { headers });
+    if (!response.ok || !response.body) {
+        throw new Error(`download failed for ${url}: HTTP ${response.status}`);
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, buffer);
+}
+async function ensureSoldr(opts) {
+    const logger = (0, log_utils_js_1.createLogger)(process.env);
+    const log = (msg) => logger.log(msg);
+    const { resolveResult, githubToken } = opts;
+    const installDir = path.dirname(resolveResult.soldrPath);
+    fs.mkdirSync(installDir, { recursive: true });
+    const { target, binaryName } = detectTarget();
+    const binaryPath = path.join(installDir, binaryName);
+    const requestedRef = resolveResult.soldrRef.trim();
+    const requestedVersion = resolveResult.soldrVersionRequested.trim();
+    const repo = resolveResult.soldrRepo.trim() || "zackees/soldr";
+    if (requestedRef) {
+        if (requestedVersion) {
+            log(`Ignoring requested release version ${JSON.stringify(requestedVersion)} because ref is set`);
+        }
+        const commitSha = await resolveRefCommitSha(repo, requestedRef, githubToken);
+        if (sourceInstallMatches(installDir, repo, requestedRef, commitSha, target, binaryName)) {
+            const current = await installedVersion(binaryPath);
+            if (current !== null) {
+                log(`Using cached soldr ${current} built from ${repo}@${requestedRef} (${commitSha})`);
+                core.setOutput("installed_version", current);
+                return;
+            }
+        }
+        const builtPath = await buildFromSource({
+            repo,
+            ref: requestedRef,
+            commitSha,
+            installDir,
+            target,
+            binaryName,
+            githubToken,
+            log,
+        });
+        const current = await installedVersion(builtPath);
+        log(`Installed soldr ${current ?? requestedRef} from ${repo}@${requestedRef} (${commitSha}) at ${builtPath}`);
+        core.setOutput("installed_version", current ?? requestedRef);
+        return;
+    }
+    // Release branch
+    const resolvedVersion = resolveResult.soldrVersionResolved.trim() || requestedVersion;
+    const current = await installedVersion(binaryPath);
+    if (current !== null && resolvedVersion) {
+        if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
+            log(`Using cached soldr ${current} at ${binaryPath}`);
+            core.setOutput("installed_version", current);
+            return;
+        }
+        log(`Cached soldr ${current} does not match requested release ${resolvedVersion}; refreshing`);
+    }
+    log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
+    const release = await fetchRelease(repo, resolvedVersion, githubToken);
+    const { name: assetName, url: downloadUrl, archiveExt } = selectAsset(release, target);
+    const tagName = typeof release["tag_name"] === "string" ? release["tag_name"] : resolvedVersion;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-release-"));
+    try {
+        const archivePath = path.join(tmp, assetName);
+        const extractDir = path.join(tmp, "extract");
+        log(`Downloading ${assetName}`);
+        await downloadWithHeaders(downloadUrl, archivePath, requestHeaders(githubToken));
+        const sourceBinary = await extractBinary(archivePath, archiveExt, binaryName, extractDir);
+        fs.copyFileSync(sourceBinary, binaryPath);
+        if (process.platform !== "win32") {
+            fs.chmodSync(binaryPath, 0o755);
+        }
+    }
+    finally {
+        try {
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
+        catch {
+            // best effort cleanup
+        }
+    }
+    const metadataPath = sourceMetadataPath(installDir);
+    if (fs.existsSync(metadataPath))
+        fs.unlinkSync(metadataPath);
+    log(`Installed soldr ${tagName} at ${binaryPath}`);
+    core.setOutput("installed_version", tagName);
+}
+
 
 /***/ }),
 
@@ -68521,7 +68539,7 @@ const {
   kReceivedClose
 } = __nccwpck_require__(98)
 const { fireEvent, failWebsocketConnection } = __nccwpck_require__(57)
-const { CloseEvent } = __nccwpck_require__(250)
+const { CloseEvent } = __nccwpck_require__(251)
 const { makeRequest } = __nccwpck_require__(84)
 const { fetching } = __nccwpck_require__(451)
 const { Headers } = __nccwpck_require__(517)
@@ -68874,7 +68892,7 @@ exports.resolveToolchainCacheChannel = resolveToolchainCacheChannel;
 exports.loadToolchainSpec = loadToolchainSpec;
 exports.systemRustupSatisfiesRequest = systemRustupSatisfiesRequest;
 const node_crypto_1 = __nccwpck_require__(276);
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const path = __importStar(__nccwpck_require__(508));
 const toml = __importStar(__nccwpck_require__(401));
 const io = __importStar(__nccwpck_require__(296));
@@ -69490,7 +69508,7 @@ exports.TracingContextImpl = TracingContextImpl;
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PooledBuffer = void 0;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const BuffersStream_js_1 = __nccwpck_require__(386);
 const node_buffer_1 = tslib_1.__importDefault(__nccwpck_require__(265));
 /**
@@ -69972,13 +69990,13 @@ const {
   kOptions,
   kFactory
 } = __nccwpck_require__(471)
-const MockClient = __nccwpck_require__(200)
-const MockPool = __nccwpck_require__(351)
+const MockClient = __nccwpck_require__(201)
+const MockPool = __nccwpck_require__(350)
 const { matchValue, buildMockOptions } = __nccwpck_require__(7)
 const { InvalidArgumentError, UndiciError } = __nccwpck_require__(488)
 const Dispatcher = __nccwpck_require__(478)
-const Pluralizer = __nccwpck_require__(254)
-const PendingInterceptorsFormatter = __nccwpck_require__(234)
+const Pluralizer = __nccwpck_require__(255)
+const PendingInterceptorsFormatter = __nccwpck_require__(235)
 
 class FakeWeakRef {
   constructor (value) {
@@ -71562,7 +71580,7 @@ function getPathStringFromParameter(parameter) {
 
 "use strict";
 
-exports.parse = __nccwpck_require__(224)
+exports.parse = __nccwpck_require__(225)
 exports.stringify = __nccwpck_require__(301)
 
 
@@ -72291,7 +72309,7 @@ exports.BlobServiceClient = BlobServiceClient;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlobBatchClient = void 0;
 const BatchResponseParser_js_1 = __nccwpck_require__(311);
-const BatchUtils_js_1 = __nccwpck_require__(258);
+const BatchUtils_js_1 = __nccwpck_require__(259);
 const BlobBatch_js_1 = __nccwpck_require__(334);
 const tracing_js_1 = __nccwpck_require__(31);
 const storage_common_1 = __nccwpck_require__(278);
@@ -72835,7 +72853,7 @@ exports.snapshotSourceMtimes = snapshotSourceMtimes;
 exports.replaySourceMtimes = replaySourceMtimes;
 exports.writeSnapshotFile = writeSnapshotFile;
 exports.readSnapshotFile = readSnapshotFile;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const path = __importStar(__nccwpck_require__(508));
 const node_crypto_1 = __nccwpck_require__(276);
 const normalize_source_mtime_js_1 = __nccwpck_require__(79);
@@ -73495,7 +73513,7 @@ module.exports = require("zlib");
 
 module.exports = parseAsync
 
-const TOMLParser = __nccwpck_require__(348)
+const TOMLParser = __nccwpck_require__(347)
 const prettyError = __nccwpck_require__(280)
 
 function parseAsync (str, opts) {
@@ -74187,7 +74205,7 @@ exports.parseProxyResponse = parseProxyResponse;
 module.exports = parseStream
 
 const stream = __nccwpck_require__(130)
-const TOMLParser = __nccwpck_require__(348)
+const TOMLParser = __nccwpck_require__(347)
 
 function parseStream (stm) {
   if (stm) {
@@ -74278,7 +74296,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AvroReader = void 0;
 // TODO: Do a review of non-interfaces
 /* eslint-disable @azure/azure-sdk/ts-use-interface-parameters */
-const AvroConstants_js_1 = __nccwpck_require__(230);
+const AvroConstants_js_1 = __nccwpck_require__(231);
 const AvroParser_js_1 = __nccwpck_require__(303);
 const utils_common_js_1 = __nccwpck_require__(392);
 class AvroReader {
@@ -74410,7 +74428,7 @@ const runtime_2 = __nccwpck_require__(19);
 const runtime_3 = __nccwpck_require__(19);
 const runtime_4 = __nccwpck_require__(19);
 const runtime_5 = __nccwpck_require__(19);
-const cachemetadata_1 = __nccwpck_require__(235);
+const cachemetadata_1 = __nccwpck_require__(236);
 // @generated message type with reflection information, may provide speed optimized methods
 class CreateCacheEntryRequest$Type extends runtime_5.MessageType {
     constructor() {
@@ -75889,7 +75907,7 @@ __export(userAgentPlatform_exports, {
 });
 module.exports = __toCommonJS(userAgentPlatform_exports);
 var import_node_os = __toESM(__nccwpck_require__(383));
-var import_node_process = __toESM(__nccwpck_require__(237));
+var import_node_process = __toESM(__nccwpck_require__(238));
 function getHeaderName() {
   return "User-Agent";
 }
@@ -75985,7 +76003,7 @@ exports.DefaultGlobber = void 0;
 const core = __importStar(__nccwpck_require__(460));
 const fs = __importStar(__nccwpck_require__(532));
 const globOptionsHelper = __importStar(__nccwpck_require__(414));
-const path = __importStar(__nccwpck_require__(248));
+const path = __importStar(__nccwpck_require__(249));
 const patternHelper = __importStar(__nccwpck_require__(43));
 const internal_match_kind_1 = __nccwpck_require__(529);
 const internal_pattern_1 = __nccwpck_require__(502);
@@ -76837,7 +76855,7 @@ exports.createTar = exports.extractTar = exports.listTar = void 0;
 const exec_1 = __nccwpck_require__(18);
 const io = __importStar(__nccwpck_require__(296));
 const fs_1 = __nccwpck_require__(532);
-const path = __importStar(__nccwpck_require__(248));
+const path = __importStar(__nccwpck_require__(249));
 const utils = __importStar(__nccwpck_require__(76));
 const constants_1 = __nccwpck_require__(45);
 const IS_WINDOWS = process.platform === 'win32';
@@ -77747,7 +77765,7 @@ function wrapAbortSignalLike(abortSignalLike) {
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageClient = void 0;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const coreHttpCompat = tslib_1.__importStar(__nccwpck_require__(72));
 const index_js_1 = __nccwpck_require__(279);
 class StorageClient extends coreHttpCompat.ExtendedServiceClient {
@@ -77815,13 +77833,13 @@ exports.StorageClient = StorageClient;
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.logger = exports.RestError = exports.StorageBrowserPolicyFactory = exports.StorageBrowserPolicy = exports.StorageSharedKeyCredentialPolicy = exports.StorageSharedKeyCredential = exports.StorageRetryPolicyFactory = exports.StorageRetryPolicy = exports.StorageRetryPolicyType = exports.Credential = exports.CredentialPolicy = exports.BaseRequestPolicy = exports.AnonymousCredentialPolicy = exports.AnonymousCredential = exports.StorageOAuthScopes = exports.newPipeline = exports.isPipelineLike = exports.Pipeline = exports.getBlobServiceAccountAudience = exports.StorageBlobAudience = exports.PremiumPageBlobTier = exports.BlockBlobTier = exports.generateBlobSASQueryParameters = exports.generateAccountSASQueryParameters = void 0;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const core_rest_pipeline_1 = __nccwpck_require__(101);
 Object.defineProperty(exports, "RestError", ({ enumerable: true, get: function () { return core_rest_pipeline_1.RestError; } }));
 tslib_1.__exportStar(__nccwpck_require__(402), exports);
 tslib_1.__exportStar(__nccwpck_require__(185), exports);
 tslib_1.__exportStar(__nccwpck_require__(64), exports);
-tslib_1.__exportStar(__nccwpck_require__(205), exports);
+tslib_1.__exportStar(__nccwpck_require__(206), exports);
 tslib_1.__exportStar(__nccwpck_require__(58), exports);
 tslib_1.__exportStar(__nccwpck_require__(2), exports);
 tslib_1.__exportStar(__nccwpck_require__(380), exports);
@@ -78398,7 +78416,7 @@ const EE = __nccwpck_require__(470)
 const { Readable, pipeline } = __nccwpck_require__(130)
 const { addAbortListener, isErrored, isReadable, nodeMajor, nodeMinor } = __nccwpck_require__(69)
 const { dataURLProcessor, serializeAMimeType } = __nccwpck_require__(25)
-const { TransformStream } = __nccwpck_require__(257)
+const { TransformStream } = __nccwpck_require__(258)
 const { getGlobalDispatcher } = __nccwpck_require__(377)
 const { webidl } = __nccwpck_require__(457)
 const { STATUS_CODES } = __nccwpck_require__(329)
@@ -80142,7 +80160,7 @@ async function httpNetworkFetch (
   // cancelAlgorithm set to cancelAlgorithm, highWaterMark set to
   // highWaterMark, and sizeAlgorithm set to sizeAlgorithm.
   if (!ReadableStream) {
-    ReadableStream = (__nccwpck_require__(257).ReadableStream)
+    ReadableStream = (__nccwpck_require__(258).ReadableStream)
   }
 
   const stream = new ReadableStream(
@@ -82028,7 +82046,7 @@ const command_1 = __nccwpck_require__(534);
 const file_command_1 = __nccwpck_require__(444);
 const utils_1 = __nccwpck_require__(505);
 const os = __importStar(__nccwpck_require__(92));
-const path = __importStar(__nccwpck_require__(248));
+const path = __importStar(__nccwpck_require__(249));
 const oidc_utils_1 = __nccwpck_require__(133);
 /**
  * The code to exit an action
@@ -82314,12 +82332,12 @@ exports.getIDToken = getIDToken;
 /**
  * Summary exports
  */
-var summary_1 = __nccwpck_require__(346);
+var summary_1 = __nccwpck_require__(345);
 Object.defineProperty(exports, "summary", ({ enumerable: true, get: function () { return summary_1.summary; } }));
 /**
  * @deprecated use core.summary
  */
-var summary_2 = __nccwpck_require__(346);
+var summary_2 = __nccwpck_require__(345);
 Object.defineProperty(exports, "markdownSummary", ({ enumerable: true, get: function () { return summary_2.markdownSummary; } }));
 /**
  * Path exports
@@ -84198,7 +84216,7 @@ exports.ServiceType = ServiceType;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.MapperTypeNames = void 0;
 exports.createSerializer = createSerializer;
-const tslib_1 = __nccwpck_require__(217);
+const tslib_1 = __nccwpck_require__(218);
 const base64 = tslib_1.__importStar(__nccwpck_require__(438));
 const interfaces_js_1 = __nccwpck_require__(99);
 const utils_js_1 = __nccwpck_require__(313);
@@ -85679,7 +85697,7 @@ function createHttpHeaders(rawHeaders) {
 /***/ 486:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-var concatMap = __nccwpck_require__(353);
+var concatMap = __nccwpck_require__(352);
 var balanced = __nccwpck_require__(131);
 
 module.exports = expandTop;
@@ -85923,7 +85941,7 @@ __export(log_exports, {
 module.exports = __toCommonJS(log_exports);
 var import_node_os = __nccwpck_require__(383);
 var import_node_util = __toESM(__nccwpck_require__(376));
-var import_node_process = __toESM(__nccwpck_require__(237));
+var import_node_process = __toESM(__nccwpck_require__(238));
 function log(message, ...args) {
   import_node_process.default.stderr.write(`${import_node_util.default.format(message, ...args)}${import_node_os.EOL}`);
 }
@@ -86636,7 +86654,7 @@ __export(clientHelpers_exports, {
 module.exports = __toCommonJS(clientHelpers_exports);
 var import_defaultHttpClient = __nccwpck_require__(373);
 var import_createPipelineFromOptions = __nccwpck_require__(316);
-var import_apiVersionPolicy = __nccwpck_require__(228);
+var import_apiVersionPolicy = __nccwpck_require__(229);
 var import_credentials = __nccwpck_require__(188);
 var import_apiKeyAuthenticationPolicy = __nccwpck_require__(87);
 var import_basicAuthenticationPolicy = __nccwpck_require__(152);
@@ -87090,7 +87108,7 @@ function parseLevel(value) {
  * Bubbles non-zero exit codes from either side.
  */
 async function runPipe(producer, consumer) {
-    const { spawn } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 198, 23));
+    const { spawn } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 199, 23));
     const [pCmd, pArgs] = producer;
     const [cCmd, cArgs] = consumer;
     await new Promise((resolve, reject) => {
@@ -87499,8 +87517,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Pattern = void 0;
 const os = __importStar(__nccwpck_require__(92));
-const path = __importStar(__nccwpck_require__(248));
-const pathHelper = __importStar(__nccwpck_require__(223));
+const path = __importStar(__nccwpck_require__(249));
+const pathHelper = __importStar(__nccwpck_require__(224));
 const assert_1 = __importDefault(__nccwpck_require__(527));
 const minimatch_1 = __nccwpck_require__(124);
 const internal_match_kind_1 = __nccwpck_require__(529);
@@ -87988,7 +88006,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.tripleToCcRsSuffix = tripleToCcRsSuffix;
 exports.detectMuslCcEnv = detectMuslCcEnv;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const path = __importStar(__nccwpck_require__(508));
 const MUSL_TRIPLE_RE = /^[a-z0-9_]+-unknown-linux-musl$/;
 function tripleToCcRsSuffix(triple) {
@@ -88465,14 +88483,14 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.shouldRefreshToolchain = shouldRefreshToolchain;
 exports.shouldSkipRefreshForExactHit = shouldSkipRefreshForExactHit;
 exports.ensureRustToolchain = ensureRustToolchain;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const os = __importStar(__nccwpck_require__(383));
 const path = __importStar(__nccwpck_require__(508));
 const core = __importStar(__nccwpck_require__(460));
 const exec = __importStar(__nccwpck_require__(18));
 const io = __importStar(__nccwpck_require__(296));
 const tc = __importStar(__nccwpck_require__(523));
-const log_utils_js_1 = __nccwpck_require__(354);
+const log_utils_js_1 = __nccwpck_require__(353);
 function rustupInitTargetTriple() {
     const system = process.platform;
     const arch = process.arch;
@@ -88777,7 +88795,7 @@ const rpc_output_stream_1 = __nccwpck_require__(308);
 const rpc_options_1 = __nccwpck_require__(294);
 const unary_call_1 = __nccwpck_require__(56);
 const server_streaming_call_1 = __nccwpck_require__(452);
-const client_streaming_call_1 = __nccwpck_require__(352);
+const client_streaming_call_1 = __nccwpck_require__(351);
 const duplex_streaming_call_1 = __nccwpck_require__(307);
 /**
  * Transport for testing.
@@ -89132,7 +89150,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports._internal = void 0;
 exports.installPassthrough = installPassthrough;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const path = __importStar(__nccwpck_require__(508));
 const STUB_VERSION = "passthrough";
 function bashStub() {
@@ -89259,7 +89277,7 @@ Object.defineProperty(exports, "isNamedKeyCredential", ({ enumerable: true, get:
 var azureSASCredential_js_1 = __nccwpck_require__(33);
 Object.defineProperty(exports, "AzureSASCredential", ({ enumerable: true, get: function () { return azureSASCredential_js_1.AzureSASCredential; } }));
 Object.defineProperty(exports, "isSASCredential", ({ enumerable: true, get: function () { return azureSASCredential_js_1.isSASCredential; } }));
-var tokenCredential_js_1 = __nccwpck_require__(247);
+var tokenCredential_js_1 = __nccwpck_require__(248);
 Object.defineProperty(exports, "isTokenCredential", ({ enumerable: true, get: function () { return tokenCredential_js_1.isTokenCredential; } }));
 //# sourceMappingURL=index.js.map
 
@@ -89894,7 +89912,7 @@ const { getGlobalOrigin } = __nccwpck_require__(139)
 const { performance } = __nccwpck_require__(321)
 const { isBlobLike, toUSVString, ReadableStreamFrom } = __nccwpck_require__(69)
 const assert = __nccwpck_require__(527)
-const { isUint8Array } = __nccwpck_require__(199)
+const { isUint8Array } = __nccwpck_require__(200)
 
 let supportedHashes = []
 
@@ -90856,7 +90874,7 @@ let ReadableStream = globalThis.ReadableStream
 
 function isReadableStreamLike (stream) {
   if (!ReadableStream) {
-    ReadableStream = (__nccwpck_require__(257).ReadableStream)
+    ReadableStream = (__nccwpck_require__(258).ReadableStream)
   }
 
   return stream instanceof ReadableStream || (
@@ -91217,7 +91235,7 @@ const crypto = __importStar(__nccwpck_require__(292));
 const fs = __importStar(__nccwpck_require__(532));
 const mm = __importStar(__nccwpck_require__(331));
 const os = __importStar(__nccwpck_require__(92));
-const path = __importStar(__nccwpck_require__(248));
+const path = __importStar(__nccwpck_require__(249));
 const httpm = __importStar(__nccwpck_require__(286));
 const semver = __importStar(__nccwpck_require__(179));
 const stream = __importStar(__nccwpck_require__(130));
@@ -92118,7 +92136,7 @@ function createEmptyPipeline() {
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SASQueryParameters = exports.SASProtocol = void 0;
-const SasIPRange_js_1 = __nccwpck_require__(361);
+const SasIPRange_js_1 = __nccwpck_require__(360);
 const utils_common_js_1 = __nccwpck_require__(154);
 /**
  * Protocols for generated SAS.
@@ -92621,7 +92639,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ensureShims = ensureShims;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const path = __importStar(__nccwpck_require__(508));
 const core = __importStar(__nccwpck_require__(460));
 // Tools that route through `soldr <tool>`:
@@ -92689,16 +92707,16 @@ exports.MessageType = void 0;
 const message_type_contract_1 = __nccwpck_require__(406);
 const reflection_info_1 = __nccwpck_require__(453);
 const reflection_type_check_1 = __nccwpck_require__(291);
-const reflection_json_reader_1 = __nccwpck_require__(345);
+const reflection_json_reader_1 = __nccwpck_require__(344);
 const reflection_json_writer_1 = __nccwpck_require__(90);
 const reflection_binary_reader_1 = __nccwpck_require__(409);
 const reflection_binary_writer_1 = __nccwpck_require__(186);
-const reflection_create_1 = __nccwpck_require__(206);
+const reflection_create_1 = __nccwpck_require__(207);
 const reflection_merge_partial_1 = __nccwpck_require__(136);
 const json_typings_1 = __nccwpck_require__(395);
-const json_format_contract_1 = __nccwpck_require__(242);
+const json_format_contract_1 = __nccwpck_require__(243);
 const reflection_equals_1 = __nccwpck_require__(462);
-const binary_writer_1 = __nccwpck_require__(251);
+const binary_writer_1 = __nccwpck_require__(252);
 const binary_reader_1 = __nccwpck_require__(134);
 const baseDescriptors = Object.getOwnPropertyDescriptors(Object.getPrototypeOf({}));
 const messageTypeDescriptor = baseDescriptors[message_type_contract_1.MESSAGE_TYPE] = {};
@@ -93114,7 +93132,7 @@ exports.readJournal = readJournal;
 exports.summarize = summarize;
 exports.formatJournalSection = formatJournalSection;
 exports.formatRollupsSection = formatRollupsSection;
-const fs = __importStar(__nccwpck_require__(249));
+const fs = __importStar(__nccwpck_require__(250));
 const diagnostics_js_1 = __nccwpck_require__(111);
 const SLOWEST_TOP_N = 20;
 /**
@@ -93418,7 +93436,7 @@ function formatRollupsSection(report) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlobBeginCopyFromUrlPoller = void 0;
 const core_util_1 = __nccwpck_require__(14);
-const core_lro_1 = __nccwpck_require__(227);
+const core_lro_1 = __nccwpck_require__(228);
 /**
  * This is the poller returned by {@link BlobClient.beginCopyFromURL}.
  * This can not be instantiated directly outside of this package.
@@ -93653,7 +93671,7 @@ function makeBlobBeginCopyFromURLPollOperation(state) {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(262);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(198);
 /******/ 	module.exports = __webpack_exports__;
 /******/
 /******/ })()
