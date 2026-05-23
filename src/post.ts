@@ -130,6 +130,22 @@ function stateBool(name: string, fallback = false): boolean {
   return fallback;
 }
 
+/**
+ * Decide whether the post-phase diagnostic dump includes the verbatim
+ * per-rustc-invocation JSONL stream. The raw stream is large (thousands
+ * of records / 20-30 MB on the demo warm build) and dominates Post Setup
+ * Soldr wall-clock when emitted. Default: mirror debug mode (preserves
+ * pre-existing behavior for workflows that already opted into debug).
+ * Explicit values "true"/"false"/"on"/"off"/"yes"/"no"/"1"/"0" override.
+ */
+export function resolveJournalPrintRaw(rawValue: string, debugMode: boolean): boolean {
+  const v = (rawValue ?? "").trim().toLowerCase();
+  if (v === "") return debugMode;
+  if (v === "true" || v === "1" || v === "yes" || v === "on") return true;
+  if (v === "false" || v === "0" || v === "no" || v === "off") return false;
+  return debugMode;
+}
+
 function readRestoreState(): RestoreState {
   return {
     setupCacheEnabled: stateBool("setupCacheEnabled"),
@@ -1132,8 +1148,14 @@ export async function run(): Promise<void> {
       cacheOutcomes: postCollector.snapshot(),
       finalSummary: finalSummary as unknown as Record<string, unknown>,
       journalPath,
-      // Only dump the raw JSONL when debug=true — it's large.
-      journalPrintRaw: debugMode,
+      // Raw JSONL stream — one record per rustc invocation, often
+      // thousands of lines / 20-30 MB of stdout per warm build. Default
+      // gate is `debug:true` (backwards compat with #134 era), but a
+      // workflow can explicitly opt out via `journal-print-raw: false`
+      // when it already uploads the JSONL as an artifact and doesn't
+      // want to pay the post-step log-writer cost (~30-50 s on the
+      // hosted ubuntu demo).
+      journalPrintRaw: resolveJournalPrintRaw(rawInputs.journalPrintRaw, debugMode),
       cacheReport,
       processSnapshot,
       logger,

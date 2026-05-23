@@ -60,6 +60,7 @@ function fixtureRawInputs(): RawInputs {
     prebuildDeps: "cargo-chef",
     prebuildDepsFlags: "--release",
     soldrMiniCache: "true",
+    journalPrintRaw: "",
   };
 }
 

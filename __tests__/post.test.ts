@@ -264,3 +264,39 @@ test("compile_cache_report parses a fake soldr cache report --json output", { sk
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+
+test("resolveJournalPrintRaw: default (empty) mirrors debugMode", async () => {
+  const mod = (await import("../src/post.js")) as {
+    resolveJournalPrintRaw: (raw: string, debug: boolean) => boolean;
+  };
+  assert.equal(mod.resolveJournalPrintRaw("", true), true);
+  assert.equal(mod.resolveJournalPrintRaw("", false), false);
+  assert.equal(mod.resolveJournalPrintRaw("   ", true), true);
+});
+
+test("resolveJournalPrintRaw: explicit true overrides debug=false", async () => {
+  const mod = (await import("../src/post.js")) as {
+    resolveJournalPrintRaw: (raw: string, debug: boolean) => boolean;
+  };
+  for (const v of ["true", "1", "on", "yes", "TRUE", "On", " Yes "]) {
+    assert.equal(mod.resolveJournalPrintRaw(v, false), true, `truthy "${v}" should enable`);
+  }
+});
+
+test("resolveJournalPrintRaw: explicit false overrides debug=true", async () => {
+  const mod = (await import("../src/post.js")) as {
+    resolveJournalPrintRaw: (raw: string, debug: boolean) => boolean;
+  };
+  for (const v of ["false", "0", "off", "no", "FALSE", "Off", " No "]) {
+    assert.equal(mod.resolveJournalPrintRaw(v, true), false, `falsy "${v}" should disable`);
+  }
+});
+
+test("resolveJournalPrintRaw: unrecognized falls back to debugMode", async () => {
+  const mod = (await import("../src/post.js")) as {
+    resolveJournalPrintRaw: (raw: string, debug: boolean) => boolean;
+  };
+  assert.equal(mod.resolveJournalPrintRaw("maybe", true), true);
+  assert.equal(mod.resolveJournalPrintRaw("???", false), false);
+});

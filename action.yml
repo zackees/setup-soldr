@@ -246,6 +246,20 @@ inputs:
       exact decompression/compression commands run.
     required: false
     default: "false"
+  journal-print-raw:
+    description: >
+      When "true", the post-phase diagnostic dump appends the verbatim
+      per-rustc-invocation JSONL stream from
+      `${ZCCACHE_CACHE_DIR}/logs/last-session.jsonl` to stdout. Default is
+      empty, which mirrors `debug` (so users who set `debug: true` keep the
+      pre-existing forensic dump). Set to "false" to suppress the raw
+      stream even when debug is on — useful for workflows that already
+      upload the JSONL as an artifact and don't want to pay the
+      log-writer cost (the raw stream is often thousands of records /
+      20-30 MB and can add 30-50 s to the post step on hosted runners).
+      Accepts "true"/"false"/"on"/"off"/"yes"/"no"/"1"/"0".
+    required: false
+    default: ""
   rust-backtrace:
     description: >
       Value to export as `RUST_BACKTRACE`. Default "1" so any

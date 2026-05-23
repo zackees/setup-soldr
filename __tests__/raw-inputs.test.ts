@@ -65,3 +65,13 @@ test("single-word inputs (no dashes) work unchanged", () => {
   assert.equal(r.cache, "false");
   assert.equal(r.linker, "fast");
 });
+
+test("journal-print-raw input round-trips through readRawInputs", () => {
+  const r = readRawInputs({ "INPUT_JOURNAL-PRINT-RAW": "false" });
+  assert.equal(r.journalPrintRaw, "false");
+});
+
+test("journal-print-raw defaults to empty when unset", () => {
+  const r = readRawInputs({});
+  assert.equal(r.journalPrintRaw, "");
+});
