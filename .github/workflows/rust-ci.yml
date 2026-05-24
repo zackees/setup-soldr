@@ -1,0 +1,258 @@
+# Reusable Rust CI workflow for repos that consume setup-soldr.
+#
+# Pattern: warm-then-fan-out. The `warm` job runs setup-soldr and a
+# `soldr cargo build --workspace --all-targets`, populating the
+# build/target/registry caches. Per-tool jobs (`fmt`, `lint`, `clippy`,
+# `test`, `dylint`) then each re-run setup-soldr (same SHA -> same
+# cache key, so the restore is a hot hit) and execute their respective
+# `soldr cargo ...` invocation. Per-tool jobs are individually toggleable
+# via boolean inputs.
+#
+# Usage:
+#
+#   jobs:
+#     ci:
+#       uses: zackees/setup-soldr/.github/workflows/rust-ci.yml@v0
+#       with:
+#         os: ubuntu-latest
+#
+# See README.md "Reusable Rust CI workflow" for the full input table
+# and cross-compile matrix example.
+
+name: rust-ci (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        description: Runner label (e.g. ubuntu-latest, macos-latest, windows-latest).
+        type: string
+        required: false
+        default: ubuntu-latest
+      target:
+        description: >
+          Rust target triple. Empty (default) builds for the host. A non-empty
+          value triggers `rustup target add <target>` plus `--target <target>`
+          on every cargo invocation.
+        type: string
+        required: false
+        default: ""
+      toolchain:
+        description: >
+          Forwarded to setup-soldr's `toolchain` input. Empty (default) means
+          setup-soldr resolves the toolchain from `rust-toolchain.toml` and
+          falls back to stable.
+        type: string
+        required: false
+        default: ""
+      features:
+        description: Forwarded as `--features <value>` on the warm build.
+        type: string
+        required: false
+        default: ""
+      cargo-args:
+        description: Free-form extra args appended to the warm `soldr cargo build` invocation.
+        type: string
+        required: false
+        default: ""
+      cache:
+        description: Forwarded to setup-soldr's `cache` umbrella input.
+        type: boolean
+        required: false
+        default: true
+      lint:
+        description: When true, runs `cargo check --workspace --all-targets`.
+        type: boolean
+        required: false
+        default: true
+      fmt:
+        description: When true, runs `cargo fmt --all -- --check`.
+        type: boolean
+        required: false
+        default: true
+      clippy:
+        description: When true, runs `cargo clippy --workspace --all-targets -- -D warnings`.
+        type: boolean
+        required: false
+        default: true
+      test:
+        description: When true, runs `cargo test --workspace`.
+        type: boolean
+        required: false
+        default: true
+      dylint:
+        description: >
+          When true, installs `cargo-dylint` + `dylint-link` and runs
+          `cargo dylint --all --workspace`. Opt-in because dylint requires
+          consumer-provided `dylint.toml` + driver crates.
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  warm:
+    name: warm (build)
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain: ${{ inputs.toolchain }}
+          cache: ${{ inputs.cache }}
+
+      - name: Add cross-compile target
+        if: inputs.target != ''
+        shell: bash
+        run: rustup target add "${{ inputs.target }}"
+
+      - name: Warm build (workspace, all-targets)
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--workspace --all-targets)
+          if [ -n "${{ inputs.target }}" ]; then
+            args+=(--target "${{ inputs.target }}")
+          fi
+          if [ -n "${{ inputs.features }}" ]; then
+            args+=(--features "${{ inputs.features }}")
+          fi
+          # shellcheck disable=SC2206 # intentional word-split on cargo-args
+          extra=(${{ inputs.cargo-args }})
+          soldr cargo build "${args[@]}" "${extra[@]}"
+
+  fmt:
+    name: fmt
+    needs: warm
+    if: ${{ inputs.fmt }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain: ${{ inputs.toolchain }}
+          cache: ${{ inputs.cache }}
+
+      - name: cargo fmt --check
+        shell: bash
+        run: soldr cargo fmt --all -- --check
+
+  lint:
+    name: lint (cargo check)
+    needs: warm
+    if: ${{ inputs.lint }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain: ${{ inputs.toolchain }}
+          cache: ${{ inputs.cache }}
+
+      - name: Add cross-compile target
+        if: inputs.target != ''
+        shell: bash
+        run: rustup target add "${{ inputs.target }}"
+
+      - name: cargo check
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--workspace --all-targets)
+          if [ -n "${{ inputs.target }}" ]; then
+            args+=(--target "${{ inputs.target }}")
+          fi
+          soldr cargo check "${args[@]}"
+
+  clippy:
+    name: clippy
+    needs: warm
+    if: ${{ inputs.clippy }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain: ${{ inputs.toolchain }}
+          cache: ${{ inputs.cache }}
+
+      - name: Add cross-compile target
+        if: inputs.target != ''
+        shell: bash
+        run: rustup target add "${{ inputs.target }}"
+
+      - name: cargo clippy
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--workspace --all-targets)
+          if [ -n "${{ inputs.target }}" ]; then
+            args+=(--target "${{ inputs.target }}")
+          fi
+          soldr cargo clippy "${args[@]}" -- -D warnings
+
+  test:
+    name: test
+    needs: warm
+    if: ${{ inputs.test }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain: ${{ inputs.toolchain }}
+          cache: ${{ inputs.cache }}
+
+      - name: Add cross-compile target
+        if: inputs.target != ''
+        shell: bash
+        run: rustup target add "${{ inputs.target }}"
+
+      - name: cargo test
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--workspace)
+          if [ -n "${{ inputs.target }}" ]; then
+            args+=(--target "${{ inputs.target }}")
+          fi
+          soldr cargo test "${args[@]}"
+
+  dylint:
+    name: dylint
+    needs: warm
+    if: ${{ inputs.dylint }}
+    runs-on: ${{ inputs.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain: ${{ inputs.toolchain }}
+          cache: ${{ inputs.cache }}
+
+      - name: Install cargo-dylint and dylint-link
+        shell: bash
+        run: |
+          set -euo pipefail
+          soldr cargo install cargo-dylint dylint-link --locked
+
+      - name: cargo dylint
+        shell: bash
+        run: soldr cargo dylint --all --workspace
