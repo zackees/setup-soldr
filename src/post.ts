@@ -195,8 +195,14 @@ async function saveOne(opts: {
   label: string;
   debug: boolean;
   log: (msg: string) => void;
+  /**
+   * Optional sibling basenames bundled into the same archive as `cacheDir`.
+   * Used by the cargo-registry layer to ship `.global-cache` and `git/` next
+   * to `registry/` without a new cache layer — setup-soldr#102.
+   */
+  extraBasenames?: string[];
 }): Promise<CacheSaveResult & { archiveBytes: number | null }> {
-  const { cacheDir, codec, level, key, matchedKey, label, debug, log } = opts;
+  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames } = opts;
   const withBytes = (r: CacheSaveResult): CacheSaveResult & { archiveBytes: number | null } =>
     Object.assign(r, { archiveBytes: null });
   if (!dirExists(cacheDir)) {
@@ -210,7 +216,7 @@ async function saveOne(opts: {
   let archiveBytes: number | null = null;
   let archivePath: string | null = null;
   try {
-    const result = await compressCache({ cacheDir, codec, level, debug, log });
+    const result = await compressCache({ cacheDir, codec, level, debug, log, extraBasenames });
     archivePath = result.archivePath;
     archiveBytes = result.archiveBytes || null;
   } catch (err) {
@@ -893,7 +899,11 @@ export async function run(): Promise<void> {
     }
   }
 
-  // Cargo registry cache (only when enabled)
+  // Cargo registry cache (only when enabled).
+  // setup-soldr#102: bundle `.global-cache` (cargo's RFC-3413 GC db) and the
+  // `git/` directory (bare mirrors + checkouts for git-source crate deps)
+  // into the same archive alongside `registry/`. Cache key + archive path
+  // are unchanged — the extras simply ride inside the existing tarball.
   let cargoRegistrySave = Object.assign(disabledSave(), { archiveBytes: null as number | null });
   if (result.cargoRegistryCache.enabled) {
     const regSaveStart = Date.now();
@@ -906,6 +916,7 @@ export async function run(): Promise<void> {
       label: "cargo-registry-cache",
       debug: debugMode,
       log: debugLog,
+      extraBasenames: result.cargoRegistryCache.extraBasenames,
     });
     if (cargoRegistrySave.status === "saved") {
       postCollector.record({

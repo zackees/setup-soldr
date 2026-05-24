@@ -429,12 +429,20 @@ export function setupCachePaths(
   rustupHome: string,
 ): string {
   const paths: string[] = [binDir, soldrBinCachePath];
+  // setup-soldr#102: always cache `~/.rustup/update-hashes/<channel>-<host>`.
+  // These are ~64-byte manifest hashes that let `rustup update` short-circuit
+  // without a dist-server roundtrip. The dir is tiny (KB range) and the
+  // latency win is large, so we include it even on the `system` rustup layout
+  // where the toolchains/ tree itself is shared with the runner image and
+  // deliberately excluded. (Toolchains/settings.toml stay gated on
+  // rustupHome being inside setupCachePath — those payloads are large and
+  // only owned by the managed rustup layout.)
+  paths.push(path.join(rustupHome, "update-hashes"));
   if (!isPathInside(setupCachePath, rustupHome)) {
     return paths.join("\n");
   }
   paths.push(path.join(rustupHome, "settings.toml"));
   paths.push(path.join(rustupHome, "toolchains"));
-  paths.push(path.join(rustupHome, "update-hashes"));
   return paths.join("\n");
 }
 

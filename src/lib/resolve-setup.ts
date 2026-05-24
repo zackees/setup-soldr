@@ -481,6 +481,21 @@ export async function resolveSetup(
   // ---- cargo registry cache ----
   const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "true");
   const cargoRegistryCachePath = path.join(cargoHome, "registry");
+  // setup-soldr#102: bundle additional `$CARGO_HOME` siblings into the same
+  // cargo-registry archive so we close the cache-retention gaps without
+  // introducing a new top-level cache layer or changing the cache key shape.
+  //   - `.global-cache` — cargo's RFC-3413 GC sqlite database. Without it the
+  //     per-job `cargo gc` sees fresh access times and conservatively keeps
+  //     everything. Shared read-only dep between setup-soldr (persists) and
+  //     soldr (reads via zackees/soldr#323). One-line leverage win.
+  //   - `git`           — `$CARGO_HOME/git/{db,checkouts}/`. `db/` holds the
+  //     bare mirrors of git-source crate deps and `checkouts/` holds the
+  //     per-commit working trees derived from `db/`; both are required for
+  //     cargo to build from a restored `db/`. Caching the parent `git/` dir
+  //     covers both subtrees and any future siblings cargo introduces.
+  // Siblings that don't exist on disk at save time (e.g. workspaces with no
+  // git-source deps) are silently skipped by compressCache — see #102.
+  const cargoRegistryCacheExtras = [".global-cache", "git"];
   const cargoRegistryCachePrefix = `setup-soldr-cargoregistry-v1-${runnerOs}-${runnerArch}`;
   const cargoRegistryCacheRestorePrefix = `${cargoRegistryCachePrefix}-${cargoLockHash}-`;
   let cargoRegistryCacheKey = `${cargoRegistryCacheRestorePrefix}${digest}-${githubSha}`;
@@ -703,6 +718,7 @@ export async function resolveSetup(
     key: cargoRegistryCacheKey,
     restorePrefix: cargoRegistryCacheRestorePrefix,
     path: cargoRegistryCachePath,
+    extraBasenames: cargoRegistryCacheExtras,
   };
 
   // Avoid unused warnings on alias helper.
