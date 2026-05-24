@@ -136,12 +136,28 @@ export interface TargetCachePlan {
 
 /**
  * Cargo-registry cache plan (payload C of issue #70).
+ *
+ * `path` is the primary cache dir (`$CARGO_HOME/registry`) and the host
+ * of the tarball — the archive is written as `${path}.tar.zst` so the
+ * existing on-disk shape, restore key, and cache key are unchanged.
+ *
+ * `extraBasenames` are sibling directories under `dirname(path)` that
+ * ride inside the same archive without a new actions/cache layer or a
+ * cache-key change — see setup-soldr#102. Today these are:
+ *   - `.global-cache` — cargo's RFC-3413 GC database; without it every
+ *     job's `cargo gc` sees fresh access times and conservatively keeps
+ *     everything. setup-soldr persists it, soldr reads it (zackees/soldr#323).
+ *   - `git`           — `$CARGO_HOME/git/{db,checkouts}/`, the bare git
+ *     mirrors plus checked-out source trees for git-source crate deps.
+ * Missing siblings are silently skipped on save so a cold checkout (no
+ * `git/` deps cloned yet) still produces a valid archive.
  */
 export interface CargoRegistryCachePlan {
   enabled: boolean;
   key: string;
   restorePrefix: string;
   path: string;
+  extraBasenames: string[];
 }
 
 /**

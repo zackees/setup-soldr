@@ -956,3 +956,127 @@ test("cache-shutdown-on-idle rejects malformed values", async () => {
     /invalid 'cache-shutdown-on-idle' input/,
   );
 });
+
+// --- cache retention gaps (setup-soldr#102) ---
+//
+// PRs 1+2 of the rollout: `.global-cache` (cargo's RFC-3413 GC db) and
+// `git/` (db/ + checkouts/ for git-source crate deps) ride inside the
+// existing cargo-registry cache archive. PR 3: `~/.rustup/update-hashes/`
+// is always part of setup-cache so `rustup update` short-circuits.
+//
+// Cache *key* shape must not move — these are pure path-list additions
+// living under the same actions/cache key.
+
+test(
+  "cargo-registry-cache extraBasenames bundles .global-cache + git (#102 PR 1-2)",
+  async () => {
+    const { result } = await run();
+    const extras = result.cargoRegistryCache.extraBasenames;
+    assert.ok(
+      extras.includes(".global-cache"),
+      `expected .global-cache in extraBasenames, got ${JSON.stringify(extras)}`,
+    );
+    assert.ok(
+      extras.includes("git"),
+      `expected git in extraBasenames, got ${JSON.stringify(extras)}`,
+    );
+  },
+);
+
+test(
+  "cargo-registry-cache extras are siblings of path (under $CARGO_HOME)",
+  async () => {
+    // The extras are basenames, not full paths — compressCache joins them
+    // against dirname(path). Verify the parent is $CARGO_HOME so the saved
+    // archive lays out as <cargoHome>/{registry,.global-cache,git}/.
+    const { result } = await run();
+    const parent = path.dirname(result.cargoRegistryCache.path);
+    assert.equal(
+      parent,
+      result.cargoHome,
+      `expected dirname(cargoRegistryCache.path) to equal cargoHome`,
+    );
+  },
+);
+
+test(
+  "cargo-registry-cache key is unchanged by extraBasenames (#102: no key shape change)",
+  async () => {
+    // PR 1-2 must only add paths inside the archive — the cache KEY itself
+    // (prefix + lock hash + toolchain digest + sha + suffix) cannot
+    // incorporate the new path names or warm caches on existing consumers
+    // would invalidate.
+    const { result } = await run();
+    // 1) Key shape: prefix `setup-soldr-cargoregistry-v1-<os>-<arch>-<lock>-<digest>-<sha>`.
+    const key = result.cargoRegistryCache.key;
+    assert.match(
+      key,
+      /^setup-soldr-cargoregistry-v1-linux-x64-[0-9a-f]{16}-[0-9a-f]{16}-0123456789abcdef$/,
+      `cache key shape regressed: ${key}`,
+    );
+    // 2) The .global-cache / git names must NOT appear in the key.
+    assert.ok(!key.includes(".global-cache"), `key leaked extra name: ${key}`);
+    assert.ok(!key.includes("/git"), `key leaked extra name: ${key}`);
+  },
+);
+
+test(
+  "setup-cache always includes rustup update-hashes path (#102 PR 3)",
+  async () => {
+    // System rustup layout (no explicit RUSTUP_HOME, system rustup satisfies):
+    // toolchains/ + settings.toml are owned by the runner image and stay
+    // out of the cache, but update-hashes/ is tiny and a huge latency win
+    // so it must always be in the path list.
+    const { root, workspace, runnerTemp } = makeWorkspace({});
+    const ctx = makeContext(root, workspace, runnerTemp);
+    delete ctx.env["RUSTUP_HOME"];
+    const inputs = readRawInputs(ctx.env);
+    const sys = await resolveSetup(ctx, inputs, {
+      fetchReleaseTag: async () => "v0.7.11",
+      systemRustupOverride: async () => true,
+    });
+    const sysPaths = sys.setupCache.paths;
+    assert.ok(
+      sysPaths.some((p) => p.endsWith(path.join("update-hashes")) || p.endsWith("update-hashes")),
+      `expected update-hashes in system-layout setup-cache paths: ${sysPaths.join(", ")}`,
+    );
+    // Managed layout still includes everything.
+    const { root: root2, workspace: ws2, runnerTemp: rt2 } = makeWorkspace({});
+    const ctx2 = makeContext(root2, ws2, rt2);
+    delete ctx2.env["RUSTUP_HOME"];
+    const inputs2 = readRawInputs(ctx2.env);
+    const mgd = await resolveSetup(ctx2, inputs2, {
+      fetchReleaseTag: async () => "v0.7.11",
+      systemRustupOverride: async () => false,
+    });
+    const mgdPaths = mgd.setupCache.paths;
+    assert.ok(
+      mgdPaths.some((p) => p.endsWith("update-hashes")),
+      `expected update-hashes in managed-layout setup-cache paths: ${mgdPaths.join(", ")}`,
+    );
+  },
+);
+
+test(
+  "setup-cache layout key is unchanged by always-on update-hashes (#102: no key shape change)",
+  async () => {
+    // The layout label drives the cache-key digest. Adding update-hashes to
+    // the path list of the *system* layout must not flip the layout label
+    // — that would invalidate every warm cache. We assert the label and
+    // the cache key prefix shape directly.
+    const { root, workspace, runnerTemp } = makeWorkspace({});
+    const ctx = makeContext(root, workspace, runnerTemp);
+    delete ctx.env["RUSTUP_HOME"];
+    const inputs = readRawInputs(ctx.env);
+    const result = await resolveSetup(ctx, inputs, {
+      fetchReleaseTag: async () => "v0.7.11",
+      systemRustupOverride: async () => true,
+    });
+    assert.equal(result.setupCache.layout, "bin+soldr-bin");
+    assert.match(
+      result.setupCache.key,
+      /^setup-soldr-v4-linux-x64-[0-9a-f]{16}$/,
+      `setup-cache key shape regressed: ${result.setupCache.key}`,
+    );
+  },
+);

@@ -97,6 +97,9 @@ function cachePlanLines(result: ResolveResult): string[] {
   lines.push(`    key=${result.cargoRegistryCache.key}`);
   lines.push(`    restore_prefix=${result.cargoRegistryCache.restorePrefix}`);
   lines.push(`    path=${result.cargoRegistryCache.path}`);
+  // setup-soldr#102: sibling basenames bundled into the same archive.
+  const extras = result.cargoRegistryCache.extraBasenames;
+  lines.push(`    extra_basenames=${extras.length > 0 ? extras.join(",") : "(none)"}`);
   return lines;
 }
 

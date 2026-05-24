@@ -288,16 +288,30 @@ test("setupCachePaths includes rustup files when rustupHome inside setupCachePat
   assert.ok(lines.some((l) => l.endsWith("update-hashes")));
 });
 
-test("setupCachePaths omits rustup files when rustupHome outside setupCachePath", () => {
-  const out = setupCachePaths(
-    "/tmp/setup-soldr",
-    "/tmp/setup-soldr/bin",
-    "/tmp/setup-soldr-soldr/bin",
-    "/home/runner/.rustup",
-  );
-  const lines = out.split("\n");
-  assert.equal(lines.length, 2);
-});
+test(
+  "setupCachePaths still caches update-hashes when rustupHome is the system layout (setup-soldr#102)",
+  () => {
+    // System rustup case: toolchains/ + settings.toml stay excluded (the
+    // runner image already owns those), but update-hashes/ is tiny and the
+    // latency win is large, so it must always be in the cached path list.
+    const out = setupCachePaths(
+      "/tmp/setup-soldr",
+      "/tmp/setup-soldr/bin",
+      "/tmp/setup-soldr-soldr/bin",
+      "/home/runner/.rustup",
+    );
+    const lines = out.split("\n");
+    assert.equal(lines.length, 3);
+    assert.ok(
+      lines.some((l) => l.endsWith("update-hashes")),
+      `expected update-hashes in ${lines.join(", ")}`,
+    );
+    // The toolchains/ + settings.toml entries are the gated ones — they
+    // must NOT leak into the system-rustup layout.
+    assert.ok(!lines.some((l) => l.endsWith("toolchains")));
+    assert.ok(!lines.some((l) => l.endsWith("settings.toml")));
+  },
+);
 
 test("setupCacheLayout reports bin+soldr-bin when rustup outside", () => {
   assert.equal(setupCacheLayout("/tmp/sc", "/home/r/.rustup"), "bin+soldr-bin");

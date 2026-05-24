@@ -210,8 +210,29 @@ export async function compressCache(opts: {
    * ultra anywhere; included for completeness.
    */
   ultra?: boolean;
+  /**
+   * Optional sibling basenames (relative to `dirname(cacheDir)`) to bundle
+   * into the same archive. Used by the cargo-registry cache layer to ship
+   * `~/.cargo/registry`, `~/.cargo/.global-cache`, and `~/.cargo/git` in a
+   * single tarball without touching the public archive path / cache key
+   * shape — see setup-soldr#102. Missing basenames are silently skipped so
+   * a fresh checkout (no `git/` deps cloned yet) doesn't fail the save.
+   * Archive layout matches today's: each basename becomes a top-level entry
+   * under the shared parent, so `tar -xf - -C <parent>` restores all of
+   * them with no decompressCache changes required.
+   */
+  extraBasenames?: string[];
 }): Promise<CompressResult> {
-  const { cacheDir, codec, level, debug = false, log = (): void => undefined, longWindow, ultra } = opts;
+  const {
+    cacheDir,
+    codec,
+    level,
+    debug = false,
+    log = (): void => undefined,
+    longWindow,
+    ultra,
+    extraBasenames = [],
+  } = opts;
   const nullResult: CompressResult = { archivePath: null, archiveBytes: 0, inflatedBytes: null, fileCount: null };
 
   if (codec === "none") return nullResult;
@@ -240,6 +261,18 @@ export async function compressCache(opts: {
 
   const parent = path.dirname(cacheDir);
   const basename = path.basename(cacheDir);
+  // Filter sibling basenames to ones that actually exist under the parent —
+  // tar errors on missing inputs, and cargo-registry's `.global-cache` /
+  // `git/` may legitimately be absent on a cold checkout.
+  const presentExtras: string[] = [];
+  for (const extra of extraBasenames) {
+    if (!extra || extra === basename) continue;
+    if (await pathExists(path.join(parent, extra))) {
+      presentExtras.push(extra);
+    } else if (debug) {
+      log(`[debug] compress: skipping missing sibling basename '${extra}' under ${parent}`);
+    }
+  }
   const archivePath = `${cacheDir}.tar.zst`;
   // Best-effort cleanup of any previous archive.
   await fs.rm(archivePath, { force: true }).catch(() => undefined);
@@ -249,9 +282,10 @@ export async function compressCache(opts: {
   const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
   const ultraFlag = ultra || levelNumeric >= 20 ? ["--ultra"] : [];
 
-  if (debug) log(`[debug] compress cmd: tar -cf - -C ${parent} ${basename} | zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`);
+  const tarInputs = [basename, ...presentExtras];
+  if (debug) log(`[debug] compress cmd: tar -cf - -C ${parent} ${tarInputs.join(" ")} | zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`);
   await runPipe(
-    ["tar", ["-cf", "-", "-C", parent, basename]],
+    ["tar", ["-cf", "-", "-C", parent, ...tarInputs]],
     [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]],
   );
 
