@@ -71,6 +71,72 @@ jobs:
       - run: soldr cargo test --locked
 ```
 
+### Reusable Rust CI workflow
+
+For repos that just want the standard Rust quality gates
+(`build`, `fmt`, `lint`, `clippy`, `test`, optional `dylint`) wired up on
+top of `setup-soldr` without hand-rolling them, this repo ships a
+reusable workflow at `.github/workflows/rust-ci.yml`. It uses a
+warm-then-fan-out pattern: a single `warm` job runs `setup-soldr` plus
+`soldr cargo build --workspace --all-targets` to populate the caches,
+then each per-tool job re-runs `setup-soldr` (same SHA = same cache
+key, so it hits the freshly-saved cache) and runs its own `soldr
+cargo …` invocation. Per-tool jobs are independently toggleable.
+
+Publishing / artifact / release work is intentionally out of scope —
+release flows vary too much across repos to template.
+
+#### Inputs
+
+| Name | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `os` | string | `ubuntu-latest` | Runner label. |
+| `target` | string | `""` (host) | Rust target triple. Non-empty triggers `rustup target add` + `--target` on every cargo invocation. |
+| `toolchain` | string | `""` | Forwarded to `setup-soldr`. Empty = `rust-toolchain.toml` or `stable`. |
+| `features` | string | `""` | Forwarded as `--features` to the warm build. |
+| `cargo-args` | string | `""` | Free-form extra args appended to the warm build. |
+| `cache` | boolean | `true` | Forwarded to `setup-soldr`'s umbrella cache switch. |
+| `lint` | boolean | `true` | `cargo check --workspace --all-targets`. |
+| `fmt` | boolean | `true` | `cargo fmt --all -- --check`. |
+| `clippy` | boolean | `true` | `cargo clippy --workspace --all-targets -- -D warnings`. |
+| `test` | boolean | `true` | `cargo test --workspace`. |
+| `dylint` | boolean | `false` | `cargo dylint --all --workspace` (installs `cargo-dylint` + `dylint-link` first). Opt-in: needs a consumer-provided `dylint.toml`. |
+
+#### Simple consumer
+
+```yaml
+jobs:
+  ci:
+    uses: zackees/setup-soldr/.github/workflows/rust-ci.yml@v0
+    with:
+      os: ubuntu-latest
+      dylint: false
+```
+
+#### Cross-compile matrix
+
+```yaml
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  target: x86_64-unknown-linux-gnu }
+          - { os: ubuntu-latest,  target: aarch64-unknown-linux-musl }
+          - { os: macos-latest,   target: aarch64-apple-darwin }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc }
+    uses: zackees/setup-soldr/.github/workflows/rust-ci.yml@v0
+    with:
+      os:     ${{ matrix.os }}
+      target: ${{ matrix.target }}
+      test:   ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+```
+
+Cross-compiled binaries usually can't run on the host, so the matrix
+example gates `test:` on the native cell. The template never tries to
+auto-detect runnability — the consumer chooses.
+
 ## Multi-platform builds (cross-target tutorial)
 
 The single-platform examples above all build for the runner's own host
