@@ -171,13 +171,13 @@ Empirical evidence from PRs #144 (4-way parallel block, +9 s saved), #145 (added
 
 ### Empirical archive sizes for setup-soldr layers
 
-Reference data measured on the zccache project on `ubuntu-24.04`, post the 0.7.30 era (May 2026):
+Reference data measured on the zccache project on `ubuntu-24.04`, post the 0.7.33 era (May 2026):
 
 | Layer | Compressed | Restore wall clock (warm exact-hit, in 4-way parallel block) |
 |---|---:|---:|
 | setup-cache | tiny (metadata) | <1 s |
 | cargo-registry | ~138 MB | ~12 s |
-| build-cache (zccache state) | ~198 MB | ~16 s |
+| build-cache (zccache state) | **~1.04 GB** (post native-CC, soldr#494) | ~36 s |
 | cook-cache (deps target/) | ~214 MB → ~2.5 GB inflated | ~12 s (bg) / ~7 s (sequential alone) |
 | target-cache (rust-plan bundle, `once` mode) | **~1.5-1.6 GB** | ~30-80 s (varies with bundle content) |
 | soldr-mini-cache | ~2 MB | <1 s |
@@ -186,6 +186,8 @@ Reference data measured on the zccache project on `ubuntu-24.04`, post the 0.7.3
 | Post Setup Soldr step (debug:true + raw dump, pre-#153) | — | ~58 s |
 
 Total warm-build wall clock on the demo workflow: ~94 s after #153 (was ~116 s after #148, 161 s baseline). For a production user without `logging: true` and `journal-print-raw: false`, estimated ~50 s.
+
+The build-cache (zccache state) grew from ~198 MB to ~1.04 GB on 2026-05-24 after soldr#494 (`feat(cargo): inject zccache CC/CXX env vars for native C/C++ caching`) landed. cc-rs build-script invocations (rusqlite-bundled, ring, zstd-sys, etc.) now hit the managed zccache and their object files persist alongside rustc artifacts. Investigated and confirmed expected in setup-soldr#155. Opt-out: `SOLDR_NATIVE_CACHE=0`.
 
 The target-cache bundle is unexpectedly large given the "rust-plan only" framing — tracked at soldr#461.
 
