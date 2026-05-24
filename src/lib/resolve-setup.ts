@@ -135,6 +135,43 @@ function makeDirs(...paths: string[]): void {
   }
 }
 
+/**
+ * Pure helper: decide the final rustup strategy from the requested one and
+ * the host platform. On macOS we always override `system` to `managed` to
+ * avoid the pre-installed rustup toolchain conflicts (see setup-soldr#105).
+ *
+ * GitHub-hosted `macos-15` (ARM) runners ship with a stable rustup toolchain
+ * that already includes `clippy`. Downstream actions that try to install a
+ * different toolchain with clippy hit
+ *   detected conflict: 'bin/cargo-clippy'
+ * because rustup component add refuses to overwrite the existing binary in
+ * the shared rustup home. Forcing the managed strategy gives setup-soldr its
+ * own private rustup home so the pre-installed components cannot collide.
+ *
+ * `explicit` (user-provided RUSTUP_HOME) is left untouched on every platform
+ * — opting in to a specific home means accepting any conflicts that come
+ * with it.
+ */
+export function resolveRustupStrategy(opts: {
+  requested: "managed" | "system" | "explicit";
+  platform: NodeJS.Platform;
+  warn?: (msg: string) => void;
+}): "managed" | "system" | "explicit" {
+  const { requested, platform, warn } = opts;
+  if (platform === "darwin" && requested === "system") {
+    warn?.(
+      "setup-soldr: forcing rustup strategy to 'managed' on macOS to avoid " +
+        "pre-installed rustup toolchain component conflicts (e.g. " +
+        "\"detected conflict: 'bin/cargo-clippy'\" on macos-15 runners). " +
+        "See https://github.com/zackees/setup-soldr/issues/105 for context. " +
+        "This may change which setup-cache key is used compared to other " +
+        "platforms.",
+    );
+    return "managed";
+  }
+  return requested;
+}
+
 // `fetchReleaseTagDefault` and `resolveSoldrReleaseVersion` live in
 // ./fetch-release.js — used directly from resolveSetup() below.
 
@@ -240,6 +277,20 @@ export async function resolveSetup(
     } else {
       rustupHome = path.join(cacheRoot, "rustup-home");
       rustupStrategy = "managed";
+    }
+    // Platform override: macOS pre-installed rustup toolchains conflict with
+    // downstream component adds (setup-soldr#105). Force `managed` when the
+    // initial selection landed on `system` so we get a private rustup home.
+    const overridden = resolveRustupStrategy({
+      requested: rustupStrategy,
+      platform: process.platform,
+      warn: (msg) => logger.warning(msg),
+    });
+    if (overridden !== rustupStrategy) {
+      rustupStrategy = overridden;
+      if (rustupStrategy === "managed") {
+        rustupHome = path.join(cacheRoot, "rustup-home");
+      }
     }
   }
 
