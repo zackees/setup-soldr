@@ -92,11 +92,25 @@ function pathInsideDir(candidate: string, dir: string, platform: NodeJS.Platform
  * compares equal when checking if a CARGO override points at a shim.
  */
 function execBasename(p: string, platform: NodeJS.Platform): string {
-  const base = path.basename(p.trim());
+  const variant = platform === "win32" ? path.win32 : path.posix;
+  const base = variant.basename(p.trim());
   if (platform === "win32") {
     return base.replace(/\.(cmd|bat|exe)$/i, "").toLowerCase();
   }
   return base;
+}
+
+/** Platform-aware absolute-path check. `path.isAbsolute` defers to the host
+ *  os, so a Windows path like `C:\\...` is not considered absolute on a Linux
+ *  CI runner — that breaks tests that exercise the win32 branch from Linux. */
+function isAbsoluteFor(p: string, platform: NodeJS.Platform): boolean {
+  return platform === "win32" ? path.win32.isAbsolute(p) : path.posix.isAbsolute(p);
+}
+
+/** Platform-aware `path.join` so the suggested shim path in the warning
+ *  uses the right separator regardless of host. */
+function joinFor(platform: NodeJS.Platform, ...parts: string[]): string {
+  return (platform === "win32" ? path.win32 : path.posix).join(...parts);
 }
 
 /**
@@ -156,7 +170,7 @@ export function diagnoseShimBypass(input: ShimBypassInput): string[] {
   // ---- CARGO env override ----
   if (input.cargoEnv && input.cargoEnv.trim()) {
     const c = input.cargoEnv.trim();
-    const isAbsolute = path.isAbsolute(c);
+    const isAbsolute = isAbsoluteFor(c, platform);
     const insideShim = pathInsideDir(c, shimDir, platform);
     const shimMatchByName = execBasename(c, platform) === "cargo" && insideShim;
     if (isAbsolute && !shimMatchByName && !insideShim) {
@@ -165,7 +179,8 @@ export function diagnoseShimBypass(input: ShimBypassInput): string[] {
           `setup-soldr cargo shim (${shimDir}). Tools that honor CARGO ` +
           `(maturin, build scripts, cargo-* subcommands spawned out-of-process) ` +
           `will exec that binary directly and bypass zccache/soldr. ` +
-          `Unset CARGO, or set it to the shim at ${path.join(
+          `Unset CARGO, or set it to the shim at ${joinFor(
+            platform,
             shimDir,
             platform === "win32" ? "cargo.cmd" : "cargo",
           )}.`,
@@ -176,7 +191,7 @@ export function diagnoseShimBypass(input: ShimBypassInput): string[] {
   // ---- RUSTC env override ----
   if (input.rustcEnv && input.rustcEnv.trim()) {
     const r = input.rustcEnv.trim();
-    const isAbsolute = path.isAbsolute(r);
+    const isAbsolute = isAbsoluteFor(r, platform);
     const insideShim = pathInsideDir(r, shimDir, platform);
     const shimMatchByName = execBasename(r, platform) === "rustc" && insideShim;
     if (isAbsolute && !shimMatchByName && !insideShim) {
@@ -184,7 +199,8 @@ export function diagnoseShimBypass(input: ShimBypassInput): string[] {
         `setup-soldr: RUSTC env var is set to ${r}, which is not the ` +
           `setup-soldr rustc shim (${shimDir}). Build scripts and cargo ` +
           `itself will exec that binary directly and bypass zccache/soldr. ` +
-          `Unset RUSTC, or set it to the shim at ${path.join(
+          `Unset RUSTC, or set it to the shim at ${joinFor(
+            platform,
             shimDir,
             platform === "win32" ? "rustc.cmd" : "rustc",
           )}.`,
