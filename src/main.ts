@@ -50,6 +50,7 @@ import {
   restoreMiniCache,
 } from "./lib/soldr-mini-cache.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
+import { diagnoseShimBypass } from "./lib/shim-bypass-check.js";
 import {
   replaySourceMtimes,
   readSnapshotFile,
@@ -870,6 +871,32 @@ export async function run(): Promise<void> {
     buildCacheMode: result.buildCache.mode,
     targetDir: result.targetCache.targetPath,
   });
+
+  // ---- shim-bypass diagnostic ----
+  // Issue #160: when shims: true is requested but the effective environment
+  // (PATH ordering, CARGO/RUSTC/RUSTC_WRAPPER overrides) would bypass them,
+  // caching looks configured but compile work runs through plain cargo.
+  // Emit advisory warnings naming each offender. Runs at the very end so it
+  // sees the final state of process.env after every prior phase.
+  if (result.shimsEnabled) {
+    const bypassWarnings = diagnoseShimBypass({
+      shimsEnabled: true,
+      shimDir: result.shimsDir,
+      path: process.env["PATH"] ?? "",
+      cargoEnv: process.env["CARGO"],
+      rustcEnv: process.env["RUSTC"],
+      rustcWrapperEnv: process.env["RUSTC_WRAPPER"],
+      soldrBinary: result.soldrPath,
+    });
+    for (const msg of bypassWarnings) {
+      core.warning(msg);
+    }
+    if (bypassWarnings.length === 0) {
+      logger.log(
+        `shim-bypass check clean: shim dir ${result.shimsDir} at PATH front, no competing CARGO/RUSTC/RUSTC_WRAPPER overrides`,
+      );
+    }
+  }
 
   // ---- stats report ----
   statsCollector.report(statsMode, (msg) => logger.log(msg));
