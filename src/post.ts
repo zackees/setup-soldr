@@ -706,8 +706,19 @@ export async function run(): Promise<void> {
   // Always stop long-running cache daemons before packing the build
   // cache so file locks release and the tarball reflects a quiescent
   // on-disk view. Best-effort; failures are logged, not raised.
+  //
+  // Wire `--archive-logs <build-cache>/logs/archive` through so soldr
+  // (post-#379) stashes the just-ended session's logs into a
+  // per-session subdirectory inside the build-cache. Setup-soldr's
+  // existing tar.zst flow already picks up the entire build-cache
+  // subtree, so the archived logs ride the cache cycle for free and
+  // survive across runs (see issue #126).
+  const logsArchiveDir = restoreState.buildCacheEnabled
+    ? path.join(result.buildCache.path, "logs", "archive")
+    : undefined;
   await shutdownCacheDaemons({
     soldrPath: process.env["SOLDR_BINARY"]?.trim() || undefined,
+    logsArchiveDir,
     log,
   });
 
