@@ -243,7 +243,12 @@ inputs:
       compile-cache info. "summarize" (default) renders a per-session totals table
       into $GITHUB_STEP_SUMMARY and emits scalar action outputs (hit rate, hits,
       misses, etc.). "detailed" adds per-extension and per-tool rollup tables and
-      sets compile-cache-rollups-json.
+      sets compile-cache-rollups-json. "insights" extends summarize with
+      per-diagnosis <details> blocks rendered from `soldr cache report --json`'s
+      `diagnoses[]` array, emits GitHub annotations (::warning::/::notice::)
+      pinned to the relevant source files, and best-effort uploads a
+      chrome-trace artifact (`setup-soldr-trace-<run_id>.json`) when the
+      installed soldr supports `cache report --chrome-trace`.
     required: false
     default: "summarize"
   stats:

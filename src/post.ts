@@ -20,6 +20,7 @@ import { saveMiniCache } from "./lib/soldr-mini-cache.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
+import { renderInsights } from "./lib/compile-cache-stats.js";
 import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
 import {
@@ -526,6 +527,11 @@ function setCompileCacheOutputs(report: SoldrCacheReportSummary, mode: CompileCa
 
 function compileCacheReportSection(report: SoldrCacheReportSummary, mode: CompileCacheStatsMode): string[] {
   if (mode === "none") return [];
+  // Insights mode is a superset of summarize — render the per-session table
+  // first so workflows don't lose the baseline metrics, then append the
+  // diagnoses block underneath. The detailed roll-up tables stay
+  // detailed-only (they're already noisy enough on their own).
+  const summaryMode: CompileCacheStatsMode = mode === "insights" ? "summarize" : mode;
   const lines: string[] = ["", "### Compile cache (zccache)", ""];
   if (report.status !== "ok" || !report.report) {
     lines.push(`| Status | ${markdownCell(report.status)} |`);
@@ -588,6 +594,19 @@ function compileCacheReportSection(report: SoldrCacheReportSummary, mode: Compil
       }
     }
   }
+  // PR3 — insights mode appends per-diagnosis <details> blocks below the
+  // per-session table. Each diagnosis renders its evidence (miss reasons
+  // table + slowest misses list + wasted_ms) plus a blockquoted
+  // suggested_fix line. Annotations are not emitted from this pure
+  // renderer — the run() loop separately forwards them to core.warning /
+  // core.notice so they show up pinned in the PR Files view.
+  if (mode === "insights") {
+    const insights = renderInsights(body);
+    if (insights.markdown.length > 0) {
+      lines.push("", "### Compile cache insights", "");
+      lines.push(insights.markdown);
+    }
+  }
   const notes = body["notes"];
   if (Array.isArray(notes) && notes.length > 0) {
     lines.push("", "<details><summary>Notes from soldr</summary>", "");
@@ -596,6 +615,10 @@ function compileCacheReportSection(report: SoldrCacheReportSummary, mode: Compil
     }
     lines.push("", "</details>");
   }
+  // Silence the "unused variable" warning — summaryMode is reserved for a
+  // future split where insights includes/excludes the detailed-rollup
+  // tables. Today the rollup gate is still keyed on `mode`.
+  void summaryMode;
   return lines;
 }
 
@@ -679,6 +702,98 @@ function writeStepSummary(markdown: string, log: (msg: string) => void): void {
     fs.appendFileSync(summaryPath, markdown, "utf8");
   } catch (err) {
     log(`post: failed to write GitHub step summary: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+/**
+ * PR3 — Emit insights-mode side effects:
+ *   - Forward each `renderInsights` annotation line to core.warning /
+ *     core.notice so it shows up pinned in the PR Files-Changed view.
+ *   - Best-effort: ask soldr to write a chrome-trace JSON (a developer
+ *     debugger trace file consumable by chrome://tracing or Perfetto)
+ *     and upload it as a workflow artifact. Silently skipped when soldr
+ *     doesn't support the `--chrome-trace` flag — keeps the action green
+ *     on older soldr versions that don't have the subcommand yet.
+ */
+async function emitInsightsAnnotationsAndTrace(opts: {
+  report: SoldrCacheReportSummary;
+  soldrBinary: string | undefined;
+  runnerTemp: string;
+  log: (msg: string) => void;
+}): Promise<void> {
+  const { report, soldrBinary, runnerTemp, log } = opts;
+  if (report.status === "ok" && report.report) {
+    try {
+      const out = renderInsights(report.report);
+      for (const line of out.annotations) {
+        // Echo to stdout exactly as GitHub Actions expects — the runner
+        // ingests `::warning::` / `::notice::` workflow-command lines
+        // from stdout regardless of which library wrote them. Avoid the
+        // @actions/core helpers because they re-encode the message and
+        // we want the file= pin we computed in renderInsights to land
+        // verbatim.
+        process.stdout.write(`${line}\n`);
+      }
+      log(`compile-cache-stats: emitted ${out.annotations.length} insights annotations`);
+    } catch (err) {
+      log(
+        `compile-cache-stats: failed to emit insights annotations: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  // Chrome-trace upload. Skipped when no SOLDR_BINARY is on disk, or
+  // when soldr's `cache report --chrome-trace <path>` exits with an
+  // "unknown subcommand"/"unrecognized flag" error (i.e. the user is on
+  // a soldr build that predates the trace flag).
+  if (!soldrBinary || !fileExists(soldrBinary) || !runnerTemp) return;
+  const runId = process.env["GITHUB_RUN_ID"]?.trim() || "local";
+  const tracePath = path.join(runnerTemp, `setup-soldr-trace-${runId}.json`);
+  let traced = false;
+  try {
+    const child = spawnSync(soldrBinary, ["cache", "report", "--chrome-trace", tracePath], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    if (child.error) {
+      log(`compile-cache-stats: chrome-trace spawn failed: ${child.error.message}`);
+      return;
+    }
+    if (child.status !== 0) {
+      const combined = `${child.stderr || ""}\n${child.stdout || ""}`;
+      if (/unrecognized|unknown|invalid/i.test(combined) && /chrome[-_ ]?trace/i.test(combined)) {
+        log("compile-cache-stats: chrome-trace flag not supported by this soldr — skipping upload");
+        return;
+      }
+      log(`compile-cache-stats: chrome-trace generation failed (exit ${child.status})`);
+      return;
+    }
+    traced = fileExists(tracePath);
+  } catch (err) {
+    log(
+      `compile-cache-stats: chrome-trace generation threw: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return;
+  }
+  if (!traced) {
+    log(`compile-cache-stats: chrome-trace file not present at ${tracePath} — skipping upload`);
+    return;
+  }
+  try {
+    // Lazy require so the action stays loadable even when
+    // @actions/artifact's runtime requirements aren't met (e.g. running
+    // outside of a GitHub-hosted runner, which is the case for every
+    // unit test in this repo). Any failure is logged-not-thrown.
+    const artifact = await import("@actions/artifact");
+    const client = new artifact.DefaultArtifactClient();
+    const artifactName = `setup-soldr-trace-${runId}.json`;
+    await client.uploadArtifact(artifactName, [tracePath], path.dirname(tracePath));
+    log(`compile-cache-stats: uploaded chrome-trace artifact ${artifactName}`);
+  } catch (err) {
+    log(
+      `compile-cache-stats: chrome-trace artifact upload failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }
 
@@ -1129,6 +1244,19 @@ export async function run(): Promise<void> {
     setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);
   }
   writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary, compileCacheStats), log);
+
+  // PR3 — insights mode side-effects: emit GH annotations + optional
+  // chrome-trace artifact upload. These run only when the user explicitly
+  // opted into `insights`; the markdown insights block already landed in
+  // the step summary above via formatFinalCacheSummaryMarkdown.
+  if (compileCacheStats === "insights") {
+    await emitInsightsAnnotationsAndTrace({
+      report: finalSummary.compile_cache_report,
+      soldrBinary: process.env["SOLDR_BINARY"]?.trim(),
+      runnerTemp,
+      log,
+    });
+  }
   const reportPath = writeCompileCacheReportFile(finalSummary.compile_cache_report, runnerTemp, log);
   if (reportPath) {
     log(`compile-cache-report.json written to ${reportPath}`);
