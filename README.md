@@ -414,6 +414,7 @@ preferred for new workflows.
 | `target-cache-include-build-script-binaries` | Forward-compatible pass-through. When `false`, requests that soldr exclude `target/*/build/*-{hash}/build-script-build` binaries from the target-cache. Requires soldr#237 to take effect. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
 | `cargo-registry-cache` | When `true` (default), setup-soldr caches `~/.cargo/registry` directly as a fast-zstd `.tar.zst` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Requires zccache `>=1.4.4` (skip-flag support). Set to `false` to opt out and let zccache own the registry cache via its legacy gzip path. |
+| `compile-cache-stats` | Controls compile-cache (zccache) diagnostic output. `none` suppresses all compile-cache info. `summarize` (default) renders a per-session totals table into `$GITHUB_STEP_SUMMARY` and emits scalar action outputs (hit rate, hits, misses, total). `detailed` adds per-extension and per-tool rollup tables and sets `compile-cache-rollups-json`. Requires soldr `>=0.7.22` for the typed `soldr cache report --json` payload; older releases fall back to a single-line note in the summary. |
 
 ### Legacy Compatibility Inputs
 
@@ -454,6 +455,15 @@ preferred for new workflows.
 | `target-lockfile` | `Cargo.lock` path used for Rust artifact cache keying. |
 | `target-lockfile-hash` | Short hash of the `Cargo.lock` used for Rust artifact cache keying, or `no-lock`. |
 | `toolchain` | Exact Rust toolchain channel configured for the action. |
+| `compile-cache-session-status` | Compile-cache report status: `ok`, `missing-binary`, `unsupported`, or `error`. Surfaces version skew between setup-soldr and the installed soldr binary. |
+| `compile-cache-hit-rate` | Compile-cache hit rate for the last session as a decimal in `[0, 1]`. Empty when the report status is not `ok` or the field is missing from the payload. |
+| `compile-cache-hits` | Compile-cache hit count for the last session. |
+| `compile-cache-misses` | Compile-cache miss count for the last session. |
+| `compile-cache-compilations` | Total compilation count for the last session (`hits + misses`, or a separate compilations counter when zccache reports one). |
+| `compile-cache-time-saved-ms` | Estimated compile time saved (milliseconds) for the last session. |
+| `compile-cache-bytes-read` | Cache bytes read during the last session. |
+| `compile-cache-bytes-written` | Cache bytes written during the last session. |
+| `compile-cache-summary-json` | Full `soldr cache report --json` payload, one-shot consumer hook. Always populated when the report status is `ok`. |
 
 ## Notes
 
