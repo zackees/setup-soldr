@@ -92,6 +92,7 @@ export function normalizeStatsMode(raw: string): StatsMode {
 export function normalizeCompileCacheStats(raw: string): CompileCacheStatsMode {
   const v = raw.trim().toLowerCase();
   if (v === "none") return "none";
-  if (v === "detailed" || v === "insights") return "detailed";
+  if (v === "insights") return "insights";
+  if (v === "detailed") return "detailed";
   return "summarize";
 }
