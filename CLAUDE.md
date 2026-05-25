@@ -6,6 +6,18 @@ All changes land via a feature branch and PR — never commit directly to `main`
 
 Floating major tags (e.g. `v0`) are moved to point at the new `main` commit only after the PR is merged, then pushed.
 
+## Test infrastructure
+
+`npm test` runs Node's built-in `node --test` runner with `--test-timeout=120000`, so every test is aborted with a stack trace if it exceeds two minutes. The cap exists to prevent the kind of hung-test scenario seen during the 2026-05-25 cargo-link-error debug session, where a stuck shell tied up CI minutes until manual intervention. Two minutes is generous for the existing fast unit suite while still catching deadlocks fast.
+
+To verify the watchdog itself, run the gated self-test in `__tests__/watchdog-self-test.test.ts`:
+
+```
+SETUP_SOLDR_WATCHDOG_SELF_TEST=1 npm test 2>&1 | grep "test timed out"
+```
+
+The self-test deliberately hangs forever; node:test should abort it at ~2 min with a stack trace pointing back at that file. Do not enable the env var in CI.
+
 ## Cache and toolchain optimization principles
 
 Durable design rules for fast-pathing the install of soldr, rustup, the Rust toolchain, components, targets, and any tool soldr fetches. These apply when adding new cache layers or modifying existing ones (`src/main.ts`, `src/post.ts`, `src/lib/cache-compress.ts`, `src/lib/ensure-rust-toolchain.ts`, `src/lib/ensure-soldr.ts`).
