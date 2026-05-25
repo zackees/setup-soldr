@@ -555,7 +555,7 @@ outputs:
       archived under `<build-cache>/logs/archive/` during the job. Only
       set when more than one session was observed (multi-step jobs); the
       empty value lets downstream steps gate on
-      `${{ steps.setup.outputs.compile-cache-sessions-total }}`.
+      `steps.setup.outputs.compile-cache-sessions-total`.
       Added in setup-soldr#98 PR4.
   compile-cache-overall-hit-rate:
     description: >
