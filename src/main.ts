@@ -826,23 +826,101 @@ export async function run(): Promise<void> {
   // surprising than a hard failure.
   await markPhase("cross-bootstrap");
   const crossTargets = parseCrossTargets(inputs.crossTargets);
+  // Track per-lane cache restore outcomes so post.ts knows which lanes to
+  // save (only the ones that missed; saving on an exact hit is wasted I/O).
+  // setup-soldr#106 / Wave 2.1 of zackees/soldr#514.
+  const crossToolCacheRestores: Record<string, { hit: boolean; matchedKey: string }> = {};
   if (crossTargets.length > 0) {
     const tool = parseCrossTool(inputs.crossTool);
     const host = ctx.runnerOs.toLowerCase() || process.platform;
     logger.log(
       `cross-bootstrap: host=${host} tool=${tool} targets=${crossTargets.join(",")}`,
     );
+    // Per-(host × target) tool cache restores. One slot per declared lane,
+    // keyed on `tool-<host>-<target>-<toolsHash>-soldr<ver>` (see
+    // crossToolCacheKeyFor in cache-keys.ts). Restore is best-effort: a
+    // miss just means we'll run the normal install path below. Restores
+    // run in parallel — there are no inter-lane dependencies.
+    if (result.crossToolCaches.length > 0) {
+      await Promise.all(
+        result.crossToolCaches.map(async (lane) => {
+          if (lane.paths.length === 0) {
+            // Unsupported lane (e.g. windows -> apple-darwin): no
+            // binaries to cache, just record the no-op.
+            crossToolCacheRestores[lane.target] = { hit: false, matchedKey: "" };
+            return;
+          }
+          const t0 = Date.now();
+          const restore = await restoreCacheSafe(
+            lane.paths,
+            lane.key,
+            [],
+            logger,
+          );
+          crossToolCacheRestores[lane.target] = {
+            hit: restore.hit,
+            matchedKey: restore.matchedKey,
+          };
+          statsCollector.record({
+            label: `cross-tool-cache:${lane.target}`,
+            operation: "restore",
+            hit: restore.hit,
+            key: lane.key,
+            matchedKey: restore.matchedKey,
+            restoreKeys: [],
+            archiveBytes: null,
+            inflatedBytes: null,
+            fileCount: null,
+            durationMs: Date.now() - t0,
+            timestamp: new Date().toISOString(),
+          });
+          logger.log(
+            `cross-tool-cache: lane=${lane.target} key=${lane.key} hit=${restore.hit} matched=${
+              restore.matchedKey || "(none)"
+            }`,
+          );
+        }),
+      );
+    }
     const plan = planCrossBootstrap({ host, targets: crossTargets, tool });
     for (const w of plan.warnings) core.warning(w);
     if (plan.actions.length > 0) {
-      await executeCrossBootstrap(plan, {
-        log: (msg) => logger.log(msg),
-        soldrBinary: result.soldrPath,
-      });
+      // When every lane hit the per-lane tool cache, the install plan is
+      // already on disk and we can skip the executeCrossBootstrap call
+      // entirely. The cached cargo-zigbuild binary lands at the same path
+      // executeCrossBootstrap would write to ($CARGO_HOME/bin), so the
+      // skipIfPresent guard inside the executor also short-circuits on a
+      // partial hit — we run unconditionally and let the guard sort it.
+      const allLanesHit =
+        result.crossToolCaches.length > 0 &&
+        result.crossToolCaches
+          .filter((l) => l.paths.length > 0)
+          .every((l) => crossToolCacheRestores[l.target]?.hit === true);
+      if (allLanesHit) {
+        logger.log(
+          "cross-bootstrap: all per-lane tool caches hit — skipping install plan",
+        );
+      } else {
+        await executeCrossBootstrap(plan, {
+          log: (msg) => logger.log(msg),
+          soldrBinary: result.soldrPath,
+        });
+      }
     } else if (plan.warnings.length === 0) {
       logger.log("cross-bootstrap: no actions planned (tool=none or empty supported set)");
     }
   }
+  // Persist per-lane restore state so post.ts can decide what to save.
+  // Save the lane plans themselves so post.ts doesn't have to recompute
+  // (resolveSetup-level inputs may not be available the same way in post).
+  core.saveState(
+    "crossToolCachePlans",
+    JSON.stringify(result.crossToolCaches),
+  );
+  core.saveState(
+    "crossToolCacheRestores",
+    JSON.stringify(crossToolCacheRestores),
+  );
   await finishPhase("cross-bootstrap");
 
   // ---- cook (prebuild-deps via cargo-chef) ----

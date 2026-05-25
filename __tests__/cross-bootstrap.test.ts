@@ -15,9 +15,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  crossToolCachePathsFor,
+  planCrossBootstrap,
   parseCrossTargets,
   parseCrossTool,
-  planCrossBootstrap,
+  toolsetFor,
 } from "../src/lib/cross-bootstrap.js";
 
 test("planCrossBootstrap: linux -> x86_64-pc-windows-gnu emits zigbuild + ziglang + rustup target add", () => {
@@ -148,4 +150,85 @@ test("parseCrossTool recognizes known values case-insensitively", () => {
   assert.equal(parseCrossTool("zigbuild"), "zigbuild");
   assert.equal(parseCrossTool("xwin"), "xwin");
   assert.equal(parseCrossTool("mingw"), "mingw");
+});
+
+// --------------------- per-lane toolset selection (setup-soldr#106) ---------------------
+//
+// `toolsetFor({host, target})` is the lookup table the per-(host, target)
+// cache layer uses to know which tool binaries to cache for each lane. The
+// returned `tools` set drives both the cache key (versioned tool names) and
+// the install plan (cargo-install / pip-install identifiers).
+
+test("toolsetFor: linux -> *-pc-windows-gnu requires cargo-zigbuild + ziglang", () => {
+  const ts = toolsetFor({ host: "linux", target: "x86_64-pc-windows-gnu" });
+  assert.deepEqual(ts.tools.sort(), ["cargo-zigbuild", "ziglang"]);
+});
+
+test("toolsetFor: linux -> *-unknown-linux-musl requires cargo-zigbuild + ziglang", () => {
+  const ts = toolsetFor({ host: "linux", target: "aarch64-unknown-linux-musl" });
+  assert.deepEqual(ts.tools.sort(), ["cargo-zigbuild", "ziglang"]);
+});
+
+test("toolsetFor: unsupported lane returns an empty toolset (no installs)", () => {
+  // windows -> apple-darwin is unsupported by the MVP planner — toolsetFor
+  // must reflect that with an empty `tools` array so the cache layer
+  // produces a stable no-op slot rather than crashing.
+  const ts = toolsetFor({ host: "windows", target: "x86_64-apple-darwin" });
+  assert.deepEqual(ts.tools, []);
+});
+
+// --------------------- per-lane cache paths (setup-soldr#106) ---------------------
+//
+// crossToolCachePathsFor returns the on-disk paths the per-lane cache should
+// archive on save and unpack on restore. These are the binaries dropped by
+// executeCrossBootstrap: cargo-zigbuild lives at $CARGO_HOME/bin/cargo-zigbuild,
+// ziglang lives under the Python install dir (we use a `.soldr-cross-tools`
+// staging slot we own so cache shape stays predictable).
+
+test("crossToolCachePathsFor: zigbuild lane returns $CARGO_HOME/bin/cargo-zigbuild + a staging dir", () => {
+  const paths = crossToolCachePathsFor({
+    host: "linux",
+    target: "x86_64-pc-windows-gnu",
+    cargoHome: "/home/runner/.cargo",
+    cacheRoot: "/runner-tmp/setup-soldr",
+  });
+  // Must include the cargo-zigbuild binary under cargo bin.
+  assert.ok(
+    paths.some((p) => p.endsWith("cargo-zigbuild") || p.endsWith("cargo-zigbuild.exe")),
+    `expected a cargo-zigbuild path in ${paths.join(", ")}`,
+  );
+  // Must include a dedicated staging slot for the lane so we can stash the
+  // ziglang pip artifacts somewhere deterministic. Path must live under the
+  // setup-soldr cache root so the slot is per-job-isolated.
+  assert.ok(
+    paths.some((p) => p.includes("setup-soldr")),
+    `expected a setup-soldr-rooted staging path in ${paths.join(", ")}`,
+  );
+});
+
+test("crossToolCachePathsFor: empty toolset lane returns empty paths (no-op cache)", () => {
+  // Unsupported lanes (or `cross-tool: none`) should not allocate cache paths.
+  const paths = crossToolCachePathsFor({
+    host: "windows",
+    target: "x86_64-apple-darwin",
+    cargoHome: "/c/cargo",
+    cacheRoot: "/c/setup-soldr",
+  });
+  assert.deepEqual(paths, []);
+});
+
+test("crossToolCachePathsFor: paths are deterministic across calls", () => {
+  const a = crossToolCachePathsFor({
+    host: "linux",
+    target: "x86_64-unknown-linux-musl",
+    cargoHome: "/home/runner/.cargo",
+    cacheRoot: "/runner-tmp/setup-soldr",
+  });
+  const b = crossToolCachePathsFor({
+    host: "linux",
+    target: "x86_64-unknown-linux-musl",
+    cargoHome: "/home/runner/.cargo",
+    cacheRoot: "/runner-tmp/setup-soldr",
+  });
+  assert.deepEqual(a, b);
 });

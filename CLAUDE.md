@@ -21,8 +21,11 @@ Build separate cache layers, each keyed by its own invalidation triggers. Confla
 | Project deps (`soldr cook` output) | per `Cargo.lock` change | lockfile hash |
 | Build cache (zccache state) | per source compile | content-driven |
 | Target cache | per build | content-driven |
+| Per-(host × target) cross-tool cache (#106) | per cross-compile lane / per pinned tool version | `(host, target, toolset-versions, soldr-version)` |
 
 A new cache layer must justify its ~200–500 ms per-run cache-API roundtrip. Don't add layers that only help fringe cases — the always-paid lookup tax outweighs the conditional win.
+
+The per-(host × target) cross-tool cache (Wave 2.1 of zackees/soldr#514) is only activated when `cross-targets` is non-empty — non-cross-compiling consumers pay zero extra cache-API roundtrips. Each declared target is one independent tiny slot keyed on its toolset versions, so bumping one tool only invalidates the affected lanes. Slot key shape: `tool-<host>-<target>-<toolsHash>-soldr<ver>` (see `crossToolCacheKeyFor` in `src/lib/cache-keys.ts`).
 
 ### Detect-then-cache: only save the delta
 
