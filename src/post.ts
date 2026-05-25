@@ -20,7 +20,13 @@ import { saveMiniCache } from "./lib/soldr-mini-cache.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
-import { renderInsights } from "./lib/compile-cache-stats.js";
+import {
+  aggregateSessions,
+  collectArchivedSessionStats,
+  renderInsights,
+  renderMultiSessionRollup,
+  type MultiSessionRollup,
+} from "./lib/compile-cache-stats.js";
 import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
 import {
@@ -91,6 +97,14 @@ export interface FinalCacheSummary {
   zccache_session: ZccacheSessionSummary;
   /** Added in setup-soldr#98. Populated by post-step from `soldr cache report --json`. */
   compile_cache_report: SoldrCacheReportSummary;
+  /**
+   * Added in setup-soldr#98 PR4. Roll-up over every per-invocation session
+   * archived under `<build-cache>/logs/archive/<session-id>/` via
+   * `soldr cache shutdown --archive-logs` (soldr#379). Present unconditionally
+   * but `sessionCount` is 0 on jobs where no archive directory was created
+   * (e.g. soldr too old, or only one cargo command ran with no archival).
+   */
+  multi_session_rollup: MultiSessionRollup;
 }
 
 interface RestoreState {
@@ -428,6 +442,14 @@ export function buildFinalCacheSummary(
     }),
     zccache_session: readZccacheSessionSummary(result.buildCache.path),
     compile_cache_report: readSoldrCacheReport(process.env["SOLDR_BINARY"]?.trim(), passthrough),
+    // PR4 — walk the per-session archive that soldr#379's
+    // `cache shutdown --archive-logs` populates between cargo invocations
+    // and roll the per-session stats up into a single job-wide aggregate.
+    // Empty archive (no archival happened, or only one session ran) leaves
+    // `sessionCount=0`, which makes the renderer / outputs no-op.
+    multi_session_rollup: aggregateSessions(
+      collectArchivedSessionStats(path.join(result.buildCache.path, "logs", "archive")),
+    ),
   };
 }
 
@@ -626,6 +648,16 @@ export function formatFinalCacheSummaryMarkdown(
   summary: FinalCacheSummary,
   compileCacheStats: CompileCacheStatsMode = "summarize",
 ): string {
+  // PR4 — multi-step roll-up. Renders only when >1 sessions were
+  // archived AND the user didn't opt out via compile-cache-stats=none.
+  // The block sits between the layer table and the per-session compile
+  // cache section so the high-level "what happened across the whole job"
+  // signal lands first, with the per-invocation breakdown beneath.
+  const multiStepBlock =
+    compileCacheStats !== "none"
+      ? renderMultiSessionRollup(summary.multi_session_rollup)
+      : "";
+  const multiStepLines = multiStepBlock.length > 0 ? ["", multiStepBlock] : [];
   const lines = [
     "## setup-soldr final cache summary",
     "",
@@ -635,6 +667,7 @@ export function formatFinalCacheSummaryMarkdown(
     `| ${tableRow("target cache", summary.target_cache)} |`,
     `| ${tableRow("build cache", summary.build_cache)} |`,
     `| ${tableRow("cargo registry cache", summary.cargo_registry_cache)} |`,
+    ...multiStepLines,
     "",
     "### zccache session",
     "",
@@ -652,6 +685,23 @@ export function formatFinalCacheSummaryMarkdown(
     "",
   ];
   return `${lines.join("\n")}\n`;
+}
+
+/**
+ * PR4 — emit the multi-step roll-up's scalar outputs. Skipped when
+ * `sessionCount <= 1` so single-session jobs don't surface a misleading
+ * roll-up to downstream workflow steps. Exported so the post-step `run()`
+ * function and the contract tests can drive it the same way.
+ */
+export function setMultiSessionOutputs(rollup: {
+  sessionCount: number;
+  overallHitRate: number | null;
+}): void {
+  if (rollup.sessionCount <= 1) return;
+  core.setOutput("compile-cache-sessions-total", String(rollup.sessionCount));
+  if (rollup.overallHitRate !== null && Number.isFinite(rollup.overallHitRate)) {
+    core.setOutput("compile-cache-overall-hit-rate", String(rollup.overallHitRate));
+  }
 }
 
 function logFinalCacheSummary(summary: FinalCacheSummary, log: (msg: string) => void): void {
@@ -1319,6 +1369,11 @@ export async function run(): Promise<void> {
   logFinalCacheSummary(finalSummary, log);
   if (compileCacheStats !== "none") {
     setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);
+    // PR4 — surface the two job-wide scalar outputs alongside the
+    // existing per-session outputs. The setter no-ops when the archive
+    // walker didn't find >1 sessions, so single-session jobs see no
+    // change in behavior.
+    setMultiSessionOutputs(finalSummary.multi_session_rollup);
   }
   writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary, compileCacheStats), log);
 
