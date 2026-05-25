@@ -75,6 +75,8 @@ export interface RawInputs {
   prebuildDepsFlags: string;
   soldrMiniCache: string;
   journalPrintRaw: string;
+  crossTargets: string;
+  crossTool: string;
 }
 
 /**

@@ -58,5 +58,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     prebuildDepsFlags: get("prebuild-deps-flags"),
     soldrMiniCache: get("soldr-mini-cache"),
     journalPrintRaw: get("journal-print-raw"),
+    crossTargets: get("cross-targets"),
+    crossTool: get("cross-tool"),
   };
 }
