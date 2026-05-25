@@ -541,6 +541,21 @@ outputs:
     description: >
       Full soldr cache report JSON payload (one-shot consumer hook).
       Set whenever soldr cache report succeeds (status "ok").
+  compile-cache-sessions-total:
+    description: >
+      Total number of cargo invocations whose per-session stats were
+      archived under `<build-cache>/logs/archive/` during the job. Only
+      set when more than one session was observed (multi-step jobs); the
+      empty value lets downstream steps gate on
+      `${{ steps.setup.outputs.compile-cache-sessions-total }}`.
+      Added in setup-soldr#98 PR4.
+  compile-cache-overall-hit-rate:
+    description: >
+      Compile-cache hit rate (0.0–1.0) computed across every per-invocation
+      session archived during the job (weighted by compilations, NOT the
+      unweighted mean of per-session rates). Only set alongside
+      compile-cache-sessions-total when more than one session was observed.
+      Added in setup-soldr#98 PR4.
 runs:
   using: node20
   main: dist/main.js

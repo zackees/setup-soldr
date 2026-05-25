@@ -27,7 +27,10 @@ process.env["SETUP_SOLDR_TEST_IMPORT"] = "1";
 
 interface PostModule {
   buildFinalCacheSummary: (result: any, state: any, saves: any, passthrough?: boolean) => any;
-  formatFinalCacheSummaryMarkdown: (summary: any, mode?: "none" | "summarize" | "detailed") => string;
+  formatFinalCacheSummaryMarkdown: (
+    summary: any,
+    mode?: "none" | "summarize" | "detailed" | "insights",
+  ) => string;
 }
 
 function mkTmp(prefix: string): string {
@@ -610,4 +613,459 @@ test("insights: normalizeCompileCacheStats accepts 'insights' as a distinct valu
   assert.equal(mod.normalizeCompileCacheStats("none"), "none");
   // Unknown values still fall back to "summarize" (preserves old behavior).
   assert.equal(mod.normalizeCompileCacheStats("garbage"), "summarize");
+});
+
+// ---------------------------------------------------------------------------
+// PR4 — Multi-step session aggregation across all sessions in a CI job.
+//
+// Today each `soldr cargo <verb>` invocation in a CI job writes its own
+// `logs/last-session-stats.json`, and each new invocation overwrites the
+// prior one. setup-soldr v0.9.7 + soldr#379 added `--archive-logs <dir>`
+// so the per-session logs land under `<cache-dir>/logs/archive/<session-id>/`
+// before the next invocation overwrites the "last" file. PR4 walks that
+// archive dir in the post-step and rolls up every session's stats into a
+// single job-wide aggregate.
+//
+// All tests below were written FIRST (TDD) — they were RED against the
+// PR3 codebase before any aggregator/renderer/wiring landed. They turn
+// GREEN once PR4's `aggregateSessions`, `collectArchivedSessionStats`,
+// `renderMultiSessionRollup`, and `setMultiSessionOutputs` ship.
+// ---------------------------------------------------------------------------
+
+interface AggregatorModule {
+  aggregateSessions: (statsFiles: Array<Record<string, unknown>>) => {
+    sessionCount: number;
+    totalHits: number;
+    totalMisses: number;
+    totalCompilations: number;
+    overallHitRate: number | null;
+    totalTimeSavedMs: number;
+    totalBytesRead: number;
+    totalBytesWritten: number;
+    sessions: Array<{
+      sessionId: string;
+      hits: number;
+      misses: number;
+      hitRate: number | null;
+      timeSavedMs: number;
+    }>;
+  };
+  collectArchivedSessionStats: (archiveDir: string) => Array<Record<string, unknown>>;
+  renderMultiSessionRollup: (rollup: ReturnType<AggregatorModule["aggregateSessions"]>) => string;
+}
+
+/**
+ * Three synthetic per-session stats payloads — these are what each
+ * `last-session-stats.json` looks like after soldr writes it under
+ * `<cache-dir>/logs/archive/<session-id>/`. The schema follows
+ * zackees/soldr#320 (the same one consumed by the single-session renderer).
+ */
+function multiSessionFixtures(): Array<Record<string, unknown>> {
+  return [
+    {
+      status: "ok",
+      session_id: "sess-cargo-build",
+      compilations: 100,
+      hits: 80,
+      misses: 20,
+      hit_rate: 0.8,
+      time_saved_ms: 30000,
+      bytes_read: 100_000_000,
+      bytes_written: 20_000_000,
+    },
+    {
+      status: "ok",
+      session_id: "sess-cargo-test",
+      compilations: 50,
+      hits: 30,
+      misses: 20,
+      hit_rate: 0.6,
+      time_saved_ms: 15000,
+      bytes_read: 50_000_000,
+      bytes_written: 10_000_000,
+    },
+    {
+      status: "ok",
+      session_id: "sess-cargo-clippy",
+      compilations: 60,
+      hits: 55,
+      misses: 5,
+      hit_rate: 55 / 60,
+      time_saved_ms: 22500,
+      bytes_read: 60_000_000,
+      bytes_written: 2_000_000,
+    },
+  ];
+}
+
+test("PR4 aggregateSessions: sums hits, misses, compilations across all sessions", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions(multiSessionFixtures());
+  assert.equal(rollup.sessionCount, 3);
+  // 80 + 30 + 55 = 165
+  assert.equal(rollup.totalHits, 165);
+  // 20 + 20 + 5 = 45
+  assert.equal(rollup.totalMisses, 45);
+  // 100 + 50 + 60 = 210
+  assert.equal(rollup.totalCompilations, 210);
+});
+
+test("PR4 aggregateSessions: overallHitRate is hits / compilations (weighted across sessions)", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions(multiSessionFixtures());
+  // Overall = 165 / 210 ≈ 0.7857 (NOT the unweighted mean of per-session rates)
+  assert.ok(rollup.overallHitRate !== null);
+  assert.ok(Math.abs((rollup.overallHitRate as number) - 165 / 210) < 1e-9);
+});
+
+test("PR4 aggregateSessions: sums time-saved and byte counters", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions(multiSessionFixtures());
+  // 30000 + 15000 + 22500 = 67500
+  assert.equal(rollup.totalTimeSavedMs, 67500);
+  // 100M + 50M + 60M = 210M
+  assert.equal(rollup.totalBytesRead, 210_000_000);
+  // 20M + 10M + 2M = 32M
+  assert.equal(rollup.totalBytesWritten, 32_000_000);
+});
+
+test("PR4 aggregateSessions: produces per-session breakdown preserving session_id", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions(multiSessionFixtures());
+  assert.equal(rollup.sessions.length, 3);
+  const ids = rollup.sessions.map((s) => s.sessionId).sort();
+  assert.deepEqual(ids, ["sess-cargo-build", "sess-cargo-clippy", "sess-cargo-test"]);
+  const build = rollup.sessions.find((s) => s.sessionId === "sess-cargo-build")!;
+  assert.equal(build.hits, 80);
+  assert.equal(build.misses, 20);
+  assert.ok(Math.abs((build.hitRate as number) - 0.8) < 1e-9);
+  assert.equal(build.timeSavedMs, 30000);
+});
+
+test("PR4 aggregateSessions: empty input → sessionCount=0, nulls and zeros, no throw", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions([]);
+  assert.equal(rollup.sessionCount, 0);
+  assert.equal(rollup.totalHits, 0);
+  assert.equal(rollup.totalMisses, 0);
+  assert.equal(rollup.totalCompilations, 0);
+  // No compilations → hit_rate is null (not NaN, not 0).
+  assert.equal(rollup.overallHitRate, null);
+  assert.equal(rollup.totalTimeSavedMs, 0);
+  assert.equal(rollup.totalBytesRead, 0);
+  assert.equal(rollup.totalBytesWritten, 0);
+  assert.deepEqual(rollup.sessions, []);
+});
+
+test("PR4 aggregateSessions: tolerates missing optional fields (time_saved_ms, bytes_*)", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions([
+    { status: "ok", session_id: "minimal-1", hits: 10, misses: 0, compilations: 10, hit_rate: 1.0 },
+    { status: "ok", session_id: "minimal-2", hits: 5, misses: 5, compilations: 10 },
+  ]);
+  assert.equal(rollup.sessionCount, 2);
+  assert.equal(rollup.totalHits, 15);
+  assert.equal(rollup.totalMisses, 5);
+  assert.equal(rollup.totalCompilations, 20);
+  assert.equal(rollup.totalTimeSavedMs, 0);
+  assert.equal(rollup.totalBytesRead, 0);
+  assert.equal(rollup.totalBytesWritten, 0);
+  // Second session has no hit_rate field → null in the per-session row,
+  // but the aggregate hit rate is still well-defined.
+  const second = rollup.sessions.find((s) => s.sessionId === "minimal-2")!;
+  assert.equal(second.hitRate, null);
+  assert.ok(Math.abs((rollup.overallHitRate as number) - 0.75) < 1e-9);
+});
+
+test("PR4 aggregateSessions: skips entries with status != ok (e.g. 'missing', 'invalid')", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions([
+    { status: "ok", session_id: "good", hits: 10, misses: 0, compilations: 10 },
+    { status: "missing", session_id: "bad-1" },
+    { status: "invalid", session_id: "bad-2", error: "bad json" },
+    { status: "ok", session_id: "good2", hits: 5, misses: 5, compilations: 10 },
+  ]);
+  // Only the two "ok" entries are aggregated.
+  assert.equal(rollup.sessionCount, 2);
+  assert.equal(rollup.totalHits, 15);
+  assert.equal(rollup.totalCompilations, 20);
+  assert.equal(rollup.sessions.length, 2);
+});
+
+test("PR4 collectArchivedSessionStats: walks <archive-dir>/<session-id>/last-session-stats.json", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const root = mkTmp("pr4-collect-");
+  const archive = path.join(root, "logs", "archive");
+  fs.mkdirSync(archive, { recursive: true });
+  try {
+    // Plant three sessions under archive/<session-id>/last-session-stats.json.
+    for (const fixture of multiSessionFixtures()) {
+      const sid = fixture["session_id"] as string;
+      const sessionDir = path.join(archive, sid);
+      fs.mkdirSync(sessionDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(sessionDir, "last-session-stats.json"),
+        JSON.stringify(fixture),
+        "utf8",
+      );
+    }
+    const found = mod.collectArchivedSessionStats(archive);
+    assert.equal(found.length, 3, "expected three archived session stats");
+    const hits = found.map((s) => s["hits"]).sort();
+    assert.deepEqual(hits, [30, 55, 80]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PR4 collectArchivedSessionStats: missing archive dir → empty array (no throw)", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const root = mkTmp("pr4-noarchive-");
+  try {
+    const found = mod.collectArchivedSessionStats(path.join(root, "does", "not", "exist"));
+    assert.deepEqual(found, []);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PR4 collectArchivedSessionStats: skips invalid JSON without throwing", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const root = mkTmp("pr4-badjson-");
+  const archive = path.join(root, "logs", "archive");
+  fs.mkdirSync(path.join(archive, "good"), { recursive: true });
+  fs.mkdirSync(path.join(archive, "bad"), { recursive: true });
+  fs.mkdirSync(path.join(archive, "non-object"), { recursive: true });
+  try {
+    fs.writeFileSync(
+      path.join(archive, "good", "last-session-stats.json"),
+      JSON.stringify({ status: "ok", session_id: "good", hits: 1, misses: 0, compilations: 1 }),
+      "utf8",
+    );
+    fs.writeFileSync(
+      path.join(archive, "bad", "last-session-stats.json"),
+      "{not valid json",
+      "utf8",
+    );
+    fs.writeFileSync(
+      path.join(archive, "non-object", "last-session-stats.json"),
+      "[1, 2, 3]",
+      "utf8",
+    );
+    const found = mod.collectArchivedSessionStats(archive);
+    // Only the well-formed one survives.
+    assert.equal(found.length, 1);
+    assert.equal(found[0]!["session_id"], "good");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PR4 renderMultiSessionRollup: includes <details> block, title with session count, aggregate table", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions(multiSessionFixtures());
+  const md = mod.renderMultiSessionRollup(rollup);
+  // The roll-up is wrapped in a collapsed <details> so it doesn't dominate
+  // the step summary on long jobs.
+  assert.match(md, /<details>/);
+  assert.match(md, /<\/details>/);
+  // Title carries the session count so users see "Multi-step roll-up (3 sessions)".
+  assert.match(md, /Multi-step roll-up \(3 sessions\)/);
+  // Aggregate scalars table — hits/misses/compilations/hit-rate land at the top.
+  assert.match(md, /\| Sessions \| 3 \|/);
+  assert.match(md, /\| Total hits \| 165 \|/);
+  assert.match(md, /\| Total misses \| 45 \|/);
+  assert.match(md, /\| Total compilations \| 210 \|/);
+  assert.match(md, /\| Overall hit rate \| 78\.6% \|/);
+  // Total time saved and bytes appear too (67500 ms = 67.5s).
+  assert.match(md, /67\.5\s*s/);
+});
+
+test("PR4 renderMultiSessionRollup: includes per-session table beneath the aggregate", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions(multiSessionFixtures());
+  const md = mod.renderMultiSessionRollup(rollup);
+  // Per-session table header. Columns: Session, Hits, Misses, Hit rate, Time saved.
+  assert.match(md, /\| Session \| Hits \| Misses \| Hit rate \| Time saved \|/);
+  assert.match(md, /sess-cargo-build/);
+  assert.match(md, /sess-cargo-test/);
+  assert.match(md, /sess-cargo-clippy/);
+  // Per-session percentages (80.0%, 60.0%, ~91.7%).
+  assert.match(md, /80\.0%/);
+  assert.match(md, /60\.0%/);
+});
+
+test("PR4 renderMultiSessionRollup: returns empty string when sessionCount <= 1 (single-session path stays unchanged)", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const empty = mod.renderMultiSessionRollup(mod.aggregateSessions([]));
+  assert.equal(empty, "");
+  const single = mod.renderMultiSessionRollup(
+    mod.aggregateSessions([
+      { status: "ok", session_id: "only", hits: 1, misses: 1, compilations: 2, hit_rate: 0.5 },
+    ]),
+  );
+  // Single session: still empty — the existing single-session renderer
+  // already covers this case and a multi-step block would be redundant.
+  assert.equal(single, "");
+});
+
+test("PR4 renderMultiSessionRollup: handles null overallHitRate gracefully (n/a)", async () => {
+  const mod = (await import("../src/lib/compile-cache-stats.js")) as unknown as AggregatorModule;
+  const rollup = mod.aggregateSessions([
+    // Two sessions with zero compilations each → overall hit rate is null.
+    { status: "ok", session_id: "empty-1", hits: 0, misses: 0, compilations: 0 },
+    { status: "ok", session_id: "empty-2", hits: 0, misses: 0, compilations: 0 },
+  ]);
+  const md = mod.renderMultiSessionRollup(rollup);
+  // Aggregate hit rate renders as n/a when no compilations happened.
+  assert.match(md, /\| Overall hit rate \| n\/a \|/);
+});
+
+test("PR4 formatFinalCacheSummaryMarkdown: multi-session rollup appears in summary when archive has N>1 sessions", async () => {
+  const mod = (await import("../src/post.js")) as PostModule;
+  const root = mkTmp("pr4-fmt-multi-");
+  const buildCachePath = path.join(root, "cache", "zccache");
+  const archive = path.join(buildCachePath, "logs", "archive");
+  fs.mkdirSync(archive, { recursive: true });
+  try {
+    // Plant three sessions on disk where post-step will discover them.
+    for (const fixture of multiSessionFixtures()) {
+      const sid = fixture["session_id"] as string;
+      const sessionDir = path.join(archive, sid);
+      fs.mkdirSync(sessionDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(sessionDir, "last-session-stats.json"),
+        JSON.stringify(fixture),
+        "utf8",
+      );
+    }
+    const result = fakeResult(buildCachePath);
+    const summary = mod.buildFinalCacheSummary(result, emptyRestoreState(), disabledSaves());
+    // The single-session report still renders (PR1 path); PR4 just adds a
+    // roll-up block on top when archive holds >1 sessions.
+    summary.compile_cache_report = {
+      status: "ok",
+      report: fixtureReport(),
+    };
+    const md = mod.formatFinalCacheSummaryMarkdown(summary, "summarize");
+    assert.match(md, /Multi-step roll-up \(3 sessions\)/);
+    assert.match(md, /\| Sessions \| 3 \|/);
+    assert.match(md, /sess-cargo-build/);
+    // Single-session path must still work — both surfaces coexist.
+    assert.match(md, /### Compile cache \(zccache\)/);
+    assert.match(md, /\| Hit rate \| 86\.4% \|/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PR4 formatFinalCacheSummaryMarkdown: NO multi-session block when archive is empty (single-session unchanged)", async () => {
+  const mod = (await import("../src/post.js")) as PostModule;
+  const root = mkTmp("pr4-fmt-single-");
+  try {
+    const result = fakeResult(path.join(root, "cache", "zccache"));
+    const summary = mod.buildFinalCacheSummary(result, emptyRestoreState(), disabledSaves());
+    summary.compile_cache_report = {
+      status: "ok",
+      report: fixtureReport(),
+    };
+    const md = mod.formatFinalCacheSummaryMarkdown(summary, "summarize");
+    // No archive → no roll-up. Existing single-session table still renders.
+    assert.doesNotMatch(md, /Multi-step roll-up/);
+    assert.match(md, /### Compile cache \(zccache\)/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PR4 formatFinalCacheSummaryMarkdown: multi-session works in detailed and insights modes too", async () => {
+  const mod = (await import("../src/post.js")) as PostModule;
+  const root = mkTmp("pr4-fmt-allmodes-");
+  const buildCachePath = path.join(root, "cache", "zccache");
+  const archive = path.join(buildCachePath, "logs", "archive");
+  fs.mkdirSync(archive, { recursive: true });
+  try {
+    for (const fixture of multiSessionFixtures()) {
+      const sid = fixture["session_id"] as string;
+      const sessionDir = path.join(archive, sid);
+      fs.mkdirSync(sessionDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(sessionDir, "last-session-stats.json"),
+        JSON.stringify(fixture),
+        "utf8",
+      );
+    }
+    const result = fakeResult(buildCachePath);
+    const summary = mod.buildFinalCacheSummary(result, emptyRestoreState(), disabledSaves());
+    summary.compile_cache_report = {
+      status: "ok",
+      report: fixtureReport(),
+    };
+    for (const mode of ["summarize", "detailed", "insights"] as const) {
+      const md = mod.formatFinalCacheSummaryMarkdown(summary, mode as any);
+      assert.match(md, /Multi-step roll-up \(3 sessions\)/, `mode=${mode} should render multi-step block`);
+    }
+    // But "none" mode suppresses everything compile-cache related,
+    // including the multi-step block.
+    const mdNone = mod.formatFinalCacheSummaryMarkdown(summary, "none");
+    assert.doesNotMatch(mdNone, /Multi-step roll-up/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PR4 scalar outputs: compile-cache-sessions-total and compile-cache-overall-hit-rate emitted when N>1 sessions", async () => {
+  const mod = (await import("../src/post.js")) as PostModule & {
+    setMultiSessionOutputs?: (
+      rollup: { sessionCount: number; overallHitRate: number | null },
+    ) => void;
+  };
+  const root = mkTmp("pr4-outputs-");
+  const ghOutputPath = path.join(root, "github-output.txt");
+  const previousOutput = process.env["GITHUB_OUTPUT"];
+  process.env["GITHUB_OUTPUT"] = ghOutputPath;
+  try {
+    fs.writeFileSync(ghOutputPath, "", "utf8");
+    assert.ok(
+      typeof mod.setMultiSessionOutputs === "function",
+      "post.ts must export setMultiSessionOutputs for PR4",
+    );
+    mod.setMultiSessionOutputs!({ sessionCount: 3, overallHitRate: 165 / 210 });
+    const ghOutContent = fs.readFileSync(ghOutputPath, "utf8");
+    // @actions/core appends `name<<HEREDOC\nvalue\nHEREDOC\n` per output.
+    assert.match(ghOutContent, /compile-cache-sessions-total/);
+    assert.match(ghOutContent, /\b3\b/);
+    assert.match(ghOutContent, /compile-cache-overall-hit-rate/);
+  } finally {
+    if (previousOutput === undefined) delete process.env["GITHUB_OUTPUT"];
+    else process.env["GITHUB_OUTPUT"] = previousOutput;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PR4 setMultiSessionOutputs: skips emission when sessionCount <= 1 (no false signal)", async () => {
+  const mod = (await import("../src/post.js")) as PostModule & {
+    setMultiSessionOutputs?: (
+      rollup: { sessionCount: number; overallHitRate: number | null },
+    ) => void;
+  };
+  const root = mkTmp("pr4-outputs-single-");
+  const ghOutputPath = path.join(root, "github-output.txt");
+  const previousOutput = process.env["GITHUB_OUTPUT"];
+  process.env["GITHUB_OUTPUT"] = ghOutputPath;
+  try {
+    fs.writeFileSync(ghOutputPath, "", "utf8");
+    assert.ok(typeof mod.setMultiSessionOutputs === "function");
+    mod.setMultiSessionOutputs!({ sessionCount: 1, overallHitRate: 0.5 });
+    mod.setMultiSessionOutputs!({ sessionCount: 0, overallHitRate: null });
+    const ghOutContent = fs.readFileSync(ghOutputPath, "utf8");
+    // With <= 1 sessions there is no "multi-step" — outputs stay empty so
+    // downstream workflows can use `if: steps.x.outputs.compile-cache-sessions-total`
+    // as a feature gate.
+    assert.equal(ghOutContent, "");
+  } finally {
+    if (previousOutput === undefined) delete process.env["GITHUB_OUTPUT"];
+    else process.env["GITHUB_OUTPUT"] = previousOutput;
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
