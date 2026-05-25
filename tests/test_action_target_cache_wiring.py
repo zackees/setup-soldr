@@ -115,6 +115,8 @@ EXPECTED_OUTPUTS = {
     "compile-cache-bytes-written",
     "compile-cache-rollups-json",
     "compile-cache-summary-json",
+    "compile-cache-sessions-total",
+    "compile-cache-overall-hit-rate",
 }
 
 
