@@ -20,6 +20,7 @@
 //   - `executeCrossBootstrap` — performs the installs via @actions/exec,
 //     skipping any binary already on PATH.
 
+import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as io from "@actions/io";
@@ -57,13 +58,21 @@ export interface PlanInput {
 }
 
 /** Normalize an os-ish string (RUNNER_OS, process.platform, ...) to one of
- *  `linux` | `darwin` | `windows`. */
+ *  `linux` | `darwin` | `windows`.
+ *
+ *  Also accepts combined `os-arch` shapes like `linux-x64` /
+ *  `macos-arm64` that the per-(host, target) cache layer uses. The arch
+ *  suffix is stripped for the OS-family decision; pass the full
+ *  fragment in to the cache-key path. */
 export function normalizeHost(raw: string): string {
   const n = raw.trim().toLowerCase();
-  if (n === "win32" || n === "windows") return "windows";
-  if (n === "darwin" || n === "macos") return "darwin";
-  if (n === "linux") return "linux";
-  return n;
+  // Strip `-x64` / `-arm64` / `-aarch64` / `-x86` arch suffixes so the
+  // combined `os-arch` shape collapses to the OS family.
+  const noArch = n.replace(/-(x64|arm64|aarch64|x86|i686|amd64)$/, "");
+  if (noArch === "win32" || noArch === "windows") return "windows";
+  if (noArch === "darwin" || noArch === "macos") return "darwin";
+  if (noArch === "linux") return "linux";
+  return noArch;
 }
 
 /** Parse a `cross-targets` input value (newline- or comma-separated). */
@@ -180,6 +189,119 @@ export interface ExecuteCrossBootstrapOpts {
   pipCommand?: string;
   /** Override rustup command. Defaults to `rustup`. */
   rustupCommand?: string;
+}
+
+// --------------------- per-lane toolset spec (setup-soldr#106) ---------------------
+//
+// Wave 2.1 of zackees/soldr#514: the per-(host × target) cache layer needs a
+// table mapping a lane to the toolset it installs. This is the same lookup
+// `planCrossBootstrap` uses internally, but lifted into its own helper so
+// the cache layer can compute the cache key (toolset-versions) without
+// running the install.
+
+export interface ToolsetSpec {
+  /**
+   * Sorted list of tool short-names this lane installs. Empty for
+   * unsupported lanes (MVP). The names are used as the keys of the
+   * `toolVersions` map fed into `crossToolCacheKeyFor()`.
+   */
+  tools: string[];
+}
+
+/** Lookup the toolset for one (host, target) lane. */
+export function toolsetFor(opts: { host: string; target: string }): ToolsetSpec {
+  const host = normalizeHost(opts.host);
+  const target = opts.target;
+  if (isLinuxToWindowsGnu(host, target) || isLinuxToLinuxMusl(host, target)) {
+    return { tools: ["cargo-zigbuild", "ziglang"] };
+  }
+  return { tools: [] };
+}
+
+/**
+ * Pinned default versions per tool, used by the per-lane cache key.
+ *
+ * Today `executeCrossBootstrap` runs `soldr cargo install <name> --locked`
+ * and `pip install <name>` without a pinned version — pip/cargo resolve to
+ * the current latest. Mixing "current latest" into a cache key is wrong:
+ * the key would be wrong as soon as the upstream cuts a new release while
+ * a warm cache exists.
+ *
+ * The pragmatic v1 default is to bake a known-good version into the cache
+ * key. Bumping these literals invalidates only the per-(host × target)
+ * tool slots and nothing else. Treat this as the action's published
+ * default; users can override in a follow-up `cross-tool-overrides` input.
+ */
+const DEFAULT_TOOL_VERSIONS: Readonly<Record<string, string>> = Object.freeze({
+  // Both values track the upstream pins used in DESIGN docs around the time
+  // of #104. Bump together with cross-bootstrap MVP rollouts.
+  "cargo-zigbuild": "0.20.0",
+  ziglang: "0.13.0",
+});
+
+/** Resolved default version literal, or `unpinned` if we have no default. */
+export function defaultToolVersion(name: string): string {
+  return DEFAULT_TOOL_VERSIONS[name] ?? "unpinned";
+}
+
+/** Build the {tool: version} map for one lane using the pinned defaults. */
+export function toolVersionsFor(opts: { host: string; target: string }): Record<string, string> {
+  const ts = toolsetFor(opts);
+  const out: Record<string, string> = {};
+  for (const tool of ts.tools) {
+    out[tool] = defaultToolVersion(tool);
+  }
+  return out;
+}
+
+// --------------------- per-lane cache paths (setup-soldr#106) ---------------------
+//
+// The on-disk locations the per-lane cache archives on save and unpacks on
+// restore. We deliberately include a per-lane staging dir under the
+// setup-soldr cache root so:
+//   - the cache layer has a stable, predictable path to keep keyed across
+//     runs (the ziglang pip artifacts otherwise live in a Python site-
+//     packages path that's host-specific and not safe to round-trip).
+//   - we don't accidentally clobber unrelated $CARGO_HOME contents.
+//
+// MVP scope: cache cargo-zigbuild's binary directly under `$CARGO_HOME/bin/`
+// (executeCrossBootstrap already installs it there), plus a sentinel staging
+// dir under `<cacheRoot>/cross-tools/<target>/` so the cache layer has at
+// least one writable target for forthcoming ziglang-pip cache work.
+
+export interface CrossToolCachePathsInput {
+  host: string;
+  target: string;
+  /** `$CARGO_HOME` from the resolved setup state. */
+  cargoHome: string;
+  /** setup-soldr's cache root (the `setupCachePath` in resolve-setup.ts). */
+  cacheRoot: string;
+}
+
+export function crossToolCachePathsFor(input: CrossToolCachePathsInput): string[] {
+  const ts = toolsetFor({ host: input.host, target: input.target });
+  if (ts.tools.length === 0) return [];
+  const paths: string[] = [];
+  // cargo-zigbuild binary (host-native, lives under $CARGO_HOME/bin).
+  // On Windows the binary name has a `.exe` suffix; the host triple here
+  // refers to the runner OS, not the cross target, so we look at platform.
+  // Use the host fragment as a coarse hint instead of process.platform so
+  // the helper is testable from any host.
+  const isWindowsHost = /win/i.test(input.host);
+  if (ts.tools.includes("cargo-zigbuild")) {
+    paths.push(
+      path.join(
+        input.cargoHome,
+        "bin",
+        isWindowsHost ? "cargo-zigbuild.exe" : "cargo-zigbuild",
+      ),
+    );
+  }
+  // Per-lane staging slot. Lives under setup-soldr's cache root so the slot
+  // is per-job-isolated and the cache layer can write a stable archive
+  // path. Currently a placeholder for future ziglang-pip-dir caching.
+  paths.push(path.join(input.cacheRoot, "cross-tools", input.target));
+  return paths;
 }
 
 /**

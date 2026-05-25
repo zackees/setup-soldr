@@ -1080,3 +1080,117 @@ test(
     );
   },
 );
+
+// --------------------- per-(host × target) tool cache plans (setup-soldr#106) ---------------------
+//
+// Wave 2.1 of zackees/soldr#514: when `cross-targets` is non-empty,
+// resolveSetup must surface a `crossToolCaches` plan with one entry per
+// declared target lane. Empty / unset `cross-targets` keeps the field empty
+// so non-cross-compiling consumers see zero behavior change.
+
+test("crossToolCaches is empty when cross-targets unset (backwards compat)", async () => {
+  const { result } = await run();
+  assert.ok(result.crossToolCaches, "crossToolCaches must exist on ResolveResult");
+  assert.deepEqual(result.crossToolCaches, [], "no cross-targets => no lane plans");
+});
+
+test("crossToolCaches is empty when cross-tool=none even with cross-targets set", async () => {
+  const { result } = await run({}, {
+    INPUT_CROSS_TARGETS: "x86_64-pc-windows-gnu",
+    INPUT_CROSS_TOOL: "none",
+  });
+  assert.deepEqual(result.crossToolCaches, []);
+});
+
+test("crossToolCaches: one entry per declared target (linux -> windows-gnu)", async () => {
+  const { result } = await run({}, {
+    INPUT_CROSS_TARGETS: "x86_64-pc-windows-gnu",
+  });
+  assert.equal(result.crossToolCaches.length, 1);
+  const lane = result.crossToolCaches[0];
+  assert.ok(lane);
+  assert.equal(lane.target, "x86_64-pc-windows-gnu");
+  assert.match(lane.host, /linux/);
+  // The key must be in the new `tool-` namespace (collision guard).
+  assert.ok(lane.key.startsWith("tool-"), `lane key shape regressed: ${lane.key}`);
+  // The lane carries the on-disk paths to archive on save.
+  assert.ok(Array.isArray(lane.paths));
+  assert.ok(lane.paths.length > 0, "supported lane must contribute cache paths");
+});
+
+test("crossToolCaches: multi-target produces one slot per triple with distinct keys", async () => {
+  const { result } = await run({}, {
+    INPUT_CROSS_TARGETS: "x86_64-pc-windows-gnu\naarch64-unknown-linux-musl",
+  });
+  assert.equal(result.crossToolCaches.length, 2);
+  const targets = result.crossToolCaches.map((c) => c.target).sort();
+  assert.deepEqual(targets, ["aarch64-unknown-linux-musl", "x86_64-pc-windows-gnu"]);
+  // Each lane must have a unique cache key (target is in the key shape).
+  const keys = new Set(result.crossToolCaches.map((c) => c.key));
+  assert.equal(keys.size, 2, "lane keys must be unique per target");
+});
+
+test("crossToolCaches: unsupported lane still gets an entry but with empty paths (no-op slot)", async () => {
+  // windows -> apple-darwin is an MVP unsupported lane. The cache layer
+  // still emits an entry so the resolve output shape is uniform, but the
+  // `paths` are empty so main.ts skips both restore and save for that lane.
+  const { result } = await run({}, {
+    INPUT_CROSS_TARGETS: "x86_64-apple-darwin",
+    ACTION_OS: "Windows",
+    ACTION_ARCH: "X64",
+  });
+  assert.equal(result.crossToolCaches.length, 1);
+  const lane = result.crossToolCaches[0];
+  assert.ok(lane);
+  assert.deepEqual(lane.paths, [], "unsupported lane has nothing to cache");
+});
+
+test("crossToolCaches keys do not collide with other cache namespaces", async () => {
+  const { result } = await run({}, {
+    INPUT_CROSS_TARGETS: "x86_64-pc-windows-gnu",
+  });
+  // Sanity: each existing cache layer uses a different prefix.
+  const otherKeys = [
+    result.setupCache.key,
+    result.buildCache.key,
+    result.targetCache.key,
+    result.cargoRegistryCache.key,
+  ];
+  for (const lane of result.crossToolCaches) {
+    for (const k of otherKeys) {
+      assert.notEqual(lane.key, k, `lane key must not equal another layer's key`);
+    }
+    // Explicit guard: the lane key is in the `tool-` namespace.
+    assert.ok(lane.key.startsWith("tool-"), `lane key must use tool- prefix: ${lane.key}`);
+  }
+});
+
+test("crossToolCaches: setting cross-targets does NOT change the other cache keys", async () => {
+  // Backwards-compat invariant: adding `cross-targets` must not invalidate
+  // the existing setup/build/target/cargo-registry caches users already
+  // populated on warm runs.
+  const { root, workspace, runnerTemp } = makeWorkspace({});
+  const baseCtx = makeContext(root, workspace, runnerTemp);
+  const baseInputs = readRawInputs(baseCtx.env);
+  const r1 = await resolveSetup(baseCtx, baseInputs, {
+    fetchReleaseTag: async () => "v0.7.11",
+    systemRustupOverride: async () => false,
+  });
+  const ctx2 = makeContext(root, workspace, runnerTemp);
+  ctx2.env = withInputs(ctx2.env, {
+    INPUT_CROSS_TARGETS: "x86_64-pc-windows-gnu",
+  });
+  const inputs2 = readRawInputs(ctx2.env);
+  const r2 = await resolveSetup(ctx2, inputs2, {
+    fetchReleaseTag: async () => "v0.7.11",
+    systemRustupOverride: async () => false,
+  });
+  assert.equal(r1.setupCache.key, r2.setupCache.key, "setup-cache key must be stable");
+  assert.equal(r1.buildCache.key, r2.buildCache.key, "build-cache key must be stable");
+  assert.equal(r1.targetCache.key, r2.targetCache.key, "target-cache key must be stable");
+  assert.equal(
+    r1.cargoRegistryCache.key,
+    r2.cargoRegistryCache.key,
+    "cargo-registry-cache key must be stable",
+  );
+});

@@ -410,6 +410,14 @@ inputs:
       installed and continue without failing the action — install the
       cross toolchain manually for those lanes for now. Default empty
       (cross-bootstrap is opt-in by populating this input).
+
+      Caching: when this input is non-empty, setup-soldr activates a
+      per-(host × target) tool cache layer (setup-soldr#106). One
+      independent cache slot per declared target lane holds the
+      lane-specific tool binaries (cargo-zigbuild, ziglang, etc.).
+      Slots are keyed on the lane's resolved tool versions so bumping
+      one tool only invalidates the affected lanes. Non-cross-compiling
+      consumers (empty input) pay zero extra cache-API roundtrips.
     required: false
     default: ""
   cross-tool:

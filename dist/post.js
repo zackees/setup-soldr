@@ -472,10 +472,10 @@ exports.downloadCacheStorageSDK = exports.downloadCacheHttpClientConcurrent = ex
 const core = __importStar(__nccwpck_require__(437));
 const http_client_1 = __nccwpck_require__(278);
 const storage_blob_1 = __nccwpck_require__(426);
-const buffer = __importStar(__nccwpck_require__(118));
+const buffer = __importStar(__nccwpck_require__(119));
 const fs = __importStar(__nccwpck_require__(507));
 const stream = __importStar(__nccwpck_require__(130));
-const util = __importStar(__nccwpck_require__(122));
+const util = __importStar(__nccwpck_require__(123));
 const utils = __importStar(__nccwpck_require__(73));
 const constants_1 = __nccwpck_require__(43);
 const requestUtils_1 = __nccwpck_require__(256);
@@ -1085,7 +1085,7 @@ const {
   types: {
     isPromise
   }
-} = __nccwpck_require__(122)
+} = __nccwpck_require__(123)
 
 function matchValue (match, value) {
   if (typeof match === 'string') {
@@ -2364,10 +2364,10 @@ module.exports = {
 const WritableStream = (__nccwpck_require__(408).Writable)
 const inherits = (__nccwpck_require__(359).inherits)
 
-const StreamSearch = __nccwpck_require__(113)
+const StreamSearch = __nccwpck_require__(114)
 
 const PartStream = __nccwpck_require__(63)
-const HeaderParser = __nccwpck_require__(106)
+const HeaderParser = __nccwpck_require__(107)
 
 const DASH = 45
 const B_ONEDASH = Buffer.from('-')
@@ -2600,11 +2600,11 @@ var aborterUtils_js_1 = __nccwpck_require__(99);
 Object.defineProperty(exports, "cancelablePromiseRace", ({ enumerable: true, get: function () { return aborterUtils_js_1.cancelablePromiseRace; } }));
 var createAbortablePromise_js_1 = __nccwpck_require__(254);
 Object.defineProperty(exports, "createAbortablePromise", ({ enumerable: true, get: function () { return createAbortablePromise_js_1.createAbortablePromise; } }));
-var delay_js_1 = __nccwpck_require__(112);
+var delay_js_1 = __nccwpck_require__(113);
 Object.defineProperty(exports, "delay", ({ enumerable: true, get: function () { return delay_js_1.delay; } }));
 var error_js_1 = __nccwpck_require__(208);
 Object.defineProperty(exports, "getErrorMessage", ({ enumerable: true, get: function () { return error_js_1.getErrorMessage; } }));
-var typeGuards_js_1 = __nccwpck_require__(109);
+var typeGuards_js_1 = __nccwpck_require__(110);
 Object.defineProperty(exports, "isDefined", ({ enumerable: true, get: function () { return typeGuards_js_1.isDefined; } }));
 Object.defineProperty(exports, "isObjectWithProperties", ({ enumerable: true, get: function () { return typeGuards_js_1.isObjectWithProperties; } }));
 Object.defineProperty(exports, "objectHasProperty", ({ enumerable: true, get: function () { return typeGuards_js_1.objectHasProperty; } }));
@@ -2938,7 +2938,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getExecOutput = exports.exec = void 0;
 const string_decoder_1 = __nccwpck_require__(148);
-const tr = __importStar(__nccwpck_require__(124));
+const tr = __importStar(__nccwpck_require__(125));
 /**
  * Exec a command.
  * Output will be streamed to the live console.
@@ -3046,7 +3046,7 @@ var binary_writer_1 = __nccwpck_require__(245);
 Object.defineProperty(exports, "BinaryWriter", ({ enumerable: true, get: function () { return binary_writer_1.BinaryWriter; } }));
 Object.defineProperty(exports, "binaryWriteOptions", ({ enumerable: true, get: function () { return binary_writer_1.binaryWriteOptions; } }));
 // Int64 and UInt64 implementations required for the binary format
-var pb_long_1 = __nccwpck_require__(116);
+var pb_long_1 = __nccwpck_require__(117);
 Object.defineProperty(exports, "PbLong", ({ enumerable: true, get: function () { return pb_long_1.PbLong; } }));
 Object.defineProperty(exports, "PbULong", ({ enumerable: true, get: function () { return pb_long_1.PbULong; } }));
 // JSON format contracts, options for reading and writing, for example
@@ -3285,7 +3285,7 @@ const { FormData } = __nccwpck_require__(203)
 const { kState } = __nccwpck_require__(13)
 const { webidl } = __nccwpck_require__(435)
 const { DOMException, structuredClone } = __nccwpck_require__(28)
-const { Blob, File: NativeFile } = __nccwpck_require__(118)
+const { Blob, File: NativeFile } = __nccwpck_require__(119)
 const { kBodyUsed } = __nccwpck_require__(191)
 const assert = __nccwpck_require__(501)
 const { isErrored } = __nccwpck_require__(66)
@@ -3890,7 +3890,7 @@ module.exports = {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const assert = __nccwpck_require__(501)
-const { atob } = __nccwpck_require__(118)
+const { atob } = __nccwpck_require__(119)
 const { isomorphicDecode } = __nccwpck_require__(493)
 
 const encoder = new TextEncoder()
@@ -5895,7 +5895,7 @@ const { getGlobalOrigin } = __nccwpck_require__(139)
 const { URLSerializer } = __nccwpck_require__(23)
 const { kHeadersList, kConstruct } = __nccwpck_require__(191)
 const assert = __nccwpck_require__(501)
-const { types } = __nccwpck_require__(122)
+const { types } = __nccwpck_require__(123)
 
 const ReadableStream = globalThis.ReadableStream || (__nccwpck_require__(251).ReadableStream)
 const textEncoder = new TextEncoder('utf-8')
@@ -8326,9 +8326,9 @@ const { ProgressEvent } = __nccwpck_require__(421)
 const { getEncoding } = __nccwpck_require__(96)
 const { DOMException } = __nccwpck_require__(28)
 const { serializeAMimeType, parseMIMEType } = __nccwpck_require__(23)
-const { types } = __nccwpck_require__(122)
+const { types } = __nccwpck_require__(123)
 const { StringDecoder } = __nccwpck_require__(148)
-const { btoa } = __nccwpck_require__(118)
+const { btoa } = __nccwpck_require__(119)
 
 /** @type {PropertyDescriptor} */
 const staticPropertyDescriptors = {
@@ -9672,7 +9672,7 @@ __export(requestPolicyFactoryPolicy_exports, {
   requestPolicyFactoryPolicyName: () => requestPolicyFactoryPolicyName
 });
 module.exports = __toCommonJS(requestPolicyFactoryPolicy_exports);
-var import_util = __nccwpck_require__(108);
+var import_util = __nccwpck_require__(109);
 var import_response = __nccwpck_require__(392);
 var HttpPipelineLogLevel = /* @__PURE__ */ ((HttpPipelineLogLevel2) => {
   HttpPipelineLogLevel2[HttpPipelineLogLevel2["ERROR"] = 1] = "ERROR";
@@ -13424,8 +13424,8 @@ const { IncomingMessage } = __nccwpck_require__(320)
 const stream = __nccwpck_require__(130)
 const net = __nccwpck_require__(486)
 const { InvalidArgumentError } = __nccwpck_require__(466)
-const { Blob } = __nccwpck_require__(118)
-const nodeUtil = __nccwpck_require__(122)
+const { Blob } = __nccwpck_require__(119)
+const nodeUtil = __nccwpck_require__(123)
 const { stringify } = __nccwpck_require__(129)
 const { headerNameLowerCasedRecord } = __nccwpck_require__(70)
 
@@ -14028,7 +14028,7 @@ var import_response = __nccwpck_require__(392);
 var import_requestPolicyFactoryPolicy = __nccwpck_require__(60);
 var import_disableKeepAlivePolicy = __nccwpck_require__(8);
 var import_httpClientAdapter = __nccwpck_require__(206);
-var import_util = __nccwpck_require__(108);
+var import_util = __nccwpck_require__(109);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
 //# sourceMappingURL=index.js.map
@@ -14202,7 +14202,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StatsCollector = void 0;
-const fs = __importStar(__nccwpck_require__(107));
+const fs = __importStar(__nccwpck_require__(108));
 const path = __importStar(__nccwpck_require__(485));
 const core = __importStar(__nccwpck_require__(437));
 function fmtBytes(n) {
@@ -14826,7 +14826,7 @@ const crypto = __importStar(__nccwpck_require__(284));
 const fs = __importStar(__nccwpck_require__(507));
 const path = __importStar(__nccwpck_require__(242));
 const semver = __importStar(__nccwpck_require__(175));
-const util = __importStar(__nccwpck_require__(122));
+const util = __importStar(__nccwpck_require__(123));
 const constants_1 = __nccwpck_require__(43);
 const versionSalt = '1.0';
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
@@ -15211,7 +15211,7 @@ exports.restoreMiniCache = restoreMiniCache;
 exports.saveMiniCache = saveMiniCache;
 exports.isEligibleForMiniCache = isEligibleForMiniCache;
 const fs = __importStar(__nccwpck_require__(243));
-const fsp = __importStar(__nccwpck_require__(107));
+const fsp = __importStar(__nccwpck_require__(108));
 const path = __importStar(__nccwpck_require__(485));
 const cache = __importStar(__nccwpck_require__(209));
 const cache_compress_js_1 = __nccwpck_require__(502);
@@ -19931,7 +19931,7 @@ module.exports = __toCommonJS(src_exports);
 var import_AbortError = __nccwpck_require__(9);
 var import_logger = __nccwpck_require__(240);
 var import_httpHeaders = __nccwpck_require__(463);
-var import_pipelineRequest = __nccwpck_require__(114);
+var import_pipelineRequest = __nccwpck_require__(115);
 var import_pipeline = __nccwpck_require__(499);
 var import_restError = __nccwpck_require__(423);
 var import_bytesEncoding = __nccwpck_require__(280);
@@ -19954,7 +19954,7 @@ var import_restError2 = __nccwpck_require__(352);
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ReflectionJsonWriter = void 0;
 const base64_1 = __nccwpck_require__(294);
-const pb_long_1 = __nccwpck_require__(116);
+const pb_long_1 = __nccwpck_require__(117);
 const reflection_info_1 = __nccwpck_require__(431);
 const assert_1 = __nccwpck_require__(462);
 /**
@@ -21264,7 +21264,7 @@ __export(logPolicy_exports, {
 });
 module.exports = __toCommonJS(logPolicy_exports);
 var import_log = __nccwpck_require__(150);
-var import_sanitizer = __nccwpck_require__(120);
+var import_sanitizer = __nccwpck_require__(121);
 const logPolicyName = "logPolicy";
 function logPolicy(options = {}) {
   const logger = options.logger ?? import_log.logger.info;
@@ -21355,3663 +21355,6 @@ module.exports = {
 /***/ }),
 
 /***/ 103:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.rangeToString = rangeToString;
-/**
- * Generate a range string. For example:
- *
- * "bytes=255-" or "bytes=0-511"
- *
- * @param iRange -
- */
-function rangeToString(iRange) {
-    if (iRange.offset < 0) {
-        throw new RangeError(`Range.offset cannot be smaller than 0.`);
-    }
-    if (iRange.count && iRange.count <= 0) {
-        throw new RangeError(`Range.count must be larger than 0. Leave it undefined if you want a range from offset to the end.`);
-    }
-    return iRange.count
-        ? `bytes=${iRange.offset}-${iRange.offset + iRange.count - 1}`
-        : `bytes=${iRange.offset}-`;
-}
-//# sourceMappingURL=Range.js.map
-
-/***/ }),
-
-/***/ 104:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const {
-  Readable,
-  Duplex,
-  PassThrough
-} = __nccwpck_require__(130)
-const {
-  InvalidArgumentError,
-  InvalidReturnValueError,
-  RequestAbortedError
-} = __nccwpck_require__(466)
-const util = __nccwpck_require__(66)
-const { AsyncResource } = __nccwpck_require__(407)
-const { addSignal, removeSignal } = __nccwpck_require__(102)
-const assert = __nccwpck_require__(501)
-
-const kResume = Symbol('resume')
-
-class PipelineRequest extends Readable {
-  constructor () {
-    super({ autoDestroy: true })
-
-    this[kResume] = null
-  }
-
-  _read () {
-    const { [kResume]: resume } = this
-
-    if (resume) {
-      this[kResume] = null
-      resume()
-    }
-  }
-
-  _destroy (err, callback) {
-    this._read()
-
-    callback(err)
-  }
-}
-
-class PipelineResponse extends Readable {
-  constructor (resume) {
-    super({ autoDestroy: true })
-    this[kResume] = resume
-  }
-
-  _read () {
-    this[kResume]()
-  }
-
-  _destroy (err, callback) {
-    if (!err && !this._readableState.endEmitted) {
-      err = new RequestAbortedError()
-    }
-
-    callback(err)
-  }
-}
-
-class PipelineHandler extends AsyncResource {
-  constructor (opts, handler) {
-    if (!opts || typeof opts !== 'object') {
-      throw new InvalidArgumentError('invalid opts')
-    }
-
-    if (typeof handler !== 'function') {
-      throw new InvalidArgumentError('invalid handler')
-    }
-
-    const { signal, method, opaque, onInfo, responseHeaders } = opts
-
-    if (signal && typeof signal.on !== 'function' && typeof signal.addEventListener !== 'function') {
-      throw new InvalidArgumentError('signal must be an EventEmitter or EventTarget')
-    }
-
-    if (method === 'CONNECT') {
-      throw new InvalidArgumentError('invalid method')
-    }
-
-    if (onInfo && typeof onInfo !== 'function') {
-      throw new InvalidArgumentError('invalid onInfo callback')
-    }
-
-    super('UNDICI_PIPELINE')
-
-    this.opaque = opaque || null
-    this.responseHeaders = responseHeaders || null
-    this.handler = handler
-    this.abort = null
-    this.context = null
-    this.onInfo = onInfo || null
-
-    this.req = new PipelineRequest().on('error', util.nop)
-
-    this.ret = new Duplex({
-      readableObjectMode: opts.objectMode,
-      autoDestroy: true,
-      read: () => {
-        const { body } = this
-
-        if (body && body.resume) {
-          body.resume()
-        }
-      },
-      write: (chunk, encoding, callback) => {
-        const { req } = this
-
-        if (req.push(chunk, encoding) || req._readableState.destroyed) {
-          callback()
-        } else {
-          req[kResume] = callback
-        }
-      },
-      destroy: (err, callback) => {
-        const { body, req, res, ret, abort } = this
-
-        if (!err && !ret._readableState.endEmitted) {
-          err = new RequestAbortedError()
-        }
-
-        if (abort && err) {
-          abort()
-        }
-
-        util.destroy(body, err)
-        util.destroy(req, err)
-        util.destroy(res, err)
-
-        removeSignal(this)
-
-        callback(err)
-      }
-    }).on('prefinish', () => {
-      const { req } = this
-
-      // Node < 15 does not call _final in same tick.
-      req.push(null)
-    })
-
-    this.res = null
-
-    addSignal(this, signal)
-  }
-
-  onConnect (abort, context) {
-    const { ret, res } = this
-
-    assert(!res, 'pipeline cannot be retried')
-
-    if (ret.destroyed) {
-      throw new RequestAbortedError()
-    }
-
-    this.abort = abort
-    this.context = context
-  }
-
-  onHeaders (statusCode, rawHeaders, resume) {
-    const { opaque, handler, context } = this
-
-    if (statusCode < 200) {
-      if (this.onInfo) {
-        const headers = this.responseHeaders === 'raw' ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders)
-        this.onInfo({ statusCode, headers })
-      }
-      return
-    }
-
-    this.res = new PipelineResponse(resume)
-
-    let body
-    try {
-      this.handler = null
-      const headers = this.responseHeaders === 'raw' ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders)
-      body = this.runInAsyncScope(handler, null, {
-        statusCode,
-        headers,
-        opaque,
-        body: this.res,
-        context
-      })
-    } catch (err) {
-      this.res.on('error', util.nop)
-      throw err
-    }
-
-    if (!body || typeof body.on !== 'function') {
-      throw new InvalidReturnValueError('expected Readable')
-    }
-
-    body
-      .on('data', (chunk) => {
-        const { ret, body } = this
-
-        if (!ret.push(chunk) && body.pause) {
-          body.pause()
-        }
-      })
-      .on('error', (err) => {
-        const { ret } = this
-
-        util.destroy(ret, err)
-      })
-      .on('end', () => {
-        const { ret } = this
-
-        ret.push(null)
-      })
-      .on('close', () => {
-        const { ret } = this
-
-        if (!ret._readableState.ended) {
-          util.destroy(ret, new RequestAbortedError())
-        }
-      })
-
-    this.body = body
-  }
-
-  onData (chunk) {
-    const { res } = this
-    return res.push(chunk)
-  }
-
-  onComplete (trailers) {
-    const { res } = this
-    res.push(null)
-  }
-
-  onError (err) {
-    const { ret } = this
-    this.handler = null
-    util.destroy(ret, err)
-  }
-}
-
-function pipeline (opts, handler) {
-  try {
-    const pipelineHandler = new PipelineHandler(opts, handler)
-    this.dispatch({ ...opts, body: pipelineHandler.req }, pipelineHandler)
-    return pipelineHandler.ret
-  } catch (err) {
-    return new PassThrough().destroy(err)
-  }
-}
-
-module.exports = pipeline
-
-
-/***/ }),
-
-/***/ 105:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.logger = void 0;
-const logger_1 = __nccwpck_require__(42);
-/**
- * The `@azure/logger` configuration for this package.
- */
-exports.logger = (0, logger_1.createClientLogger)("storage-blob");
-//# sourceMappingURL=log.js.map
-
-/***/ }),
-
-/***/ 106:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const EventEmitter = (__nccwpck_require__(143).EventEmitter)
-const inherits = (__nccwpck_require__(359).inherits)
-const getLimit = __nccwpck_require__(461)
-
-const StreamSearch = __nccwpck_require__(113)
-
-const B_DCRLF = Buffer.from('\r\n\r\n')
-const RE_CRLF = /\r\n/g
-const RE_HDR = /^([^:]+):[ \t]?([\x00-\xFF]+)?$/ // eslint-disable-line no-control-regex
-
-function HeaderParser (cfg) {
-  EventEmitter.call(this)
-
-  cfg = cfg || {}
-  const self = this
-  this.nread = 0
-  this.maxed = false
-  this.npairs = 0
-  this.maxHeaderPairs = getLimit(cfg, 'maxHeaderPairs', 2000)
-  this.maxHeaderSize = getLimit(cfg, 'maxHeaderSize', 80 * 1024)
-  this.buffer = ''
-  this.header = {}
-  this.finished = false
-  this.ss = new StreamSearch(B_DCRLF)
-  this.ss.on('info', function (isMatch, data, start, end) {
-    if (data && !self.maxed) {
-      if (self.nread + end - start >= self.maxHeaderSize) {
-        end = self.maxHeaderSize - self.nread + start
-        self.nread = self.maxHeaderSize
-        self.maxed = true
-      } else { self.nread += (end - start) }
-
-      self.buffer += data.toString('binary', start, end)
-    }
-    if (isMatch) { self._finish() }
-  })
-}
-inherits(HeaderParser, EventEmitter)
-
-HeaderParser.prototype.push = function (data) {
-  const r = this.ss.push(data)
-  if (this.finished) { return r }
-}
-
-HeaderParser.prototype.reset = function () {
-  this.finished = false
-  this.buffer = ''
-  this.header = {}
-  this.ss.reset()
-}
-
-HeaderParser.prototype._finish = function () {
-  if (this.buffer) { this._parseHeader() }
-  this.ss.matches = this.ss.maxMatches
-  const header = this.header
-  this.header = {}
-  this.buffer = ''
-  this.finished = true
-  this.nread = this.npairs = 0
-  this.maxed = false
-  this.emit('header', header)
-}
-
-HeaderParser.prototype._parseHeader = function () {
-  if (this.npairs === this.maxHeaderPairs) { return }
-
-  const lines = this.buffer.split(RE_CRLF)
-  const len = lines.length
-  let m, h
-
-  for (var i = 0; i < len; ++i) { // eslint-disable-line no-var
-    if (lines[i].length === 0) { continue }
-    if (lines[i][0] === '\t' || lines[i][0] === ' ') {
-      // folded header content
-      // RFC2822 says to just remove the CRLF and not the whitespace following
-      // it, so we follow the RFC and include the leading whitespace ...
-      if (h) {
-        this.header[h][this.header[h].length - 1] += lines[i]
-        continue
-      }
-    }
-
-    const posColon = lines[i].indexOf(':')
-    if (
-      posColon === -1 ||
-      posColon === 0
-    ) {
-      return
-    }
-    m = RE_HDR.exec(lines[i])
-    h = m[1].toLowerCase()
-    this.header[h] = this.header[h] || []
-    this.header[h].push((m[2] || ''))
-    if (++this.npairs === this.maxHeaderPairs) { break }
-  }
-}
-
-module.exports = HeaderParser
-
-
-/***/ }),
-
-/***/ 107:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:fs/promises");
-
-/***/ }),
-
-/***/ 108:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var util_exports = {};
-__export(util_exports, {
-  HttpHeaders: () => HttpHeaders,
-  toHttpHeadersLike: () => toHttpHeadersLike,
-  toPipelineRequest: () => toPipelineRequest,
-  toWebResourceLike: () => toWebResourceLike
-});
-module.exports = __toCommonJS(util_exports);
-var import_core_rest_pipeline = __nccwpck_require__(100);
-const originalRequestSymbol = /* @__PURE__ */ Symbol("Original PipelineRequest");
-const originalClientRequestSymbol = /* @__PURE__ */ Symbol.for("@azure/core-client original request");
-function toPipelineRequest(webResource, options = {}) {
-  const compatWebResource = webResource;
-  const request = compatWebResource[originalRequestSymbol];
-  const headers = (0, import_core_rest_pipeline.createHttpHeaders)(webResource.headers.toJson({ preserveCase: true }));
-  if (request) {
-    request.headers = headers;
-    return request;
-  } else {
-    const newRequest = (0, import_core_rest_pipeline.createPipelineRequest)({
-      url: webResource.url,
-      method: webResource.method,
-      headers,
-      withCredentials: webResource.withCredentials,
-      timeout: webResource.timeout,
-      requestId: webResource.requestId,
-      abortSignal: webResource.abortSignal,
-      body: webResource.body,
-      formData: webResource.formData,
-      disableKeepAlive: !!webResource.keepAlive,
-      onDownloadProgress: webResource.onDownloadProgress,
-      onUploadProgress: webResource.onUploadProgress,
-      proxySettings: webResource.proxySettings,
-      streamResponseStatusCodes: webResource.streamResponseStatusCodes,
-      agent: webResource.agent,
-      requestOverrides: webResource.requestOverrides
-    });
-    if (options.originalRequest) {
-      newRequest[originalClientRequestSymbol] = options.originalRequest;
-    }
-    return newRequest;
-  }
-}
-function toWebResourceLike(request, options) {
-  const originalRequest = options?.originalRequest ?? request;
-  const webResource = {
-    url: request.url,
-    method: request.method,
-    headers: toHttpHeadersLike(request.headers),
-    withCredentials: request.withCredentials,
-    timeout: request.timeout,
-    requestId: request.headers.get("x-ms-client-request-id") || request.requestId,
-    abortSignal: request.abortSignal,
-    body: request.body,
-    formData: request.formData,
-    keepAlive: !!request.disableKeepAlive,
-    onDownloadProgress: request.onDownloadProgress,
-    onUploadProgress: request.onUploadProgress,
-    proxySettings: request.proxySettings,
-    streamResponseStatusCodes: request.streamResponseStatusCodes,
-    agent: request.agent,
-    requestOverrides: request.requestOverrides,
-    clone() {
-      throw new Error("Cannot clone a non-proxied WebResourceLike");
-    },
-    prepare() {
-      throw new Error("WebResourceLike.prepare() is not supported by @azure/core-http-compat");
-    },
-    validateRequestProperties() {
-    }
-  };
-  if (options?.createProxy) {
-    return new Proxy(webResource, {
-      get(target, prop, receiver) {
-        if (prop === originalRequestSymbol) {
-          return request;
-        } else if (prop === "clone") {
-          return () => {
-            return toWebResourceLike(toPipelineRequest(webResource, { originalRequest }), {
-              createProxy: true,
-              originalRequest
-            });
-          };
-        }
-        return Reflect.get(target, prop, receiver);
-      },
-      set(target, prop, value, receiver) {
-        if (prop === "keepAlive") {
-          request.disableKeepAlive = !value;
-        }
-        const passThroughProps = [
-          "url",
-          "method",
-          "withCredentials",
-          "timeout",
-          "requestId",
-          "abortSignal",
-          "body",
-          "formData",
-          "onDownloadProgress",
-          "onUploadProgress",
-          "proxySettings",
-          "streamResponseStatusCodes",
-          "agent",
-          "requestOverrides"
-        ];
-        if (typeof prop === "string" && passThroughProps.includes(prop)) {
-          request[prop] = value;
-        }
-        return Reflect.set(target, prop, value, receiver);
-      }
-    });
-  } else {
-    return webResource;
-  }
-}
-function toHttpHeadersLike(headers) {
-  return new HttpHeaders(headers.toJSON({ preserveCase: true }));
-}
-function getHeaderKey(headerName) {
-  return headerName.toLowerCase();
-}
-class HttpHeaders {
-  _headersMap;
-  constructor(rawHeaders) {
-    this._headersMap = {};
-    if (rawHeaders) {
-      for (const headerName in rawHeaders) {
-        this.set(headerName, rawHeaders[headerName]);
-      }
-    }
-  }
-  /**
-   * Set a header in this collection with the provided name and value. The name is
-   * case-insensitive.
-   * @param headerName - The name of the header to set. This value is case-insensitive.
-   * @param headerValue - The value of the header to set.
-   */
-  set(headerName, headerValue) {
-    this._headersMap[getHeaderKey(headerName)] = {
-      name: headerName,
-      value: headerValue.toString()
-    };
-  }
-  /**
-   * Get the header value for the provided header name, or undefined if no header exists in this
-   * collection with the provided name.
-   * @param headerName - The name of the header.
-   */
-  get(headerName) {
-    const header = this._headersMap[getHeaderKey(headerName)];
-    return !header ? void 0 : header.value;
-  }
-  /**
-   * Get whether or not this header collection contains a header entry for the provided header name.
-   */
-  contains(headerName) {
-    return !!this._headersMap[getHeaderKey(headerName)];
-  }
-  /**
-   * Remove the header with the provided headerName. Return whether or not the header existed and
-   * was removed.
-   * @param headerName - The name of the header to remove.
-   */
-  remove(headerName) {
-    const result = this.contains(headerName);
-    delete this._headersMap[getHeaderKey(headerName)];
-    return result;
-  }
-  /**
-   * Get the headers that are contained this collection as an object.
-   */
-  rawHeaders() {
-    return this.toJson({ preserveCase: true });
-  }
-  /**
-   * Get the headers that are contained in this collection as an array.
-   */
-  headersArray() {
-    const headers = [];
-    for (const headerKey in this._headersMap) {
-      headers.push(this._headersMap[headerKey]);
-    }
-    return headers;
-  }
-  /**
-   * Get the header names that are contained in this collection.
-   */
-  headerNames() {
-    const headerNames = [];
-    const headers = this.headersArray();
-    for (let i = 0; i < headers.length; ++i) {
-      headerNames.push(headers[i].name);
-    }
-    return headerNames;
-  }
-  /**
-   * Get the header values that are contained in this collection.
-   */
-  headerValues() {
-    const headerValues = [];
-    const headers = this.headersArray();
-    for (let i = 0; i < headers.length; ++i) {
-      headerValues.push(headers[i].value);
-    }
-    return headerValues;
-  }
-  /**
-   * Get the JSON object representation of this HTTP header collection.
-   */
-  toJson(options = {}) {
-    const result = {};
-    if (options.preserveCase) {
-      for (const headerKey in this._headersMap) {
-        const header = this._headersMap[headerKey];
-        result[header.name] = header.value;
-      }
-    } else {
-      for (const headerKey in this._headersMap) {
-        const header = this._headersMap[headerKey];
-        result[getHeaderKey(header.name)] = header.value;
-      }
-    }
-    return result;
-  }
-  /**
-   * Get the string representation of this HTTP header collection.
-   */
-  toString() {
-    return JSON.stringify(this.toJson({ preserveCase: true }));
-  }
-  /**
-   * Create a deep clone/copy of this HttpHeaders collection.
-   */
-  clone() {
-    const resultPreservingCasing = {};
-    for (const headerKey in this._headersMap) {
-      const header = this._headersMap[headerKey];
-      resultPreservingCasing[header.name] = header.value;
-    }
-    return new HttpHeaders(resultPreservingCasing);
-  }
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=util.js.map
-
-
-/***/ }),
-
-/***/ 109:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isDefined = isDefined;
-exports.isObjectWithProperties = isObjectWithProperties;
-exports.objectHasProperty = objectHasProperty;
-/**
- * Helper TypeGuard that checks if something is defined or not.
- * @param thing - Anything
- */
-function isDefined(thing) {
-    return typeof thing !== "undefined" && thing !== null;
-}
-/**
- * Helper TypeGuard that checks if the input is an object with the specified properties.
- * @param thing - Anything.
- * @param properties - The name of the properties that should appear in the object.
- */
-function isObjectWithProperties(thing, properties) {
-    if (!isDefined(thing) || typeof thing !== "object") {
-        return false;
-    }
-    for (const property of properties) {
-        if (!objectHasProperty(thing, property)) {
-            return false;
-        }
-    }
-    return true;
-}
-/**
- * Helper TypeGuard that checks if the input is an object with the specified property.
- * @param thing - Any object.
- * @param property - The name of the property that should appear in the object.
- */
-function objectHasProperty(thing, property) {
-    return (isDefined(thing) && typeof thing === "object" && property in thing);
-}
-//# sourceMappingURL=typeGuards.js.map
-
-/***/ }),
-
-/***/ 110:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("constants");
-
-/***/ }),
-
-/***/ 111:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseCAEChallenge = parseCAEChallenge;
-exports.authorizeRequestOnClaimChallenge = authorizeRequestOnClaimChallenge;
-const log_js_1 = __nccwpck_require__(458);
-const base64_js_1 = __nccwpck_require__(416);
-/**
- * Converts: `Bearer a="b", c="d", Bearer d="e", f="g"`.
- * Into: `[ { a: 'b', c: 'd' }, { d: 'e', f: 'g' } ]`.
- *
- * @internal
- */
-function parseCAEChallenge(challenges) {
-    const bearerChallenges = `, ${challenges.trim()}`.split(", Bearer ").filter((x) => x);
-    return bearerChallenges.map((challenge) => {
-        const challengeParts = `${challenge.trim()}, `.split('", ').filter((x) => x);
-        const keyValuePairs = challengeParts.map((keyValue) => (([key, value]) => ({ [key]: value }))(keyValue.trim().split('="')));
-        // Key-value pairs to plain object:
-        return keyValuePairs.reduce((a, b) => ({ ...a, ...b }), {});
-    });
-}
-/**
- * This function can be used as a callback for the `bearerTokenAuthenticationPolicy` of `@azure/core-rest-pipeline`, to support CAE challenges:
- * [Continuous Access Evaluation](https://learn.microsoft.com/azure/active-directory/conditional-access/concept-continuous-access-evaluation).
- *
- * Call the `bearerTokenAuthenticationPolicy` with the following options:
- *
- * ```ts snippet:AuthorizeRequestOnClaimChallenge
- * import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
- * import { authorizeRequestOnClaimChallenge } from "@azure/core-client";
- *
- * const policy = bearerTokenAuthenticationPolicy({
- *   challengeCallbacks: {
- *     authorizeRequestOnChallenge: authorizeRequestOnClaimChallenge,
- *   },
- *   scopes: ["https://service/.default"],
- * });
- * ```
- *
- * Once provided, the `bearerTokenAuthenticationPolicy` policy will internally handle Continuous Access Evaluation (CAE) challenges.
- * When it can't complete a challenge it will return the 401 (unauthorized) response from ARM.
- *
- * Example challenge with claims:
- *
- * ```
- * Bearer authorization_uri="https://login.windows-ppe.net/", error="invalid_token",
- * error_description="User session has been revoked",
- * claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTYwMzc0MjgwMCJ9fX0="
- * ```
- */
-async function authorizeRequestOnClaimChallenge(onChallengeOptions) {
-    const { scopes, response } = onChallengeOptions;
-    const logger = onChallengeOptions.logger || log_js_1.logger;
-    const challenge = response.headers.get("WWW-Authenticate");
-    if (!challenge) {
-        logger.info(`The WWW-Authenticate header was missing. Failed to perform the Continuous Access Evaluation authentication flow.`);
-        return false;
-    }
-    const challenges = parseCAEChallenge(challenge) || [];
-    const parsedChallenge = challenges.find((x) => x.claims);
-    if (!parsedChallenge) {
-        logger.info(`The WWW-Authenticate header was missing the necessary "claims" to perform the Continuous Access Evaluation authentication flow.`);
-        return false;
-    }
-    const accessToken = await onChallengeOptions.getAccessToken(parsedChallenge.scope ? [parsedChallenge.scope] : scopes, {
-        claims: (0, base64_js_1.decodeStringToString)(parsedChallenge.claims),
-    });
-    if (!accessToken) {
-        return false;
-    }
-    onChallengeOptions.request.headers.set("Authorization", `${accessToken.tokenType ?? "Bearer"} ${accessToken.token}`);
-    return true;
-}
-//# sourceMappingURL=authorizeRequestOnClaimChallenge.js.map
-
-/***/ }),
-
-/***/ 112:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.delay = delay;
-exports.calculateRetryDelay = calculateRetryDelay;
-const createAbortablePromise_js_1 = __nccwpck_require__(254);
-const util_1 = __nccwpck_require__(145);
-const StandardAbortMessage = "The delay was aborted.";
-/**
- * A wrapper for setTimeout that resolves a promise after timeInMs milliseconds.
- * @param timeInMs - The number of milliseconds to be delayed.
- * @param options - The options for delay - currently abort options
- * @returns Promise that is resolved after timeInMs
- */
-function delay(timeInMs, options) {
-    let token;
-    const { abortSignal, abortErrorMsg } = options ?? {};
-    return (0, createAbortablePromise_js_1.createAbortablePromise)((resolve) => {
-        token = setTimeout(resolve, timeInMs);
-    }, {
-        cleanupBeforeAbort: () => clearTimeout(token),
-        abortSignal,
-        abortErrorMsg: abortErrorMsg ?? StandardAbortMessage,
-    });
-}
-/**
- * Calculates the delay interval for retry attempts using exponential delay with jitter.
- * @param retryAttempt - The current retry attempt number.
- * @param config - The exponential retry configuration.
- * @returns An object containing the calculated retry delay.
- */
-function calculateRetryDelay(retryAttempt, config) {
-    // Exponentially increase the delay each time
-    const exponentialDelay = config.retryDelayInMs * Math.pow(2, retryAttempt);
-    // Don't let the delay exceed the maximum
-    const clampedDelay = Math.min(config.maxRetryDelayInMs, exponentialDelay);
-    // Allow the final value to have some "jitter" (within 50% of the delay size) so
-    // that retries across multiple clients don't occur simultaneously.
-    const retryAfterInMs = clampedDelay / 2 + (0, util_1.getRandomIntegerInclusive)(0, clampedDelay / 2);
-    return { retryAfterInMs };
-}
-//# sourceMappingURL=delay.js.map
-
-/***/ }),
-
-/***/ 113:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-/**
- * Copyright Brian White. All rights reserved.
- *
- * @see https://github.com/mscdex/streamsearch
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
- * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
- *
- * Based heavily on the Streaming Boyer-Moore-Horspool C++ implementation
- * by Hongli Lai at: https://github.com/FooBarWidget/boyer-moore-horspool
- */
-const EventEmitter = (__nccwpck_require__(143).EventEmitter)
-const inherits = (__nccwpck_require__(359).inherits)
-
-function SBMH (needle) {
-  if (typeof needle === 'string') {
-    needle = Buffer.from(needle)
-  }
-
-  if (!Buffer.isBuffer(needle)) {
-    throw new TypeError('The needle has to be a String or a Buffer.')
-  }
-
-  const needleLength = needle.length
-
-  if (needleLength === 0) {
-    throw new Error('The needle cannot be an empty String/Buffer.')
-  }
-
-  if (needleLength > 256) {
-    throw new Error('The needle cannot have a length bigger than 256.')
-  }
-
-  this.maxMatches = Infinity
-  this.matches = 0
-
-  this._occ = new Array(256)
-    .fill(needleLength) // Initialize occurrence table.
-  this._lookbehind_size = 0
-  this._needle = needle
-  this._bufpos = 0
-
-  this._lookbehind = Buffer.alloc(needleLength)
-
-  // Populate occurrence table with analysis of the needle,
-  // ignoring last letter.
-  for (var i = 0; i < needleLength - 1; ++i) { // eslint-disable-line no-var
-    this._occ[needle[i]] = needleLength - 1 - i
-  }
-}
-inherits(SBMH, EventEmitter)
-
-SBMH.prototype.reset = function () {
-  this._lookbehind_size = 0
-  this.matches = 0
-  this._bufpos = 0
-}
-
-SBMH.prototype.push = function (chunk, pos) {
-  if (!Buffer.isBuffer(chunk)) {
-    chunk = Buffer.from(chunk, 'binary')
-  }
-  const chlen = chunk.length
-  this._bufpos = pos || 0
-  let r
-  while (r !== chlen && this.matches < this.maxMatches) { r = this._sbmh_feed(chunk) }
-  return r
-}
-
-SBMH.prototype._sbmh_feed = function (data) {
-  const len = data.length
-  const needle = this._needle
-  const needleLength = needle.length
-  const lastNeedleChar = needle[needleLength - 1]
-
-  // Positive: points to a position in `data`
-  //           pos == 3 points to data[3]
-  // Negative: points to a position in the lookbehind buffer
-  //           pos == -2 points to lookbehind[lookbehind_size - 2]
-  let pos = -this._lookbehind_size
-  let ch
-
-  if (pos < 0) {
-    // Lookbehind buffer is not empty. Perform Boyer-Moore-Horspool
-    // search with character lookup code that considers both the
-    // lookbehind buffer and the current round's haystack data.
-    //
-    // Loop until
-    //   there is a match.
-    // or until
-    //   we've moved past the position that requires the
-    //   lookbehind buffer. In this case we switch to the
-    //   optimized loop.
-    // or until
-    //   the character to look at lies outside the haystack.
-    while (pos < 0 && pos <= len - needleLength) {
-      ch = this._sbmh_lookup_char(data, pos + needleLength - 1)
-
-      if (
-        ch === lastNeedleChar &&
-        this._sbmh_memcmp(data, pos, needleLength - 1)
-      ) {
-        this._lookbehind_size = 0
-        ++this.matches
-        this.emit('info', true)
-
-        return (this._bufpos = pos + needleLength)
-      }
-      pos += this._occ[ch]
-    }
-
-    // No match.
-
-    if (pos < 0) {
-      // There's too few data for Boyer-Moore-Horspool to run,
-      // so let's use a different algorithm to skip as much as
-      // we can.
-      // Forward pos until
-      //   the trailing part of lookbehind + data
-      //   looks like the beginning of the needle
-      // or until
-      //   pos == 0
-      while (pos < 0 && !this._sbmh_memcmp(data, pos, len - pos)) { ++pos }
-    }
-
-    if (pos >= 0) {
-      // Discard lookbehind buffer.
-      this.emit('info', false, this._lookbehind, 0, this._lookbehind_size)
-      this._lookbehind_size = 0
-    } else {
-      // Cut off part of the lookbehind buffer that has
-      // been processed and append the entire haystack
-      // into it.
-      const bytesToCutOff = this._lookbehind_size + pos
-      if (bytesToCutOff > 0) {
-        // The cut off data is guaranteed not to contain the needle.
-        this.emit('info', false, this._lookbehind, 0, bytesToCutOff)
-      }
-
-      this._lookbehind.copy(this._lookbehind, 0, bytesToCutOff,
-        this._lookbehind_size - bytesToCutOff)
-      this._lookbehind_size -= bytesToCutOff
-
-      data.copy(this._lookbehind, this._lookbehind_size)
-      this._lookbehind_size += len
-
-      this._bufpos = len
-      return len
-    }
-  }
-
-  pos += (pos >= 0) * this._bufpos
-
-  // Lookbehind buffer is now empty. We only need to check if the
-  // needle is in the haystack.
-  if (data.indexOf(needle, pos) !== -1) {
-    pos = data.indexOf(needle, pos)
-    ++this.matches
-    if (pos > 0) { this.emit('info', true, data, this._bufpos, pos) } else { this.emit('info', true) }
-
-    return (this._bufpos = pos + needleLength)
-  } else {
-    pos = len - needleLength
-  }
-
-  // There was no match. If there's trailing haystack data that we cannot
-  // match yet using the Boyer-Moore-Horspool algorithm (because the trailing
-  // data is less than the needle size) then match using a modified
-  // algorithm that starts matching from the beginning instead of the end.
-  // Whatever trailing data is left after running this algorithm is added to
-  // the lookbehind buffer.
-  while (
-    pos < len &&
-    (
-      data[pos] !== needle[0] ||
-      (
-        (Buffer.compare(
-          data.subarray(pos, pos + len - pos),
-          needle.subarray(0, len - pos)
-        ) !== 0)
-      )
-    )
-  ) {
-    ++pos
-  }
-  if (pos < len) {
-    data.copy(this._lookbehind, 0, pos, pos + (len - pos))
-    this._lookbehind_size = len - pos
-  }
-
-  // Everything until pos is guaranteed not to contain needle data.
-  if (pos > 0) { this.emit('info', false, data, this._bufpos, pos < len ? pos : len) }
-
-  this._bufpos = len
-  return len
-}
-
-SBMH.prototype._sbmh_lookup_char = function (data, pos) {
-  return (pos < 0)
-    ? this._lookbehind[this._lookbehind_size + pos]
-    : data[pos]
-}
-
-SBMH.prototype._sbmh_memcmp = function (data, pos, len) {
-  for (var i = 0; i < len; ++i) { // eslint-disable-line no-var
-    if (this._sbmh_lookup_char(data, pos + i) !== this._needle[i]) { return false }
-  }
-  return true
-}
-
-module.exports = SBMH
-
-
-/***/ }),
-
-/***/ 114:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var pipelineRequest_exports = {};
-__export(pipelineRequest_exports, {
-  createPipelineRequest: () => createPipelineRequest
-});
-module.exports = __toCommonJS(pipelineRequest_exports);
-var import_httpHeaders = __nccwpck_require__(463);
-var import_uuidUtils = __nccwpck_require__(376);
-class PipelineRequestImpl {
-  url;
-  method;
-  headers;
-  timeout;
-  withCredentials;
-  body;
-  multipartBody;
-  formData;
-  streamResponseStatusCodes;
-  enableBrowserStreams;
-  proxySettings;
-  disableKeepAlive;
-  abortSignal;
-  requestId;
-  allowInsecureConnection;
-  onUploadProgress;
-  onDownloadProgress;
-  requestOverrides;
-  authSchemes;
-  constructor(options) {
-    this.url = options.url;
-    this.body = options.body;
-    this.headers = options.headers ?? (0, import_httpHeaders.createHttpHeaders)();
-    this.method = options.method ?? "GET";
-    this.timeout = options.timeout ?? 0;
-    this.multipartBody = options.multipartBody;
-    this.formData = options.formData;
-    this.disableKeepAlive = options.disableKeepAlive ?? false;
-    this.proxySettings = options.proxySettings;
-    this.streamResponseStatusCodes = options.streamResponseStatusCodes;
-    this.withCredentials = options.withCredentials ?? false;
-    this.abortSignal = options.abortSignal;
-    this.onUploadProgress = options.onUploadProgress;
-    this.onDownloadProgress = options.onDownloadProgress;
-    this.requestId = options.requestId || (0, import_uuidUtils.randomUUID)();
-    this.allowInsecureConnection = options.allowInsecureConnection ?? false;
-    this.enableBrowserStreams = options.enableBrowserStreams ?? false;
-    this.requestOverrides = options.requestOverrides;
-    this.authSchemes = options.authSchemes;
-  }
-}
-function createPipelineRequest(options) {
-  return new PipelineRequestImpl(options);
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=pipelineRequest.js.map
-
-
-/***/ }),
-
-/***/ 115:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var userAgentPlatform_exports = {};
-__export(userAgentPlatform_exports, {
-  getHeaderName: () => getHeaderName,
-  setPlatformSpecificData: () => setPlatformSpecificData
-});
-module.exports = __toCommonJS(userAgentPlatform_exports);
-var import_node_os = __toESM(__nccwpck_require__(366));
-var import_node_process = __toESM(__nccwpck_require__(230));
-function getHeaderName() {
-  return "User-Agent";
-}
-async function setPlatformSpecificData(map) {
-  if (import_node_process.default && import_node_process.default.versions) {
-    const osInfo = `${import_node_os.default.type()} ${import_node_os.default.release()}; ${import_node_os.default.arch()}`;
-    const versions = import_node_process.default.versions;
-    if (versions.bun) {
-      map.set("Bun", `${versions.bun} (${osInfo})`);
-    } else if (versions.deno) {
-      map.set("Deno", `${versions.deno} (${osInfo})`);
-    } else if (versions.node) {
-      map.set("Node", `${versions.node} (${osInfo})`);
-    }
-  }
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 116:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PbLong = exports.PbULong = exports.detectBi = void 0;
-const goog_varint_1 = __nccwpck_require__(199);
-let BI;
-function detectBi() {
-    const dv = new DataView(new ArrayBuffer(8));
-    const ok = globalThis.BigInt !== undefined
-        && typeof dv.getBigInt64 === "function"
-        && typeof dv.getBigUint64 === "function"
-        && typeof dv.setBigInt64 === "function"
-        && typeof dv.setBigUint64 === "function";
-    BI = ok ? {
-        MIN: BigInt("-9223372036854775808"),
-        MAX: BigInt("9223372036854775807"),
-        UMIN: BigInt("0"),
-        UMAX: BigInt("18446744073709551615"),
-        C: BigInt,
-        V: dv,
-    } : undefined;
-}
-exports.detectBi = detectBi;
-detectBi();
-function assertBi(bi) {
-    if (!bi)
-        throw new Error("BigInt unavailable, see https://github.com/timostamm/protobuf-ts/blob/v1.0.8/MANUAL.md#bigint-support");
-}
-// used to validate from(string) input (when bigint is unavailable)
-const RE_DECIMAL_STR = /^-?[0-9]+$/;
-// constants for binary math
-const TWO_PWR_32_DBL = 0x100000000;
-const HALF_2_PWR_32 = 0x080000000;
-// base class for PbLong and PbULong provides shared code
-class SharedPbLong {
-    /**
-     * Create a new instance with the given bits.
-     */
-    constructor(lo, hi) {
-        this.lo = lo | 0;
-        this.hi = hi | 0;
-    }
-    /**
-     * Is this instance equal to 0?
-     */
-    isZero() {
-        return this.lo == 0 && this.hi == 0;
-    }
-    /**
-     * Convert to a native number.
-     */
-    toNumber() {
-        let result = this.hi * TWO_PWR_32_DBL + (this.lo >>> 0);
-        if (!Number.isSafeInteger(result))
-            throw new Error("cannot convert to safe number");
-        return result;
-    }
-}
-/**
- * 64-bit unsigned integer as two 32-bit values.
- * Converts between `string`, `number` and `bigint` representations.
- */
-class PbULong extends SharedPbLong {
-    /**
-     * Create instance from a `string`, `number` or `bigint`.
-     */
-    static from(value) {
-        if (BI)
-            // noinspection FallThroughInSwitchStatementJS
-            switch (typeof value) {
-                case "string":
-                    if (value == "0")
-                        return this.ZERO;
-                    if (value == "")
-                        throw new Error('string is no integer');
-                    value = BI.C(value);
-                case "number":
-                    if (value === 0)
-                        return this.ZERO;
-                    value = BI.C(value);
-                case "bigint":
-                    if (!value)
-                        return this.ZERO;
-                    if (value < BI.UMIN)
-                        throw new Error('signed value for ulong');
-                    if (value > BI.UMAX)
-                        throw new Error('ulong too large');
-                    BI.V.setBigUint64(0, value, true);
-                    return new PbULong(BI.V.getInt32(0, true), BI.V.getInt32(4, true));
-            }
-        else
-            switch (typeof value) {
-                case "string":
-                    if (value == "0")
-                        return this.ZERO;
-                    value = value.trim();
-                    if (!RE_DECIMAL_STR.test(value))
-                        throw new Error('string is no integer');
-                    let [minus, lo, hi] = goog_varint_1.int64fromString(value);
-                    if (minus)
-                        throw new Error('signed value for ulong');
-                    return new PbULong(lo, hi);
-                case "number":
-                    if (value == 0)
-                        return this.ZERO;
-                    if (!Number.isSafeInteger(value))
-                        throw new Error('number is no integer');
-                    if (value < 0)
-                        throw new Error('signed value for ulong');
-                    return new PbULong(value, value / TWO_PWR_32_DBL);
-            }
-        throw new Error('unknown value ' + typeof value);
-    }
-    /**
-     * Convert to decimal string.
-     */
-    toString() {
-        return BI ? this.toBigInt().toString() : goog_varint_1.int64toString(this.lo, this.hi);
-    }
-    /**
-     * Convert to native bigint.
-     */
-    toBigInt() {
-        assertBi(BI);
-        BI.V.setInt32(0, this.lo, true);
-        BI.V.setInt32(4, this.hi, true);
-        return BI.V.getBigUint64(0, true);
-    }
-}
-exports.PbULong = PbULong;
-/**
- * ulong 0 singleton.
- */
-PbULong.ZERO = new PbULong(0, 0);
-/**
- * 64-bit signed integer as two 32-bit values.
- * Converts between `string`, `number` and `bigint` representations.
- */
-class PbLong extends SharedPbLong {
-    /**
-     * Create instance from a `string`, `number` or `bigint`.
-     */
-    static from(value) {
-        if (BI)
-            // noinspection FallThroughInSwitchStatementJS
-            switch (typeof value) {
-                case "string":
-                    if (value == "0")
-                        return this.ZERO;
-                    if (value == "")
-                        throw new Error('string is no integer');
-                    value = BI.C(value);
-                case "number":
-                    if (value === 0)
-                        return this.ZERO;
-                    value = BI.C(value);
-                case "bigint":
-                    if (!value)
-                        return this.ZERO;
-                    if (value < BI.MIN)
-                        throw new Error('signed long too small');
-                    if (value > BI.MAX)
-                        throw new Error('signed long too large');
-                    BI.V.setBigInt64(0, value, true);
-                    return new PbLong(BI.V.getInt32(0, true), BI.V.getInt32(4, true));
-            }
-        else
-            switch (typeof value) {
-                case "string":
-                    if (value == "0")
-                        return this.ZERO;
-                    value = value.trim();
-                    if (!RE_DECIMAL_STR.test(value))
-                        throw new Error('string is no integer');
-                    let [minus, lo, hi] = goog_varint_1.int64fromString(value);
-                    if (minus) {
-                        if (hi > HALF_2_PWR_32 || (hi == HALF_2_PWR_32 && lo != 0))
-                            throw new Error('signed long too small');
-                    }
-                    else if (hi >= HALF_2_PWR_32)
-                        throw new Error('signed long too large');
-                    let pbl = new PbLong(lo, hi);
-                    return minus ? pbl.negate() : pbl;
-                case "number":
-                    if (value == 0)
-                        return this.ZERO;
-                    if (!Number.isSafeInteger(value))
-                        throw new Error('number is no integer');
-                    return value > 0
-                        ? new PbLong(value, value / TWO_PWR_32_DBL)
-                        : new PbLong(-value, -value / TWO_PWR_32_DBL).negate();
-            }
-        throw new Error('unknown value ' + typeof value);
-    }
-    /**
-     * Do we have a minus sign?
-     */
-    isNegative() {
-        return (this.hi & HALF_2_PWR_32) !== 0;
-    }
-    /**
-     * Negate two's complement.
-     * Invert all the bits and add one to the result.
-     */
-    negate() {
-        let hi = ~this.hi, lo = this.lo;
-        if (lo)
-            lo = ~lo + 1;
-        else
-            hi += 1;
-        return new PbLong(lo, hi);
-    }
-    /**
-     * Convert to decimal string.
-     */
-    toString() {
-        if (BI)
-            return this.toBigInt().toString();
-        if (this.isNegative()) {
-            let n = this.negate();
-            return '-' + goog_varint_1.int64toString(n.lo, n.hi);
-        }
-        return goog_varint_1.int64toString(this.lo, this.hi);
-    }
-    /**
-     * Convert to native bigint.
-     */
-    toBigInt() {
-        assertBi(BI);
-        BI.V.setInt32(0, this.lo, true);
-        BI.V.setInt32(4, this.hi, true);
-        return BI.V.getBigInt64(0, true);
-    }
-}
-exports.PbLong = PbLong;
-/**
- * long 0 singleton.
- */
-PbLong.ZERO = new PbLong(0, 0);
-
-
-/***/ }),
-
-/***/ 117:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=service.js.map
-
-/***/ }),
-
-/***/ 118:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("buffer");
-
-/***/ }),
-
-/***/ 119:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Path = void 0;
-const path = __importStar(__nccwpck_require__(242));
-const pathHelper = __importStar(__nccwpck_require__(216));
-const assert_1 = __importDefault(__nccwpck_require__(501));
-const IS_WINDOWS = process.platform === 'win32';
-/**
- * Helper class for parsing paths into segments
- */
-class Path {
-    /**
-     * Constructs a Path
-     * @param itemPath Path or array of segments
-     */
-    constructor(itemPath) {
-        this.segments = [];
-        // String
-        if (typeof itemPath === 'string') {
-            assert_1.default(itemPath, `Parameter 'itemPath' must not be empty`);
-            // Normalize slashes and trim unnecessary trailing slash
-            itemPath = pathHelper.safeTrimTrailingSeparator(itemPath);
-            // Not rooted
-            if (!pathHelper.hasRoot(itemPath)) {
-                this.segments = itemPath.split(path.sep);
-            }
-            // Rooted
-            else {
-                // Add all segments, while not at the root
-                let remaining = itemPath;
-                let dir = pathHelper.dirname(remaining);
-                while (dir !== remaining) {
-                    // Add the segment
-                    const basename = path.basename(remaining);
-                    this.segments.unshift(basename);
-                    // Truncate the last segment
-                    remaining = dir;
-                    dir = pathHelper.dirname(remaining);
-                }
-                // Remainder is the root
-                this.segments.unshift(remaining);
-            }
-        }
-        // Array
-        else {
-            // Must not be empty
-            assert_1.default(itemPath.length > 0, `Parameter 'itemPath' must not be an empty array`);
-            // Each segment
-            for (let i = 0; i < itemPath.length; i++) {
-                let segment = itemPath[i];
-                // Must not be empty
-                assert_1.default(segment, `Parameter 'itemPath' must not contain any empty segments`);
-                // Normalize slashes
-                segment = pathHelper.normalizeSeparators(itemPath[i]);
-                // Root segment
-                if (i === 0 && pathHelper.hasRoot(segment)) {
-                    segment = pathHelper.safeTrimTrailingSeparator(segment);
-                    assert_1.default(segment === pathHelper.dirname(segment), `Parameter 'itemPath' root segment contains information for multiple segments`);
-                    this.segments.push(segment);
-                }
-                // All other segments
-                else {
-                    // Must not contain slash
-                    assert_1.default(!segment.includes(path.sep), `Parameter 'itemPath' contains unexpected path separators`);
-                    this.segments.push(segment);
-                }
-            }
-        }
-    }
-    /**
-     * Converts the path to it's string representation
-     */
-    toString() {
-        // First segment
-        let result = this.segments[0];
-        // All others
-        let skipSlash = result.endsWith(path.sep) || (IS_WINDOWS && /^[A-Z]:$/i.test(result));
-        for (let i = 1; i < this.segments.length; i++) {
-            if (skipSlash) {
-                skipSlash = false;
-            }
-            else {
-                result += path.sep;
-            }
-            result += this.segments[i];
-        }
-        return result;
-    }
-}
-exports.Path = Path;
-//# sourceMappingURL=internal-path.js.map
-
-/***/ }),
-
-/***/ 120:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var sanitizer_exports = {};
-__export(sanitizer_exports, {
-  Sanitizer: () => Sanitizer
-});
-module.exports = __toCommonJS(sanitizer_exports);
-var import_object = __nccwpck_require__(144);
-const RedactedString = "REDACTED";
-const defaultAllowedHeaderNames = [
-  "x-ms-client-request-id",
-  "x-ms-return-client-request-id",
-  "x-ms-useragent",
-  "x-ms-correlation-request-id",
-  "x-ms-request-id",
-  "client-request-id",
-  "ms-cv",
-  "return-client-request-id",
-  "traceparent",
-  "Access-Control-Allow-Credentials",
-  "Access-Control-Allow-Headers",
-  "Access-Control-Allow-Methods",
-  "Access-Control-Allow-Origin",
-  "Access-Control-Expose-Headers",
-  "Access-Control-Max-Age",
-  "Access-Control-Request-Headers",
-  "Access-Control-Request-Method",
-  "Origin",
-  "Accept",
-  "Accept-Encoding",
-  "Cache-Control",
-  "Connection",
-  "Content-Length",
-  "Content-Type",
-  "Date",
-  "ETag",
-  "Expires",
-  "If-Match",
-  "If-Modified-Since",
-  "If-None-Match",
-  "If-Unmodified-Since",
-  "Last-Modified",
-  "Pragma",
-  "Request-Id",
-  "Retry-After",
-  "Server",
-  "Transfer-Encoding",
-  "User-Agent",
-  "WWW-Authenticate"
-];
-const defaultAllowedQueryParameters = ["api-version"];
-class Sanitizer {
-  allowedHeaderNames;
-  allowedQueryParameters;
-  constructor({
-    additionalAllowedHeaderNames: allowedHeaderNames = [],
-    additionalAllowedQueryParameters: allowedQueryParameters = []
-  } = {}) {
-    allowedHeaderNames = defaultAllowedHeaderNames.concat(allowedHeaderNames);
-    allowedQueryParameters = defaultAllowedQueryParameters.concat(allowedQueryParameters);
-    this.allowedHeaderNames = new Set(allowedHeaderNames.map((n) => n.toLowerCase()));
-    this.allowedQueryParameters = new Set(allowedQueryParameters.map((p) => p.toLowerCase()));
-  }
-  /**
-   * Sanitizes an object for logging.
-   * @param obj - The object to sanitize
-   * @returns - The sanitized object as a string
-   */
-  sanitize(obj) {
-    const seen = /* @__PURE__ */ new Set();
-    return JSON.stringify(
-      obj,
-      (key, value) => {
-        if (value instanceof Error) {
-          return {
-            ...value,
-            name: value.name,
-            message: value.message
-          };
-        }
-        if (key === "headers" && (0, import_object.isObject)(value)) {
-          return this.sanitizeHeaders(value);
-        } else if (key === "url" && typeof value === "string") {
-          return this.sanitizeUrl(value);
-        } else if (key === "query" && (0, import_object.isObject)(value)) {
-          return this.sanitizeQuery(value);
-        } else if (key === "body") {
-          return void 0;
-        } else if (key === "response") {
-          return void 0;
-        } else if (key === "operationSpec") {
-          return void 0;
-        } else if (Array.isArray(value) || (0, import_object.isObject)(value)) {
-          if (seen.has(value)) {
-            return "[Circular]";
-          }
-          seen.add(value);
-        }
-        return value;
-      },
-      2
-    );
-  }
-  /**
-   * Sanitizes a URL for logging.
-   * @param value - The URL to sanitize
-   * @returns - The sanitized URL as a string
-   */
-  sanitizeUrl(value) {
-    if (typeof value !== "string" || value === null || value === "") {
-      return value;
-    }
-    const url = new URL(value);
-    if (!url.search) {
-      return value;
-    }
-    for (const [key] of url.searchParams) {
-      if (!this.allowedQueryParameters.has(key.toLowerCase())) {
-        url.searchParams.set(key, RedactedString);
-      }
-    }
-    return url.toString();
-  }
-  sanitizeHeaders(obj) {
-    const sanitized = {};
-    for (const key of Object.keys(obj)) {
-      if (this.allowedHeaderNames.has(key.toLowerCase())) {
-        sanitized[key] = obj[key];
-      } else {
-        sanitized[key] = RedactedString;
-      }
-    }
-    return sanitized;
-  }
-  sanitizeQuery(value) {
-    if (typeof value !== "object" || value === null) {
-      return value;
-    }
-    const sanitized = {};
-    for (const k of Object.keys(value)) {
-      if (this.allowedQueryParameters.has(k.toLowerCase())) {
-        sanitized[k] = value[k];
-      } else {
-        sanitized[k] = RedactedString;
-      }
-    }
-    return sanitized;
-  }
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=sanitizer.js.map
-
-
-/***/ }),
-
-/***/ 121:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blob.js.map
-
-/***/ }),
-
-/***/ 122:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("util");
-
-/***/ }),
-
-/***/ 123:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-module.exports = minimatch
-minimatch.Minimatch = Minimatch
-
-var path = (function () { try { return __nccwpck_require__(242) } catch (e) {}}()) || {
-  sep: '/'
-}
-minimatch.sep = path.sep
-
-var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
-var expand = __nccwpck_require__(464)
-
-var plTypes = {
-  '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},
-  '?': { open: '(?:', close: ')?' },
-  '+': { open: '(?:', close: ')+' },
-  '*': { open: '(?:', close: ')*' },
-  '@': { open: '(?:', close: ')' }
-}
-
-// any single thing other than /
-// don't need to escape / when using new RegExp()
-var qmark = '[^/]'
-
-// * => any number of characters
-var star = qmark + '*?'
-
-// ** when dots are allowed.  Anything goes, except .. and .
-// not (^ or / followed by one or two dots followed by $ or /),
-// followed by anything, any number of times.
-var twoStarDot = '(?:(?!(?:\\\/|^)(?:\\.{1,2})($|\\\/)).)*?'
-
-// not a ^ or / followed by a dot,
-// followed by anything, any number of times.
-var twoStarNoDot = '(?:(?!(?:\\\/|^)\\.).)*?'
-
-// characters that need to be escaped in RegExp.
-var reSpecials = charSet('().*{}+?[]^$\\!')
-
-// "abc" -> { a:true, b:true, c:true }
-function charSet (s) {
-  return s.split('').reduce(function (set, c) {
-    set[c] = true
-    return set
-  }, {})
-}
-
-// normalizes slashes.
-var slashSplit = /\/+/
-
-minimatch.filter = filter
-function filter (pattern, options) {
-  options = options || {}
-  return function (p, i, list) {
-    return minimatch(p, pattern, options)
-  }
-}
-
-function ext (a, b) {
-  b = b || {}
-  var t = {}
-  Object.keys(a).forEach(function (k) {
-    t[k] = a[k]
-  })
-  Object.keys(b).forEach(function (k) {
-    t[k] = b[k]
-  })
-  return t
-}
-
-minimatch.defaults = function (def) {
-  if (!def || typeof def !== 'object' || !Object.keys(def).length) {
-    return minimatch
-  }
-
-  var orig = minimatch
-
-  var m = function minimatch (p, pattern, options) {
-    return orig(p, pattern, ext(def, options))
-  }
-
-  m.Minimatch = function Minimatch (pattern, options) {
-    return new orig.Minimatch(pattern, ext(def, options))
-  }
-  m.Minimatch.defaults = function defaults (options) {
-    return orig.defaults(ext(def, options)).Minimatch
-  }
-
-  m.filter = function filter (pattern, options) {
-    return orig.filter(pattern, ext(def, options))
-  }
-
-  m.defaults = function defaults (options) {
-    return orig.defaults(ext(def, options))
-  }
-
-  m.makeRe = function makeRe (pattern, options) {
-    return orig.makeRe(pattern, ext(def, options))
-  }
-
-  m.braceExpand = function braceExpand (pattern, options) {
-    return orig.braceExpand(pattern, ext(def, options))
-  }
-
-  m.match = function (list, pattern, options) {
-    return orig.match(list, pattern, ext(def, options))
-  }
-
-  return m
-}
-
-Minimatch.defaults = function (def) {
-  return minimatch.defaults(def).Minimatch
-}
-
-function minimatch (p, pattern, options) {
-  assertValidPattern(pattern)
-
-  if (!options) options = {}
-
-  // shortcut: comments match nothing.
-  if (!options.nocomment && pattern.charAt(0) === '#') {
-    return false
-  }
-
-  return new Minimatch(pattern, options).match(p)
-}
-
-function Minimatch (pattern, options) {
-  if (!(this instanceof Minimatch)) {
-    return new Minimatch(pattern, options)
-  }
-
-  assertValidPattern(pattern)
-
-  if (!options) options = {}
-
-  pattern = pattern.trim()
-
-  // windows support: need to use /, not \
-  if (!options.allowWindowsEscape && path.sep !== '/') {
-    pattern = pattern.split(path.sep).join('/')
-  }
-
-  this.options = options
-  this.maxGlobstarRecursion = options.maxGlobstarRecursion !== undefined
-    ? options.maxGlobstarRecursion : 200
-  this.set = []
-  this.pattern = pattern
-  this.regexp = null
-  this.negate = false
-  this.comment = false
-  this.empty = false
-  this.partial = !!options.partial
-
-  // make the set of regexps etc.
-  this.make()
-}
-
-Minimatch.prototype.debug = function () {}
-
-Minimatch.prototype.make = make
-function make () {
-  var pattern = this.pattern
-  var options = this.options
-
-  // empty patterns and comments match nothing.
-  if (!options.nocomment && pattern.charAt(0) === '#') {
-    this.comment = true
-    return
-  }
-  if (!pattern) {
-    this.empty = true
-    return
-  }
-
-  // step 1: figure out negation, etc.
-  this.parseNegate()
-
-  // step 2: expand braces
-  var set = this.globSet = this.braceExpand()
-
-  if (options.debug) this.debug = function debug() { console.error.apply(console, arguments) }
-
-  this.debug(this.pattern, set)
-
-  // step 3: now we have a set, so turn each one into a series of path-portion
-  // matching patterns.
-  // These will be regexps, except in the case of "**", which is
-  // set to the GLOBSTAR object for globstar behavior,
-  // and will not contain any / characters
-  set = this.globParts = set.map(function (s) {
-    return s.split(slashSplit)
-  })
-
-  this.debug(this.pattern, set)
-
-  // glob --> regexps
-  set = set.map(function (s, si, set) {
-    return s.map(this.parse, this)
-  }, this)
-
-  this.debug(this.pattern, set)
-
-  // filter out everything that didn't compile properly.
-  set = set.filter(function (s) {
-    return s.indexOf(false) === -1
-  })
-
-  this.debug(this.pattern, set)
-
-  this.set = set
-}
-
-Minimatch.prototype.parseNegate = parseNegate
-function parseNegate () {
-  var pattern = this.pattern
-  var negate = false
-  var options = this.options
-  var negateOffset = 0
-
-  if (options.nonegate) return
-
-  for (var i = 0, l = pattern.length
-    ; i < l && pattern.charAt(i) === '!'
-    ; i++) {
-    negate = !negate
-    negateOffset++
-  }
-
-  if (negateOffset) this.pattern = pattern.substr(negateOffset)
-  this.negate = negate
-}
-
-// Brace expansion:
-// a{b,c}d -> abd acd
-// a{b,}c -> abc ac
-// a{0..3}d -> a0d a1d a2d a3d
-// a{b,c{d,e}f}g -> abg acdfg acefg
-// a{b,c}d{e,f}g -> abdeg acdeg abdeg abdfg
-//
-// Invalid sets are not expanded.
-// a{2..}b -> a{2..}b
-// a{b}c -> a{b}c
-minimatch.braceExpand = function (pattern, options) {
-  return braceExpand(pattern, options)
-}
-
-Minimatch.prototype.braceExpand = braceExpand
-
-function braceExpand (pattern, options) {
-  if (!options) {
-    if (this instanceof Minimatch) {
-      options = this.options
-    } else {
-      options = {}
-    }
-  }
-
-  pattern = typeof pattern === 'undefined'
-    ? this.pattern : pattern
-
-  assertValidPattern(pattern)
-
-  // Thanks to Yeting Li <https://github.com/yetingli> for
-  // improving this regexp to avoid a ReDOS vulnerability.
-  if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
-    // shortcut. no need to expand.
-    return [pattern]
-  }
-
-  return expand(pattern)
-}
-
-var MAX_PATTERN_LENGTH = 1024 * 64
-var assertValidPattern = function (pattern) {
-  if (typeof pattern !== 'string') {
-    throw new TypeError('invalid pattern')
-  }
-
-  if (pattern.length > MAX_PATTERN_LENGTH) {
-    throw new TypeError('pattern is too long')
-  }
-}
-
-// parse a component of the expanded set.
-// At this point, no pattern may contain "/" in it
-// so we're going to return a 2d array, where each entry is the full
-// pattern, split on '/', and then turned into a regular expression.
-// A regexp is made at the end which joins each array with an
-// escaped /, and another full one which joins each regexp with |.
-//
-// Following the lead of Bash 4.1, note that "**" only has special meaning
-// when it is the *only* thing in a path portion.  Otherwise, any series
-// of * is equivalent to a single *.  Globstar behavior is enabled by
-// default, and can be disabled by setting options.noglobstar.
-Minimatch.prototype.parse = parse
-var SUBPARSE = {}
-function parse (pattern, isSub) {
-  assertValidPattern(pattern)
-
-  var options = this.options
-
-  // shortcuts
-  if (pattern === '**') {
-    if (!options.noglobstar)
-      return GLOBSTAR
-    else
-      pattern = '*'
-  }
-  if (pattern === '') return ''
-
-  var re = ''
-  var hasMagic = !!options.nocase
-  var escaping = false
-  // ? => one single character
-  var patternListStack = []
-  var negativeLists = []
-  var stateChar
-  var inClass = false
-  var reClassStart = -1
-  var classStart = -1
-  // . and .. never match anything that doesn't start with .,
-  // even when options.dot is set.
-  var patternStart = pattern.charAt(0) === '.' ? '' // anything
-  // not (start or / followed by . or .. followed by / or end)
-  : options.dot ? '(?!(?:^|\\\/)\\.{1,2}(?:$|\\\/))'
-  : '(?!\\.)'
-  var self = this
-
-  function clearStateChar () {
-    if (stateChar) {
-      // we had some state-tracking character
-      // that wasn't consumed by this pass.
-      switch (stateChar) {
-        case '*':
-          re += star
-          hasMagic = true
-        break
-        case '?':
-          re += qmark
-          hasMagic = true
-        break
-        default:
-          re += '\\' + stateChar
-        break
-      }
-      self.debug('clearStateChar %j %j', stateChar, re)
-      stateChar = false
-    }
-  }
-
-  for (var i = 0, len = pattern.length, c
-    ; (i < len) && (c = pattern.charAt(i))
-    ; i++) {
-    this.debug('%s\t%s %s %j', pattern, i, re, c)
-
-    // skip over any that are escaped.
-    if (escaping && reSpecials[c]) {
-      re += '\\' + c
-      escaping = false
-      continue
-    }
-
-    switch (c) {
-      /* istanbul ignore next */
-      case '/': {
-        // completely not allowed, even escaped.
-        // Should already be path-split by now.
-        return false
-      }
-
-      case '\\':
-        clearStateChar()
-        escaping = true
-      continue
-
-      // the various stateChar values
-      // for the "extglob" stuff.
-      case '?':
-      case '*':
-      case '+':
-      case '@':
-      case '!':
-        this.debug('%s\t%s %s %j <-- stateChar', pattern, i, re, c)
-
-        // all of those are literals inside a class, except that
-        // the glob [!a] means [^a] in regexp
-        if (inClass) {
-          this.debug('  in class')
-          if (c === '!' && i === classStart + 1) c = '^'
-          re += c
-          continue
-        }
-
-        // coalesce consecutive non-globstar * characters
-        if (c === '*' && stateChar === '*') continue
-
-        // if we already have a stateChar, then it means
-        // that there was something like ** or +? in there.
-        // Handle the stateChar, then proceed with this one.
-        self.debug('call clearStateChar %j', stateChar)
-        clearStateChar()
-        stateChar = c
-        // if extglob is disabled, then +(asdf|foo) isn't a thing.
-        // just clear the statechar *now*, rather than even diving into
-        // the patternList stuff.
-        if (options.noext) clearStateChar()
-      continue
-
-      case '(':
-        if (inClass) {
-          re += '('
-          continue
-        }
-
-        if (!stateChar) {
-          re += '\\('
-          continue
-        }
-
-        patternListStack.push({
-          type: stateChar,
-          start: i - 1,
-          reStart: re.length,
-          open: plTypes[stateChar].open,
-          close: plTypes[stateChar].close
-        })
-        // negation is (?:(?!js)[^/]*)
-        re += stateChar === '!' ? '(?:(?!(?:' : '(?:'
-        this.debug('plType %j %j', stateChar, re)
-        stateChar = false
-      continue
-
-      case ')':
-        if (inClass || !patternListStack.length) {
-          re += '\\)'
-          continue
-        }
-
-        clearStateChar()
-        hasMagic = true
-        var pl = patternListStack.pop()
-        // negation is (?:(?!js)[^/]*)
-        // The others are (?:<pattern>)<type>
-        re += pl.close
-        if (pl.type === '!') {
-          negativeLists.push(pl)
-        }
-        pl.reEnd = re.length
-      continue
-
-      case '|':
-        if (inClass || !patternListStack.length || escaping) {
-          re += '\\|'
-          escaping = false
-          continue
-        }
-
-        clearStateChar()
-        re += '|'
-      continue
-
-      // these are mostly the same in regexp and glob
-      case '[':
-        // swallow any state-tracking char before the [
-        clearStateChar()
-
-        if (inClass) {
-          re += '\\' + c
-          continue
-        }
-
-        inClass = true
-        classStart = i
-        reClassStart = re.length
-        re += c
-      continue
-
-      case ']':
-        //  a right bracket shall lose its special
-        //  meaning and represent itself in
-        //  a bracket expression if it occurs
-        //  first in the list.  -- POSIX.2 2.8.3.2
-        if (i === classStart + 1 || !inClass) {
-          re += '\\' + c
-          escaping = false
-          continue
-        }
-
-        // handle the case where we left a class open.
-        // "[z-a]" is valid, equivalent to "\[z-a\]"
-        // split where the last [ was, make sure we don't have
-        // an invalid re. if so, re-walk the contents of the
-        // would-be class to re-translate any characters that
-        // were passed through as-is
-        // TODO: It would probably be faster to determine this
-        // without a try/catch and a new RegExp, but it's tricky
-        // to do safely.  For now, this is safe and works.
-        var cs = pattern.substring(classStart + 1, i)
-        try {
-          RegExp('[' + cs + ']')
-        } catch (er) {
-          // not a valid class!
-          var sp = this.parse(cs, SUBPARSE)
-          re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]'
-          hasMagic = hasMagic || sp[1]
-          inClass = false
-          continue
-        }
-
-        // finish up the class.
-        hasMagic = true
-        inClass = false
-        re += c
-      continue
-
-      default:
-        // swallow any state char that wasn't consumed
-        clearStateChar()
-
-        if (escaping) {
-          // no need
-          escaping = false
-        } else if (reSpecials[c]
-          && !(c === '^' && inClass)) {
-          re += '\\'
-        }
-
-        re += c
-
-    } // switch
-  } // for
-
-  // handle the case where we left a class open.
-  // "[abc" is valid, equivalent to "\[abc"
-  if (inClass) {
-    // split where the last [ was, and escape it
-    // this is a huge pita.  We now have to re-walk
-    // the contents of the would-be class to re-translate
-    // any characters that were passed through as-is
-    cs = pattern.substr(classStart + 1)
-    sp = this.parse(cs, SUBPARSE)
-    re = re.substr(0, reClassStart) + '\\[' + sp[0]
-    hasMagic = hasMagic || sp[1]
-  }
-
-  // handle the case where we had a +( thing at the *end*
-  // of the pattern.
-  // each pattern list stack adds 3 chars, and we need to go through
-  // and escape any | chars that were passed through as-is for the regexp.
-  // Go through and escape them, taking care not to double-escape any
-  // | chars that were already escaped.
-  for (pl = patternListStack.pop(); pl; pl = patternListStack.pop()) {
-    var tail = re.slice(pl.reStart + pl.open.length)
-    this.debug('setting tail', re, pl)
-    // maybe some even number of \, then maybe 1 \, followed by a |
-    tail = tail.replace(/((?:\\{2}){0,64})(\\?)\|/g, function (_, $1, $2) {
-      if (!$2) {
-        // the | isn't already escaped, so escape it.
-        $2 = '\\'
-      }
-
-      // need to escape all those slashes *again*, without escaping the
-      // one that we need for escaping the | character.  As it works out,
-      // escaping an even number of slashes can be done by simply repeating
-      // it exactly after itself.  That's why this trick works.
-      //
-      // I am sorry that you have to see this.
-      return $1 + $1 + $2 + '|'
-    })
-
-    this.debug('tail=%j\n   %s', tail, tail, pl, re)
-    var t = pl.type === '*' ? star
-      : pl.type === '?' ? qmark
-      : '\\' + pl.type
-
-    hasMagic = true
-    re = re.slice(0, pl.reStart) + t + '\\(' + tail
-  }
-
-  // handle trailing things that only matter at the very end.
-  clearStateChar()
-  if (escaping) {
-    // trailing \\
-    re += '\\\\'
-  }
-
-  // only need to apply the nodot start if the re starts with
-  // something that could conceivably capture a dot
-  var addPatternStart = false
-  switch (re.charAt(0)) {
-    case '[': case '.': case '(': addPatternStart = true
-  }
-
-  // Hack to work around lack of negative lookbehind in JS
-  // A pattern like: *.!(x).!(y|z) needs to ensure that a name
-  // like 'a.xyz.yz' doesn't match.  So, the first negative
-  // lookahead, has to look ALL the way ahead, to the end of
-  // the pattern.
-  for (var n = negativeLists.length - 1; n > -1; n--) {
-    var nl = negativeLists[n]
-
-    var nlBefore = re.slice(0, nl.reStart)
-    var nlFirst = re.slice(nl.reStart, nl.reEnd - 8)
-    var nlLast = re.slice(nl.reEnd - 8, nl.reEnd)
-    var nlAfter = re.slice(nl.reEnd)
-
-    nlLast += nlAfter
-
-    // Handle nested stuff like *(*.js|!(*.json)), where open parens
-    // mean that we should *not* include the ) in the bit that is considered
-    // "after" the negated section.
-    var openParensBefore = nlBefore.split('(').length - 1
-    var cleanAfter = nlAfter
-    for (i = 0; i < openParensBefore; i++) {
-      cleanAfter = cleanAfter.replace(/\)[+*?]?/, '')
-    }
-    nlAfter = cleanAfter
-
-    var dollar = ''
-    if (nlAfter === '' && isSub !== SUBPARSE) {
-      dollar = '$'
-    }
-    var newRe = nlBefore + nlFirst + nlAfter + dollar + nlLast
-    re = newRe
-  }
-
-  // if the re is not "" at this point, then we need to make sure
-  // it doesn't match against an empty path part.
-  // Otherwise a/* will match a/, which it should not.
-  if (re !== '' && hasMagic) {
-    re = '(?=.)' + re
-  }
-
-  if (addPatternStart) {
-    re = patternStart + re
-  }
-
-  // parsing just a piece of a larger pattern.
-  if (isSub === SUBPARSE) {
-    return [re, hasMagic]
-  }
-
-  // skip the regexp for non-magical patterns
-  // unescape anything in it, though, so that it'll be
-  // an exact match against a file etc.
-  if (!hasMagic) {
-    return globUnescape(pattern)
-  }
-
-  var flags = options.nocase ? 'i' : ''
-  try {
-    var regExp = new RegExp('^' + re + '$', flags)
-  } catch (er) /* istanbul ignore next - should be impossible */ {
-    // If it was an invalid regular expression, then it can't match
-    // anything.  This trick looks for a character after the end of
-    // the string, which is of course impossible, except in multi-line
-    // mode, but it's not a /m regex.
-    return new RegExp('$.')
-  }
-
-  regExp._glob = pattern
-  regExp._src = re
-
-  return regExp
-}
-
-minimatch.makeRe = function (pattern, options) {
-  return new Minimatch(pattern, options || {}).makeRe()
-}
-
-Minimatch.prototype.makeRe = makeRe
-function makeRe () {
-  if (this.regexp || this.regexp === false) return this.regexp
-
-  // at this point, this.set is a 2d array of partial
-  // pattern strings, or "**".
-  //
-  // It's better to use .match().  This function shouldn't
-  // be used, really, but it's pretty convenient sometimes,
-  // when you just want to work with a regex.
-  var set = this.set
-
-  if (!set.length) {
-    this.regexp = false
-    return this.regexp
-  }
-  var options = this.options
-
-  var twoStar = options.noglobstar ? star
-    : options.dot ? twoStarDot
-    : twoStarNoDot
-  var flags = options.nocase ? 'i' : ''
-
-  var re = set.map(function (pattern) {
-    return pattern.map(function (p) {
-      return (p === GLOBSTAR) ? twoStar
-      : (typeof p === 'string') ? regExpEscape(p)
-      : p._src
-    }).join('\\\/')
-  }).join('|')
-
-  // must match entire pattern
-  // ending in a * or ** will make it less strict.
-  re = '^(?:' + re + ')$'
-
-  // can match anything, as long as it's not this.
-  if (this.negate) re = '^(?!' + re + ').*$'
-
-  try {
-    this.regexp = new RegExp(re, flags)
-  } catch (ex) /* istanbul ignore next - should be impossible */ {
-    this.regexp = false
-  }
-  return this.regexp
-}
-
-minimatch.match = function (list, pattern, options) {
-  options = options || {}
-  var mm = new Minimatch(pattern, options)
-  list = list.filter(function (f) {
-    return mm.match(f)
-  })
-  if (mm.options.nonull && !list.length) {
-    list.push(pattern)
-  }
-  return list
-}
-
-Minimatch.prototype.match = function match (f, partial) {
-  if (typeof partial === 'undefined') partial = this.partial
-  this.debug('match', f, this.pattern)
-  // short-circuit in the case of busted things.
-  // comments, etc.
-  if (this.comment) return false
-  if (this.empty) return f === ''
-
-  if (f === '/' && partial) return true
-
-  var options = this.options
-
-  // windows: need to use /, not \
-  if (path.sep !== '/') {
-    f = f.split(path.sep).join('/')
-  }
-
-  // treat the test path as a set of pathparts.
-  f = f.split(slashSplit)
-  this.debug(this.pattern, 'split', f)
-
-  // just ONE of the pattern sets in this.set needs to match
-  // in order for it to be valid.  If negating, then just one
-  // match means that we have failed.
-  // Either way, return on the first hit.
-
-  var set = this.set
-  this.debug(this.pattern, 'set', set)
-
-  // Find the basename of the path by looking for the last non-empty segment
-  var filename
-  var i
-  for (i = f.length - 1; i >= 0; i--) {
-    filename = f[i]
-    if (filename) break
-  }
-
-  for (i = 0; i < set.length; i++) {
-    var pattern = set[i]
-    var file = f
-    if (options.matchBase && pattern.length === 1) {
-      file = [filename]
-    }
-    var hit = this.matchOne(file, pattern, partial)
-    if (hit) {
-      if (options.flipNegate) return true
-      return !this.negate
-    }
-  }
-
-  // didn't get any hits.  this is success if it's a negative
-  // pattern, failure otherwise.
-  if (options.flipNegate) return false
-  return this.negate
-}
-
-// set partial to true to test if, for example,
-// "/a/b" matches the start of "/*/b/*/d"
-// Partial means, if you run out of file before you run
-// out of pattern, then that's fine, as long as all
-// the parts match.
-Minimatch.prototype.matchOne = function (file, pattern, partial) {
-  if (pattern.indexOf(GLOBSTAR) !== -1) {
-    return this._matchGlobstar(file, pattern, partial, 0, 0)
-  }
-  return this._matchOne(file, pattern, partial, 0, 0)
-}
-
-Minimatch.prototype._matchGlobstar = function (file, pattern, partial, fileIndex, patternIndex) {
-  var i
-
-  // find first globstar from patternIndex
-  var firstgs = -1
-  for (i = patternIndex; i < pattern.length; i++) {
-    if (pattern[i] === GLOBSTAR) { firstgs = i; break }
-  }
-
-  // find last globstar
-  var lastgs = -1
-  for (i = pattern.length - 1; i >= 0; i--) {
-    if (pattern[i] === GLOBSTAR) { lastgs = i; break }
-  }
-
-  var head = pattern.slice(patternIndex, firstgs)
-  var body = partial ? pattern.slice(firstgs + 1) : pattern.slice(firstgs + 1, lastgs)
-  var tail = partial ? [] : pattern.slice(lastgs + 1)
-
-  // check the head
-  if (head.length) {
-    var fileHead = file.slice(fileIndex, fileIndex + head.length)
-    if (!this._matchOne(fileHead, head, partial, 0, 0)) {
-      return false
-    }
-    fileIndex += head.length
-  }
-
-  // check the tail
-  var fileTailMatch = 0
-  if (tail.length) {
-    if (tail.length + fileIndex > file.length) return false
-
-    var tailStart = file.length - tail.length
-    if (this._matchOne(file, tail, partial, tailStart, 0)) {
-      fileTailMatch = tail.length
-    } else {
-      // affordance for stuff like a/**/* matching a/b/
-      if (file[file.length - 1] !== '' ||
-          fileIndex + tail.length === file.length) {
-        return false
-      }
-      tailStart--
-      if (!this._matchOne(file, tail, partial, tailStart, 0)) {
-        return false
-      }
-      fileTailMatch = tail.length + 1
-    }
-  }
-
-  // if body is empty (single ** between head and tail)
-  if (!body.length) {
-    var sawSome = !!fileTailMatch
-    for (i = fileIndex; i < file.length - fileTailMatch; i++) {
-      var f = String(file[i])
-      sawSome = true
-      if (f === '.' || f === '..' ||
-          (!this.options.dot && f.charAt(0) === '.')) {
-        return false
-      }
-    }
-    return partial || sawSome
-  }
-
-  // split body into segments at each GLOBSTAR
-  var bodySegments = [[[], 0]]
-  var currentBody = bodySegments[0]
-  var nonGsParts = 0
-  var nonGsPartsSums = [0]
-  for (var bi = 0; bi < body.length; bi++) {
-    var b = body[bi]
-    if (b === GLOBSTAR) {
-      nonGsPartsSums.push(nonGsParts)
-      currentBody = [[], 0]
-      bodySegments.push(currentBody)
-    } else {
-      currentBody[0].push(b)
-      nonGsParts++
-    }
-  }
-
-  var idx = bodySegments.length - 1
-  var fileLength = file.length - fileTailMatch
-  for (var si = 0; si < bodySegments.length; si++) {
-    bodySegments[si][1] = fileLength -
-      (nonGsPartsSums[idx--] + bodySegments[si][0].length)
-  }
-
-  return !!this._matchGlobStarBodySections(
-    file, bodySegments, fileIndex, 0, partial, 0, !!fileTailMatch
-  )
-}
-
-// return false for "nope, not matching"
-// return null for "not matching, cannot keep trying"
-Minimatch.prototype._matchGlobStarBodySections = function (
-  file, bodySegments, fileIndex, bodyIndex, partial, globStarDepth, sawTail
-) {
-  var bs = bodySegments[bodyIndex]
-  if (!bs) {
-    // just make sure there are no bad dots
-    for (var i = fileIndex; i < file.length; i++) {
-      sawTail = true
-      var f = file[i]
-      if (f === '.' || f === '..' ||
-          (!this.options.dot && f.charAt(0) === '.')) {
-        return false
-      }
-    }
-    return sawTail
-  }
-
-  var body = bs[0]
-  var after = bs[1]
-  while (fileIndex <= after) {
-    var m = this._matchOne(
-      file.slice(0, fileIndex + body.length),
-      body,
-      partial,
-      fileIndex,
-      0
-    )
-    // if limit exceeded, no match. intentional false negative,
-    // acceptable break in correctness for security.
-    if (m && globStarDepth < this.maxGlobstarRecursion) {
-      var sub = this._matchGlobStarBodySections(
-        file, bodySegments,
-        fileIndex + body.length, bodyIndex + 1,
-        partial, globStarDepth + 1, sawTail
-      )
-      if (sub !== false) {
-        return sub
-      }
-    }
-    var f = file[fileIndex]
-    if (f === '.' || f === '..' ||
-        (!this.options.dot && f.charAt(0) === '.')) {
-      return false
-    }
-    fileIndex++
-  }
-  return partial || null
-}
-
-Minimatch.prototype._matchOne = function (file, pattern, partial, fileIndex, patternIndex) {
-  var fi, pi, fl, pl
-  for (
-    fi = fileIndex, pi = patternIndex, fl = file.length, pl = pattern.length
-    ; (fi < fl) && (pi < pl)
-    ; fi++, pi++
-  ) {
-    this.debug('matchOne loop')
-    var p = pattern[pi]
-    var f = file[fi]
-
-    this.debug(pattern, p, f)
-
-    // should be impossible.
-    // some invalid regexp stuff in the set.
-    /* istanbul ignore if */
-    if (p === false || p === GLOBSTAR) return false
-
-    // something other than **
-    // non-magic patterns just have to match exactly
-    // patterns with magic have been turned into regexps.
-    var hit
-    if (typeof p === 'string') {
-      hit = f === p
-      this.debug('string match', p, f, hit)
-    } else {
-      hit = f.match(p)
-      this.debug('pattern match', p, f, hit)
-    }
-
-    if (!hit) return false
-  }
-
-  // now either we fell off the end of the pattern, or we're done.
-  if (fi === fl && pi === pl) {
-    // ran out of pattern and filename at the same time.
-    // an exact hit!
-    return true
-  } else if (fi === fl) {
-    // ran out of file, but still had pattern left.
-    // this is ok if we're doing the match as part of
-    // a glob fs traversal.
-    return partial
-  } else /* istanbul ignore else */ if (pi === pl) {
-    // ran out of pattern, still have file left.
-    // this is only acceptable if we're on the very last
-    // empty segment of a file with a trailing slash.
-    // a/* should match a/b/
-    return (fi === fl - 1) && (file[fi] === '')
-  }
-
-  // should be unreachable.
-  /* istanbul ignore next */
-  throw new Error('wtf?')
-}
-
-// replace stuff like \* with *
-function globUnescape (s) {
-  return s.replace(/\\(.)/g, '$1')
-}
-
-function regExpEscape (s) {
-  return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
-}
-
-
-/***/ }),
-
-/***/ 124:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.argStringToArray = exports.ToolRunner = void 0;
-const os = __importStar(__nccwpck_require__(91));
-const events = __importStar(__nccwpck_require__(447));
-const child = __importStar(__nccwpck_require__(163));
-const path = __importStar(__nccwpck_require__(242));
-const io = __importStar(__nccwpck_require__(287));
-const ioUtil = __importStar(__nccwpck_require__(218));
-const timers_1 = __nccwpck_require__(487);
-/* eslint-disable @typescript-eslint/unbound-method */
-const IS_WINDOWS = process.platform === 'win32';
-/*
- * Class for running command line tools. Handles quoting and arg parsing in a platform agnostic way.
- */
-class ToolRunner extends events.EventEmitter {
-    constructor(toolPath, args, options) {
-        super();
-        if (!toolPath) {
-            throw new Error("Parameter 'toolPath' cannot be null or empty.");
-        }
-        this.toolPath = toolPath;
-        this.args = args || [];
-        this.options = options || {};
-    }
-    _debug(message) {
-        if (this.options.listeners && this.options.listeners.debug) {
-            this.options.listeners.debug(message);
-        }
-    }
-    _getCommandString(options, noPrefix) {
-        const toolPath = this._getSpawnFileName();
-        const args = this._getSpawnArgs(options);
-        let cmd = noPrefix ? '' : '[command]'; // omit prefix when piped to a second tool
-        if (IS_WINDOWS) {
-            // Windows + cmd file
-            if (this._isCmdFile()) {
-                cmd += toolPath;
-                for (const a of args) {
-                    cmd += ` ${a}`;
-                }
-            }
-            // Windows + verbatim
-            else if (options.windowsVerbatimArguments) {
-                cmd += `"${toolPath}"`;
-                for (const a of args) {
-                    cmd += ` ${a}`;
-                }
-            }
-            // Windows (regular)
-            else {
-                cmd += this._windowsQuoteCmdArg(toolPath);
-                for (const a of args) {
-                    cmd += ` ${this._windowsQuoteCmdArg(a)}`;
-                }
-            }
-        }
-        else {
-            // OSX/Linux - this can likely be improved with some form of quoting.
-            // creating processes on Unix is fundamentally different than Windows.
-            // on Unix, execvp() takes an arg array.
-            cmd += toolPath;
-            for (const a of args) {
-                cmd += ` ${a}`;
-            }
-        }
-        return cmd;
-    }
-    _processLineBuffer(data, strBuffer, onLine) {
-        try {
-            let s = strBuffer + data.toString();
-            let n = s.indexOf(os.EOL);
-            while (n > -1) {
-                const line = s.substring(0, n);
-                onLine(line);
-                // the rest of the string ...
-                s = s.substring(n + os.EOL.length);
-                n = s.indexOf(os.EOL);
-            }
-            return s;
-        }
-        catch (err) {
-            // streaming lines to console is best effort.  Don't fail a build.
-            this._debug(`error processing line. Failed with error ${err}`);
-            return '';
-        }
-    }
-    _getSpawnFileName() {
-        if (IS_WINDOWS) {
-            if (this._isCmdFile()) {
-                return process.env['COMSPEC'] || 'cmd.exe';
-            }
-        }
-        return this.toolPath;
-    }
-    _getSpawnArgs(options) {
-        if (IS_WINDOWS) {
-            if (this._isCmdFile()) {
-                let argline = `/D /S /C "${this._windowsQuoteCmdArg(this.toolPath)}`;
-                for (const a of this.args) {
-                    argline += ' ';
-                    argline += options.windowsVerbatimArguments
-                        ? a
-                        : this._windowsQuoteCmdArg(a);
-                }
-                argline += '"';
-                return [argline];
-            }
-        }
-        return this.args;
-    }
-    _endsWith(str, end) {
-        return str.endsWith(end);
-    }
-    _isCmdFile() {
-        const upperToolPath = this.toolPath.toUpperCase();
-        return (this._endsWith(upperToolPath, '.CMD') ||
-            this._endsWith(upperToolPath, '.BAT'));
-    }
-    _windowsQuoteCmdArg(arg) {
-        // for .exe, apply the normal quoting rules that libuv applies
-        if (!this._isCmdFile()) {
-            return this._uvQuoteCmdArg(arg);
-        }
-        // otherwise apply quoting rules specific to the cmd.exe command line parser.
-        // the libuv rules are generic and are not designed specifically for cmd.exe
-        // command line parser.
-        //
-        // for a detailed description of the cmd.exe command line parser, refer to
-        // http://stackoverflow.com/questions/4094699/how-does-the-windows-command-interpreter-cmd-exe-parse-scripts/7970912#7970912
-        // need quotes for empty arg
-        if (!arg) {
-            return '""';
-        }
-        // determine whether the arg needs to be quoted
-        const cmdSpecialChars = [
-            ' ',
-            '\t',
-            '&',
-            '(',
-            ')',
-            '[',
-            ']',
-            '{',
-            '}',
-            '^',
-            '=',
-            ';',
-            '!',
-            "'",
-            '+',
-            ',',
-            '`',
-            '~',
-            '|',
-            '<',
-            '>',
-            '"'
-        ];
-        let needsQuotes = false;
-        for (const char of arg) {
-            if (cmdSpecialChars.some(x => x === char)) {
-                needsQuotes = true;
-                break;
-            }
-        }
-        // short-circuit if quotes not needed
-        if (!needsQuotes) {
-            return arg;
-        }
-        // the following quoting rules are very similar to the rules that by libuv applies.
-        //
-        // 1) wrap the string in quotes
-        //
-        // 2) double-up quotes - i.e. " => ""
-        //
-        //    this is different from the libuv quoting rules. libuv replaces " with \", which unfortunately
-        //    doesn't work well with a cmd.exe command line.
-        //
-        //    note, replacing " with "" also works well if the arg is passed to a downstream .NET console app.
-        //    for example, the command line:
-        //          foo.exe "myarg:""my val"""
-        //    is parsed by a .NET console app into an arg array:
-        //          [ "myarg:\"my val\"" ]
-        //    which is the same end result when applying libuv quoting rules. although the actual
-        //    command line from libuv quoting rules would look like:
-        //          foo.exe "myarg:\"my val\""
-        //
-        // 3) double-up slashes that precede a quote,
-        //    e.g.  hello \world    => "hello \world"
-        //          hello\"world    => "hello\\""world"
-        //          hello\\"world   => "hello\\\\""world"
-        //          hello world\    => "hello world\\"
-        //
-        //    technically this is not required for a cmd.exe command line, or the batch argument parser.
-        //    the reasons for including this as a .cmd quoting rule are:
-        //
-        //    a) this is optimized for the scenario where the argument is passed from the .cmd file to an
-        //       external program. many programs (e.g. .NET console apps) rely on the slash-doubling rule.
-        //
-        //    b) it's what we've been doing previously (by deferring to node default behavior) and we
-        //       haven't heard any complaints about that aspect.
-        //
-        // note, a weakness of the quoting rules chosen here, is that % is not escaped. in fact, % cannot be
-        // escaped when used on the command line directly - even though within a .cmd file % can be escaped
-        // by using %%.
-        //
-        // the saving grace is, on the command line, %var% is left as-is if var is not defined. this contrasts
-        // the line parsing rules within a .cmd file, where if var is not defined it is replaced with nothing.
-        //
-        // one option that was explored was replacing % with ^% - i.e. %var% => ^%var^%. this hack would
-        // often work, since it is unlikely that var^ would exist, and the ^ character is removed when the
-        // variable is used. the problem, however, is that ^ is not removed when %* is used to pass the args
-        // to an external program.
-        //
-        // an unexplored potential solution for the % escaping problem, is to create a wrapper .cmd file.
-        // % can be escaped within a .cmd file.
-        let reverse = '"';
-        let quoteHit = true;
-        for (let i = arg.length; i > 0; i--) {
-            // walk the string in reverse
-            reverse += arg[i - 1];
-            if (quoteHit && arg[i - 1] === '\\') {
-                reverse += '\\'; // double the slash
-            }
-            else if (arg[i - 1] === '"') {
-                quoteHit = true;
-                reverse += '"'; // double the quote
-            }
-            else {
-                quoteHit = false;
-            }
-        }
-        reverse += '"';
-        return reverse
-            .split('')
-            .reverse()
-            .join('');
-    }
-    _uvQuoteCmdArg(arg) {
-        // Tool runner wraps child_process.spawn() and needs to apply the same quoting as
-        // Node in certain cases where the undocumented spawn option windowsVerbatimArguments
-        // is used.
-        //
-        // Since this function is a port of quote_cmd_arg from Node 4.x (technically, lib UV,
-        // see https://github.com/nodejs/node/blob/v4.x/deps/uv/src/win/process.c for details),
-        // pasting copyright notice from Node within this function:
-        //
-        //      Copyright Joyent, Inc. and other Node contributors. All rights reserved.
-        //
-        //      Permission is hereby granted, free of charge, to any person obtaining a copy
-        //      of this software and associated documentation files (the "Software"), to
-        //      deal in the Software without restriction, including without limitation the
-        //      rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-        //      sell copies of the Software, and to permit persons to whom the Software is
-        //      furnished to do so, subject to the following conditions:
-        //
-        //      The above copyright notice and this permission notice shall be included in
-        //      all copies or substantial portions of the Software.
-        //
-        //      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        //      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        //      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        //      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        //      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-        //      FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-        //      IN THE SOFTWARE.
-        if (!arg) {
-            // Need double quotation for empty argument
-            return '""';
-        }
-        if (!arg.includes(' ') && !arg.includes('\t') && !arg.includes('"')) {
-            // No quotation needed
-            return arg;
-        }
-        if (!arg.includes('"') && !arg.includes('\\')) {
-            // No embedded double quotes or backslashes, so I can just wrap
-            // quote marks around the whole thing.
-            return `"${arg}"`;
-        }
-        // Expected input/output:
-        //   input : hello"world
-        //   output: "hello\"world"
-        //   input : hello""world
-        //   output: "hello\"\"world"
-        //   input : hello\world
-        //   output: hello\world
-        //   input : hello\\world
-        //   output: hello\\world
-        //   input : hello\"world
-        //   output: "hello\\\"world"
-        //   input : hello\\"world
-        //   output: "hello\\\\\"world"
-        //   input : hello world\
-        //   output: "hello world\\" - note the comment in libuv actually reads "hello world\"
-        //                             but it appears the comment is wrong, it should be "hello world\\"
-        let reverse = '"';
-        let quoteHit = true;
-        for (let i = arg.length; i > 0; i--) {
-            // walk the string in reverse
-            reverse += arg[i - 1];
-            if (quoteHit && arg[i - 1] === '\\') {
-                reverse += '\\';
-            }
-            else if (arg[i - 1] === '"') {
-                quoteHit = true;
-                reverse += '\\';
-            }
-            else {
-                quoteHit = false;
-            }
-        }
-        reverse += '"';
-        return reverse
-            .split('')
-            .reverse()
-            .join('');
-    }
-    _cloneExecOptions(options) {
-        options = options || {};
-        const result = {
-            cwd: options.cwd || process.cwd(),
-            env: options.env || process.env,
-            silent: options.silent || false,
-            windowsVerbatimArguments: options.windowsVerbatimArguments || false,
-            failOnStdErr: options.failOnStdErr || false,
-            ignoreReturnCode: options.ignoreReturnCode || false,
-            delay: options.delay || 10000
-        };
-        result.outStream = options.outStream || process.stdout;
-        result.errStream = options.errStream || process.stderr;
-        return result;
-    }
-    _getSpawnOptions(options, toolPath) {
-        options = options || {};
-        const result = {};
-        result.cwd = options.cwd;
-        result.env = options.env;
-        result['windowsVerbatimArguments'] =
-            options.windowsVerbatimArguments || this._isCmdFile();
-        if (options.windowsVerbatimArguments) {
-            result.argv0 = `"${toolPath}"`;
-        }
-        return result;
-    }
-    /**
-     * Exec a tool.
-     * Output will be streamed to the live console.
-     * Returns promise with return code
-     *
-     * @param     tool     path to tool to exec
-     * @param     options  optional exec options.  See ExecOptions
-     * @returns   number
-     */
-    exec() {
-        return __awaiter(this, void 0, void 0, function* () {
-            // root the tool path if it is unrooted and contains relative pathing
-            if (!ioUtil.isRooted(this.toolPath) &&
-                (this.toolPath.includes('/') ||
-                    (IS_WINDOWS && this.toolPath.includes('\\')))) {
-                // prefer options.cwd if it is specified, however options.cwd may also need to be rooted
-                this.toolPath = path.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
-            }
-            // if the tool is only a file name, then resolve it from the PATH
-            // otherwise verify it exists (add extension on Windows if necessary)
-            this.toolPath = yield io.which(this.toolPath, true);
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                this._debug(`exec tool: ${this.toolPath}`);
-                this._debug('arguments:');
-                for (const arg of this.args) {
-                    this._debug(`   ${arg}`);
-                }
-                const optionsNonNull = this._cloneExecOptions(this.options);
-                if (!optionsNonNull.silent && optionsNonNull.outStream) {
-                    optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os.EOL);
-                }
-                const state = new ExecState(optionsNonNull, this.toolPath);
-                state.on('debug', (message) => {
-                    this._debug(message);
-                });
-                if (this.options.cwd && !(yield ioUtil.exists(this.options.cwd))) {
-                    return reject(new Error(`The cwd: ${this.options.cwd} does not exist!`));
-                }
-                const fileName = this._getSpawnFileName();
-                const cp = child.spawn(fileName, this._getSpawnArgs(optionsNonNull), this._getSpawnOptions(this.options, fileName));
-                let stdbuffer = '';
-                if (cp.stdout) {
-                    cp.stdout.on('data', (data) => {
-                        if (this.options.listeners && this.options.listeners.stdout) {
-                            this.options.listeners.stdout(data);
-                        }
-                        if (!optionsNonNull.silent && optionsNonNull.outStream) {
-                            optionsNonNull.outStream.write(data);
-                        }
-                        stdbuffer = this._processLineBuffer(data, stdbuffer, (line) => {
-                            if (this.options.listeners && this.options.listeners.stdline) {
-                                this.options.listeners.stdline(line);
-                            }
-                        });
-                    });
-                }
-                let errbuffer = '';
-                if (cp.stderr) {
-                    cp.stderr.on('data', (data) => {
-                        state.processStderr = true;
-                        if (this.options.listeners && this.options.listeners.stderr) {
-                            this.options.listeners.stderr(data);
-                        }
-                        if (!optionsNonNull.silent &&
-                            optionsNonNull.errStream &&
-                            optionsNonNull.outStream) {
-                            const s = optionsNonNull.failOnStdErr
-                                ? optionsNonNull.errStream
-                                : optionsNonNull.outStream;
-                            s.write(data);
-                        }
-                        errbuffer = this._processLineBuffer(data, errbuffer, (line) => {
-                            if (this.options.listeners && this.options.listeners.errline) {
-                                this.options.listeners.errline(line);
-                            }
-                        });
-                    });
-                }
-                cp.on('error', (err) => {
-                    state.processError = err.message;
-                    state.processExited = true;
-                    state.processClosed = true;
-                    state.CheckComplete();
-                });
-                cp.on('exit', (code) => {
-                    state.processExitCode = code;
-                    state.processExited = true;
-                    this._debug(`Exit code ${code} received from tool '${this.toolPath}'`);
-                    state.CheckComplete();
-                });
-                cp.on('close', (code) => {
-                    state.processExitCode = code;
-                    state.processExited = true;
-                    state.processClosed = true;
-                    this._debug(`STDIO streams have closed for tool '${this.toolPath}'`);
-                    state.CheckComplete();
-                });
-                state.on('done', (error, exitCode) => {
-                    if (stdbuffer.length > 0) {
-                        this.emit('stdline', stdbuffer);
-                    }
-                    if (errbuffer.length > 0) {
-                        this.emit('errline', errbuffer);
-                    }
-                    cp.removeAllListeners();
-                    if (error) {
-                        reject(error);
-                    }
-                    else {
-                        resolve(exitCode);
-                    }
-                });
-                if (this.options.input) {
-                    if (!cp.stdin) {
-                        throw new Error('child process missing stdin');
-                    }
-                    cp.stdin.end(this.options.input);
-                }
-            }));
-        });
-    }
-}
-exports.ToolRunner = ToolRunner;
-/**
- * Convert an arg string to an array of args. Handles escaping
- *
- * @param    argString   string of arguments
- * @returns  string[]    array of arguments
- */
-function argStringToArray(argString) {
-    const args = [];
-    let inQuotes = false;
-    let escaped = false;
-    let arg = '';
-    function append(c) {
-        // we only escape double quotes.
-        if (escaped && c !== '"') {
-            arg += '\\';
-        }
-        arg += c;
-        escaped = false;
-    }
-    for (let i = 0; i < argString.length; i++) {
-        const c = argString.charAt(i);
-        if (c === '"') {
-            if (!escaped) {
-                inQuotes = !inQuotes;
-            }
-            else {
-                append(c);
-            }
-            continue;
-        }
-        if (c === '\\' && escaped) {
-            append(c);
-            continue;
-        }
-        if (c === '\\' && inQuotes) {
-            escaped = true;
-            continue;
-        }
-        if (c === ' ' && !inQuotes) {
-            if (arg.length > 0) {
-                args.push(arg);
-                arg = '';
-            }
-            continue;
-        }
-        append(c);
-    }
-    if (arg.length > 0) {
-        args.push(arg.trim());
-    }
-    return args;
-}
-exports.argStringToArray = argStringToArray;
-class ExecState extends events.EventEmitter {
-    constructor(options, toolPath) {
-        super();
-        this.processClosed = false; // tracks whether the process has exited and stdio is closed
-        this.processError = '';
-        this.processExitCode = 0;
-        this.processExited = false; // tracks whether the process has exited
-        this.processStderr = false; // tracks whether stderr was written to
-        this.delay = 10000; // 10 seconds
-        this.done = false;
-        this.timeout = null;
-        if (!toolPath) {
-            throw new Error('toolPath must not be empty');
-        }
-        this.options = options;
-        this.toolPath = toolPath;
-        if (options.delay) {
-            this.delay = options.delay;
-        }
-    }
-    CheckComplete() {
-        if (this.done) {
-            return;
-        }
-        if (this.processClosed) {
-            this._setResult();
-        }
-        else if (this.processExited) {
-            this.timeout = timers_1.setTimeout(ExecState.HandleTimeout, this.delay, this);
-        }
-    }
-    _debug(message) {
-        this.emit('debug', message);
-    }
-    _setResult() {
-        // determine whether there is an error
-        let error;
-        if (this.processExited) {
-            if (this.processError) {
-                error = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
-            }
-            else if (this.processExitCode !== 0 && !this.options.ignoreReturnCode) {
-                error = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
-            }
-            else if (this.processStderr && this.options.failOnStdErr) {
-                error = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
-            }
-        }
-        // clear the timeout
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-            this.timeout = null;
-        }
-        this.done = true;
-        this.emit('done', error, this.processExitCode);
-    }
-    static HandleTimeout(state) {
-        if (state.done) {
-            return;
-        }
-        if (!state.processClosed && state.processExited) {
-            const message = `The STDIO streams did not close within ${state.delay /
-                1000} seconds of the exit event from process '${state.toolPath}'. This may indicate a child process inherited the STDIO streams and has not yet exited.`;
-            state._debug(message);
-        }
-        state._setResult();
-    }
-}
-//# sourceMappingURL=toolrunner.js.map
-
-/***/ }),
-
-/***/ 125:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.StorageSharedKeyCredentialPolicy = void 0;
-const constants_js_1 = __nccwpck_require__(34);
-const utils_common_js_1 = __nccwpck_require__(451);
-const CredentialPolicy_js_1 = __nccwpck_require__(300);
-const SharedKeyComparator_js_1 = __nccwpck_require__(173);
-/**
- * StorageSharedKeyCredentialPolicy is a policy used to sign HTTP request with a shared key.
- */
-class StorageSharedKeyCredentialPolicy extends CredentialPolicy_js_1.CredentialPolicy {
-    /**
-     * Reference to StorageSharedKeyCredential which generates StorageSharedKeyCredentialPolicy
-     */
-    factory;
-    /**
-     * Creates an instance of StorageSharedKeyCredentialPolicy.
-     * @param nextPolicy -
-     * @param options -
-     * @param factory -
-     */
-    constructor(nextPolicy, options, factory) {
-        super(nextPolicy, options);
-        this.factory = factory;
-    }
-    /**
-     * Signs request.
-     *
-     * @param request -
-     */
-    signRequest(request) {
-        request.headers.set(constants_js_1.HeaderConstants.X_MS_DATE, new Date().toUTCString());
-        if (request.body &&
-            (typeof request.body === "string" || request.body !== undefined) &&
-            request.body.length > 0) {
-            request.headers.set(constants_js_1.HeaderConstants.CONTENT_LENGTH, Buffer.byteLength(request.body));
-        }
-        const stringToSign = [
-            request.method.toUpperCase(),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_LANGUAGE),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_ENCODING),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_LENGTH),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_MD5),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_TYPE),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.DATE),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.IF_MODIFIED_SINCE),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.IF_MATCH),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.IF_NONE_MATCH),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.IF_UNMODIFIED_SINCE),
-            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.RANGE),
-        ].join("\n") +
-            "\n" +
-            this.getCanonicalizedHeadersString(request) +
-            this.getCanonicalizedResourceString(request);
-        const signature = this.factory.computeHMACSHA256(stringToSign);
-        request.headers.set(constants_js_1.HeaderConstants.AUTHORIZATION, `SharedKey ${this.factory.accountName}:${signature}`);
-        // console.log(`[URL]:${request.url}`);
-        // console.log(`[HEADERS]:${request.headers.toString()}`);
-        // console.log(`[STRING TO SIGN]:${JSON.stringify(stringToSign)}`);
-        // console.log(`[KEY]: ${request.headers.get(HeaderConstants.AUTHORIZATION)}`);
-        return request;
-    }
-    /**
-     * Retrieve header value according to shared key sign rules.
-     * @see https://learn.microsoft.com/rest/api/storageservices/authenticate-with-shared-key
-     *
-     * @param request -
-     * @param headerName -
-     */
-    getHeaderValueToSign(request, headerName) {
-        const value = request.headers.get(headerName);
-        if (!value) {
-            return "";
-        }
-        // When using version 2015-02-21 or later, if Content-Length is zero, then
-        // set the Content-Length part of the StringToSign to an empty string.
-        // https://learn.microsoft.com/rest/api/storageservices/authenticate-with-shared-key
-        if (headerName === constants_js_1.HeaderConstants.CONTENT_LENGTH && value === "0") {
-            return "";
-        }
-        return value;
-    }
-    /**
-     * To construct the CanonicalizedHeaders portion of the signature string, follow these steps:
-     * 1. Retrieve all headers for the resource that begin with x-ms-, including the x-ms-date header.
-     * 2. Convert each HTTP header name to lowercase.
-     * 3. Sort the headers lexicographically by header name, in ascending order.
-     *    Each header may appear only once in the string.
-     * 4. Replace any linear whitespace in the header value with a single space.
-     * 5. Trim any whitespace around the colon in the header.
-     * 6. Finally, append a new-line character to each canonicalized header in the resulting list.
-     *    Construct the CanonicalizedHeaders string by concatenating all headers in this list into a single string.
-     *
-     * @param request -
-     */
-    getCanonicalizedHeadersString(request) {
-        let headersArray = request.headers.headersArray().filter((value) => {
-            return value.name.toLowerCase().startsWith(constants_js_1.HeaderConstants.PREFIX_FOR_STORAGE);
-        });
-        headersArray.sort((a, b) => {
-            return (0, SharedKeyComparator_js_1.compareHeader)(a.name.toLowerCase(), b.name.toLowerCase());
-        });
-        // Remove duplicate headers
-        headersArray = headersArray.filter((value, index, array) => {
-            if (index > 0 && value.name.toLowerCase() === array[index - 1].name.toLowerCase()) {
-                return false;
-            }
-            return true;
-        });
-        let canonicalizedHeadersStringToSign = "";
-        headersArray.forEach((header) => {
-            canonicalizedHeadersStringToSign += `${header.name
-                .toLowerCase()
-                .trimRight()}:${header.value.trimLeft()}\n`;
-        });
-        return canonicalizedHeadersStringToSign;
-    }
-    /**
-     * Retrieves the webResource canonicalized resource string.
-     *
-     * @param request -
-     */
-    getCanonicalizedResourceString(request) {
-        const path = (0, utils_common_js_1.getURLPath)(request.url) || "/";
-        let canonicalizedResourceString = "";
-        canonicalizedResourceString += `/${this.factory.accountName}${path}`;
-        const queries = (0, utils_common_js_1.getURLQueries)(request.url);
-        const lowercaseQueries = {};
-        if (queries) {
-            const queryKeys = [];
-            for (const key in queries) {
-                if (Object.prototype.hasOwnProperty.call(queries, key)) {
-                    const lowercaseKey = key.toLowerCase();
-                    lowercaseQueries[lowercaseKey] = queries[key];
-                    queryKeys.push(lowercaseKey);
-                }
-            }
-            queryKeys.sort();
-            for (const key of queryKeys) {
-                canonicalizedResourceString += `\n${key}:${decodeURIComponent(lowercaseQueries[key])}`;
-            }
-        }
-        return canonicalizedResourceString;
-    }
-}
-exports.StorageSharedKeyCredentialPolicy = StorageSharedKeyCredentialPolicy;
-//# sourceMappingURL=StorageSharedKeyCredentialPolicy.js.map
-
-/***/ }),
-
-/***/ 126:
-/***/ ((module) => {
-
-"use strict";
-
-
-// https://wicg.github.io/cookie-store/#cookie-maximum-attribute-value-size
-const maxAttributeValueSize = 1024
-
-// https://wicg.github.io/cookie-store/#cookie-maximum-name-value-pair-size
-const maxNameValuePairSize = 4096
-
-module.exports = {
-  maxAttributeValueSize,
-  maxNameValuePairSize
-}
-
-
-/***/ }),
-
-/***/ 127:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -26122,6 +22465,75 @@ async function run() {
             }
         }
     }
+    // ---- per-(host × target) cross-tool cache save (setup-soldr#106) ----
+    // Wave 2.1 of zackees/soldr#514. Save each lane whose restore missed and
+    // whose `paths` actually exist on disk after executeCrossBootstrap ran.
+    // Skipping exact hits avoids re-uploading identical content; skipping
+    // missing paths avoids cache-API failures on unsupported lanes.
+    try {
+        const lanePlansRaw = core.getState("crossToolCachePlans");
+        const restoresRaw = core.getState("crossToolCacheRestores");
+        if (lanePlansRaw) {
+            const lanePlans = JSON.parse(lanePlansRaw);
+            const restores = restoresRaw
+                ? JSON.parse(restoresRaw)
+                : {};
+            for (const lane of lanePlans) {
+                if (!lane.paths || lane.paths.length === 0) {
+                    continue; // unsupported lane, nothing to save
+                }
+                const restore = restores[lane.target];
+                if (restore?.hit) {
+                    log(`cross-tool-cache: lane=${lane.target} exact hit — skipping save`);
+                    continue;
+                }
+                // Only save when at least one of the lane's paths exists. The cache
+                // API will error on a fully-missing path list, and there's no
+                // point uploading nothing.
+                const existing = lane.paths.filter((p) => {
+                    try {
+                        return fs.existsSync(p);
+                    }
+                    catch {
+                        return false;
+                    }
+                });
+                if (existing.length === 0) {
+                    log(`cross-tool-cache: lane=${lane.target} no paths exist on disk — skipping save`);
+                    continue;
+                }
+                const t0 = Date.now();
+                try {
+                    const id = await cache.saveCache(existing, lane.key);
+                    if (id > 0) {
+                        log(`cross-tool-cache: lane=${lane.target} saved id=${id} key=${lane.key}`);
+                        postCollector.record({
+                            label: `cross-tool-cache:${lane.target}`,
+                            operation: "save",
+                            hit: false,
+                            key: lane.key,
+                            matchedKey: "",
+                            restoreKeys: [],
+                            archiveBytes: null,
+                            inflatedBytes: null,
+                            fileCount: null,
+                            durationMs: Date.now() - t0,
+                            timestamp: new Date().toISOString(),
+                        });
+                    }
+                    else {
+                        log(`cross-tool-cache: lane=${lane.target} save skipped (id=${id}) — likely concurrent save by another job`);
+                    }
+                }
+                catch (err) {
+                    log(`cross-tool-cache: lane=${lane.target} save failed: ${err instanceof Error ? err.message : String(err)}`);
+                }
+            }
+        }
+    }
+    catch (err) {
+        log(`cross-tool-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
     const finalSummary = buildFinalCacheSummary(result, restoreState, {
         buildCache: buildSave,
         cargoRegistryCache: cargoRegistrySave,
@@ -26231,6 +22643,3663 @@ if (typeof process !== "undefined" &&
         const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
         core.warning(`setup-soldr post-job step failed: ${message}`);
     });
+}
+
+
+/***/ }),
+
+/***/ 104:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.rangeToString = rangeToString;
+/**
+ * Generate a range string. For example:
+ *
+ * "bytes=255-" or "bytes=0-511"
+ *
+ * @param iRange -
+ */
+function rangeToString(iRange) {
+    if (iRange.offset < 0) {
+        throw new RangeError(`Range.offset cannot be smaller than 0.`);
+    }
+    if (iRange.count && iRange.count <= 0) {
+        throw new RangeError(`Range.count must be larger than 0. Leave it undefined if you want a range from offset to the end.`);
+    }
+    return iRange.count
+        ? `bytes=${iRange.offset}-${iRange.offset + iRange.count - 1}`
+        : `bytes=${iRange.offset}-`;
+}
+//# sourceMappingURL=Range.js.map
+
+/***/ }),
+
+/***/ 105:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const {
+  Readable,
+  Duplex,
+  PassThrough
+} = __nccwpck_require__(130)
+const {
+  InvalidArgumentError,
+  InvalidReturnValueError,
+  RequestAbortedError
+} = __nccwpck_require__(466)
+const util = __nccwpck_require__(66)
+const { AsyncResource } = __nccwpck_require__(407)
+const { addSignal, removeSignal } = __nccwpck_require__(102)
+const assert = __nccwpck_require__(501)
+
+const kResume = Symbol('resume')
+
+class PipelineRequest extends Readable {
+  constructor () {
+    super({ autoDestroy: true })
+
+    this[kResume] = null
+  }
+
+  _read () {
+    const { [kResume]: resume } = this
+
+    if (resume) {
+      this[kResume] = null
+      resume()
+    }
+  }
+
+  _destroy (err, callback) {
+    this._read()
+
+    callback(err)
+  }
+}
+
+class PipelineResponse extends Readable {
+  constructor (resume) {
+    super({ autoDestroy: true })
+    this[kResume] = resume
+  }
+
+  _read () {
+    this[kResume]()
+  }
+
+  _destroy (err, callback) {
+    if (!err && !this._readableState.endEmitted) {
+      err = new RequestAbortedError()
+    }
+
+    callback(err)
+  }
+}
+
+class PipelineHandler extends AsyncResource {
+  constructor (opts, handler) {
+    if (!opts || typeof opts !== 'object') {
+      throw new InvalidArgumentError('invalid opts')
+    }
+
+    if (typeof handler !== 'function') {
+      throw new InvalidArgumentError('invalid handler')
+    }
+
+    const { signal, method, opaque, onInfo, responseHeaders } = opts
+
+    if (signal && typeof signal.on !== 'function' && typeof signal.addEventListener !== 'function') {
+      throw new InvalidArgumentError('signal must be an EventEmitter or EventTarget')
+    }
+
+    if (method === 'CONNECT') {
+      throw new InvalidArgumentError('invalid method')
+    }
+
+    if (onInfo && typeof onInfo !== 'function') {
+      throw new InvalidArgumentError('invalid onInfo callback')
+    }
+
+    super('UNDICI_PIPELINE')
+
+    this.opaque = opaque || null
+    this.responseHeaders = responseHeaders || null
+    this.handler = handler
+    this.abort = null
+    this.context = null
+    this.onInfo = onInfo || null
+
+    this.req = new PipelineRequest().on('error', util.nop)
+
+    this.ret = new Duplex({
+      readableObjectMode: opts.objectMode,
+      autoDestroy: true,
+      read: () => {
+        const { body } = this
+
+        if (body && body.resume) {
+          body.resume()
+        }
+      },
+      write: (chunk, encoding, callback) => {
+        const { req } = this
+
+        if (req.push(chunk, encoding) || req._readableState.destroyed) {
+          callback()
+        } else {
+          req[kResume] = callback
+        }
+      },
+      destroy: (err, callback) => {
+        const { body, req, res, ret, abort } = this
+
+        if (!err && !ret._readableState.endEmitted) {
+          err = new RequestAbortedError()
+        }
+
+        if (abort && err) {
+          abort()
+        }
+
+        util.destroy(body, err)
+        util.destroy(req, err)
+        util.destroy(res, err)
+
+        removeSignal(this)
+
+        callback(err)
+      }
+    }).on('prefinish', () => {
+      const { req } = this
+
+      // Node < 15 does not call _final in same tick.
+      req.push(null)
+    })
+
+    this.res = null
+
+    addSignal(this, signal)
+  }
+
+  onConnect (abort, context) {
+    const { ret, res } = this
+
+    assert(!res, 'pipeline cannot be retried')
+
+    if (ret.destroyed) {
+      throw new RequestAbortedError()
+    }
+
+    this.abort = abort
+    this.context = context
+  }
+
+  onHeaders (statusCode, rawHeaders, resume) {
+    const { opaque, handler, context } = this
+
+    if (statusCode < 200) {
+      if (this.onInfo) {
+        const headers = this.responseHeaders === 'raw' ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders)
+        this.onInfo({ statusCode, headers })
+      }
+      return
+    }
+
+    this.res = new PipelineResponse(resume)
+
+    let body
+    try {
+      this.handler = null
+      const headers = this.responseHeaders === 'raw' ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders)
+      body = this.runInAsyncScope(handler, null, {
+        statusCode,
+        headers,
+        opaque,
+        body: this.res,
+        context
+      })
+    } catch (err) {
+      this.res.on('error', util.nop)
+      throw err
+    }
+
+    if (!body || typeof body.on !== 'function') {
+      throw new InvalidReturnValueError('expected Readable')
+    }
+
+    body
+      .on('data', (chunk) => {
+        const { ret, body } = this
+
+        if (!ret.push(chunk) && body.pause) {
+          body.pause()
+        }
+      })
+      .on('error', (err) => {
+        const { ret } = this
+
+        util.destroy(ret, err)
+      })
+      .on('end', () => {
+        const { ret } = this
+
+        ret.push(null)
+      })
+      .on('close', () => {
+        const { ret } = this
+
+        if (!ret._readableState.ended) {
+          util.destroy(ret, new RequestAbortedError())
+        }
+      })
+
+    this.body = body
+  }
+
+  onData (chunk) {
+    const { res } = this
+    return res.push(chunk)
+  }
+
+  onComplete (trailers) {
+    const { res } = this
+    res.push(null)
+  }
+
+  onError (err) {
+    const { ret } = this
+    this.handler = null
+    util.destroy(ret, err)
+  }
+}
+
+function pipeline (opts, handler) {
+  try {
+    const pipelineHandler = new PipelineHandler(opts, handler)
+    this.dispatch({ ...opts, body: pipelineHandler.req }, pipelineHandler)
+    return pipelineHandler.ret
+  } catch (err) {
+    return new PassThrough().destroy(err)
+  }
+}
+
+module.exports = pipeline
+
+
+/***/ }),
+
+/***/ 106:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.logger = void 0;
+const logger_1 = __nccwpck_require__(42);
+/**
+ * The `@azure/logger` configuration for this package.
+ */
+exports.logger = (0, logger_1.createClientLogger)("storage-blob");
+//# sourceMappingURL=log.js.map
+
+/***/ }),
+
+/***/ 107:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const EventEmitter = (__nccwpck_require__(143).EventEmitter)
+const inherits = (__nccwpck_require__(359).inherits)
+const getLimit = __nccwpck_require__(461)
+
+const StreamSearch = __nccwpck_require__(114)
+
+const B_DCRLF = Buffer.from('\r\n\r\n')
+const RE_CRLF = /\r\n/g
+const RE_HDR = /^([^:]+):[ \t]?([\x00-\xFF]+)?$/ // eslint-disable-line no-control-regex
+
+function HeaderParser (cfg) {
+  EventEmitter.call(this)
+
+  cfg = cfg || {}
+  const self = this
+  this.nread = 0
+  this.maxed = false
+  this.npairs = 0
+  this.maxHeaderPairs = getLimit(cfg, 'maxHeaderPairs', 2000)
+  this.maxHeaderSize = getLimit(cfg, 'maxHeaderSize', 80 * 1024)
+  this.buffer = ''
+  this.header = {}
+  this.finished = false
+  this.ss = new StreamSearch(B_DCRLF)
+  this.ss.on('info', function (isMatch, data, start, end) {
+    if (data && !self.maxed) {
+      if (self.nread + end - start >= self.maxHeaderSize) {
+        end = self.maxHeaderSize - self.nread + start
+        self.nread = self.maxHeaderSize
+        self.maxed = true
+      } else { self.nread += (end - start) }
+
+      self.buffer += data.toString('binary', start, end)
+    }
+    if (isMatch) { self._finish() }
+  })
+}
+inherits(HeaderParser, EventEmitter)
+
+HeaderParser.prototype.push = function (data) {
+  const r = this.ss.push(data)
+  if (this.finished) { return r }
+}
+
+HeaderParser.prototype.reset = function () {
+  this.finished = false
+  this.buffer = ''
+  this.header = {}
+  this.ss.reset()
+}
+
+HeaderParser.prototype._finish = function () {
+  if (this.buffer) { this._parseHeader() }
+  this.ss.matches = this.ss.maxMatches
+  const header = this.header
+  this.header = {}
+  this.buffer = ''
+  this.finished = true
+  this.nread = this.npairs = 0
+  this.maxed = false
+  this.emit('header', header)
+}
+
+HeaderParser.prototype._parseHeader = function () {
+  if (this.npairs === this.maxHeaderPairs) { return }
+
+  const lines = this.buffer.split(RE_CRLF)
+  const len = lines.length
+  let m, h
+
+  for (var i = 0; i < len; ++i) { // eslint-disable-line no-var
+    if (lines[i].length === 0) { continue }
+    if (lines[i][0] === '\t' || lines[i][0] === ' ') {
+      // folded header content
+      // RFC2822 says to just remove the CRLF and not the whitespace following
+      // it, so we follow the RFC and include the leading whitespace ...
+      if (h) {
+        this.header[h][this.header[h].length - 1] += lines[i]
+        continue
+      }
+    }
+
+    const posColon = lines[i].indexOf(':')
+    if (
+      posColon === -1 ||
+      posColon === 0
+    ) {
+      return
+    }
+    m = RE_HDR.exec(lines[i])
+    h = m[1].toLowerCase()
+    this.header[h] = this.header[h] || []
+    this.header[h].push((m[2] || ''))
+    if (++this.npairs === this.maxHeaderPairs) { break }
+  }
+}
+
+module.exports = HeaderParser
+
+
+/***/ }),
+
+/***/ 108:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs/promises");
+
+/***/ }),
+
+/***/ 109:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var util_exports = {};
+__export(util_exports, {
+  HttpHeaders: () => HttpHeaders,
+  toHttpHeadersLike: () => toHttpHeadersLike,
+  toPipelineRequest: () => toPipelineRequest,
+  toWebResourceLike: () => toWebResourceLike
+});
+module.exports = __toCommonJS(util_exports);
+var import_core_rest_pipeline = __nccwpck_require__(100);
+const originalRequestSymbol = /* @__PURE__ */ Symbol("Original PipelineRequest");
+const originalClientRequestSymbol = /* @__PURE__ */ Symbol.for("@azure/core-client original request");
+function toPipelineRequest(webResource, options = {}) {
+  const compatWebResource = webResource;
+  const request = compatWebResource[originalRequestSymbol];
+  const headers = (0, import_core_rest_pipeline.createHttpHeaders)(webResource.headers.toJson({ preserveCase: true }));
+  if (request) {
+    request.headers = headers;
+    return request;
+  } else {
+    const newRequest = (0, import_core_rest_pipeline.createPipelineRequest)({
+      url: webResource.url,
+      method: webResource.method,
+      headers,
+      withCredentials: webResource.withCredentials,
+      timeout: webResource.timeout,
+      requestId: webResource.requestId,
+      abortSignal: webResource.abortSignal,
+      body: webResource.body,
+      formData: webResource.formData,
+      disableKeepAlive: !!webResource.keepAlive,
+      onDownloadProgress: webResource.onDownloadProgress,
+      onUploadProgress: webResource.onUploadProgress,
+      proxySettings: webResource.proxySettings,
+      streamResponseStatusCodes: webResource.streamResponseStatusCodes,
+      agent: webResource.agent,
+      requestOverrides: webResource.requestOverrides
+    });
+    if (options.originalRequest) {
+      newRequest[originalClientRequestSymbol] = options.originalRequest;
+    }
+    return newRequest;
+  }
+}
+function toWebResourceLike(request, options) {
+  const originalRequest = options?.originalRequest ?? request;
+  const webResource = {
+    url: request.url,
+    method: request.method,
+    headers: toHttpHeadersLike(request.headers),
+    withCredentials: request.withCredentials,
+    timeout: request.timeout,
+    requestId: request.headers.get("x-ms-client-request-id") || request.requestId,
+    abortSignal: request.abortSignal,
+    body: request.body,
+    formData: request.formData,
+    keepAlive: !!request.disableKeepAlive,
+    onDownloadProgress: request.onDownloadProgress,
+    onUploadProgress: request.onUploadProgress,
+    proxySettings: request.proxySettings,
+    streamResponseStatusCodes: request.streamResponseStatusCodes,
+    agent: request.agent,
+    requestOverrides: request.requestOverrides,
+    clone() {
+      throw new Error("Cannot clone a non-proxied WebResourceLike");
+    },
+    prepare() {
+      throw new Error("WebResourceLike.prepare() is not supported by @azure/core-http-compat");
+    },
+    validateRequestProperties() {
+    }
+  };
+  if (options?.createProxy) {
+    return new Proxy(webResource, {
+      get(target, prop, receiver) {
+        if (prop === originalRequestSymbol) {
+          return request;
+        } else if (prop === "clone") {
+          return () => {
+            return toWebResourceLike(toPipelineRequest(webResource, { originalRequest }), {
+              createProxy: true,
+              originalRequest
+            });
+          };
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+      set(target, prop, value, receiver) {
+        if (prop === "keepAlive") {
+          request.disableKeepAlive = !value;
+        }
+        const passThroughProps = [
+          "url",
+          "method",
+          "withCredentials",
+          "timeout",
+          "requestId",
+          "abortSignal",
+          "body",
+          "formData",
+          "onDownloadProgress",
+          "onUploadProgress",
+          "proxySettings",
+          "streamResponseStatusCodes",
+          "agent",
+          "requestOverrides"
+        ];
+        if (typeof prop === "string" && passThroughProps.includes(prop)) {
+          request[prop] = value;
+        }
+        return Reflect.set(target, prop, value, receiver);
+      }
+    });
+  } else {
+    return webResource;
+  }
+}
+function toHttpHeadersLike(headers) {
+  return new HttpHeaders(headers.toJSON({ preserveCase: true }));
+}
+function getHeaderKey(headerName) {
+  return headerName.toLowerCase();
+}
+class HttpHeaders {
+  _headersMap;
+  constructor(rawHeaders) {
+    this._headersMap = {};
+    if (rawHeaders) {
+      for (const headerName in rawHeaders) {
+        this.set(headerName, rawHeaders[headerName]);
+      }
+    }
+  }
+  /**
+   * Set a header in this collection with the provided name and value. The name is
+   * case-insensitive.
+   * @param headerName - The name of the header to set. This value is case-insensitive.
+   * @param headerValue - The value of the header to set.
+   */
+  set(headerName, headerValue) {
+    this._headersMap[getHeaderKey(headerName)] = {
+      name: headerName,
+      value: headerValue.toString()
+    };
+  }
+  /**
+   * Get the header value for the provided header name, or undefined if no header exists in this
+   * collection with the provided name.
+   * @param headerName - The name of the header.
+   */
+  get(headerName) {
+    const header = this._headersMap[getHeaderKey(headerName)];
+    return !header ? void 0 : header.value;
+  }
+  /**
+   * Get whether or not this header collection contains a header entry for the provided header name.
+   */
+  contains(headerName) {
+    return !!this._headersMap[getHeaderKey(headerName)];
+  }
+  /**
+   * Remove the header with the provided headerName. Return whether or not the header existed and
+   * was removed.
+   * @param headerName - The name of the header to remove.
+   */
+  remove(headerName) {
+    const result = this.contains(headerName);
+    delete this._headersMap[getHeaderKey(headerName)];
+    return result;
+  }
+  /**
+   * Get the headers that are contained this collection as an object.
+   */
+  rawHeaders() {
+    return this.toJson({ preserveCase: true });
+  }
+  /**
+   * Get the headers that are contained in this collection as an array.
+   */
+  headersArray() {
+    const headers = [];
+    for (const headerKey in this._headersMap) {
+      headers.push(this._headersMap[headerKey]);
+    }
+    return headers;
+  }
+  /**
+   * Get the header names that are contained in this collection.
+   */
+  headerNames() {
+    const headerNames = [];
+    const headers = this.headersArray();
+    for (let i = 0; i < headers.length; ++i) {
+      headerNames.push(headers[i].name);
+    }
+    return headerNames;
+  }
+  /**
+   * Get the header values that are contained in this collection.
+   */
+  headerValues() {
+    const headerValues = [];
+    const headers = this.headersArray();
+    for (let i = 0; i < headers.length; ++i) {
+      headerValues.push(headers[i].value);
+    }
+    return headerValues;
+  }
+  /**
+   * Get the JSON object representation of this HTTP header collection.
+   */
+  toJson(options = {}) {
+    const result = {};
+    if (options.preserveCase) {
+      for (const headerKey in this._headersMap) {
+        const header = this._headersMap[headerKey];
+        result[header.name] = header.value;
+      }
+    } else {
+      for (const headerKey in this._headersMap) {
+        const header = this._headersMap[headerKey];
+        result[getHeaderKey(header.name)] = header.value;
+      }
+    }
+    return result;
+  }
+  /**
+   * Get the string representation of this HTTP header collection.
+   */
+  toString() {
+    return JSON.stringify(this.toJson({ preserveCase: true }));
+  }
+  /**
+   * Create a deep clone/copy of this HttpHeaders collection.
+   */
+  clone() {
+    const resultPreservingCasing = {};
+    for (const headerKey in this._headersMap) {
+      const header = this._headersMap[headerKey];
+      resultPreservingCasing[header.name] = header.value;
+    }
+    return new HttpHeaders(resultPreservingCasing);
+  }
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=util.js.map
+
+
+/***/ }),
+
+/***/ 110:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isDefined = isDefined;
+exports.isObjectWithProperties = isObjectWithProperties;
+exports.objectHasProperty = objectHasProperty;
+/**
+ * Helper TypeGuard that checks if something is defined or not.
+ * @param thing - Anything
+ */
+function isDefined(thing) {
+    return typeof thing !== "undefined" && thing !== null;
+}
+/**
+ * Helper TypeGuard that checks if the input is an object with the specified properties.
+ * @param thing - Anything.
+ * @param properties - The name of the properties that should appear in the object.
+ */
+function isObjectWithProperties(thing, properties) {
+    if (!isDefined(thing) || typeof thing !== "object") {
+        return false;
+    }
+    for (const property of properties) {
+        if (!objectHasProperty(thing, property)) {
+            return false;
+        }
+    }
+    return true;
+}
+/**
+ * Helper TypeGuard that checks if the input is an object with the specified property.
+ * @param thing - Any object.
+ * @param property - The name of the property that should appear in the object.
+ */
+function objectHasProperty(thing, property) {
+    return (isDefined(thing) && typeof thing === "object" && property in thing);
+}
+//# sourceMappingURL=typeGuards.js.map
+
+/***/ }),
+
+/***/ 111:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("constants");
+
+/***/ }),
+
+/***/ 112:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseCAEChallenge = parseCAEChallenge;
+exports.authorizeRequestOnClaimChallenge = authorizeRequestOnClaimChallenge;
+const log_js_1 = __nccwpck_require__(458);
+const base64_js_1 = __nccwpck_require__(416);
+/**
+ * Converts: `Bearer a="b", c="d", Bearer d="e", f="g"`.
+ * Into: `[ { a: 'b', c: 'd' }, { d: 'e', f: 'g' } ]`.
+ *
+ * @internal
+ */
+function parseCAEChallenge(challenges) {
+    const bearerChallenges = `, ${challenges.trim()}`.split(", Bearer ").filter((x) => x);
+    return bearerChallenges.map((challenge) => {
+        const challengeParts = `${challenge.trim()}, `.split('", ').filter((x) => x);
+        const keyValuePairs = challengeParts.map((keyValue) => (([key, value]) => ({ [key]: value }))(keyValue.trim().split('="')));
+        // Key-value pairs to plain object:
+        return keyValuePairs.reduce((a, b) => ({ ...a, ...b }), {});
+    });
+}
+/**
+ * This function can be used as a callback for the `bearerTokenAuthenticationPolicy` of `@azure/core-rest-pipeline`, to support CAE challenges:
+ * [Continuous Access Evaluation](https://learn.microsoft.com/azure/active-directory/conditional-access/concept-continuous-access-evaluation).
+ *
+ * Call the `bearerTokenAuthenticationPolicy` with the following options:
+ *
+ * ```ts snippet:AuthorizeRequestOnClaimChallenge
+ * import { bearerTokenAuthenticationPolicy } from "@azure/core-rest-pipeline";
+ * import { authorizeRequestOnClaimChallenge } from "@azure/core-client";
+ *
+ * const policy = bearerTokenAuthenticationPolicy({
+ *   challengeCallbacks: {
+ *     authorizeRequestOnChallenge: authorizeRequestOnClaimChallenge,
+ *   },
+ *   scopes: ["https://service/.default"],
+ * });
+ * ```
+ *
+ * Once provided, the `bearerTokenAuthenticationPolicy` policy will internally handle Continuous Access Evaluation (CAE) challenges.
+ * When it can't complete a challenge it will return the 401 (unauthorized) response from ARM.
+ *
+ * Example challenge with claims:
+ *
+ * ```
+ * Bearer authorization_uri="https://login.windows-ppe.net/", error="invalid_token",
+ * error_description="User session has been revoked",
+ * claims="eyJhY2Nlc3NfdG9rZW4iOnsibmJmIjp7ImVzc2VudGlhbCI6dHJ1ZSwgInZhbHVlIjoiMTYwMzc0MjgwMCJ9fX0="
+ * ```
+ */
+async function authorizeRequestOnClaimChallenge(onChallengeOptions) {
+    const { scopes, response } = onChallengeOptions;
+    const logger = onChallengeOptions.logger || log_js_1.logger;
+    const challenge = response.headers.get("WWW-Authenticate");
+    if (!challenge) {
+        logger.info(`The WWW-Authenticate header was missing. Failed to perform the Continuous Access Evaluation authentication flow.`);
+        return false;
+    }
+    const challenges = parseCAEChallenge(challenge) || [];
+    const parsedChallenge = challenges.find((x) => x.claims);
+    if (!parsedChallenge) {
+        logger.info(`The WWW-Authenticate header was missing the necessary "claims" to perform the Continuous Access Evaluation authentication flow.`);
+        return false;
+    }
+    const accessToken = await onChallengeOptions.getAccessToken(parsedChallenge.scope ? [parsedChallenge.scope] : scopes, {
+        claims: (0, base64_js_1.decodeStringToString)(parsedChallenge.claims),
+    });
+    if (!accessToken) {
+        return false;
+    }
+    onChallengeOptions.request.headers.set("Authorization", `${accessToken.tokenType ?? "Bearer"} ${accessToken.token}`);
+    return true;
+}
+//# sourceMappingURL=authorizeRequestOnClaimChallenge.js.map
+
+/***/ }),
+
+/***/ 113:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.delay = delay;
+exports.calculateRetryDelay = calculateRetryDelay;
+const createAbortablePromise_js_1 = __nccwpck_require__(254);
+const util_1 = __nccwpck_require__(145);
+const StandardAbortMessage = "The delay was aborted.";
+/**
+ * A wrapper for setTimeout that resolves a promise after timeInMs milliseconds.
+ * @param timeInMs - The number of milliseconds to be delayed.
+ * @param options - The options for delay - currently abort options
+ * @returns Promise that is resolved after timeInMs
+ */
+function delay(timeInMs, options) {
+    let token;
+    const { abortSignal, abortErrorMsg } = options ?? {};
+    return (0, createAbortablePromise_js_1.createAbortablePromise)((resolve) => {
+        token = setTimeout(resolve, timeInMs);
+    }, {
+        cleanupBeforeAbort: () => clearTimeout(token),
+        abortSignal,
+        abortErrorMsg: abortErrorMsg ?? StandardAbortMessage,
+    });
+}
+/**
+ * Calculates the delay interval for retry attempts using exponential delay with jitter.
+ * @param retryAttempt - The current retry attempt number.
+ * @param config - The exponential retry configuration.
+ * @returns An object containing the calculated retry delay.
+ */
+function calculateRetryDelay(retryAttempt, config) {
+    // Exponentially increase the delay each time
+    const exponentialDelay = config.retryDelayInMs * Math.pow(2, retryAttempt);
+    // Don't let the delay exceed the maximum
+    const clampedDelay = Math.min(config.maxRetryDelayInMs, exponentialDelay);
+    // Allow the final value to have some "jitter" (within 50% of the delay size) so
+    // that retries across multiple clients don't occur simultaneously.
+    const retryAfterInMs = clampedDelay / 2 + (0, util_1.getRandomIntegerInclusive)(0, clampedDelay / 2);
+    return { retryAfterInMs };
+}
+//# sourceMappingURL=delay.js.map
+
+/***/ }),
+
+/***/ 114:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+/**
+ * Copyright Brian White. All rights reserved.
+ *
+ * @see https://github.com/mscdex/streamsearch
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *
+ * Based heavily on the Streaming Boyer-Moore-Horspool C++ implementation
+ * by Hongli Lai at: https://github.com/FooBarWidget/boyer-moore-horspool
+ */
+const EventEmitter = (__nccwpck_require__(143).EventEmitter)
+const inherits = (__nccwpck_require__(359).inherits)
+
+function SBMH (needle) {
+  if (typeof needle === 'string') {
+    needle = Buffer.from(needle)
+  }
+
+  if (!Buffer.isBuffer(needle)) {
+    throw new TypeError('The needle has to be a String or a Buffer.')
+  }
+
+  const needleLength = needle.length
+
+  if (needleLength === 0) {
+    throw new Error('The needle cannot be an empty String/Buffer.')
+  }
+
+  if (needleLength > 256) {
+    throw new Error('The needle cannot have a length bigger than 256.')
+  }
+
+  this.maxMatches = Infinity
+  this.matches = 0
+
+  this._occ = new Array(256)
+    .fill(needleLength) // Initialize occurrence table.
+  this._lookbehind_size = 0
+  this._needle = needle
+  this._bufpos = 0
+
+  this._lookbehind = Buffer.alloc(needleLength)
+
+  // Populate occurrence table with analysis of the needle,
+  // ignoring last letter.
+  for (var i = 0; i < needleLength - 1; ++i) { // eslint-disable-line no-var
+    this._occ[needle[i]] = needleLength - 1 - i
+  }
+}
+inherits(SBMH, EventEmitter)
+
+SBMH.prototype.reset = function () {
+  this._lookbehind_size = 0
+  this.matches = 0
+  this._bufpos = 0
+}
+
+SBMH.prototype.push = function (chunk, pos) {
+  if (!Buffer.isBuffer(chunk)) {
+    chunk = Buffer.from(chunk, 'binary')
+  }
+  const chlen = chunk.length
+  this._bufpos = pos || 0
+  let r
+  while (r !== chlen && this.matches < this.maxMatches) { r = this._sbmh_feed(chunk) }
+  return r
+}
+
+SBMH.prototype._sbmh_feed = function (data) {
+  const len = data.length
+  const needle = this._needle
+  const needleLength = needle.length
+  const lastNeedleChar = needle[needleLength - 1]
+
+  // Positive: points to a position in `data`
+  //           pos == 3 points to data[3]
+  // Negative: points to a position in the lookbehind buffer
+  //           pos == -2 points to lookbehind[lookbehind_size - 2]
+  let pos = -this._lookbehind_size
+  let ch
+
+  if (pos < 0) {
+    // Lookbehind buffer is not empty. Perform Boyer-Moore-Horspool
+    // search with character lookup code that considers both the
+    // lookbehind buffer and the current round's haystack data.
+    //
+    // Loop until
+    //   there is a match.
+    // or until
+    //   we've moved past the position that requires the
+    //   lookbehind buffer. In this case we switch to the
+    //   optimized loop.
+    // or until
+    //   the character to look at lies outside the haystack.
+    while (pos < 0 && pos <= len - needleLength) {
+      ch = this._sbmh_lookup_char(data, pos + needleLength - 1)
+
+      if (
+        ch === lastNeedleChar &&
+        this._sbmh_memcmp(data, pos, needleLength - 1)
+      ) {
+        this._lookbehind_size = 0
+        ++this.matches
+        this.emit('info', true)
+
+        return (this._bufpos = pos + needleLength)
+      }
+      pos += this._occ[ch]
+    }
+
+    // No match.
+
+    if (pos < 0) {
+      // There's too few data for Boyer-Moore-Horspool to run,
+      // so let's use a different algorithm to skip as much as
+      // we can.
+      // Forward pos until
+      //   the trailing part of lookbehind + data
+      //   looks like the beginning of the needle
+      // or until
+      //   pos == 0
+      while (pos < 0 && !this._sbmh_memcmp(data, pos, len - pos)) { ++pos }
+    }
+
+    if (pos >= 0) {
+      // Discard lookbehind buffer.
+      this.emit('info', false, this._lookbehind, 0, this._lookbehind_size)
+      this._lookbehind_size = 0
+    } else {
+      // Cut off part of the lookbehind buffer that has
+      // been processed and append the entire haystack
+      // into it.
+      const bytesToCutOff = this._lookbehind_size + pos
+      if (bytesToCutOff > 0) {
+        // The cut off data is guaranteed not to contain the needle.
+        this.emit('info', false, this._lookbehind, 0, bytesToCutOff)
+      }
+
+      this._lookbehind.copy(this._lookbehind, 0, bytesToCutOff,
+        this._lookbehind_size - bytesToCutOff)
+      this._lookbehind_size -= bytesToCutOff
+
+      data.copy(this._lookbehind, this._lookbehind_size)
+      this._lookbehind_size += len
+
+      this._bufpos = len
+      return len
+    }
+  }
+
+  pos += (pos >= 0) * this._bufpos
+
+  // Lookbehind buffer is now empty. We only need to check if the
+  // needle is in the haystack.
+  if (data.indexOf(needle, pos) !== -1) {
+    pos = data.indexOf(needle, pos)
+    ++this.matches
+    if (pos > 0) { this.emit('info', true, data, this._bufpos, pos) } else { this.emit('info', true) }
+
+    return (this._bufpos = pos + needleLength)
+  } else {
+    pos = len - needleLength
+  }
+
+  // There was no match. If there's trailing haystack data that we cannot
+  // match yet using the Boyer-Moore-Horspool algorithm (because the trailing
+  // data is less than the needle size) then match using a modified
+  // algorithm that starts matching from the beginning instead of the end.
+  // Whatever trailing data is left after running this algorithm is added to
+  // the lookbehind buffer.
+  while (
+    pos < len &&
+    (
+      data[pos] !== needle[0] ||
+      (
+        (Buffer.compare(
+          data.subarray(pos, pos + len - pos),
+          needle.subarray(0, len - pos)
+        ) !== 0)
+      )
+    )
+  ) {
+    ++pos
+  }
+  if (pos < len) {
+    data.copy(this._lookbehind, 0, pos, pos + (len - pos))
+    this._lookbehind_size = len - pos
+  }
+
+  // Everything until pos is guaranteed not to contain needle data.
+  if (pos > 0) { this.emit('info', false, data, this._bufpos, pos < len ? pos : len) }
+
+  this._bufpos = len
+  return len
+}
+
+SBMH.prototype._sbmh_lookup_char = function (data, pos) {
+  return (pos < 0)
+    ? this._lookbehind[this._lookbehind_size + pos]
+    : data[pos]
+}
+
+SBMH.prototype._sbmh_memcmp = function (data, pos, len) {
+  for (var i = 0; i < len; ++i) { // eslint-disable-line no-var
+    if (this._sbmh_lookup_char(data, pos + i) !== this._needle[i]) { return false }
+  }
+  return true
+}
+
+module.exports = SBMH
+
+
+/***/ }),
+
+/***/ 115:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var pipelineRequest_exports = {};
+__export(pipelineRequest_exports, {
+  createPipelineRequest: () => createPipelineRequest
+});
+module.exports = __toCommonJS(pipelineRequest_exports);
+var import_httpHeaders = __nccwpck_require__(463);
+var import_uuidUtils = __nccwpck_require__(376);
+class PipelineRequestImpl {
+  url;
+  method;
+  headers;
+  timeout;
+  withCredentials;
+  body;
+  multipartBody;
+  formData;
+  streamResponseStatusCodes;
+  enableBrowserStreams;
+  proxySettings;
+  disableKeepAlive;
+  abortSignal;
+  requestId;
+  allowInsecureConnection;
+  onUploadProgress;
+  onDownloadProgress;
+  requestOverrides;
+  authSchemes;
+  constructor(options) {
+    this.url = options.url;
+    this.body = options.body;
+    this.headers = options.headers ?? (0, import_httpHeaders.createHttpHeaders)();
+    this.method = options.method ?? "GET";
+    this.timeout = options.timeout ?? 0;
+    this.multipartBody = options.multipartBody;
+    this.formData = options.formData;
+    this.disableKeepAlive = options.disableKeepAlive ?? false;
+    this.proxySettings = options.proxySettings;
+    this.streamResponseStatusCodes = options.streamResponseStatusCodes;
+    this.withCredentials = options.withCredentials ?? false;
+    this.abortSignal = options.abortSignal;
+    this.onUploadProgress = options.onUploadProgress;
+    this.onDownloadProgress = options.onDownloadProgress;
+    this.requestId = options.requestId || (0, import_uuidUtils.randomUUID)();
+    this.allowInsecureConnection = options.allowInsecureConnection ?? false;
+    this.enableBrowserStreams = options.enableBrowserStreams ?? false;
+    this.requestOverrides = options.requestOverrides;
+    this.authSchemes = options.authSchemes;
+  }
+}
+function createPipelineRequest(options) {
+  return new PipelineRequestImpl(options);
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=pipelineRequest.js.map
+
+
+/***/ }),
+
+/***/ 116:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var userAgentPlatform_exports = {};
+__export(userAgentPlatform_exports, {
+  getHeaderName: () => getHeaderName,
+  setPlatformSpecificData: () => setPlatformSpecificData
+});
+module.exports = __toCommonJS(userAgentPlatform_exports);
+var import_node_os = __toESM(__nccwpck_require__(366));
+var import_node_process = __toESM(__nccwpck_require__(230));
+function getHeaderName() {
+  return "User-Agent";
+}
+async function setPlatformSpecificData(map) {
+  if (import_node_process.default && import_node_process.default.versions) {
+    const osInfo = `${import_node_os.default.type()} ${import_node_os.default.release()}; ${import_node_os.default.arch()}`;
+    const versions = import_node_process.default.versions;
+    if (versions.bun) {
+      map.set("Bun", `${versions.bun} (${osInfo})`);
+    } else if (versions.deno) {
+      map.set("Deno", `${versions.deno} (${osInfo})`);
+    } else if (versions.node) {
+      map.set("Node", `${versions.node} (${osInfo})`);
+    }
+  }
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 117:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PbLong = exports.PbULong = exports.detectBi = void 0;
+const goog_varint_1 = __nccwpck_require__(199);
+let BI;
+function detectBi() {
+    const dv = new DataView(new ArrayBuffer(8));
+    const ok = globalThis.BigInt !== undefined
+        && typeof dv.getBigInt64 === "function"
+        && typeof dv.getBigUint64 === "function"
+        && typeof dv.setBigInt64 === "function"
+        && typeof dv.setBigUint64 === "function";
+    BI = ok ? {
+        MIN: BigInt("-9223372036854775808"),
+        MAX: BigInt("9223372036854775807"),
+        UMIN: BigInt("0"),
+        UMAX: BigInt("18446744073709551615"),
+        C: BigInt,
+        V: dv,
+    } : undefined;
+}
+exports.detectBi = detectBi;
+detectBi();
+function assertBi(bi) {
+    if (!bi)
+        throw new Error("BigInt unavailable, see https://github.com/timostamm/protobuf-ts/blob/v1.0.8/MANUAL.md#bigint-support");
+}
+// used to validate from(string) input (when bigint is unavailable)
+const RE_DECIMAL_STR = /^-?[0-9]+$/;
+// constants for binary math
+const TWO_PWR_32_DBL = 0x100000000;
+const HALF_2_PWR_32 = 0x080000000;
+// base class for PbLong and PbULong provides shared code
+class SharedPbLong {
+    /**
+     * Create a new instance with the given bits.
+     */
+    constructor(lo, hi) {
+        this.lo = lo | 0;
+        this.hi = hi | 0;
+    }
+    /**
+     * Is this instance equal to 0?
+     */
+    isZero() {
+        return this.lo == 0 && this.hi == 0;
+    }
+    /**
+     * Convert to a native number.
+     */
+    toNumber() {
+        let result = this.hi * TWO_PWR_32_DBL + (this.lo >>> 0);
+        if (!Number.isSafeInteger(result))
+            throw new Error("cannot convert to safe number");
+        return result;
+    }
+}
+/**
+ * 64-bit unsigned integer as two 32-bit values.
+ * Converts between `string`, `number` and `bigint` representations.
+ */
+class PbULong extends SharedPbLong {
+    /**
+     * Create instance from a `string`, `number` or `bigint`.
+     */
+    static from(value) {
+        if (BI)
+            // noinspection FallThroughInSwitchStatementJS
+            switch (typeof value) {
+                case "string":
+                    if (value == "0")
+                        return this.ZERO;
+                    if (value == "")
+                        throw new Error('string is no integer');
+                    value = BI.C(value);
+                case "number":
+                    if (value === 0)
+                        return this.ZERO;
+                    value = BI.C(value);
+                case "bigint":
+                    if (!value)
+                        return this.ZERO;
+                    if (value < BI.UMIN)
+                        throw new Error('signed value for ulong');
+                    if (value > BI.UMAX)
+                        throw new Error('ulong too large');
+                    BI.V.setBigUint64(0, value, true);
+                    return new PbULong(BI.V.getInt32(0, true), BI.V.getInt32(4, true));
+            }
+        else
+            switch (typeof value) {
+                case "string":
+                    if (value == "0")
+                        return this.ZERO;
+                    value = value.trim();
+                    if (!RE_DECIMAL_STR.test(value))
+                        throw new Error('string is no integer');
+                    let [minus, lo, hi] = goog_varint_1.int64fromString(value);
+                    if (minus)
+                        throw new Error('signed value for ulong');
+                    return new PbULong(lo, hi);
+                case "number":
+                    if (value == 0)
+                        return this.ZERO;
+                    if (!Number.isSafeInteger(value))
+                        throw new Error('number is no integer');
+                    if (value < 0)
+                        throw new Error('signed value for ulong');
+                    return new PbULong(value, value / TWO_PWR_32_DBL);
+            }
+        throw new Error('unknown value ' + typeof value);
+    }
+    /**
+     * Convert to decimal string.
+     */
+    toString() {
+        return BI ? this.toBigInt().toString() : goog_varint_1.int64toString(this.lo, this.hi);
+    }
+    /**
+     * Convert to native bigint.
+     */
+    toBigInt() {
+        assertBi(BI);
+        BI.V.setInt32(0, this.lo, true);
+        BI.V.setInt32(4, this.hi, true);
+        return BI.V.getBigUint64(0, true);
+    }
+}
+exports.PbULong = PbULong;
+/**
+ * ulong 0 singleton.
+ */
+PbULong.ZERO = new PbULong(0, 0);
+/**
+ * 64-bit signed integer as two 32-bit values.
+ * Converts between `string`, `number` and `bigint` representations.
+ */
+class PbLong extends SharedPbLong {
+    /**
+     * Create instance from a `string`, `number` or `bigint`.
+     */
+    static from(value) {
+        if (BI)
+            // noinspection FallThroughInSwitchStatementJS
+            switch (typeof value) {
+                case "string":
+                    if (value == "0")
+                        return this.ZERO;
+                    if (value == "")
+                        throw new Error('string is no integer');
+                    value = BI.C(value);
+                case "number":
+                    if (value === 0)
+                        return this.ZERO;
+                    value = BI.C(value);
+                case "bigint":
+                    if (!value)
+                        return this.ZERO;
+                    if (value < BI.MIN)
+                        throw new Error('signed long too small');
+                    if (value > BI.MAX)
+                        throw new Error('signed long too large');
+                    BI.V.setBigInt64(0, value, true);
+                    return new PbLong(BI.V.getInt32(0, true), BI.V.getInt32(4, true));
+            }
+        else
+            switch (typeof value) {
+                case "string":
+                    if (value == "0")
+                        return this.ZERO;
+                    value = value.trim();
+                    if (!RE_DECIMAL_STR.test(value))
+                        throw new Error('string is no integer');
+                    let [minus, lo, hi] = goog_varint_1.int64fromString(value);
+                    if (minus) {
+                        if (hi > HALF_2_PWR_32 || (hi == HALF_2_PWR_32 && lo != 0))
+                            throw new Error('signed long too small');
+                    }
+                    else if (hi >= HALF_2_PWR_32)
+                        throw new Error('signed long too large');
+                    let pbl = new PbLong(lo, hi);
+                    return minus ? pbl.negate() : pbl;
+                case "number":
+                    if (value == 0)
+                        return this.ZERO;
+                    if (!Number.isSafeInteger(value))
+                        throw new Error('number is no integer');
+                    return value > 0
+                        ? new PbLong(value, value / TWO_PWR_32_DBL)
+                        : new PbLong(-value, -value / TWO_PWR_32_DBL).negate();
+            }
+        throw new Error('unknown value ' + typeof value);
+    }
+    /**
+     * Do we have a minus sign?
+     */
+    isNegative() {
+        return (this.hi & HALF_2_PWR_32) !== 0;
+    }
+    /**
+     * Negate two's complement.
+     * Invert all the bits and add one to the result.
+     */
+    negate() {
+        let hi = ~this.hi, lo = this.lo;
+        if (lo)
+            lo = ~lo + 1;
+        else
+            hi += 1;
+        return new PbLong(lo, hi);
+    }
+    /**
+     * Convert to decimal string.
+     */
+    toString() {
+        if (BI)
+            return this.toBigInt().toString();
+        if (this.isNegative()) {
+            let n = this.negate();
+            return '-' + goog_varint_1.int64toString(n.lo, n.hi);
+        }
+        return goog_varint_1.int64toString(this.lo, this.hi);
+    }
+    /**
+     * Convert to native bigint.
+     */
+    toBigInt() {
+        assertBi(BI);
+        BI.V.setInt32(0, this.lo, true);
+        BI.V.setInt32(4, this.hi, true);
+        return BI.V.getBigInt64(0, true);
+    }
+}
+exports.PbLong = PbLong;
+/**
+ * long 0 singleton.
+ */
+PbLong.ZERO = new PbLong(0, 0);
+
+
+/***/ }),
+
+/***/ 118:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=service.js.map
+
+/***/ }),
+
+/***/ 119:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("buffer");
+
+/***/ }),
+
+/***/ 120:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Path = void 0;
+const path = __importStar(__nccwpck_require__(242));
+const pathHelper = __importStar(__nccwpck_require__(216));
+const assert_1 = __importDefault(__nccwpck_require__(501));
+const IS_WINDOWS = process.platform === 'win32';
+/**
+ * Helper class for parsing paths into segments
+ */
+class Path {
+    /**
+     * Constructs a Path
+     * @param itemPath Path or array of segments
+     */
+    constructor(itemPath) {
+        this.segments = [];
+        // String
+        if (typeof itemPath === 'string') {
+            assert_1.default(itemPath, `Parameter 'itemPath' must not be empty`);
+            // Normalize slashes and trim unnecessary trailing slash
+            itemPath = pathHelper.safeTrimTrailingSeparator(itemPath);
+            // Not rooted
+            if (!pathHelper.hasRoot(itemPath)) {
+                this.segments = itemPath.split(path.sep);
+            }
+            // Rooted
+            else {
+                // Add all segments, while not at the root
+                let remaining = itemPath;
+                let dir = pathHelper.dirname(remaining);
+                while (dir !== remaining) {
+                    // Add the segment
+                    const basename = path.basename(remaining);
+                    this.segments.unshift(basename);
+                    // Truncate the last segment
+                    remaining = dir;
+                    dir = pathHelper.dirname(remaining);
+                }
+                // Remainder is the root
+                this.segments.unshift(remaining);
+            }
+        }
+        // Array
+        else {
+            // Must not be empty
+            assert_1.default(itemPath.length > 0, `Parameter 'itemPath' must not be an empty array`);
+            // Each segment
+            for (let i = 0; i < itemPath.length; i++) {
+                let segment = itemPath[i];
+                // Must not be empty
+                assert_1.default(segment, `Parameter 'itemPath' must not contain any empty segments`);
+                // Normalize slashes
+                segment = pathHelper.normalizeSeparators(itemPath[i]);
+                // Root segment
+                if (i === 0 && pathHelper.hasRoot(segment)) {
+                    segment = pathHelper.safeTrimTrailingSeparator(segment);
+                    assert_1.default(segment === pathHelper.dirname(segment), `Parameter 'itemPath' root segment contains information for multiple segments`);
+                    this.segments.push(segment);
+                }
+                // All other segments
+                else {
+                    // Must not contain slash
+                    assert_1.default(!segment.includes(path.sep), `Parameter 'itemPath' contains unexpected path separators`);
+                    this.segments.push(segment);
+                }
+            }
+        }
+    }
+    /**
+     * Converts the path to it's string representation
+     */
+    toString() {
+        // First segment
+        let result = this.segments[0];
+        // All others
+        let skipSlash = result.endsWith(path.sep) || (IS_WINDOWS && /^[A-Z]:$/i.test(result));
+        for (let i = 1; i < this.segments.length; i++) {
+            if (skipSlash) {
+                skipSlash = false;
+            }
+            else {
+                result += path.sep;
+            }
+            result += this.segments[i];
+        }
+        return result;
+    }
+}
+exports.Path = Path;
+//# sourceMappingURL=internal-path.js.map
+
+/***/ }),
+
+/***/ 121:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var sanitizer_exports = {};
+__export(sanitizer_exports, {
+  Sanitizer: () => Sanitizer
+});
+module.exports = __toCommonJS(sanitizer_exports);
+var import_object = __nccwpck_require__(144);
+const RedactedString = "REDACTED";
+const defaultAllowedHeaderNames = [
+  "x-ms-client-request-id",
+  "x-ms-return-client-request-id",
+  "x-ms-useragent",
+  "x-ms-correlation-request-id",
+  "x-ms-request-id",
+  "client-request-id",
+  "ms-cv",
+  "return-client-request-id",
+  "traceparent",
+  "Access-Control-Allow-Credentials",
+  "Access-Control-Allow-Headers",
+  "Access-Control-Allow-Methods",
+  "Access-Control-Allow-Origin",
+  "Access-Control-Expose-Headers",
+  "Access-Control-Max-Age",
+  "Access-Control-Request-Headers",
+  "Access-Control-Request-Method",
+  "Origin",
+  "Accept",
+  "Accept-Encoding",
+  "Cache-Control",
+  "Connection",
+  "Content-Length",
+  "Content-Type",
+  "Date",
+  "ETag",
+  "Expires",
+  "If-Match",
+  "If-Modified-Since",
+  "If-None-Match",
+  "If-Unmodified-Since",
+  "Last-Modified",
+  "Pragma",
+  "Request-Id",
+  "Retry-After",
+  "Server",
+  "Transfer-Encoding",
+  "User-Agent",
+  "WWW-Authenticate"
+];
+const defaultAllowedQueryParameters = ["api-version"];
+class Sanitizer {
+  allowedHeaderNames;
+  allowedQueryParameters;
+  constructor({
+    additionalAllowedHeaderNames: allowedHeaderNames = [],
+    additionalAllowedQueryParameters: allowedQueryParameters = []
+  } = {}) {
+    allowedHeaderNames = defaultAllowedHeaderNames.concat(allowedHeaderNames);
+    allowedQueryParameters = defaultAllowedQueryParameters.concat(allowedQueryParameters);
+    this.allowedHeaderNames = new Set(allowedHeaderNames.map((n) => n.toLowerCase()));
+    this.allowedQueryParameters = new Set(allowedQueryParameters.map((p) => p.toLowerCase()));
+  }
+  /**
+   * Sanitizes an object for logging.
+   * @param obj - The object to sanitize
+   * @returns - The sanitized object as a string
+   */
+  sanitize(obj) {
+    const seen = /* @__PURE__ */ new Set();
+    return JSON.stringify(
+      obj,
+      (key, value) => {
+        if (value instanceof Error) {
+          return {
+            ...value,
+            name: value.name,
+            message: value.message
+          };
+        }
+        if (key === "headers" && (0, import_object.isObject)(value)) {
+          return this.sanitizeHeaders(value);
+        } else if (key === "url" && typeof value === "string") {
+          return this.sanitizeUrl(value);
+        } else if (key === "query" && (0, import_object.isObject)(value)) {
+          return this.sanitizeQuery(value);
+        } else if (key === "body") {
+          return void 0;
+        } else if (key === "response") {
+          return void 0;
+        } else if (key === "operationSpec") {
+          return void 0;
+        } else if (Array.isArray(value) || (0, import_object.isObject)(value)) {
+          if (seen.has(value)) {
+            return "[Circular]";
+          }
+          seen.add(value);
+        }
+        return value;
+      },
+      2
+    );
+  }
+  /**
+   * Sanitizes a URL for logging.
+   * @param value - The URL to sanitize
+   * @returns - The sanitized URL as a string
+   */
+  sanitizeUrl(value) {
+    if (typeof value !== "string" || value === null || value === "") {
+      return value;
+    }
+    const url = new URL(value);
+    if (!url.search) {
+      return value;
+    }
+    for (const [key] of url.searchParams) {
+      if (!this.allowedQueryParameters.has(key.toLowerCase())) {
+        url.searchParams.set(key, RedactedString);
+      }
+    }
+    return url.toString();
+  }
+  sanitizeHeaders(obj) {
+    const sanitized = {};
+    for (const key of Object.keys(obj)) {
+      if (this.allowedHeaderNames.has(key.toLowerCase())) {
+        sanitized[key] = obj[key];
+      } else {
+        sanitized[key] = RedactedString;
+      }
+    }
+    return sanitized;
+  }
+  sanitizeQuery(value) {
+    if (typeof value !== "object" || value === null) {
+      return value;
+    }
+    const sanitized = {};
+    for (const k of Object.keys(value)) {
+      if (this.allowedQueryParameters.has(k.toLowerCase())) {
+        sanitized[k] = value[k];
+      } else {
+        sanitized[k] = RedactedString;
+      }
+    }
+    return sanitized;
+  }
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=sanitizer.js.map
+
+
+/***/ }),
+
+/***/ 122:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blob.js.map
+
+/***/ }),
+
+/***/ 123:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("util");
+
+/***/ }),
+
+/***/ 124:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+module.exports = minimatch
+minimatch.Minimatch = Minimatch
+
+var path = (function () { try { return __nccwpck_require__(242) } catch (e) {}}()) || {
+  sep: '/'
+}
+minimatch.sep = path.sep
+
+var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
+var expand = __nccwpck_require__(464)
+
+var plTypes = {
+  '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},
+  '?': { open: '(?:', close: ')?' },
+  '+': { open: '(?:', close: ')+' },
+  '*': { open: '(?:', close: ')*' },
+  '@': { open: '(?:', close: ')' }
+}
+
+// any single thing other than /
+// don't need to escape / when using new RegExp()
+var qmark = '[^/]'
+
+// * => any number of characters
+var star = qmark + '*?'
+
+// ** when dots are allowed.  Anything goes, except .. and .
+// not (^ or / followed by one or two dots followed by $ or /),
+// followed by anything, any number of times.
+var twoStarDot = '(?:(?!(?:\\\/|^)(?:\\.{1,2})($|\\\/)).)*?'
+
+// not a ^ or / followed by a dot,
+// followed by anything, any number of times.
+var twoStarNoDot = '(?:(?!(?:\\\/|^)\\.).)*?'
+
+// characters that need to be escaped in RegExp.
+var reSpecials = charSet('().*{}+?[]^$\\!')
+
+// "abc" -> { a:true, b:true, c:true }
+function charSet (s) {
+  return s.split('').reduce(function (set, c) {
+    set[c] = true
+    return set
+  }, {})
+}
+
+// normalizes slashes.
+var slashSplit = /\/+/
+
+minimatch.filter = filter
+function filter (pattern, options) {
+  options = options || {}
+  return function (p, i, list) {
+    return minimatch(p, pattern, options)
+  }
+}
+
+function ext (a, b) {
+  b = b || {}
+  var t = {}
+  Object.keys(a).forEach(function (k) {
+    t[k] = a[k]
+  })
+  Object.keys(b).forEach(function (k) {
+    t[k] = b[k]
+  })
+  return t
+}
+
+minimatch.defaults = function (def) {
+  if (!def || typeof def !== 'object' || !Object.keys(def).length) {
+    return minimatch
+  }
+
+  var orig = minimatch
+
+  var m = function minimatch (p, pattern, options) {
+    return orig(p, pattern, ext(def, options))
+  }
+
+  m.Minimatch = function Minimatch (pattern, options) {
+    return new orig.Minimatch(pattern, ext(def, options))
+  }
+  m.Minimatch.defaults = function defaults (options) {
+    return orig.defaults(ext(def, options)).Minimatch
+  }
+
+  m.filter = function filter (pattern, options) {
+    return orig.filter(pattern, ext(def, options))
+  }
+
+  m.defaults = function defaults (options) {
+    return orig.defaults(ext(def, options))
+  }
+
+  m.makeRe = function makeRe (pattern, options) {
+    return orig.makeRe(pattern, ext(def, options))
+  }
+
+  m.braceExpand = function braceExpand (pattern, options) {
+    return orig.braceExpand(pattern, ext(def, options))
+  }
+
+  m.match = function (list, pattern, options) {
+    return orig.match(list, pattern, ext(def, options))
+  }
+
+  return m
+}
+
+Minimatch.defaults = function (def) {
+  return minimatch.defaults(def).Minimatch
+}
+
+function minimatch (p, pattern, options) {
+  assertValidPattern(pattern)
+
+  if (!options) options = {}
+
+  // shortcut: comments match nothing.
+  if (!options.nocomment && pattern.charAt(0) === '#') {
+    return false
+  }
+
+  return new Minimatch(pattern, options).match(p)
+}
+
+function Minimatch (pattern, options) {
+  if (!(this instanceof Minimatch)) {
+    return new Minimatch(pattern, options)
+  }
+
+  assertValidPattern(pattern)
+
+  if (!options) options = {}
+
+  pattern = pattern.trim()
+
+  // windows support: need to use /, not \
+  if (!options.allowWindowsEscape && path.sep !== '/') {
+    pattern = pattern.split(path.sep).join('/')
+  }
+
+  this.options = options
+  this.maxGlobstarRecursion = options.maxGlobstarRecursion !== undefined
+    ? options.maxGlobstarRecursion : 200
+  this.set = []
+  this.pattern = pattern
+  this.regexp = null
+  this.negate = false
+  this.comment = false
+  this.empty = false
+  this.partial = !!options.partial
+
+  // make the set of regexps etc.
+  this.make()
+}
+
+Minimatch.prototype.debug = function () {}
+
+Minimatch.prototype.make = make
+function make () {
+  var pattern = this.pattern
+  var options = this.options
+
+  // empty patterns and comments match nothing.
+  if (!options.nocomment && pattern.charAt(0) === '#') {
+    this.comment = true
+    return
+  }
+  if (!pattern) {
+    this.empty = true
+    return
+  }
+
+  // step 1: figure out negation, etc.
+  this.parseNegate()
+
+  // step 2: expand braces
+  var set = this.globSet = this.braceExpand()
+
+  if (options.debug) this.debug = function debug() { console.error.apply(console, arguments) }
+
+  this.debug(this.pattern, set)
+
+  // step 3: now we have a set, so turn each one into a series of path-portion
+  // matching patterns.
+  // These will be regexps, except in the case of "**", which is
+  // set to the GLOBSTAR object for globstar behavior,
+  // and will not contain any / characters
+  set = this.globParts = set.map(function (s) {
+    return s.split(slashSplit)
+  })
+
+  this.debug(this.pattern, set)
+
+  // glob --> regexps
+  set = set.map(function (s, si, set) {
+    return s.map(this.parse, this)
+  }, this)
+
+  this.debug(this.pattern, set)
+
+  // filter out everything that didn't compile properly.
+  set = set.filter(function (s) {
+    return s.indexOf(false) === -1
+  })
+
+  this.debug(this.pattern, set)
+
+  this.set = set
+}
+
+Minimatch.prototype.parseNegate = parseNegate
+function parseNegate () {
+  var pattern = this.pattern
+  var negate = false
+  var options = this.options
+  var negateOffset = 0
+
+  if (options.nonegate) return
+
+  for (var i = 0, l = pattern.length
+    ; i < l && pattern.charAt(i) === '!'
+    ; i++) {
+    negate = !negate
+    negateOffset++
+  }
+
+  if (negateOffset) this.pattern = pattern.substr(negateOffset)
+  this.negate = negate
+}
+
+// Brace expansion:
+// a{b,c}d -> abd acd
+// a{b,}c -> abc ac
+// a{0..3}d -> a0d a1d a2d a3d
+// a{b,c{d,e}f}g -> abg acdfg acefg
+// a{b,c}d{e,f}g -> abdeg acdeg abdeg abdfg
+//
+// Invalid sets are not expanded.
+// a{2..}b -> a{2..}b
+// a{b}c -> a{b}c
+minimatch.braceExpand = function (pattern, options) {
+  return braceExpand(pattern, options)
+}
+
+Minimatch.prototype.braceExpand = braceExpand
+
+function braceExpand (pattern, options) {
+  if (!options) {
+    if (this instanceof Minimatch) {
+      options = this.options
+    } else {
+      options = {}
+    }
+  }
+
+  pattern = typeof pattern === 'undefined'
+    ? this.pattern : pattern
+
+  assertValidPattern(pattern)
+
+  // Thanks to Yeting Li <https://github.com/yetingli> for
+  // improving this regexp to avoid a ReDOS vulnerability.
+  if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
+    // shortcut. no need to expand.
+    return [pattern]
+  }
+
+  return expand(pattern)
+}
+
+var MAX_PATTERN_LENGTH = 1024 * 64
+var assertValidPattern = function (pattern) {
+  if (typeof pattern !== 'string') {
+    throw new TypeError('invalid pattern')
+  }
+
+  if (pattern.length > MAX_PATTERN_LENGTH) {
+    throw new TypeError('pattern is too long')
+  }
+}
+
+// parse a component of the expanded set.
+// At this point, no pattern may contain "/" in it
+// so we're going to return a 2d array, where each entry is the full
+// pattern, split on '/', and then turned into a regular expression.
+// A regexp is made at the end which joins each array with an
+// escaped /, and another full one which joins each regexp with |.
+//
+// Following the lead of Bash 4.1, note that "**" only has special meaning
+// when it is the *only* thing in a path portion.  Otherwise, any series
+// of * is equivalent to a single *.  Globstar behavior is enabled by
+// default, and can be disabled by setting options.noglobstar.
+Minimatch.prototype.parse = parse
+var SUBPARSE = {}
+function parse (pattern, isSub) {
+  assertValidPattern(pattern)
+
+  var options = this.options
+
+  // shortcuts
+  if (pattern === '**') {
+    if (!options.noglobstar)
+      return GLOBSTAR
+    else
+      pattern = '*'
+  }
+  if (pattern === '') return ''
+
+  var re = ''
+  var hasMagic = !!options.nocase
+  var escaping = false
+  // ? => one single character
+  var patternListStack = []
+  var negativeLists = []
+  var stateChar
+  var inClass = false
+  var reClassStart = -1
+  var classStart = -1
+  // . and .. never match anything that doesn't start with .,
+  // even when options.dot is set.
+  var patternStart = pattern.charAt(0) === '.' ? '' // anything
+  // not (start or / followed by . or .. followed by / or end)
+  : options.dot ? '(?!(?:^|\\\/)\\.{1,2}(?:$|\\\/))'
+  : '(?!\\.)'
+  var self = this
+
+  function clearStateChar () {
+    if (stateChar) {
+      // we had some state-tracking character
+      // that wasn't consumed by this pass.
+      switch (stateChar) {
+        case '*':
+          re += star
+          hasMagic = true
+        break
+        case '?':
+          re += qmark
+          hasMagic = true
+        break
+        default:
+          re += '\\' + stateChar
+        break
+      }
+      self.debug('clearStateChar %j %j', stateChar, re)
+      stateChar = false
+    }
+  }
+
+  for (var i = 0, len = pattern.length, c
+    ; (i < len) && (c = pattern.charAt(i))
+    ; i++) {
+    this.debug('%s\t%s %s %j', pattern, i, re, c)
+
+    // skip over any that are escaped.
+    if (escaping && reSpecials[c]) {
+      re += '\\' + c
+      escaping = false
+      continue
+    }
+
+    switch (c) {
+      /* istanbul ignore next */
+      case '/': {
+        // completely not allowed, even escaped.
+        // Should already be path-split by now.
+        return false
+      }
+
+      case '\\':
+        clearStateChar()
+        escaping = true
+      continue
+
+      // the various stateChar values
+      // for the "extglob" stuff.
+      case '?':
+      case '*':
+      case '+':
+      case '@':
+      case '!':
+        this.debug('%s\t%s %s %j <-- stateChar', pattern, i, re, c)
+
+        // all of those are literals inside a class, except that
+        // the glob [!a] means [^a] in regexp
+        if (inClass) {
+          this.debug('  in class')
+          if (c === '!' && i === classStart + 1) c = '^'
+          re += c
+          continue
+        }
+
+        // coalesce consecutive non-globstar * characters
+        if (c === '*' && stateChar === '*') continue
+
+        // if we already have a stateChar, then it means
+        // that there was something like ** or +? in there.
+        // Handle the stateChar, then proceed with this one.
+        self.debug('call clearStateChar %j', stateChar)
+        clearStateChar()
+        stateChar = c
+        // if extglob is disabled, then +(asdf|foo) isn't a thing.
+        // just clear the statechar *now*, rather than even diving into
+        // the patternList stuff.
+        if (options.noext) clearStateChar()
+      continue
+
+      case '(':
+        if (inClass) {
+          re += '('
+          continue
+        }
+
+        if (!stateChar) {
+          re += '\\('
+          continue
+        }
+
+        patternListStack.push({
+          type: stateChar,
+          start: i - 1,
+          reStart: re.length,
+          open: plTypes[stateChar].open,
+          close: plTypes[stateChar].close
+        })
+        // negation is (?:(?!js)[^/]*)
+        re += stateChar === '!' ? '(?:(?!(?:' : '(?:'
+        this.debug('plType %j %j', stateChar, re)
+        stateChar = false
+      continue
+
+      case ')':
+        if (inClass || !patternListStack.length) {
+          re += '\\)'
+          continue
+        }
+
+        clearStateChar()
+        hasMagic = true
+        var pl = patternListStack.pop()
+        // negation is (?:(?!js)[^/]*)
+        // The others are (?:<pattern>)<type>
+        re += pl.close
+        if (pl.type === '!') {
+          negativeLists.push(pl)
+        }
+        pl.reEnd = re.length
+      continue
+
+      case '|':
+        if (inClass || !patternListStack.length || escaping) {
+          re += '\\|'
+          escaping = false
+          continue
+        }
+
+        clearStateChar()
+        re += '|'
+      continue
+
+      // these are mostly the same in regexp and glob
+      case '[':
+        // swallow any state-tracking char before the [
+        clearStateChar()
+
+        if (inClass) {
+          re += '\\' + c
+          continue
+        }
+
+        inClass = true
+        classStart = i
+        reClassStart = re.length
+        re += c
+      continue
+
+      case ']':
+        //  a right bracket shall lose its special
+        //  meaning and represent itself in
+        //  a bracket expression if it occurs
+        //  first in the list.  -- POSIX.2 2.8.3.2
+        if (i === classStart + 1 || !inClass) {
+          re += '\\' + c
+          escaping = false
+          continue
+        }
+
+        // handle the case where we left a class open.
+        // "[z-a]" is valid, equivalent to "\[z-a\]"
+        // split where the last [ was, make sure we don't have
+        // an invalid re. if so, re-walk the contents of the
+        // would-be class to re-translate any characters that
+        // were passed through as-is
+        // TODO: It would probably be faster to determine this
+        // without a try/catch and a new RegExp, but it's tricky
+        // to do safely.  For now, this is safe and works.
+        var cs = pattern.substring(classStart + 1, i)
+        try {
+          RegExp('[' + cs + ']')
+        } catch (er) {
+          // not a valid class!
+          var sp = this.parse(cs, SUBPARSE)
+          re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]'
+          hasMagic = hasMagic || sp[1]
+          inClass = false
+          continue
+        }
+
+        // finish up the class.
+        hasMagic = true
+        inClass = false
+        re += c
+      continue
+
+      default:
+        // swallow any state char that wasn't consumed
+        clearStateChar()
+
+        if (escaping) {
+          // no need
+          escaping = false
+        } else if (reSpecials[c]
+          && !(c === '^' && inClass)) {
+          re += '\\'
+        }
+
+        re += c
+
+    } // switch
+  } // for
+
+  // handle the case where we left a class open.
+  // "[abc" is valid, equivalent to "\[abc"
+  if (inClass) {
+    // split where the last [ was, and escape it
+    // this is a huge pita.  We now have to re-walk
+    // the contents of the would-be class to re-translate
+    // any characters that were passed through as-is
+    cs = pattern.substr(classStart + 1)
+    sp = this.parse(cs, SUBPARSE)
+    re = re.substr(0, reClassStart) + '\\[' + sp[0]
+    hasMagic = hasMagic || sp[1]
+  }
+
+  // handle the case where we had a +( thing at the *end*
+  // of the pattern.
+  // each pattern list stack adds 3 chars, and we need to go through
+  // and escape any | chars that were passed through as-is for the regexp.
+  // Go through and escape them, taking care not to double-escape any
+  // | chars that were already escaped.
+  for (pl = patternListStack.pop(); pl; pl = patternListStack.pop()) {
+    var tail = re.slice(pl.reStart + pl.open.length)
+    this.debug('setting tail', re, pl)
+    // maybe some even number of \, then maybe 1 \, followed by a |
+    tail = tail.replace(/((?:\\{2}){0,64})(\\?)\|/g, function (_, $1, $2) {
+      if (!$2) {
+        // the | isn't already escaped, so escape it.
+        $2 = '\\'
+      }
+
+      // need to escape all those slashes *again*, without escaping the
+      // one that we need for escaping the | character.  As it works out,
+      // escaping an even number of slashes can be done by simply repeating
+      // it exactly after itself.  That's why this trick works.
+      //
+      // I am sorry that you have to see this.
+      return $1 + $1 + $2 + '|'
+    })
+
+    this.debug('tail=%j\n   %s', tail, tail, pl, re)
+    var t = pl.type === '*' ? star
+      : pl.type === '?' ? qmark
+      : '\\' + pl.type
+
+    hasMagic = true
+    re = re.slice(0, pl.reStart) + t + '\\(' + tail
+  }
+
+  // handle trailing things that only matter at the very end.
+  clearStateChar()
+  if (escaping) {
+    // trailing \\
+    re += '\\\\'
+  }
+
+  // only need to apply the nodot start if the re starts with
+  // something that could conceivably capture a dot
+  var addPatternStart = false
+  switch (re.charAt(0)) {
+    case '[': case '.': case '(': addPatternStart = true
+  }
+
+  // Hack to work around lack of negative lookbehind in JS
+  // A pattern like: *.!(x).!(y|z) needs to ensure that a name
+  // like 'a.xyz.yz' doesn't match.  So, the first negative
+  // lookahead, has to look ALL the way ahead, to the end of
+  // the pattern.
+  for (var n = negativeLists.length - 1; n > -1; n--) {
+    var nl = negativeLists[n]
+
+    var nlBefore = re.slice(0, nl.reStart)
+    var nlFirst = re.slice(nl.reStart, nl.reEnd - 8)
+    var nlLast = re.slice(nl.reEnd - 8, nl.reEnd)
+    var nlAfter = re.slice(nl.reEnd)
+
+    nlLast += nlAfter
+
+    // Handle nested stuff like *(*.js|!(*.json)), where open parens
+    // mean that we should *not* include the ) in the bit that is considered
+    // "after" the negated section.
+    var openParensBefore = nlBefore.split('(').length - 1
+    var cleanAfter = nlAfter
+    for (i = 0; i < openParensBefore; i++) {
+      cleanAfter = cleanAfter.replace(/\)[+*?]?/, '')
+    }
+    nlAfter = cleanAfter
+
+    var dollar = ''
+    if (nlAfter === '' && isSub !== SUBPARSE) {
+      dollar = '$'
+    }
+    var newRe = nlBefore + nlFirst + nlAfter + dollar + nlLast
+    re = newRe
+  }
+
+  // if the re is not "" at this point, then we need to make sure
+  // it doesn't match against an empty path part.
+  // Otherwise a/* will match a/, which it should not.
+  if (re !== '' && hasMagic) {
+    re = '(?=.)' + re
+  }
+
+  if (addPatternStart) {
+    re = patternStart + re
+  }
+
+  // parsing just a piece of a larger pattern.
+  if (isSub === SUBPARSE) {
+    return [re, hasMagic]
+  }
+
+  // skip the regexp for non-magical patterns
+  // unescape anything in it, though, so that it'll be
+  // an exact match against a file etc.
+  if (!hasMagic) {
+    return globUnescape(pattern)
+  }
+
+  var flags = options.nocase ? 'i' : ''
+  try {
+    var regExp = new RegExp('^' + re + '$', flags)
+  } catch (er) /* istanbul ignore next - should be impossible */ {
+    // If it was an invalid regular expression, then it can't match
+    // anything.  This trick looks for a character after the end of
+    // the string, which is of course impossible, except in multi-line
+    // mode, but it's not a /m regex.
+    return new RegExp('$.')
+  }
+
+  regExp._glob = pattern
+  regExp._src = re
+
+  return regExp
+}
+
+minimatch.makeRe = function (pattern, options) {
+  return new Minimatch(pattern, options || {}).makeRe()
+}
+
+Minimatch.prototype.makeRe = makeRe
+function makeRe () {
+  if (this.regexp || this.regexp === false) return this.regexp
+
+  // at this point, this.set is a 2d array of partial
+  // pattern strings, or "**".
+  //
+  // It's better to use .match().  This function shouldn't
+  // be used, really, but it's pretty convenient sometimes,
+  // when you just want to work with a regex.
+  var set = this.set
+
+  if (!set.length) {
+    this.regexp = false
+    return this.regexp
+  }
+  var options = this.options
+
+  var twoStar = options.noglobstar ? star
+    : options.dot ? twoStarDot
+    : twoStarNoDot
+  var flags = options.nocase ? 'i' : ''
+
+  var re = set.map(function (pattern) {
+    return pattern.map(function (p) {
+      return (p === GLOBSTAR) ? twoStar
+      : (typeof p === 'string') ? regExpEscape(p)
+      : p._src
+    }).join('\\\/')
+  }).join('|')
+
+  // must match entire pattern
+  // ending in a * or ** will make it less strict.
+  re = '^(?:' + re + ')$'
+
+  // can match anything, as long as it's not this.
+  if (this.negate) re = '^(?!' + re + ').*$'
+
+  try {
+    this.regexp = new RegExp(re, flags)
+  } catch (ex) /* istanbul ignore next - should be impossible */ {
+    this.regexp = false
+  }
+  return this.regexp
+}
+
+minimatch.match = function (list, pattern, options) {
+  options = options || {}
+  var mm = new Minimatch(pattern, options)
+  list = list.filter(function (f) {
+    return mm.match(f)
+  })
+  if (mm.options.nonull && !list.length) {
+    list.push(pattern)
+  }
+  return list
+}
+
+Minimatch.prototype.match = function match (f, partial) {
+  if (typeof partial === 'undefined') partial = this.partial
+  this.debug('match', f, this.pattern)
+  // short-circuit in the case of busted things.
+  // comments, etc.
+  if (this.comment) return false
+  if (this.empty) return f === ''
+
+  if (f === '/' && partial) return true
+
+  var options = this.options
+
+  // windows: need to use /, not \
+  if (path.sep !== '/') {
+    f = f.split(path.sep).join('/')
+  }
+
+  // treat the test path as a set of pathparts.
+  f = f.split(slashSplit)
+  this.debug(this.pattern, 'split', f)
+
+  // just ONE of the pattern sets in this.set needs to match
+  // in order for it to be valid.  If negating, then just one
+  // match means that we have failed.
+  // Either way, return on the first hit.
+
+  var set = this.set
+  this.debug(this.pattern, 'set', set)
+
+  // Find the basename of the path by looking for the last non-empty segment
+  var filename
+  var i
+  for (i = f.length - 1; i >= 0; i--) {
+    filename = f[i]
+    if (filename) break
+  }
+
+  for (i = 0; i < set.length; i++) {
+    var pattern = set[i]
+    var file = f
+    if (options.matchBase && pattern.length === 1) {
+      file = [filename]
+    }
+    var hit = this.matchOne(file, pattern, partial)
+    if (hit) {
+      if (options.flipNegate) return true
+      return !this.negate
+    }
+  }
+
+  // didn't get any hits.  this is success if it's a negative
+  // pattern, failure otherwise.
+  if (options.flipNegate) return false
+  return this.negate
+}
+
+// set partial to true to test if, for example,
+// "/a/b" matches the start of "/*/b/*/d"
+// Partial means, if you run out of file before you run
+// out of pattern, then that's fine, as long as all
+// the parts match.
+Minimatch.prototype.matchOne = function (file, pattern, partial) {
+  if (pattern.indexOf(GLOBSTAR) !== -1) {
+    return this._matchGlobstar(file, pattern, partial, 0, 0)
+  }
+  return this._matchOne(file, pattern, partial, 0, 0)
+}
+
+Minimatch.prototype._matchGlobstar = function (file, pattern, partial, fileIndex, patternIndex) {
+  var i
+
+  // find first globstar from patternIndex
+  var firstgs = -1
+  for (i = patternIndex; i < pattern.length; i++) {
+    if (pattern[i] === GLOBSTAR) { firstgs = i; break }
+  }
+
+  // find last globstar
+  var lastgs = -1
+  for (i = pattern.length - 1; i >= 0; i--) {
+    if (pattern[i] === GLOBSTAR) { lastgs = i; break }
+  }
+
+  var head = pattern.slice(patternIndex, firstgs)
+  var body = partial ? pattern.slice(firstgs + 1) : pattern.slice(firstgs + 1, lastgs)
+  var tail = partial ? [] : pattern.slice(lastgs + 1)
+
+  // check the head
+  if (head.length) {
+    var fileHead = file.slice(fileIndex, fileIndex + head.length)
+    if (!this._matchOne(fileHead, head, partial, 0, 0)) {
+      return false
+    }
+    fileIndex += head.length
+  }
+
+  // check the tail
+  var fileTailMatch = 0
+  if (tail.length) {
+    if (tail.length + fileIndex > file.length) return false
+
+    var tailStart = file.length - tail.length
+    if (this._matchOne(file, tail, partial, tailStart, 0)) {
+      fileTailMatch = tail.length
+    } else {
+      // affordance for stuff like a/**/* matching a/b/
+      if (file[file.length - 1] !== '' ||
+          fileIndex + tail.length === file.length) {
+        return false
+      }
+      tailStart--
+      if (!this._matchOne(file, tail, partial, tailStart, 0)) {
+        return false
+      }
+      fileTailMatch = tail.length + 1
+    }
+  }
+
+  // if body is empty (single ** between head and tail)
+  if (!body.length) {
+    var sawSome = !!fileTailMatch
+    for (i = fileIndex; i < file.length - fileTailMatch; i++) {
+      var f = String(file[i])
+      sawSome = true
+      if (f === '.' || f === '..' ||
+          (!this.options.dot && f.charAt(0) === '.')) {
+        return false
+      }
+    }
+    return partial || sawSome
+  }
+
+  // split body into segments at each GLOBSTAR
+  var bodySegments = [[[], 0]]
+  var currentBody = bodySegments[0]
+  var nonGsParts = 0
+  var nonGsPartsSums = [0]
+  for (var bi = 0; bi < body.length; bi++) {
+    var b = body[bi]
+    if (b === GLOBSTAR) {
+      nonGsPartsSums.push(nonGsParts)
+      currentBody = [[], 0]
+      bodySegments.push(currentBody)
+    } else {
+      currentBody[0].push(b)
+      nonGsParts++
+    }
+  }
+
+  var idx = bodySegments.length - 1
+  var fileLength = file.length - fileTailMatch
+  for (var si = 0; si < bodySegments.length; si++) {
+    bodySegments[si][1] = fileLength -
+      (nonGsPartsSums[idx--] + bodySegments[si][0].length)
+  }
+
+  return !!this._matchGlobStarBodySections(
+    file, bodySegments, fileIndex, 0, partial, 0, !!fileTailMatch
+  )
+}
+
+// return false for "nope, not matching"
+// return null for "not matching, cannot keep trying"
+Minimatch.prototype._matchGlobStarBodySections = function (
+  file, bodySegments, fileIndex, bodyIndex, partial, globStarDepth, sawTail
+) {
+  var bs = bodySegments[bodyIndex]
+  if (!bs) {
+    // just make sure there are no bad dots
+    for (var i = fileIndex; i < file.length; i++) {
+      sawTail = true
+      var f = file[i]
+      if (f === '.' || f === '..' ||
+          (!this.options.dot && f.charAt(0) === '.')) {
+        return false
+      }
+    }
+    return sawTail
+  }
+
+  var body = bs[0]
+  var after = bs[1]
+  while (fileIndex <= after) {
+    var m = this._matchOne(
+      file.slice(0, fileIndex + body.length),
+      body,
+      partial,
+      fileIndex,
+      0
+    )
+    // if limit exceeded, no match. intentional false negative,
+    // acceptable break in correctness for security.
+    if (m && globStarDepth < this.maxGlobstarRecursion) {
+      var sub = this._matchGlobStarBodySections(
+        file, bodySegments,
+        fileIndex + body.length, bodyIndex + 1,
+        partial, globStarDepth + 1, sawTail
+      )
+      if (sub !== false) {
+        return sub
+      }
+    }
+    var f = file[fileIndex]
+    if (f === '.' || f === '..' ||
+        (!this.options.dot && f.charAt(0) === '.')) {
+      return false
+    }
+    fileIndex++
+  }
+  return partial || null
+}
+
+Minimatch.prototype._matchOne = function (file, pattern, partial, fileIndex, patternIndex) {
+  var fi, pi, fl, pl
+  for (
+    fi = fileIndex, pi = patternIndex, fl = file.length, pl = pattern.length
+    ; (fi < fl) && (pi < pl)
+    ; fi++, pi++
+  ) {
+    this.debug('matchOne loop')
+    var p = pattern[pi]
+    var f = file[fi]
+
+    this.debug(pattern, p, f)
+
+    // should be impossible.
+    // some invalid regexp stuff in the set.
+    /* istanbul ignore if */
+    if (p === false || p === GLOBSTAR) return false
+
+    // something other than **
+    // non-magic patterns just have to match exactly
+    // patterns with magic have been turned into regexps.
+    var hit
+    if (typeof p === 'string') {
+      hit = f === p
+      this.debug('string match', p, f, hit)
+    } else {
+      hit = f.match(p)
+      this.debug('pattern match', p, f, hit)
+    }
+
+    if (!hit) return false
+  }
+
+  // now either we fell off the end of the pattern, or we're done.
+  if (fi === fl && pi === pl) {
+    // ran out of pattern and filename at the same time.
+    // an exact hit!
+    return true
+  } else if (fi === fl) {
+    // ran out of file, but still had pattern left.
+    // this is ok if we're doing the match as part of
+    // a glob fs traversal.
+    return partial
+  } else /* istanbul ignore else */ if (pi === pl) {
+    // ran out of pattern, still have file left.
+    // this is only acceptable if we're on the very last
+    // empty segment of a file with a trailing slash.
+    // a/* should match a/b/
+    return (fi === fl - 1) && (file[fi] === '')
+  }
+
+  // should be unreachable.
+  /* istanbul ignore next */
+  throw new Error('wtf?')
+}
+
+// replace stuff like \* with *
+function globUnescape (s) {
+  return s.replace(/\\(.)/g, '$1')
+}
+
+function regExpEscape (s) {
+  return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+}
+
+
+/***/ }),
+
+/***/ 125:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.argStringToArray = exports.ToolRunner = void 0;
+const os = __importStar(__nccwpck_require__(91));
+const events = __importStar(__nccwpck_require__(447));
+const child = __importStar(__nccwpck_require__(163));
+const path = __importStar(__nccwpck_require__(242));
+const io = __importStar(__nccwpck_require__(287));
+const ioUtil = __importStar(__nccwpck_require__(218));
+const timers_1 = __nccwpck_require__(487);
+/* eslint-disable @typescript-eslint/unbound-method */
+const IS_WINDOWS = process.platform === 'win32';
+/*
+ * Class for running command line tools. Handles quoting and arg parsing in a platform agnostic way.
+ */
+class ToolRunner extends events.EventEmitter {
+    constructor(toolPath, args, options) {
+        super();
+        if (!toolPath) {
+            throw new Error("Parameter 'toolPath' cannot be null or empty.");
+        }
+        this.toolPath = toolPath;
+        this.args = args || [];
+        this.options = options || {};
+    }
+    _debug(message) {
+        if (this.options.listeners && this.options.listeners.debug) {
+            this.options.listeners.debug(message);
+        }
+    }
+    _getCommandString(options, noPrefix) {
+        const toolPath = this._getSpawnFileName();
+        const args = this._getSpawnArgs(options);
+        let cmd = noPrefix ? '' : '[command]'; // omit prefix when piped to a second tool
+        if (IS_WINDOWS) {
+            // Windows + cmd file
+            if (this._isCmdFile()) {
+                cmd += toolPath;
+                for (const a of args) {
+                    cmd += ` ${a}`;
+                }
+            }
+            // Windows + verbatim
+            else if (options.windowsVerbatimArguments) {
+                cmd += `"${toolPath}"`;
+                for (const a of args) {
+                    cmd += ` ${a}`;
+                }
+            }
+            // Windows (regular)
+            else {
+                cmd += this._windowsQuoteCmdArg(toolPath);
+                for (const a of args) {
+                    cmd += ` ${this._windowsQuoteCmdArg(a)}`;
+                }
+            }
+        }
+        else {
+            // OSX/Linux - this can likely be improved with some form of quoting.
+            // creating processes on Unix is fundamentally different than Windows.
+            // on Unix, execvp() takes an arg array.
+            cmd += toolPath;
+            for (const a of args) {
+                cmd += ` ${a}`;
+            }
+        }
+        return cmd;
+    }
+    _processLineBuffer(data, strBuffer, onLine) {
+        try {
+            let s = strBuffer + data.toString();
+            let n = s.indexOf(os.EOL);
+            while (n > -1) {
+                const line = s.substring(0, n);
+                onLine(line);
+                // the rest of the string ...
+                s = s.substring(n + os.EOL.length);
+                n = s.indexOf(os.EOL);
+            }
+            return s;
+        }
+        catch (err) {
+            // streaming lines to console is best effort.  Don't fail a build.
+            this._debug(`error processing line. Failed with error ${err}`);
+            return '';
+        }
+    }
+    _getSpawnFileName() {
+        if (IS_WINDOWS) {
+            if (this._isCmdFile()) {
+                return process.env['COMSPEC'] || 'cmd.exe';
+            }
+        }
+        return this.toolPath;
+    }
+    _getSpawnArgs(options) {
+        if (IS_WINDOWS) {
+            if (this._isCmdFile()) {
+                let argline = `/D /S /C "${this._windowsQuoteCmdArg(this.toolPath)}`;
+                for (const a of this.args) {
+                    argline += ' ';
+                    argline += options.windowsVerbatimArguments
+                        ? a
+                        : this._windowsQuoteCmdArg(a);
+                }
+                argline += '"';
+                return [argline];
+            }
+        }
+        return this.args;
+    }
+    _endsWith(str, end) {
+        return str.endsWith(end);
+    }
+    _isCmdFile() {
+        const upperToolPath = this.toolPath.toUpperCase();
+        return (this._endsWith(upperToolPath, '.CMD') ||
+            this._endsWith(upperToolPath, '.BAT'));
+    }
+    _windowsQuoteCmdArg(arg) {
+        // for .exe, apply the normal quoting rules that libuv applies
+        if (!this._isCmdFile()) {
+            return this._uvQuoteCmdArg(arg);
+        }
+        // otherwise apply quoting rules specific to the cmd.exe command line parser.
+        // the libuv rules are generic and are not designed specifically for cmd.exe
+        // command line parser.
+        //
+        // for a detailed description of the cmd.exe command line parser, refer to
+        // http://stackoverflow.com/questions/4094699/how-does-the-windows-command-interpreter-cmd-exe-parse-scripts/7970912#7970912
+        // need quotes for empty arg
+        if (!arg) {
+            return '""';
+        }
+        // determine whether the arg needs to be quoted
+        const cmdSpecialChars = [
+            ' ',
+            '\t',
+            '&',
+            '(',
+            ')',
+            '[',
+            ']',
+            '{',
+            '}',
+            '^',
+            '=',
+            ';',
+            '!',
+            "'",
+            '+',
+            ',',
+            '`',
+            '~',
+            '|',
+            '<',
+            '>',
+            '"'
+        ];
+        let needsQuotes = false;
+        for (const char of arg) {
+            if (cmdSpecialChars.some(x => x === char)) {
+                needsQuotes = true;
+                break;
+            }
+        }
+        // short-circuit if quotes not needed
+        if (!needsQuotes) {
+            return arg;
+        }
+        // the following quoting rules are very similar to the rules that by libuv applies.
+        //
+        // 1) wrap the string in quotes
+        //
+        // 2) double-up quotes - i.e. " => ""
+        //
+        //    this is different from the libuv quoting rules. libuv replaces " with \", which unfortunately
+        //    doesn't work well with a cmd.exe command line.
+        //
+        //    note, replacing " with "" also works well if the arg is passed to a downstream .NET console app.
+        //    for example, the command line:
+        //          foo.exe "myarg:""my val"""
+        //    is parsed by a .NET console app into an arg array:
+        //          [ "myarg:\"my val\"" ]
+        //    which is the same end result when applying libuv quoting rules. although the actual
+        //    command line from libuv quoting rules would look like:
+        //          foo.exe "myarg:\"my val\""
+        //
+        // 3) double-up slashes that precede a quote,
+        //    e.g.  hello \world    => "hello \world"
+        //          hello\"world    => "hello\\""world"
+        //          hello\\"world   => "hello\\\\""world"
+        //          hello world\    => "hello world\\"
+        //
+        //    technically this is not required for a cmd.exe command line, or the batch argument parser.
+        //    the reasons for including this as a .cmd quoting rule are:
+        //
+        //    a) this is optimized for the scenario where the argument is passed from the .cmd file to an
+        //       external program. many programs (e.g. .NET console apps) rely on the slash-doubling rule.
+        //
+        //    b) it's what we've been doing previously (by deferring to node default behavior) and we
+        //       haven't heard any complaints about that aspect.
+        //
+        // note, a weakness of the quoting rules chosen here, is that % is not escaped. in fact, % cannot be
+        // escaped when used on the command line directly - even though within a .cmd file % can be escaped
+        // by using %%.
+        //
+        // the saving grace is, on the command line, %var% is left as-is if var is not defined. this contrasts
+        // the line parsing rules within a .cmd file, where if var is not defined it is replaced with nothing.
+        //
+        // one option that was explored was replacing % with ^% - i.e. %var% => ^%var^%. this hack would
+        // often work, since it is unlikely that var^ would exist, and the ^ character is removed when the
+        // variable is used. the problem, however, is that ^ is not removed when %* is used to pass the args
+        // to an external program.
+        //
+        // an unexplored potential solution for the % escaping problem, is to create a wrapper .cmd file.
+        // % can be escaped within a .cmd file.
+        let reverse = '"';
+        let quoteHit = true;
+        for (let i = arg.length; i > 0; i--) {
+            // walk the string in reverse
+            reverse += arg[i - 1];
+            if (quoteHit && arg[i - 1] === '\\') {
+                reverse += '\\'; // double the slash
+            }
+            else if (arg[i - 1] === '"') {
+                quoteHit = true;
+                reverse += '"'; // double the quote
+            }
+            else {
+                quoteHit = false;
+            }
+        }
+        reverse += '"';
+        return reverse
+            .split('')
+            .reverse()
+            .join('');
+    }
+    _uvQuoteCmdArg(arg) {
+        // Tool runner wraps child_process.spawn() and needs to apply the same quoting as
+        // Node in certain cases where the undocumented spawn option windowsVerbatimArguments
+        // is used.
+        //
+        // Since this function is a port of quote_cmd_arg from Node 4.x (technically, lib UV,
+        // see https://github.com/nodejs/node/blob/v4.x/deps/uv/src/win/process.c for details),
+        // pasting copyright notice from Node within this function:
+        //
+        //      Copyright Joyent, Inc. and other Node contributors. All rights reserved.
+        //
+        //      Permission is hereby granted, free of charge, to any person obtaining a copy
+        //      of this software and associated documentation files (the "Software"), to
+        //      deal in the Software without restriction, including without limitation the
+        //      rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+        //      sell copies of the Software, and to permit persons to whom the Software is
+        //      furnished to do so, subject to the following conditions:
+        //
+        //      The above copyright notice and this permission notice shall be included in
+        //      all copies or substantial portions of the Software.
+        //
+        //      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        //      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        //      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        //      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        //      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+        //      FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+        //      IN THE SOFTWARE.
+        if (!arg) {
+            // Need double quotation for empty argument
+            return '""';
+        }
+        if (!arg.includes(' ') && !arg.includes('\t') && !arg.includes('"')) {
+            // No quotation needed
+            return arg;
+        }
+        if (!arg.includes('"') && !arg.includes('\\')) {
+            // No embedded double quotes or backslashes, so I can just wrap
+            // quote marks around the whole thing.
+            return `"${arg}"`;
+        }
+        // Expected input/output:
+        //   input : hello"world
+        //   output: "hello\"world"
+        //   input : hello""world
+        //   output: "hello\"\"world"
+        //   input : hello\world
+        //   output: hello\world
+        //   input : hello\\world
+        //   output: hello\\world
+        //   input : hello\"world
+        //   output: "hello\\\"world"
+        //   input : hello\\"world
+        //   output: "hello\\\\\"world"
+        //   input : hello world\
+        //   output: "hello world\\" - note the comment in libuv actually reads "hello world\"
+        //                             but it appears the comment is wrong, it should be "hello world\\"
+        let reverse = '"';
+        let quoteHit = true;
+        for (let i = arg.length; i > 0; i--) {
+            // walk the string in reverse
+            reverse += arg[i - 1];
+            if (quoteHit && arg[i - 1] === '\\') {
+                reverse += '\\';
+            }
+            else if (arg[i - 1] === '"') {
+                quoteHit = true;
+                reverse += '\\';
+            }
+            else {
+                quoteHit = false;
+            }
+        }
+        reverse += '"';
+        return reverse
+            .split('')
+            .reverse()
+            .join('');
+    }
+    _cloneExecOptions(options) {
+        options = options || {};
+        const result = {
+            cwd: options.cwd || process.cwd(),
+            env: options.env || process.env,
+            silent: options.silent || false,
+            windowsVerbatimArguments: options.windowsVerbatimArguments || false,
+            failOnStdErr: options.failOnStdErr || false,
+            ignoreReturnCode: options.ignoreReturnCode || false,
+            delay: options.delay || 10000
+        };
+        result.outStream = options.outStream || process.stdout;
+        result.errStream = options.errStream || process.stderr;
+        return result;
+    }
+    _getSpawnOptions(options, toolPath) {
+        options = options || {};
+        const result = {};
+        result.cwd = options.cwd;
+        result.env = options.env;
+        result['windowsVerbatimArguments'] =
+            options.windowsVerbatimArguments || this._isCmdFile();
+        if (options.windowsVerbatimArguments) {
+            result.argv0 = `"${toolPath}"`;
+        }
+        return result;
+    }
+    /**
+     * Exec a tool.
+     * Output will be streamed to the live console.
+     * Returns promise with return code
+     *
+     * @param     tool     path to tool to exec
+     * @param     options  optional exec options.  See ExecOptions
+     * @returns   number
+     */
+    exec() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // root the tool path if it is unrooted and contains relative pathing
+            if (!ioUtil.isRooted(this.toolPath) &&
+                (this.toolPath.includes('/') ||
+                    (IS_WINDOWS && this.toolPath.includes('\\')))) {
+                // prefer options.cwd if it is specified, however options.cwd may also need to be rooted
+                this.toolPath = path.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
+            }
+            // if the tool is only a file name, then resolve it from the PATH
+            // otherwise verify it exists (add extension on Windows if necessary)
+            this.toolPath = yield io.which(this.toolPath, true);
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                this._debug(`exec tool: ${this.toolPath}`);
+                this._debug('arguments:');
+                for (const arg of this.args) {
+                    this._debug(`   ${arg}`);
+                }
+                const optionsNonNull = this._cloneExecOptions(this.options);
+                if (!optionsNonNull.silent && optionsNonNull.outStream) {
+                    optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os.EOL);
+                }
+                const state = new ExecState(optionsNonNull, this.toolPath);
+                state.on('debug', (message) => {
+                    this._debug(message);
+                });
+                if (this.options.cwd && !(yield ioUtil.exists(this.options.cwd))) {
+                    return reject(new Error(`The cwd: ${this.options.cwd} does not exist!`));
+                }
+                const fileName = this._getSpawnFileName();
+                const cp = child.spawn(fileName, this._getSpawnArgs(optionsNonNull), this._getSpawnOptions(this.options, fileName));
+                let stdbuffer = '';
+                if (cp.stdout) {
+                    cp.stdout.on('data', (data) => {
+                        if (this.options.listeners && this.options.listeners.stdout) {
+                            this.options.listeners.stdout(data);
+                        }
+                        if (!optionsNonNull.silent && optionsNonNull.outStream) {
+                            optionsNonNull.outStream.write(data);
+                        }
+                        stdbuffer = this._processLineBuffer(data, stdbuffer, (line) => {
+                            if (this.options.listeners && this.options.listeners.stdline) {
+                                this.options.listeners.stdline(line);
+                            }
+                        });
+                    });
+                }
+                let errbuffer = '';
+                if (cp.stderr) {
+                    cp.stderr.on('data', (data) => {
+                        state.processStderr = true;
+                        if (this.options.listeners && this.options.listeners.stderr) {
+                            this.options.listeners.stderr(data);
+                        }
+                        if (!optionsNonNull.silent &&
+                            optionsNonNull.errStream &&
+                            optionsNonNull.outStream) {
+                            const s = optionsNonNull.failOnStdErr
+                                ? optionsNonNull.errStream
+                                : optionsNonNull.outStream;
+                            s.write(data);
+                        }
+                        errbuffer = this._processLineBuffer(data, errbuffer, (line) => {
+                            if (this.options.listeners && this.options.listeners.errline) {
+                                this.options.listeners.errline(line);
+                            }
+                        });
+                    });
+                }
+                cp.on('error', (err) => {
+                    state.processError = err.message;
+                    state.processExited = true;
+                    state.processClosed = true;
+                    state.CheckComplete();
+                });
+                cp.on('exit', (code) => {
+                    state.processExitCode = code;
+                    state.processExited = true;
+                    this._debug(`Exit code ${code} received from tool '${this.toolPath}'`);
+                    state.CheckComplete();
+                });
+                cp.on('close', (code) => {
+                    state.processExitCode = code;
+                    state.processExited = true;
+                    state.processClosed = true;
+                    this._debug(`STDIO streams have closed for tool '${this.toolPath}'`);
+                    state.CheckComplete();
+                });
+                state.on('done', (error, exitCode) => {
+                    if (stdbuffer.length > 0) {
+                        this.emit('stdline', stdbuffer);
+                    }
+                    if (errbuffer.length > 0) {
+                        this.emit('errline', errbuffer);
+                    }
+                    cp.removeAllListeners();
+                    if (error) {
+                        reject(error);
+                    }
+                    else {
+                        resolve(exitCode);
+                    }
+                });
+                if (this.options.input) {
+                    if (!cp.stdin) {
+                        throw new Error('child process missing stdin');
+                    }
+                    cp.stdin.end(this.options.input);
+                }
+            }));
+        });
+    }
+}
+exports.ToolRunner = ToolRunner;
+/**
+ * Convert an arg string to an array of args. Handles escaping
+ *
+ * @param    argString   string of arguments
+ * @returns  string[]    array of arguments
+ */
+function argStringToArray(argString) {
+    const args = [];
+    let inQuotes = false;
+    let escaped = false;
+    let arg = '';
+    function append(c) {
+        // we only escape double quotes.
+        if (escaped && c !== '"') {
+            arg += '\\';
+        }
+        arg += c;
+        escaped = false;
+    }
+    for (let i = 0; i < argString.length; i++) {
+        const c = argString.charAt(i);
+        if (c === '"') {
+            if (!escaped) {
+                inQuotes = !inQuotes;
+            }
+            else {
+                append(c);
+            }
+            continue;
+        }
+        if (c === '\\' && escaped) {
+            append(c);
+            continue;
+        }
+        if (c === '\\' && inQuotes) {
+            escaped = true;
+            continue;
+        }
+        if (c === ' ' && !inQuotes) {
+            if (arg.length > 0) {
+                args.push(arg);
+                arg = '';
+            }
+            continue;
+        }
+        append(c);
+    }
+    if (arg.length > 0) {
+        args.push(arg.trim());
+    }
+    return args;
+}
+exports.argStringToArray = argStringToArray;
+class ExecState extends events.EventEmitter {
+    constructor(options, toolPath) {
+        super();
+        this.processClosed = false; // tracks whether the process has exited and stdio is closed
+        this.processError = '';
+        this.processExitCode = 0;
+        this.processExited = false; // tracks whether the process has exited
+        this.processStderr = false; // tracks whether stderr was written to
+        this.delay = 10000; // 10 seconds
+        this.done = false;
+        this.timeout = null;
+        if (!toolPath) {
+            throw new Error('toolPath must not be empty');
+        }
+        this.options = options;
+        this.toolPath = toolPath;
+        if (options.delay) {
+            this.delay = options.delay;
+        }
+    }
+    CheckComplete() {
+        if (this.done) {
+            return;
+        }
+        if (this.processClosed) {
+            this._setResult();
+        }
+        else if (this.processExited) {
+            this.timeout = timers_1.setTimeout(ExecState.HandleTimeout, this.delay, this);
+        }
+    }
+    _debug(message) {
+        this.emit('debug', message);
+    }
+    _setResult() {
+        // determine whether there is an error
+        let error;
+        if (this.processExited) {
+            if (this.processError) {
+                error = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
+            }
+            else if (this.processExitCode !== 0 && !this.options.ignoreReturnCode) {
+                error = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
+            }
+            else if (this.processStderr && this.options.failOnStdErr) {
+                error = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
+            }
+        }
+        // clear the timeout
+        if (this.timeout) {
+            clearTimeout(this.timeout);
+            this.timeout = null;
+        }
+        this.done = true;
+        this.emit('done', error, this.processExitCode);
+    }
+    static HandleTimeout(state) {
+        if (state.done) {
+            return;
+        }
+        if (!state.processClosed && state.processExited) {
+            const message = `The STDIO streams did not close within ${state.delay /
+                1000} seconds of the exit event from process '${state.toolPath}'. This may indicate a child process inherited the STDIO streams and has not yet exited.`;
+            state._debug(message);
+        }
+        state._setResult();
+    }
+}
+//# sourceMappingURL=toolrunner.js.map
+
+/***/ }),
+
+/***/ 126:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.StorageSharedKeyCredentialPolicy = void 0;
+const constants_js_1 = __nccwpck_require__(34);
+const utils_common_js_1 = __nccwpck_require__(451);
+const CredentialPolicy_js_1 = __nccwpck_require__(300);
+const SharedKeyComparator_js_1 = __nccwpck_require__(173);
+/**
+ * StorageSharedKeyCredentialPolicy is a policy used to sign HTTP request with a shared key.
+ */
+class StorageSharedKeyCredentialPolicy extends CredentialPolicy_js_1.CredentialPolicy {
+    /**
+     * Reference to StorageSharedKeyCredential which generates StorageSharedKeyCredentialPolicy
+     */
+    factory;
+    /**
+     * Creates an instance of StorageSharedKeyCredentialPolicy.
+     * @param nextPolicy -
+     * @param options -
+     * @param factory -
+     */
+    constructor(nextPolicy, options, factory) {
+        super(nextPolicy, options);
+        this.factory = factory;
+    }
+    /**
+     * Signs request.
+     *
+     * @param request -
+     */
+    signRequest(request) {
+        request.headers.set(constants_js_1.HeaderConstants.X_MS_DATE, new Date().toUTCString());
+        if (request.body &&
+            (typeof request.body === "string" || request.body !== undefined) &&
+            request.body.length > 0) {
+            request.headers.set(constants_js_1.HeaderConstants.CONTENT_LENGTH, Buffer.byteLength(request.body));
+        }
+        const stringToSign = [
+            request.method.toUpperCase(),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_LANGUAGE),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_ENCODING),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_LENGTH),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_MD5),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.CONTENT_TYPE),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.DATE),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.IF_MODIFIED_SINCE),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.IF_MATCH),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.IF_NONE_MATCH),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.IF_UNMODIFIED_SINCE),
+            this.getHeaderValueToSign(request, constants_js_1.HeaderConstants.RANGE),
+        ].join("\n") +
+            "\n" +
+            this.getCanonicalizedHeadersString(request) +
+            this.getCanonicalizedResourceString(request);
+        const signature = this.factory.computeHMACSHA256(stringToSign);
+        request.headers.set(constants_js_1.HeaderConstants.AUTHORIZATION, `SharedKey ${this.factory.accountName}:${signature}`);
+        // console.log(`[URL]:${request.url}`);
+        // console.log(`[HEADERS]:${request.headers.toString()}`);
+        // console.log(`[STRING TO SIGN]:${JSON.stringify(stringToSign)}`);
+        // console.log(`[KEY]: ${request.headers.get(HeaderConstants.AUTHORIZATION)}`);
+        return request;
+    }
+    /**
+     * Retrieve header value according to shared key sign rules.
+     * @see https://learn.microsoft.com/rest/api/storageservices/authenticate-with-shared-key
+     *
+     * @param request -
+     * @param headerName -
+     */
+    getHeaderValueToSign(request, headerName) {
+        const value = request.headers.get(headerName);
+        if (!value) {
+            return "";
+        }
+        // When using version 2015-02-21 or later, if Content-Length is zero, then
+        // set the Content-Length part of the StringToSign to an empty string.
+        // https://learn.microsoft.com/rest/api/storageservices/authenticate-with-shared-key
+        if (headerName === constants_js_1.HeaderConstants.CONTENT_LENGTH && value === "0") {
+            return "";
+        }
+        return value;
+    }
+    /**
+     * To construct the CanonicalizedHeaders portion of the signature string, follow these steps:
+     * 1. Retrieve all headers for the resource that begin with x-ms-, including the x-ms-date header.
+     * 2. Convert each HTTP header name to lowercase.
+     * 3. Sort the headers lexicographically by header name, in ascending order.
+     *    Each header may appear only once in the string.
+     * 4. Replace any linear whitespace in the header value with a single space.
+     * 5. Trim any whitespace around the colon in the header.
+     * 6. Finally, append a new-line character to each canonicalized header in the resulting list.
+     *    Construct the CanonicalizedHeaders string by concatenating all headers in this list into a single string.
+     *
+     * @param request -
+     */
+    getCanonicalizedHeadersString(request) {
+        let headersArray = request.headers.headersArray().filter((value) => {
+            return value.name.toLowerCase().startsWith(constants_js_1.HeaderConstants.PREFIX_FOR_STORAGE);
+        });
+        headersArray.sort((a, b) => {
+            return (0, SharedKeyComparator_js_1.compareHeader)(a.name.toLowerCase(), b.name.toLowerCase());
+        });
+        // Remove duplicate headers
+        headersArray = headersArray.filter((value, index, array) => {
+            if (index > 0 && value.name.toLowerCase() === array[index - 1].name.toLowerCase()) {
+                return false;
+            }
+            return true;
+        });
+        let canonicalizedHeadersStringToSign = "";
+        headersArray.forEach((header) => {
+            canonicalizedHeadersStringToSign += `${header.name
+                .toLowerCase()
+                .trimRight()}:${header.value.trimLeft()}\n`;
+        });
+        return canonicalizedHeadersStringToSign;
+    }
+    /**
+     * Retrieves the webResource canonicalized resource string.
+     *
+     * @param request -
+     */
+    getCanonicalizedResourceString(request) {
+        const path = (0, utils_common_js_1.getURLPath)(request.url) || "/";
+        let canonicalizedResourceString = "";
+        canonicalizedResourceString += `/${this.factory.accountName}${path}`;
+        const queries = (0, utils_common_js_1.getURLQueries)(request.url);
+        const lowercaseQueries = {};
+        if (queries) {
+            const queryKeys = [];
+            for (const key in queries) {
+                if (Object.prototype.hasOwnProperty.call(queries, key)) {
+                    const lowercaseKey = key.toLowerCase();
+                    lowercaseQueries[lowercaseKey] = queries[key];
+                    queryKeys.push(lowercaseKey);
+                }
+            }
+            queryKeys.sort();
+            for (const key of queryKeys) {
+                canonicalizedResourceString += `\n${key}:${decodeURIComponent(lowercaseQueries[key])}`;
+            }
+        }
+        return canonicalizedResourceString;
+    }
+}
+exports.StorageSharedKeyCredentialPolicy = StorageSharedKeyCredentialPolicy;
+//# sourceMappingURL=StorageSharedKeyCredentialPolicy.js.map
+
+/***/ }),
+
+/***/ 127:
+/***/ ((module) => {
+
+"use strict";
+
+
+// https://wicg.github.io/cookie-store/#cookie-maximum-attribute-value-size
+const maxAttributeValueSize = 1024
+
+// https://wicg.github.io/cookie-store/#cookie-maximum-name-value-pair-size
+const maxNameValuePairSize = 4096
+
+module.exports = {
+  maxAttributeValueSize,
+  maxNameValuePairSize
 }
 
 
@@ -26528,7 +26597,7 @@ function consumeEnd (consume) {
       resolve(dst.buffer)
     } else if (type === 'blob') {
       if (!Blob) {
-        Blob = (__nccwpck_require__(118).Blob)
+        Blob = (__nccwpck_require__(119).Blob)
       }
       resolve(new Blob(body, { type: stream[kContentType] }))
     }
@@ -26931,7 +27000,7 @@ exports.OidcClient = OidcClient;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BinaryReader = exports.binaryReadOptions = void 0;
 const binary_format_contract_1 = __nccwpck_require__(323);
-const pb_long_1 = __nccwpck_require__(116);
+const pb_long_1 = __nccwpck_require__(117);
 const goog_varint_1 = __nccwpck_require__(199);
 const defaultsRead = {
     readUnknownField: true,
@@ -27527,7 +27596,7 @@ async function parseXML(str, opts = {}) {
 
 module.exports.request = __nccwpck_require__(488)
 module.exports.stream = __nccwpck_require__(341)
-module.exports.pipeline = __nccwpck_require__(104)
+module.exports.pipeline = __nccwpck_require__(105)
 module.exports.upgrade = __nccwpck_require__(411)
 module.exports.connect = __nccwpck_require__(357)
 
@@ -28160,7 +28229,7 @@ var import_sha256 = __nccwpck_require__(196);
 var import_uuidUtils = __nccwpck_require__(376);
 var import_checkEnvironment = __nccwpck_require__(417);
 var import_bytesEncoding = __nccwpck_require__(280);
-var import_sanitizer = __nccwpck_require__(120);
+var import_sanitizer = __nccwpck_require__(121);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (0);
 //# sourceMappingURL=internal.js.map
@@ -30318,9 +30387,9 @@ module.exports = require("child_process");
  */
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const tslib_1 = __nccwpck_require__(211);
-tslib_1.__exportStar(__nccwpck_require__(117), exports);
+tslib_1.__exportStar(__nccwpck_require__(118), exports);
 tslib_1.__exportStar(__nccwpck_require__(177), exports);
-tslib_1.__exportStar(__nccwpck_require__(121), exports);
+tslib_1.__exportStar(__nccwpck_require__(122), exports);
 tslib_1.__exportStar(__nccwpck_require__(307), exports);
 tslib_1.__exportStar(__nccwpck_require__(204), exports);
 tslib_1.__exportStar(__nccwpck_require__(265), exports);
@@ -41116,7 +41185,7 @@ const core_rest_pipeline_1 = __nccwpck_require__(100);
 const core_client_1 = __nccwpck_require__(418);
 const core_xml_1 = __nccwpck_require__(190);
 const core_auth_1 = __nccwpck_require__(490);
-const log_js_1 = __nccwpck_require__(105);
+const log_js_1 = __nccwpck_require__(106);
 const storage_common_1 = __nccwpck_require__(271);
 const constants_js_1 = __nccwpck_require__(147);
 Object.defineProperty(exports, "StorageOAuthScopes", ({ enumerable: true, get: function () { return constants_js_1.StorageOAuthScopes; } }));
@@ -41435,7 +41504,7 @@ const models_js_1 = __nccwpck_require__(395);
 const PageBlobRangeResponse_js_1 = __nccwpck_require__(27);
 const Pipeline_js_1 = __nccwpck_require__(179);
 const BlobStartCopyFromUrlPoller_js_1 = __nccwpck_require__(510);
-const Range_js_1 = __nccwpck_require__(103);
+const Range_js_1 = __nccwpck_require__(104);
 const StorageClient_js_1 = __nccwpck_require__(433);
 const Batch_js_1 = __nccwpck_require__(90);
 const storage_common_2 = __nccwpck_require__(271);
@@ -44284,7 +44353,7 @@ exports.ReflectionBinaryWriter = void 0;
 const binary_format_contract_1 = __nccwpck_require__(323);
 const reflection_info_1 = __nccwpck_require__(431);
 const assert_1 = __nccwpck_require__(462);
-const pb_long_1 = __nccwpck_require__(116);
+const pb_long_1 = __nccwpck_require__(117);
 /**
  * Writes proto3 messages in binary format using reflection information.
  *
@@ -45388,7 +45457,7 @@ module.exports = require("util/types");
 "use strict";
 
 
-const { promisify } = __nccwpck_require__(122)
+const { promisify } = __nccwpck_require__(123)
 const Client = __nccwpck_require__(87)
 const { buildMockDispatch } = __nccwpck_require__(7)
 const {
@@ -46619,7 +46688,7 @@ const { isBlobLike, toUSVString, makeIterator } = __nccwpck_require__(493)
 const { kState } = __nccwpck_require__(13)
 const { File: UndiciFile, FileLike, isFileLike } = __nccwpck_require__(349)
 const { webidl } = __nccwpck_require__(435)
-const { Blob, File: NativeFile } = __nccwpck_require__(118)
+const { Blob, File: NativeFile } = __nccwpck_require__(119)
 
 /** @type {globalThis['File']} */
 const File = NativeFile ?? UndiciFile
@@ -47108,7 +47177,7 @@ __export(httpClientAdapter_exports, {
 });
 module.exports = __toCommonJS(httpClientAdapter_exports);
 var import_response = __nccwpck_require__(392);
-var import_util = __nccwpck_require__(108);
+var import_util = __nccwpck_require__(109);
 function convertHttpClient(requestPolicyClient) {
   return {
     sendRequest: async (request) => {
@@ -52306,7 +52375,7 @@ module.exports = {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BinaryWriter = exports.binaryWriteOptions = void 0;
-const pb_long_1 = __nccwpck_require__(116);
+const pb_long_1 = __nccwpck_require__(117);
 const goog_varint_1 = __nccwpck_require__(199);
 const assert_1 = __nccwpck_require__(462);
 const defaultsWrite = {
@@ -52550,7 +52619,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AvroReadableFromStream = void 0;
 const AvroReadable_js_1 = __nccwpck_require__(370);
 const abort_controller_1 = __nccwpck_require__(473);
-const buffer_1 = __nccwpck_require__(118);
+const buffer_1 = __nccwpck_require__(119);
 const ABORT_ERROR = new abort_controller_1.AbortError("Reading from the avro stream was aborted.");
 class AvroReadableFromStream extends AvroReadable_js_1.AvroReadable {
     _position;
@@ -53076,7 +53145,7 @@ exports.retryHttpClientResponse = retryHttpClientResponse;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageSharedKeyCredential = void 0;
 const node_crypto_1 = __nccwpck_require__(269);
-const StorageSharedKeyCredentialPolicy_js_1 = __nccwpck_require__(125);
+const StorageSharedKeyCredentialPolicy_js_1 = __nccwpck_require__(126);
 const Credential_js_1 = __nccwpck_require__(94);
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -54327,7 +54396,7 @@ tslib_1.__exportStar(__nccwpck_require__(300), exports);
 tslib_1.__exportStar(__nccwpck_require__(202), exports);
 tslib_1.__exportStar(__nccwpck_require__(441), exports);
 tslib_1.__exportStar(__nccwpck_require__(165), exports);
-tslib_1.__exportStar(__nccwpck_require__(125), exports);
+tslib_1.__exportStar(__nccwpck_require__(126), exports);
 tslib_1.__exportStar(__nccwpck_require__(75), exports);
 tslib_1.__exportStar(__nccwpck_require__(405), exports);
 tslib_1.__exportStar(__nccwpck_require__(167), exports);
@@ -56502,7 +56571,7 @@ exports.restoreSoloCache = restoreSoloCache;
 exports.verifyRestoredToolchain = verifyRestoredToolchain;
 const node_crypto_1 = __nccwpck_require__(269);
 const fs = __importStar(__nccwpck_require__(243));
-const fsp = __importStar(__nccwpck_require__(107));
+const fsp = __importStar(__nccwpck_require__(108));
 const path = __importStar(__nccwpck_require__(485));
 const cache = __importStar(__nccwpck_require__(209));
 const exec = __importStar(__nccwpck_require__(16));
@@ -56866,7 +56935,7 @@ __export(userAgent_exports, {
   getUserAgentValue: () => getUserAgentValue
 });
 module.exports = __toCommonJS(userAgent_exports);
-var import_userAgentPlatform = __nccwpck_require__(115);
+var import_userAgentPlatform = __nccwpck_require__(116);
 var import_constants = __nccwpck_require__(157);
 function getUserAgentString(telemetryInfo) {
   const parts = [];
@@ -57960,7 +58029,7 @@ const { WebsocketFrameSend } = __nccwpck_require__(183)
 const { ByteParser } = __nccwpck_require__(459)
 const { kEnumerableProperty, isBlobLike } = __nccwpck_require__(66)
 const { getGlobalDispatcher } = __nccwpck_require__(360)
-const { types } = __nccwpck_require__(122)
+const { types } = __nccwpck_require__(123)
 
 let experimentalWarned = false
 
@@ -59518,7 +59587,7 @@ const core_rest_pipeline_1 = __nccwpck_require__(100);
 const core_http_compat_1 = __nccwpck_require__(69);
 const constants_js_1 = __nccwpck_require__(147);
 const BatchUtils_js_1 = __nccwpck_require__(252);
-const log_js_1 = __nccwpck_require__(105);
+const log_js_1 = __nccwpck_require__(106);
 const HTTP_HEADER_DELIMITER = ": ";
 const SPACE_DELIMITER = " ";
 const NOT_FOUND = -1;
@@ -62233,7 +62302,7 @@ exports.ReflectionJsonReader = void 0;
 const json_typings_1 = __nccwpck_require__(377);
 const base64_1 = __nccwpck_require__(294);
 const reflection_info_1 = __nccwpck_require__(431);
-const pb_long_1 = __nccwpck_require__(116);
+const pb_long_1 = __nccwpck_require__(117);
 const assert_1 = __nccwpck_require__(462);
 const reflection_long_convert_1 = __nccwpck_require__(156);
 /**
@@ -63015,7 +63084,7 @@ function createTracingClient(options) {
 "use strict";
 
 
-const { promisify } = __nccwpck_require__(122)
+const { promisify } = __nccwpck_require__(123)
 const Pool = __nccwpck_require__(327)
 const { buildMockDispatch } = __nccwpck_require__(7)
 const {
@@ -64496,8 +64565,8 @@ exports.BufferScheduler = BufferScheduler;
 "use strict";
 
 
-const { Blob, File: NativeFile } = __nccwpck_require__(118)
-const { types } = __nccwpck_require__(122)
+const { Blob, File: NativeFile } = __nccwpck_require__(119)
+const { types } = __nccwpck_require__(123)
 const { kState } = __nccwpck_require__(13)
 const { isBlobLike } = __nccwpck_require__(493)
 const { webidl } = __nccwpck_require__(435)
@@ -69466,7 +69535,7 @@ __export(response_exports, {
 });
 module.exports = __toCommonJS(response_exports);
 var import_core_rest_pipeline = __nccwpck_require__(100);
-var import_util = __nccwpck_require__(108);
+var import_util = __nccwpck_require__(109);
 const originalResponse = /* @__PURE__ */ Symbol("Original FullOperationResponse");
 function toCompatResponse(response, options) {
   let request = (0, import_util.toWebResourceLike)(response.request);
@@ -70634,7 +70703,7 @@ exports.CacheService = new runtime_rpc_1.ServiceType("github.actions.results.api
 "use strict";
 
 
-const { maxNameValuePairSize, maxAttributeValueSize } = __nccwpck_require__(126)
+const { maxNameValuePairSize, maxAttributeValueSize } = __nccwpck_require__(127)
 const { isCTLExcludingHtab } = __nccwpck_require__(390)
 const { collectASequenceOfCodePointsFast } = __nccwpck_require__(23)
 const assert = __nccwpck_require__(501)
@@ -72485,7 +72554,7 @@ Object.defineProperty(exports, "deserializationPolicyName", ({ enumerable: true,
 var serializationPolicy_js_1 = __nccwpck_require__(467);
 Object.defineProperty(exports, "serializationPolicy", ({ enumerable: true, get: function () { return serializationPolicy_js_1.serializationPolicy; } }));
 Object.defineProperty(exports, "serializationPolicyName", ({ enumerable: true, get: function () { return serializationPolicy_js_1.serializationPolicyName; } }));
-var authorizeRequestOnClaimChallenge_js_1 = __nccwpck_require__(111);
+var authorizeRequestOnClaimChallenge_js_1 = __nccwpck_require__(112);
 Object.defineProperty(exports, "authorizeRequestOnClaimChallenge", ({ enumerable: true, get: function () { return authorizeRequestOnClaimChallenge_js_1.authorizeRequestOnClaimChallenge; } }));
 var authorizeRequestOnTenantChallenge_js_1 = __nccwpck_require__(169);
 Object.defineProperty(exports, "authorizeRequestOnTenantChallenge", ({ enumerable: true, get: function () { return authorizeRequestOnTenantChallenge_js_1.authorizeRequestOnTenantChallenge; } }));
@@ -72816,7 +72885,7 @@ var import_AbortError = __nccwpck_require__(9);
 var import_httpHeaders = __nccwpck_require__(463);
 var import_restError = __nccwpck_require__(423);
 var import_log = __nccwpck_require__(150);
-var import_sanitizer = __nccwpck_require__(120);
+var import_sanitizer = __nccwpck_require__(121);
 const DEFAULT_TLS_SETTINGS = {};
 function isReadableStream(body) {
   return body && typeof body.pipe === "function";
@@ -73304,7 +73373,7 @@ __export(restError_exports, {
 module.exports = __toCommonJS(restError_exports);
 var import_error = __nccwpck_require__(152);
 var import_inspect = __nccwpck_require__(1);
-var import_sanitizer = __nccwpck_require__(120);
+var import_sanitizer = __nccwpck_require__(121);
 const errorSanitizer = new import_sanitizer.Sanitizer();
 class RestError extends Error {
   /**
@@ -73557,7 +73626,7 @@ Object.defineProperty(exports, "StorageBrowserPolicy", ({ enumerable: true, get:
 Object.defineProperty(exports, "StorageBrowserPolicyFactory", ({ enumerable: true, get: function () { return storage_common_1.StorageBrowserPolicyFactory; } }));
 tslib_1.__exportStar(__nccwpck_require__(500), exports);
 tslib_1.__exportStar(__nccwpck_require__(314), exports);
-var log_js_1 = __nccwpck_require__(105);
+var log_js_1 = __nccwpck_require__(106);
 Object.defineProperty(exports, "logger", ({ enumerable: true, get: function () { return log_js_1.logger; } }));
 //# sourceMappingURL=index.js.map
 
@@ -73876,7 +73945,7 @@ __export(sendRequest_exports, {
 module.exports = __toCommonJS(sendRequest_exports);
 var import_restError = __nccwpck_require__(423);
 var import_httpHeaders = __nccwpck_require__(463);
-var import_pipelineRequest = __nccwpck_require__(114);
+var import_pipelineRequest = __nccwpck_require__(115);
 var import_clientHelpers = __nccwpck_require__(469);
 var import_typeGuards = __nccwpck_require__(474);
 var import_multipart = __nccwpck_require__(264);
@@ -74841,7 +74910,7 @@ function schemeFetch (fetchParams) {
     }
     case 'blob:': {
       if (!resolveObjectURL) {
-        resolveObjectURL = (__nccwpck_require__(118).resolveObjectURL)
+        resolveObjectURL = (__nccwpck_require__(119).resolveObjectURL)
       }
 
       // 1. Let blobURLEntry be request’s current URL’s blob URL entry.
@@ -76599,7 +76668,7 @@ function parseHeaderValueAsNumber(response, headerName) {
 "use strict";
 
 
-const { types } = __nccwpck_require__(122)
+const { types } = __nccwpck_require__(123)
 const { hasOwn, toUSVString } = __nccwpck_require__(493)
 
 /** @type {import('../../types/webidl').Webidl} */
@@ -77255,7 +77324,7 @@ module.exports = {
  */
 
 const tty = __nccwpck_require__(178);
-const util = __nccwpck_require__(122);
+const util = __nccwpck_require__(123);
 
 /**
  * This is the Node.js implementation of `debug()`.
@@ -77980,7 +78049,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.reflectionScalarDefault = void 0;
 const reflection_info_1 = __nccwpck_require__(431);
 const reflection_long_convert_1 = __nccwpck_require__(156);
-const pb_long_1 = __nccwpck_require__(116);
+const pb_long_1 = __nccwpck_require__(117);
 /**
  * Creates the default value for a scalar type.
  */
@@ -81082,7 +81151,7 @@ exports.parseCookFlags = parseCookFlags;
 exports.canonicalizeCookFlags = canonicalizeCookFlags;
 const node_crypto_1 = __nccwpck_require__(269);
 const fs = __importStar(__nccwpck_require__(243));
-const fsp = __importStar(__nccwpck_require__(107));
+const fsp = __importStar(__nccwpck_require__(108));
 const path = __importStar(__nccwpck_require__(485));
 const exec = __importStar(__nccwpck_require__(16));
 const cache = __importStar(__nccwpck_require__(209));
@@ -82208,7 +82277,7 @@ var http = __nccwpck_require__(320);
 var https = __nccwpck_require__(67);
 var events = __nccwpck_require__(447);
 var assert = __nccwpck_require__(501);
-var util = __nccwpck_require__(122);
+var util = __nccwpck_require__(123);
 
 
 exports.httpOverHttp = httpOverHttp;
@@ -83051,9 +83120,9 @@ const os = __importStar(__nccwpck_require__(91));
 const path = __importStar(__nccwpck_require__(242));
 const pathHelper = __importStar(__nccwpck_require__(216));
 const assert_1 = __importDefault(__nccwpck_require__(501));
-const minimatch_1 = __nccwpck_require__(123);
+const minimatch_1 = __nccwpck_require__(124);
 const internal_match_kind_1 = __nccwpck_require__(504);
-const internal_path_1 = __nccwpck_require__(119);
+const internal_path_1 = __nccwpck_require__(120);
 const IS_WINDOWS = process.platform === 'win32';
 class Pattern {
     constructor(patternOrNegate, isImplicitPattern = false, segments, homedir) {
@@ -84246,7 +84315,7 @@ const {
   isValidHeaderName,
   isValidHeaderValue
 } = __nccwpck_require__(493)
-const util = __nccwpck_require__(122)
+const util = __nccwpck_require__(123)
 const { webidl } = __nccwpck_require__(435)
 const assert = __nccwpck_require__(501)
 
@@ -86817,7 +86886,7 @@ exports.walkDirSize = walkDirSize;
 exports.detectCompressMagic = detectCompressMagic;
 exports.decompressCache = decompressCache;
 exports.compressCache = compressCache;
-const fs = __importStar(__nccwpck_require__(107));
+const fs = __importStar(__nccwpck_require__(108));
 const path = __importStar(__nccwpck_require__(485));
 const core = __importStar(__nccwpck_require__(437));
 const exec = __importStar(__nccwpck_require__(16));
@@ -88076,7 +88145,7 @@ function makeBlobBeginCopyFromURLPollOperation(state) {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(127);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(103);
 /******/ 	module.exports = __webpack_exports__;
 /******/
 /******/ })()

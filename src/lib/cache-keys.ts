@@ -455,6 +455,66 @@ export function setupCacheLayout(
     : "bin+soldr-bin";
 }
 
+// --------------------- per-(host × target) cross-tool cache key (setup-soldr#106) ---------------------
+//
+// Wave 2.1 of zackees/soldr#514. The per-lane cache slot is keyed on the
+// dimensions that materially change the contents of `$CARGO_HOME/bin/cargo-
+// zigbuild` (and friends) for one cross-compile lane:
+//   - host  : runner.os-runner.arch (the binaries are runner-native)
+//   - target: rust triple (selects which ziglang sysroot + std is needed)
+//   - tools : map of tool-name -> resolved version (sparse — only the tools
+//             that lane actually installs are present)
+//   - soldr : the resolved soldr version, since the soldr-cargo-install path
+//             might evolve across releases
+//
+// The `tool-` prefix is a deliberate namespace guard so this key never
+// collides with the existing setup-cache (`setup-soldr-v*-`), build-cache
+// (`setup-soldr-buildcache-v*-`), target-cache (`setup-soldr-targetcache-*-`),
+// cargo-registry (`setup-soldr-cargoregistry-v*-`), or soldr-mini
+// (`soldr-mini-*`) namespaces.
+
+export interface CrossToolCacheKeyInput {
+  /** e.g. `linux-x64`, `macos-arm64`. Sanitized before use. */
+  host: string;
+  /** Rust triple, e.g. `x86_64-pc-windows-gnu`. Sanitized before use. */
+  target: string;
+  /**
+   * Sparse map of tool-name -> resolved version. Order-independent (keys are
+   * sorted before serialization). Tools that don't apply to this lane (e.g.
+   * `cargo-xwin` on a `*-unknown-linux-musl` lane) must simply be omitted —
+   * including them with a placeholder value would invalidate the cache when
+   * the placeholder changes.
+   */
+  toolVersions: Record<string, string>;
+  /** Resolved soldr version. Empty allowed; we substitute `unresolved`. */
+  soldrVer: string;
+}
+
+/**
+ * Derive the cache key for one (host, target) cross-compile lane.
+ *
+ * Shape: `tool-<host>-<target>-<toolsHash>-soldr<soldrVer>` where
+ * `<toolsHash>` is a short content-addressable hash over the sorted
+ * tool-name -> version map. The hash keeps the key length bounded and
+ * canonical regardless of how many tools the lane includes.
+ */
+export function crossToolCacheKeyFor(input: CrossToolCacheKeyInput): string {
+  const host = sanitizeFragment(input.host.trim());
+  const target = sanitizeFragment(input.target.trim());
+  const soldrVer = sanitizeFragment(
+    (input.soldrVer || "").trim().replace(/^v/, "") || "unresolved",
+  );
+  // Canonicalize the toolVersions map: sort keys, drop empty values so the
+  // sparse-spec invariant in the test "omits irrelevant tools" holds.
+  const tools: Record<string, string> = {};
+  for (const [k, v] of Object.entries(input.toolVersions)) {
+    if (!k || !v) continue;
+    tools[k.trim()] = String(v).trim();
+  }
+  const toolsHash = shortJsonHash(tools);
+  return `tool-${host}-${target}-${toolsHash}-soldr${soldrVer}`;
+}
+
 /** Produce a path-style output: workspace-relative when inside workspace, else absolute. */
 export function pathForOutput(workspace: string, p: string | null): string {
   if (p === null) return "";

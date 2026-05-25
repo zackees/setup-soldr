@@ -163,6 +163,36 @@ export interface CargoRegistryCachePlan {
 }
 
 /**
+ * Per-(host × target) cross-compile tool cache plan. Wave 2.1 of
+ * zackees/soldr#514, setup-soldr#106.
+ *
+ * One slot per declared `cross-targets` entry. The slot caches the
+ * lane-specific tool binaries (cargo-zigbuild + ziglang for the MVP
+ * lanes; cargo-xwin / MSVC SDK in follow-ups). Existing layers are
+ * unchanged; this is additive and only fires when `cross-targets` is
+ * non-empty.
+ *
+ * Key shape: `tool-<host>-<target>-<toolsHash>-soldr<soldrVer>` —
+ * deliberately distinct from every other cache namespace (`setup-soldr-*`,
+ * `soldr-mini-*`) so we don't risk collisions.
+ */
+export interface CrossToolCachePlan {
+  /** e.g. `linux-x64`. */
+  host: string;
+  /** Rust triple. */
+  target: string;
+  /** Sparse map of tool-name -> resolved version. Empty for unsupported lanes. */
+  toolVersions: Record<string, string>;
+  /** Cache key (with `tool-` prefix). */
+  key: string;
+  /**
+   * On-disk paths to archive on save / restore. Empty for unsupported
+   * lanes — the orchestrator should skip restore and save for those.
+   */
+  paths: string[];
+}
+
+/**
  * Full resolved state from resolve-setup. Drives every downstream step.
  *
  * This is the single source of truth produced by resolveSetup() and consumed
@@ -199,6 +229,10 @@ export interface ResolveResult {
   buildCache: BuildCachePlan;
   targetCache: TargetCachePlan;
   cargoRegistryCache: CargoRegistryCachePlan;
+  // Per-lane cross-compile tool caches (setup-soldr#106). One entry per
+  // declared `cross-targets` triple; empty when `cross-targets` unset or
+  // `cross-tool=none`.
+  crossToolCaches: CrossToolCachePlan[];
 
   // Compression
   targetCacheCompress: CompressCodec;

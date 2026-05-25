@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import {
   canonicalJsonStringify,
   cargoConfigHash,
+  crossToolCacheKeyFor,
   normalizeBuildCacheMode,
   normalizeLegacyTargetCacheMode,
   normalizeTargetCacheBool,
@@ -335,4 +336,211 @@ test("pathForOutput returns absolute path when outside workspace", () => {
 
 test("pathForOutput returns empty string when null", () => {
   assert.equal(pathForOutput("/ws", null), "");
+});
+
+// --------------------- crossToolCacheKeyFor (setup-soldr#106) ---------------------
+//
+// Per-(host × target) tool cache slot — one tiny cache per cross-compile lane.
+// Issue zackees/setup-soldr#106 / Wave 2.1 of zackees/soldr#514.
+//
+// Key shape (must be byte-stable across runs of the same lane):
+//   tool-${host}-${target}-${toolset-versions}-soldr${soldrVer}
+//
+// MUST be distinct from the existing setup-cache / build-cache / target-cache /
+// cargo-registry cache keys: the `tool-` prefix is the namespace guard.
+
+test("crossToolCacheKeyFor: stable shape for linux -> windows-gnu lane (zigbuild + zig)", () => {
+  const key = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  // The key must:
+  //   - start with the `tool-` namespace prefix
+  //   - embed host + target verbatim (sanitized)
+  //   - end with the soldr version (so a key-tail scan can identify the
+  //     soldr release the slot was built against)
+  //   - be reproducible across calls
+  assert.match(key, /^tool-/);
+  assert.match(key, /linux-x64/);
+  assert.match(key, /x86_64-pc-windows-gnu/);
+  assert.match(key, /soldr0\.7\.33$/);
+});
+
+test("crossToolCacheKeyFor: deterministic — same input yields byte-identical output", () => {
+  const a = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-unknown-linux-musl",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  const b = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-unknown-linux-musl",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  assert.equal(a, b);
+});
+
+test("crossToolCacheKeyFor: host change invalidates", () => {
+  const linux = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  const macos = crossToolCacheKeyFor({
+    host: "macos-arm64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  assert.notEqual(linux, macos);
+});
+
+test("crossToolCacheKeyFor: target change invalidates", () => {
+  const gnuKey = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  const muslKey = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-unknown-linux-musl",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  assert.notEqual(gnuKey, muslKey);
+});
+
+test("crossToolCacheKeyFor: tool version change invalidates only the affected lane", () => {
+  const a = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  const b = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.21.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  assert.notEqual(a, b);
+});
+
+test("crossToolCacheKeyFor: soldrVer change invalidates", () => {
+  const a = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  const b = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.8.0",
+  });
+  assert.notEqual(a, b);
+});
+
+test("crossToolCacheKeyFor: tool version order is irrelevant — keys are canonical", () => {
+  // Keys must be canonical w.r.t. the toolVersions map order so two callers
+  // that pass {zig, zigbuild} vs {zigbuild, zig} produce the same key.
+  const a = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  const b = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { ziglang: "0.13.0", "cargo-zigbuild": "0.20.0" },
+    soldrVer: "0.7.33",
+  });
+  assert.equal(a, b);
+});
+
+test("crossToolCacheKeyFor: omits irrelevant tools — sparse spec is the source of truth", () => {
+  // A linux -> musl lane has no xwin — it must be possible to express this by
+  // simply omitting the key from toolVersions. The resulting key must be
+  // distinct from one that includes a placeholder xwin entry.
+  const sparse = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-unknown-linux-musl",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0" },
+    soldrVer: "0.7.33",
+  });
+  const withXwin = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-unknown-linux-musl",
+    toolVersions: { "cargo-zigbuild": "0.20.0", ziglang: "0.13.0", "cargo-xwin": "0.18.0" },
+    soldrVer: "0.7.33",
+  });
+  assert.notEqual(sparse, withXwin);
+});
+
+test("crossToolCacheKeyFor: starts with `tool-` namespace prefix (collision guard)", () => {
+  // The `tool-` prefix is what keeps this layer distinct from setup-cache
+  // (`setup-soldr-v*-`), build-cache (`setup-soldr-buildcache-v*-`),
+  // target-cache (`setup-soldr-targetcache-*-v*-`), cargo-registry
+  // (`setup-soldr-cargoregistry-v*-`), and soldr-mini (`soldr-mini-`).
+  const key = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-unknown-linux-musl",
+    toolVersions: { "cargo-zigbuild": "0.20.0" },
+    soldrVer: "0.7.33",
+  });
+  assert.ok(key.startsWith("tool-"), `expected key to start with 'tool-', got: ${key}`);
+  // Must NOT collide with any of the other cache namespaces.
+  assert.ok(!key.startsWith("setup-soldr-"), `must not overlap setup/build/target cache keys`);
+  assert.ok(!key.startsWith("soldr-mini"), `must not overlap soldr-mini cache keys`);
+});
+
+test("crossToolCacheKeyFor: handles unresolved / empty soldr version gracefully", () => {
+  // If we don't have a resolved soldr version yet, the key must still be
+  // well-formed (no `undefined` literals leaking into the cache namespace).
+  const key = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-unknown-linux-musl",
+    toolVersions: { "cargo-zigbuild": "0.20.0" },
+    soldrVer: "",
+  });
+  assert.ok(key.length > 0);
+  assert.doesNotMatch(key, /undefined/);
+  assert.doesNotMatch(key, /\bnull\b/);
+});
+
+test("crossToolCacheKeyFor: empty toolVersions still produces a stable key (rust-std-only lane)", () => {
+  // Native lanes (e.g. linux -> linux-gnu) have no extra tool installs — just
+  // `rustup target add`. The key still needs to be derivable so the cache
+  // layer can opt into a no-op slot per lane.
+  const key = crossToolCacheKeyFor({
+    host: "linux-x64",
+    target: "x86_64-unknown-linux-gnu",
+    toolVersions: {},
+    soldrVer: "0.7.33",
+  });
+  assert.ok(key.startsWith("tool-"));
+  assert.match(key, /linux-x64/);
+  assert.match(key, /x86_64-unknown-linux-gnu/);
+});
+
+test("crossToolCacheKeyFor: sanitizes host/target fragments (no path separators or whitespace leak in)", () => {
+  // host/target can come from runner.os + arch + user-typed triple — must be
+  // sanitized so a malicious or careless input can't produce a key like
+  // `tool-linux/x64-...-foo` that breaks actions/cache.
+  const key = crossToolCacheKeyFor({
+    host: "linux x64",
+    target: "x86_64-pc-windows-gnu",
+    toolVersions: { "cargo-zigbuild": "0.20.0" },
+    soldrVer: "0.7.33",
+  });
+  assert.ok(!key.includes(" "), `key must not contain whitespace: ${key}`);
+  assert.ok(!key.includes("/"), `key must not contain path separators: ${key}`);
 });

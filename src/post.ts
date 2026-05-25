@@ -1229,6 +1229,83 @@ export async function run(): Promise<void> {
     }
   }
 
+  // ---- per-(host × target) cross-tool cache save (setup-soldr#106) ----
+  // Wave 2.1 of zackees/soldr#514. Save each lane whose restore missed and
+  // whose `paths` actually exist on disk after executeCrossBootstrap ran.
+  // Skipping exact hits avoids re-uploading identical content; skipping
+  // missing paths avoids cache-API failures on unsupported lanes.
+  try {
+    const lanePlansRaw = core.getState("crossToolCachePlans");
+    const restoresRaw = core.getState("crossToolCacheRestores");
+    if (lanePlansRaw) {
+      const lanePlans = JSON.parse(lanePlansRaw) as Array<{
+        host: string;
+        target: string;
+        key: string;
+        paths: string[];
+      }>;
+      const restores = restoresRaw
+        ? (JSON.parse(restoresRaw) as Record<string, { hit: boolean; matchedKey: string }>)
+        : {};
+      for (const lane of lanePlans) {
+        if (!lane.paths || lane.paths.length === 0) {
+          continue; // unsupported lane, nothing to save
+        }
+        const restore = restores[lane.target];
+        if (restore?.hit) {
+          log(`cross-tool-cache: lane=${lane.target} exact hit — skipping save`);
+          continue;
+        }
+        // Only save when at least one of the lane's paths exists. The cache
+        // API will error on a fully-missing path list, and there's no
+        // point uploading nothing.
+        const existing = lane.paths.filter((p) => {
+          try {
+            return fs.existsSync(p);
+          } catch {
+            return false;
+          }
+        });
+        if (existing.length === 0) {
+          log(`cross-tool-cache: lane=${lane.target} no paths exist on disk — skipping save`);
+          continue;
+        }
+        const t0 = Date.now();
+        try {
+          const id = await cache.saveCache(existing, lane.key);
+          if (id > 0) {
+            log(`cross-tool-cache: lane=${lane.target} saved id=${id} key=${lane.key}`);
+            postCollector.record({
+              label: `cross-tool-cache:${lane.target}`,
+              operation: "save",
+              hit: false,
+              key: lane.key,
+              matchedKey: "",
+              restoreKeys: [],
+              archiveBytes: null,
+              inflatedBytes: null,
+              fileCount: null,
+              durationMs: Date.now() - t0,
+              timestamp: new Date().toISOString(),
+            });
+          } else {
+            log(
+              `cross-tool-cache: lane=${lane.target} save skipped (id=${id}) — likely concurrent save by another job`,
+            );
+          }
+        } catch (err) {
+          log(
+            `cross-tool-cache: lane=${lane.target} save failed: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+        }
+      }
+    }
+  } catch (err) {
+    log(`cross-tool-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   const finalSummary = buildFinalCacheSummary(
     result,
     restoreState,
