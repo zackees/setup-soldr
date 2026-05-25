@@ -52,6 +52,12 @@ import {
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { diagnoseShimBypass } from "./lib/shim-bypass-check.js";
 import {
+  executeCrossBootstrap,
+  parseCrossTargets,
+  parseCrossTool,
+  planCrossBootstrap,
+} from "./lib/cross-bootstrap.js";
+import {
   replaySourceMtimes,
   readSnapshotFile,
   SNAPSHOT_FILENAME,
@@ -809,6 +815,35 @@ export async function run(): Promise<void> {
     core.setOutput("soldr_version", "passthrough");
   }
   await finishPhase("verify");
+
+  // ---- cross-bootstrap (issue #104 MVP) ----
+  // After the Rust toolchain and the soldr binary are both available, but
+  // before the user's own steps run, auto-install cross-compile tooling
+  // for any declared `cross-targets`. Skip entirely if the input is empty
+  // so workflows that don't cross-compile pay zero cost. Failures here are
+  // surfaced as standard exec errors and DO fail the action — the user
+  // explicitly asked for these targets, so a silent skip would be more
+  // surprising than a hard failure.
+  await markPhase("cross-bootstrap");
+  const crossTargets = parseCrossTargets(inputs.crossTargets);
+  if (crossTargets.length > 0) {
+    const tool = parseCrossTool(inputs.crossTool);
+    const host = ctx.runnerOs.toLowerCase() || process.platform;
+    logger.log(
+      `cross-bootstrap: host=${host} tool=${tool} targets=${crossTargets.join(",")}`,
+    );
+    const plan = planCrossBootstrap({ host, targets: crossTargets, tool });
+    for (const w of plan.warnings) core.warning(w);
+    if (plan.actions.length > 0) {
+      await executeCrossBootstrap(plan, {
+        log: (msg) => logger.log(msg),
+        soldrBinary: result.soldrPath,
+      });
+    } else if (plan.warnings.length === 0) {
+      logger.log("cross-bootstrap: no actions planned (tool=none or empty supported set)");
+    }
+  }
+  await finishPhase("cross-bootstrap");
 
   // ---- cook (prebuild-deps via cargo-chef) ----
   // The RESTORE was kicked off as a background promise right after the

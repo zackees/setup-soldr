@@ -61,6 +61,8 @@ function fixtureRawInputs(): RawInputs {
     prebuildDepsFlags: "--release",
     soldrMiniCache: "true",
     journalPrintRaw: "",
+    crossTargets: "",
+    crossTool: "auto",
   };
 }
 

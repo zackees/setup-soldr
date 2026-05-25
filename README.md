@@ -71,6 +71,35 @@ jobs:
       - run: soldr cargo test --locked
 ```
 
+### Cross-compile auto-bootstrap
+
+When a job needs to cross-compile to a non-host triple, set the
+`cross-targets` input. For supported (host, target) lanes, setup-soldr
+installs the cross toolchain automatically — no extra `pip install
+ziglang` / `cargo install cargo-zigbuild` step in the workflow.
+
+```yaml
+- uses: zackees/setup-soldr@v0
+  with:
+    cross-targets: x86_64-pc-windows-gnu
+- run: soldr cargo zigbuild --release --target x86_64-pc-windows-gnu
+```
+
+MVP coverage (issue #104, this release):
+
+| Host | Target | Installed |
+|---|---|---|
+| Linux | `*-pc-windows-gnu` | `cargo-zigbuild` + `ziglang` + `rustup target add` |
+| Linux | `*-unknown-linux-musl` | `cargo-zigbuild` + `ziglang` + `rustup target add` |
+
+Other (host, target) lanes — Windows-host and macOS-host runners, and
+the `xwin` / `mingw` strategies for Linux→MSVC — emit a one-line
+warning and continue without failing the action; you'll need to install
+the cross toolchain manually for those lanes for now. The `cross-tool:`
+input selects the strategy (`auto` (default), `none`, `zigbuild`,
+`xwin`, `mingw`); only `auto` and `none` change behavior in this
+release. Set `cross-tool: none` to skip cross-bootstrap entirely.
+
 ### Reusable Rust CI workflow
 
 For repos that just want the standard Rust quality gates

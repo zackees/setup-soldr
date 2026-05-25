@@ -386,6 +386,38 @@ inputs:
       cache entry.
     required: false
     default: "--release"
+  cross-targets:
+    description: >
+      Optional newline- or comma-separated list of non-host Rust target
+      triples this job needs to cross-compile to (e.g.
+      `x86_64-pc-windows-gnu`). When set, setup-soldr auto-installs the
+      cross toolchain for each supported (host, target) lane after the
+      Rust toolchain is provisioned and before the user's own steps run.
+
+      MVP (issue #104, this release) supports:
+        - Linux host -> `*-pc-windows-gnu` (any arch): installs
+          `cargo-zigbuild` + `ziglang` and runs `rustup target add`.
+        - Linux host -> `*-unknown-linux-musl` (any arch): same install
+          set.
+
+      Unsupported lanes (Windows host, macOS host, msvc / mingw / xwin
+      strategies) emit a one-line `core.warning` describing what would be
+      installed and continue without failing the action — install the
+      cross toolchain manually for those lanes for now. Default empty
+      (cross-bootstrap is opt-in by populating this input).
+    required: false
+    default: ""
+  cross-tool:
+    description: >
+      Cross-compile strategy selector used when `cross-targets` is
+      non-empty. Accepted values: `auto` (default), `none`, `zigbuild`,
+      `xwin`, `mingw`. In this release only `auto` and `none` change
+      behavior — `zigbuild` / `xwin` / `mingw` are accepted for
+      forward-compatibility and currently route through the same `auto`
+      logic for the supported lanes. Set to `none` to skip cross-bootstrap
+      entirely even when `cross-targets` is set.
+    required: false
+    default: "auto"
   soldr-mini-cache:
     description: >
       Cache the soldr binary in its own tiny long-lived layer,
