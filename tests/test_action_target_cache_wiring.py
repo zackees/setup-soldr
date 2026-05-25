@@ -65,6 +65,8 @@ EXPECTED_INPUTS = {
     "prebuild-deps-flags",
     "soldr-mini-cache",
     "journal-print-raw",
+    "cross-targets",
+    "cross-tool",
 }
 
 
