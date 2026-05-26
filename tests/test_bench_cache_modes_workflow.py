@@ -27,6 +27,8 @@ def test_benchmark_workflow_exposes_bounded_dispatch_inputs() -> None:
 
     assert "cell_timeout_minutes" in inputs
     assert inputs["cell_timeout_minutes"]["default"] == "30"
+    assert inputs["cache_backend"]["default"] == "local-tar-zstd"
+    assert "local-tar-zstd+actions-cache-smoke" in inputs["cache_backend"]["options"]
     assert "cook-production" in inputs["layers"]["default"]
     assert "cook-production" in inputs["layers"]["description"]
 
@@ -51,3 +53,22 @@ def test_all_on_captures_toolchain_baseline_for_delta_only_payload() -> None:
 
     capture = next(step for step in bench_steps if step.get("name") == "Capture pre-soldr toolchain snapshot")
     assert "matrix.layer == 'all-on'" in capture["if"]
+
+
+def test_real_cache_smoke_backend_is_opt_in_and_collated() -> None:
+    workflow = _load_workflow()
+    save_job = workflow["jobs"]["real-cache-save"]
+    restore_job = workflow["jobs"]["real-cache-restore"]
+
+    assert save_job["if"] == "${{ inputs.cache_backend == 'local-tar-zstd+actions-cache-smoke' }}"
+    assert restore_job["needs"] == "real-cache-save"
+    save_step = next(step for step in save_job["steps"] if step.get("name") == "Save real target cache")
+    restore_step = next(step for step in restore_job["steps"] if step.get("name") == "Restore real target cache")
+    assert "scripts/bench-real-cache-smoke.mjs" in save_step["run"]
+    assert "--mode=save" in save_step["run"]
+    assert "scripts/bench-real-cache-smoke.mjs" in restore_step["run"]
+    assert "--mode=restore" in restore_step["run"]
+
+    collate_needs = workflow["jobs"]["collate"]["needs"]
+    assert "bench" in collate_needs
+    assert "real-cache-restore" in collate_needs

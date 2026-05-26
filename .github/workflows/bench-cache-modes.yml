@@ -33,6 +33,14 @@ on:
         description: "Timeout for each benchmark cell. Partial CSV artifacts are still uploaded on failure/timeout."
         required: false
         default: "30"
+      cache_backend:
+        description: "Benchmark backend: local tar/zstd only, or local tar/zstd plus a small real actions/cache target-cache smoke."
+        required: false
+        type: choice
+        default: "local-tar-zstd"
+        options:
+          - local-tar-zstd
+          - local-tar-zstd+actions-cache-smoke
 
 permissions:
   contents: read
@@ -140,9 +148,83 @@ jobs:
           path: bench-${{ matrix.os }}-${{ matrix.layer }}-r${{ matrix.rep }}.csv
           if-no-files-found: warn
 
+  real-cache-save:
+    name: Real actions/cache target save
+    needs: expand
+    if: ${{ inputs.cache_backend == 'local-tar-zstd+actions-cache-smoke' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install script dependencies
+        run: npm ci
+
+      - name: Save real target cache
+        env:
+          RUNNER_OS: ${{ runner.os }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          node scripts/bench-real-cache-smoke.mjs \
+            --mode=save \
+            --layer=target \
+            --workload=${{ inputs.workload }} \
+            --rep=1 \
+            --out=bench-real-cache-state.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-real-cache-state
+          path: bench-real-cache-state.json
+          if-no-files-found: error
+
+  real-cache-restore:
+    name: Real actions/cache target restore
+    needs: real-cache-save
+    if: ${{ inputs.cache_backend == 'local-tar-zstd+actions-cache-smoke' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install script dependencies
+        run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bench-real-cache-state
+
+      - name: Restore real target cache
+        env:
+          RUNNER_OS: ${{ runner.os }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          node scripts/bench-real-cache-smoke.mjs \
+            --mode=restore \
+            --layer=target \
+            --workload=${{ inputs.workload }} \
+            --rep=1 \
+            --state=bench-real-cache-state.json \
+            --out=bench-ubuntu-24.04-target-real-cache-r1.csv
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-ubuntu-24.04-target-real-cache-r1
+          path: bench-ubuntu-24.04-target-real-cache-r1.csv
+          if-no-files-found: warn
+
   collate:
     name: Collate results
-    needs: bench
+    needs:
+      - bench
+      - real-cache-restore
     if: always()
     runs-on: ubuntu-24.04
     steps:

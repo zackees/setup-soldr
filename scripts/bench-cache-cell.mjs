@@ -7,6 +7,8 @@
 // Per-cell flow:
 //   1. Prepare a clean workload checkout under ${RUNNER_TEMP}/workload
 //   2. Cold build (cargo build --release in the workload dir) — record wall clock
+//      For cook-production, run `soldr cook` and snapshot its target/ output
+//      before this user build, matching production cook-cache save timing.
 //   3. Snapshot layer paths -> ${RUNNER_TEMP}/sim-cache/<layer>__<i>.tar.zst (tar+zstd -19 --long=27)
 //   4. (build-affecting layers only) Wipe layer paths, target/, and any
 //      out-of-scope zccache state, then restore from snapshot
@@ -53,6 +55,8 @@ const runnerTemp = process.env.RUNNER_TEMP ?? os.tmpdir();
 const runnerOs = process.env.RUNNER_OS ?? process.platform;
 const cacheBackend = args["cache-backend"] ?? process.env.BENCH_CACHE_BACKEND ?? "local-tar-zstd";
 const compressionModel = args["compression-model"] ?? process.env.BENCH_COMPRESSION_MODEL ?? "zstd-19-long27";
+const cookProduction = args.layer === "cook-production";
+const cookFlags = parseCookFlags(args["cook-flags"] ?? process.env.BENCH_COOK_FLAGS ?? "--release");
 
 const workloadSrc = path.resolve("scripts", "bench-workloads", args.workload);
 const workloadDir = path.join(runnerTemp, "bench-workload");
@@ -87,6 +91,17 @@ const preSnapshotStates = tracksSoloToolchainDelta
     : await snapshotPathStates(soloToolchainBasePaths)
   : null;
 
+let snapshotResult = null;
+let coldPrebuildS = 0;
+if (cookProduction) {
+  const tCookStart = nowMs();
+  await runSoldrCook(workloadDir, env, cookFlags);
+  coldPrebuildS = (nowMs() - tCookStart) / 1000;
+  log(`[bench] cook-production prebuild wall=${coldPrebuildS.toFixed(2)}s`);
+  await quiesceCacheDaemonsBeforeSnapshot(env, workloadDir);
+  snapshotResult = await snapshotLayer();
+}
+
 // --- 1. cold build -----------------------------------------------------------
 const tColdStart = nowMs();
 let wallColdS = 0;
@@ -95,57 +110,17 @@ if (skipBuild) {
 } else {
   await runCargoBuild(workloadDir, env);
 }
-wallColdS = (nowMs() - tColdStart) / 1000;
+wallColdS = coldPrebuildS + (nowMs() - tColdStart) / 1000;
 log(`[bench] cold build wall=${wallColdS.toFixed(2)}s`);
 
-await quiesceCacheDaemonsBeforeSnapshot(env, workloadDir);
-
-// --- 2. snapshot -------------------------------------------------------------
-let snapshotPaths = layerPaths;
-let soloToolchainDeltaPaths = [];
-if (preSnapshotStates) {
-  soloToolchainDeltaPaths = await materializeDeltaPaths(
-    soloToolchainBasePaths,
-    preSnapshotStates,
-    path.join(runnerTemp, "sim-delta", args.layer, "solo-toolchain"),
-  );
-  snapshotPaths = args.layer === "solo-toolchain"
-    ? soloToolchainDeltaPaths
-    : dedupeLayerPaths([...layerPaths, ...soloToolchainDeltaPaths]);
-}
-const soloToolchainDeltaEmpty = args.layer === "solo-toolchain" && preSnapshotStates && snapshotPaths.length === 0;
-const allOnSoloToolchainDeltaEmpty = args.layer === "all-on" && preSnapshotStates && soloToolchainDeltaPaths.length === 0;
-if (soloToolchainDeltaEmpty) {
-  log(`[bench] solo-toolchain delta is empty; emitting mechanics row without save/restore`);
-} else if (allOnSoloToolchainDeltaEmpty) {
-  log(`[bench] all-on solo-toolchain delta is empty; runner-image toolchains excluded from snapshot`);
+if (!snapshotResult) {
+  await quiesceCacheDaemonsBeforeSnapshot(env, workloadDir);
+  snapshotResult = await snapshotLayer();
+} else {
+  await quiesceCacheDaemonsBeforeSnapshot(env, workloadDir);
 }
 
-const snapshots = [];
-let totalCompressedMb = 0;
-let totalInflatedMb = 0;
-let saveTimeS = 0;
-for (let i = 0; i < snapshotPaths.length; i++) {
-  const p = snapshotPaths[i];
-  const archivePath = path.join(simCacheDir, `${args.layer}__${i}.tar.zst`);
-  const inflated = await dirSizeBytes(path.join(p.parent, p.basename));
-  if (inflated === 0) {
-    log(`[bench] skip empty path ${p.parent}/${p.basename}`);
-    continue;
-  }
-  const t0 = nowMs();
-  await tarZstdCreate(archivePath, p.parent, p.basename);
-  saveTimeS += (nowMs() - t0) / 1000;
-  const compressed = await statSizeBytes(archivePath);
-  snapshots.push({ ...p, archivePath, compressedBytes: compressed, inflatedBytes: inflated });
-  totalCompressedMb += compressed / 1_000_000;
-  totalInflatedMb += inflated / 1_000_000;
-  log(`[bench] snap ${p.basename}: inflated=${(inflated / 1_000_000).toFixed(1)}MB compressed=${(compressed / 1_000_000).toFixed(1)}MB`);
-}
-
-const compressedMb = round(totalCompressedMb, 2);
-const inflatedMb = round(totalInflatedMb, 2);
-const ratio = totalInflatedMb > 0 ? round(totalInflatedMb / Math.max(totalCompressedMb, 0.001), 2) : 0;
+const { snapshots, saveTimeS, compressedMb, inflatedMb, ratio, soloToolchainDeltaEmpty } = snapshotResult;
 
 csvRows.push(csvRow({
   os: runnerOs, layer: args.layer, phase: "cold", wallClockS: round(wallColdS, 2),
@@ -238,6 +213,14 @@ function parseArgs(argv) {
   return out;
 }
 
+function parseCookFlags(raw) {
+  return raw
+    .trim()
+    .split(/\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
 function die(msg) { console.error(`bench-cache-cell: ${msg}`); process.exit(2); }
 function log(msg) { console.log(msg); }
 function nowMs() { return Number(process.hrtime.bigint() / 1_000_000n); }
@@ -255,6 +238,56 @@ function csvRow(r) {
 async function writeCsv(rows) {
   await fsp.mkdir(path.dirname(path.resolve(out)), { recursive: true });
   await fsp.writeFile(out, [csvHeader(), ...rows].join("\n") + "\n", "utf8");
+}
+
+async function snapshotLayer() {
+  // --- 2. snapshot -----------------------------------------------------------
+  let snapshotPaths = layerPaths;
+  let soloToolchainDeltaPaths = [];
+  if (preSnapshotStates) {
+    soloToolchainDeltaPaths = await materializeDeltaPaths(
+      soloToolchainBasePaths,
+      preSnapshotStates,
+      path.join(runnerTemp, "sim-delta", args.layer, "solo-toolchain"),
+    );
+    snapshotPaths = args.layer === "solo-toolchain"
+      ? soloToolchainDeltaPaths
+      : dedupeLayerPaths([...layerPaths, ...soloToolchainDeltaPaths]);
+  }
+  const soloToolchainDeltaEmpty = args.layer === "solo-toolchain" && preSnapshotStates && snapshotPaths.length === 0;
+  const allOnSoloToolchainDeltaEmpty = args.layer === "all-on" && preSnapshotStates && soloToolchainDeltaPaths.length === 0;
+  if (soloToolchainDeltaEmpty) {
+    log(`[bench] solo-toolchain delta is empty; emitting mechanics row without save/restore`);
+  } else if (allOnSoloToolchainDeltaEmpty) {
+    log(`[bench] all-on solo-toolchain delta is empty; runner-image toolchains excluded from snapshot`);
+  }
+
+  const snapshots = [];
+  let totalCompressedMb = 0;
+  let totalInflatedMb = 0;
+  let saveTimeS = 0;
+  for (let i = 0; i < snapshotPaths.length; i++) {
+    const p = snapshotPaths[i];
+    const archivePath = path.join(simCacheDir, `${args.layer}__${i}.tar.zst`);
+    const inflated = await dirSizeBytes(path.join(p.parent, p.basename));
+    if (inflated === 0) {
+      log(`[bench] skip empty path ${p.parent}/${p.basename}`);
+      continue;
+    }
+    const t0 = nowMs();
+    await tarZstdCreate(archivePath, p.parent, p.basename);
+    saveTimeS += (nowMs() - t0) / 1000;
+    const compressed = await statSizeBytes(archivePath);
+    snapshots.push({ ...p, archivePath, compressedBytes: compressed, inflatedBytes: inflated });
+    totalCompressedMb += compressed / 1_000_000;
+    totalInflatedMb += inflated / 1_000_000;
+    log(`[bench] snap ${p.basename}: inflated=${(inflated / 1_000_000).toFixed(1)}MB compressed=${(compressed / 1_000_000).toFixed(1)}MB`);
+  }
+
+  const compressedMb = round(totalCompressedMb, 2);
+  const inflatedMb = round(totalInflatedMb, 2);
+  const ratio = totalInflatedMb > 0 ? round(totalInflatedMb / Math.max(totalCompressedMb, 0.001), 2) : 0;
+  return { snapshots, saveTimeS, compressedMb, inflatedMb, ratio, soloToolchainDeltaEmpty };
 }
 
 async function prepareWorkload(src, dest) {
@@ -450,7 +483,7 @@ async function dirSizeBytes(dir) {
 
 function run(cmd, argv, opts = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, argv, { stdio: "inherit", ...opts });
+    const child = spawn(cmd, argv, spawnOptionsForCommand(cmd, { stdio: "inherit", ...opts }));
     child.on("error", reject);
     child.on("exit", (code) => code === 0 ? resolve() : reject(new Error(`${cmd} exited ${code}`)));
   });
@@ -460,7 +493,7 @@ function runBestEffort(cmd, argv, opts = {}) {
   return new Promise((resolve) => {
     let child;
     try {
-      child = spawn(cmd, argv, { stdio: ["ignore", "pipe", "pipe"], ...opts });
+      child = spawn(cmd, argv, spawnOptionsForCommand(cmd, { stdio: ["ignore", "pipe", "pipe"], ...opts }));
     } catch (err) {
       resolve({ status: "error", code: null, stderr: "", error: err });
       return;
@@ -470,6 +503,39 @@ function runBestEffort(cmd, argv, opts = {}) {
     child.on("error", (err) => resolve({ status: "error", code: null, stderr, error: err }));
     child.on("exit", (code) => resolve({ status: "exit", code, stderr, error: null }));
   });
+}
+
+function spawnOptionsForCommand(cmd, opts) {
+  if (shouldUseWindowsCommandShell(cmd, opts.env)) {
+    return { ...opts, shell: true };
+  }
+  return opts;
+}
+
+function shouldUseWindowsCommandShell(cmd, envExt) {
+  if (process.platform !== "win32") return false;
+  const ext = path.extname(cmd).toLowerCase();
+  if (ext === ".cmd" || ext === ".bat") return true;
+  if (ext) return false;
+
+  const hasPathSeparator = cmd.includes(path.sep) || cmd.includes("/");
+  const candidates = hasPathSeparator
+    ? [path.dirname(cmd)]
+    : envPathValue(envExt).split(path.delimiter).filter((entry) => entry.length > 0);
+  const basename = hasPathSeparator ? path.basename(cmd) : cmd;
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, `${basename}.com`)) || fs.existsSync(path.join(dir, `${basename}.exe`))) {
+      return false;
+    }
+    if (fs.existsSync(path.join(dir, `${basename}.bat`)) || fs.existsSync(path.join(dir, `${basename}.cmd`))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function envPathValue(envExt) {
+  return envExt?.PATH ?? envExt?.Path ?? envExt?.path ?? process.env.PATH ?? process.env.Path ?? "";
 }
 
 async function quiesceCacheDaemonsBeforeSnapshot(envExt, workloadDir) {
@@ -550,6 +616,13 @@ function shellEscape(s) {
   // input rather than emit a buggy escape.
   if (/['"`$\\\n]/.test(s)) throw new Error(`refusing to shell-escape unsafe path: ${s}`);
   return /[ ()]/.test(s) ? `"${s}"` : s;
+}
+
+async function runSoldrCook(dir, envExt, flags) {
+  const soldr = envExt.SOLDR_BINARY?.trim() || "soldr";
+  const printableFlags = flags.length > 0 ? ` ${flags.join(" ")}` : "";
+  log(`[bench] running production cook before cold build: ${soldr} cook${printableFlags}`);
+  await run(soldr, ["cook", ...flags], { cwd: dir, env: envExt });
 }
 
 async function runCargoBuild(dir, envExt) {

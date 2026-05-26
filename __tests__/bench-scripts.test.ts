@@ -8,6 +8,30 @@ import { test } from "node:test";
 
 const execFileAsync = promisify(execFile);
 
+async function writeNodeShim(binDir: string, name: string, source: string): Promise<string> {
+  const scriptPath = path.join(binDir, `${name}.cjs`);
+  await fs.writeFile(scriptPath, source, "utf8");
+
+  if (process.platform === "win32") {
+    const shimPath = path.join(binDir, `${name}.cmd`);
+    await fs.writeFile(
+      shimPath,
+      `@echo off\r\n"${process.execPath}" "${scriptPath}" %*\r\n`,
+      "utf8",
+    );
+    return shimPath;
+  }
+
+  const shimPath = path.join(binDir, name);
+  await fs.writeFile(
+    shimPath,
+    `#!/usr/bin/env sh\nexec "${process.execPath}" "${scriptPath}" "$@"\n`,
+    "utf8",
+  );
+  await fs.chmod(shimPath, 0o755);
+  return shimPath;
+}
+
 test("collate-bench appends amortized payback fields", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-collate-"));
   await fs.mkdir(path.join(dir, "cell"), { recursive: true });
@@ -54,6 +78,7 @@ test("render-bench-summary reports methodology, aggregates, and amortized flags"
   assert.match(stdout, /### Rep aggregates/);
   assert.match(stdout, /break_even_warm_hits=15\.38/);
   assert.match(stdout, /inflated_mb=806/);
+  assert.match(stdout, /actions-cache/);
 });
 
 test("bench-cache-cell writes a labeled partial-safe CSV in dry-run mode", async () => {
@@ -167,14 +192,107 @@ test("bench-cache-cell falls back to zccache stop before snapshot", async () => 
   }
 });
 
-test("bench-cache-cell treats cook-production as build-affecting", async () => {
+test("bench-cache-cell runs cook-production cook before cold cargo build and emits warm row", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-cell-cook-prod-"));
   const home = path.join(dir, "home");
   const runnerTemp = path.join(dir, "runner-temp");
+  const binDir = path.join(dir, "bin");
+  const eventsFile = path.join(dir, "events.log");
   await fs.mkdir(path.join(home, ".cargo"), { recursive: true });
   await fs.mkdir(path.join(home, ".rustup"), { recursive: true });
   await fs.mkdir(runnerTemp, { recursive: true });
+  await fs.mkdir(binDir, { recursive: true });
   const out = path.join(dir, "bench.csv");
+  const soldrShim = await writeNodeShim(binDir, "soldr", `
+const fs = require("node:fs");
+const path = require("node:path");
+const args = process.argv.slice(2);
+const events = process.env.BENCH_EVENT_LOG;
+function log(line) { fs.appendFileSync(events, line + "\\n"); }
+log("soldr " + args.join(" "));
+if (args[0] === "cook") {
+  const target = path.join(process.cwd(), "target");
+  fs.mkdirSync(target, { recursive: true });
+  fs.writeFileSync(path.join(target, "cook-output.txt"), "cook\\n");
+  process.exit(0);
+}
+if (args[0] === "cache" && args[1] === "shutdown") process.exit(0);
+process.exit(2);
+`);
+  await writeNodeShim(binDir, "cargo", `
+const fs = require("node:fs");
+const path = require("node:path");
+const args = process.argv.slice(2);
+const events = process.env.BENCH_EVENT_LOG;
+fs.appendFileSync(events, "cargo " + args.join(" ") + "\\n");
+const target = process.env.CARGO_TARGET_DIR || path.join(process.cwd(), "target");
+fs.mkdirSync(target, { recursive: true });
+fs.writeFileSync(path.join(target, "user-build.txt"), "cargo\\n");
+`);
+  await writeNodeShim(binDir, "tar", `
+const fs = require("node:fs");
+const path = require("node:path");
+const args = process.argv.slice(2);
+const events = process.env.BENCH_EVENT_LOG;
+function log(line) { fs.appendFileSync(events, line + "\\n"); }
+function restoreTarget(root) {
+  const target = path.join(root, "target");
+  fs.mkdirSync(target, { recursive: true });
+  fs.writeFileSync(path.join(target, "cook-output.txt"), "cook\\n");
+}
+if (args.includes("-cf")) {
+  const archive = args[args.indexOf("-cf") + 1];
+  const parent = args[args.indexOf("-C") + 1];
+  const basename = args[args.length - 1];
+  const target = path.join(parent, basename);
+  log("archive create hasCook=" + fs.existsSync(path.join(target, "cook-output.txt")) + " hasUser=" + fs.existsSync(path.join(target, "user-build.txt")));
+  fs.mkdirSync(path.dirname(archive), { recursive: true });
+  fs.writeFileSync(archive, "archive\\n");
+  process.exit(0);
+}
+if (args.includes("-xf")) {
+  const root = args[args.indexOf("-C") + 1];
+  log("archive extract");
+  restoreTarget(root);
+  process.exit(0);
+}
+process.exit(2);
+`);
+  await writeNodeShim(binDir, "bash", `
+const fs = require("node:fs");
+const path = require("node:path");
+const args = process.argv.slice(2);
+const script = args[1] || "";
+const events = process.env.BENCH_EVENT_LOG;
+function log(line) { fs.appendFileSync(events, line + "\\n"); }
+function token(pattern) {
+  const match = pattern.exec(script);
+  return match && (match[1] || match[2] || match[3] || match[4]);
+}
+function restoreTarget(root) {
+  const target = path.join(root, "target");
+  fs.mkdirSync(target, { recursive: true });
+  fs.writeFileSync(path.join(target, "cook-output.txt"), "cook\\n");
+}
+if (script.includes("tar -cf -")) {
+  const parent = token(/ -C (?:"([^"]+)"|(\\S+)) /);
+  const basenameMatch = / -C (?:"[^"]+"|\\S+) (?:"([^"]+)"|(\\S+)) \\|/.exec(script);
+  const basename = basenameMatch && (basenameMatch[1] || basenameMatch[2]);
+  const archive = token(/ -o (?:"([^"]+)"|(\\S+))$/);
+  const target = path.join(parent, basename);
+  log("archive create hasCook=" + fs.existsSync(path.join(target, "cook-output.txt")) + " hasUser=" + fs.existsSync(path.join(target, "user-build.txt")));
+  fs.mkdirSync(path.dirname(archive), { recursive: true });
+  fs.writeFileSync(archive, "archive\\n");
+  process.exit(0);
+}
+if (script.includes("tar -xf -")) {
+  const root = token(/ -C (?:"([^"]+)"|(\\S+))$/);
+  log("archive extract");
+  restoreTarget(root);
+  process.exit(0);
+}
+process.exit(2);
+`);
 
   await execFileAsync(process.execPath, [
     "scripts/bench-cache-cell.mjs",
@@ -185,7 +303,6 @@ test("bench-cache-cell treats cook-production as build-affecting", async () => {
   ], {
     env: {
       ...process.env,
-      BENCH_SKIP_BUILD: "1",
       RUNNER_OS: "Linux",
       RUNNER_TEMP: runnerTemp,
       HOME: home,
@@ -195,9 +312,24 @@ test("bench-cache-cell treats cook-production as build-affecting", async () => {
       ZCCACHE_CACHE_DIR: path.join(home, ".cache", "zccache"),
       SETUP_SOLDR_CACHE_PATH: path.join(runnerTemp, "setup-soldr-cache"),
       SOLDR_INSTALL_DIR: path.join(runnerTemp, "setup-soldr-tools"),
+      SOLDR_BINARY: soldrShim,
+      BENCH_EVENT_LOG: eventsFile,
+      PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
     },
   });
 
   const csv = await fs.readFile(out, "utf8");
   assert.ok(csv.split(/\r?\n/).some((line) => line.includes(",cook-production,warm,")));
+  const events = (await fs.readFile(eventsFile, "utf8")).trim().split(/\r?\n/);
+  const soldrCook = events.findIndex((line) => line === "soldr cook --release");
+  const archiveCreate = events.findIndex((line) => line.startsWith("archive create "));
+  const firstCargo = events.findIndex((line) => line === "cargo build --release --quiet");
+  assert.notEqual(soldrCook, -1);
+  assert.notEqual(archiveCreate, -1);
+  assert.notEqual(firstCargo, -1);
+  assert.ok(soldrCook < archiveCreate);
+  assert.ok(archiveCreate < firstCargo);
+  assert.match(events[archiveCreate]!, /hasCook=true/);
+  assert.match(events[archiveCreate]!, /hasUser=false/);
+  assert.equal(events.filter((line) => line === "cargo build --release --quiet").length, 2);
 });

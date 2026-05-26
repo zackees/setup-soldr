@@ -577,7 +577,11 @@ for the current workload.
 
 `bench-cache-modes.yml` labels synthetic local tar/zstd results in the CSV and
 summary. Use `break_even_warm_hits` rather than restore-only net benefit when
-deciding whether a cache layer belongs in the default path.
+deciding whether a cache layer belongs in the default path. For a small real
+service check, dispatch the workflow with
+`cache_backend=local-tar-zstd+actions-cache-smoke`; this keeps the normal local
+matrix and adds a two-job target-cache save/restore smoke using
+`@actions/cache`, emitted as `cache_backend=actions-cache`.
 
 ## Known limitations
 
