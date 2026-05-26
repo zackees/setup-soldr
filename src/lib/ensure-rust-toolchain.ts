@@ -13,6 +13,12 @@ import * as io from "@actions/io";
 import * as tc from "@actions/tool-cache";
 import { createLogger } from "./log-utils.js";
 import type { ResolveResult } from "./types.js";
+import {
+  detectSoldrSupportsToolchainSubcommands,
+  soldrToolchainEnsure,
+  type SoldrExecFn,
+  type ToolchainEnsureResult,
+} from "./soldr-toolchain-client.js";
 
 function rustupInitTargetTriple(): string {
   const system = process.platform;
@@ -245,6 +251,44 @@ async function addTargets(
   }
 }
 
+/**
+ * Try delegating toolchain provisioning to `soldr toolchain ensure --json`.
+ *
+ * Wave 3.4 of zackees/soldr#514 (setup-soldr#133): if the soldr binary at
+ * `soldrPath` is >= 0.7.35 and the subcommand returns a schema-version-1
+ * payload, the legacy in-TS rustup driver is bypassed entirely. On any
+ * failure (missing binary, older version, schema mismatch, non-zero exit,
+ * malformed JSON) this returns `null` and the caller must run the legacy
+ * code path.
+ *
+ * Exported for unit tests. Callers in production should use
+ * `ensureRustToolchain`, which threads through `ensure-rust-toolchain`'s
+ * existing public API.
+ */
+export async function tryDelegateToSoldrToolchainEnsure(opts: {
+  soldrPath: string;
+  channel: string;
+  profile: string;
+  components: string[];
+  targets: string[];
+  exec?: SoldrExecFn;
+  warn?: (msg: string) => void;
+}): Promise<ToolchainEnsureResult | null> {
+  const detected = await detectSoldrSupportsToolchainSubcommands(opts.soldrPath, {
+    exec: opts.exec,
+    warn: opts.warn,
+  });
+  if (!detected.supported) return null;
+  return soldrToolchainEnsure(opts.soldrPath, {
+    exec: opts.exec,
+    warn: opts.warn,
+    channel: opts.channel,
+    profile: opts.profile,
+    components: opts.components,
+    targets: opts.targets,
+  });
+}
+
 export async function ensureRustToolchain(opts: {
   resolveResult: ResolveResult;
   setupCacheExactHit: boolean;
@@ -272,12 +316,44 @@ export async function ensureRustToolchain(opts: {
     process.env["PATH"] = `${binDir}${sep}${process.env["PATH"] ?? ""}`;
   }
 
-  const rustup = await ensureRustupAvailable(soldrRoot, log);
   const channel = resolveResult.toolchain.channel.trim() || "stable";
   const profile = resolveResult.toolchain.profile.trim() || "minimal";
   const components = [...resolveResult.toolchain.components];
   const targets = [...resolveResult.toolchain.targets];
   const cacheChannel = resolveResult.toolchain.cacheChannel.trim();
+
+  // Wave 3.4 (setup-soldr#133): try delegating to `soldr toolchain ensure --json`.
+  // Returns null when the binary is missing, < 0.7.35, the schema mismatches,
+  // or the subcommand exits non-zero — every such case falls through to the
+  // legacy in-TS rustup driver below. The delegation is *optional*: the action
+  // continues to work end-to-end when pinned to an older soldr release.
+  const delegated = await tryDelegateToSoldrToolchainEnsure({
+    soldrPath: resolveResult.soldrPath,
+    channel,
+    profile,
+    components,
+    targets,
+    warn: (msg) => core.warning(msg),
+  });
+  if (delegated) {
+    log(
+      `Delegated Rust toolchain provisioning to soldr toolchain ensure --json ` +
+        `(channel=${delegated.channel}, elapsed_ms=${delegated.elapsedMs})`,
+    );
+    if (delegated.componentsAdded.length > 0) {
+      log(`soldr installed Rust components: ${delegated.componentsAdded.join(", ")}`);
+    }
+    if (delegated.targetsAdded.length > 0) {
+      log(`soldr installed Rust targets: ${delegated.targetsAdded.join(", ")}`);
+    }
+    core.exportVariable("RUSTUP_TOOLCHAIN", channel);
+    process.env["RUSTUP_TOOLCHAIN"] = channel;
+    core.setOutput("toolchain", channel);
+    void os.EOL;
+    return;
+  }
+
+  const rustup = await ensureRustupAvailable(soldrRoot, log);
 
   log(`Resolved Rust toolchain channel=${channel} profile=${profile}`);
   log(`Requested Rust components: ${components.length > 0 ? components.join(", ") : "none"}`);

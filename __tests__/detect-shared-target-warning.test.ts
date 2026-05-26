@@ -6,6 +6,7 @@ import * as path from "node:path";
 import {
   shouldEmitSharedTargetWarning,
   targetDirHasCompiledArtifacts,
+  tryDelegateToSoldrDoctorSharedTargetWarning,
 } from "../src/lib/detect-shared-target-warning.js";
 
 function mkTmp(prefix: string): string {
@@ -129,4 +130,95 @@ test("shouldEmitSharedTargetWarning true when all conditions hold", () => {
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+// --- Delegation to `soldr toolchain doctor --json` (Wave 3.4 / setup-soldr#133) ---
+
+type ExecResult = { code: number; stdout: string; stderr: string };
+type ExecFn = (cmd: string, args: string[]) => Promise<ExecResult>;
+
+function mkExec(map: Record<string, ExecResult>): ExecFn {
+  return async (_cmd, args) => {
+    const key = args.join(" ");
+    return map[key] ?? { code: 127, stdout: "", stderr: `mock: no entry for ${key}` };
+  };
+}
+
+test("tryDelegateToSoldrDoctorSharedTargetWarning reads probe and forwards would_warn=true", async () => {
+  const doctorPayload = {
+    schema_version: 1,
+    host: { os: "linux", arch: "x86_64", libc: "gnu" },
+    probes: [
+      {
+        name: "shared-target-warning",
+        ok: false,
+        details: { would_warn: true, target_dir: "target", build_cache_mode: "once" },
+      },
+    ],
+    elapsed_ms: 1,
+  };
+  const exec = mkExec({
+    "version --json": { code: 0, stdout: JSON.stringify({ soldr_version: "0.7.35" }), stderr: "" },
+    "toolchain doctor --json": { code: 0, stdout: JSON.stringify(doctorPayload), stderr: "" },
+  });
+  const result = await tryDelegateToSoldrDoctorSharedTargetWarning({
+    soldrPath: "/fake/soldr",
+    exec,
+  });
+  assert.notEqual(result, null);
+  assert.equal(result!.wouldWarn, true);
+});
+
+test("tryDelegateToSoldrDoctorSharedTargetWarning reads probe and forwards would_warn=false", async () => {
+  const doctorPayload = {
+    schema_version: 1,
+    host: { os: "linux", arch: "x86_64", libc: "gnu" },
+    probes: [
+      {
+        name: "shared-target-warning",
+        ok: true,
+        details: { would_warn: false, target_dir: "target" },
+      },
+    ],
+    elapsed_ms: 1,
+  };
+  const exec = mkExec({
+    "version --json": { code: 0, stdout: JSON.stringify({ soldr_version: "0.7.35" }), stderr: "" },
+    "toolchain doctor --json": { code: 0, stdout: JSON.stringify(doctorPayload), stderr: "" },
+  });
+  const result = await tryDelegateToSoldrDoctorSharedTargetWarning({
+    soldrPath: "/fake/soldr",
+    exec,
+  });
+  assert.notEqual(result, null);
+  assert.equal(result!.wouldWarn, false);
+});
+
+test("tryDelegateToSoldrDoctorSharedTargetWarning returns null for soldr 0.7.34", async () => {
+  const exec = mkExec({
+    "version --json": { code: 0, stdout: JSON.stringify({ soldr_version: "0.7.34" }), stderr: "" },
+  });
+  const result = await tryDelegateToSoldrDoctorSharedTargetWarning({
+    soldrPath: "/fake/soldr",
+    exec,
+  });
+  assert.equal(result, null);
+});
+
+test("tryDelegateToSoldrDoctorSharedTargetWarning returns null when probe missing", async () => {
+  const doctorPayload = {
+    schema_version: 1,
+    host: { os: "linux", arch: "x86_64", libc: "gnu" },
+    probes: [{ name: "musl-cc", ok: true, details: {} }],
+    elapsed_ms: 1,
+  };
+  const exec = mkExec({
+    "version --json": { code: 0, stdout: JSON.stringify({ soldr_version: "0.7.35" }), stderr: "" },
+    "toolchain doctor --json": { code: 0, stdout: JSON.stringify(doctorPayload), stderr: "" },
+  });
+  const result = await tryDelegateToSoldrDoctorSharedTargetWarning({
+    soldrPath: "/fake/soldr",
+    exec,
+  });
+  assert.equal(result, null);
 });
