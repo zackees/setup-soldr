@@ -983,6 +983,7 @@ export async function run(): Promise<void> {
     effectiveTargetCacheEnabled: result.targetCache.enabled,
     buildCacheMode: result.buildCache.mode,
     targetDir: result.targetCache.targetPath,
+    soldrPath: result.soldrPath,
   });
 
   // ---- shim-bypass diagnostic ----

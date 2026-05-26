@@ -10,6 +10,11 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import { createLogger } from "./log-utils.js";
+import {
+  detectSoldrSupportsToolchainSubcommands,
+  soldrToolchainDoctor,
+  type SoldrExecFn,
+} from "./soldr-toolchain-client.js";
 
 const WARNING_MESSAGE =
   "setup-soldr detected a pre-populated shared target directory; a " +
@@ -78,11 +83,52 @@ export function shouldEmitSharedTargetWarning(opts: {
   return targetDirHasCompiledArtifacts(opts.targetDir);
 }
 
+/**
+ * Wave 3.4 (setup-soldr#133): try sourcing the shared-target-warning
+ * verdict from `soldr toolchain doctor --json`'s `shared-target-warning`
+ * probe. Returns `{ wouldWarn }` on success or `null` when delegation
+ * is not possible (binary missing, soldr < 0.7.35, probe missing, etc.).
+ *
+ * Exported for unit tests.
+ */
+export async function tryDelegateToSoldrDoctorSharedTargetWarning(opts: {
+  soldrPath: string;
+  exec?: SoldrExecFn;
+  warn?: (msg: string) => void;
+}): Promise<{ wouldWarn: boolean; details: Record<string, unknown> } | null> {
+  const detected = await detectSoldrSupportsToolchainSubcommands(opts.soldrPath, {
+    exec: opts.exec,
+    warn: opts.warn,
+  });
+  if (!detected.supported) return null;
+  const doctor = await soldrToolchainDoctor(opts.soldrPath, {
+    exec: opts.exec,
+    warn: opts.warn,
+  });
+  if (doctor === null) return null;
+  const probe = doctor.probes.find((p) => p.name === "shared-target-warning");
+  if (!probe) return null;
+  const details = probe.details ?? {};
+  // probe.ok semantics: in this probe, `would_warn` is the authoritative
+  // signal; some soldr revisions set `ok=false` to mean "the check tripped"
+  // (i.e. would_warn=true). Prefer the explicit boolean when present.
+  const wouldWarnExplicit = (details as Record<string, unknown>)["would_warn"];
+  const wouldWarn =
+    typeof wouldWarnExplicit === "boolean" ? wouldWarnExplicit : !probe.ok;
+  return { wouldWarn, details };
+}
+
 export async function detectSharedTargetWarning(opts: {
   buildCacheEnabled: boolean;
   effectiveTargetCacheEnabled: boolean;
   buildCacheMode: string;
   targetDir: string;
+  /**
+   * Optional. When set and the soldr binary at this path is >= 0.7.35,
+   * the shared-target-warning probe is sourced from
+   * `soldr toolchain doctor --json` instead of the in-process scan.
+   */
+  soldrPath?: string;
 }): Promise<void> {
   const logger = createLogger(process.env);
   const targetDir = (opts.targetDir ?? "").trim();
@@ -90,6 +136,30 @@ export async function detectSharedTargetWarning(opts: {
     logger.log("shared-target-dir check skipped: no target dir resolved");
     return;
   }
+
+  // Wave 3.4: try delegation if we have a soldr path.
+  if (opts.soldrPath) {
+    const delegated = await tryDelegateToSoldrDoctorSharedTargetWarning({
+      soldrPath: opts.soldrPath,
+      warn: (msg) => core.warning(msg),
+    });
+    if (delegated !== null) {
+      if (delegated.wouldWarn) {
+        core.warning(WARNING_MESSAGE);
+        logger.log(
+          `shared-target-dir warning emitted for target_dir=${targetDir} ` +
+            `build_cache_mode=${opts.buildCacheMode} (via soldr toolchain doctor)`,
+        );
+      } else {
+        logger.log(
+          `shared-target-dir check clean for target_dir=${targetDir} ` +
+            `build_cache_mode=${opts.buildCacheMode} (via soldr toolchain doctor)`,
+        );
+      }
+      return;
+    }
+  }
+
   if (
     shouldEmitSharedTargetWarning({
       buildCacheEnabled: opts.buildCacheEnabled,

@@ -13,6 +13,11 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
+import {
+  detectSoldrSupportsToolchainSubcommands,
+  soldrToolchainDoctor,
+  type SoldrExecFn,
+} from "./soldr-toolchain-client.js";
 
 const MUSL_TRIPLE_RE = /^[a-z0-9_]+-unknown-linux-musl$/;
 
@@ -137,6 +142,60 @@ export function detectMuslCcEnv(
         [arVar]: `${triple}-ar`,
       },
       resolvedPaths: { cc: ccPath, cxx: cxxPath, ar: arPath },
+    });
+  }
+  return out;
+}
+
+/**
+ * Wave 3.4 (setup-soldr#133): try sourcing the musl-cc resolution from
+ * `soldr toolchain doctor --json`'s `musl-cc` probe. Returns:
+ *   - an array of MuslCcResolution when the probe exists and yielded data
+ *     (the array may be empty if the probe found nothing)
+ *   - `null` when delegation is not possible (binary missing, soldr < 0.7.35,
+ *     schema mismatch, non-zero exit, probe missing). Callers must fall back
+ *     to the legacy in-process scan in that case.
+ *
+ * Exported for unit tests.
+ */
+export async function tryDelegateToSoldrDoctorMuslCc(opts: {
+  soldrPath: string;
+  exec?: SoldrExecFn;
+  warn?: (msg: string) => void;
+}): Promise<MuslCcResolution[] | null> {
+  const detected = await detectSoldrSupportsToolchainSubcommands(opts.soldrPath, {
+    exec: opts.exec,
+    warn: opts.warn,
+  });
+  if (!detected.supported) return null;
+  const doctor = await soldrToolchainDoctor(opts.soldrPath, {
+    exec: opts.exec,
+    warn: opts.warn,
+  });
+  if (doctor === null) return null;
+  const probe = doctor.probes.find((p) => p.name === "musl-cc");
+  if (!probe) return null;
+  const details = probe.details ?? {};
+  const resolutionsRaw = Array.isArray((details as Record<string, unknown>)["resolutions"])
+    ? ((details as Record<string, unknown>)["resolutions"] as Record<string, unknown>[])
+    : [];
+  const out: MuslCcResolution[] = [];
+  for (const r of resolutionsRaw) {
+    const triple = String(r["triple"] ?? "");
+    if (!MUSL_TRIPLE_RE.test(triple)) continue;
+    const exportsRaw = (r["exports"] ?? {}) as Record<string, unknown>;
+    const expRec: Record<string, string> = {};
+    for (const [k, v] of Object.entries(exportsRaw)) {
+      if (typeof v === "string") expRec[k] = v;
+    }
+    out.push({
+      triple,
+      exports: expRec,
+      resolvedPaths: {
+        cc: String(r["cc"] ?? ""),
+        cxx: String(r["cxx"] ?? ""),
+        ar: String(r["ar"] ?? ""),
+      },
     });
   }
   return out;

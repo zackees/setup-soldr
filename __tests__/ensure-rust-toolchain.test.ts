@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   shouldRefreshToolchain,
   shouldSkipRefreshForExactHit,
+  tryDelegateToSoldrToolchainEnsure,
 } from "../src/lib/ensure-rust-toolchain.js";
 import { resolveRustupStrategy } from "../src/lib/resolve-setup.js";
 
@@ -138,4 +139,139 @@ test("resolveRustupStrategy works without a warn callback", () => {
     platform: "darwin",
   });
   assert.equal(result, "managed");
+});
+
+// --- Delegation to `soldr toolchain ensure --json` (Wave 3.4 / setup-soldr#133) ---
+
+type ExecResult = { code: number; stdout: string; stderr: string };
+type ExecFn = (cmd: string, args: string[]) => Promise<ExecResult>;
+
+function mkExec(map: Record<string, ExecResult>): ExecFn {
+  return async (_cmd, args) => {
+    const key = args.join(" ");
+    return map[key] ?? { code: 127, stdout: "", stderr: `mock: no entry for ${key}` };
+  };
+}
+
+test("tryDelegateToSoldrToolchainEnsure delegates when soldr 0.7.35 is installed", async () => {
+  const ensurePayload = {
+    schema_version: 1,
+    channel: "1.94.1",
+    rustup_bootstrapped: false,
+    components_added: ["rustfmt", "clippy"],
+    targets_added: ["x86_64-pc-windows-gnu"],
+    plugins_installed: [],
+    smoke_verify: { cargo_version: "cargo 1.94.1", rustc_version: "rustc 1.94.1", ok: true },
+    elapsed_ms: 100,
+  };
+  const exec = mkExec({
+    "version --json": { code: 0, stdout: JSON.stringify({ soldr_version: "0.7.35" }), stderr: "" },
+    "toolchain ensure --json --channel 1.94.1 --profile minimal --component rustfmt --component clippy --target x86_64-pc-windows-gnu": {
+      code: 0,
+      stdout: JSON.stringify(ensurePayload),
+      stderr: "",
+    },
+  });
+  const result = await tryDelegateToSoldrToolchainEnsure({
+    soldrPath: "/fake/soldr",
+    channel: "1.94.1",
+    profile: "minimal",
+    components: ["rustfmt", "clippy"],
+    targets: ["x86_64-pc-windows-gnu"],
+    exec,
+  });
+  assert.notEqual(result, null);
+  assert.equal(result!.channel, "1.94.1");
+  assert.deepEqual(result!.componentsAdded, ["rustfmt", "clippy"]);
+});
+
+test("tryDelegateToSoldrToolchainEnsure returns null for soldr 0.7.34 (fallback path)", async () => {
+  const exec = mkExec({
+    "version --json": { code: 0, stdout: JSON.stringify({ soldr_version: "0.7.34" }), stderr: "" },
+  });
+  const result = await tryDelegateToSoldrToolchainEnsure({
+    soldrPath: "/fake/soldr",
+    channel: "1.94.1",
+    profile: "minimal",
+    components: [],
+    targets: [],
+    exec,
+  });
+  assert.equal(result, null);
+});
+
+test("tryDelegateToSoldrToolchainEnsure returns null when soldr binary missing", async () => {
+  const exec: ExecFn = async () => ({ code: 127, stdout: "", stderr: "ENOENT" });
+  const result = await tryDelegateToSoldrToolchainEnsure({
+    soldrPath: "/no/such/path",
+    channel: "1.94.1",
+    profile: "minimal",
+    components: [],
+    targets: [],
+    exec,
+  });
+  assert.equal(result, null);
+});
+
+test("tryDelegateToSoldrToolchainEnsure returns null for passthrough stub", async () => {
+  const exec = mkExec({
+    "version --json": {
+      code: 0,
+      stdout: JSON.stringify({ soldr_version: "passthrough", setup_soldr_passthrough: true }),
+      stderr: "",
+    },
+  });
+  const result = await tryDelegateToSoldrToolchainEnsure({
+    soldrPath: "/fake/soldr",
+    channel: "1.94.1",
+    profile: "minimal",
+    components: [],
+    targets: [],
+    exec,
+  });
+  assert.equal(result, null);
+});
+
+test("tryDelegateToSoldrToolchainEnsure returns null on schema_version mismatch", async () => {
+  const exec = mkExec({
+    "version --json": { code: 0, stdout: JSON.stringify({ soldr_version: "0.7.35" }), stderr: "" },
+    "toolchain ensure --json --channel 1.94.1 --profile minimal": {
+      code: 0,
+      stdout: JSON.stringify({ schema_version: 99, channel: "1.94.1" }),
+      stderr: "",
+    },
+  });
+  const warnings: string[] = [];
+  const result = await tryDelegateToSoldrToolchainEnsure({
+    soldrPath: "/fake/soldr",
+    channel: "1.94.1",
+    profile: "minimal",
+    components: [],
+    targets: [],
+    exec,
+    warn: (msg) => warnings.push(msg),
+  });
+  assert.equal(result, null);
+  // The schema_version warning must surface.
+  assert.ok(warnings.some((w) => /schema_version/.test(w)));
+});
+
+test("tryDelegateToSoldrToolchainEnsure returns null when subcommand fails", async () => {
+  const exec = mkExec({
+    "version --json": { code: 0, stdout: JSON.stringify({ soldr_version: "0.7.35" }), stderr: "" },
+    "toolchain ensure --json --channel 1.94.1 --profile minimal": {
+      code: 1,
+      stdout: "",
+      stderr: "rustup install failed",
+    },
+  });
+  const result = await tryDelegateToSoldrToolchainEnsure({
+    soldrPath: "/fake/soldr",
+    channel: "1.94.1",
+    profile: "minimal",
+    components: [],
+    targets: [],
+    exec,
+  });
+  assert.equal(result, null);
 });
