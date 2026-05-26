@@ -87,6 +87,8 @@ export interface CookSaveResult {
 }
 
 const COOK_KEY_PREFIX = "cook";
+const COOK_MODE = "soldr-cook";
+const LEGACY_COOK_MODE = "cargo-chef";
 
 /**
  * Compute the canonical flag fingerprint. Sorts and lowercases so flag
@@ -119,6 +121,11 @@ export function buildCookCacheKey(parts: CookCacheKeyParts): string {
   ].join("-");
 }
 
+export function isCookMode(mode: string): boolean {
+  const normalized = mode.trim().toLowerCase();
+  return normalized === COOK_MODE || normalized === LEGACY_COOK_MODE;
+}
+
 /**
  * Decide whether to run cook based on the runtime environment. Returns a
  * reason string for diagnostic logging in both branches.
@@ -132,10 +139,12 @@ export function decideCookGate(opts: {
   if (mode === "" || mode === "none" || mode === "off" || mode === "false") {
     return { enabled: false, reason: `prebuild-deps=${opts.prebuildDeps || "(empty)"} - cook disabled` };
   }
-  if (mode !== "cargo-chef") {
+  if (!isCookMode(mode)) {
     return {
       enabled: false,
-      reason: `prebuild-deps=${opts.prebuildDeps} - unknown strategy, only "cargo-chef" supported`,
+      reason:
+        `prebuild-deps=${opts.prebuildDeps} - unknown strategy, ` +
+        `only "${COOK_MODE}" supported ("${LEGACY_COOK_MODE}" remains an alias)`,
     };
   }
   if (!opts.cacheUmbrella) {
@@ -147,13 +156,13 @@ export function decideCookGate(opts: {
   if (!fs.existsSync(opts.lockfilePath)) {
     return { enabled: false, reason: `Cargo.lock path ${opts.lockfilePath} does not exist` };
   }
-  return { enabled: true, reason: "cook enabled" };
+  return { enabled: true, reason: `${COOK_MODE} enabled` };
 }
 
 /**
- * Run `soldr cook` in the project directory. Cargo-chef itself emits
- * the recipe and runs the cook compile. We tolerate failure: cook is
- * an optimization, not a correctness primitive, so any non-zero exit
+ * Run `soldr cook` in the project directory. The soldr-cook mode emits
+ * the recipe and runs the dependency compile. We tolerate failure: cook
+ * is an optimization, not a correctness primitive, so any non-zero exit
  * is logged and the action proceeds. The user's normal `cargo build`
  * step will work fine without a cooked target.
  */
