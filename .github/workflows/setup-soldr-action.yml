@@ -70,6 +70,24 @@ jobs:
           Write-Host "target-lockfile-hash=${{ steps.setup.outputs.target-lockfile-hash }}"
           Write-Host "toolchain=${{ steps.setup.outputs.toolchain }}"
 
+      - name: Verify zccache seed survives isolated SOLDR_CACHE_DIR
+        shell: bash
+        env:
+          SOLDR_CACHE_DIR: ${{ runner.temp }}/setup-soldr-zccache-seed-smoke
+        run: |
+          set -euo pipefail
+          doctor_json="$(soldr doctor --json)"
+          printf '%s\n' "$doctor_json"
+          node -e '
+            const payload = JSON.parse(process.argv[1]);
+            if (payload.active_zccache_source !== "pinned" || payload.pinned_zccache_active !== true) {
+              console.error(
+                `expected pinned zccache after SOLDR_CACHE_DIR override; got source=${payload.active_zccache_source} active=${payload.pinned_zccache_active}`,
+              );
+              process.exit(1);
+            }
+          ' "$doctor_json"
+
       - name: Build zccache through soldr
         shell: bash
         working-directory: zccache

@@ -204,12 +204,13 @@ inputs:
     default: "1GiB"
   cache-payload-max-bytes:
     description: >
-      Optional hard limit for tar-backed cache saves, measured before
-      compression. Empty (default) disables the limit. When set and exceeded,
-      cache-payload-oversize-action decides whether setup-soldr skips the save
-      or fails the post step.
+      Hard limit for tar-backed cache saves, measured before compression.
+      Default 2GiB prevents runaway multi-GiB zccache artifact uploads in
+      normal CI. Set to 0 to disable the limit. When exceeded,
+      cache-payload-oversize-action decides whether setup-soldr skips the
+      save or fails the post step.
     required: false
-    default: ""
+    default: "2GiB"
   cache-payload-oversize-action:
     description: >
       Behavior when cache-payload-max-bytes is exceeded. "skip" logs a warning

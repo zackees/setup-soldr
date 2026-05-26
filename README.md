@@ -54,6 +54,13 @@ and fails by default if the scoped shutdown cannot be confirmed. The normal
 setup-soldr post step still runs later so final cache saves see a quiescent
 cache directory.
 
+During setup, the action also seeds soldr's pinned zccache install from a
+vendored `vendor/zccache/<host-triple>/` directory when present, otherwise from
+the managed zccache release asset. Because soldr keeps pinned zccache binaries
+in a home-anchored location, later test steps can override `SOLDR_CACHE_DIR`
+for daemon isolation without forcing a second zccache release lookup or a
+`cargo install` fallback.
+
 ### macOS
 
 ```yaml
@@ -468,6 +475,10 @@ preferred for new workflows.
 | `target-cache-strip-debuginfo` | Forward-compatible pass-through. When `true`, requests that soldr strip debug-info-bearing artifacts from the target-cache before saving. Requires soldr#237 to take effect; current soldr releases ignore the flag. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
 | `target-cache-include-incremental` | Forward-compatible pass-through. When `false`, requests that soldr exclude `target/*/incremental/` directories from the target-cache. Requires soldr#237 to take effect. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
 | `target-cache-include-build-script-binaries` | Forward-compatible pass-through. When `false`, requests that soldr exclude `target/*/build/*-{hash}/build-script-build` binaries from the target-cache. Requires soldr#237 to take effect. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
+| `cache-payload-warn-bytes` | Soft warning threshold for tar-backed cache saves before compression. Default `1GiB`; warnings include the largest files so runaway zccache payloads are diagnosable. |
+| `cache-payload-max-bytes` | Hard limit for tar-backed cache saves before compression. Default `2GiB`, which skips multi-GiB uploads by default; set `0` to disable. |
+| `cache-payload-oversize-action` | Behavior when `cache-payload-max-bytes` is exceeded. Default `skip` logs a warning and avoids the upload; `fail` treats the oversized payload as a post-step error. |
+| `cache-payload-top-n` | Number of largest files and directories retained in cache payload stats and summaries. Default `10`; set `0` to keep only aggregate counts. |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
 | `cargo-registry-cache` | When `true` (default), setup-soldr caches `~/.cargo/registry` directly as a fast-zstd `.tar.zst` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Requires zccache `>=1.4.4` (skip-flag support). Set to `false` to opt out and let zccache own the registry cache via its legacy gzip path. |
 | `compile-cache-stats` | Controls compile-cache (zccache) diagnostic output. `none` suppresses all compile-cache info. `summarize` (default) renders a per-session totals table into `$GITHUB_STEP_SUMMARY` and emits scalar action outputs (hit rate, hits, misses, total). `detailed` adds per-extension and per-tool rollup tables and sets `compile-cache-rollups-json`. Requires soldr `>=0.7.22` for the typed `soldr cache report --json` payload; older releases fall back to a single-line note in the summary. |

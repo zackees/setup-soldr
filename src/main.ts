@@ -19,6 +19,7 @@ import { installPassthrough } from "./lib/install-passthrough.js";
 import { normalizeSourceMtime } from "./lib/normalize-source-mtime.js";
 import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js";
 import { ensureShims } from "./lib/ensure-shims.js";
+import { seedZccache } from "./lib/zccache-seed.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import {
@@ -144,6 +145,13 @@ function buildActionContext(): ActionContext {
     parentSha,
     logger,
   };
+}
+
+function actionRoot(): string {
+  const explicit = process.env["GITHUB_ACTION_PATH"]?.trim() || process.env["SETUP_SOLDR_ACTION_ROOT"]?.trim();
+  if (explicit) return path.resolve(explicit);
+  const moduleDir = typeof __dirname === "string" ? __dirname : process.cwd();
+  return path.resolve(moduleDir, "..");
 }
 
 async function restoreCacheSafe(
@@ -772,6 +780,21 @@ export async function run(): Promise<void> {
     );
   }
   await finishPhase("install");
+
+  // ---- zccache-seed ----
+  // Pin setup-soldr's zccache before user workflow steps. The pinned
+  // install is home-anchored inside soldr, so later self-tests can isolate
+  // SOLDR_CACHE_DIR without repeating release lookup or cargo-install fallback.
+  await markPhase("zccache-seed");
+  await seedZccache({
+    soldrPath: result.soldrPath,
+    actionRoot: actionRoot(),
+    enabled: result.enabled,
+    buildCacheEnabled,
+    log: (msg) => logger.log(msg),
+    warn: (msg) => logger.warning(msg),
+  });
+  await finishPhase("zccache-seed");
 
   // Export SOLDR_BINARY so shims can exec it directly
   core.exportVariable("SOLDR_BINARY", result.soldrPath);
