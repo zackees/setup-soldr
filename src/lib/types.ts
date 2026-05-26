@@ -74,6 +74,7 @@ export interface RawInputs {
   lockfile: string;
   buildCache: string;
   buildCacheMode: string;
+  zccacheSeedStrict: string;
   targetCache: string;
   targetCacheMode: string;
   targetDir: string;

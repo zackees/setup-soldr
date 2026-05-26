@@ -790,7 +790,7 @@ export async function run(): Promise<void> {
     soldrPath: result.soldrPath,
     actionRoot: actionRoot(),
     enabled: result.enabled,
-    buildCacheEnabled,
+    strict: isTruthy(inputs.zccacheSeedStrict),
     log: (msg) => logger.log(msg),
     warn: (msg) => logger.warning(msg),
   });

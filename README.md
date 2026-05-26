@@ -468,6 +468,7 @@ preferred for new workflows.
 | `lockfile` | Optional `Cargo.lock` path used for Rust artifact cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save Soldr/zccache build cache state across runs. Default `true`; set to `false` to opt out. |
 | `build-cache-mode` | Rust build cache mode. Default `once` saves a full snapshot on miss, then restores only the local rust-plan bundle on later hits without resaving the full target tree. `thin` is the bounded dependency-artifact alternative. `full` opts into normal whole-target restore/save behavior and should be treated as unbounded. |
+| `zccache-seed-strict` | When `true`, setup fails if setup-soldr cannot seed soldr's pinned zccache install from a vendored or managed release source. Default `false` keeps the seed best-effort and allows soldr's normal managed fallback path. Enable this in repos where a later `cargo install zccache` fallback is unacceptable. |
 | `prebuild-deps` | Dependency prebuild mode. Default `soldr-cook` runs `soldr cook` and restores/saves a long-enduring dependency cache; set to `none` to skip. `cargo-chef` is accepted as a legacy alias. |
 | `prebuild-deps-flags` | Flags forwarded to `soldr cook`; default `--release`. Material flags are hashed into the cook cache key. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |

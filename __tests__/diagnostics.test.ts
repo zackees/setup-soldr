@@ -36,6 +36,7 @@ function fixtureRawInputs(): RawInputs {
     lockfile: "Cargo.lock",
     buildCache: "true",
     buildCacheMode: "",
+    zccacheSeedStrict: "",
     targetCache: "true",
     targetCacheMode: "",
     targetDir: "target",
