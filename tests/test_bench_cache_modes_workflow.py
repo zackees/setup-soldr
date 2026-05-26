@@ -63,9 +63,18 @@ def test_real_cache_smoke_backend_is_opt_in_and_collated() -> None:
     assert save_job["if"] == "${{ inputs.cache_backend == 'local-tar-zstd+actions-cache-smoke' }}"
     assert restore_job["needs"] == "real-cache-save"
     save_step = next(step for step in save_job["steps"] if step.get("name") == "Save real target cache")
-    restore_step = next(step for step in restore_job["steps"] if step.get("name") == "Restore real target cache")
+    save_action = next(step for step in save_job["steps"] if step.get("uses") == "actions/cache/save@v4")
+    restore_prepare = next(step for step in restore_job["steps"] if step.get("name") == "Prepare real target cache restore")
+    restore_action = next(step for step in restore_job["steps"] if step.get("uses") == "actions/cache/restore@v4")
+    restore_step = next(step for step in restore_job["steps"] if step.get("name") == "Emit real target cache row")
     assert "scripts/bench-real-cache-smoke.mjs" in save_step["run"]
     assert "--mode=save" in save_step["run"]
+    assert save_action["with"]["path"] == "${{ steps.real-save-prepare.outputs.path }}"
+    assert save_action["with"]["key"] == "${{ steps.real-save-prepare.outputs.key }}"
+    assert "--mode=prepare-restore" in restore_prepare["run"]
+    assert restore_action["with"]["path"] == "${{ steps.real-restore-prepare.outputs.path }}"
+    assert restore_action["with"]["key"] == "${{ steps.real-restore-prepare.outputs.key }}"
+    assert restore_action["with"]["fail-on-cache-miss"] is True
     assert "scripts/bench-real-cache-smoke.mjs" in restore_step["run"]
     assert "--mode=restore" in restore_step["run"]
 
