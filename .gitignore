@@ -6,6 +6,7 @@ __pycache__/
 node_modules/
 dist-main/
 dist-post/
+dist-cleanup/
 dist-tsc/
 *.tsbuildinfo
 licenses.txt
