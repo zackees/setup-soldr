@@ -14,9 +14,32 @@ export type TargetCacheProfile = "thin-v1" | "thin-v2";
 export type StatsMode = "none" | "summarize" | "detailed";
 export type CompileCacheStatsMode = "none" | "summarize" | "detailed" | "insights";
 
+export interface CachePayloadEntry {
+  path: string;
+  bytes: number;
+}
+
+export interface CachePayloadSkipSummary {
+  reason: string;
+  count: number;
+  samples: string[];
+}
+
+export interface CachePayloadCensus {
+  bytes: number;
+  files: number;
+  symlinks: number;
+  directories: number;
+  inputs: string[];
+  topFiles: CachePayloadEntry[];
+  topDirectories: CachePayloadEntry[];
+  skipped: CachePayloadSkipSummary[];
+}
+
 export interface CacheOpStats {
   label: string;
   operation: "restore" | "save";
+  status?: string;
   hit: boolean;
   key: string;
   matchedKey: string;
@@ -24,6 +47,7 @@ export interface CacheOpStats {
   archiveBytes: number | null;
   inflatedBytes: number | null;
   fileCount: number | null;
+  payload?: CachePayloadCensus | null;
   durationMs: number;
   timestamp: string;
 }
@@ -59,6 +83,10 @@ export interface RawInputs {
   targetCacheIncludeBuildScriptBinaries: string;
   targetCacheCompress: string;
   targetCacheCompressLevel: string;
+  cachePayloadWarnBytes: string;
+  cachePayloadMaxBytes: string;
+  cachePayloadOversizeAction: string;
+  cachePayloadTopN: string;
   sourceMtimeNormalize: string;
   cargoRegistryCache: string;
   compileCacheStats: string;

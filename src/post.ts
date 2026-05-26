@@ -34,10 +34,23 @@ import {
   writeSnapshotFile,
   SNAPSHOT_FILENAME,
 } from "./lib/source-mtime-snapshot.js";
-import type { CompileCacheStatsMode, ResolveResult, StatsMode } from "./lib/types.js";
+import type {
+  CachePayloadCensus,
+  CompileCacheStatsMode,
+  RawInputs,
+  ResolveResult,
+  StatsMode,
+} from "./lib/types.js";
 
 type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
-type SaveStatus = "disabled" | "not-managed-in-post" | "exact-hit-skip" | "missing-dir-skip" | "saved" | "failed";
+type SaveStatus =
+  | "disabled"
+  | "not-managed-in-post"
+  | "exact-hit-skip"
+  | "missing-dir-skip"
+  | "oversize-skip"
+  | "saved"
+  | "failed";
 
 interface CacheSaveResult {
   status: SaveStatus;
@@ -46,6 +59,10 @@ interface CacheSaveResult {
   saved_paths?: string[];
   cache_id?: number;
   error?: string;
+  archiveBytes?: number | null;
+  inflatedBytes?: number | null;
+  fileCount?: number | null;
+  payload?: CachePayloadCensus | null;
 }
 
 interface CacheLayerSummary {
@@ -201,6 +218,83 @@ function restoreStatus(enabled: boolean, exactHit: boolean, matchedKey: string):
   return "miss";
 }
 
+interface CachePayloadPolicy {
+  warnBytes: number | null;
+  maxBytes: number | null;
+  oversizeAction: "skip" | "fail";
+  topN: number;
+}
+
+function parseByteCount(raw: string, inputName: string, log: (msg: string) => void): number | null {
+  const value = (raw ?? "").trim();
+  if (!value || value === "0") return null;
+  const match = /^(\d+(?:\.\d+)?)\s*([kmgt]?i?b?|b)?$/i.exec(value);
+  if (!match) {
+    core.warning(`setup-soldr: ignoring invalid ${inputName} value '${value}'`);
+    return null;
+  }
+  const amountText = match[1];
+  if (amountText === undefined) return null;
+  const amount = Number(amountText);
+  if (!Number.isFinite(amount) || amount < 0) {
+    core.warning(`setup-soldr: ignoring invalid ${inputName} value '${value}'`);
+    return null;
+  }
+  const unit = (match[2] ?? "b").toLowerCase();
+  const multiplier =
+    unit === "k" || unit === "kb" || unit === "kib"
+      ? 1024
+      : unit === "m" || unit === "mb" || unit === "mib"
+        ? 1024 ** 2
+        : unit === "g" || unit === "gb" || unit === "gib"
+          ? 1024 ** 3
+          : unit === "t" || unit === "tb" || unit === "tib"
+            ? 1024 ** 4
+            : 1;
+  const parsed = Math.floor(amount * multiplier);
+  if (parsed <= 0) return null;
+  log(`cache-payload-policy: ${inputName}=${parsed} bytes`);
+  return parsed;
+}
+
+function parseTopN(raw: string, log: (msg: string) => void): number {
+  const value = (raw ?? "").trim();
+  if (!value) return 10;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    core.warning(`setup-soldr: ignoring invalid cache-payload-top-n value '${value}'`);
+    return 10;
+  }
+  const topN = Math.max(0, Math.min(50, Math.floor(parsed)));
+  log(`cache-payload-policy: cache-payload-top-n=${topN}`);
+  return topN;
+}
+
+function resolveCachePayloadPolicy(inputs: RawInputs, log: (msg: string) => void): CachePayloadPolicy {
+  const action = (inputs.cachePayloadOversizeAction || "skip").trim().toLowerCase();
+  let oversizeAction: "skip" | "fail" = "skip";
+  if (action === "fail") {
+    oversizeAction = "fail";
+  } else if (action && action !== "skip") {
+    core.warning(
+      `setup-soldr: ignoring invalid cache-payload-oversize-action value '${inputs.cachePayloadOversizeAction}'`,
+    );
+  }
+  return {
+    warnBytes: parseByteCount(inputs.cachePayloadWarnBytes || "1GiB", "cache-payload-warn-bytes", log),
+    maxBytes: parseByteCount(inputs.cachePayloadMaxBytes, "cache-payload-max-bytes", log),
+    oversizeAction,
+    topN: parseTopN(inputs.cachePayloadTopN, log),
+  };
+}
+
+type CacheSaveResultWithStats = CacheSaveResult & {
+  archiveBytes: number | null;
+  inflatedBytes: number | null;
+  fileCount: number | null;
+  payload: CachePayloadCensus | null;
+};
+
 async function saveOne(opts: {
   cacheDir: string;
   codec: "auto" | "zstd" | "none";
@@ -216,28 +310,63 @@ async function saveOne(opts: {
    * to `registry/` without a new cache layer — setup-soldr#102.
    */
   extraBasenames?: string[];
-}): Promise<CacheSaveResult & { archiveBytes: number | null }> {
-  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames } = opts;
-  const withBytes = (r: CacheSaveResult): CacheSaveResult & { archiveBytes: number | null } =>
-    Object.assign(r, { archiveBytes: null });
+  payloadPolicy: CachePayloadPolicy;
+}): Promise<CacheSaveResultWithStats> {
+  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadPolicy } = opts;
+  const withStats = (r: CacheSaveResult): CacheSaveResultWithStats =>
+    Object.assign(r, {
+      archiveBytes: null,
+      inflatedBytes: null,
+      fileCount: null,
+      payload: null,
+    });
   if (!dirExists(cacheDir)) {
     log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
-    return withBytes({ status: "missing-dir-skip", cache_dir: cacheDir });
+    return withStats({ status: "missing-dir-skip", cache_dir: cacheDir });
   }
   if (matchedKey === key) {
     log(`${label}: exact cache hit on ${key}, skipping save`);
-    return withBytes({ status: "exact-hit-skip", cache_dir: cacheDir });
+    return withStats({ status: "exact-hit-skip", cache_dir: cacheDir });
   }
   let archiveBytes: number | null = null;
   let archivePath: string | null = null;
+  let inflatedBytes: number | null = null;
+  let fileCount: number | null = null;
+  let payload: CachePayloadCensus | null = null;
   try {
-    const result = await compressCache({ cacheDir, codec, level, debug, log, extraBasenames });
+    const result = await compressCache({
+      cacheDir,
+      codec,
+      level,
+      debug,
+      log,
+      extraBasenames,
+      payloadWarnBytes: payloadPolicy.warnBytes,
+      payloadMaxBytes: payloadPolicy.maxBytes,
+      payloadOversizeAction: payloadPolicy.oversizeAction,
+      payloadTopN: payloadPolicy.topN,
+      label,
+    });
     archivePath = result.archivePath;
     archiveBytes = result.archiveBytes || null;
+    inflatedBytes = result.inflatedBytes;
+    fileCount = result.fileCount;
+    payload = result.payload;
+    if (result.skippedReason === "payload-too-large") {
+      log(`${label}: payload exceeded cache-payload-max-bytes, skipping save`);
+      return {
+        status: "oversize-skip",
+        cache_dir: cacheDir,
+        archiveBytes,
+        inflatedBytes,
+        fileCount,
+        payload,
+      };
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     log(`${label}: compression failed: ${message}`);
-    return withBytes({ status: "failed", cache_dir: cacheDir, error: message });
+    return withStats({ status: "failed", cache_dir: cacheDir, error: message });
   }
   const pathsToSave = archivePath ? [archivePath] : [cacheDir];
   try {
@@ -250,6 +379,9 @@ async function saveOne(opts: {
       saved_paths: pathsToSave,
       cache_id: id,
       archiveBytes,
+      inflatedBytes,
+      fileCount,
+      payload,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -261,6 +393,9 @@ async function saveOne(opts: {
       saved_paths: pathsToSave,
       error: message,
       archiveBytes,
+      inflatedBytes,
+      fileCount,
+      payload,
     };
   }
 }
@@ -488,6 +623,8 @@ function saveText(save: CacheSaveResult): string {
       return "skipped exact hit";
     case "missing-dir-skip":
       return "skipped missing dir";
+    case "oversize-skip":
+      return "skipped oversize payload";
     case "failed":
       return save.error ? `failed: ${save.error}` : "failed";
     case "disabled":
@@ -518,6 +655,85 @@ function fmtBytes(n: number): string {
   if (n >= 1_048_576) return `${(n / 1_048_576).toFixed(1)} MB`;
   if (n >= 1_024) return `${(n / 1_024).toFixed(1)} KB`;
   return `${n} B`;
+}
+
+function fmtOptionalBytes(n: number | null | undefined): string {
+  return typeof n === "number" && Number.isFinite(n) ? fmtBytes(n) : "";
+}
+
+function skipSummaryText(payload: CachePayloadCensus): string {
+  if (payload.skipped.length === 0) return "none";
+  return payload.skipped.map((entry) => `${entry.reason}: ${entry.count}`).join(", ");
+}
+
+function payloadEntryLines(entries: readonly { path: string; bytes: number }[]): string[] {
+  if (entries.length === 0) return ["- none"];
+  return entries.map((entry) => `- \`${entry.path}\` - ${fmtBytes(entry.bytes)}`);
+}
+
+function payloadSkipLines(payload: CachePayloadCensus): string[] {
+  if (payload.skipped.length === 0) return ["- none"];
+  const lines: string[] = [];
+  for (const skipped of payload.skipped) {
+    const samples = skipped.samples.length > 0 ? `; samples: ${skipped.samples.map((s) => `\`${s}\``).join(", ")}` : "";
+    lines.push(`- ${skipped.reason}: ${skipped.count}${samples}`);
+  }
+  return lines;
+}
+
+function cachePayloadAuditSection(summary: FinalCacheSummary): string[] {
+  const rows: Array<[string, CacheSaveResult]> = [];
+  for (const [label, save] of [
+    ["target cache", summary.target_cache.save],
+    ["build cache", summary.build_cache.save],
+    ["cargo registry cache", summary.cargo_registry_cache.save],
+  ] as Array<[string, CacheSaveResult]>) {
+    if (save.payload) rows.push([label, save]);
+  }
+
+  if (rows.length === 0) return [];
+
+  const lines = [
+    "",
+    "### cache payload audit",
+    "",
+    "| Layer | Payload | Files | Symlinks | Archive | Skipped |",
+    "| --- | ---: | ---: | ---: | ---: | --- |",
+  ];
+
+  for (const [label, save] of rows) {
+    const payload = save.payload;
+    if (!payload) continue;
+    lines.push(
+      `| ${markdownCell(label)} | ${fmtBytes(payload.bytes)} | ${payload.files} | ${payload.symlinks} | ` +
+        `${fmtOptionalBytes(save.archiveBytes)} | ${markdownCell(skipSummaryText(payload))} |`,
+    );
+  }
+
+  for (const [label, save] of rows) {
+    const payload = save.payload;
+    if (!payload) continue;
+    lines.push(
+      "",
+      `<details><summary>${label} largest payload entries</summary>`,
+      "",
+      "Largest files:",
+      "",
+      ...payloadEntryLines(payload.topFiles),
+      "",
+      "Largest directories:",
+      "",
+      ...payloadEntryLines(payload.topDirectories),
+      "",
+      "Skipped tar inputs:",
+      "",
+      ...payloadSkipLines(payload),
+      "",
+      "</details>",
+    );
+  }
+
+  return lines;
 }
 
 function setCompileCacheOutputs(report: SoldrCacheReportSummary, mode: CompileCacheStatsMode): void {
@@ -667,6 +883,7 @@ export function formatFinalCacheSummaryMarkdown(
     `| ${tableRow("target cache", summary.target_cache)} |`,
     `| ${tableRow("build cache", summary.build_cache)} |`,
     `| ${tableRow("cargo registry cache", summary.cargo_registry_cache)} |`,
+    ...cachePayloadAuditSection(summary),
     ...multiStepLines,
     "",
     "### zccache session",
@@ -873,6 +1090,8 @@ export async function run(): Promise<void> {
   const debugMode = result.debugMode ?? false;
   const debugLog = debugMode ? log : (): void => undefined;
   const postCollector = new StatsCollector();
+  const rawInputs = readRawInputs(process.env);
+  const payloadPolicy = resolveCachePayloadPolicy(rawInputs, log);
 
   // Always stop long-running cache daemons before packing the build
   // cache so file locks release and the tarball reflects a quiescent
@@ -880,10 +1099,10 @@ export async function run(): Promise<void> {
   //
   // Wire `--archive-logs <build-cache>/logs/archive` through so soldr
   // (post-#379) stashes the just-ended session's logs into a
-  // per-session subdirectory inside the build-cache. Setup-soldr's
-  // existing tar.zst flow already picks up the entire build-cache
-  // subtree, so the archived logs ride the cache cycle for free and
-  // survive across runs (see issue #126).
+  // per-session subdirectory before we render this post step's roll-up.
+  // The tar payload planner filters the build-cache logs/ subtree out of
+  // cache saves: raw session journals are diagnostics, not reusable cache
+  // content, and can be tens of MB per invocation.
   const logsArchiveDir = restoreState.buildCacheEnabled
     ? path.join(result.buildCache.path, "logs", "archive")
     : undefined;
@@ -942,13 +1161,21 @@ export async function run(): Promise<void> {
         label: "build-cache",
         debug: debugMode,
         log: debugLog,
+        payloadPolicy,
       })
-    : Object.assign(disabledSave(), { archiveBytes: null });
-  if (buildSave.status === "saved") {
+    : Object.assign(disabledSave(), {
+        archiveBytes: null,
+        inflatedBytes: null,
+        fileCount: null,
+        payload: null,
+      });
+  if (buildSave.status === "saved" || buildSave.status === "oversize-skip") {
     postCollector.record({
       label: "build-cache", operation: "save", hit: false,
       key: result.buildCache.key, matchedKey: buildCacheMatched, restoreKeys: [],
-      archiveBytes: buildSave.archiveBytes, inflatedBytes: null, fileCount: null,
+      status: buildSave.status,
+      archiveBytes: buildSave.archiveBytes, inflatedBytes: buildSave.inflatedBytes, fileCount: buildSave.fileCount,
+      payload: buildSave.payload,
       durationMs: Date.now() - buildSaveStart, timestamp: new Date().toISOString(),
     });
   }
@@ -1069,7 +1296,12 @@ export async function run(): Promise<void> {
   // `git/` directory (bare mirrors + checkouts for git-source crate deps)
   // into the same archive alongside `registry/`. Cache key + archive path
   // are unchanged — the extras simply ride inside the existing tarball.
-  let cargoRegistrySave = Object.assign(disabledSave(), { archiveBytes: null as number | null });
+  let cargoRegistrySave: CacheSaveResultWithStats = Object.assign(disabledSave(), {
+    archiveBytes: null as number | null,
+    inflatedBytes: null as number | null,
+    fileCount: null as number | null,
+    payload: null as CachePayloadCensus | null,
+  });
   if (result.cargoRegistryCache.enabled) {
     const regSaveStart = Date.now();
     cargoRegistrySave = await saveOne({
@@ -1082,12 +1314,17 @@ export async function run(): Promise<void> {
       debug: debugMode,
       log: debugLog,
       extraBasenames: result.cargoRegistryCache.extraBasenames,
+      payloadPolicy,
     });
-    if (cargoRegistrySave.status === "saved") {
+    if (cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip") {
       postCollector.record({
         label: "cargo-registry", operation: "save", hit: false,
         key: result.cargoRegistryCache.key, matchedKey: registryMatched, restoreKeys: [],
-        archiveBytes: cargoRegistrySave.archiveBytes, inflatedBytes: null, fileCount: null,
+        status: cargoRegistrySave.status,
+        archiveBytes: cargoRegistrySave.archiveBytes,
+        inflatedBytes: cargoRegistrySave.inflatedBytes,
+        fileCount: cargoRegistrySave.fileCount,
+        payload: cargoRegistrySave.payload,
         durationMs: Date.now() - regSaveStart, timestamp: new Date().toISOString(),
       });
     }
@@ -1415,7 +1652,6 @@ export async function run(): Promise<void> {
   // main.ts persists into action state.
   const loggingState = core.getState("logging");
   if (loggingEnabled(loggingState)) {
-    const rawInputs = readRawInputs(process.env);
     // zccache writes its per-rustc-invocation JSONL journal under the
     // build-cache directory (which == ZCCACHE_CACHE_DIR per
     // resolve-setup.ts's env exports). When `logging: true` is on we

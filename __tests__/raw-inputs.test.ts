@@ -84,3 +84,16 @@ test("prebuild-deps inputs round-trip through readRawInputs", () => {
   assert.equal(r.prebuildDeps, "soldr-cook");
   assert.equal(r.prebuildDepsFlags, "--release --workspace");
 });
+
+test("cache payload audit inputs round-trip through readRawInputs", () => {
+  const r = readRawInputs({
+    "INPUT_CACHE-PAYLOAD-WARN-BYTES": "1GiB",
+    "INPUT_CACHE-PAYLOAD-MAX-BYTES": "4GiB",
+    "INPUT_CACHE-PAYLOAD-OVERSIZE-ACTION": "fail",
+    "INPUT_CACHE-PAYLOAD-TOP-N": "25",
+  });
+  assert.equal(r.cachePayloadWarnBytes, "1GiB");
+  assert.equal(r.cachePayloadMaxBytes, "4GiB");
+  assert.equal(r.cachePayloadOversizeAction, "fail");
+  assert.equal(r.cachePayloadTopN, "25");
+});

@@ -114,10 +114,26 @@ function cacheOutcomeLines(outcomes: readonly CacheOpStats[]): string[] {
   for (const o of outcomes) {
     lines.push(
       `  [${o.operation}] ${o.label}: hit=${o.hit} matched=${o.matchedKey || "(none)"} ` +
-        `key=${o.key} duration_ms=${o.durationMs}`,
+        `key=${o.key}${o.status ? ` status=${o.status}` : ""} duration_ms=${o.durationMs}`,
     );
     if (o.archiveBytes !== null) {
       lines.push(`    archive_bytes=${o.archiveBytes} inflated_bytes=${o.inflatedBytes ?? "?"} files=${o.fileCount ?? "?"}`);
+    }
+    if (o.payload) {
+      lines.push(
+        `    payload_bytes=${o.payload.bytes} payload_files=${o.payload.files} ` +
+          `symlinks=${o.payload.symlinks} dirs=${o.payload.directories}`,
+      );
+      if (o.payload.topFiles.length > 0) {
+        lines.push(
+          `    top_files=${o.payload.topFiles.map((entry) => `${entry.path}:${entry.bytes}`).join(",")}`,
+        );
+      }
+      if (o.payload.skipped.length > 0) {
+        lines.push(
+          `    skipped=${o.payload.skipped.map((entry) => `${entry.reason}:${entry.count}`).join(",")}`,
+        );
+      }
     }
   }
   return lines;

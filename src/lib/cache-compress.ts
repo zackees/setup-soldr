@@ -8,11 +8,17 @@
 // zstd vs gzip magic bytes for back-compat.
 
 import * as fs from "node:fs/promises";
-import type { Dirent } from "node:fs";
+import type { Dirent, Stats } from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as io from "@actions/io";
+import type {
+  CachePayloadCensus,
+  CachePayloadEntry,
+  CachePayloadSkipSummary,
+} from "./types.js";
 
 /**
  * Recursively walk a directory and sum file sizes.
@@ -50,6 +56,116 @@ function fmtBytesDebug(n: number): string {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)}KB`;
   if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)}MB`;
   return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
+}
+
+const DEFAULT_PAYLOAD_TOP_N = 10;
+const MAX_SKIP_SAMPLES = 8;
+
+const TRANSIENT_EXACT_BASENAMES = new Set([
+  ".package-cache",
+  ".package-cache-mutate",
+  "zccache.pid",
+  "sccache.pid",
+]);
+
+const ARCHIVE_SUFFIXES = [
+  ".tar",
+  ".tar.zst",
+  ".tar.gz",
+  ".tgz",
+  ".zip",
+  ".zst.tmp",
+];
+
+const TRANSIENT_SUFFIXES: Array<[string, string]> = [
+  [".sock", "transient-socket-path"],
+  [".socket", "transient-socket-path"],
+  [".pid", "transient-pid-file"],
+  [".lock", "transient-lock-file"],
+  [".lck", "transient-lock-file"],
+  [".tmp", "transient-temp-file"],
+  [".temp", "transient-temp-file"],
+  [".part", "transient-temp-file"],
+  [".partial", "transient-temp-file"],
+];
+
+function normalizeTopN(value: number | undefined): number {
+  if (value === undefined || !Number.isFinite(value)) return DEFAULT_PAYLOAD_TOP_N;
+  return Math.max(0, Math.min(50, Math.floor(value)));
+}
+
+function comparePayloadEntry(a: CachePayloadEntry, b: CachePayloadEntry): number {
+  if (a.bytes !== b.bytes) return b.bytes - a.bytes;
+  return a.path.localeCompare(b.path);
+}
+
+function toTarPath(relativePath: string): string {
+  return relativePath.split(path.sep).join("/");
+}
+
+function reasonForTransientBasename(name: string): string | null {
+  const lower = name.toLowerCase();
+  if (TRANSIENT_EXACT_BASENAMES.has(lower)) return "transient-cargo-mutex";
+  for (const suffix of ARCHIVE_SUFFIXES) {
+    if (lower.endsWith(suffix)) return "archive-file";
+  }
+  for (const [suffix, reason] of TRANSIENT_SUFFIXES) {
+    if (lower.endsWith(suffix)) return reason;
+  }
+  return null;
+}
+
+function reasonForTransientPath(relativePath: string): string | null {
+  const parts = toTarPath(relativePath).split("/");
+  if (parts.length >= 2 && parts[1]?.toLowerCase() === "logs") {
+    return "diagnostic-log-dir";
+  }
+  return null;
+}
+
+function reasonForSpecialFile(stats: Stats): string {
+  if (stats.isSocket()) return "special-socket";
+  if (stats.isFIFO()) return "special-fifo";
+  if (stats.isBlockDevice()) return "special-block-device";
+  if (stats.isCharacterDevice()) return "special-character-device";
+  return "unsupported-file-type";
+}
+
+function reasonForAccessError(err: unknown): string {
+  const code = (err as NodeJS.ErrnoException).code;
+  if (code === "ENOENT" || code === "ENOTDIR") return "vanished";
+  if (code === "EACCES" || code === "EPERM") return "inaccessible";
+  return "inaccessible";
+}
+
+function hasManifestUnsafeName(relativePath: string): boolean {
+  return relativePath.includes("\n") || relativePath.includes("\r");
+}
+
+interface MutableSkipSummary {
+  reason: string;
+  count: number;
+  samples: string[];
+}
+
+function makeSkipRecorder(): {
+  add(reason: string, sample: string): void;
+  summaries(): CachePayloadSkipSummary[];
+} {
+  const skipped = new Map<string, MutableSkipSummary>();
+  return {
+    add(reason: string, sample: string): void {
+      const current = skipped.get(reason) ?? { reason, count: 0, samples: [] };
+      current.count++;
+      if (current.samples.length < MAX_SKIP_SAMPLES) {
+        current.samples.push(sample);
+      }
+      skipped.set(reason, current);
+    },
+    summaries(): CachePayloadSkipSummary[] {
+      return Array.from(skipped.values()).sort((a, b) => a.reason.localeCompare(b.reason));
+    },
+  };
 }
 
 export type CompressMagic = "zstd" | "gzip" | "unknown";
@@ -90,6 +206,170 @@ async function pathExists(p: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export interface TarPayloadPlan extends CachePayloadCensus {
+  manifestEntries: string[];
+}
+
+interface WalkResult {
+  bytes: number;
+  files: number;
+  symlinks: number;
+  directories: number;
+}
+
+const EMPTY_WALK: WalkResult = {
+  bytes: 0,
+  files: 0,
+  symlinks: 0,
+  directories: 0,
+};
+
+/**
+ * Preflight every tar input with lstat before compression.
+ *
+ * This keeps daemon sockets, cargo mutex files, partial archives, and other
+ * transient/special files out of the manifest that tar receives. Symlinks are
+ * archived as symlink entries and are not followed, so links pointing outside
+ * the cache root do not pull external content into the cache.
+ */
+export async function planTarPayload(opts: {
+  parent: string;
+  inputBasenames: string[];
+  topN?: number;
+}): Promise<TarPayloadPlan> {
+  const topN = normalizeTopN(opts.topN);
+  const skip = makeSkipRecorder();
+  const manifestEntries: string[] = [];
+  const fileEntries: CachePayloadEntry[] = [];
+  const dirEntries: CachePayloadEntry[] = [];
+  const inputs: string[] = [];
+
+  const walk = async (absolutePath: string, relativePath: string): Promise<WalkResult> => {
+    if (hasManifestUnsafeName(relativePath)) {
+      skip.add("unsupported-name", toTarPath(relativePath));
+      return EMPTY_WALK;
+    }
+
+    const transientReason = reasonForTransientBasename(path.basename(relativePath));
+    if (transientReason) {
+      skip.add(transientReason, toTarPath(relativePath));
+      return EMPTY_WALK;
+    }
+
+    const transientPathReason = reasonForTransientPath(relativePath);
+    if (transientPathReason) {
+      skip.add(transientPathReason, toTarPath(relativePath));
+      return EMPTY_WALK;
+    }
+
+    let stats: Stats;
+    try {
+      stats = await fs.lstat(absolutePath);
+    } catch (err) {
+      skip.add(reasonForAccessError(err), toTarPath(relativePath));
+      return EMPTY_WALK;
+    }
+
+    const tarPath = toTarPath(relativePath);
+    if (stats.isSymbolicLink()) {
+      manifestEntries.push(tarPath);
+      return { ...EMPTY_WALK, symlinks: 1 };
+    }
+
+    if (stats.isFile()) {
+      manifestEntries.push(tarPath);
+      fileEntries.push({ path: tarPath, bytes: stats.size });
+      return { bytes: stats.size, files: 1, symlinks: 0, directories: 0 };
+    }
+
+    if (!stats.isDirectory()) {
+      skip.add(reasonForSpecialFile(stats), tarPath);
+      return EMPTY_WALK;
+    }
+
+    let entries: Dirent[];
+    try {
+      entries = await fs.readdir(absolutePath, { withFileTypes: true });
+    } catch (err) {
+      skip.add(reasonForAccessError(err), tarPath);
+      return EMPTY_WALK;
+    }
+
+    entries.sort((a, b) => a.name.localeCompare(b.name));
+    let bytes = 0;
+    let files = 0;
+    let symlinks = 0;
+    let directories = 1;
+    for (const entry of entries) {
+      const childRelative = path.join(relativePath, entry.name);
+      const child = await walk(path.join(absolutePath, entry.name), childRelative);
+      bytes += child.bytes;
+      files += child.files;
+      symlinks += child.symlinks;
+      directories += child.directories;
+    }
+    dirEntries.push({ path: tarPath, bytes });
+    return { bytes, files, symlinks, directories };
+  };
+
+  let bytes = 0;
+  let files = 0;
+  let symlinks = 0;
+  let directories = 0;
+  const seen = new Set<string>();
+  for (const rawBasename of opts.inputBasenames) {
+    const basename = rawBasename.trim();
+    if (!basename || seen.has(basename)) continue;
+    seen.add(basename);
+
+    if (
+      path.isAbsolute(basename) ||
+      basename === "." ||
+      basename === ".." ||
+      basename.includes("/") ||
+      basename.includes("\\")
+    ) {
+      skip.add("unsupported-input-basename", basename);
+      continue;
+    }
+
+    inputs.push(basename);
+    const result = await walk(path.join(opts.parent, basename), basename);
+    bytes += result.bytes;
+    files += result.files;
+    symlinks += result.symlinks;
+    directories += result.directories;
+  }
+
+  fileEntries.sort(comparePayloadEntry);
+  dirEntries.sort(comparePayloadEntry);
+
+  return {
+    bytes,
+    files,
+    symlinks,
+    directories,
+    inputs,
+    topFiles: fileEntries.slice(0, topN),
+    topDirectories: dirEntries.slice(0, topN),
+    skipped: skip.summaries(),
+    manifestEntries,
+  };
+}
+
+function publicPayload(plan: TarPayloadPlan): CachePayloadCensus {
+  return {
+    bytes: plan.bytes,
+    files: plan.files,
+    symlinks: plan.symlinks,
+    directories: plan.directories,
+    inputs: plan.inputs,
+    topFiles: plan.topFiles,
+    topDirectories: plan.topDirectories,
+    skipped: plan.skipped,
+  };
 }
 
 export interface DecompressResult {
@@ -183,6 +463,8 @@ export interface CompressResult {
   archiveBytes: number;
   inflatedBytes: number | null;
   fileCount: number | null;
+  payload: CachePayloadCensus | null;
+  skippedReason?: "payload-too-large";
 }
 
 /**
@@ -222,6 +504,16 @@ export async function compressCache(opts: {
    * them with no decompressCache changes required.
    */
   extraBasenames?: string[];
+  /** Cache payload warning threshold in uncompressed bytes. null/undefined disables warnings. */
+  payloadWarnBytes?: number | null;
+  /** Cache payload hard limit in uncompressed bytes. null/undefined disables the hard limit. */
+  payloadMaxBytes?: number | null;
+  /** Behavior when payloadMaxBytes is exceeded. Defaults to "skip". */
+  payloadOversizeAction?: "skip" | "fail";
+  /** Number of largest files/directories to retain in the payload census. */
+  payloadTopN?: number;
+  /** Human-readable cache label used in warning/debug output. */
+  label?: string;
 }): Promise<CompressResult> {
   const {
     cacheDir,
@@ -232,8 +524,19 @@ export async function compressCache(opts: {
     longWindow,
     ultra,
     extraBasenames = [],
+    payloadWarnBytes = null,
+    payloadMaxBytes = null,
+    payloadOversizeAction = "skip",
+    payloadTopN,
+    label,
   } = opts;
-  const nullResult: CompressResult = { archivePath: null, archiveBytes: 0, inflatedBytes: null, fileCount: null };
+  const nullResult: CompressResult = {
+    archivePath: null,
+    archiveBytes: 0,
+    inflatedBytes: null,
+    fileCount: null,
+    payload: null,
+  };
 
   if (codec === "none") return nullResult;
 
@@ -250,15 +553,6 @@ export async function compressCache(opts: {
     return nullResult;
   }
 
-  let inflatedBytes: number | null = null;
-  let fileCount: number | null = null;
-  if (debug) {
-    const walked = await walkDirSize(cacheDir);
-    inflatedBytes = walked.bytes;
-    fileCount = walked.files;
-    log(`[debug] compress ${path.basename(cacheDir)}: input=${fmtBytesDebug(inflatedBytes)} files=${fileCount}`);
-  }
-
   const parent = path.dirname(cacheDir);
   const basename = path.basename(cacheDir);
   // Filter sibling basenames to ones that actually exist under the parent —
@@ -273,6 +567,65 @@ export async function compressCache(opts: {
       log(`[debug] compress: skipping missing sibling basename '${extra}' under ${parent}`);
     }
   }
+  const displayLabel = label ?? basename;
+  const tarInputs = [basename, ...presentExtras];
+  let payload = await planTarPayload({
+    parent,
+    inputBasenames: tarInputs,
+    topN: payloadTopN,
+  });
+  let payloadCensus = publicPayload(payload);
+  let inflatedBytes: number | null = payload.bytes;
+  let fileCount: number | null = payload.files;
+  if (debug) {
+    const skipped = payload.skipped.reduce((sum, entry) => sum + entry.count, 0);
+    log(
+      `[debug] compress ${displayLabel}: input=${fmtBytesDebug(payload.bytes)} ` +
+        `files=${payload.files} symlinks=${payload.symlinks} dirs=${payload.directories} skipped=${skipped}`,
+    );
+    if (payload.topFiles.length > 0) {
+      log(
+        `[debug] compress ${displayLabel}: largest files ` +
+          payload.topFiles.map((entry) => `${entry.path}=${fmtBytesDebug(entry.bytes)}`).join(", "),
+      );
+    }
+    if (payload.skipped.length > 0) {
+      log(
+        `[debug] compress ${displayLabel}: skipped ` +
+          payload.skipped.map((entry) => `${entry.reason}=${entry.count}`).join(", "),
+      );
+    }
+  }
+
+  if (payloadWarnBytes !== null && payloadWarnBytes > 0 && payload.bytes > payloadWarnBytes) {
+    const largest = payload.topFiles
+      .slice(0, 5)
+      .map((entry) => `${entry.path} (${fmtBytesDebug(entry.bytes)})`)
+      .join(", ");
+    core.warning(
+      `setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression ` +
+        `(>${fmtBytesDebug(payloadWarnBytes)}). Largest files: ${largest || "none"}`,
+    );
+  }
+
+  if (payloadMaxBytes !== null && payloadMaxBytes > 0 && payload.bytes > payloadMaxBytes) {
+    const message =
+      `setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression, ` +
+      `exceeding cache-payload-max-bytes=${fmtBytesDebug(payloadMaxBytes)}`;
+    if (payloadOversizeAction === "fail") {
+      throw new Error(message);
+    }
+    core.warning(`${message}; skipping cache save`);
+    return {
+      archivePath: null,
+      archiveBytes: 0,
+      inflatedBytes,
+      fileCount,
+      payload: payloadCensus,
+      skippedReason: "payload-too-large",
+    };
+  }
+
   const archivePath = `${cacheDir}.tar.zst`;
   // Best-effort cleanup of any previous archive.
   await fs.rm(archivePath, { force: true }).catch(() => undefined);
@@ -282,12 +635,53 @@ export async function compressCache(opts: {
   const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
   const ultraFlag = ultra || levelNumeric >= 20 ? ["--ultra"] : [];
 
-  const tarInputs = [basename, ...presentExtras];
-  if (debug) log(`[debug] compress cmd: tar -cf - -C ${parent} ${tarInputs.join(" ")} | zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`);
-  await runPipe(
-    ["tar", ["-cf", "-", "-C", parent, ...tarInputs]],
-    [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]],
-  );
+  const writeArchiveFromManifest = async (entries: readonly string[]): Promise<void> => {
+    const manifestDir = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-tar-"));
+    const manifestPath = path.join(manifestDir, "manifest.txt");
+    try {
+      await fs.writeFile(
+        manifestPath,
+        entries.map((entry) => `${entry}\n`).join(""),
+        "utf8",
+      );
+      if (debug) {
+        log(
+          `[debug] compress cmd: tar -cf - -C ${parent} -T ${manifestPath} | ` +
+            `zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}` +
+            `${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`,
+        );
+      }
+      await runPipe(
+        ["tar", ["-cf", "-", "-C", parent, "-T", manifestPath]],
+        [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]],
+      );
+    } finally {
+      await fs.rm(manifestDir, { recursive: true, force: true }).catch(() => undefined);
+    }
+  };
+
+  try {
+    await writeArchiveFromManifest(payload.manifestEntries);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    log(`${displayLabel}: tar failed after payload preflight (${message}); retrying once with a fresh scan`);
+    await fs.rm(archivePath, { force: true }).catch(() => undefined);
+    payload = await planTarPayload({
+      parent,
+      inputBasenames: tarInputs,
+      topN: payloadTopN,
+    });
+    payloadCensus = publicPayload(payload);
+    inflatedBytes = payload.bytes;
+    fileCount = payload.files;
+    if (debug) {
+      log(
+        `[debug] compress ${displayLabel}: retry input=${fmtBytesDebug(payload.bytes)} ` +
+          `files=${payload.files} symlinks=${payload.symlinks} dirs=${payload.directories}`,
+      );
+    }
+    await writeArchiveFromManifest(payload.manifestEntries);
+  }
 
   let archiveBytes = 0;
   try { archiveBytes = (await fs.stat(archivePath)).size; } catch { /* archive may not exist */ }
@@ -296,7 +690,7 @@ export async function compressCache(opts: {
     log(`[debug] compress result: archive=${fmtBytesDebug(archiveBytes)} ratio=${(archiveBytes / inflatedBytes).toFixed(2)}`);
   }
 
-  return { archivePath, archiveBytes, inflatedBytes, fileCount };
+  return { archivePath, archiveBytes, inflatedBytes, fileCount, payload: payloadCensus };
 }
 
 function parseLevel(value: string): number {
