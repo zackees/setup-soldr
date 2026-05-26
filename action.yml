@@ -306,8 +306,8 @@ inputs:
       between idle compile invocations and respawns on next use — a
       workaround for daemons that accumulate state or hold locks across
       a long build. The post step always calls
-      `zccache --stop-server` / `<soldrPath> stop` as a final
-      best-effort sweep regardless of this setting.
+      `soldr cache shutdown` (falling back to `zccache stop` when needed)
+      as a final best-effort sweep regardless of this setting.
     required: false
     default: ""
   logging:

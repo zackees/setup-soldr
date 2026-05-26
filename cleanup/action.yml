@@ -1,0 +1,32 @@
+name: setup-soldr cleanup
+author: zackees
+description: Stop the setup-soldr/soldr-managed zccache daemon during a workflow job.
+inputs:
+  soldr-path:
+    description: >
+      Optional soldr binary path. Defaults to SOLDR_BINARY when set, otherwise
+      PATH-resolved `soldr`.
+    required: false
+    default: ""
+  archive-logs:
+    description: >
+      Optional directory passed to `soldr cache shutdown --archive-logs`.
+      Leave empty for mid-job cleanup when logs do not need to be copied.
+    required: false
+    default: ""
+  shutdown-timeout-seconds:
+    description: >
+      Timeout passed to `soldr cache shutdown --shutdown-timeout-seconds`.
+      Default 30 seconds.
+    required: false
+    default: "30"
+  fail-on-error:
+    description: >
+      When true, fail the step if neither scoped soldr shutdown nor the
+      zccache fallback succeeds. Keep true before self-tests so daemon leaks
+      fail loudly.
+    required: false
+    default: "true"
+runs:
+  using: node20
+  main: dist/index.js

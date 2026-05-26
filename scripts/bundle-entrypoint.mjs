@@ -17,19 +17,23 @@
 //
 // Usage: node scripts/bundle-entrypoint.mjs main
 //        node scripts/bundle-entrypoint.mjs post
+//        node scripts/bundle-entrypoint.mjs cleanup
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 
 const name = process.argv[2];
 if (!name) {
-  console.error("usage: node scripts/bundle-entrypoint.mjs <main|post>");
+  console.error("usage: node scripts/bundle-entrypoint.mjs <main|post|cleanup>");
   process.exit(1);
 }
 
 const sourcePath = `dist-${name}/index.js`;
-const targetPath = `dist/${name}.js`;
+const targetPath = name === "cleanup" ? "cleanup/dist/index.js" : `dist/${name}.js`;
 mkdirSync("dist", { recursive: true });
+if (name === "cleanup") {
+  mkdirSync("cleanup/dist", { recursive: true });
+}
 
 const buf = readFileSync(sourcePath);
 // Normalize CRLF -> LF. Standalone CR (without LF) is left alone - ncc bundles

@@ -29,6 +29,31 @@ jobs:
       - run: soldr cargo test --locked
 ```
 
+### Self-build cleanup
+
+Projects that build zccache or soldr with setup-soldr should stop the builder
+cache daemon before running tests that exercise cache lifecycle behavior. Insert
+the cleanup sub-action between the builder phase and the test phase:
+
+```yaml
+- uses: zackees/setup-soldr@v0
+  with:
+    cache: true
+- run: soldr cargo build --workspace --locked
+- uses: zackees/setup-soldr/cleanup@v0
+  with:
+    shutdown-timeout-seconds: 30
+- run: soldr cargo test --workspace --locked
+  env:
+    SOLDR_CACHE_DIR: ${{ runner.temp }}/self-test-soldr
+    ZCCACHE_CACHE_DIR: ${{ runner.temp }}/self-test-soldr/cache/zccache
+```
+
+The cleanup action calls `soldr cache shutdown` using the setup-soldr cache root
+and fails by default if the scoped shutdown cannot be confirmed. The normal
+setup-soldr post step still runs later so final cache saves see a quiescent
+cache directory.
+
 ### macOS
 
 ```yaml

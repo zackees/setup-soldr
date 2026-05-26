@@ -112,7 +112,7 @@ test("shutdownCacheDaemons never invokes the broken 'soldr stop' subcommand", as
     (m) =>
       /\bsoldr\b[^\n]*\$[^\n]*\bstop\b(?!\w)/.test(m) &&
       !m.includes("cache shutdown") &&
-      !m.includes("--stop-server"),
+      !m.includes("zccache"),
   );
   assert.ok(!ranSoldrStop, `must not invoke 'soldr stop'; saw: ${JSON.stringify(logged)}`);
 });
@@ -187,6 +187,31 @@ test("shutdownCacheDaemons forwards --archive-logs to soldr when logsArchiveDir 
   );
 });
 
+test("shutdownCacheDaemons forwards --shutdown-timeout-seconds to soldr", async () => {
+  const logged: string[] = [];
+  const dir = mkTmp("shutdown-cache-timeout-");
+  const argvLog = path.join(dir, "argv.log");
+  try {
+    const fakeSoldr = writeFakeSoldr(dir, { exitCode: 0, argvLog });
+    await shutdownCacheDaemons({
+      soldrPath: fakeSoldr,
+      shutdownTimeoutSeconds: 15,
+      log: (m) => logged.push(m),
+    });
+    const argvLine = fs.readFileSync(argvLog, "utf8").trim();
+    assert.ok(
+      argvLine.includes("--shutdown-timeout-seconds") && argvLine.includes("15"),
+      `expected shutdown timeout forwarded, got argv: ${argvLine}`,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  assert.ok(
+    logged.some((m) => m.includes("--shutdown-timeout-seconds 15")),
+    `expected timeout in invocation log, got: ${JSON.stringify(logged)}`,
+  );
+});
+
 test("shutdownCacheDaemons falls back to zccache when soldr lacks the cache shutdown subcommand", async () => {
   // Simulate an older soldr by pointing soldrPath at a script that prints
   // "unrecognized subcommand" to stderr and exits 2 — matching soldr#379's
@@ -222,6 +247,66 @@ test("shutdownCacheDaemons falls back to zccache when soldr lacks the cache shut
   );
 });
 
+test("shutdownCacheDaemons also treats unexpected shutdown argument as unsupported", async () => {
+  const logged: string[] = [];
+  const dir = mkTmp("shutdown-cache-unexpected-");
+  try {
+    const fakeSoldr = writeFakeSoldr(dir, {
+      exitCode: 2,
+      stderr: "error: unexpected argument 'shutdown' found",
+    });
+    const previousPath = process.env["PATH"];
+    process.env["PATH"] = mkTmp("empty-path-");
+    try {
+      await shutdownCacheDaemons({ soldrPath: fakeSoldr, log: (m) => logged.push(m) });
+    } finally {
+      if (previousPath === undefined) delete process.env["PATH"];
+      else process.env["PATH"] = previousPath;
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  assert.ok(
+    logged.some((m) => m.includes("not supported on this soldr version")),
+    `expected fallback log line, got: ${JSON.stringify(logged)}`,
+  );
+});
+
+test("shutdownCacheDaemons fallback invokes zccache stop", async () => {
+  const logged: string[] = [];
+  const dir = mkTmp("shutdown-cache-zccache-stop-");
+  const argvLog = path.join(dir, "zccache-argv.log");
+  const isWindows = process.platform === "win32";
+  const zccachePath = path.join(dir, isWindows ? "zccache.cmd" : "zccache");
+  try {
+    const fakeSoldr = writeFakeSoldr(dir, {
+      exitCode: 2,
+      stderr: "error: unrecognized subcommand 'shutdown'",
+    });
+    if (isWindows) {
+      fs.writeFileSync(zccachePath, `@echo off\r\n>>"${argvLog}" echo %*\r\nexit /b 0\r\n`, "utf8");
+    } else {
+      fs.writeFileSync(zccachePath, `#!/bin/sh\necho "$*" >> "${argvLog}"\n`, "utf8");
+      fs.chmodSync(zccachePath, 0o755);
+    }
+    const previousPath = process.env["PATH"];
+    process.env["PATH"] = `${dir}${path.delimiter}${mkTmp("empty-path-")}`;
+    try {
+      await shutdownCacheDaemons({ soldrPath: fakeSoldr, log: (m) => logged.push(m) });
+    } finally {
+      if (previousPath === undefined) delete process.env["PATH"];
+      else process.env["PATH"] = previousPath;
+    }
+    assert.equal(fs.readFileSync(argvLog, "utf8").trim(), "stop");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  assert.ok(
+    logged.some((m) => m.includes("zccache") && m.includes(" stop")),
+    `expected zccache stop invocation, got: ${JSON.stringify(logged)}`,
+  );
+});
+
 test("shutdownCacheDaemons does NOT fall back when soldr exits non-zero for a recognized command", async () => {
   // soldr knows `cache shutdown` but the daemon is wedged: exit 1, no
   // "unrecognized subcommand" stderr. We should log + return, NOT
@@ -252,6 +337,27 @@ test("shutdownCacheDaemons does NOT fall back when soldr exits non-zero for a re
     !logged.some((m) => m.includes("zccache")),
     `must NOT attempt zccache fallback for a recognized-command failure, got: ${JSON.stringify(logged)}`,
   );
+});
+
+test("shutdownCacheDaemons throws for recognized soldr failure when failOnError is set", async () => {
+  const logged: string[] = [];
+  const dir = mkTmp("shutdown-cache-required-");
+  try {
+    const fakeSoldr = writeFakeSoldr(dir, {
+      exitCode: 1,
+      stderr: "error: daemon refused shutdown request",
+    });
+    await assert.rejects(
+      shutdownCacheDaemons({
+        soldrPath: fakeSoldr,
+        failOnError: true,
+        log: (m) => logged.push(m),
+      }),
+      /shutdown-cache: soldr: exit 1/,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("shutdownCacheDaemons both paths fail: logs and continues best-effort", async () => {
