@@ -52,6 +52,7 @@ if (cols.cacheBackend >= 0 || cols.compressionModel >= 0) {
     out.push(`- Compression model(s): ${uniqueValues(rows, cols.compressionModel).map(code).join(", ")}`);
   }
   out.push("- Rows using `local-tar-zstd` are synthetic local archive measurements, not direct Actions cache upload/download timings.");
+  out.push("- Rows using `actions-cache` are opt-in smoke measurements from the GitHub Actions cache service for save/restore timing validation.");
 }
 
 const aggregates = warmAggregates(rows, cols);
