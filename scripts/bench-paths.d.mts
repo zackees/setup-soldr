@@ -9,11 +9,25 @@ export interface LayerPath {
   basename: string;
 }
 
+export interface SnapshotEntry {
+  root: string;
+  relpath: string;
+  kind?: "file" | "symlink" | "directory";
+}
+
+export interface SnapshotDiff {
+  added?: SnapshotEntry[];
+  changed?: Array<{ after: SnapshotEntry }>;
+}
+
 export interface PathsForLayerOpts {
   env?: NodeJS.ProcessEnv;
   workloadDir?: string;
+  soloToolchainDelta?: SnapshotDiff;
 }
 
 export function pathsForLayer(layer: string, opts?: PathsForLayerOpts): LayerPath[];
+
+export function pathsForSoloToolchainDelta(delta?: SnapshotDiff): LayerPath[];
 
 export function isActiveLayer(layer: string): boolean;

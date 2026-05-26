@@ -73,6 +73,32 @@ jobs:
       - name: Install Rust (stable, default profile)
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Build in-tree action
+        run: |
+          npm ci
+          npm run build
+
+      - name: Capture pre-soldr toolchain snapshot
+        if: ${{ matrix.layer == 'solo-toolchain' }}
+        env:
+          RUNNER_OS: ${{ runner.os }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          node scripts/bench-cache-cell.mjs \
+            --layer=solo-toolchain \
+            --workload=${{ inputs.workload }} \
+            --rep=${{ matrix.rep }} \
+            --pre-snapshot-out=${{ runner.temp }}/bench-solo-toolchain-pre.json
+
+      - name: Install and wire zccache
+        uses: ./
+        with:
+          cache: false
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: false
+          shims: true
+
       - name: Ensure zstd present (linux/macos preinstalled; windows ships bsdtar)
         shell: bash
         run: |
@@ -87,11 +113,17 @@ jobs:
         env:
           RUNNER_OS: ${{ runner.os }}
           RUNNER_TEMP: ${{ runner.temp }}
+          # cache:false disables actions/cache writes during the setup step.
+          # Re-enable soldr's local zccache wrapper for this benchmark process.
+          SOLDR_BUILD_CACHE_MODE: full
+          SETUP_SOLDR_BUILD_CACHE_MODE: once
+          SOLDR_TARGET_CACHE_MODE: off
         run: |
           node scripts/bench-cache-cell.mjs \
             --layer=${{ matrix.layer }} \
             --workload=${{ inputs.workload }} \
             --rep=${{ matrix.rep }} \
+            --pre-snapshot-in=${{ runner.temp }}/bench-solo-toolchain-pre.json \
             --out=bench-${{ matrix.os }}-${{ matrix.layer }}-r${{ matrix.rep }}.csv
 
       - uses: actions/upload-artifact@v4
