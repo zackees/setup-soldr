@@ -1,0 +1,129 @@
+name: Bench cache modes
+
+# Inline-disk-simulation benchmark of every setup-soldr cache layer.
+# Snapshots each layer to ${RUNNER_TEMP}/sim-cache/ via tar+zstd-19, wipes,
+# restores, rebuilds. Emits one CSV per cell; collate job concatenates them
+# and renders to $GITHUB_STEP_SUMMARY. See issue #178 for design.
+#
+# Trigger: workflow_dispatch only — this is exploratory tooling, not CI.
+
+on:
+  workflow_dispatch:
+    inputs:
+      layers:
+        description: "Comma-separated layer names (baseline, soldr-mini, solo-toolchain, cargo-registry, cook, build, target, setup-cache, all-on). Empty = full set."
+        required: false
+        default: "baseline,soldr-mini,solo-toolchain,cargo-registry,cook,build,target,setup-cache,all-on"
+      oses:
+        description: "Comma-separated runner OS labels."
+        required: false
+        default: "ubuntu-24.04"
+      reps:
+        description: "Repetitions per (os, layer) cell. Bench is noisy; >3 explodes the matrix."
+        required: false
+        default: "1"
+      workload:
+        description: "Rust workload from scripts/bench-workloads/."
+        required: false
+        type: choice
+        default: "demo-small"
+        options:
+          - demo-small
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bench-cache-modes
+  cancel-in-progress: false
+
+jobs:
+  expand:
+    name: Expand matrix
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.expand.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: expand
+        env:
+          INPUT_LAYERS: ${{ inputs.layers }}
+          INPUT_OSES:   ${{ inputs.oses }}
+          INPUT_REPS:   ${{ inputs.reps }}
+        run: node scripts/expand-bench-matrix.mjs
+
+  bench:
+    name: ${{ matrix.os }} / ${{ matrix.layer }} (rep ${{ matrix.rep }})
+    needs: expand
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.expand.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Rust (stable, default profile)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Ensure zstd present (linux/macos preinstalled; windows ships bsdtar)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v zstd >/dev/null 2>&1; then
+            echo "::warning::zstd not on PATH; bench-cache-cell will fall back to tar --use-compress-program"
+          else
+            zstd --version
+          fi
+
+      - name: Run bench cell
+        env:
+          RUNNER_OS: ${{ runner.os }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          node scripts/bench-cache-cell.mjs \
+            --layer=${{ matrix.layer }} \
+            --workload=${{ inputs.workload }} \
+            --rep=${{ matrix.rep }} \
+            --out=bench-${{ matrix.os }}-${{ matrix.layer }}-r${{ matrix.rep }}.csv
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.os }}-${{ matrix.layer }}-r${{ matrix.rep }}
+          path: bench-${{ matrix.os }}-${{ matrix.layer }}-r${{ matrix.rep }}.csv
+          if-no-files-found: error
+
+  collate:
+    name: Collate results
+    needs: bench
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bench-*
+          path: bench-cells
+
+      - name: Collate CSVs
+        run: node scripts/collate-bench.mjs bench-cells > bench-matrix.csv
+
+      - name: Render to step summary
+        run: node scripts/render-bench-summary.mjs bench-matrix.csv >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-matrix
+          path: bench-matrix.csv
+          if-no-files-found: error
