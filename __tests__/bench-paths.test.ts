@@ -8,9 +8,24 @@ import * as path from "node:path";
 // existing test-file convention (see main.test.ts).
 type BenchPaths = {
   LAYER_NAMES: ReadonlyArray<string>;
-  pathsForLayer: (layer: string, opts?: { env?: NodeJS.ProcessEnv; workloadDir?: string }) =>
+  pathsForLayer: (
+    layer: string,
+    opts?: { env?: NodeJS.ProcessEnv; workloadDir?: string; soloToolchainDelta?: SnapshotDiff },
+  ) =>
     Array<{ parent: string; basename: string }>;
+  pathsForSoloToolchainDelta: (delta?: SnapshotDiff) => Array<{ parent: string; basename: string }>;
   isActiveLayer: (layer: string) => boolean;
+};
+
+type SnapshotEntry = {
+  root: string;
+  relpath: string;
+  kind?: "file" | "symlink" | "directory";
+};
+
+type SnapshotDiff = {
+  added?: SnapshotEntry[];
+  changed?: Array<{ after: SnapshotEntry }>;
 };
 
 async function loadBenchPaths(): Promise<BenchPaths> {
@@ -27,6 +42,10 @@ const FAKE_ENV = {
 };
 
 const FAKE_WORKLOAD = "/work/setup-soldr/scripts/bench-workloads/demo-small";
+
+function asPath(p: { parent: string; basename: string }): string {
+  return path.join(p.parent, p.basename).replace(/\\/g, "/");
+}
 
 test("LAYER_NAMES covers the issue inventory (baseline + 7 prod + all-on)", async () => {
   const benchPaths = await loadBenchPaths();
@@ -79,8 +98,47 @@ test("cargo-registry bundles the three ~/.cargo siblings", async () => {
 test("solo-toolchain spans rustup + cargo bin", async () => {
   const benchPaths = await loadBenchPaths();
   const ps = benchPaths.pathsForLayer("solo-toolchain", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
-  const tuples = ps.map((p) => `${p.parent}/${p.basename}`).sort();
+  const tuples = ps.map(asPath).sort();
   assert.deepEqual(tuples, ["/home/runner/.cargo/bin", "/home/runner/.rustup/toolchains"]);
+});
+
+test("solo-toolchain can resolve exact paths from a pre/post snapshot delta", async () => {
+  const benchPaths = await loadBenchPaths();
+  const delta: SnapshotDiff = {
+    added: [
+      { root: "/home/runner/.rustup/toolchains", relpath: "stable-x86_64-unknown-linux-gnu/bin/rustc", kind: "file" },
+      { root: "/home/runner/.cargo/bin", relpath: "cargo-soldr", kind: "symlink" },
+      { root: "/home/runner/.cargo/bin", relpath: "cargo-soldr", kind: "symlink" },
+    ],
+    changed: [
+      { after: { root: "/home/runner/.rustup/toolchains", relpath: "stable-x86_64-unknown-linux-gnu/lib/libstd.rlib", kind: "file" } },
+    ],
+  };
+
+  const ps = benchPaths.pathsForLayer("solo-toolchain", {
+    env: FAKE_ENV,
+    workloadDir: FAKE_WORKLOAD,
+    soloToolchainDelta: delta,
+  });
+
+  assert.deepEqual(ps.map(asPath).sort(), [
+    "/home/runner/.cargo/bin/cargo-soldr",
+    "/home/runner/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+    "/home/runner/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/libstd.rlib",
+  ]);
+});
+
+test("solo-toolchain delta API returns no paths for an empty delta", async () => {
+  const benchPaths = await loadBenchPaths();
+  assert.deepEqual(benchPaths.pathsForSoloToolchainDelta({ added: [], changed: [] }), []);
+  assert.deepEqual(
+    benchPaths.pathsForLayer("solo-toolchain", {
+      env: FAKE_ENV,
+      workloadDir: FAKE_WORKLOAD,
+      soloToolchainDelta: { added: [], changed: [] },
+    }),
+    [],
+  );
 });
 
 test("build layer uses ZCCACHE_CACHE_DIR", async () => {
@@ -92,21 +150,23 @@ test("build layer uses ZCCACHE_CACHE_DIR", async () => {
   assert.equal(first.basename, "zccache");
 });
 
-test("target + cook both point at workload's target dir (overlap is real)", async () => {
+test("cook snapshots target/deps while target snapshots the whole target dir", async () => {
   const benchPaths = await loadBenchPaths();
   const tgt = benchPaths.pathsForLayer("target", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
   const cook = benchPaths.pathsForLayer("cook", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
-  assert.deepEqual(tgt, cook);
+  assert.deepEqual(tgt.map(asPath), [`${FAKE_WORKLOAD}/target`]);
+  assert.deepEqual(cook.map(asPath), [`${FAKE_WORKLOAD}/target/deps`]);
 });
 
 test("all-on deduplicates overlapping paths", async () => {
   const benchPaths = await loadBenchPaths();
   const ps = benchPaths.pathsForLayer("all-on", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
-  const keys = ps.map((p) => `${p.parent}::${p.basename}`);
+  const keys = ps.map(asPath);
   assert.equal(new Set(keys).size, keys.length, "all-on must dedupe");
   assert.ok(ps.some((p) => p.basename === "registry"));
   assert.ok(ps.some((p) => p.basename === "toolchains"));
-  assert.ok(ps.some((p) => p.basename === "target"));
+  assert.ok(keys.includes(`${FAKE_WORKLOAD}/target`));
+  assert.ok(!keys.includes(`${FAKE_WORKLOAD}/target/deps`), "whole target snapshot should cover cook target/deps");
 });
 
 test("unknown layer throws", async () => {

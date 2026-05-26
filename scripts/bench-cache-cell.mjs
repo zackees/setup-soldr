@@ -8,8 +8,13 @@
 //   1. Prepare a clean workload checkout under ${RUNNER_TEMP}/workload
 //   2. Cold build (cargo build --release in the workload dir) — record wall clock
 //   3. Snapshot layer paths -> ${RUNNER_TEMP}/sim-cache/<layer>__<i>.tar.zst (tar+zstd -19 --long=27)
-//   4. (build-affecting layers only) Wipe layer paths, then restore from snapshot
+//   4. (build-affecting layers only) Wipe layer paths and target/, then restore from snapshot
 //   5. (build-affecting layers only) Warm build — record wall clock
+//
+// The solo-toolchain cell supports a separate --pre-snapshot-out mode. The
+// workflow runs that before setup-soldr, then passes --pre-snapshot-in to the
+// measured cell so only toolchain files added on top of the runner image are
+// archived.
 //
 // For layers that don't affect the workload's build (solo-toolchain, soldr-mini,
 // setup-cache, baseline), the warm row is omitted; the CSV downstream treats
@@ -51,12 +56,27 @@ const workloadDir = path.join(runnerTemp, "bench-workload");
 const simCacheDir = path.join(runnerTemp, "sim-cache");
 await fsp.mkdir(simCacheDir, { recursive: true });
 
-await prepareWorkload(workloadSrc, workloadDir);
-
 const env = { ...process.env, CARGO_TARGET_DIR: path.join(workloadDir, "target") };
 const layerPaths = pathsForLayer(args.layer, { env, workloadDir });
 
 log(`[bench] layer=${args.layer} workload=${args.workload} rep=${rep} paths=${layerPaths.length}`);
+
+if (args["pre-snapshot-out"]) {
+  if (args.layer !== "solo-toolchain") die("--pre-snapshot-out is only supported for --layer=solo-toolchain");
+  await writePathStates(args["pre-snapshot-out"], layerPaths);
+  log(`[bench] wrote pre-snapshot ${args["pre-snapshot-out"]}`);
+  process.exit(0);
+}
+
+await prepareWorkload(workloadSrc, workloadDir);
+
+// solo-toolchain overlaps runner-image state. Capture that baseline before the
+// setup-soldr action runs, then only archive post-setup/cold added files.
+const preSnapshotStates = args.layer === "solo-toolchain"
+  ? args["pre-snapshot-in"]
+    ? await readPathStates(args["pre-snapshot-in"])
+    : await snapshotPathStates(layerPaths)
+  : null;
 
 // --- 1. cold build -----------------------------------------------------------
 const tColdStart = nowMs();
@@ -70,12 +90,20 @@ wallColdS = (nowMs() - tColdStart) / 1000;
 log(`[bench] cold build wall=${wallColdS.toFixed(2)}s`);
 
 // --- 2. snapshot -------------------------------------------------------------
+const snapshotPaths = preSnapshotStates
+  ? await materializeDeltaPaths(layerPaths, preSnapshotStates, path.join(runnerTemp, "sim-delta", args.layer))
+  : layerPaths;
+const soloToolchainDeltaEmpty = preSnapshotStates && snapshotPaths.length === 0;
+if (soloToolchainDeltaEmpty) {
+  log(`[bench] solo-toolchain delta is empty; emitting mechanics row without save/restore`);
+}
+
 const snapshots = [];
 let totalCompressedMb = 0;
 let totalInflatedMb = 0;
 let saveTimeS = 0;
-for (let i = 0; i < layerPaths.length; i++) {
-  const p = layerPaths[i];
+for (let i = 0; i < snapshotPaths.length; i++) {
+  const p = snapshotPaths[i];
   const archivePath = path.join(simCacheDir, `${args.layer}__${i}.tar.zst`);
   const inflated = await dirSizeBytes(path.join(p.parent, p.basename));
   if (inflated === 0) {
@@ -107,21 +135,33 @@ csv.push(csvRow({
 // --- 3 + 4 + 5: restore + warm (only for build-affecting + wipe-safe) --------
 const shouldWipe = !WIPE_UNSAFE.has(args.layer) && isActiveLayer(args.layer);
 const shouldWarmBuild = BUILD_AFFECTING.has(args.layer) && isActiveLayer(args.layer);
+const unsafeSnapshotKeys = unsafePathKeys(args.layer, env, workloadDir);
 let restoreTimeS = 0;
 
 if (snapshots.length > 0) {
   if (shouldWipe) {
+    let wiped = 0;
     for (const s of snapshots) {
+      if (unsafeSnapshotKeys.has(pathKey(s))) continue;
       await rmrf(path.join(s.parent, s.basename));
+      wiped++;
     }
-    log(`[bench] wiped ${snapshots.length} path(s)`);
+    log(`[bench] wiped ${wiped} path(s)`);
   } else if (isActiveLayer(args.layer)) {
     log(`[bench] layer ${args.layer} is wipe-unsafe; restoring into side dirs for mechanics measurement only`);
   }
+}
 
+if (shouldWarmBuild && shouldWipe) {
+  await rmrf(env.CARGO_TARGET_DIR);
+  log(`[bench] wiped CARGO_TARGET_DIR before warm build: ${env.CARGO_TARGET_DIR}`);
+}
+
+if (snapshots.length > 0) {
   for (const s of snapshots) {
-    const restoreRoot = shouldWipe ? s.parent : path.join(runnerTemp, "sim-restore", args.layer);
-    if (!shouldWipe) await fsp.mkdir(restoreRoot, { recursive: true });
+    const restoreLive = shouldWipe && !unsafeSnapshotKeys.has(pathKey(s));
+    const restoreRoot = restoreLive ? s.parent : path.join(runnerTemp, "sim-restore", args.layer);
+    if (!restoreLive) await fsp.mkdir(restoreRoot, { recursive: true });
     const t0 = nowMs();
     await tarZstdExtract(s.archivePath, restoreRoot);
     restoreTimeS += (nowMs() - t0) / 1000;
@@ -141,7 +181,7 @@ if (shouldWarmBuild) {
     compressedMb, inflatedMb, ratio,
     workload: args.workload, rep,
   }));
-} else if (snapshots.length > 0) {
+} else if (snapshots.length > 0 || soloToolchainDeltaEmpty) {
   // emit a mechanics-only row so downstream collation has size/save/restore numbers
   csv.push(csvRow({
     os: runnerOs, layer: args.layer, phase: "mech", wallClockS: "",
@@ -208,6 +248,119 @@ async function statSizeBytes(p) {
   try { return (await fsp.stat(p)).size; } catch { return 0; }
 }
 
+async function snapshotPathStates(paths) {
+  const states = new Map();
+  for (const p of paths) {
+    states.set(path.resolve(p.parent, p.basename), await fileStateMap(path.join(p.parent, p.basename)));
+  }
+  return states;
+}
+
+async function writePathStates(outPath, paths) {
+  const states = await snapshotPathStates(paths);
+  const payload = {
+    version: 1,
+    roots: [...states].map(([root, entries]) => ({
+      root,
+      entries: [...entries],
+    })),
+  };
+  await fsp.mkdir(path.dirname(outPath), { recursive: true });
+  await fsp.writeFile(outPath, JSON.stringify(payload), "utf8");
+}
+
+async function readPathStates(inPath) {
+  if (!inPath) throw new Error("no pre-snapshot input");
+  const payload = JSON.parse(await fsp.readFile(inPath, "utf8"));
+  if (payload?.version !== 1 || !Array.isArray(payload.roots)) {
+    throw new Error(`invalid pre-snapshot file: ${inPath}`);
+  }
+  const states = new Map();
+  for (const root of payload.roots) {
+    if (typeof root?.root !== "string" || !Array.isArray(root.entries)) continue;
+    states.set(path.resolve(root.root), new Map(root.entries));
+  }
+  return states;
+}
+
+async function materializeDeltaPaths(paths, beforeStates, deltaRoot) {
+  await rmrf(deltaRoot);
+  const deltaPaths = [];
+  for (const p of paths) {
+    const srcRoot = path.join(p.parent, p.basename);
+    const before = beforeStates.get(path.resolve(srcRoot)) ?? new Map();
+    const after = await fileStateMap(srcRoot);
+    let copied = 0;
+    for (const [rel, state] of after) {
+      if (before.has(rel)) continue;
+      const dest = path.join(deltaRoot, p.basename, rel);
+      await fsp.mkdir(path.dirname(dest), { recursive: true });
+      await copyEntry(path.join(srcRoot, rel), dest, state);
+      copied++;
+    }
+    if (copied > 0) {
+      deltaPaths.push({ parent: deltaRoot, basename: p.basename });
+      log(`[bench] solo-toolchain delta ${p.basename}: ${copied} added entr${copied === 1 ? "y" : "ies"}`);
+    }
+  }
+  return deltaPaths;
+}
+
+async function fileStateMap(root) {
+  const out = new Map();
+  async function walk(d, relBase) {
+    let entries;
+    try { entries = await fsp.readdir(d, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      const full = path.join(d, e.name);
+      const rel = relBase ? path.join(relBase, e.name) : e.name;
+      if (e.isDirectory()) {
+        await walk(full, rel);
+      } else if (e.isSymbolicLink()) {
+        try {
+          const linkTarget = await fsp.readlink(full);
+          out.set(rel, { kind: "symlink", linkTarget });
+        } catch { /* ignore */ }
+      } else if (e.isFile()) {
+        try {
+          const st = await fsp.stat(full);
+          out.set(rel, { kind: "file", size: st.size });
+        } catch { /* ignore */ }
+      }
+    }
+  }
+  if (fs.existsSync(root)) await walk(root, "");
+  return out;
+}
+
+async function copyEntry(src, dest, state) {
+  if (state?.kind === "symlink") {
+    await fsp.symlink(state.linkTarget, dest).catch(async () => {
+      const resolved = path.resolve(path.dirname(src), state.linkTarget);
+      await fsp.copyFile(resolved, dest);
+    });
+    return;
+  }
+  await fsp.copyFile(src, dest);
+}
+
+function unsafePathKeys(layer, env, workloadDir) {
+  const keys = new Set();
+  if (WIPE_UNSAFE.has(layer)) {
+    for (const p of pathsForLayer(layer, { env, workloadDir })) keys.add(pathKey(p));
+    return keys;
+  }
+  if (layer !== "all-on") return keys;
+  for (const name of WIPE_UNSAFE) {
+    for (const p of pathsForLayer(name, { env, workloadDir })) keys.add(pathKey(p));
+  }
+  return keys;
+}
+
+function pathKey(p) {
+  return path.resolve(p.parent, p.basename);
+}
+
 async function dirSizeBytes(dir) {
   let total = 0;
   async function walk(d) {
@@ -218,6 +371,8 @@ async function dirSizeBytes(dir) {
       if (e.isDirectory()) await walk(full);
       else if (e.isFile()) {
         try { total += (await fsp.stat(full)).size; } catch { /* ignore */ }
+      } else if (e.isSymbolicLink()) {
+        try { total += Math.max(1, Buffer.byteLength(await fsp.readlink(full))); } catch { /* ignore */ }
       }
     }
   }
