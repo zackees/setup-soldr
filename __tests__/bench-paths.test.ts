@@ -150,12 +150,12 @@ test("build layer uses ZCCACHE_CACHE_DIR", async () => {
   assert.equal(first.basename, "zccache");
 });
 
-test("cook snapshots target/deps while target snapshots the whole target dir", async () => {
+test("cook snapshots release deps while target snapshots the whole target dir", async () => {
   const benchPaths = await loadBenchPaths();
   const tgt = benchPaths.pathsForLayer("target", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
   const cook = benchPaths.pathsForLayer("cook", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
   assert.deepEqual(tgt.map(asPath), [`${FAKE_WORKLOAD}/target`]);
-  assert.deepEqual(cook.map(asPath), [`${FAKE_WORKLOAD}/target/deps`]);
+  assert.deepEqual(cook.map(asPath), [`${FAKE_WORKLOAD}/target/release/deps`]);
 });
 
 test("all-on deduplicates overlapping paths", async () => {
@@ -166,7 +166,7 @@ test("all-on deduplicates overlapping paths", async () => {
   assert.ok(ps.some((p) => p.basename === "registry"));
   assert.ok(ps.some((p) => p.basename === "toolchains"));
   assert.ok(keys.includes(`${FAKE_WORKLOAD}/target`));
-  assert.ok(!keys.includes(`${FAKE_WORKLOAD}/target/deps`), "whole target snapshot should cover cook target/deps");
+  assert.ok(!keys.includes(`${FAKE_WORKLOAD}/target/release/deps`), "whole target snapshot should cover cook deps");
 });
 
 test("unknown layer throws", async () => {

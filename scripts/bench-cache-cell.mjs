@@ -8,7 +8,8 @@
 //   1. Prepare a clean workload checkout under ${RUNNER_TEMP}/workload
 //   2. Cold build (cargo build --release in the workload dir) — record wall clock
 //   3. Snapshot layer paths -> ${RUNNER_TEMP}/sim-cache/<layer>__<i>.tar.zst (tar+zstd -19 --long=27)
-//   4. (build-affecting layers only) Wipe layer paths and target/, then restore from snapshot
+//   4. (build-affecting layers only) Wipe layer paths, target/, and any
+//      out-of-scope zccache state, then restore from snapshot
 //   5. (build-affecting layers only) Warm build — record wall clock
 //
 // The solo-toolchain cell supports a separate --pre-snapshot-out mode. The
@@ -155,6 +156,15 @@ if (snapshots.length > 0) {
 if (shouldWarmBuild && shouldWipe) {
   await rmrf(env.CARGO_TARGET_DIR);
   log(`[bench] wiped CARGO_TARGET_DIR before warm build: ${env.CARGO_TARGET_DIR}`);
+}
+
+if (shouldWipeBuildCacheBeforeWarm(args.layer)) {
+  let wipedBuildPaths = 0;
+  for (const p of pathsForLayer("build", { env, workloadDir })) {
+    await rmrf(path.join(p.parent, p.basename));
+    wipedBuildPaths++;
+  }
+  log(`[bench] wiped build-cache path(s) before warm build: ${wipedBuildPaths}`);
 }
 
 if (snapshots.length > 0) {
@@ -355,6 +365,10 @@ function unsafePathKeys(layer, env, workloadDir) {
     for (const p of pathsForLayer(name, { env, workloadDir })) keys.add(pathKey(p));
   }
   return keys;
+}
+
+function shouldWipeBuildCacheBeforeWarm(layer) {
+  return BUILD_AFFECTING.has(layer) && !WIPE_UNSAFE.has(layer) && layer !== "build" && layer !== "all-on";
 }
 
 function pathKey(p) {
