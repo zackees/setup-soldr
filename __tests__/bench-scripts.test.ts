@@ -95,6 +95,78 @@ test("bench-cache-cell writes a labeled partial-safe CSV in dry-run mode", async
   assert.doesNotMatch(csv, /toolchains/);
 });
 
+test("bench-cache-cell falls back to zccache stop before snapshot", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-cell-stop-"));
+  const home = path.join(dir, "home");
+  const runnerTemp = path.join(dir, "runner-temp");
+  const binDir = path.join(dir, "bin");
+  const argsFile = path.join(dir, "zccache-args.txt");
+  await fs.mkdir(path.join(home, ".cargo"), { recursive: true });
+  await fs.mkdir(path.join(home, ".rustup"), { recursive: true });
+  await fs.mkdir(runnerTemp, { recursive: true });
+  await fs.mkdir(binDir, { recursive: true });
+  const out = path.join(dir, "bench.csv");
+
+  const soldrShim = path.join(binDir, process.platform === "win32" ? "soldr.cmd" : "soldr");
+  const zccacheShim = path.join(binDir, process.platform === "win32" ? "zccache.cmd" : "zccache");
+  if (process.platform === "win32") {
+    await fs.writeFile(
+      soldrShim,
+      "@echo off\r\necho error: unexpected argument 'shutdown' found 1>&2\r\nexit /b 2\r\n",
+      "utf8",
+    );
+    await fs.writeFile(
+      zccacheShim,
+      `@echo off\r\necho %* > "${argsFile}"\r\nexit /b 0\r\n`,
+      "utf8",
+    );
+  } else {
+    await fs.writeFile(
+      soldrShim,
+      "#!/usr/bin/env sh\necho \"error: unexpected argument 'shutdown' found\" >&2\nexit 2\n",
+      "utf8",
+    );
+    await fs.writeFile(
+      zccacheShim,
+      `#!/usr/bin/env sh\nprintf '%s\\n' "$*" > '${argsFile}'\n`,
+      "utf8",
+    );
+    await fs.chmod(soldrShim, 0o755);
+    await fs.chmod(zccacheShim, 0o755);
+  }
+
+  const result = await execFileAsync(process.execPath, [
+    "scripts/bench-cache-cell.mjs",
+    "--layer=baseline",
+    "--workload=demo-small",
+    "--rep=1",
+    "--out=" + out,
+  ], {
+    env: {
+      ...process.env,
+      BENCH_SKIP_BUILD: "1",
+      RUNNER_OS: "Linux",
+      RUNNER_TEMP: runnerTemp,
+      HOME: home,
+      USERPROFILE: home,
+      CARGO_HOME: path.join(home, ".cargo"),
+      RUSTUP_HOME: path.join(home, ".rustup"),
+      ZCCACHE_CACHE_DIR: path.join(home, ".cache", "zccache"),
+      SETUP_SOLDR_CACHE_PATH: path.join(runnerTemp, "setup-soldr-cache"),
+      SOLDR_BINARY: soldrShim,
+      PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
+    },
+  });
+
+  assert.match(
+    result.stdout + result.stderr,
+    /falling back to zccache stop/,
+  );
+  if (process.platform !== "win32") {
+    assert.equal((await fs.readFile(argsFile, "utf8")).trim(), "stop");
+  }
+});
+
 test("bench-cache-cell treats cook-production as build-affecting", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-cell-cook-prod-"));
   const home = path.join(dir, "home");

@@ -98,6 +98,8 @@ if (skipBuild) {
 wallColdS = (nowMs() - tColdStart) / 1000;
 log(`[bench] cold build wall=${wallColdS.toFixed(2)}s`);
 
+await quiesceCacheDaemonsBeforeSnapshot(env, workloadDir);
+
 // --- 2. snapshot -------------------------------------------------------------
 let snapshotPaths = layerPaths;
 let soloToolchainDeltaPaths = [];
@@ -452,6 +454,70 @@ function run(cmd, argv, opts = {}) {
     child.on("error", reject);
     child.on("exit", (code) => code === 0 ? resolve() : reject(new Error(`${cmd} exited ${code}`)));
   });
+}
+
+function runBestEffort(cmd, argv, opts = {}) {
+  return new Promise((resolve) => {
+    let child;
+    try {
+      child = spawn(cmd, argv, { stdio: ["ignore", "pipe", "pipe"], ...opts });
+    } catch (err) {
+      resolve({ status: "error", code: null, stderr: "", error: err });
+      return;
+    }
+    let stderr = "";
+    child.stderr?.on("data", (data) => { stderr += data.toString(); });
+    child.on("error", (err) => resolve({ status: "error", code: null, stderr, error: err }));
+    child.on("exit", (code) => resolve({ status: "exit", code, stderr, error: null }));
+  });
+}
+
+async function quiesceCacheDaemonsBeforeSnapshot(envExt, workloadDir) {
+  const buildCachePath = pathsForLayer("build", { env: envExt, workloadDir })[0];
+  const buildCacheDir = path.join(buildCachePath.parent, buildCachePath.basename);
+  const logsArchiveDir = path.join(buildCacheDir, "logs", "archive");
+  const soldr = envExt.SOLDR_BINARY?.trim() || "soldr";
+
+  log(`[bench] quiescing cache daemon(s) before snapshot`);
+  const soldrResult = await runBestEffort(
+    soldr,
+    ["cache", "shutdown", "--archive-logs", logsArchiveDir],
+    { env: envExt },
+  );
+  if (soldrResult.status === "exit" && soldrResult.code === 0) {
+    log(`[bench] soldr cache shutdown completed`);
+    return;
+  }
+
+  const canFallback =
+    soldrResult.status === "error" ||
+    (soldrResult.code === 2 && looksLikeUnsupportedSoldrShutdown(soldrResult.stderr));
+  if (!canFallback) {
+    log(`[bench] soldr cache shutdown exit ${soldrResult.code}; continuing best-effort without fallback`);
+    return;
+  }
+
+  log(`[bench] soldr cache shutdown unavailable; falling back to zccache stop`);
+  const zccacheResult = await runBestEffort("zccache", ["stop"], { env: envExt });
+  if (zccacheResult.status === "exit" && zccacheResult.code === 0) {
+    log(`[bench] zccache stop completed`);
+  } else if (zccacheResult.status === "error") {
+    log(`[bench] zccache stop spawn failed; continuing best-effort`);
+  } else {
+    log(`[bench] zccache stop exit ${zccacheResult.code}; continuing best-effort`);
+  }
+}
+
+function looksLikeUnsupportedSoldrShutdown(stderr) {
+  const s = stderr.toLowerCase();
+  return (
+    s.includes("unrecognized subcommand") ||
+    s.includes("unknown subcommand") ||
+    s.includes("invalid subcommand") ||
+    s.includes("unexpected argument") ||
+    s.includes("tool not found") ||
+    s.includes("no release found")
+  );
 }
 
 async function tarZstdCreate(archivePath, parent, basename) {
