@@ -89,7 +89,7 @@ export function pathsForLayer(layer, opts = {}) {
         { parent: cargoHome, basename: ".global-cache" },
       ];
     case "cook":
-      return [{ parent: path.join(workloadDir, "target"), basename: "deps" }];
+      return [{ parent: path.join(workloadDir, "target", "release"), basename: "deps" }];
     case "build":
       return [{ parent: path.dirname(zccacheDir), basename: path.basename(zccacheDir) }];
     case "target":
