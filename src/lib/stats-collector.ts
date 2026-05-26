@@ -105,11 +105,15 @@ export class StatsCollector {
   }
 
   private saveLogLine(op: CacheOpStats): string {
+    const statusStr = op.status ? ` status=${op.status}` : "";
     const archStr = op.archiveBytes !== null ? ` archive=${fmtBytes(op.archiveBytes)}` : "";
     const inflStr = op.inflatedBytes !== null ? ` inflated=${fmtBytes(op.inflatedBytes)}` : "";
     const filesStr = op.fileCount !== null ? ` files=${op.fileCount}` : "";
+    const skippedStr = op.payload?.skipped && op.payload.skipped.length > 0
+      ? ` skipped=${op.payload.skipped.map((s) => `${s.reason}:${s.count}`).join(",")}`
+      : "";
     const ratio = ratioStr(op.archiveBytes, op.inflatedBytes);
-    return `[save]    ${op.label.padEnd(20)}          key=${op.key}${archStr}${inflStr}${filesStr}${ratio}  ${op.timestamp}  ${fmtMs(op.durationMs)}`;
+    return `[save]    ${op.label.padEnd(20)}          key=${op.key}${statusStr}${archStr}${inflStr}${filesStr}${ratio}${skippedStr}  ${op.timestamp}  ${fmtMs(op.durationMs)}`;
   }
 
   async writeFiles(runnerTemp: string): Promise<void> {

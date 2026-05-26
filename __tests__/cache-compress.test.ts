@@ -1,9 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import * as fs from "node:fs";
+import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
-import { detectCompressMagic } from "../src/lib/cache-compress.js";
+import { detectCompressMagic, planTarPayload } from "../src/lib/cache-compress.js";
 
 function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -66,6 +68,126 @@ test("detectCompressMagic handles short gzip-like prefix", async () => {
     fs.writeFileSync(file, Buffer.from([0x1f, 0x8b]));
     assert.equal(await detectCompressMagic(file), "gzip");
   } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("planTarPayload filters transient files and reports largest payload entries", async () => {
+  const root = mkTmp("payload-plan-");
+  try {
+    const cache = path.join(root, "cache");
+    const nested = path.join(cache, "nested");
+    fs.mkdirSync(nested, { recursive: true });
+    fs.writeFileSync(path.join(cache, "large.bin"), Buffer.alloc(10));
+    fs.writeFileSync(path.join(nested, "small.txt"), Buffer.alloc(5));
+    fs.writeFileSync(path.join(cache, "zccache.sock"), "not really a socket");
+    fs.writeFileSync(path.join(cache, "worker.pid"), "123");
+    fs.writeFileSync(path.join(cache, "build.lock"), "");
+    fs.writeFileSync(path.join(cache, "old.tar.zst"), Buffer.alloc(100));
+    fs.writeFileSync(path.join(cache, ".package-cache"), "");
+
+    const plan = await planTarPayload({ parent: root, inputBasenames: ["cache"], topN: 2 });
+
+    assert.equal(plan.bytes, 15);
+    assert.equal(plan.files, 2);
+    assert.deepEqual(plan.manifestEntries.sort(), ["cache/large.bin", "cache/nested/small.txt"]);
+    assert.deepEqual(plan.topFiles.map((entry) => entry.path), ["cache/large.bin", "cache/nested/small.txt"]);
+    assert.equal(plan.topDirectories[0]?.path, "cache");
+    assert.equal(plan.topDirectories[0]?.bytes, 15);
+    const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry.count]));
+    assert.equal(skipped.get("transient-socket-path"), 1);
+    assert.equal(skipped.get("transient-pid-file"), 1);
+    assert.equal(skipped.get("transient-lock-file"), 1);
+    assert.equal(skipped.get("archive-file"), 1);
+    assert.equal(skipped.get("transient-cargo-mutex"), 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("planTarPayload excludes zccache diagnostic logs from cache saves", async () => {
+  const root = mkTmp("payload-logs-");
+  try {
+    const cache = path.join(root, "zccache");
+    fs.mkdirSync(path.join(cache, "artifacts"), { recursive: true });
+    fs.mkdirSync(path.join(cache, "logs", "archive", "no-session"), { recursive: true });
+    fs.writeFileSync(path.join(cache, "artifacts", "keep.bin"), Buffer.alloc(7));
+    fs.writeFileSync(path.join(cache, "logs", "last-session.jsonl"), Buffer.alloc(79 * 1024));
+    fs.writeFileSync(path.join(cache, "logs", "archive", "no-session", "last-session.jsonl"), Buffer.alloc(79 * 1024));
+    fs.writeFileSync(path.join(cache, "logs", "last-session-stats.json"), "{}");
+
+    const plan = await planTarPayload({ parent: root, inputBasenames: ["zccache"], topN: 5 });
+
+    assert.equal(plan.bytes, 7);
+    assert.equal(plan.files, 1);
+    assert.deepEqual(plan.manifestEntries, ["zccache/artifacts/keep.bin"]);
+    const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry]));
+    assert.equal(skipped.get("diagnostic-log-dir")?.count, 1);
+    assert.deepEqual(skipped.get("diagnostic-log-dir")?.samples, ["zccache/logs"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("planTarPayload archives symlink entries without following external targets", async () => {
+  const root = mkTmp("payload-symlink-");
+  try {
+    const cache = path.join(root, "cache");
+    fs.mkdirSync(cache, { recursive: true });
+    const outside = path.join(root, "outside.bin");
+    fs.writeFileSync(outside, Buffer.alloc(1234));
+    const link = path.join(cache, "outside-link");
+    try {
+      fs.symlinkSync(outside, link, "file");
+    } catch {
+      return;
+    }
+
+    const plan = await planTarPayload({ parent: root, inputBasenames: ["cache"], topN: 5 });
+
+    assert.equal(plan.bytes, 0);
+    assert.equal(plan.files, 0);
+    assert.equal(plan.symlinks, 1);
+    assert.deepEqual(plan.manifestEntries, ["cache/outside-link"]);
+    assert.deepEqual(plan.topFiles, []);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("planTarPayload skips sockets and fifos on Unix", async () => {
+  if (process.platform === "win32") return;
+  const root = mkTmp("payload-special-");
+  let server: net.Server | null = null;
+  try {
+    const cache = path.join(root, "cache");
+    fs.mkdirSync(cache, { recursive: true });
+    fs.writeFileSync(path.join(cache, "keep.bin"), Buffer.alloc(3));
+    const fifo = path.join(cache, "native-fifo");
+    const mkfifo = spawnSync("mkfifo", [fifo], { encoding: "utf8" });
+    if (mkfifo.status !== 0) return;
+
+    const socketPath = path.join(cache, "native-socket");
+    server = net.createServer();
+    await new Promise<void>((resolve, reject) => {
+      server?.once("error", reject);
+      server?.listen(socketPath, resolve);
+    });
+
+    const plan = await planTarPayload({ parent: root, inputBasenames: ["cache"], topN: 5 });
+
+    assert.deepEqual(plan.manifestEntries, ["cache/keep.bin"]);
+    const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry.count]));
+    assert.equal(skipped.get("special-fifo"), 1);
+    assert.equal(skipped.get("special-socket"), 1);
+  } finally {
+    await new Promise<void>((resolve) => {
+      if (!server) {
+        resolve();
+        return;
+      }
+      server.close(() => resolve());
+    });
     fs.rmSync(root, { recursive: true, force: true });
   }
 });

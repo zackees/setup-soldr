@@ -194,6 +194,36 @@ inputs:
       SOLDR_TARGET_CACHE_COMPRESS_LEVEL.
     required: false
     default: "3"
+  cache-payload-warn-bytes:
+    description: >
+      Soft warning threshold for tar-backed cache saves, measured before
+      compression. Accepts bytes or KiB/MiB/GiB/TiB suffixes. When exceeded,
+      setup-soldr emits a warning with the largest files so oversized payloads
+      such as multi-GiB zccache archives are visible in CI. Default 1GiB.
+    required: false
+    default: "1GiB"
+  cache-payload-max-bytes:
+    description: >
+      Optional hard limit for tar-backed cache saves, measured before
+      compression. Empty (default) disables the limit. When set and exceeded,
+      cache-payload-oversize-action decides whether setup-soldr skips the save
+      or fails the post step.
+    required: false
+    default: ""
+  cache-payload-oversize-action:
+    description: >
+      Behavior when cache-payload-max-bytes is exceeded. "skip" logs a warning
+      and does not upload the cache entry. "fail" treats the oversized payload
+      as a cache packaging error. Ignored when cache-payload-max-bytes is empty.
+    required: false
+    default: "skip"
+  cache-payload-top-n:
+    description: >
+      Number of largest files and directories retained in cache payload stats,
+      stats-json, and the final step summary. Set to 0 to suppress top-entry
+      lists while keeping aggregate bytes/files/skipped counts.
+    required: false
+    default: "10"
   source-mtime-normalize:
     description: >
       Opt-in. When "true", rewrite the mtime of tracked Rust build-input files
