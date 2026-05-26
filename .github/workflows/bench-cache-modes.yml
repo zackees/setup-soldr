@@ -160,10 +160,8 @@ jobs:
           node-version: 22
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install script dependencies
-        run: npm ci
-
       - name: Save real target cache
+        id: real-save-prepare
         env:
           RUNNER_OS: ${{ runner.os }}
           RUNNER_TEMP: ${{ runner.temp }}
@@ -174,6 +172,23 @@ jobs:
             --workload=${{ inputs.workload }} \
             --rep=1 \
             --out=bench-real-cache-state.json
+
+      - name: Mark real cache save start
+        id: real-save-start
+        run: echo "ms=$(node -e 'process.stdout.write(String(Date.now()))')" >> "$GITHUB_OUTPUT"
+
+      - name: Save real target cache entry
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.real-save-prepare.outputs.path }}
+          key: ${{ steps.real-save-prepare.outputs.key }}
+
+      - name: Finalize real cache save timing
+        run: |
+          node scripts/bench-real-cache-smoke.mjs \
+            --mode=finalize-save \
+            --state=bench-real-cache-state.json \
+            --save-start-ms=${{ steps.real-save-start.outputs.ms }}
 
       - uses: actions/upload-artifact@v4
         with:
@@ -193,14 +208,35 @@ jobs:
           node-version: 22
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Install script dependencies
-        run: npm ci
-
       - uses: actions/download-artifact@v4
         with:
           name: bench-real-cache-state
 
-      - name: Restore real target cache
+      - name: Prepare real target cache restore
+        id: real-restore-prepare
+        env:
+          RUNNER_OS: ${{ runner.os }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          node scripts/bench-real-cache-smoke.mjs \
+            --mode=prepare-restore \
+            --layer=target \
+            --workload=${{ inputs.workload }} \
+            --rep=1 \
+            --state=bench-real-cache-state.json
+
+      - name: Mark real cache restore start
+        id: real-restore-start
+        run: echo "ms=$(node -e 'process.stdout.write(String(Date.now()))')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore real target cache entry
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.real-restore-prepare.outputs.path }}
+          key: ${{ steps.real-restore-prepare.outputs.key }}
+          fail-on-cache-miss: true
+
+      - name: Emit real target cache row
         env:
           RUNNER_OS: ${{ runner.os }}
           RUNNER_TEMP: ${{ runner.temp }}
@@ -211,6 +247,7 @@ jobs:
             --workload=${{ inputs.workload }} \
             --rep=1 \
             --state=bench-real-cache-state.json \
+            --restore-start-ms=${{ steps.real-restore-start.outputs.ms }} \
             --out=bench-ubuntu-24.04-target-real-cache-r1.csv
 
       - uses: actions/upload-artifact@v4

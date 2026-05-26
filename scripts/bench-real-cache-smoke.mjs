@@ -1,9 +1,9 @@
-// bench-real-cache-smoke.mjs - tiny Actions-cache validation path for the
-// cache-mode benchmark. It runs as two jobs: save a real cache entry after a
-// cold build, then restore that entry in a downstream job and emit normal
-// bench CSV rows.
+// bench-real-cache-smoke.mjs - state/CVS helper for the cache-mode benchmark's
+// real Actions cache validation path. The workflow performs the actual
+// save/restore through actions/cache/save and actions/cache/restore; this script
+// prepares the workload, records timings around those action steps, and emits
+// normal bench CSV rows.
 
-import * as cache from "@actions/cache";
 import { spawn } from "node:child_process";
 import * as fsp from "node:fs/promises";
 import * as fs from "node:fs";
@@ -12,7 +12,9 @@ import * as path from "node:path";
 
 const args = parseArgs(process.argv.slice(2));
 const mode = args.mode;
-if (mode !== "save" && mode !== "restore") die("missing or invalid --mode=save|restore");
+if (!["save", "finalize-save", "prepare-restore", "restore"].includes(mode)) {
+  die("missing or invalid --mode=save|finalize-save|prepare-restore|restore");
+}
 
 const layer = args.layer ?? "target";
 if (layer !== "target") die("real-cache smoke currently supports --layer=target only");
@@ -43,33 +45,46 @@ if (mode === "save") {
     process.env.GITHUB_RUN_ATTEMPT ?? "1",
   ].join("-");
 
-  const tSave = nowMs();
-  const cacheId = await cache.saveCache([targetDir], key);
-  const saveTimeS = secondsSince(tSave);
   await writeJson(out, {
     version: 1,
     key,
-    cacheId,
     os: runnerOs,
     layer,
     workload,
     rep,
     coldWallS: round(coldWallS, 2),
-    saveTimeS: round(saveTimeS, 2),
+    saveTimeS: "",
     inflatedMb,
   });
-  console.log(`[bench-real-cache] saved key=${key} id=${cacheId} cold=${coldWallS.toFixed(2)}s save=${saveTimeS.toFixed(2)}s`);
+  await writeOutputs({ key, path: targetDir });
+  console.log(`[bench-real-cache] prepared key=${key} path=${targetDir} cold=${coldWallS.toFixed(2)}s`);
+} else if (mode === "finalize-save") {
+  const statePath = args.state;
+  if (!statePath) die("finalize-save mode requires --state=<json>");
+  const saveStartMs = Number(args["save-start-ms"]);
+  if (!Number.isFinite(saveStartMs)) die("finalize-save mode requires --save-start-ms=<epoch-ms>");
+  const state = JSON.parse(await fsp.readFile(statePath, "utf8"));
+  if (state?.version !== 1 || !state.key) die(`invalid state file: ${statePath}`);
+  state.saveTimeS = round((Date.now() - saveStartMs) / 1000, 2);
+  await writeJson(statePath, state);
+  console.log(`[bench-real-cache] finalized save key=${state.key} save=${state.saveTimeS}s`);
+} else if (mode === "prepare-restore") {
+  const statePath = args.state;
+  if (!statePath) die("prepare-restore mode requires --state=<json>");
+  const state = JSON.parse(await fsp.readFile(statePath, "utf8"));
+  if (state?.version !== 1 || !state.key) die(`invalid state file: ${statePath}`);
+  await prepareWorkload(workloadSrc, workloadDir);
+  await writeOutputs({ key: state.key, path: targetDir });
+  console.log(`[bench-real-cache] prepared restore key=${state.key} path=${targetDir}`);
 } else {
   const statePath = args.state;
   if (!statePath) die("restore mode requires --state=<json>");
   const state = JSON.parse(await fsp.readFile(statePath, "utf8"));
   if (state?.version !== 1 || !state.key) die(`invalid state file: ${statePath}`);
-
-  await prepareWorkload(workloadSrc, workloadDir);
-  const tRestore = nowMs();
-  const matchedKey = await cache.restoreCache([targetDir], state.key);
-  const restoreTimeS = secondsSince(tRestore);
-  if (!matchedKey) die(`real cache restore missed key ${state.key}`);
+  const restoreStartMs = Number(args["restore-start-ms"]);
+  if (!Number.isFinite(restoreStartMs)) die("restore mode requires --restore-start-ms=<epoch-ms>");
+  const restoreTimeS = (Date.now() - restoreStartMs) / 1000;
+  if (!fs.existsSync(targetDir)) die(`real cache restore produced no target dir for key ${state.key}`);
 
   const tWarm = nowMs();
   await run("cargo", ["build", "--release", "--quiet"], { cwd: workloadDir, env });
@@ -78,7 +93,7 @@ if (mode === "save") {
     warmWallS: round(warmWallS, 2),
     restoreTimeS: round(restoreTimeS, 2),
   });
-  console.log(`[bench-real-cache] restored key=${matchedKey} warm=${warmWallS.toFixed(2)}s restore=${restoreTimeS.toFixed(2)}s`);
+  console.log(`[bench-real-cache] restored key=${state.key} warm=${warmWallS.toFixed(2)}s restore=${restoreTimeS.toFixed(2)}s`);
 }
 
 function parseArgs(argv) {
@@ -103,6 +118,13 @@ function sanitize(s) { return String(s).replace(/[^A-Za-z0-9_.-]+/g, "-"); }
 async function writeJson(file, payload) {
   await fsp.mkdir(path.dirname(path.resolve(file)), { recursive: true });
   await fsp.writeFile(file, JSON.stringify(payload, null, 2) + "\n", "utf8");
+}
+
+async function writeOutputs(outputs) {
+  const file = process.env.GITHUB_OUTPUT;
+  if (!file) return;
+  const lines = Object.entries(outputs).map(([k, v]) => `${k}=${v}`);
+  await fsp.appendFile(file, lines.join("\n") + "\n", "utf8");
 }
 
 async function writeCsv(file, state, warm) {
