@@ -26,6 +26,7 @@ export const LAYER_NAMES = Object.freeze([
   "solo-toolchain",
   "cargo-registry",
   "cook",
+  "cook-production",
   "build",
   "target",
   "setup-cache",
@@ -49,13 +50,19 @@ export const LAYER_NAMES = Object.freeze([
  * @typedef {object} SnapshotDiff
  * @property {SnapshotEntry[]} [added]
  * @property {{after: SnapshotEntry}[]} [changed]
+ *
+ * @typedef {object} PathsForLayerOpts
+ * @property {NodeJS.ProcessEnv} [env]
+ * @property {string} [workloadDir]
+ * @property {SnapshotDiff} [soloToolchainDelta]
+ * @property {boolean} [includeRunnerToolchain]
  */
 
 /**
  * Resolve the on-disk paths for a given layer.
  *
  * @param {string} layer
- * @param {{env?: NodeJS.ProcessEnv, workloadDir?: string, soloToolchainDelta?: SnapshotDiff}} [opts]
+ * @param {PathsForLayerOpts} [opts]
  * @returns {LayerPath[]}
  */
 export function pathsForLayer(layer, opts = {}) {
@@ -90,6 +97,8 @@ export function pathsForLayer(layer, opts = {}) {
       ];
     case "cook":
       return [{ parent: path.join(workloadDir, "target", "release"), basename: "deps" }];
+    case "cook-production":
+      return [{ parent: workloadDir, basename: "target" }];
     case "build":
       return [{ parent: path.dirname(zccacheDir), basename: path.basename(zccacheDir) }];
     case "target":
@@ -100,6 +109,7 @@ export function pathsForLayer(layer, opts = {}) {
       const acc = [];
       for (const name of LAYER_NAMES) {
         if (name === "baseline" || name === "all-on") continue;
+        if (name === "solo-toolchain" && !opts.includeRunnerToolchain && !opts.soloToolchainDelta) continue;
         for (const p of pathsForLayer(name, opts)) {
           addDedupedPath(acc, p);
         }

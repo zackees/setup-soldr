@@ -10,11 +10,14 @@ on:
       - src/**
       - dist/**
       - __tests__/**
+      - scripts/*bench*.mjs
+      - scripts/bench-workloads/**
       - tests/**
       - package.json
       - package-lock.json
       - tsconfig.json
       - .github/workflows/setup-soldr-action.yml
+      - .github/workflows/bench-cache-modes.yml
       - .github/workflows/setup-soldr-contract.yml
       - .github/workflows/zccache-build-demo.yml
   pull_request:
@@ -24,11 +27,14 @@ on:
       - src/**
       - dist/**
       - __tests__/**
+      - scripts/*bench*.mjs
+      - scripts/bench-workloads/**
       - tests/**
       - package.json
       - package-lock.json
       - tsconfig.json
       - .github/workflows/setup-soldr-action.yml
+      - .github/workflows/bench-cache-modes.yml
       - .github/workflows/setup-soldr-contract.yml
       - .github/workflows/zccache-build-demo.yml
   workflow_dispatch:
@@ -96,5 +102,6 @@ jobs:
           set -euo pipefail
           python -m pytest \
             tests/test_action_target_cache_wiring.py \
+            tests/test_bench_cache_modes_workflow.py \
             tests/test_release_rollout_contract.py \
             tests/test_zccache_build_demo_workflow.py

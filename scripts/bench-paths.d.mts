@@ -24,6 +24,7 @@ export interface PathsForLayerOpts {
   env?: NodeJS.ProcessEnv;
   workloadDir?: string;
   soloToolchainDelta?: SnapshotDiff;
+  includeRunnerToolchain?: boolean;
 }
 
 export function pathsForLayer(layer: string, opts?: PathsForLayerOpts): LayerPath[];
