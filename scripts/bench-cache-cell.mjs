@@ -36,7 +36,7 @@ import { pathsForLayer, isActiveLayer, LAYER_NAMES } from "./bench-paths.mjs";
 
 // Layers whose snapshot+restore changes what cargo finds at build time, so a
 // warm rebuild is a meaningful measurement. Anything else is "mechanics only".
-const BUILD_AFFECTING = new Set(["cargo-registry", "cook", "build", "target", "all-on"]);
+const BUILD_AFFECTING = new Set(["cargo-registry", "cook", "cook-production", "build", "target", "all-on"]);
 
 // Layers we MUST NOT wipe — they're shared runner-image state. We still
 // snapshot + restore-to-side, but skip the destructive wipe.
@@ -51,6 +51,8 @@ const rep = Number(args.rep ?? 1);
 const skipBuild = process.env.BENCH_SKIP_BUILD === "1";
 const runnerTemp = process.env.RUNNER_TEMP ?? os.tmpdir();
 const runnerOs = process.env.RUNNER_OS ?? process.platform;
+const cacheBackend = args["cache-backend"] ?? process.env.BENCH_CACHE_BACKEND ?? "local-tar-zstd";
+const compressionModel = args["compression-model"] ?? process.env.BENCH_COMPRESSION_MODEL ?? "zstd-19-long27";
 
 const workloadSrc = path.resolve("scripts", "bench-workloads", args.workload);
 const workloadDir = path.join(runnerTemp, "bench-workload");
@@ -59,12 +61,17 @@ await fsp.mkdir(simCacheDir, { recursive: true });
 
 const env = { ...process.env, CARGO_TARGET_DIR: path.join(workloadDir, "target") };
 const layerPaths = pathsForLayer(args.layer, { env, workloadDir });
+const soloToolchainBasePaths = pathsForLayer("solo-toolchain", { env, workloadDir, includeRunnerToolchain: true });
+const csvRows = [];
+await writeCsv(csvRows);
 
 log(`[bench] layer=${args.layer} workload=${args.workload} rep=${rep} paths=${layerPaths.length}`);
 
 if (args["pre-snapshot-out"]) {
-  if (args.layer !== "solo-toolchain") die("--pre-snapshot-out is only supported for --layer=solo-toolchain");
-  await writePathStates(args["pre-snapshot-out"], layerPaths);
+  if (args.layer !== "solo-toolchain" && args.layer !== "all-on") {
+    die("--pre-snapshot-out is only supported for --layer=solo-toolchain or --layer=all-on");
+  }
+  await writePathStates(args["pre-snapshot-out"], soloToolchainBasePaths);
   log(`[bench] wrote pre-snapshot ${args["pre-snapshot-out"]}`);
   process.exit(0);
 }
@@ -73,10 +80,11 @@ await prepareWorkload(workloadSrc, workloadDir);
 
 // solo-toolchain overlaps runner-image state. Capture that baseline before the
 // setup-soldr action runs, then only archive post-setup/cold added files.
-const preSnapshotStates = args.layer === "solo-toolchain"
+const tracksSoloToolchainDelta = args.layer === "solo-toolchain" || args.layer === "all-on";
+const preSnapshotStates = tracksSoloToolchainDelta
   ? args["pre-snapshot-in"]
     ? await readPathStates(args["pre-snapshot-in"])
-    : await snapshotPathStates(layerPaths)
+    : await snapshotPathStates(soloToolchainBasePaths)
   : null;
 
 // --- 1. cold build -----------------------------------------------------------
@@ -91,12 +99,24 @@ wallColdS = (nowMs() - tColdStart) / 1000;
 log(`[bench] cold build wall=${wallColdS.toFixed(2)}s`);
 
 // --- 2. snapshot -------------------------------------------------------------
-const snapshotPaths = preSnapshotStates
-  ? await materializeDeltaPaths(layerPaths, preSnapshotStates, path.join(runnerTemp, "sim-delta", args.layer))
-  : layerPaths;
-const soloToolchainDeltaEmpty = preSnapshotStates && snapshotPaths.length === 0;
+let snapshotPaths = layerPaths;
+let soloToolchainDeltaPaths = [];
+if (preSnapshotStates) {
+  soloToolchainDeltaPaths = await materializeDeltaPaths(
+    soloToolchainBasePaths,
+    preSnapshotStates,
+    path.join(runnerTemp, "sim-delta", args.layer, "solo-toolchain"),
+  );
+  snapshotPaths = args.layer === "solo-toolchain"
+    ? soloToolchainDeltaPaths
+    : dedupeLayerPaths([...layerPaths, ...soloToolchainDeltaPaths]);
+}
+const soloToolchainDeltaEmpty = args.layer === "solo-toolchain" && preSnapshotStates && snapshotPaths.length === 0;
+const allOnSoloToolchainDeltaEmpty = args.layer === "all-on" && preSnapshotStates && soloToolchainDeltaPaths.length === 0;
 if (soloToolchainDeltaEmpty) {
   log(`[bench] solo-toolchain delta is empty; emitting mechanics row without save/restore`);
+} else if (allOnSoloToolchainDeltaEmpty) {
+  log(`[bench] all-on solo-toolchain delta is empty; runner-image toolchains excluded from snapshot`);
 }
 
 const snapshots = [];
@@ -125,13 +145,13 @@ const compressedMb = round(totalCompressedMb, 2);
 const inflatedMb = round(totalInflatedMb, 2);
 const ratio = totalInflatedMb > 0 ? round(totalInflatedMb / Math.max(totalCompressedMb, 0.001), 2) : 0;
 
-const csv = [csvHeader()];
-csv.push(csvRow({
+csvRows.push(csvRow({
   os: runnerOs, layer: args.layer, phase: "cold", wallClockS: round(wallColdS, 2),
   saveTimeS: round(saveTimeS, 2), restoreTimeS: "",
   compressedMb, inflatedMb, ratio,
   workload: args.workload, rep,
 }));
+await writeCsv(csvRows);
 
 // --- 3 + 4 + 5: restore + warm (only for build-affecting + wipe-safe) --------
 const shouldWipe = !WIPE_UNSAFE.has(args.layer) && isActiveLayer(args.layer);
@@ -185,24 +205,25 @@ if (shouldWarmBuild) {
   const wallWarmS = (nowMs() - tWarmStart) / 1000;
   log(`[bench] warm build wall=${wallWarmS.toFixed(2)}s`);
 
-  csv.push(csvRow({
+  csvRows.push(csvRow({
     os: runnerOs, layer: args.layer, phase: "warm", wallClockS: round(wallWarmS, 2),
     saveTimeS: "", restoreTimeS: round(restoreTimeS, 2),
     compressedMb, inflatedMb, ratio,
     workload: args.workload, rep,
   }));
+  await writeCsv(csvRows);
 } else if (snapshots.length > 0 || soloToolchainDeltaEmpty) {
   // emit a mechanics-only row so downstream collation has size/save/restore numbers
-  csv.push(csvRow({
+  csvRows.push(csvRow({
     os: runnerOs, layer: args.layer, phase: "mech", wallClockS: "",
     saveTimeS: round(saveTimeS, 2), restoreTimeS: round(restoreTimeS, 2),
     compressedMb, inflatedMb, ratio,
     workload: args.workload, rep,
   }));
+  await writeCsv(csvRows);
 }
 
-await fsp.writeFile(out, csv.join("\n") + "\n", "utf8");
-log(`[bench] wrote ${out} (${csv.length - 1} row(s))`);
+log(`[bench] wrote ${out} (${csvRows.length} row(s))`);
 
 // ============================== helpers ======================================
 
@@ -221,11 +242,17 @@ function nowMs() { return Number(process.hrtime.bigint() / 1_000_000n); }
 function round(n, d) { return Math.round(n * 10 ** d) / 10 ** d; }
 
 function csvHeader() {
-  return "os,layer,phase,wall_clock_s,save_time_s,restore_time_s,compressed_mb,inflated_mb,ratio,workload,rep";
+  return "os,layer,phase,wall_clock_s,save_time_s,restore_time_s,compressed_mb,inflated_mb,ratio,workload,rep,cache_backend,compression_model";
 }
 function csvRow(r) {
   return [r.os, r.layer, r.phase, r.wallClockS, r.saveTimeS, r.restoreTimeS,
-          r.compressedMb, r.inflatedMb, r.ratio, r.workload, r.rep].join(",");
+          r.compressedMb, r.inflatedMb, r.ratio, r.workload, r.rep,
+          r.cacheBackend ?? cacheBackend, r.compressionModel ?? compressionModel].join(",");
+}
+
+async function writeCsv(rows) {
+  await fsp.mkdir(path.dirname(path.resolve(out)), { recursive: true });
+  await fsp.writeFile(out, [csvHeader(), ...rows].join("\n") + "\n", "utf8");
 }
 
 async function prepareWorkload(src, dest) {
@@ -373,6 +400,31 @@ function shouldWipeBuildCacheBeforeWarm(layer) {
 
 function pathKey(p) {
   return path.resolve(p.parent, p.basename);
+}
+
+function dedupeLayerPaths(paths) {
+  const acc = [];
+  for (const p of paths) addDedupedPath(acc, p);
+  return acc;
+}
+
+function addDedupedPath(acc, candidate) {
+  const candidateTarget = path.resolve(candidate.parent, candidate.basename);
+  for (let i = 0; i < acc.length; i++) {
+    const existingTarget = path.resolve(acc[i].parent, acc[i].basename);
+    if (pathCovers(existingTarget, candidateTarget)) return;
+    if (pathCovers(candidateTarget, existingTarget)) {
+      acc.splice(i, 1);
+      i--;
+    }
+  }
+  acc.push(candidate);
+}
+
+function pathCovers(parentTarget, childTarget) {
+  if (parentTarget === childTarget) return true;
+  const rel = path.relative(parentTarget, childTarget);
+  return rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel);
 }
 
 async function dirSizeBytes(dir) {

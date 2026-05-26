@@ -1,6 +1,6 @@
 name: Bench cache modes
 
-# Inline-disk-simulation benchmark of every setup-soldr cache layer.
+# Synthetic inline-disk benchmark of every setup-soldr cache layer.
 # Snapshots each layer to ${RUNNER_TEMP}/sim-cache/ via tar+zstd-19, wipes,
 # restores, rebuilds. Emits one CSV per cell; collate job concatenates them
 # and renders to $GITHUB_STEP_SUMMARY. See issue #178 for design.
@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       layers:
-        description: "Comma-separated layer names (baseline, soldr-mini, solo-toolchain, cargo-registry, cook, build, target, setup-cache, all-on). Empty = full set."
+        description: "Comma-separated layer names (baseline, soldr-mini, solo-toolchain, cargo-registry, cook, cook-production, build, target, setup-cache, all-on). Empty = full set."
         required: false
-        default: "baseline,soldr-mini,solo-toolchain,cargo-registry,cook,build,target,setup-cache,all-on"
+        default: "baseline,soldr-mini,solo-toolchain,cargo-registry,cook,cook-production,build,target,setup-cache,all-on"
       oses:
         description: "Comma-separated runner OS labels."
         required: false
@@ -29,6 +29,10 @@ on:
         default: "demo-small"
         options:
           - demo-small
+      cell_timeout_minutes:
+        description: "Timeout for each benchmark cell. Partial CSV artifacts are still uploaded on failure/timeout."
+        required: false
+        default: "30"
 
 permissions:
   contents: read
@@ -79,7 +83,7 @@ jobs:
           npm run build
 
       - name: Capture pre-soldr toolchain snapshot
-        if: ${{ matrix.layer == 'solo-toolchain' }}
+        if: ${{ matrix.layer == 'solo-toolchain' || matrix.layer == 'all-on' }}
         env:
           RUNNER_OS: ${{ runner.os }}
           RUNNER_TEMP: ${{ runner.temp }}
@@ -110,6 +114,7 @@ jobs:
           fi
 
       - name: Run bench cell
+        timeout-minutes: ${{ fromJSON(inputs.cell_timeout_minutes) }}
         env:
           RUNNER_OS: ${{ runner.os }}
           RUNNER_TEMP: ${{ runner.temp }}
@@ -123,14 +128,17 @@ jobs:
             --layer=${{ matrix.layer }} \
             --workload=${{ inputs.workload }} \
             --rep=${{ matrix.rep }} \
+            --cache-backend=local-tar-zstd \
+            --compression-model=zstd-19-long27 \
             --pre-snapshot-in=${{ runner.temp }}/bench-solo-toolchain-pre.json \
             --out=bench-${{ matrix.os }}-${{ matrix.layer }}-r${{ matrix.rep }}.csv
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: bench-${{ matrix.os }}-${{ matrix.layer }}-r${{ matrix.rep }}
           path: bench-${{ matrix.os }}-${{ matrix.layer }}-r${{ matrix.rep }}.csv
-          if-no-files-found: error
+          if-no-files-found: warn
 
   collate:
     name: Collate results

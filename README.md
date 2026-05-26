@@ -511,6 +511,27 @@ preferred for new workflows.
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
 - The setup cache intentionally keeps the installed `soldr` binary and only includes rustup state when setup-soldr had to fall back to a managed `RUSTUP_HOME` under the setup cache root. The dedicated `ZCCACHE_CACHE_DIR` payload stays in its own cache so warm runs do not restore the same build-cache bytes twice.
 
+## Cache-layer policy
+
+The action keeps target artifacts as the primary warm path. Companion layers are
+useful only when their save cost, restore cost, and hit rate prove they pay back
+for the current workload.
+
+| Layer | Default policy | Benchmark expectation |
+|---|---|---|
+| `target` / `build-cache-mode: once` | Primary warm path. | Should show low warm wall time and roughly one-hit payback after save cost. |
+| `cook` | Keep enabled only when production-shaped cook data is distinct from the target-cache fallback. | Compare `cook`, `cook-production`, and `target` rows before changing defaults. |
+| `build` / zccache state | Companion layer. Gate retire/keep decisions on restored zccache hit rate. | Do not treat a low restore time as success if warm zccache stats still show zero hits. |
+| `cargo-registry` | Companion layer. Gate retire/keep decisions on multi-rep or real-cache data. | Should beat noise after save cost and should never stall without a bounded timeout artifact. |
+| `setup-cache` | Mechanics/install layer. | Report save/restore mechanics separately from build warm speedup. |
+| `soldr-mini` | Mechanics/install layer. | Report save/restore mechanics separately from build warm speedup. |
+| `solo-toolchain` | Delta-only and opt-in. | Default stable on hosted runners should produce an empty or tiny delta. |
+| `all-on` benchmark mode | Diagnostic only. | Must not archive hosted-runner Rust toolchains unless explicitly requested. |
+
+`bench-cache-modes.yml` labels synthetic local tar/zstd results in the CSV and
+summary. Use `break_even_warm_hits` rather than restore-only net benefit when
+deciding whether a cache layer belongs in the default path.
+
 ## Known limitations
 
 ### Repeated `soldr cargo build` sharing a target directory

@@ -10,7 +10,12 @@ type BenchPaths = {
   LAYER_NAMES: ReadonlyArray<string>;
   pathsForLayer: (
     layer: string,
-    opts?: { env?: NodeJS.ProcessEnv; workloadDir?: string; soloToolchainDelta?: SnapshotDiff },
+    opts?: {
+      env?: NodeJS.ProcessEnv;
+      workloadDir?: string;
+      soloToolchainDelta?: SnapshotDiff;
+      includeRunnerToolchain?: boolean;
+    },
   ) =>
     Array<{ parent: string; basename: string }>;
   pathsForSoloToolchainDelta: (delta?: SnapshotDiff) => Array<{ parent: string; basename: string }>;
@@ -55,6 +60,7 @@ test("LAYER_NAMES covers the issue inventory (baseline + 7 prod + all-on)", asyn
     "solo-toolchain",
     "cargo-registry",
     "cook",
+    "cook-production",
     "build",
     "target",
     "setup-cache",
@@ -150,23 +156,38 @@ test("build layer uses ZCCACHE_CACHE_DIR", async () => {
   assert.equal(first.basename, "zccache");
 });
 
-test("cook snapshots release deps while target snapshots the whole target dir", async () => {
+test("cook snapshots release deps while cook-production and target snapshot the whole target dir", async () => {
   const benchPaths = await loadBenchPaths();
   const tgt = benchPaths.pathsForLayer("target", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
   const cook = benchPaths.pathsForLayer("cook", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
+  const cookProduction = benchPaths.pathsForLayer("cook-production", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
   assert.deepEqual(tgt.map(asPath), [`${FAKE_WORKLOAD}/target`]);
   assert.deepEqual(cook.map(asPath), [`${FAKE_WORKLOAD}/target/release/deps`]);
+  assert.deepEqual(cookProduction.map(asPath), [`${FAKE_WORKLOAD}/target`]);
 });
 
-test("all-on deduplicates overlapping paths", async () => {
+test("all-on deduplicates overlapping paths and excludes runner toolchains by default", async () => {
   const benchPaths = await loadBenchPaths();
   const ps = benchPaths.pathsForLayer("all-on", { env: FAKE_ENV, workloadDir: FAKE_WORKLOAD });
   const keys = ps.map(asPath);
   assert.equal(new Set(keys).size, keys.length, "all-on must dedupe");
   assert.ok(ps.some((p) => p.basename === "registry"));
-  assert.ok(ps.some((p) => p.basename === "toolchains"));
+  assert.ok(!keys.includes("/home/runner/.rustup/toolchains"));
+  assert.ok(!keys.includes("/home/runner/.cargo/bin"));
   assert.ok(keys.includes(`${FAKE_WORKLOAD}/target`));
   assert.ok(!keys.includes(`${FAKE_WORKLOAD}/target/release/deps`), "whole target snapshot should cover cook deps");
+});
+
+test("all-on can include runner toolchains only when explicitly requested", async () => {
+  const benchPaths = await loadBenchPaths();
+  const ps = benchPaths.pathsForLayer("all-on", {
+    env: FAKE_ENV,
+    workloadDir: FAKE_WORKLOAD,
+    includeRunnerToolchain: true,
+  });
+  const keys = ps.map(asPath);
+  assert.ok(keys.includes("/home/runner/.rustup/toolchains"));
+  assert.ok(keys.includes("/home/runner/.cargo/bin"));
 });
 
 test("unknown layer throws", async () => {
