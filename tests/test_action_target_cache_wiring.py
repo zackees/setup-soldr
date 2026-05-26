@@ -44,6 +44,7 @@ EXPECTED_INPUTS = {
     "lockfile",
     "build-cache",
     "build-cache-mode",
+    "zccache-seed-strict",
     "target-cache",
     "target-cache-mode",
     "target-dir",

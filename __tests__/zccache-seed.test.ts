@@ -100,7 +100,7 @@ test("seedZccache installs vendored zccache when present", async () => {
       soldrPath: "soldr",
       actionRoot: root,
       enabled: true,
-      buildCacheEnabled: true,
+      strict: false,
       log: () => undefined,
       warn: (msg) => assert.fail(msg),
       execFn: makeExec(calls, {
@@ -131,7 +131,7 @@ test("seedZccache falls back to managed release URL when no vendor exists", asyn
       soldrPath: "soldr",
       actionRoot: root,
       enabled: true,
-      buildCacheEnabled: true,
+      strict: false,
       log: () => undefined,
       warn: (msg) => assert.fail(msg),
       execFn: makeExec(calls, {
@@ -158,6 +158,156 @@ test("seedZccache falls back to managed release URL when no vendor exists", asyn
   }
 });
 
+test("seedZccache fails when managed zccache version cannot be resolved", async () => {
+  const root = mkTmp("zccache-seed-missing-version-");
+  const calls: Array<{ cmd: string; args: string[] }> = [];
+  try {
+    await assert.rejects(
+      seedZccache({
+        soldrPath: "soldr",
+        actionRoot: root,
+        enabled: true,
+        strict: true,
+        log: () => undefined,
+        warn: (msg) => assert.fail(msg),
+        execFn: makeExec(calls, {}),
+        env: {},
+      }),
+      /zccache seed failed: could not determine managed zccache version/,
+    );
+    assert.deepEqual(calls.map((call) => call.args), [["install-zccache", "--status", "--json"]]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("seedZccache fails instead of allowing a later cargo-install fallback", async () => {
+  const root = mkTmp("zccache-seed-install-fail-");
+  const calls: Array<{ cmd: string; args: string[] }> = [];
+  const target = detectHostZccacheTarget();
+  const vendorDir = path.join(root, "vendor", "zccache", target.archiveTarget);
+  writeFakeZccacheDir(vendorDir, target.binaryExt);
+  try {
+    await assert.rejects(
+      seedZccache({
+        soldrPath: "soldr",
+        actionRoot: root,
+        enabled: true,
+        strict: true,
+        log: () => undefined,
+        warn: (msg) => assert.fail(msg),
+        execFn: makeExec(
+          calls,
+          {
+            command: "install-zccache --status",
+            managed_version: "1.11.2",
+            pinned: null,
+          },
+          1,
+        ),
+        env: {},
+      }),
+      /refusing to continue because later isolated SOLDR_CACHE_DIR roots would fall back to cargo-installing zccache: install failed/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("seedZccache warns on install failure when strict mode is disabled", async () => {
+  const root = mkTmp("zccache-seed-install-warn-");
+  const calls: Array<{ cmd: string; args: string[] }> = [];
+  const warnings: string[] = [];
+  const target = detectHostZccacheTarget();
+  const vendorDir = path.join(root, "vendor", "zccache", target.archiveTarget);
+  writeFakeZccacheDir(vendorDir, target.binaryExt);
+  try {
+    await seedZccache({
+      soldrPath: "soldr",
+      actionRoot: root,
+      enabled: true,
+      strict: false,
+      log: () => undefined,
+      warn: (msg) => warnings.push(msg),
+      execFn: makeExec(
+        calls,
+        {
+          command: "install-zccache --status",
+          managed_version: "1.11.2",
+          pinned: null,
+        },
+        1,
+      ),
+      env: {},
+    });
+
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0] ?? "", /later isolated SOLDR_CACHE_DIR roots may fetch zccache again: install failed/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("seedZccache fails when strict managed release download cannot complete", async () => {
+  const root = mkTmp("zccache-seed-download-fail-");
+  const calls: Array<{ cmd: string; args: string[] }> = [];
+  try {
+    await assert.rejects(
+      seedZccache({
+        soldrPath: "soldr",
+        actionRoot: root,
+        enabled: true,
+        strict: true,
+        log: () => undefined,
+        warn: (msg) => assert.fail(msg),
+        execFn: makeExec(calls, {
+          command: "install-zccache --status",
+          managed_version: "1.11.2",
+          pinned: null,
+        }),
+        downloadFn: async () => {
+          throw new Error("release missing");
+        },
+        env: {},
+      }),
+      /managed zccache release could not be downloaded.*release missing/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("seedZccache warns when non-strict managed release download cannot complete", async () => {
+  const root = mkTmp("zccache-seed-download-warn-");
+  const calls: Array<{ cmd: string; args: string[] }> = [];
+  const warnings: string[] = [];
+  try {
+    await seedZccache({
+      soldrPath: "soldr",
+      actionRoot: root,
+      enabled: true,
+      strict: false,
+      log: () => undefined,
+      warn: (msg) => warnings.push(msg),
+      execFn: makeExec(calls, {
+        command: "install-zccache --status",
+        managed_version: "1.11.2",
+        pinned: null,
+      }),
+      downloadFn: async () => {
+        throw new Error("release missing");
+      },
+      env: {},
+    });
+
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0] ?? "", /managed zccache release could not be downloaded/);
+    assert.match(warnings[0] ?? "", /may fetch zccache again: release missing/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("seedZccache skips when an up-to-date pin already exists", async () => {
   const root = mkTmp("zccache-seed-existing-");
   const calls: Array<{ cmd: string; args: string[] }> = [];
@@ -166,7 +316,7 @@ test("seedZccache skips when an up-to-date pin already exists", async () => {
       soldrPath: "soldr",
       actionRoot: root,
       enabled: true,
-      buildCacheEnabled: true,
+      strict: false,
       log: () => undefined,
       warn: (msg) => assert.fail(msg),
       execFn: makeExec(calls, {
@@ -192,7 +342,7 @@ test("seedZccache does not override SOLDR_ZCCACHE_LOCAL_DIR", async () => {
       soldrPath: "soldr",
       actionRoot: root,
       enabled: true,
-      buildCacheEnabled: true,
+      strict: false,
       log: () => undefined,
       warn: (msg) => assert.fail(msg),
       execFn: makeExec(calls, {}),

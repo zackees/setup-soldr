@@ -85,6 +85,11 @@ test("prebuild-deps inputs round-trip through readRawInputs", () => {
   assert.equal(r.prebuildDepsFlags, "--release --workspace");
 });
 
+test("zccache seed strict input round-trips through readRawInputs", () => {
+  const r = readRawInputs({ "INPUT_ZCCACHE-SEED-STRICT": "true" });
+  assert.equal(r.zccacheSeedStrict, "true");
+});
+
 test("cache payload audit inputs round-trip through readRawInputs", () => {
   const r = readRawInputs({
     "INPUT_CACHE-PAYLOAD-WARN-BYTES": "1GiB",

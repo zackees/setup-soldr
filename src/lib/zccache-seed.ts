@@ -21,7 +21,7 @@ export interface SeedZccacheOptions {
   soldrPath: string;
   actionRoot: string;
   enabled: boolean;
-  buildCacheEnabled: boolean;
+  strict: boolean;
   log: (msg: string) => void;
   warn?: (msg: string) => void;
   execFn?: typeof exec.exec;
@@ -205,18 +205,24 @@ async function readInstallStatus(
   return parseInstallStatus(result.stdout);
 }
 
+function errorDetail(err: unknown): string {
+  return err instanceof Error ? (err.message || String(err)) : String(err);
+}
+
 export async function seedZccache(opts: SeedZccacheOptions): Promise<void> {
   const warn = opts.warn ?? ((msg: string): void => core.warning(msg));
   const execFn = opts.execFn ?? exec.exec;
   const downloadFn = opts.downloadFn ?? downloadManagedRelease;
   const env = opts.env ?? process.env;
+  const failOrWarn = (message: string): void => {
+    if (opts.strict) {
+      throw new Error(message);
+    }
+    warn(message);
+  };
 
   if (!opts.enabled) {
     opts.log("zccache-seed: skipped - setup-soldr passthrough mode");
-    return;
-  }
-  if (!opts.buildCacheEnabled) {
-    opts.log("zccache-seed: skipped - build-cache disabled");
     return;
   }
   if ((env[LOCAL_DIR_ENV] ?? "").trim()) {
@@ -228,7 +234,7 @@ export async function seedZccache(opts: SeedZccacheOptions): Promise<void> {
   try {
     target = detectHostZccacheTarget();
   } catch (err) {
-    warn(`setup-soldr: zccache seed skipped: ${err instanceof Error ? err.message : String(err)}`);
+    failOrWarn(`setup-soldr: zccache seed skipped: ${err instanceof Error ? err.message : String(err)}`);
     return;
   }
 
@@ -243,7 +249,7 @@ export async function seedZccache(opts: SeedZccacheOptions): Promise<void> {
   const vendored = findVendoredZccacheDir({ actionRoot: opts.actionRoot, target, env });
   const managedUrl = status ? managedReleaseUrl(status.managedVersion, target) : "";
   if (!vendored && !managedUrl) {
-    warn("setup-soldr: zccache seed skipped: could not determine managed zccache version");
+    failOrWarn("setup-soldr: zccache seed failed: could not determine managed zccache version");
     return;
   }
 
@@ -253,17 +259,52 @@ export async function seedZccache(opts: SeedZccacheOptions): Promise<void> {
   try {
     if (!source) {
       opts.log(`zccache-seed: downloading managed zccache release ${managedUrl}`);
-      source = await downloadFn(managedUrl, target, env);
+      try {
+        source = await downloadFn(managedUrl, target, env);
+      } catch (err) {
+        const detail = errorDetail(err);
+        failOrWarn(
+          opts.strict
+            ? "setup-soldr: zccache seed failed; refusing to continue because the managed " +
+                "zccache release could not be downloaded and later isolated SOLDR_CACHE_DIR roots " +
+                "would fall back to cargo-installing zccache" +
+                (detail ? `: ${detail}` : "")
+            : "setup-soldr: zccache seed failed; managed zccache release could not be downloaded; " +
+                "later isolated SOLDR_CACHE_DIR roots may fetch zccache again" +
+                (detail ? `: ${detail}` : ""),
+        );
+        return;
+      }
       tempRoot = path.dirname(source);
     }
 
     opts.log(`zccache-seed: installing pinned zccache from ${sourceKind} source ${source}`);
-    const install = await runCaptured(execFn, opts.soldrPath, ["install-zccache", source, "--json"]);
+    let install: CapturedExec;
+    try {
+      install = await runCaptured(execFn, opts.soldrPath, ["install-zccache", source, "--json"]);
+    } catch (err) {
+      const detail = errorDetail(err);
+      failOrWarn(
+        opts.strict
+          ? "setup-soldr: zccache seed failed; refusing to continue because pinned zccache " +
+              "installation errored and later isolated SOLDR_CACHE_DIR roots would fall back to " +
+              "cargo-installing zccache" +
+              (detail ? `: ${detail}` : "")
+          : "setup-soldr: zccache seed failed; pinned zccache installation errored; later isolated " +
+              "SOLDR_CACHE_DIR roots may fetch zccache again" +
+              (detail ? `: ${detail}` : ""),
+      );
+      return;
+    }
     if (install.code !== 0) {
       const detail = (install.stderr || install.stdout).trim();
-      warn(
-        "setup-soldr: zccache seed failed; later isolated SOLDR_CACHE_DIR roots may fetch zccache again" +
-          (detail ? `: ${detail}` : ""),
+      failOrWarn(
+        opts.strict
+          ? "setup-soldr: zccache seed failed; refusing to continue because later isolated " +
+              "SOLDR_CACHE_DIR roots would fall back to cargo-installing zccache" +
+              (detail ? `: ${detail}` : "")
+          : "setup-soldr: zccache seed failed; later isolated SOLDR_CACHE_DIR roots may fetch zccache again" +
+              (detail ? `: ${detail}` : ""),
       );
       return;
     }

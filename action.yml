@@ -123,6 +123,15 @@ inputs:
       and should be treated as unbounded.
     required: false
     default: ""
+  zccache-seed-strict:
+    description: >
+      When "true", fail setup if setup-soldr cannot seed soldr's pinned
+      zccache install from the vendored or managed release source. Default
+      "false" keeps the seed best-effort and allows soldr's normal managed
+      fallback path. Enable this in repos where a later zccache `cargo install`
+      fallback is unacceptable.
+    required: false
+    default: "false"
   target-cache:
     description: >
       Deprecated compatibility input. Set to "false" to disable Rust target
