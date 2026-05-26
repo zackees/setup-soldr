@@ -461,6 +461,8 @@ preferred for new workflows.
 | `lockfile` | Optional `Cargo.lock` path used for Rust artifact cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save Soldr/zccache build cache state across runs. Default `true`; set to `false` to opt out. |
 | `build-cache-mode` | Rust build cache mode. Default `once` saves a full snapshot on miss, then restores only the local rust-plan bundle on later hits without resaving the full target tree. `thin` is the bounded dependency-artifact alternative. `full` opts into normal whole-target restore/save behavior and should be treated as unbounded. |
+| `prebuild-deps` | Dependency prebuild mode. Default `soldr-cook` runs `soldr cook` and restores/saves a long-enduring dependency cache; set to `none` to skip. `cargo-chef` is accepted as a legacy alias. |
+| `prebuild-deps-flags` | Flags forwarded to `soldr cook`; default `--release`. Material flags are hashed into the cook cache key. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
 | `target-cache-profile` | Thin-slice pruning policy for the `target/` cache. `thin-v1` (default) keeps `.rlib`/`.rmeta`/proc-macro outputs. `thin-v2` is the aggressive prune that keeps fingerprints + dep-info + final outputs only and relies on the zccache compilation cache to repopulate library bytes. See "Target cache profile" below before opting in. |
 | `target-cache-strip-debuginfo` | Forward-compatible pass-through. When `true`, requests that soldr strip debug-info-bearing artifacts from the target-cache before saving. Requires soldr#237 to take effect; current soldr releases ignore the flag. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
@@ -536,6 +538,26 @@ preferred for new workflows.
 - Inspect `soldr cache`, zccache session stats, and the setup step's restore-status outputs when warm cache reuse is unexpectedly low.
 - The setup cache intentionally keeps the installed `soldr` binary and only includes rustup state when setup-soldr had to fall back to a managed `RUSTUP_HOME` under the setup cache root. The dedicated `ZCCACHE_CACHE_DIR` payload stays in its own cache so warm runs do not restore the same build-cache bytes twice.
 
+## soldr-cook Dependency Prebuilds
+
+`prebuild-deps: soldr-cook` runs `soldr cook` before the workflow's own
+`soldr cargo ...` steps. The cook cache is intended to be long-enduring:
+its key uses runner OS, arch, libc, resolved Rust release, material cook
+flags, `Cargo.lock` hash, and soldr version. It deliberately omits commit
+SHA, so the same dependency/toolchain/build shape can hit across branches
+and commits.
+
+Key shape: `cook-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.
+
+The mode uses the existing `cook-...` key namespace for compatibility with
+already-warmed caches. `cargo-chef` remains accepted as an alias, but new
+workflows should use `soldr-cook`.
+
+When target-cache already matched at the lockfile/build-shape level,
+setup-soldr skips the cook restore/run because the target cache already
+contains the same dependency artifacts. Set `prebuild-deps: none` when a
+workflow should rely only on target/build/cache layers.
+
 ## Cache-layer policy
 
 The action keeps target artifacts as the primary warm path. Companion layers are
@@ -545,7 +567,7 @@ for the current workload.
 | Layer | Default policy | Benchmark expectation |
 |---|---|---|
 | `target` / `build-cache-mode: once` | Primary warm path. | Should show low warm wall time and roughly one-hit payback after save cost. |
-| `cook` | Keep enabled only when production-shaped cook data is distinct from the target-cache fallback. | Compare `cook`, `cook-production`, and `target` rows before changing defaults. |
+| `soldr-cook` | Long-enduring dependency prebuild cache; skipped when target-cache already covers the same lockfile/build shape. | Compare `cook`, `cook-production`, and `target` rows before changing defaults. |
 | `build` / zccache state | Companion layer. Gate retire/keep decisions on restored zccache hit rate. | Do not treat a low restore time as success if warm zccache stats still show zero hits. |
 | `cargo-registry` | Companion layer. Gate retire/keep decisions on multi-rep or real-cache data. | Should beat noise after save cost and should never stall without a bounded timeout artifact. |
 | `setup-cache` | Mechanics/install layer. | Report save/restore mechanics separately from build warm speedup. |

@@ -923,10 +923,10 @@ export async function run(): Promise<void> {
   );
   await finishPhase("cross-bootstrap");
 
-  // ---- cook (prebuild-deps via cargo-chef) ----
+  // ---- cook (prebuild-deps via soldr-cook) ----
   // The RESTORE was kicked off as a background promise right after the
   // parallel-restore block above — we just await its result here. The
-  // RUN (actual cargo-chef invocation) still happens in this phase if
+  // RUN (`soldr cook`) still happens in this phase if
   // the restore missed.
   // Failures here are logged but never fail the action — the user's
   // own cargo build will still work without the cooked deps.

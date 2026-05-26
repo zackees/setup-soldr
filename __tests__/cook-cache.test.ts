@@ -13,6 +13,7 @@ import {
   buildCookCacheKey,
   decideCookGate,
   hashCookFlags,
+  isCookMode,
   canonicalizeCookFlags,
   parseCookFlags,
 } from "../src/lib/cook-cache.js";
@@ -87,6 +88,13 @@ test("buildCookCacheKey does NOT include SHA — same lock hits across branches"
   const branchA = buildCookCacheKey({ ...baseParts });
   const branchB = buildCookCacheKey({ ...baseParts });
   assert.equal(branchA, branchB);
+});
+
+test("isCookMode accepts soldr-cook and legacy cargo-chef alias", () => {
+  assert.equal(isCookMode("soldr-cook"), true);
+  assert.equal(isCookMode(" SOLDR-COOK "), true);
+  assert.equal(isCookMode("cargo-chef"), true);
+  assert.equal(isCookMode("bazel"), false);
 });
 
 test("parseCookFlags handles whitespace + empty input", () => {
@@ -176,8 +184,25 @@ test("decideCookGate disables when Cargo.lock missing", () => {
   assert.match(g2.reason, /does not exist/);
 });
 
-test("decideCookGate enables for the default case", () => {
+test("decideCookGate enables for soldr-cook mode", () => {
   const lock = mkTmp("cook-gate-ok-");
+  const lockPath = path.join(lock, "Cargo.lock");
+  fs.writeFileSync(lockPath, "[[package]]\n", "utf8");
+  try {
+    const g = decideCookGate({
+      prebuildDeps: "soldr-cook",
+      cacheUmbrella: true,
+      lockfilePath: lockPath,
+    });
+    assert.equal(g.enabled, true);
+    assert.match(g.reason, /soldr-cook enabled/);
+  } finally {
+    fs.rmSync(lock, { recursive: true, force: true });
+  }
+});
+
+test("decideCookGate keeps cargo-chef as a compatibility alias", () => {
+  const lock = mkTmp("cook-gate-legacy-");
   const lockPath = path.join(lock, "Cargo.lock");
   fs.writeFileSync(lockPath, "[[package]]\n", "utf8");
   try {
