@@ -102,6 +102,7 @@ export interface RawInputs {
   soloToolchainCacheLevel: string;
   prebuildDeps: string;
   prebuildDepsFlags: string;
+  prebuildDepsDeltaCache: string;
   soldrMiniCache: string;
   journalPrintRaw: string;
   crossTargets: string;

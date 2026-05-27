@@ -10,12 +10,16 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
+  buildCookBaseCacheKey,
   buildCookCacheKey,
+  buildCookDeltaCacheKey,
   decideCookGate,
+  hashCookBuildShape,
   hashCookFlags,
   isCookMode,
   canonicalizeCookFlags,
   parseCookFlags,
+  supportsLayeredCookCache,
 } from "../src/lib/cook-cache.js";
 
 function mkTmp(prefix: string): string {
@@ -88,6 +92,54 @@ test("buildCookCacheKey does NOT include SHA — same lock hits across branches"
   const branchA = buildCookCacheKey({ ...baseParts });
   const branchB = buildCookCacheKey({ ...baseParts });
   assert.equal(branchA, branchB);
+});
+
+test("buildCookBaseCacheKey stays Cargo.lock-oriented and omits SHA", () => {
+  const parts = {
+    runnerOs: "linux",
+    runnerArch: "x64",
+    libc: "glibc",
+    rustcRelease: "1.84.1",
+    flagsHash: "abc12345",
+    lockHash: "deadbeef",
+    soldrVersion: "0.7.38",
+  };
+  assert.equal(
+    buildCookBaseCacheKey(parts),
+    "cook-base-v2-linux-x64-glibc-rustc1.84.1-fabc12345-ldeadbeef-soldr0.7.38",
+  );
+  assert.equal(buildCookBaseCacheKey(parts), buildCookBaseCacheKey(parts));
+});
+
+test("buildCookDeltaCacheKey includes build shape and commit SHA", () => {
+  const parts = {
+    runnerOs: "linux",
+    runnerArch: "x64",
+    libc: "glibc",
+    rustcRelease: "1.84.1",
+    flagsHash: "abc12345",
+    lockHash: "deadbeef",
+    soldrVersion: "0.7.38",
+    buildShapeHash: hashCookBuildShape("target-shape"),
+    githubSha: "0123456789abcdef9999",
+  };
+  const key = buildCookDeltaCacheKey(parts);
+  assert.match(
+    key,
+    /^cook-delta-v2-linux-x64-glibc-rustc1\.84\.1-fabc12345-ldeadbeef-soldr0\.7\.38-s[0-9a-f]{12}-g0123456789abcdef$/,
+  );
+  assert.notEqual(
+    key,
+    buildCookDeltaCacheKey({ ...parts, githubSha: "fedcba9876543210" }),
+  );
+});
+
+test("supportsLayeredCookCache gates soldr versions", () => {
+  assert.equal(supportsLayeredCookCache("0.7.37"), false);
+  assert.equal(supportsLayeredCookCache("0.7.38"), true);
+  assert.equal(supportsLayeredCookCache("v0.7.38"), true);
+  assert.equal(supportsLayeredCookCache("0.7.39-rc1"), true);
+  assert.equal(supportsLayeredCookCache("source-ref"), false);
 });
 
 test("isCookMode accepts soldr-cook and legacy cargo-chef alias", () => {

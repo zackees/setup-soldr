@@ -37,13 +37,19 @@ import {
   type RootMap as SoloRootMap,
 } from "./lib/solo-toolchain-cache.js";
 import {
+  buildCookBaseCacheKey,
   buildCookCacheKey,
+  buildCookDeltaCacheKey,
   decideCookGate,
+  hashCookBuildShape,
   hashCookFlags,
   canonicalizeCookFlags,
+  loadLayeredCookCache,
   parseCookFlags,
   restoreCookCache,
+  restoreLayeredCookCacheArchives,
   runCook,
+  supportsLayeredCookCache,
 } from "./lib/cook-cache.js";
 import {
   buildMiniCacheKey,
@@ -533,11 +539,19 @@ export async function run(): Promise<void> {
   const cookActive = cookGate.enabled && result.enabled;
   let cookFlags: string[] = [];
   let cookKey = "";
+  let cookBaseKey = "";
+  let cookDeltaKey = "";
+  let cookDeltaParentKey = "";
   let cookProjectRoot = "";
   let cookTargetDir = "";
   let cookArchive = "";
+  let cookBaseArchive = "";
+  let cookDeltaArchive = "";
+  let cookBaseManifest = "";
+  let cookLayered = false;
   let cookRestoreT0 = Date.now();
   let cookRestorePromise: Promise<{ hit: boolean; matchedKey: string; archiveBytes: number }> | null = null;
+  let cookLayeredRestorePromise: ReturnType<typeof restoreLayeredCookCacheArchives> | null = null;
   // Skip cook restore when target-cache matched at the lockfile/shape level.
   // restoreKeyLock = `${prefix}-${targetInputsHash}-${suffix}-` where
   // targetInputsHash = sha256(toolchain, lockfile, manifest, shape). A
@@ -559,7 +573,7 @@ export async function run(): Promise<void> {
     cookFlags = canonicalizeCookFlags(parseCookFlags(inputs.prebuildDepsFlags));
     const flagsHash = hashCookFlags(cookFlags);
     const lockHash = result.targetCache.lockfileHash || "no-lock";
-    cookKey = buildCookCacheKey({
+    const cookKeyParts = {
       runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
       runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
       libc: detectLibc(),
@@ -568,20 +582,66 @@ export async function run(): Promise<void> {
       lockHash,
       soldrVersion:
         result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim() || "unset",
-    });
+    };
     cookProjectRoot = path.dirname(result.targetCache.targetPath);
     cookTargetDir = result.targetCache.targetPath;
-    cookArchive = `${cookTargetDir}.tar.zst`;
-    logger.log(`cook: key=${cookKey} starting background restore concurrent with install`);
     cookRestoreT0 = Date.now();
-    cookRestorePromise = restoreCookCache({
-      exactKey: cookKey,
-      archivePath: cookArchive,
-      targetDir: cookTargetDir,
-      longWindow: 27,
-      debug: debugMode,
-      log: (msg) => logger.log(msg),
-    });
+    const deltaInput = inputs.prebuildDepsDeltaCache.trim() || "true";
+    const deltaRequested = !isFalsy(deltaInput);
+    const soldrVersionForCook =
+      result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim();
+    cookLayered = deltaRequested && supportsLayeredCookCache(soldrVersionForCook);
+    if (cookLayered) {
+      const shapeHash = hashCookBuildShape(result.targetCache.restoreKeyLock || result.targetCache.key);
+      cookBaseKey = buildCookBaseCacheKey(cookKeyParts);
+      cookDeltaKey = buildCookDeltaCacheKey({
+        ...cookKeyParts,
+        buildShapeHash: shapeHash,
+        githubSha: ctx.githubSha || "nosha",
+      });
+      if (ctx.parentSha && ctx.parentSha !== ctx.githubSha) {
+        cookDeltaParentKey = buildCookDeltaCacheKey({
+          ...cookKeyParts,
+          buildShapeHash: shapeHash,
+          githubSha: ctx.parentSha,
+        });
+      }
+      cookBaseArchive = `${cookTargetDir}.soldr-base.tar.zst`;
+      cookDeltaArchive = `${cookTargetDir}.soldr-delta.tar.zst`;
+      cookBaseManifest = `${cookTargetDir}.soldr-base-manifest.pb`;
+      logger.log(
+        `cook: layered keys base=${cookBaseKey} delta=${cookDeltaKey} ` +
+          `starting archive restore concurrent with install`,
+      );
+      cookLayeredRestorePromise = restoreLayeredCookCacheArchives({
+        baseKey: cookBaseKey,
+        deltaKey: cookDeltaKey,
+        deltaRestoreKeys: cookDeltaParentKey ? [cookDeltaParentKey] : [],
+        baseArchivePath: cookBaseArchive,
+        deltaArchivePath: cookDeltaArchive,
+        log: (msg) => logger.log(msg),
+      });
+    } else {
+      if (deltaRequested) {
+        logger.log(
+          `cook: layered cache requires soldr >=0.7.38; ` +
+            `version=${soldrVersionForCook || "unknown"} falling back to legacy cook cache`,
+        );
+      } else {
+        logger.log("cook: layered cache disabled via prebuild-deps-delta-cache=false");
+      }
+      cookKey = buildCookCacheKey(cookKeyParts);
+      cookArchive = `${cookTargetDir}.tar.zst`;
+      logger.log(`cook: key=${cookKey} starting background restore concurrent with install`);
+      cookRestorePromise = restoreCookCache({
+        exactKey: cookKey,
+        archivePath: cookArchive,
+        targetDir: cookTargetDir,
+        longWindow: 27,
+        debug: debugMode,
+        log: (msg) => logger.log(msg),
+      });
+    }
   }
 
   // ---- toolchain ----
@@ -941,7 +1001,79 @@ export async function run(): Promise<void> {
   // Failures here are logged but never fail the action — the user's
   // own cargo build will still work without the cooked deps.
   await markPhase("cook");
-  if (cookActive && cookRestorePromise) {
+  if (cookActive && cookLayeredRestorePromise) {
+    const restore = await cookLayeredRestorePromise;
+    const loaded = await loadLayeredCookCache({
+      soldrBinary: result.soldrPath,
+      projectRoot: cookProjectRoot,
+      targetDir: cookTargetDir,
+      baseArchivePath: cookBaseArchive,
+      deltaArchivePath: cookDeltaArchive,
+      baseManifestPath: cookBaseManifest,
+      restore,
+      log: (msg) => logger.log(msg),
+    });
+    const baseReady = restore.base.hit && loaded.baseLoaded;
+    const deltaReady = baseReady && restore.delta.hit && loaded.deltaLoaded;
+    statsCollector.record({
+      label: "cook-cache-base",
+      operation: "restore",
+      hit: baseReady,
+      key: cookBaseKey,
+      matchedKey: restore.base.matchedKey,
+      restoreKeys: [],
+      archiveBytes: restore.base.archiveBytes || null,
+      inflatedBytes: null,
+      fileCount: loaded.baseReport?.cacheFilesRestored ?? null,
+      durationMs: Date.now() - cookRestoreT0,
+      timestamp: new Date().toISOString(),
+    });
+    statsCollector.record({
+      label: "cook-cache-delta",
+      operation: "restore",
+      hit: deltaReady,
+      key: cookDeltaKey,
+      matchedKey: restore.delta.matchedKey,
+      restoreKeys: cookDeltaParentKey ? [cookDeltaParentKey] : [],
+      archiveBytes: restore.delta.archiveBytes || null,
+      inflatedBytes: null,
+      fileCount: loaded.deltaReport?.cacheFilesRestored ?? null,
+      durationMs: Date.now() - cookRestoreT0,
+      timestamp: new Date().toISOString(),
+    });
+    let cookRan = false;
+    if (!deltaReady) {
+      const runRes = await runCook({
+        soldrBinary: result.soldrPath,
+        projectRoot: cookProjectRoot,
+        flags: cookFlags,
+        log: (msg) => logger.log(msg),
+      });
+      cookRan = runRes.exitCode === 0;
+    } else {
+      logger.log("cook: base+delta cache hit - skipping cook run, target/deps already warm");
+    }
+    const cookSaveLayer = cookRan ? (baseReady ? "delta" : "base") : "none";
+    core.saveState("cookEnabled", "true");
+    core.saveState("cookLayered", "true");
+    core.saveState("cookBaseExactKey", cookBaseKey);
+    core.saveState("cookDeltaExactKey", cookDeltaKey);
+    core.saveState("cookBaseMatchedKey", restore.base.matchedKey);
+    core.saveState("cookDeltaMatchedKey", restore.delta.matchedKey);
+    core.saveState("cookBaseHit", baseReady ? "true" : "false");
+    core.saveState("cookDeltaHit", deltaReady ? "true" : "false");
+    core.saveState("cookHit", deltaReady ? "true" : "false");
+    core.saveState("cookRan", cookRan ? "true" : "false");
+    core.saveState("cookSaveLayer", cookSaveLayer);
+    core.saveState("cookProjectRoot", cookProjectRoot);
+    core.saveState("cookTargetDir", cookTargetDir);
+    core.saveState("cookBaseArchive", cookBaseArchive);
+    core.saveState("cookDeltaArchive", cookDeltaArchive);
+    core.saveState("cookBaseManifest", cookBaseManifest);
+    core.saveState("cookSoldrBinary", result.soldrPath);
+    core.saveState("cookCompressLevel", "19");
+    core.saveState("cookDeltaCompressLevel", "3");
+  } else if (cookActive && cookRestorePromise) {
     const restore = await cookRestorePromise;
     statsCollector.record({
       label: "cook-cache",
@@ -969,6 +1101,7 @@ export async function run(): Promise<void> {
       logger.log("cook: cache hit - skipping cook run, target/deps already warm");
     }
     core.saveState("cookEnabled", "true");
+    core.saveState("cookLayered", "false");
     core.saveState("cookExactKey", cookKey);
     core.saveState("cookMatchedKey", restore.matchedKey);
     core.saveState("cookHit", restore.hit ? "true" : "false");
@@ -981,9 +1114,11 @@ export async function run(): Promise<void> {
       `cook: skipped - target-cache matched at lockfile/shape level (matched=${targetCacheMatchedKey}); cook output would be redundant`,
     );
     core.saveState("cookEnabled", "false");
+    core.saveState("cookLayered", "false");
   } else {
     logger.log(`cook: skipped - ${cookGate.reason}`);
     core.saveState("cookEnabled", "false");
+    core.saveState("cookLayered", "false");
   }
   await finishPhase("cook");
 

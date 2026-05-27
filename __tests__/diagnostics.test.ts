@@ -64,6 +64,7 @@ function fixtureRawInputs(): RawInputs {
     soloToolchainCacheLevel: "",
     prebuildDeps: "soldr-cook",
     prebuildDepsFlags: "--release",
+    prebuildDepsDeltaCache: "true",
     soldrMiniCache: "true",
     journalPrintRaw: "",
     crossTargets: "",

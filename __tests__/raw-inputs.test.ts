@@ -80,9 +80,11 @@ test("prebuild-deps inputs round-trip through readRawInputs", () => {
   const r = readRawInputs({
     "INPUT_PREBUILD-DEPS": "soldr-cook",
     "INPUT_PREBUILD-DEPS-FLAGS": "--release --workspace",
+    "INPUT_PREBUILD-DEPS-DELTA-CACHE": "false",
   });
   assert.equal(r.prebuildDeps, "soldr-cook");
   assert.equal(r.prebuildDepsFlags, "--release --workspace");
+  assert.equal(r.prebuildDepsDeltaCache, "false");
 });
 
 test("zccache seed strict input round-trips through readRawInputs", () => {

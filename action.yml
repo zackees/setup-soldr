@@ -20,9 +20,9 @@ inputs:
     required: false
     default: "true"
   version:
-    description: Soldr version or tag to install. Defaults to 0.7.37.
+    description: Soldr version or tag to install. Defaults to 0.7.38.
     required: false
-    default: "0.7.37"
+    default: "0.7.38"
   repo:
     description: Internal override for the Soldr source repository used by integration branches.
     required: false
@@ -432,6 +432,17 @@ inputs:
       cache entry.
     required: false
     default: "--release"
+  prebuild-deps-delta-cache:
+    description: >
+      When "true" (default), setup-soldr uses soldr's protobuf-backed
+      layered cook cache for compatible soldr releases. The base layer is
+      long-lived and Cargo.lock-oriented; the delta layer is commit/build
+      shape-oriented and should stay small for normal code-only changes.
+      Set to "false" to fall back to the legacy single cook archive for
+      rollback/debugging. Requires soldr 0.7.38 or newer; older releases
+      automatically use the legacy cook cache path.
+    required: false
+    default: "true"
   cross-targets:
     description: >
       Optional newline- or comma-separated list of non-host Rust target
