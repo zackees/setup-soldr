@@ -68,6 +68,7 @@ EXPECTED_INPUTS = {
     "solo-toolchain-cache-level",
     "prebuild-deps",
     "prebuild-deps-flags",
+    "prebuild-deps-delta-cache",
     "soldr-mini-cache",
     "journal-print-raw",
     "cross-targets",

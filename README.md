@@ -2,7 +2,7 @@
 
 [![Setup Soldr Action](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml/badge.svg)](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml)
 
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.37`.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.38`.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -454,7 +454,7 @@ preferred for new workflows.
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.7.37`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.7.38`. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
@@ -471,6 +471,7 @@ preferred for new workflows.
 | `zccache-seed-strict` | When `true`, setup fails if setup-soldr cannot seed soldr's pinned zccache install from a vendored or managed release source. Default `false` keeps the seed best-effort and allows soldr's normal managed fallback path. Enable this in repos where a later `cargo install zccache` fallback is unacceptable. |
 | `prebuild-deps` | Dependency prebuild mode. Default `soldr-cook` runs `soldr cook` and restores/saves a long-enduring dependency cache; set to `none` to skip. `cargo-chef` is accepted as a legacy alias. |
 | `prebuild-deps-flags` | Flags forwarded to `soldr cook`; default `--release`. Material flags are hashed into the cook cache key. |
+| `prebuild-deps-delta-cache` | Default `true`. With soldr `>=0.7.38`, restore/save the cook cache as a protobuf-backed base layer plus a smaller commit/build-shape delta layer. Set to `false` to use the legacy single cook archive. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
 | `target-cache-profile` | Thin-slice pruning policy for the `target/` cache. `thin-v1` (default) keeps `.rlib`/`.rmeta`/proc-macro outputs. `thin-v2` is the aggressive prune that keeps fingerprints + dep-info + final outputs only and relies on the zccache compilation cache to repopulate library bytes. See "Target cache profile" below before opting in. |
 | `target-cache-strip-debuginfo` | Forward-compatible pass-through. When `true`, requests that soldr strip debug-info-bearing artifacts from the target-cache before saving. Requires soldr#237 to take effect; current soldr releases ignore the flag. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
@@ -535,7 +536,7 @@ preferred for new workflows.
 
 ## Notes
 
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.37`.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.38`.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action keeps using the runner's existing `CARGO_HOME` unless `CARGO_HOME` is already set by the workflow. When `RUSTUP_HOME` is not explicitly set, setup-soldr prefers the runner's existing rustup home if it already satisfies the requested toolchain/components/targets; otherwise it falls back to a managed `RUSTUP_HOME` under the action cache root and rehydrates that state on later warm runs.
@@ -553,17 +554,26 @@ preferred for new workflows.
 ## soldr-cook Dependency Prebuilds
 
 `prebuild-deps: soldr-cook` runs `soldr cook` before the workflow's own
-`soldr cargo ...` steps. The cook cache is intended to be long-enduring:
-its key uses runner OS, arch, libc, resolved Rust release, material cook
-flags, `Cargo.lock` hash, and soldr version. It deliberately omits commit
-SHA, so the same dependency/toolchain/build shape can hit across branches
-and commits.
+`soldr cargo ...` steps. With soldr `>=0.7.38`, setup-soldr restores a
+protobuf-backed base archive first, then a delta archive. The base key is
+long-lived and uses runner OS, arch, libc, resolved Rust release, material
+cook flags, `Cargo.lock` hash, and soldr version. It deliberately omits commit
+SHA, so the same dependency/toolchain shape can hit across branches and
+commits. The delta key adds the target/build shape and commit SHA, so normal
+code-only changes save a small secondary archive instead of re-uploading the
+whole cook cache.
 
-Key shape: `cook-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.
+Base key shape:
+`cook-base-v2-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.
 
-The mode uses the existing `cook-...` key namespace for compatibility with
-already-warmed caches. `cargo-chef` remains accepted as an alias, but new
-workflows should use `soldr-cook`.
+Delta key shape:
+`cook-delta-v2-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>-s<shape_hash>-g<sha>`.
+
+Set `prebuild-deps-delta-cache: false` to use the legacy single archive:
+`cook-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.
+Older soldr releases fall back to this legacy namespace automatically.
+`cargo-chef` remains accepted as an alias, but new workflows should use
+`soldr-cook`.
 
 When target-cache already matched at the lockfile/build-shape level,
 setup-soldr skips the cook restore/run because the target cache already

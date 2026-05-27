@@ -1,16 +1,17 @@
 // Cook cache layer — long-lived deps tarball keyed by Cargo.lock content.
 //
 // Per CLAUDE.md "Cache-lifetime axis" + the cook simulation findings:
-// the cook cache is short-lived/large (churns on every Cargo.lock change,
-// 100s of MB to multi-GB). It must NOT include SHA in the key (causes
-// catastrophic eviction churn). Content-addressable keying gives parent-
-// to-branch sharing automatically: same Cargo.lock = same key, regardless
-// of branch or commit.
+// the base cook cache is long-lived/large and keyed by Cargo.lock content.
+// It must NOT include SHA in the key (causes catastrophic eviction churn).
+// Content-addressable keying gives parent-to-branch sharing automatically:
+// same Cargo.lock = same key, regardless of branch or commit. The delta
+// layer is intentionally short-lived and includes commit/build shape so
+// normal code-only changes upload a small secondary archive.
 //
 // Save path: snapshot `target/` immediately after cook completes, before
-// the user's `cargo build` adds project artifacts. We tar+zstd-19 with
-// `--long=27` because compiled rust deps have heavy cross-crate
-// redundancy that benefits from the 128 MB zstd window.
+// the user's `cargo build` adds project artifacts. The legacy path keeps
+// the historical tar+zstd-19/long-window archive; the layered path delegates
+// protobuf manifest and archive construction to `soldr save`.
 
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
@@ -32,6 +33,13 @@ export interface CookCacheKeyParts {
   /** soldr version included so a cook output produced by a buggy soldr
    * doesn't survive across soldr upgrades. */
   soldrVersion: string;
+}
+
+export interface CookDeltaCacheKeyParts extends CookCacheKeyParts {
+  /** Hash/fingerprint of the target/build shape this delta applies to. */
+  buildShapeHash: string;
+  /** Current Git commit SHA. Delta layers are intentionally short-lived. */
+  githubSha: string;
 }
 
 /** Cook gating decision. */
@@ -67,6 +75,54 @@ export interface CookRestoreResult {
   archiveBytes: number;
 }
 
+export interface CookLayerRestoreInfo {
+  hit: boolean;
+  matchedKey: string;
+  archivePath: string;
+  archiveBytes: number;
+}
+
+export interface CookLayeredRestoreOpts {
+  baseKey: string;
+  deltaKey: string;
+  deltaRestoreKeys?: string[];
+  baseArchivePath: string;
+  deltaArchivePath: string;
+  log: (msg: string) => void;
+}
+
+export interface CookLayeredRestoreResult {
+  base: CookLayerRestoreInfo;
+  delta: CookLayerRestoreInfo;
+}
+
+export interface CookLayerLoadReport {
+  cacheFilesRestored: number | null;
+  sourceFilesInManifest: number | null;
+  mtimesApplied: number | null;
+  mtimesSkippedMissing: number | null;
+  mtimesSkippedSizeMismatch: number | null;
+  mtimesSkippedModified: number | null;
+}
+
+export interface CookLayeredLoadResult {
+  baseLoaded: boolean;
+  deltaLoaded: boolean;
+  baseReport: CookLayerLoadReport | null;
+  deltaReport: CookLayerLoadReport | null;
+}
+
+export interface CookLayeredLoadOpts {
+  soldrBinary: string;
+  projectRoot: string;
+  targetDir: string;
+  baseArchivePath: string;
+  deltaArchivePath: string;
+  baseManifestPath: string;
+  restore: CookLayeredRestoreResult;
+  log: (msg: string) => void;
+}
+
 export interface CookSaveOpts {
   targetDir: string;
   exactKey: string;
@@ -77,16 +133,39 @@ export interface CookSaveOpts {
 }
 
 export interface CookSaveResult {
-  status: "saved" | "skipped-race" | "skipped-missing-target" | "skipped-empty" | "failed";
+  status:
+    | "saved"
+    | "skipped-race"
+    | "skipped-missing-target"
+    | "skipped-missing-manifest"
+    | "skipped-empty"
+    | "failed";
   cacheId?: number;
   archiveBytes?: number;
   inflatedBytes?: number;
   fileCount?: number;
+  sourceFiles?: number;
+  deletedCacheFiles?: number;
   archivePath?: string;
   error?: string;
 }
 
+export interface CookLayeredSaveOpts {
+  soldrBinary: string;
+  projectRoot: string;
+  targetDir: string;
+  exactKey: string;
+  archivePath: string;
+  layer: "base" | "delta";
+  zstdLevel: string;
+  baseManifestPath?: string;
+  log: (msg: string) => void;
+}
+
 const COOK_KEY_PREFIX = "cook";
+const COOK_BASE_KEY_PREFIX = "cook-base-v2";
+const COOK_DELTA_KEY_PREFIX = "cook-delta-v2";
+export const LAYERED_COOK_MIN_SOLDR_VERSION = "0.7.38";
 const COOK_MODE = "soldr-cook";
 const LEGACY_COOK_MODE = "cargo-chef";
 
@@ -119,6 +198,69 @@ export function buildCookCacheKey(parts: CookCacheKeyParts): string {
     `l${parts.lockHash}`,
     `soldr${parts.soldrVersion}`,
   ].join("-");
+}
+
+function keyFragment(value: string, fallback: string): string {
+  const cleaned = value.trim().replace(/[^A-Za-z0-9_.-]+/g, "_");
+  return cleaned || fallback;
+}
+
+function shortHash(value: string, fallback: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+  return createHash("sha256").update(trimmed, "utf8").digest("hex").slice(0, 12);
+}
+
+function cookKeyParts(parts: CookCacheKeyParts): string[] {
+  const release = keyFragment(parts.rustcRelease, "unresolved");
+  return [
+    keyFragment(parts.runnerOs, "unknown-os"),
+    keyFragment(parts.runnerArch, "unknown-arch"),
+    keyFragment(parts.libc, "unknown-libc"),
+    `rustc${release}`,
+    `f${keyFragment(parts.flagsHash, "none")}`,
+    `l${keyFragment(parts.lockHash, "no-lock")}`,
+    `soldr${keyFragment(parts.soldrVersion, "unset")}`,
+  ];
+}
+
+export function buildCookBaseCacheKey(parts: CookCacheKeyParts): string {
+  return [COOK_BASE_KEY_PREFIX, ...cookKeyParts(parts)].join("-");
+}
+
+export function hashCookBuildShape(value: string): string {
+  return shortHash(value, "no-shape");
+}
+
+export function buildCookDeltaCacheKey(parts: CookDeltaCacheKeyParts): string {
+  const sha = keyFragment(parts.githubSha || "nosha", "nosha").slice(0, 16);
+  const shape = keyFragment(parts.buildShapeHash, "no-shape");
+  return [
+    COOK_DELTA_KEY_PREFIX,
+    ...cookKeyParts(parts),
+    `s${shape}`,
+    `g${sha}`,
+  ].join("-");
+}
+
+function parseVersion(value: string): { major: number; minor: number; patch: number } | null {
+  const cleaned = value.trim().replace(/^v/i, "");
+  const match = /^(\d+)\.(\d+)\.(\d+)(?:[.+-].*)?$/.exec(cleaned);
+  if (!match) return null;
+  return {
+    major: Number(match[1] ?? NaN),
+    minor: Number(match[2] ?? NaN),
+    patch: Number(match[3] ?? NaN),
+  };
+}
+
+export function supportsLayeredCookCache(soldrVersion: string): boolean {
+  const parsed = parseVersion(soldrVersion);
+  if (!parsed) return false;
+  const min = parseVersion(LAYERED_COOK_MIN_SOLDR_VERSION)!;
+  if (parsed.major !== min.major) return parsed.major > min.major;
+  if (parsed.minor !== min.minor) return parsed.minor > min.minor;
+  return parsed.patch >= min.patch;
 }
 
 export function isCookMode(mode: string): boolean {
@@ -237,6 +379,219 @@ export async function restoreCookCache(opts: CookRestoreOpts): Promise<CookResto
   return { hit: true, matchedKey: matched, archiveBytes };
 }
 
+async function archiveSize(archivePath: string): Promise<number> {
+  try {
+    return (await fsp.stat(archivePath)).size;
+  } catch {
+    return 0;
+  }
+}
+
+async function restoreOneLayer(
+  label: string,
+  key: string,
+  archivePath: string,
+  restoreKeys: string[] | undefined,
+  log: (msg: string) => void,
+): Promise<CookLayerRestoreInfo> {
+  await fsp.mkdir(path.dirname(archivePath), { recursive: true });
+  await fsp.rm(archivePath, { force: true });
+  let matched: string | undefined;
+  try {
+    matched = await cache.restoreCache([archivePath], key, restoreKeys ?? []);
+  } catch (err) {
+    log(`${label}: restore failed: ${err instanceof Error ? err.message : String(err)}`);
+    return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
+  }
+  if (!matched) {
+    log(`${label}: no entry for key ${key}`);
+    return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
+  }
+  const bytes = await archiveSize(archivePath);
+  const hit = matched === key;
+  log(`${label}: restored matched=${matched} exact=${hit} archive=${bytes}B`);
+  return { hit, matchedKey: matched, archivePath, archiveBytes: bytes };
+}
+
+export async function restoreLayeredCookCacheArchives(
+  opts: CookLayeredRestoreOpts,
+): Promise<CookLayeredRestoreResult> {
+  const base = await restoreOneLayer(
+    "cook-cache-base",
+    opts.baseKey,
+    opts.baseArchivePath,
+    [],
+    opts.log,
+  );
+  if (!base.matchedKey) {
+    return {
+      base,
+      delta: { hit: false, matchedKey: "", archivePath: opts.deltaArchivePath, archiveBytes: 0 },
+    };
+  }
+  const delta = await restoreOneLayer(
+    "cook-cache-delta",
+    opts.deltaKey,
+    opts.deltaArchivePath,
+    opts.deltaRestoreKeys ?? [],
+    opts.log,
+  );
+  return { base, delta };
+}
+
+interface SoldrJsonRun {
+  code: number;
+  stdout: string;
+  stderr: string;
+  payload: Record<string, unknown> | null;
+}
+
+async function runSoldrJson(
+  soldrBinary: string,
+  args: string[],
+  cwd: string,
+  log: (msg: string) => void,
+): Promise<SoldrJsonRun> {
+  let stdout = "";
+  let stderr = "";
+  log(`cook-cache: running '${soldrBinary} ${args.join(" ")}' in ${cwd}`);
+  let code = 1;
+  try {
+    code = await exec.exec(soldrBinary, args, {
+      cwd,
+      ignoreReturnCode: true,
+      silent: true,
+      listeners: {
+        stdout: (data: Buffer) => {
+          stdout += data.toString("utf8");
+        },
+        stderr: (data: Buffer) => {
+          stderr += data.toString("utf8");
+        },
+      },
+    });
+  } catch (err) {
+    stderr += err instanceof Error ? err.message : String(err);
+  }
+  let payload: Record<string, unknown> | null = null;
+  const lastLine = stdout
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .at(-1);
+  if (lastLine) {
+    try {
+      const parsed = JSON.parse(lastLine) as unknown;
+      if (typeof parsed === "object" && parsed !== null) {
+        payload = parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Best-effort diagnostics only; non-JSON output is still surfaced below.
+    }
+  }
+  if (stdout.trim()) log(`cook-cache: stdout: ${stdout.trim()}`);
+  if (stderr.trim()) log(`cook-cache: stderr: ${stderr.trim()}`);
+  return { code, stdout, stderr, payload };
+}
+
+function numField(payload: Record<string, unknown> | null, name: string): number | null {
+  const value = payload?.[name];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function loadReport(payload: Record<string, unknown> | null): CookLayerLoadReport {
+  return {
+    cacheFilesRestored: numField(payload, "cache_files_restored"),
+    sourceFilesInManifest: numField(payload, "source_files_in_manifest"),
+    mtimesApplied: numField(payload, "mtimes_applied"),
+    mtimesSkippedMissing: numField(payload, "mtimes_skipped_missing"),
+    mtimesSkippedSizeMismatch: numField(payload, "mtimes_skipped_size_mismatch"),
+    mtimesSkippedModified: numField(payload, "mtimes_skipped_modified"),
+  };
+}
+
+async function loadOneLayer(opts: {
+  label: string;
+  soldrBinary: string;
+  projectRoot: string;
+  targetDir: string;
+  archivePath: string;
+  manifestOut?: string;
+  log: (msg: string) => void;
+}): Promise<{ loaded: boolean; report: CookLayerLoadReport | null }> {
+  const args = [
+    "load",
+    "--archive",
+    opts.archivePath,
+    "--cache-dir",
+    opts.targetDir,
+    "--workspace",
+    opts.projectRoot,
+    "--json",
+  ];
+  if (opts.manifestOut) {
+    args.push("--manifest-out", opts.manifestOut);
+  }
+  const run = await runSoldrJson(opts.soldrBinary, args, opts.projectRoot, opts.log);
+  if (run.code !== 0) {
+    opts.log(`${opts.label}: soldr load failed with exit ${run.code}`);
+    return { loaded: false, report: null };
+  }
+  const report = loadReport(run.payload);
+  opts.log(
+    `${opts.label}: loaded cache_files=${report.cacheFilesRestored ?? "?"} ` +
+      `mtimes_applied=${report.mtimesApplied ?? "?"}`,
+  );
+  return { loaded: true, report };
+}
+
+export async function loadLayeredCookCache(
+  opts: CookLayeredLoadOpts,
+): Promise<CookLayeredLoadResult> {
+  if (!opts.restore.base.matchedKey) {
+    return { baseLoaded: false, deltaLoaded: false, baseReport: null, deltaReport: null };
+  }
+  const base = await loadOneLayer({
+    label: "cook-cache-base",
+    soldrBinary: opts.soldrBinary,
+    projectRoot: opts.projectRoot,
+    targetDir: opts.targetDir,
+    archivePath: opts.baseArchivePath,
+    manifestOut: opts.baseManifestPath,
+    log: opts.log,
+  });
+  if (!base.loaded) {
+    return {
+      baseLoaded: false,
+      deltaLoaded: false,
+      baseReport: base.report,
+      deltaReport: null,
+    };
+  }
+  if (!opts.restore.delta.matchedKey) {
+    return {
+      baseLoaded: true,
+      deltaLoaded: false,
+      baseReport: base.report,
+      deltaReport: null,
+    };
+  }
+  const delta = await loadOneLayer({
+    label: "cook-cache-delta",
+    soldrBinary: opts.soldrBinary,
+    projectRoot: opts.projectRoot,
+    targetDir: opts.targetDir,
+    archivePath: opts.deltaArchivePath,
+    log: opts.log,
+  });
+  return {
+    baseLoaded: true,
+    deltaLoaded: delta.loaded,
+    baseReport: base.report,
+    deltaReport: delta.report,
+  };
+}
+
 /**
  * Tar+zstd the post-cook target directory and upload via actions cache.
  * Caller passes the same `longWindow` as the restore side so the archive
@@ -313,6 +668,109 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
     return {
       status: "failed",
       error: err instanceof Error ? err.message : String(err),
+      archivePath,
+    };
+  }
+}
+
+function saveReport(payload: Record<string, unknown> | null): {
+  sourceFiles: number | null;
+  cacheFiles: number | null;
+  deletedCacheFiles: number | null;
+  archiveBytes: number | null;
+} {
+  return {
+    sourceFiles: numField(payload, "source_files"),
+    cacheFiles: numField(payload, "cache_files"),
+    deletedCacheFiles: numField(payload, "deleted_cache_files"),
+    archiveBytes: numField(payload, "archive_bytes"),
+  };
+}
+
+export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<CookSaveResult> {
+  const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
+  if (!fs.existsSync(targetDir)) {
+    return { status: "skipped-missing-target" };
+  }
+  let entryCount = 0;
+  try {
+    entryCount = (await fsp.readdir(targetDir)).length;
+  } catch { /* */ }
+  if (entryCount === 0) {
+    return { status: "skipped-empty" };
+  }
+  if (layer === "delta") {
+    const manifest = opts.baseManifestPath ?? "";
+    if (!manifest || !fs.existsSync(manifest)) {
+      return { status: "skipped-missing-manifest" };
+    }
+  }
+
+  await fsp.mkdir(path.dirname(archivePath), { recursive: true });
+  await fsp.rm(archivePath, { force: true });
+
+  const args = [
+    "save",
+    "--cache-dir",
+    targetDir,
+    "--workspace",
+    projectRoot,
+    "--out",
+    archivePath,
+    "--zstd-level",
+    zstdLevel,
+    "--json",
+  ];
+  if (layer === "delta") {
+    args.push("--delta-from-manifest", opts.baseManifestPath as string);
+  }
+
+  const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
+  if (run.code !== 0) {
+    return {
+      status: "failed",
+      error: `soldr save ${layer} exited ${run.code}`,
+      archivePath,
+    };
+  }
+
+  const report = saveReport(run.payload);
+  const archiveBytes = report.archiveBytes ?? await archiveSize(archivePath);
+  try {
+    const id = await cache.saveCache([archivePath], exactKey);
+    if (id <= 0) {
+      log(
+        `cook-cache-${layer}: save did not reserve a new entry (id=${id}) ` +
+          `for key=${exactKey}`,
+      );
+      return {
+        status: "skipped-race",
+        cacheId: id,
+        archiveBytes,
+        fileCount: report.cacheFiles ?? undefined,
+        sourceFiles: report.sourceFiles ?? undefined,
+        deletedCacheFiles: report.deletedCacheFiles ?? undefined,
+        archivePath,
+      };
+    }
+    log(`cook-cache-${layer}: saved id=${id} key=${exactKey} archive=${archivePath}`);
+    return {
+      status: "saved",
+      cacheId: id,
+      archiveBytes,
+      fileCount: report.cacheFiles ?? undefined,
+      sourceFiles: report.sourceFiles ?? undefined,
+      deletedCacheFiles: report.deletedCacheFiles ?? undefined,
+      archivePath,
+    };
+  } catch (err) {
+    return {
+      status: "failed",
+      error: err instanceof Error ? err.message : String(err),
+      archiveBytes,
+      fileCount: report.cacheFiles ?? undefined,
+      sourceFiles: report.sourceFiles ?? undefined,
+      deletedCacheFiles: report.deletedCacheFiles ?? undefined,
       archivePath,
     };
   }

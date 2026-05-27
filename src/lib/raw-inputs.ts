@@ -61,6 +61,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     soloToolchainCacheLevel: get("solo-toolchain-cache-level"),
     prebuildDeps: get("prebuild-deps"),
     prebuildDepsFlags: get("prebuild-deps-flags"),
+    prebuildDepsDeltaCache: get("prebuild-deps-delta-cache"),
     soldrMiniCache: get("soldr-mini-cache"),
     journalPrintRaw: get("journal-print-raw"),
     crossTargets: get("cross-targets"),

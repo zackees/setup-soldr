@@ -15,7 +15,7 @@ import * as cache from "@actions/cache";
 import { compressCache } from "./lib/cache-compress.js";
 import { saveSoloCache, stageDiffForSave, type RootMap as SoloRootMap } from "./lib/solo-toolchain-cache.js";
 import type { SnapshotDiff } from "./lib/toolchain-snapshot.js";
-import { saveCookCache } from "./lib/cook-cache.js";
+import { saveCookCache, saveLayeredCookCache } from "./lib/cook-cache.js";
 import { saveMiniCache } from "./lib/soldr-mini-cache.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
@@ -1412,51 +1412,115 @@ export async function run(): Promise<void> {
   // CLAUDE.md "Compression" + the cook simulation findings.
   const cookEnabled = core.getState("cookEnabled") === "true";
   if (cookEnabled) {
+    const cookLayered = core.getState("cookLayered") === "true";
     const cookHit = core.getState("cookHit") === "true";
     const cookRan = core.getState("cookRan") === "true";
-    const cookExactKey = core.getState("cookExactKey");
     const cookTargetDir = core.getState("cookTargetDir");
-    const cookLongWindow = parseInt(core.getState("cookLongWindow") || "27", 10);
-    const cookLevel = core.getState("cookCompressLevel") || "19";
-    log(
-      `cook-cache: post-step key=${cookExactKey} hit=${cookHit} ran=${cookRan} target=${cookTargetDir}`,
-    );
-    if (cookHit) {
-      log("cook-cache: exact hit - skipping save");
-    } else if (!cookRan) {
-      log("cook-cache: cook did not run successfully - skipping save");
-    } else if (!cookTargetDir || !fs.existsSync(cookTargetDir)) {
-      log(`cook-cache: target dir ${cookTargetDir} missing - skipping save`);
-    } else {
-      const cookSaveStart = Date.now();
-      try {
-        const saveResult = await saveCookCache({
-          targetDir: cookTargetDir,
-          exactKey: cookExactKey,
-          level: cookLevel,
-          longWindow: cookLongWindow,
-          debug: debugMode,
-          log,
-        });
-        if (saveResult.status === "saved") {
-          postCollector.record({
-            label: "cook-cache",
-            operation: "save",
-            hit: false,
-            key: cookExactKey,
-            matchedKey: "",
-            restoreKeys: [],
-            archiveBytes: saveResult.archiveBytes ?? null,
-            inflatedBytes: saveResult.inflatedBytes ?? null,
-            fileCount: saveResult.fileCount ?? null,
-            durationMs: Date.now() - cookSaveStart,
-            timestamp: new Date().toISOString(),
+    if (cookLayered) {
+      const cookSaveLayer = core.getState("cookSaveLayer") || "none";
+      const cookProjectRoot = core.getState("cookProjectRoot");
+      const cookBaseKey = core.getState("cookBaseExactKey");
+      const cookDeltaKey = core.getState("cookDeltaExactKey");
+      const cookBaseArchive = core.getState("cookBaseArchive");
+      const cookDeltaArchive = core.getState("cookDeltaArchive");
+      const cookBaseManifest = core.getState("cookBaseManifest");
+      const soldrBinary =
+        core.getState("cookSoldrBinary") || process.env["SOLDR_BINARY"]?.trim() || "soldr";
+      log(
+        `cook-cache: post-step layered save_layer=${cookSaveLayer} hit=${cookHit} ` +
+          `ran=${cookRan} target=${cookTargetDir}`,
+      );
+      if (!cookRan || cookSaveLayer === "none") {
+        log("cook-cache: layered cache warm or cook did not run successfully - skipping save");
+      } else if (!cookTargetDir || !fs.existsSync(cookTargetDir)) {
+        log(`cook-cache: target dir ${cookTargetDir} missing - skipping save`);
+      } else if (!cookProjectRoot || !fs.existsSync(cookProjectRoot)) {
+        log(`cook-cache: project root ${cookProjectRoot} missing - skipping save`);
+      } else {
+        const saveKey = cookSaveLayer === "delta" ? cookDeltaKey : cookBaseKey;
+        const archivePath = cookSaveLayer === "delta" ? cookDeltaArchive : cookBaseArchive;
+        const level =
+          cookSaveLayer === "delta"
+            ? core.getState("cookDeltaCompressLevel") || "3"
+            : core.getState("cookCompressLevel") || "19";
+        const cookSaveStart = Date.now();
+        try {
+          const saveResult = await saveLayeredCookCache({
+            soldrBinary,
+            projectRoot: cookProjectRoot,
+            targetDir: cookTargetDir,
+            exactKey: saveKey,
+            archivePath,
+            layer: cookSaveLayer === "delta" ? "delta" : "base",
+            zstdLevel: level,
+            baseManifestPath: cookBaseManifest,
+            log,
           });
-        } else {
-          log(`cook-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
+          if (saveResult.status === "saved") {
+            postCollector.record({
+              label: `cook-cache-${cookSaveLayer}`,
+              operation: "save",
+              hit: false,
+              key: saveKey,
+              matchedKey: "",
+              restoreKeys: [],
+              archiveBytes: saveResult.archiveBytes ?? null,
+              inflatedBytes: saveResult.inflatedBytes ?? null,
+              fileCount: saveResult.fileCount ?? null,
+              durationMs: Date.now() - cookSaveStart,
+              timestamp: new Date().toISOString(),
+            });
+          } else {
+            log(`cook-cache-${cookSaveLayer}: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
+          }
+        } catch (err) {
+          log(`cook-cache-${cookSaveLayer}: save failed: ${err instanceof Error ? err.message : String(err)}`);
         }
-      } catch (err) {
-        log(`cook-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    } else {
+      const cookExactKey = core.getState("cookExactKey");
+      const cookLongWindow = parseInt(core.getState("cookLongWindow") || "27", 10);
+      const cookLevel = core.getState("cookCompressLevel") || "19";
+      log(
+        `cook-cache: post-step key=${cookExactKey} hit=${cookHit} ran=${cookRan} target=${cookTargetDir}`,
+      );
+      if (cookHit) {
+        log("cook-cache: exact hit - skipping save");
+      } else if (!cookRan) {
+        log("cook-cache: cook did not run successfully - skipping save");
+      } else if (!cookTargetDir || !fs.existsSync(cookTargetDir)) {
+        log(`cook-cache: target dir ${cookTargetDir} missing - skipping save`);
+      } else {
+        const cookSaveStart = Date.now();
+        try {
+          const saveResult = await saveCookCache({
+            targetDir: cookTargetDir,
+            exactKey: cookExactKey,
+            level: cookLevel,
+            longWindow: cookLongWindow,
+            debug: debugMode,
+            log,
+          });
+          if (saveResult.status === "saved") {
+            postCollector.record({
+              label: "cook-cache",
+              operation: "save",
+              hit: false,
+              key: cookExactKey,
+              matchedKey: "",
+              restoreKeys: [],
+              archiveBytes: saveResult.archiveBytes ?? null,
+              inflatedBytes: saveResult.inflatedBytes ?? null,
+              fileCount: saveResult.fileCount ?? null,
+              durationMs: Date.now() - cookSaveStart,
+              timestamp: new Date().toISOString(),
+            });
+          } else {
+            log(`cook-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
+          }
+        } catch (err) {
+          log(`cook-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
       }
     }
   }
