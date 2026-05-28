@@ -133,7 +133,7 @@ test("planTarPayload excludes zccache diagnostic logs from cache saves", async (
   }
 });
 
-test("planTarPayload zccache build-cache profile trims private artifacts and loose diagnostics", async () => {
+test("planTarPayload zccache build-cache profile keeps private artifacts, trims only diagnostics (#398)", async () => {
   const root = mkTmp("payload-zccache-private-");
   try {
     const cache = path.join(root, "zccache");
@@ -155,23 +155,24 @@ test("planTarPayload zccache build-cache profile trims private artifacts and loo
       profile: "zccache-build-cache",
     });
 
-    assert.equal(plan.bytes, 41);
-    assert.equal(plan.files, 3);
+    // #398: private/<session>/artifacts is the reusable zccache store — it MUST
+    // be kept (excluding it produced restored-but-0-hit build caches). Only
+    // diagnostic logs (debug.txt, *.jsonl) are trimmed.
+    assert.equal(plan.bytes, 142);
+    assert.equal(plan.files, 4);
     assert.deepEqual(plan.manifestEntries.sort(), [
       "zccache/artifacts/public-hash",
       "zccache/index.bin",
+      "zccache/private/soldr-dev-123/artifacts/private-hash",
       "zccache/private/soldr-dev-123/state/index.bin",
     ]);
     assert.deepEqual(plan.topSubtrees.map((entry) => [entry.path, entry.bytes, entry.files]), [
-      ["zccache/private/soldr-dev-123", 17, 1],
+      ["zccache/private/soldr-dev-123", 118, 2],
       ["zccache", 13, 1],
       ["zccache/artifacts", 11, 1],
     ]);
     const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry]));
-    assert.equal(skipped.get("zccache-private-artifacts")?.count, 1);
-    assert.deepEqual(skipped.get("zccache-private-artifacts")?.samples, [
-      "zccache/private/soldr-dev-123/artifacts",
-    ]);
+    assert.equal(skipped.get("zccache-private-artifacts"), undefined);
     assert.equal(skipped.get("diagnostic-log-file")?.count, 2);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });

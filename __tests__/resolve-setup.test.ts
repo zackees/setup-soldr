@@ -418,13 +418,24 @@ test("primary cache_key includes cache-key-suffix", async () => {
   );
 });
 
-test("build_cache_key includes cache-key-suffix", async () => {
+test("build_cache_key is per-job + SHA-independent (setup-soldr#237)", async () => {
   const { outputs } = await run({}, { INPUT_CACHE_KEY_SUFFIX: "myjob" });
   const key = outputs["build_cache_key"] ?? "";
+  assert.ok(key.length > 0, "expected a non-empty build_cache_key");
+  // Keep the per-job suffix so each job restores its OWN store (sharing one
+  // store across jobs that compile different things still hit 0%)...
   assert.ok(
-    key.endsWith("-myjob"),
-    `expected build_cache_key to end with -myjob, got ${key}`,
+    key.includes("-myjob-"),
+    `expected build_cache_key to include the per-job suffix, got ${key}`,
   );
+  // ...but drop the commit SHA so it warm-hits across commits (the SHA was the
+  // root cause of the exact-miss-then-wrong-fallback that gave ~0% hits, #237).
+  assert.ok(
+    !key.includes("0123456789abcdef"),
+    `build_cache_key must not include the commit SHA, got ${key}`,
+  );
+  // Shape: setup-soldr-buildcache-v2-<os>-<arch>-<digest>-<suffix>-<lockhash>.
+  assert.match(key, /^setup-soldr-buildcache-v2-.*-myjob-/);
 });
 
 test("cargo_registry_cache_key includes cache-key-suffix", async () => {

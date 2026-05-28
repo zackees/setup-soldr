@@ -432,8 +432,14 @@ export async function resolveSetup(
   }
   const buildCachePrefix = `setup-soldr-buildcache-v2-${runnerOs}-${runnerArch}`;
   const buildCacheToolchainPrefix = `${buildCachePrefix}-${digest}-`;
-  let buildCacheKey = `${buildCacheToolchainPrefix}${githubSha}`;
-  let buildCacheParentKey = parentSha ? `${buildCacheToolchainPrefix}${parentSha}` : "";
+  // Build-cache key (setup-soldr#237): platform + toolchain (digest) + per-job
+  // suffix + Cargo.lock — but NOT the commit SHA. Dropping the SHA is the fix:
+  // it made the key exact-miss on every commit, after which the fallback grabbed
+  // a *different* job's archive → 0 hits. We KEEP the per-job suffix (and scope
+  // the fallback to it, see the BuildCachePlan below) so each job restores its
+  // OWN store, warm across commits — sharing one store across jobs that compile
+  // different things (check vs doc vs test) was over-broad and still hit 0%.
+  // Assembled below once `cargoLockHash` is known.
 
   // ---- target cache ----
   const targetDirInput = inputs.targetDir.trim() || "target";
@@ -445,6 +451,14 @@ export async function resolveSetup(
   makeDirs(targetCachePath);
   const lockfilePath = resolveLockfilePath(workspace, targetCachePath, inputs.lockfile);
   const cargoLockHash = lockfilePath ? await shortFileHash(lockfilePath, "no-lock") : "no-lock";
+
+  // setup-soldr#237: per-job, SHA-independent build-cache key. The per-job
+  // suffix keeps each job restoring its own store; dropping the SHA makes it
+  // warm across commits. The fallback (BuildCachePlan below) is scoped to this
+  // job prefix only, never another job's store.
+  const buildCacheJobPrefix = `${buildCacheToolchainPrefix}${sanitizedSuffix ? `${sanitizedSuffix}-` : ""}`;
+  const buildCacheKey = `${buildCacheJobPrefix}${cargoLockHash}`;
+  const buildCacheParentKey = "";
 
   const legacyTargetCacheModeInput = inputs.targetCacheMode;
   const legacyTargetCacheMode = normalizeLegacyTargetCacheMode(legacyTargetCacheModeInput, log);
@@ -543,12 +557,11 @@ export async function resolveSetup(
     targetCacheParentKey = parentSha ? `${targetCacheLockPrefix}${parentSha}` : "";
   }
 
-  if (suffix) {
-    buildCacheKey = `${buildCacheKey}-${sanitizedSuffix}`;
-    if (buildCacheParentKey) {
-      buildCacheParentKey = `${buildCacheParentKey}-${sanitizedSuffix}`;
-    }
-  }
+  // setup-soldr#237: the build-cache key intentionally does NOT include
+  // `cache-key-suffix`. Per-job suffixes fragmented the cache and made the
+  // restore-key fallback land on another job's archive (→ ~0% hits). The
+  // suffix still scopes the action-managed setup-cache (`cacheKey` above) and
+  // the target-cache, just not the content-addressed zccache build-cache.
 
   // ---- cargo registry cache ----
   const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "false");
@@ -816,8 +829,11 @@ export async function resolveSetup(
   const buildCache: BuildCachePlan = {
     key: buildCacheKey,
     restoreKeyParent: buildCacheParentKey,
-    restoreKeyToolchain: buildCacheToolchainPrefix,
-    restoreKeyOsArch: `${buildCachePrefix}-`,
+    // setup-soldr#237: job-scoped fallback only — newest entry for THIS job at
+    // any Cargo.lock, never another job's store. The old bare toolchain/os-arch
+    // restore-keys matched any job and caused cross-job restores → 0 hits.
+    restoreKeyToolchain: buildCacheJobPrefix,
+    restoreKeyOsArch: "",
     path: zccacheCacheDir,
     mode: buildCacheMode,
   };

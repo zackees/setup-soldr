@@ -144,9 +144,16 @@ function reasonForTransientPath(relativePath: string, profile: CachePayloadProfi
       lowerParts[1] === "private" &&
       lowerParts.length >= 4 &&
       lowerParts[3] === "artifacts";
-    if (isPrivateArtifacts) {
-      return "zccache-private-artifacts";
-    }
+    // setup-soldr#398: do NOT exclude `private/<session>/artifacts/**`. That is
+    // exactly where the zccache daemon stores its reusable compiled artifacts —
+    // excluding them produced a build-cache that restored with an exact key hit
+    // but 0 zccache hits (verified on real zccache CI + locally: tarring the
+    // store WITH these artifacts restores ~100% hits, WITHOUT them 0%). The
+    // 0.9.12 exclusion treated them as throwaway "private daemon payloads" to
+    // trim footprint, but they ARE the cache; a small useless cache is worse
+    // than a larger reusable one (footprint is still bounded by
+    // cache-payload-max-bytes). We keep `isPrivateArtifacts` only so the
+    // diagnostic-suffix filter below never drops a real artifact file.
 
     const isPublicArtifact = lowerParts[1] === "artifacts";
     const isArtifactPayload = isPublicArtifact || isPrivateArtifacts;
