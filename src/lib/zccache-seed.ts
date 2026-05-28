@@ -138,6 +138,17 @@ export function findVendoredZccacheDir(opts: {
   return null;
 }
 
+export function findBundledZccacheDir(opts: {
+  soldrPath: string;
+  target: ZccacheHostTarget;
+}): string | null {
+  const installedDir = path.dirname(opts.soldrPath);
+  if (hasRequiredZccacheBinaries(installedDir, opts.target.binaryExt)) {
+    return installedDir;
+  }
+  return null;
+}
+
 export function managedReleaseUrl(version: string, target: ZccacheHostTarget): string {
   const normalized = version.trim().replace(/^v/i, "");
   const asset = `zccache-v${normalized}-${target.archiveTarget}.${target.archiveExt}`;
@@ -247,15 +258,16 @@ export async function seedZccache(opts: SeedZccacheOptions): Promise<void> {
   }
 
   const vendored = findVendoredZccacheDir({ actionRoot: opts.actionRoot, target, env });
+  const bundled = vendored ? null : findBundledZccacheDir({ soldrPath: opts.soldrPath, target });
   const managedUrl = status ? managedReleaseUrl(status.managedVersion, target) : "";
-  if (!vendored && !managedUrl) {
+  if (!vendored && !bundled && !managedUrl) {
     failOrWarn("setup-soldr: zccache seed failed: could not determine managed zccache version");
     return;
   }
 
-  const sourceKind = vendored ? "vendored" : "managed-release";
+  const sourceKind = vendored ? "vendored" : bundled ? "soldr-release" : "managed-release";
   let tempRoot = "";
-  let source = vendored ?? "";
+  let source = vendored ?? bundled ?? "";
   try {
     if (!source) {
       opts.log(`zccache-seed: downloading managed zccache release ${managedUrl}`);

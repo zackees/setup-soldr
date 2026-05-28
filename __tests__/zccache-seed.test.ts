@@ -6,6 +6,7 @@ import * as path from "node:path";
 import type * as exec from "@actions/exec";
 import {
   detectHostZccacheTarget,
+  findBundledZccacheDir,
   findVendoredZccacheDir,
   managedReleaseUrl,
   seedZccache,
@@ -89,6 +90,22 @@ test("findVendoredZccacheDir accepts per-target vendor directory", () => {
   }
 });
 
+test("findBundledZccacheDir accepts zccache next to installed soldr", () => {
+  const root = mkTmp("zccache-bundled-");
+  try {
+    const target = detectHostZccacheTarget();
+    const binDir = path.join(root, "bin");
+    const soldrPath = path.join(binDir, target.binaryExt ? "soldr.exe" : "soldr");
+    fs.mkdirSync(binDir, { recursive: true });
+    fs.writeFileSync(soldrPath, "fake soldr");
+    writeFakeZccacheDir(binDir, target.binaryExt);
+
+    assert.equal(findBundledZccacheDir({ soldrPath, target }), binDir);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("seedZccache installs vendored zccache when present", async () => {
   const root = mkTmp("zccache-seed-vendor-");
   const calls: Array<{ cmd: string; args: string[] }> = [];
@@ -115,6 +132,46 @@ test("seedZccache installs vendored zccache when present", async () => {
       ["install-zccache", "--status", "--json"],
       ["install-zccache", vendorDir, "--json"],
     ]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("seedZccache installs zccache from the bundled soldr release before downloading", async () => {
+  const root = mkTmp("zccache-seed-bundled-");
+  const calls: Array<{ cmd: string; args: string[] }> = [];
+  const downloads: string[] = [];
+  const target = detectHostZccacheTarget();
+  const binDir = path.join(root, "bin");
+  const soldrPath = path.join(binDir, target.binaryExt ? "soldr.exe" : "soldr");
+  fs.mkdirSync(binDir, { recursive: true });
+  fs.writeFileSync(soldrPath, "fake soldr");
+  writeFakeZccacheDir(binDir, target.binaryExt);
+  try {
+    await seedZccache({
+      soldrPath,
+      actionRoot: root,
+      enabled: true,
+      strict: true,
+      log: () => undefined,
+      warn: (msg) => assert.fail(msg),
+      execFn: makeExec(calls, {
+        command: "install-zccache --status",
+        managed_version: "1.11.2",
+        pinned: null,
+      }),
+      downloadFn: async (url) => {
+        downloads.push(url);
+        throw new Error("download should not run");
+      },
+      env: {},
+    });
+
+    assert.deepEqual(calls.map((call) => call.args), [
+      ["install-zccache", "--status", "--json"],
+      ["install-zccache", binDir, "--json"],
+    ]);
+    assert.deepEqual(downloads, []);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

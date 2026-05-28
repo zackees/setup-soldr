@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ensureSoldr } from "../src/lib/ensure-soldr.js";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { ensureSoldr, _internal } from "../src/lib/ensure-soldr.js";
 
 // Most of ensure-soldr's logic depends on external HTTP + subprocess, both of
 // which we don't want to actually exercise in unit tests. We focus on the
@@ -10,6 +13,59 @@ import { ensureSoldr } from "../src/lib/ensure-soldr.js";
 test("ensureSoldr is an async function with one argument", () => {
   assert.equal(typeof ensureSoldr, "function");
   assert.equal(ensureSoldr.length, 1);
+});
+
+test("copyBundledReleasePayload keeps zccache trio from combined soldr archives", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-bundle-"));
+  try {
+    const extract = path.join(root, "extract", "soldr-v0.7.42-x86_64-unknown-linux-gnu");
+    const install = path.join(root, "install");
+    fs.mkdirSync(extract, { recursive: true });
+    fs.mkdirSync(install, { recursive: true });
+    for (const name of ["zccache", "zccache-daemon", "zccache-fp", "crgx", "manifest.json"]) {
+      fs.writeFileSync(path.join(extract, name), name);
+    }
+
+    const copied = _internal.copyBundledReleasePayload(extract, install, "soldr");
+
+    assert.deepEqual(copied.sort(), ["crgx", "manifest.json", "zccache", "zccache-daemon", "zccache-fp"].sort());
+    for (const name of copied) {
+      assert.equal(fs.readFileSync(path.join(install, name), "utf8"), name);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("clearBundledReleasePayload removes stale sibling zccache binaries", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-clear-"));
+  try {
+    for (const name of ["zccache.exe", "zccache-daemon.exe", "zccache-fp.exe", "crgx.exe", "manifest.json"]) {
+      fs.writeFileSync(path.join(root, name), "stale");
+    }
+
+    _internal.clearBundledReleasePayload(root, "soldr.exe");
+
+    for (const name of ["zccache.exe", "zccache-daemon.exe", "zccache-fp.exe", "crgx.exe", "manifest.json"]) {
+      assert.equal(fs.existsSync(path.join(root, name)), false);
+    }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("hasBundledZccachePayload requires the full zccache trio", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-has-bundle-"));
+  try {
+    fs.writeFileSync(path.join(root, "zccache.exe"), "zccache");
+    fs.writeFileSync(path.join(root, "zccache-daemon.exe"), "zccache-daemon");
+    assert.equal(_internal.hasBundledZccachePayload(root, "soldr.exe"), false);
+
+    fs.writeFileSync(path.join(root, "zccache-fp.exe"), "zccache-fp");
+    assert.equal(_internal.hasBundledZccachePayload(root, "soldr.exe"), true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("ensureSoldr rejects with a clear message for unknown arch (mocked)", async () => {
