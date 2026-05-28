@@ -1,6 +1,6 @@
-"""Contract tests for the node20 action.yml manifest.
+"""Contract tests for the node24 action.yml manifest.
 
-After the port from a composite action to a node20 JavaScript action, the
+After the port from a composite action to a node24 JavaScript action, the
 manifest no longer carries any shell steps — runtime behavior lives in
 ``dist/main.js`` / ``dist/post.js``. These tests guard the public surface of
 the manifest: the runner declaration, dist entrypoints, and the full set of
@@ -19,7 +19,7 @@ ACTION_PATH = REPO_ROOT / "action.yml"
 
 
 # Full set of inputs the action.yml manifest exposes. Originally preserved
-# verbatim from the composite action; new inputs added since the node20 port
+# verbatim from the composite action; new inputs added since the node24 port
 # are appended here so the contract test continues to guard the public input
 # surface.
 EXPECTED_INPUTS = {
@@ -70,6 +70,12 @@ EXPECTED_INPUTS = {
     "prebuild-deps-flags",
     "prebuild-deps-delta-cache",
     "soldr-mini-cache",
+    "dylint-cache",
+    "dylint-toolchain",
+    "dylint-driver-rev",
+    "cargo-dylint-version",
+    "dylint-link-version",
+    "dylint-cache-paths",
     "journal-print-raw",
     "cross-targets",
     "cross-tool",
@@ -108,6 +114,10 @@ EXPECTED_OUTPUTS = {
     "target-cache-budget-status",
     "target-lockfile",
     "target-lockfile-hash",
+    "dylint-cache-hit",
+    "dylint-cache-key",
+    "dylint-cache-restore-status",
+    "dylint-driver-path",
     "toolchain",
     "stats-json",
     "shims-dir",
@@ -130,10 +140,10 @@ def _load_action() -> dict:
     return yaml.safe_load(ACTION_PATH.read_text(encoding="utf-8"))
 
 
-def test_action_runs_as_node20_with_main_and_post_entrypoints() -> None:
+def test_action_runs_as_node24_with_main_and_post_entrypoints() -> None:
     manifest = _load_action()
     runs = manifest["runs"]
-    assert runs["using"] == "node20"
+    assert runs["using"] == "node24"
     assert runs["main"] == "dist/main.js"
     assert runs["post"] == "dist/post.js"
     assert runs.get("post-if") == "always()"

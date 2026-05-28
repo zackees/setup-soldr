@@ -2,7 +2,7 @@
 
 [![Setup Soldr Action](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml/badge.svg)](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml)
 
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.42`.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.43`.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -456,7 +456,7 @@ preferred for new workflows.
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.7.42`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.7.43`. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
@@ -485,6 +485,12 @@ preferred for new workflows.
 | `cache-payload-top-n` | Number of largest files and directories retained in cache payload stats and summaries. Default `10`; set `0` to keep only aggregate counts. |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
 | `cargo-registry-cache` | When `true`, setup-soldr caches `~/.cargo/registry` directly as a fast-zstd `.tar.zst` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Requires zccache `>=1.4.4` (skip-flag support). Default `false` keeps the default cache footprint small; opt in when registry restore timing beats upload/retention cost. |
+| `dylint-cache` | Explicit opt-in cache for Dylint tooling. Default `false`. When `true`, restores/saves cargo-dylint, dylint-link, Cargo install metadata, and the compatible Dylint driver directory. Cold jobs still run the workflow's normal install/build steps; warm jobs can gate those steps on `dylint-cache-hit` or `SETUP_SOLDR_DYLINT_CACHE_HIT`. |
+| `dylint-toolchain` | Nightly toolchain used by the Dylint driver, such as `nightly-2026-03-26`. Empty defaults to the resolved action toolchain. Included in the Dylint cache key. |
+| `dylint-driver-rev` | Git revision or version identity for the compatible Dylint driver source. Included in the Dylint cache key. |
+| `cargo-dylint-version` | `cargo-dylint` version installed by the workflow. Default `5.0.0`; included in the Dylint cache key. |
+| `dylint-link-version` | `dylint-link` version installed by the workflow. Default `5.0.0`; included in the Dylint cache key. |
+| `dylint-cache-paths` | Optional newline- or comma-separated path override for the Dylint cache. Empty uses `$CARGO_HOME/bin/cargo-dylint*`, `$CARGO_HOME/bin/dylint-link*`, `$CARGO_HOME/.crates.toml`, `$CARGO_HOME/.crates2.json`, and `$RUNNER_TEMP/dylint-drivers`. |
 | `compile-cache-stats` | Controls compile-cache (zccache) diagnostic output. `none` suppresses all compile-cache info. `summarize` (default) renders a per-session totals table into `$GITHUB_STEP_SUMMARY` and emits scalar action outputs (hit rate, hits, misses, total). `detailed` adds per-extension and per-tool rollup tables and sets `compile-cache-rollups-json`. Requires soldr `>=0.7.22` for the typed `soldr cache report --json` payload; older releases fall back to a single-line note in the summary. |
 
 ### Legacy Compatibility Inputs
@@ -525,6 +531,10 @@ preferred for new workflows.
 | `target-cache-budget-status` | Soft-budget diagnostic for the restored Rust artifact cache footprint. |
 | `target-lockfile` | `Cargo.lock` path used for Rust artifact cache keying. |
 | `target-lockfile-hash` | Short hash of the `Cargo.lock` used for Rust artifact cache keying, or `no-lock`. |
+| `dylint-cache-hit` | Whether the opt-in Dylint tool/driver cache restored an exact key hit. |
+| `dylint-cache-key` | Primary key used by the opt-in Dylint tool/driver cache. |
+| `dylint-cache-restore-status` | Diagnostic restore status for the opt-in Dylint tool/driver cache. |
+| `dylint-driver-path` | Dylint driver directory exported as `DYLINT_DRIVER_PATH` when `dylint-cache` is enabled. |
 | `toolchain` | Exact Rust toolchain channel configured for the action. |
 | `compile-cache-session-status` | Compile-cache report status: `ok`, `missing-binary`, `unsupported`, or `error`. Surfaces version skew between setup-soldr and the installed soldr binary. |
 | `compile-cache-hit-rate` | Compile-cache hit rate for the last session as a decimal in `[0, 1]`. Empty when the report status is not `ok` or the field is missing from the payload. |
@@ -538,7 +548,10 @@ preferred for new workflows.
 
 ## Notes
 
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.42`.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.43`.
+- For soldr `0.7.43+`, the action copies the bundled `cargo-chef` binary from
+  the soldr release archive and exports `SOLDR_CARGO_CHEF_LOCAL_DIR` so
+  `soldr cook` does not need a live upstream cargo-chef release lookup.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action keeps using the runner's existing `CARGO_HOME` unless `CARGO_HOME` is already set by the workflow. When `RUSTUP_HOME` is not explicitly set, setup-soldr prefers the runner's existing rustup home if it already satisfies the requested toolchain/components/targets; otherwise it falls back to a managed `RUSTUP_HOME` under the action cache root and rehydrates that state on later warm runs.
@@ -582,6 +595,22 @@ When target-cache already matched at the lockfile/build-shape level,
 setup-soldr skips the cook restore/run because the target cache already
 contains the same dependency artifacts. Set `prebuild-deps: none` when a
 workflow should rely only on target/build/cache layers.
+
+## Dylint Tool Cache
+
+`dylint-cache: true` enables an exact-key cache for workflows that install
+`cargo-dylint`, install `dylint-link`, and build a compatible Dylint driver
+from pinned source. This deliberately does not vendor Dylint binaries into
+setup-soldr or soldr release archives: Dylint drivers are tightly coupled to
+the nightly toolchain, host triple, and driver source revision, so a cache-only
+mode keeps the default action small and makes the trust boundary explicit.
+
+The key includes host triple, `cargo-dylint-version`, `dylint-link-version`,
+`dylint-toolchain`, `dylint-driver-rev`, the action toolchain signature,
+`Cargo.lock`, Cargo config, and workspace manifests. A cold run should keep the
+normal workflow install/build steps. A warm run can skip them when
+`${{ steps.setup.outputs.dylint-cache-hit == 'true' }}` or
+`SETUP_SOLDR_DYLINT_CACHE_HIT=true`.
 
 ## Cache-layer policy
 
@@ -772,7 +801,7 @@ Fresh GitHub checkouts assign new mtimes to every file, which can cause Cargo to
 
 ## Development
 
-`setup-soldr` is a Node 20 JavaScript GitHub Action. The runtime lives in TypeScript under `src/` and is bundled into `dist/main.js` (pre-step) and `dist/post.js` (post-step) with `@vercel/ncc`. The bundled output **is committed** to the repository so consumers running `uses: zackees/setup-soldr@v0` get a self-contained action without needing `npm install` at action runtime.
+`setup-soldr` is a Node 24 JavaScript GitHub Action. The runtime lives in TypeScript under `src/` and is bundled into `dist/main.js` (pre-step) and `dist/post.js` (post-step) with `@vercel/ncc`. The bundled output **is committed** to the repository so consumers running `uses: zackees/setup-soldr@v0` get a self-contained action without needing `npm install` at action runtime.
 
 Clone with submodules, or initialize them after clone:
 

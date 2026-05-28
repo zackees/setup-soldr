@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.43`, copy the bundled `cargo-chef` binary from soldr
+  release archives, and export `SOLDR_CARGO_CHEF_LOCAL_DIR` so `soldr cook`
+  does not perform a live cargo-chef release lookup.
+- Move the main and cleanup actions to the Node 24 GitHub Actions runtime.
+- Add opt-in `dylint-cache` support for caching `cargo-dylint`, `dylint-link`,
+  and compatible Dylint driver directories.
+- Resolve final zccache stats from private session and archived shutdown logs.
+
 ## v0.9.12 - 2026-05-28
 
 - Trim the default cache footprint: keep the Soldr/zccache build-cache enabled,

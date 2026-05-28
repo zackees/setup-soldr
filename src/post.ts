@@ -155,6 +155,19 @@ function fileExists(p: string): boolean {
   }
 }
 
+function cachePathExists(p: string): boolean {
+  try {
+    if (!p.includes("*")) return fs.existsSync(p);
+    const firstStar = p.indexOf("*");
+    const slash = Math.max(p.lastIndexOf(path.sep, firstStar), p.lastIndexOf("/", firstStar), p.lastIndexOf("\\", firstStar));
+    const dir = slash >= 0 ? p.slice(0, slash) : ".";
+    const prefix = p.slice(slash + 1, firstStar);
+    return fs.readdirSync(dir).some((entry) => entry.startsWith(prefix));
+  } catch {
+    return false;
+  }
+}
+
 function stateBool(name: string, fallback = false): boolean {
   const value = core.getState(name).trim().toLowerCase();
   if (value === "true") return true;
@@ -510,7 +523,7 @@ function readSoldrCacheReport(
 }
 
 function readZccacheSessionSummary(buildCachePath: string): ZccacheSessionSummary {
-  const statsPath = path.join(buildCachePath, "logs", "last-session-stats.json");
+  const statsPath = resolveZccacheSessionStatsPath(buildCachePath);
   if (!fileExists(statsPath)) {
     return { stats_path: statsPath, present: false, status: "missing" };
   }
@@ -535,6 +548,46 @@ function readZccacheSessionSummary(buildCachePath: string): ZccacheSessionSummar
       error: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+function resolveZccacheSessionStatsPath(buildCachePath: string): string {
+  const defaultPath = path.join(buildCachePath, "logs", "last-session-stats.json");
+  if (fileExists(defaultPath)) return defaultPath;
+
+  const candidates = [
+    ...collectSessionStatsCandidates(path.join(buildCachePath, "private")),
+    ...collectSessionStatsCandidates(path.join(buildCachePath, "logs", "archive")),
+  ];
+  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs || a.path.localeCompare(b.path));
+  return candidates[0]?.path ?? defaultPath;
+}
+
+function collectSessionStatsCandidates(root: string): Array<{ path: string; mtimeMs: number }> {
+  let entries: fs.Dirent[];
+  try {
+    if (!fs.statSync(root).isDirectory()) return [];
+    entries = fs.readdirSync(root, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const out: Array<{ path: string; mtimeMs: number }> = [];
+  for (const ent of entries) {
+    if (!ent.isDirectory()) continue;
+    const candidate = path.join(root, ent.name, "logs", "last-session-stats.json");
+    const archiveCandidate = path.join(root, ent.name, "last-session-stats.json");
+    for (const statsPath of [candidate, archiveCandidate]) {
+      try {
+        const stat = fs.statSync(statsPath);
+        if (stat.isFile()) {
+          out.push({ path: statsPath, mtimeMs: stat.mtimeMs });
+        }
+      } catch {
+        // Candidate shape not present; try the next known layout.
+      }
+    }
+  }
+  return out;
 }
 
 export function buildFinalCacheSummary(
@@ -1667,6 +1720,51 @@ export async function run(): Promise<void> {
     }
   } catch (err) {
     log(`cross-tool-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // ---- Dylint tool/driver cache save (setup-soldr#221) ----
+  // Exact-key only and opt-in. Cold jobs keep their existing install/build
+  // steps; warm jobs restore cargo-dylint/dylint-link plus the compatible
+  // driver directory before those steps run.
+  try {
+    if (result.dylintCache.enabled && result.dylintCache.paths.length > 0) {
+      const exactHit = core.getState("dylintCacheExactHit") === "true";
+      if (exactHit) {
+        log("dylint-cache: exact hit - skipping save");
+      } else {
+        const existing = result.dylintCache.paths.some((p) => cachePathExists(p));
+        if (!existing) {
+          log("dylint-cache: no configured paths exist on disk - skipping save");
+        } else {
+          const t0 = Date.now();
+          try {
+            const id = await cache.saveCache(result.dylintCache.paths, result.dylintCache.key);
+            if (id > 0) {
+              log(`dylint-cache: saved id=${id} key=${result.dylintCache.key}`);
+              postCollector.record({
+                label: "dylint-cache",
+                operation: "save",
+                hit: false,
+                key: result.dylintCache.key,
+                matchedKey: "",
+                restoreKeys: [],
+                archiveBytes: null,
+                inflatedBytes: null,
+                fileCount: null,
+                durationMs: Date.now() - t0,
+                timestamp: new Date().toISOString(),
+              });
+            } else {
+              log(`dylint-cache: save skipped (id=${id}) - likely concurrent save by another job`);
+            }
+          } catch (err) {
+            log(`dylint-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    log(`dylint-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   const finalSummary = buildFinalCacheSummary(

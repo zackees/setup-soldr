@@ -138,6 +138,66 @@ function defaultHomeDir(env: Record<string, string | undefined>, name: string): 
   return path.resolve(path.join(home, name));
 }
 
+function parseOptInBool(inputName: string, value: string, defaultValue = false): boolean {
+  const raw = value.trim().toLowerCase();
+  if (!raw) return defaultValue;
+  if (TRUTHY_VALUES.has(raw)) return true;
+  if (FALSY_VALUES.has(raw)) return false;
+  throw new Error(
+    `invalid '${inputName}' input: '${value}'. Allowed: true | false`,
+  );
+}
+
+function semverAtLeast(value: string, minimum: string): boolean {
+  const parse = (v: string): [number, number, number] | null => {
+    const m = v.trim().replace(/^v/, "").match(/^(\d+)\.(\d+)\.(\d+)/);
+    if (!m) return null;
+    return [Number(m[1]!), Number(m[2]!), Number(m[3]!)];
+  };
+  const got = parse(value);
+  const want = parse(minimum);
+  if (!got || !want) return false;
+  for (let i = 0; i < 3; i += 1) {
+    if (got[i]! > want[i]!) return true;
+    if (got[i]! < want[i]!) return false;
+  }
+  return true;
+}
+
+function rustHostTriple(runnerOs: string, runnerArch: string): string {
+  const osName = runnerOs.trim().toLowerCase();
+  const archName = runnerArch.trim().toLowerCase();
+  const arch =
+    archName === "x64" || archName === "amd64"
+      ? "x86_64"
+      : archName === "arm64" || archName === "aarch64"
+        ? "aarch64"
+        : archName === "x86" || archName === "ia32"
+          ? "i686"
+          : sanitizeFragment(archName || "unknown");
+  if (osName === "windows" || osName === "win32") return `${arch}-pc-windows-msvc`;
+  if (osName === "macos" || osName === "darwin") return `${arch}-apple-darwin`;
+  if (osName === "linux") return `${arch}-unknown-linux-gnu`;
+  return `${arch}-${sanitizeFragment(osName || "unknown")}`;
+}
+
+function splitPathInput(value: string): string[] {
+  return value
+    .split(/[\r\n,]+/g)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function defaultDylintCachePaths(cargoHome: string, driverPath: string): string[] {
+  return [
+    path.join(cargoHome, "bin", "cargo-dylint*"),
+    path.join(cargoHome, "bin", "dylint-link*"),
+    path.join(cargoHome, ".crates.toml"),
+    path.join(cargoHome, ".crates2.json"),
+    driverPath,
+  ];
+}
+
 function makeDirs(...paths: string[]): void {
   for (const p of paths) {
     fs.mkdirSync(p, { recursive: true });
@@ -519,6 +579,41 @@ export async function resolveSetup(
     makeDirs(cargoRegistryCachePath);
   }
 
+  // ---- Dylint tool/driver cache (explicit opt-in, setup-soldr#221) ----
+  const dylintCacheEnabled =
+    cacheUmbrellaEnabled && parseOptInBool("dylint-cache", inputs.dylintCache, false);
+  const dylintDriverPath = path.join(runnerTemp, "dylint-drivers");
+  const dylintHostTriple = rustHostTriple(ctx.runnerOs || env["ACTION_OS"] || process.platform, ctx.runnerArch || env["ACTION_ARCH"] || process.arch);
+  const dylintToolchain = inputs.dylintToolchain.trim() || toolchain.channel;
+  const dylintDriverRev = inputs.dylintDriverRev.trim() || "none";
+  const cargoDylintVersion = inputs.cargoDylintVersion.trim() || "5.0.0";
+  const dylintLinkVersion = inputs.dylintLinkVersion.trim() || "5.0.0";
+  const customDylintPaths = splitPathInput(inputs.dylintCachePaths).map((p) =>
+    path.isAbsolute(expanduser(p, env)) ? resolveAbsolute(p, env) : path.resolve(workspace, p),
+  );
+  const dylintCachePaths =
+    customDylintPaths.length > 0
+      ? customDylintPaths
+      : defaultDylintCachePaths(cargoHome, dylintDriverPath);
+  const dylintCacheHash = shortJsonHash({
+    host_triple: dylintHostTriple,
+    cargo_dylint_version: cargoDylintVersion,
+    dylint_link_version: dylintLinkVersion,
+    dylint_toolchain: dylintToolchain,
+    dylint_driver_rev: dylintDriverRev,
+    cargo_config: cargoConfigHashValue,
+    cargo_lock: cargoLockHash,
+    manifest: wsManifestHash,
+    setup_toolchain: digest,
+  });
+  let dylintCacheKey = `setup-soldr-dylint-v1-${runnerOs}-${runnerArch}-${sanitizeFragment(dylintHostTriple)}-${dylintCacheHash}`;
+  if (suffix) {
+    dylintCacheKey = `${dylintCacheKey}-${sanitizedSuffix}`;
+  }
+  if (dylintCacheEnabled) {
+    makeDirs(dylintDriverPath);
+  }
+
   // ---- env exports ----
   const cacheShutdownOnIdleSeconds = parseCacheShutdownOnIdleSeconds(inputs.cacheShutdownOnIdle);
   const rustBacktraceValue = parseRustBacktrace(inputs.rustBacktrace);
@@ -571,6 +666,14 @@ export async function resolveSetup(
   setEnv("SOLDR_TARGET_CACHE_COMPRESS_LEVEL", targetCacheCompressLevel);
   if (cargoRegistryCacheEnabled) {
     setEnv("SOLDR_SKIP_CARGO_REGISTRY_SAVE", "1");
+  }
+  if (!soldrRef && semverAtLeast(soldrVersionResolved || soldrVersionRequested, "0.7.43")) {
+    setEnv("SOLDR_CARGO_CHEF_LOCAL_DIR", binDir);
+  }
+  if (dylintCacheEnabled) {
+    setEnv("DYLINT_DRIVER_PATH", dylintDriverPath);
+    setEnv("SETUP_SOLDR_DYLINT_CACHE_KEY", dylintCacheKey);
+    setEnv("SETUP_SOLDR_DYLINT_CACHE_PATHS", dylintCachePaths.join(path.delimiter));
   }
   setEnv("SOLDR_TARGET_CACHE_BACKEND", "local");
   setEnv("SETUP_SOLDR_TOOLCHAIN_CHANNEL", toolchain.channel);
@@ -692,6 +795,15 @@ export async function resolveSetup(
   log(`target-cache bundle-dir=${targetCacheBundlePath}`);
   log(`target-cache lockfile=${pathForOutput(workspace, lockfilePath)}`);
   log(`target-cache lockfile-hash=${cargoLockHash}`);
+  if (dylintCacheEnabled) {
+    log(`dylint-cache key=${dylintCacheKey}`);
+    log(`dylint-cache host-triple=${dylintHostTriple}`);
+    log(`dylint-cache toolchain=${dylintToolchain}`);
+    log(`dylint-cache cargo-dylint-version=${cargoDylintVersion}`);
+    log(`dylint-cache dylint-link-version=${dylintLinkVersion}`);
+    log(`dylint-cache driver-rev=${dylintDriverRev}`);
+    log(`dylint-cache driver-path=${dylintDriverPath}`);
+  }
 
   // ---- assemble plans ----
   const setupCache: SetupCachePlan = {
@@ -731,6 +843,17 @@ export async function resolveSetup(
     restorePrefix: cargoRegistryCacheRestorePrefix,
     path: cargoRegistryCachePath,
     extraBasenames: cargoRegistryCacheExtras,
+  };
+  const dylintCachePlan = {
+    enabled: dylintCacheEnabled,
+    key: dylintCacheEnabled ? dylintCacheKey : "",
+    paths: dylintCacheEnabled ? dylintCachePaths : [],
+    driverPath: dylintCacheEnabled ? dylintDriverPath : "",
+    hostTriple: dylintCacheEnabled ? dylintHostTriple : "",
+    toolchain: dylintCacheEnabled ? dylintToolchain : "",
+    driverRev: dylintCacheEnabled ? dylintDriverRev : "",
+    cargoDylintVersion: dylintCacheEnabled ? cargoDylintVersion : "",
+    dylintLinkVersion: dylintCacheEnabled ? dylintLinkVersion : "",
   };
 
   // ---- per-(host × target) tool caches (setup-soldr#106) ----
@@ -805,6 +928,7 @@ export async function resolveSetup(
     buildCache,
     targetCache,
     cargoRegistryCache: cargoRegistryCachePlan,
+    dylintCache: dylintCachePlan,
     crossToolCaches: crossToolCachePlans,
     targetCacheCompress,
     targetCacheCompressLevel,

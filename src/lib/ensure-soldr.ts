@@ -43,6 +43,22 @@ function normalizeVersion(value: string): string {
   return value.startsWith("v") ? value.slice(1) : value;
 }
 
+function versionAtLeast(value: string, minimum: string): boolean {
+  const parse = (v: string): [number, number, number] | null => {
+    const m = normalizeVersion(v).match(/^(\d+)\.(\d+)\.(\d+)/);
+    if (!m) return null;
+    return [Number(m[1]!), Number(m[2]!), Number(m[3]!)];
+  };
+  const got = parse(value);
+  const want = parse(minimum);
+  if (!got || !want) return false;
+  for (let i = 0; i < 3; i += 1) {
+    if (got[i]! > want[i]!) return true;
+    if (got[i]! < want[i]!) return false;
+  }
+  return true;
+}
+
 function requestHeaders(githubToken: string): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
@@ -245,6 +261,7 @@ function bundledReleasePayloadNames(binaryName: string): string[] {
     `zccache-daemon${suffix}`,
     `zccache-fp${suffix}`,
     `crgx${suffix}`,
+    `cargo-chef${suffix}`,
     "manifest.json",
   ];
 }
@@ -258,6 +275,11 @@ function hasBundledZccachePayload(installDir: string, binaryName: string): boole
   return bundledZccacheBinaryNames(binaryName).every((name) =>
     fs.existsSync(path.join(installDir, name)),
   );
+}
+
+function hasBundledCargoChefPayload(installDir: string, binaryName: string): boolean {
+  const suffix = platformBinarySuffix(binaryName);
+  return fs.existsSync(path.join(installDir, `cargo-chef${suffix}`));
 }
 
 function clearBundledReleasePayload(installDir: string, binaryName: string): void {
@@ -418,12 +440,16 @@ export async function ensureSoldr(opts: {
   const current = await installedVersion(binaryPath);
   if (current !== null && resolvedVersion) {
     if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
-      if (hasBundledZccachePayload(installDir, binaryName)) {
+      const needsCargoChef = versionAtLeast(resolvedVersion, "0.7.43");
+      const hasRequiredPayload =
+        hasBundledZccachePayload(installDir, binaryName) &&
+        (!needsCargoChef || hasBundledCargoChefPayload(installDir, binaryName));
+      if (hasRequiredPayload) {
         log(`Using cached soldr ${current} at ${binaryPath}`);
         core.setOutput("installed_version", current);
         return;
       }
-      log(`Cached soldr ${current} is missing bundled zccache payload; refreshing`);
+      log(`Cached soldr ${current} is missing bundled release payload; refreshing`);
     }
     if (normalizeVersion(current) !== normalizeVersion(resolvedVersion)) {
       log(`Cached soldr ${current} does not match requested release ${resolvedVersion}; refreshing`);
@@ -469,5 +495,7 @@ export const _internal = {
   bundledZccacheBinaryNames,
   clearBundledReleasePayload,
   copyBundledReleasePayload,
+  hasBundledCargoChefPayload,
   hasBundledZccachePayload,
+  versionAtLeast,
 };
