@@ -134,10 +134,11 @@ inputs:
     default: "false"
   target-cache:
     description: >
-      Deprecated compatibility input. Set to "false" to disable Rust target
+      Deprecated compatibility input. Default "false" to keep setup-soldr's
+      default cache footprint small. Set to "true" to enable Rust target
       artifact caching; prefer build-cache-mode for selecting once, thin, or full.
     required: false
-    default: "true"
+    default: "false"
   target-cache-mode:
     description: >
       Deprecated compatibility input translated into build-cache-mode.
@@ -208,9 +209,9 @@ inputs:
       Soft warning threshold for tar-backed cache saves, measured before
       compression. Accepts bytes or KiB/MiB/GiB/TiB suffixes. When exceeded,
       setup-soldr emits a warning with the largest files so oversized payloads
-      such as multi-GiB zccache archives are visible in CI. Default 1GiB.
+      such as multi-GiB zccache archives are visible in CI. Default 512MiB.
     required: false
-    default: "1GiB"
+    default: "512MiB"
   cache-payload-max-bytes:
     description: >
       Hard limit for tar-backed cache saves, measured before compression.
@@ -246,7 +247,7 @@ inputs:
     default: "false"
   cargo-registry-cache:
     description: >
-      When "true" (default), setup-soldr manages a separate actions/cache step
+      When "true", setup-soldr manages a separate actions/cache step
       for ~/.cargo/registry that pre-compresses the directory into a single
       .tar.zst via the embedded setup-soldr-cache-compress sub-action. The
       same archive also bundles ~/.cargo/.global-cache (cargo's RFC-3413 GC
@@ -256,8 +257,9 @@ inputs:
       silently skipped in that case). See setup-soldr#102. Also exports
       SOLDR_SKIP_CARGO_REGISTRY_SAVE=1 so the zccache CLI's built-in
       cargo-registry save (honored in zccache >=1.4.4) no-ops and the
-      payload is not double-saved. Set to "false" to opt out and let
-      zccache own the registry cache via its legacy gzip path.
+      payload is not double-saved. Default "false" keeps setup-soldr's
+      default cache footprint small; opt in explicitly when registry restore
+      timing beats the upload/retention cost for the repository.
 
       Deliberately NOT cached on this layer: ~/.cargo/.package-cache and
       ~/.cargo/.package-cache-mutate are cargo's "another build is running"
@@ -268,7 +270,7 @@ inputs:
       full $CARGO_HOME so accidentally-staged secrets never enter the
       archive.
     required: false
-    default: "true"
+    default: "false"
   shims:
     description: >
       When "true", setup-soldr writes PATH-shadowing shims for cargo,

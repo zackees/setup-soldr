@@ -18,6 +18,7 @@ import type {
   CachePayloadCensus,
   CachePayloadEntry,
   CachePayloadSkipSummary,
+  CachePayloadSubtree,
 } from "./types.js";
 
 /**
@@ -61,6 +62,8 @@ function fmtBytesDebug(n: number): string {
 const DEFAULT_PAYLOAD_TOP_N = 10;
 const MAX_SKIP_SAMPLES = 8;
 
+export type CachePayloadProfile = "generic" | "zccache-build-cache";
+
 const TRANSIENT_EXACT_BASENAMES = new Set([
   ".package-cache",
   ".package-cache-mutate",
@@ -89,6 +92,17 @@ const TRANSIENT_SUFFIXES: Array<[string, string]> = [
   [".partial", "transient-temp-file"],
 ];
 
+const ZCCACHE_DIAGNOSTIC_FILE_SUFFIXES = [
+  ".jsonl",
+  ".log",
+  ".trace",
+  ".txt",
+  ".out",
+  ".err",
+  ".stdout",
+  ".stderr",
+];
+
 function normalizeTopN(value: number | undefined): number {
   if (value === undefined || !Number.isFinite(value)) return DEFAULT_PAYLOAD_TOP_N;
   return Math.max(0, Math.min(50, Math.floor(value)));
@@ -115,12 +129,53 @@ function reasonForTransientBasename(name: string): string | null {
   return null;
 }
 
-function reasonForTransientPath(relativePath: string): string | null {
-  const parts = toTarPath(relativePath).split("/");
+function reasonForTransientPath(relativePath: string, profile: CachePayloadProfile): string | null {
+  const tarPath = toTarPath(relativePath);
+  const parts = tarPath.split("/");
   if (parts.length >= 2 && parts[1]?.toLowerCase() === "logs") {
     return "diagnostic-log-dir";
   }
+  if (profile === "zccache-build-cache" && parts[0]?.toLowerCase() === "zccache") {
+    const lowerParts = parts.map((part) => part.toLowerCase());
+    if (lowerParts.includes("logs")) {
+      return "diagnostic-log-dir";
+    }
+    const isPrivateArtifacts =
+      lowerParts[1] === "private" &&
+      lowerParts.length >= 4 &&
+      lowerParts[3] === "artifacts";
+    if (isPrivateArtifacts) {
+      return "zccache-private-artifacts";
+    }
+
+    const isPublicArtifact = lowerParts[1] === "artifacts";
+    const isArtifactPayload = isPublicArtifact || isPrivateArtifacts;
+    const basename = lowerParts[lowerParts.length - 1] ?? "";
+    if (
+      !isArtifactPayload &&
+      ZCCACHE_DIAGNOSTIC_FILE_SUFFIXES.some((suffix) => basename.endsWith(suffix))
+    ) {
+      return "diagnostic-log-file";
+    }
+  }
   return null;
+}
+
+function payloadSubtreePath(tarPath: string, profile: CachePayloadProfile): string {
+  const parts = tarPath.split("/");
+  if (profile === "zccache-build-cache" && parts[0] === "zccache") {
+    if (parts[1] === "private" && parts.length >= 3) {
+      return parts.slice(0, 3).join("/");
+    }
+    if (parts.length >= 3) {
+      return parts.slice(0, 2).join("/");
+    }
+    return "zccache";
+  }
+  if (parts.length <= 2) {
+    return parts[0] ?? tarPath;
+  }
+  return parts.slice(0, 2).join("/");
 }
 
 function reasonForSpecialFile(stats: Stats): string {
@@ -238,13 +293,24 @@ export async function planTarPayload(opts: {
   parent: string;
   inputBasenames: string[];
   topN?: number;
+  profile?: CachePayloadProfile;
 }): Promise<TarPayloadPlan> {
   const topN = normalizeTopN(opts.topN);
+  const profile = opts.profile ?? "generic";
   const skip = makeSkipRecorder();
   const manifestEntries: string[] = [];
   const fileEntries: CachePayloadEntry[] = [];
   const dirEntries: CachePayloadEntry[] = [];
+  const subtreeEntries = new Map<string, CachePayloadSubtree>();
   const inputs: string[] = [];
+
+  const addSubtreeFile = (tarPath: string, bytes: number): void => {
+    const group = payloadSubtreePath(tarPath, profile);
+    const current = subtreeEntries.get(group) ?? { path: group, bytes: 0, files: 0 };
+    current.bytes += bytes;
+    current.files++;
+    subtreeEntries.set(group, current);
+  };
 
   const walk = async (absolutePath: string, relativePath: string): Promise<WalkResult> => {
     if (hasManifestUnsafeName(relativePath)) {
@@ -258,7 +324,7 @@ export async function planTarPayload(opts: {
       return EMPTY_WALK;
     }
 
-    const transientPathReason = reasonForTransientPath(relativePath);
+    const transientPathReason = reasonForTransientPath(relativePath, profile);
     if (transientPathReason) {
       skip.add(transientPathReason, toTarPath(relativePath));
       return EMPTY_WALK;
@@ -281,6 +347,7 @@ export async function planTarPayload(opts: {
     if (stats.isFile()) {
       manifestEntries.push(tarPath);
       fileEntries.push({ path: tarPath, bytes: stats.size });
+      addSubtreeFile(tarPath, stats.size);
       return { bytes: stats.size, files: 1, symlinks: 0, directories: 0 };
     }
 
@@ -345,6 +412,11 @@ export async function planTarPayload(opts: {
 
   fileEntries.sort(comparePayloadEntry);
   dirEntries.sort(comparePayloadEntry);
+  const topSubtrees = Array.from(subtreeEntries.values()).sort((a, b) => {
+    if (a.bytes !== b.bytes) return b.bytes - a.bytes;
+    if (a.files !== b.files) return b.files - a.files;
+    return a.path.localeCompare(b.path);
+  });
 
   return {
     bytes,
@@ -354,6 +426,7 @@ export async function planTarPayload(opts: {
     inputs,
     topFiles: fileEntries.slice(0, topN),
     topDirectories: dirEntries.slice(0, topN),
+    topSubtrees: topSubtrees.slice(0, topN),
     skipped: skip.summaries(),
     manifestEntries,
   };
@@ -368,6 +441,7 @@ function publicPayload(plan: TarPayloadPlan): CachePayloadCensus {
     inputs: plan.inputs,
     topFiles: plan.topFiles,
     topDirectories: plan.topDirectories,
+    topSubtrees: plan.topSubtrees,
     skipped: plan.skipped,
   };
 }
@@ -512,6 +586,8 @@ export async function compressCache(opts: {
   payloadOversizeAction?: "skip" | "fail";
   /** Number of largest files/directories to retain in the payload census. */
   payloadTopN?: number;
+  /** Cache-specific pruning/audit profile. */
+  payloadProfile?: CachePayloadProfile;
   /** Human-readable cache label used in warning/debug output. */
   label?: string;
 }): Promise<CompressResult> {
@@ -528,6 +604,7 @@ export async function compressCache(opts: {
     payloadMaxBytes = null,
     payloadOversizeAction = "skip",
     payloadTopN,
+    payloadProfile = "generic",
     label,
   } = opts;
   const nullResult: CompressResult = {
@@ -573,6 +650,7 @@ export async function compressCache(opts: {
     parent,
     inputBasenames: tarInputs,
     topN: payloadTopN,
+    profile: payloadProfile,
   });
   let payloadCensus = publicPayload(payload);
   let inflatedBytes: number | null = payload.bytes;
@@ -670,6 +748,7 @@ export async function compressCache(opts: {
       parent,
       inputBasenames: tarInputs,
       topN: payloadTopN,
+      profile: payloadProfile,
     });
     payloadCensus = publicPayload(payload);
     inflatedBytes = payload.bytes;

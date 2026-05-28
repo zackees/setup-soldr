@@ -19,6 +19,12 @@ export interface CachePayloadEntry {
   bytes: number;
 }
 
+export interface CachePayloadSubtree {
+  path: string;
+  bytes: number;
+  files: number;
+}
+
 export interface CachePayloadSkipSummary {
   reason: string;
   count: number;
@@ -33,6 +39,7 @@ export interface CachePayloadCensus {
   inputs: string[];
   topFiles: CachePayloadEntry[];
   topDirectories: CachePayloadEntry[];
+  topSubtrees: CachePayloadSubtree[];
   skipped: CachePayloadSkipSummary[];
 }
 
