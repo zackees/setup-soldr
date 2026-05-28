@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.42`, and seed zccache from the zccache trio bundled
+  inside soldr release archives before using the legacy cross-repo zccache
+  release fallback.
 - Seed soldr's pinned zccache install during setup so isolated `SOLDR_CACHE_DIR`
   test roots do not refetch zccache or fall back to `cargo install`.
 - Run that seed even when `build-cache` is disabled, and add

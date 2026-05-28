@@ -234,6 +234,61 @@ function findFile(root: string, name: string): string | null {
   return null;
 }
 
+function platformBinarySuffix(binaryName: string): string {
+  return binaryName.endsWith(".exe") ? ".exe" : "";
+}
+
+function bundledReleasePayloadNames(binaryName: string): string[] {
+  const suffix = platformBinarySuffix(binaryName);
+  return [
+    `zccache${suffix}`,
+    `zccache-daemon${suffix}`,
+    `zccache-fp${suffix}`,
+    `crgx${suffix}`,
+    "manifest.json",
+  ];
+}
+
+function bundledZccacheBinaryNames(binaryName: string): string[] {
+  const suffix = platformBinarySuffix(binaryName);
+  return [`zccache${suffix}`, `zccache-daemon${suffix}`, `zccache-fp${suffix}`];
+}
+
+function hasBundledZccachePayload(installDir: string, binaryName: string): boolean {
+  return bundledZccacheBinaryNames(binaryName).every((name) =>
+    fs.existsSync(path.join(installDir, name)),
+  );
+}
+
+function clearBundledReleasePayload(installDir: string, binaryName: string): void {
+  for (const name of bundledReleasePayloadNames(binaryName)) {
+    try {
+      fs.rmSync(path.join(installDir, name), { force: true });
+    } catch {
+      // best effort stale-payload cleanup
+    }
+  }
+}
+
+function copyBundledReleasePayload(
+  extractDir: string,
+  installDir: string,
+  binaryName: string,
+): string[] {
+  const copied: string[] = [];
+  for (const name of bundledReleasePayloadNames(binaryName)) {
+    const source = findFile(extractDir, name);
+    if (!source) continue;
+    const destination = path.join(installDir, name);
+    fs.copyFileSync(source, destination);
+    if (name !== "manifest.json" && process.platform !== "win32") {
+      fs.chmodSync(destination, 0o755);
+    }
+    copied.push(name);
+  }
+  return copied;
+}
+
 async function buildFromSource(opts: {
   repo: string;
   ref: string;
@@ -274,6 +329,7 @@ async function buildFromSource(opts: {
     if (!fs.existsSync(builtBinary)) {
       throw new Error(`built soldr binary not found at ${builtBinary}`);
     }
+    clearBundledReleasePayload(installDir, binaryName);
     const destination = path.join(installDir, binaryName);
     fs.copyFileSync(builtBinary, destination);
     if (process.platform !== "win32") {
@@ -333,6 +389,7 @@ export async function ensureSoldr(opts: {
     if (sourceInstallMatches(installDir, repo, requestedRef, commitSha, target, binaryName)) {
       const current = await installedVersion(binaryPath);
       if (current !== null) {
+        clearBundledReleasePayload(installDir, binaryName);
         log(`Using cached soldr ${current} built from ${repo}@${requestedRef} (${commitSha})`);
         core.setOutput("installed_version", current);
         return;
@@ -361,11 +418,16 @@ export async function ensureSoldr(opts: {
   const current = await installedVersion(binaryPath);
   if (current !== null && resolvedVersion) {
     if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
-      log(`Using cached soldr ${current} at ${binaryPath}`);
-      core.setOutput("installed_version", current);
-      return;
+      if (hasBundledZccachePayload(installDir, binaryName)) {
+        log(`Using cached soldr ${current} at ${binaryPath}`);
+        core.setOutput("installed_version", current);
+        return;
+      }
+      log(`Cached soldr ${current} is missing bundled zccache payload; refreshing`);
     }
-    log(`Cached soldr ${current} does not match requested release ${resolvedVersion}; refreshing`);
+    if (normalizeVersion(current) !== normalizeVersion(resolvedVersion)) {
+      log(`Cached soldr ${current} does not match requested release ${resolvedVersion}; refreshing`);
+    }
   }
 
   log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
@@ -380,9 +442,14 @@ export async function ensureSoldr(opts: {
     log(`Downloading ${assetName}`);
     await downloadWithHeaders(downloadUrl, archivePath, requestHeaders(githubToken));
     const sourceBinary = await extractBinary(archivePath, archiveExt, binaryName, extractDir);
+    clearBundledReleasePayload(installDir, binaryName);
     fs.copyFileSync(sourceBinary, binaryPath);
     if (process.platform !== "win32") {
       fs.chmodSync(binaryPath, 0o755);
+    }
+    const copied = copyBundledReleasePayload(extractDir, installDir, binaryName);
+    if (copied.length > 0) {
+      log(`Installed bundled soldr release payload: ${copied.join(", ")}`);
     }
   } finally {
     try {
@@ -396,3 +463,11 @@ export async function ensureSoldr(opts: {
   log(`Installed soldr ${tagName} at ${binaryPath}`);
   core.setOutput("installed_version", tagName);
 }
+
+export const _internal = {
+  bundledReleasePayloadNames,
+  bundledZccacheBinaryNames,
+  clearBundledReleasePayload,
+  copyBundledReleasePayload,
+  hasBundledZccachePayload,
+};
