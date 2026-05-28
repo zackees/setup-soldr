@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.9.12 - 2026-05-28
+
+- Trim the default cache footprint: keep the Soldr/zccache build-cache enabled,
+  but default the optional target-cache and cargo-registry-cache layers off.
+- Add a zccache build-cache payload profile that skips
+  `zccache/private/*/artifacts/**`, zccache log subtrees, and loose diagnostic
+  files before tar/zstd saves.
+- Add top-subtree payload audit output so oversized cache entries identify the
+  largest contributing subtrees, not only individual files.
+- Lower the default tar-backed cache payload warning threshold to `512MiB`
+  while keeping the `2GiB` hard skip cap.
+
 ## v0.9.11 - 2026-05-28
 
 - Add the cleanup sub-action for workflows that need to quiesce soldr/zccache
