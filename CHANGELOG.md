@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.9.13 - 2026-05-28
+
 - Default to soldr `0.7.43`, copy the bundled `cargo-chef` binary from soldr
   release archives, and export `SOLDR_CARGO_CHEF_LOCAL_DIR` so `soldr cook`
   does not perform a live cargo-chef release lookup.
