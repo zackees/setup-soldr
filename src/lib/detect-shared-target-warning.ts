@@ -21,6 +21,54 @@ const WARNING_MESSAGE =
   "subsequent `soldr cargo build` using the same `--target-dir` may fail " +
   "with a missing .rmeta error - see README 'Known limitations'.";
 
+// setup-soldr#239: when target-cache is DISABLED the populated target/ is this
+// run's own `soldr cook` output, not a stale plan restored from a prior run,
+// so the missing-.rmeta risk does not apply. We still surface the observation,
+// but as a notice (informational tray) rather than a warning, so it does not
+// flood the warning channel and hide genuine warnings on every job.
+const NOTICE_MESSAGE =
+  "setup-soldr: target/ already has compiled artifacts (from `soldr cook`). " +
+  "target-cache is disabled, so this is the current run's own output and is " +
+  "expected - no action needed. (Enable target-cache and you'd get the " +
+  "stale-rust-plan warning instead.)";
+
+/**
+ * Pure severity decision (setup-soldr#239): a restored stale rust-plan can
+ * only collide when target-cache is enabled, so warn then; otherwise the
+ * populated target/ is the current run's own cook output → notice.
+ */
+export function sharedTargetSignalSeverity(targetCacheEnabled: boolean): "warning" | "notice" {
+  return targetCacheEnabled ? "warning" : "notice";
+}
+
+/**
+ * Emit the shared-target signal at the right severity (setup-soldr#239):
+ * a `warning` when target-cache is enabled (a restored stale plan really can
+ * collide), a quieter `notice` when it is disabled (the populated target/ is
+ * just this run's cook output). `via` names the detection path for the log.
+ */
+function emitSharedTargetSignal(opts: {
+  targetCacheEnabled: boolean;
+  buildCacheMode: string;
+  targetDir: string;
+  via: string;
+  log: (msg: string) => void;
+}): void {
+  if (sharedTargetSignalSeverity(opts.targetCacheEnabled) === "warning") {
+    core.warning(WARNING_MESSAGE);
+    opts.log(
+      `shared-target-dir warning emitted for target_dir=${opts.targetDir} ` +
+        `build_cache_mode=${opts.buildCacheMode} (${opts.via})`,
+    );
+  } else {
+    core.notice(NOTICE_MESSAGE);
+    opts.log(
+      `shared-target-dir notice (target-cache disabled) for target_dir=${opts.targetDir} ` +
+        `build_cache_mode=${opts.buildCacheMode} (${opts.via})`,
+    );
+  }
+}
+
 /**
  * Recursively scan `dir` for any `deps/` subdirectory containing a `.rmeta`
  * file. Returns true on the first match. Stops the walk early.
@@ -145,11 +193,13 @@ export async function detectSharedTargetWarning(opts: {
     });
     if (delegated !== null) {
       if (delegated.wouldWarn) {
-        core.warning(WARNING_MESSAGE);
-        logger.log(
-          `shared-target-dir warning emitted for target_dir=${targetDir} ` +
-            `build_cache_mode=${opts.buildCacheMode} (via soldr toolchain doctor)`,
-        );
+        emitSharedTargetSignal({
+          targetCacheEnabled: opts.effectiveTargetCacheEnabled,
+          buildCacheMode: opts.buildCacheMode,
+          targetDir,
+          via: "via soldr toolchain doctor",
+          log: (m) => logger.log(m),
+        });
       } else {
         logger.log(
           `shared-target-dir check clean for target_dir=${targetDir} ` +
@@ -168,10 +218,13 @@ export async function detectSharedTargetWarning(opts: {
       targetDir,
     })
   ) {
-    core.warning(WARNING_MESSAGE);
-    logger.log(
-      `shared-target-dir warning emitted for target_dir=${targetDir} build_cache_mode=${opts.buildCacheMode}`,
-    );
+    emitSharedTargetSignal({
+      targetCacheEnabled: opts.effectiveTargetCacheEnabled,
+      buildCacheMode: opts.buildCacheMode,
+      targetDir,
+      via: "in-process scan",
+      log: (m) => logger.log(m),
+    });
   } else {
     logger.log(
       `shared-target-dir check clean for target_dir=${targetDir} ` +
