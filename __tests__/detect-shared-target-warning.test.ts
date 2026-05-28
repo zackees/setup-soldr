@@ -4,6 +4,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
+  sharedTargetSignalSeverity,
   shouldEmitSharedTargetWarning,
   targetDirHasCompiledArtifacts,
   tryDelegateToSoldrDoctorSharedTargetWarning,
@@ -221,4 +222,12 @@ test("tryDelegateToSoldrDoctorSharedTargetWarning returns null when probe missin
     exec,
   });
   assert.equal(result, null);
+});
+
+test("#239 sharedTargetSignalSeverity: warning iff target-cache enabled", () => {
+  // target-cache ON: a restored stale rust-plan can collide → warning.
+  assert.equal(sharedTargetSignalSeverity(true), "warning");
+  // target-cache OFF (e.g. zccache): populated target/ is this run's own cook
+  // output, not a stale restored plan → quieter notice, off the warning channel.
+  assert.equal(sharedTargetSignalSeverity(false), "notice");
 });
