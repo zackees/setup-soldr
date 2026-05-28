@@ -172,6 +172,53 @@ test("invalid compress level rejected", async () => {
   );
 });
 
+test("dylint cache is opt-in and exports driver path plus exact-key material", async () => {
+  const { result, outputs } = await run({}, {
+    "INPUT_DYLINT-CACHE": "true",
+    "INPUT_DYLINT-TOOLCHAIN": "nightly-2026-03-26",
+    "INPUT_DYLINT-DRIVER-REV": "4bd91ce7729b74c7ee5664bbb588f7baf30b4a09",
+    "INPUT_CARGO-DYLINT-VERSION": "5.0.0",
+    "INPUT_DYLINT-LINK-VERSION": "5.0.0",
+  });
+
+  assert.equal(result.dylintCache.enabled, true);
+  assert.equal(result.dylintCache.hostTriple, "x86_64-unknown-linux-gnu");
+  assert.equal(result.dylintCache.toolchain, "nightly-2026-03-26");
+  assert.equal(result.dylintCache.driverRev, "4bd91ce7729b74c7ee5664bbb588f7baf30b4a09");
+  assert.match(result.dylintCache.key, /^setup-soldr-dylint-v1-linux-x64-x86_64-unknown-linux-gnu-/);
+  assert.ok(result.dylintCache.paths.some((p) => p.includes("cargo-dylint*")));
+  assert.ok(result.dylintCache.paths.some((p) => p.includes("dylint-drivers")));
+  assert.equal(result.envExports["DYLINT_DRIVER_PATH"], result.dylintCache.driverPath);
+  assert.equal(outputs["dylint-cache-key"], result.dylintCache.key);
+  assert.equal(outputs["dylint-driver-path"], result.dylintCache.driverPath);
+});
+
+test("dylint cache key changes when driver revision changes", async () => {
+  const first = await run({}, {
+    "INPUT_DYLINT-CACHE": "true",
+    "INPUT_DYLINT-TOOLCHAIN": "nightly-2026-03-26",
+    "INPUT_DYLINT-DRIVER-REV": "rev-a",
+  });
+  const second = await run({}, {
+    "INPUT_DYLINT-CACHE": "true",
+    "INPUT_DYLINT-TOOLCHAIN": "nightly-2026-03-26",
+    "INPUT_DYLINT-DRIVER-REV": "rev-b",
+  });
+  assert.notEqual(first.result.dylintCache.key, second.result.dylintCache.key);
+});
+
+test("soldr 0.7.43+ exports bundled cargo-chef local dir", async () => {
+  const { result } = await run({}, { INPUT_VERSION: "0.7.43" });
+  assert.equal(result.envExports["SOLDR_CARGO_CHEF_LOCAL_DIR"], result.binDir);
+});
+
+test("invalid dylint cache boolean rejects with clear error", async () => {
+  await assert.rejects(
+    () => run({}, { "INPUT_DYLINT-CACHE": "maybe" }),
+    /invalid 'dylint-cache' input/,
+  );
+});
+
 test("compression inputs do not change cache keys", async () => {
   // Both runs must use the same workspace so target_cache_path (which feeds
   // the target_shape hash) is identical between the baseline and the

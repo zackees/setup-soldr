@@ -92,6 +92,23 @@ test("zccache seed strict input round-trips through readRawInputs", () => {
   assert.equal(r.zccacheSeedStrict, "true");
 });
 
+test("dylint cache inputs round-trip through readRawInputs", () => {
+  const r = readRawInputs({
+    "INPUT_DYLINT-CACHE": "true",
+    "INPUT_DYLINT-TOOLCHAIN": "nightly-2026-03-26",
+    "INPUT_DYLINT-DRIVER-REV": "4bd91ce",
+    "INPUT_CARGO-DYLINT-VERSION": "5.0.0",
+    "INPUT_DYLINT-LINK-VERSION": "5.0.0",
+    "INPUT_DYLINT-CACHE-PATHS": "cache/dylint",
+  });
+  assert.equal(r.dylintCache, "true");
+  assert.equal(r.dylintToolchain, "nightly-2026-03-26");
+  assert.equal(r.dylintDriverRev, "4bd91ce");
+  assert.equal(r.cargoDylintVersion, "5.0.0");
+  assert.equal(r.dylintLinkVersion, "5.0.0");
+  assert.equal(r.dylintCachePaths, "cache/dylint");
+});
+
 test("cache payload audit inputs round-trip through readRawInputs", () => {
   const r = readRawInputs({
     "INPUT_CACHE-PAYLOAD-WARN-BYTES": "1GiB",

@@ -120,6 +120,138 @@ test("final cache summary includes zccache stats and cache layer outcomes", asyn
   }
 });
 
+test("final cache summary resolves private zccache session stats", async () => {
+  const mod = (await import("../src/post.js")) as {
+    buildFinalCacheSummary: (result: any, state: any, saves: any) => any;
+    formatFinalCacheSummaryMarkdown: (summary: any) => string;
+  };
+  const root = mkTmp("post-private-session-summary-");
+  try {
+    const buildCachePath = path.join(root, "cache", "zccache");
+    const statsPath = path.join(
+      buildCachePath,
+      "private",
+      "soldr-dev-session",
+      "logs",
+      "last-session-stats.json",
+    );
+    fs.mkdirSync(path.dirname(statsPath), { recursive: true });
+    fs.writeFileSync(
+      statsPath,
+      JSON.stringify({
+        status: "ok",
+        session_id: "soldr-dev-session",
+        compilations: 12,
+        hits: 5,
+        misses: 7,
+        hit_rate: 5 / 12,
+      }),
+      "utf8",
+    );
+
+    const summary = mod.buildFinalCacheSummary(
+      {
+        setupCache: { key: "setup-key" },
+        targetCache: { key: "target-key" },
+        buildCache: { key: "build-key", path: buildCachePath },
+        cargoRegistryCache: { key: "registry-key" },
+      },
+      {
+        setupCacheEnabled: false,
+        setupCacheExactHit: false,
+        setupCacheMatchedKey: "",
+        targetCacheEnabled: false,
+        targetCacheExactHit: false,
+        targetCacheMatchedKey: "",
+        buildCacheEnabled: true,
+        buildCacheExactHit: false,
+        buildCacheMatchedKey: "",
+        cargoRegistryCacheEnabled: false,
+        cargoRegistryCacheExactHit: false,
+        cargoRegistryCacheMatchedKey: "",
+      },
+      {
+        buildCache: { status: "disabled" },
+        cargoRegistryCache: { status: "disabled" },
+        targetCache: { status: "disabled" },
+      },
+    );
+
+    assert.equal(summary.zccache_session.status, "ok");
+    assert.equal(summary.zccache_session.stats_path, statsPath);
+    assert.equal(summary.zccache_session.stats.hits, 5);
+    const markdown = mod.formatFinalCacheSummaryMarkdown(summary);
+    assert.match(markdown, /hits=5 misses=7/);
+    assert.ok(markdown.includes(statsPath));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("final cache summary resolves archived private zccache stats after shutdown", async () => {
+  const mod = (await import("../src/post.js")) as {
+    buildFinalCacheSummary: (result: any, state: any, saves: any) => any;
+  };
+  const root = mkTmp("post-archived-session-summary-");
+  try {
+    const buildCachePath = path.join(root, "cache", "zccache");
+    const statsPath = path.join(
+      buildCachePath,
+      "logs",
+      "archive",
+      "soldr-dev-session",
+      "last-session-stats.json",
+    );
+    fs.mkdirSync(path.dirname(statsPath), { recursive: true });
+    fs.writeFileSync(
+      statsPath,
+      JSON.stringify({
+        status: "ok",
+        session_id: "soldr-dev-session",
+        compilations: 20,
+        hits: 9,
+        misses: 11,
+        hit_rate: 0.45,
+      }),
+      "utf8",
+    );
+
+    const summary = mod.buildFinalCacheSummary(
+      {
+        setupCache: { key: "setup-key" },
+        targetCache: { key: "target-key" },
+        buildCache: { key: "build-key", path: buildCachePath },
+        cargoRegistryCache: { key: "registry-key" },
+      },
+      {
+        setupCacheEnabled: false,
+        setupCacheExactHit: false,
+        setupCacheMatchedKey: "",
+        targetCacheEnabled: false,
+        targetCacheExactHit: false,
+        targetCacheMatchedKey: "",
+        buildCacheEnabled: true,
+        buildCacheExactHit: false,
+        buildCacheMatchedKey: "",
+        cargoRegistryCacheEnabled: false,
+        cargoRegistryCacheExactHit: false,
+        cargoRegistryCacheMatchedKey: "",
+      },
+      {
+        buildCache: { status: "disabled" },
+        cargoRegistryCache: { status: "disabled" },
+        targetCache: { status: "disabled" },
+      },
+    );
+
+    assert.equal(summary.zccache_session.status, "ok");
+    assert.equal(summary.zccache_session.stats_path, statsPath);
+    assert.equal(summary.zccache_session.stats.misses, 11);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("compile_cache_report reports missing-binary when SOLDR_BINARY is unset", async () => {
   const mod = (await import("../src/post.js")) as {
     buildFinalCacheSummary: (result: any, state: any, saves: any) => any;

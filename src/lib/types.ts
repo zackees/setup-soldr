@@ -111,6 +111,12 @@ export interface RawInputs {
   prebuildDepsFlags: string;
   prebuildDepsDeltaCache: string;
   soldrMiniCache: string;
+  dylintCache: string;
+  dylintToolchain: string;
+  dylintDriverRev: string;
+  cargoDylintVersion: string;
+  dylintLinkVersion: string;
+  dylintCachePaths: string;
   journalPrintRaw: string;
   crossTargets: string;
   crossTool: string;
@@ -230,6 +236,26 @@ export interface CrossToolCachePlan {
 }
 
 /**
+ * Explicit opt-in Dylint tool/driver cache (setup-soldr#221).
+ *
+ * This is intentionally cache-only rather than vendoring Dylint binaries into
+ * every setup-soldr install. Workflows provide their pinned nightly/driver
+ * revision and keep their normal cold install/build steps; warm runs restore
+ * the cargo-dylint/dylint-link binaries plus the compatible driver directory.
+ */
+export interface DylintCachePlan {
+  enabled: boolean;
+  key: string;
+  paths: string[];
+  driverPath: string;
+  hostTriple: string;
+  toolchain: string;
+  driverRev: string;
+  cargoDylintVersion: string;
+  dylintLinkVersion: string;
+}
+
+/**
  * Full resolved state from resolve-setup. Drives every downstream step.
  *
  * This is the single source of truth produced by resolveSetup() and consumed
@@ -266,6 +292,7 @@ export interface ResolveResult {
   buildCache: BuildCachePlan;
   targetCache: TargetCachePlan;
   cargoRegistryCache: CargoRegistryCachePlan;
+  dylintCache: DylintCachePlan;
   // Per-lane cross-compile tool caches (setup-soldr#106). One entry per
   // declared `cross-targets` triple; empty when `cross-targets` unset or
   // `cross-tool=none`.

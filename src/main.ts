@@ -246,6 +246,9 @@ export async function run(): Promise<void> {
   core.saveState("cargoRegistryCacheEnabled", result.cargoRegistryCache.enabled ? "true" : "false");
   core.saveState("cargoRegistryCacheExactHit", "false");
   core.saveState("cargoRegistryCacheMatchedKey", "");
+  core.saveState("dylintCacheEnabled", result.dylintCache.enabled ? "true" : "false");
+  core.saveState("dylintCacheExactHit", "false");
+  core.saveState("dylintCacheMatchedKey", "");
 
   // ---- parallel restores ----
   // setup-cache, target-cache, build-cache, and cargo-registry write to
@@ -465,6 +468,41 @@ export async function run(): Promise<void> {
     });
   })();
 
+  const dylintRestorePromise = (async (): Promise<void> => {
+    if (!result.dylintCache.enabled) return;
+    const t0 = Date.now();
+    const restore = await restoreCacheSafe(
+      result.dylintCache.paths,
+      result.dylintCache.key,
+      [],
+      logger,
+    );
+    core.setOutput("dylint-cache-hit", restore.hit ? "true" : "false");
+    core.setOutput("dylint-cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
+    core.setOutput("dylint_cache_hit", restore.hit ? "true" : "false");
+    core.setOutput("dylint_cache_matched_key", restore.matchedKey);
+    core.exportVariable("SETUP_SOLDR_DYLINT_CACHE_HIT", restore.hit ? "true" : "false");
+    core.exportVariable("SETUP_SOLDR_DYLINT_CACHE_MATCHED_KEY", restore.matchedKey);
+    core.saveState("dylintCacheExactHit", restore.hit ? "true" : "false");
+    core.saveState("dylintCacheMatchedKey", restore.matchedKey);
+    statsCollector.record({
+      label: "dylint-cache",
+      operation: "restore",
+      hit: restore.hit,
+      key: result.dylintCache.key,
+      matchedKey: restore.matchedKey,
+      restoreKeys: [],
+      archiveBytes: null,
+      inflatedBytes: null,
+      fileCount: null,
+      durationMs: Date.now() - t0,
+      timestamp: new Date().toISOString(),
+    });
+    logger.log(
+      `dylint-cache: key=${result.dylintCache.key} hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`,
+    );
+  })();
+
   // Promise.all — each IIFE wraps its own errors via restoreCacheSafe and
   // try/catches, so this should only see rejections for genuine programming
   // bugs.
@@ -473,6 +511,7 @@ export async function run(): Promise<void> {
     targetRestorePromise,
     buildRestorePromise,
     cargoRegistryRestorePromise,
+    dylintRestorePromise,
   ]);
   await finishPhase("parallel-restore");
 
