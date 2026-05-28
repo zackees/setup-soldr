@@ -432,8 +432,15 @@ export async function resolveSetup(
   }
   const buildCachePrefix = `setup-soldr-buildcache-v2-${runnerOs}-${runnerArch}`;
   const buildCacheToolchainPrefix = `${buildCachePrefix}-${digest}-`;
-  let buildCacheKey = `${buildCacheToolchainPrefix}${githubSha}`;
-  let buildCacheParentKey = parentSha ? `${buildCacheToolchainPrefix}${parentSha}` : "";
+  // Coarse, content-addressed build-cache key (setup-soldr#237). The actual
+  // key is assembled below, once `cargoLockHash` is known. It is deliberately
+  // NOT keyed on the commit SHA or `cache-key-suffix`: zccache's store is
+  // content-addressed, so a single shared entry per (platform, toolchain,
+  // Cargo.lock) lets every job and every commit warm-reuse it. Keying on the
+  // SHA exact-missed on every commit, and the per-suffix restore-key fallback
+  // then restored a *different* job's archive (e.g. an `msrv` job loading a
+  // `-dylint` cache) → ~0% zccache hits. See the "Coarse keys" rule in
+  // CLAUDE.md.
 
   // ---- target cache ----
   const targetDirInput = inputs.targetDir.trim() || "target";
@@ -445,6 +452,14 @@ export async function resolveSetup(
   makeDirs(targetCachePath);
   const lockfilePath = resolveLockfilePath(workspace, targetCachePath, inputs.lockfile);
   const cargoLockHash = lockfilePath ? await shortFileHash(lockfilePath, "no-lock") : "no-lock";
+
+  // setup-soldr#237: coarse build-cache key — platform + toolchain (digest) +
+  // Cargo.lock only. No commit SHA, no cache-key-suffix, so all jobs sharing a
+  // toolchain restore one accumulating, content-addressed store and actually
+  // warm-hit. main.ts's restore ladder (toolchain prefix → os-arch prefix)
+  // still covers Cargo.lock changes.
+  const buildCacheKey = `${buildCacheToolchainPrefix}${cargoLockHash}`;
+  const buildCacheParentKey = "";
 
   const legacyTargetCacheModeInput = inputs.targetCacheMode;
   const legacyTargetCacheMode = normalizeLegacyTargetCacheMode(legacyTargetCacheModeInput, log);
@@ -543,12 +558,11 @@ export async function resolveSetup(
     targetCacheParentKey = parentSha ? `${targetCacheLockPrefix}${parentSha}` : "";
   }
 
-  if (suffix) {
-    buildCacheKey = `${buildCacheKey}-${sanitizedSuffix}`;
-    if (buildCacheParentKey) {
-      buildCacheParentKey = `${buildCacheParentKey}-${sanitizedSuffix}`;
-    }
-  }
+  // setup-soldr#237: the build-cache key intentionally does NOT include
+  // `cache-key-suffix`. Per-job suffixes fragmented the cache and made the
+  // restore-key fallback land on another job's archive (→ ~0% hits). The
+  // suffix still scopes the action-managed setup-cache (`cacheKey` above) and
+  // the target-cache, just not the content-addressed zccache build-cache.
 
   // ---- cargo registry cache ----
   const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "false");
