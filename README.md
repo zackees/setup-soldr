@@ -475,23 +475,23 @@ preferred for new workflows.
 | `prebuild-deps-flags` | Flags forwarded to `soldr cook`; default `--release`. Material flags are hashed into the cook cache key. |
 | `prebuild-deps-delta-cache` | Default `true`. With soldr `>=0.7.38`, restore/save the cook cache as a protobuf-backed base layer plus a smaller commit/build-shape delta layer. Set to `false` to use the legacy single cook archive. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
-| `target-cache-profile` | Thin-slice pruning policy for the `target/` cache. `thin-v1` (default) keeps `.rlib`/`.rmeta`/proc-macro outputs. `thin-v2` is the aggressive prune that keeps fingerprints + dep-info + final outputs only and relies on the zccache compilation cache to repopulate library bytes. See "Target cache profile" below before opting in. |
+| `target-cache-profile` | Thin-slice pruning policy for the `target/` cache when `target-cache: true` is enabled. `thin-v1` (default) keeps `.rlib`/`.rmeta`/proc-macro outputs. `thin-v2` is the aggressive prune that keeps fingerprints + dep-info + final outputs only and relies on the zccache compilation cache to repopulate library bytes. See "Target cache profile" below before opting in. |
 | `target-cache-strip-debuginfo` | Forward-compatible pass-through. When `true`, requests that soldr strip debug-info-bearing artifacts from the target-cache before saving. Requires soldr#237 to take effect; current soldr releases ignore the flag. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
 | `target-cache-include-incremental` | Forward-compatible pass-through. When `false`, requests that soldr exclude `target/*/incremental/` directories from the target-cache. Requires soldr#237 to take effect. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
 | `target-cache-include-build-script-binaries` | Forward-compatible pass-through. When `false`, requests that soldr exclude `target/*/build/*-{hash}/build-script-build` binaries from the target-cache. Requires soldr#237 to take effect. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
-| `cache-payload-warn-bytes` | Soft warning threshold for tar-backed cache saves before compression. Default `1GiB`; warnings include the largest files so runaway zccache payloads are diagnosable. |
+| `cache-payload-warn-bytes` | Soft warning threshold for tar-backed cache saves before compression. Default `512MiB`; warnings include the largest files and subtrees so runaway zccache payloads are diagnosable. |
 | `cache-payload-max-bytes` | Hard limit for tar-backed cache saves before compression. Default `2GiB`, which skips multi-GiB uploads by default; set `0` to disable. |
 | `cache-payload-oversize-action` | Behavior when `cache-payload-max-bytes` is exceeded. Default `skip` logs a warning and avoids the upload; `fail` treats the oversized payload as a post-step error. |
 | `cache-payload-top-n` | Number of largest files and directories retained in cache payload stats and summaries. Default `10`; set `0` to keep only aggregate counts. |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
-| `cargo-registry-cache` | When `true` (default), setup-soldr caches `~/.cargo/registry` directly as a fast-zstd `.tar.zst` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Requires zccache `>=1.4.4` (skip-flag support). Set to `false` to opt out and let zccache own the registry cache via its legacy gzip path. |
+| `cargo-registry-cache` | When `true`, setup-soldr caches `~/.cargo/registry` directly as a fast-zstd `.tar.zst` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Requires zccache `>=1.4.4` (skip-flag support). Default `false` keeps the default cache footprint small; opt in when registry restore timing beats upload/retention cost. |
 | `compile-cache-stats` | Controls compile-cache (zccache) diagnostic output. `none` suppresses all compile-cache info. `summarize` (default) renders a per-session totals table into `$GITHUB_STEP_SUMMARY` and emits scalar action outputs (hit rate, hits, misses, total). `detailed` adds per-extension and per-tool rollup tables and sets `compile-cache-rollups-json`. Requires soldr `>=0.7.22` for the typed `soldr cache report --json` payload; older releases fall back to a single-line note in the summary. |
 
 ### Legacy Compatibility Inputs
 
 | Input | Meaning |
 |---|---|
-| `target-cache` | Deprecated compatibility input. Set to `false` to disable Rust target artifact caching. |
+| `target-cache` | Deprecated compatibility input. Default `false` to keep the default cache footprint small. Set to `true` to enable Rust target artifact caching. |
 | `target-cache-mode` | Deprecated compatibility input translated into `build-cache-mode`: `hot` maps to `thin`, `full` maps to `full`, and `off` disables Rust target artifact caching. |
 
 ## Outputs
@@ -542,11 +542,12 @@ preferred for new workflows.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action keeps using the runner's existing `CARGO_HOME` unless `CARGO_HOME` is already set by the workflow. When `RUSTUP_HOME` is not explicitly set, setup-soldr prefers the runner's existing rustup home if it already satisfies the requested toolchain/components/targets; otherwise it falls back to a managed `RUSTUP_HOME` under the action cache root and rehydrates that state on later warm runs.
-- The action restores Soldr/zccache cache state by default so child branches can reuse parent-branch build state.
-- The default `build-cache-mode` is `once`, which maps to soldr/zccache full-target planning on a cold run but restores only the local rust-plan bundle on later hits. Use `build-cache-mode: thin` for the bounded dependency-artifact alternative, or `build-cache-mode: full` when you explicitly want normal whole-target restore/save behavior on every run.
-- In `once` mode, an exact rust-plan bundle hit skips the separate build-cache restore because the target bundle already rehydrates the warm artifacts needed for the following build.
+- The action restores Soldr/zccache build-cache state by default so child branches can reuse parent-branch compile artifacts without saving a large `target/` layer.
+- The default `build-cache-mode` is `once`, which maps to soldr/zccache full-target planning for the build-cache layer. The separate target-cache layer is now default-off; set `target-cache: true` when a workflow has measured that the rust-plan bundle pays for its cache footprint.
+- When `target-cache: true` and `build-cache-mode: once` are combined, an exact rust-plan bundle hit skips the separate build-cache restore because the target bundle already rehydrates the warm artifacts needed for the following build.
 - setup-soldr now emits soft target-cache footprint budgets by mode: `once` warns above `1 GiB` or `8000` files, `thin` warns above `512 MiB` or `4000` files, and `full` warns above `2 GiB` or `12000` files.
 - When the restored target-cache footprint exceeds that soft budget, the setup step emits a warning and reports `target-cache-budget-status=over-soft-budget:...` so workflows can spot cache shapes that are unlikely to stay fast.
+- During build-cache saves, setup-soldr excludes zccache private-daemon artifact payloads (`zccache/private/*/artifacts/**`) and loose diagnostic files (`*.jsonl`, `*.log`, `*.txt`, `*.out`, `*.err`, `*.stdout`, `*.stderr`, `*.trace`) from the zccache cache root. Public `zccache/artifacts/**` payloads and index files remain eligible for save.
 - setup-soldr also emits `setup-duration-seconds` plus a JSON `setup-phase-summary` output so warm-path investigations can compare cache restore time against toolchain/install/verify overhead.
 - During post-job finalization, setup-soldr writes a GitHub step summary with restore/save outcomes for the setup, target, build, and Cargo registry cache layers. When soldr emits `last-session-stats.json`, the summary includes zccache hit/miss counts, hit rate, compilation count, non-cacheable count, errors, and the stats file path.
 - zccache is the artifact cache authority; soldr interprets the Rust build and passes zccache a structured Rust artifact plan.
@@ -584,16 +585,16 @@ workflow should rely only on target/build/cache layers.
 
 ## Cache-layer policy
 
-The action keeps target artifacts as the primary warm path. Companion layers are
-useful only when their save cost, restore cost, and hit rate prove they pay back
-for the current workload.
+The action keeps the default cache path small: zccache build-cache and soldr-cook
+stay on, while the largest optional payloads must be opted into after measuring
+save cost, restore cost, and hit rate for the current workload.
 
 | Layer | Default policy | Benchmark expectation |
 |---|---|---|
-| `target` / `build-cache-mode: once` | Primary warm path. | Should show low warm wall time and roughly one-hit payback after save cost. |
-| `soldr-cook` | Long-enduring dependency prebuild cache; skipped when target-cache already covers the same lockfile/build shape. | Compare `cook`, `cook-production`, and `target` rows before changing defaults. |
-| `build` / zccache state | Companion layer. Gate retire/keep decisions on restored zccache hit rate. | Do not treat a low restore time as success if warm zccache stats still show zero hits. |
-| `cargo-registry` | Companion layer. Gate retire/keep decisions on multi-rep or real-cache data. | Should beat noise after save cost and should never stall without a bounded timeout artifact. |
+| `build` / zccache state | Default warm path. Private daemon artifact payloads and diagnostics are pruned before save. | Do not treat a low restore time as success if warm zccache stats still show zero hits. |
+| `soldr-cook` | Default dependency prebuild path; skipped only when an opted-in target-cache already covers the same lockfile/build shape. | Compare `cook`, `cook-production`, and target-cache rows before changing defaults. |
+| `target` / `target-cache: true` | Opt-in large warm path. | Should show low warm wall time and roughly one-hit payback after save cost. |
+| `cargo-registry` | Opt-in companion layer. Gate keep/retire decisions on multi-run or real-cache data. | Should beat noise after save cost and should never stall without a bounded timeout artifact. |
 | `setup-cache` | Mechanics/install layer. | Report save/restore mechanics separately from build warm speedup. |
 | `soldr-mini` | Mechanics/install layer. | Report save/restore mechanics separately from build warm speedup. |
 | `solo-toolchain` | Delta-only and opt-in. | Default stable on hosted runners should produce an empty or tiny delta. |

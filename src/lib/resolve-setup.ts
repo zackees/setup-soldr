@@ -398,7 +398,10 @@ export async function resolveSetup(
   // follow-up.
   const cacheUmbrellaEnabled = !isFalsy(inputs.cache.trim() || "true");
 
-  const targetCacheInputRaw = inputs.targetCache.trim() || "true";
+  const explicitTargetCacheInput = inputs.targetCache.trim();
+  const targetCacheInputRaw =
+    explicitTargetCacheInput ||
+    (legacyTargetCacheMode && legacyTargetCacheMode !== "off" ? "true" : "false");
   const targetCacheRequested =
     cacheUmbrellaEnabled &&
     !isFalsy(targetCacheInputRaw) &&
@@ -488,7 +491,7 @@ export async function resolveSetup(
   }
 
   // ---- cargo registry cache ----
-  const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "true");
+  const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "false");
   const cargoRegistryCachePath = path.join(cargoHome, "registry");
   // setup-soldr#102: bundle additional `$CARGO_HOME` siblings into the same
   // cargo-registry archive so we close the cache-retention gaps without

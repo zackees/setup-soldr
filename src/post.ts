@@ -12,7 +12,7 @@ import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import * as core from "@actions/core";
 import * as cache from "@actions/cache";
-import { compressCache } from "./lib/cache-compress.js";
+import { compressCache, type CachePayloadProfile } from "./lib/cache-compress.js";
 import { saveSoloCache, stageDiffForSave, type RootMap as SoloRootMap } from "./lib/solo-toolchain-cache.js";
 import type { SnapshotDiff } from "./lib/toolchain-snapshot.js";
 import { saveCookCache, saveLayeredCookCache } from "./lib/cook-cache.js";
@@ -281,7 +281,7 @@ function resolveCachePayloadPolicy(inputs: RawInputs, log: (msg: string) => void
     );
   }
   return {
-    warnBytes: parseByteCount(inputs.cachePayloadWarnBytes || "1GiB", "cache-payload-warn-bytes", log),
+    warnBytes: parseByteCount(inputs.cachePayloadWarnBytes || "512MiB", "cache-payload-warn-bytes", log),
     maxBytes: parseByteCount(inputs.cachePayloadMaxBytes, "cache-payload-max-bytes", log),
     oversizeAction,
     topN: parseTopN(inputs.cachePayloadTopN, log),
@@ -310,9 +310,10 @@ async function saveOne(opts: {
    * to `registry/` without a new cache layer — setup-soldr#102.
    */
   extraBasenames?: string[];
+  payloadProfile?: CachePayloadProfile;
   payloadPolicy: CachePayloadPolicy;
 }): Promise<CacheSaveResultWithStats> {
-  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadPolicy } = opts;
+  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadProfile, payloadPolicy } = opts;
   const withStats = (r: CacheSaveResult): CacheSaveResultWithStats =>
     Object.assign(r, {
       archiveBytes: null,
@@ -345,6 +346,7 @@ async function saveOne(opts: {
       payloadMaxBytes: payloadPolicy.maxBytes,
       payloadOversizeAction: payloadPolicy.oversizeAction,
       payloadTopN: payloadPolicy.topN,
+      payloadProfile,
       label,
     });
     archivePath = result.archivePath;
@@ -671,6 +673,11 @@ function payloadEntryLines(entries: readonly { path: string; bytes: number }[]):
   return entries.map((entry) => `- \`${entry.path}\` - ${fmtBytes(entry.bytes)}`);
 }
 
+function payloadSubtreeLines(entries: CachePayloadCensus["topSubtrees"]): string[] {
+  if (entries.length === 0) return ["- none"];
+  return entries.map((entry) => `- \`${entry.path}\` - ${fmtBytes(entry.bytes)} across ${entry.files} files`);
+}
+
 function payloadSkipLines(payload: CachePayloadCensus): string[] {
   if (payload.skipped.length === 0) return ["- none"];
   const lines: string[] = [];
@@ -716,6 +723,10 @@ function cachePayloadAuditSection(summary: FinalCacheSummary): string[] {
     lines.push(
       "",
       `<details><summary>${label} largest payload entries</summary>`,
+      "",
+      "Largest subtrees:",
+      "",
+      ...payloadSubtreeLines(payload.topSubtrees),
       "",
       "Largest files:",
       "",
@@ -1161,6 +1172,7 @@ export async function run(): Promise<void> {
         label: "build-cache",
         debug: debugMode,
         log: debugLog,
+        payloadProfile: "zccache-build-cache",
         payloadPolicy,
       })
     : Object.assign(disabledSave(), {

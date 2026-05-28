@@ -92,6 +92,10 @@ test("planTarPayload filters transient files and reports largest payload entries
     assert.equal(plan.files, 2);
     assert.deepEqual(plan.manifestEntries.sort(), ["cache/large.bin", "cache/nested/small.txt"]);
     assert.deepEqual(plan.topFiles.map((entry) => entry.path), ["cache/large.bin", "cache/nested/small.txt"]);
+    assert.deepEqual(plan.topSubtrees.map((entry) => [entry.path, entry.bytes, entry.files]), [
+      ["cache", 10, 1],
+      ["cache/nested", 5, 1],
+    ]);
     assert.equal(plan.topDirectories[0]?.path, "cache");
     assert.equal(plan.topDirectories[0]?.bytes, 15);
     const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry.count]));
@@ -124,6 +128,51 @@ test("planTarPayload excludes zccache diagnostic logs from cache saves", async (
     const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry]));
     assert.equal(skipped.get("diagnostic-log-dir")?.count, 1);
     assert.deepEqual(skipped.get("diagnostic-log-dir")?.samples, ["zccache/logs"]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("planTarPayload zccache build-cache profile trims private artifacts and loose diagnostics", async () => {
+  const root = mkTmp("payload-zccache-private-");
+  try {
+    const cache = path.join(root, "zccache");
+    const privateSession = path.join(cache, "private", "soldr-dev-123");
+    fs.mkdirSync(path.join(cache, "artifacts"), { recursive: true });
+    fs.mkdirSync(path.join(privateSession, "artifacts"), { recursive: true });
+    fs.mkdirSync(path.join(privateSession, "state"), { recursive: true });
+    fs.writeFileSync(path.join(cache, "artifacts", "public-hash"), Buffer.alloc(11));
+    fs.writeFileSync(path.join(cache, "index.bin"), Buffer.alloc(13));
+    fs.writeFileSync(path.join(privateSession, "artifacts", "private-hash"), Buffer.alloc(101));
+    fs.writeFileSync(path.join(privateSession, "state", "index.bin"), Buffer.alloc(17));
+    fs.writeFileSync(path.join(privateSession, "state", "debug.txt"), Buffer.alloc(19));
+    fs.writeFileSync(path.join(cache, "last-session.jsonl"), Buffer.alloc(23));
+
+    const plan = await planTarPayload({
+      parent: root,
+      inputBasenames: ["zccache"],
+      topN: 5,
+      profile: "zccache-build-cache",
+    });
+
+    assert.equal(plan.bytes, 41);
+    assert.equal(plan.files, 3);
+    assert.deepEqual(plan.manifestEntries.sort(), [
+      "zccache/artifacts/public-hash",
+      "zccache/index.bin",
+      "zccache/private/soldr-dev-123/state/index.bin",
+    ]);
+    assert.deepEqual(plan.topSubtrees.map((entry) => [entry.path, entry.bytes, entry.files]), [
+      ["zccache/private/soldr-dev-123", 17, 1],
+      ["zccache", 13, 1],
+      ["zccache/artifacts", 11, 1],
+    ]);
+    const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry]));
+    assert.equal(skipped.get("zccache-private-artifacts")?.count, 1);
+    assert.deepEqual(skipped.get("zccache-private-artifacts")?.samples, [
+      "zccache/private/soldr-dev-123/artifacts",
+    ]);
+    assert.equal(skipped.get("diagnostic-log-file")?.count, 2);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

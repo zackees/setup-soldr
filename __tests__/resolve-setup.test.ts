@@ -240,7 +240,7 @@ test("thin build cache mode requires Cargo.lock", async () => {
 });
 
 test("full build cache mode restores target tree + bundle", async () => {
-  const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "full" });
+  const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "full", INPUT_TARGET_CACHE: "true" });
   const lines = (outputs["target_cache_paths"] ?? "").split("\n");
   assert.equal(lines.length, 2);
   assert.equal(outputs["target_cache_mode"], "full");
@@ -310,14 +310,14 @@ test("source ref changes setup cache key", async () => {
 // --- lockfile-only restore key ---
 
 test("lockfile prefix emitted for once mode", async () => {
-  const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "once" });
+  const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "once", INPUT_TARGET_CACHE: "true" });
   const prefix = outputs["target_cache_restore_key_lockfile"] ?? "";
   assert.match(prefix, /^setup-soldr-targetcache-once-v1-linux-x64-/);
   assert.ok(prefix.endsWith("-"));
 });
 
 test("lockfile prefix emitted for full mode", async () => {
-  const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "full" });
+  const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "full", INPUT_TARGET_CACHE: "true" });
   const prefix = outputs["target_cache_restore_key_lockfile"] ?? "";
   assert.match(prefix, /^setup-soldr-targetcache-full-v1-linux-x64-/);
 });
@@ -325,10 +325,10 @@ test("lockfile prefix emitted for full mode", async () => {
 test("lockfile prefix stable across manifest changes", async () => {
   const { outputs: a } = await run({
     files: { "Cargo.toml": "[package]\nname='a'\nversion='0.1.0'\n" },
-  }, { INPUT_BUILD_CACHE_MODE: "once" });
+  }, { INPUT_BUILD_CACHE_MODE: "once", INPUT_TARGET_CACHE: "true" });
   const { outputs: b } = await run({
     files: { "Cargo.toml": "[package]\nname='a'\nversion='0.1.0'\n[[bin]]\nname='x'\npath='src/main.rs'\n" },
-  }, { INPUT_BUILD_CACHE_MODE: "once" });
+  }, { INPUT_BUILD_CACHE_MODE: "once", INPUT_TARGET_CACHE: "true" });
   assert.notEqual(a["target_cache_restore_key_lock"], b["target_cache_restore_key_lock"]);
   assert.equal(
     a["target_cache_restore_key_lockfile"],
@@ -337,8 +337,8 @@ test("lockfile prefix stable across manifest changes", async () => {
 });
 
 test("lockfile prefix changes when lockfile contents change", async () => {
-  const { outputs: a } = await run({ lockfileContents: "# baseline\n" }, { INPUT_BUILD_CACHE_MODE: "once" });
-  const { outputs: b } = await run({ lockfileContents: "# different\n" }, { INPUT_BUILD_CACHE_MODE: "once" });
+  const { outputs: a } = await run({ lockfileContents: "# baseline\n" }, { INPUT_BUILD_CACHE_MODE: "once", INPUT_TARGET_CACHE: "true" });
+  const { outputs: b } = await run({ lockfileContents: "# different\n" }, { INPUT_BUILD_CACHE_MODE: "once", INPUT_TARGET_CACHE: "true" });
   assert.notEqual(
     a["target_cache_restore_key_lockfile"],
     b["target_cache_restore_key_lockfile"],
@@ -355,6 +355,7 @@ test("lockfile prefix empty when target cache disabled", async () => {
 test("lockfile prefix includes cache-key suffix fragment", async () => {
   const { outputs } = await run({}, {
     INPUT_BUILD_CACHE_MODE: "once",
+    INPUT_TARGET_CACHE: "true",
     INPUT_CACHE_KEY_SUFFIX: "myjob",
   });
   const prefix = outputs["target_cache_restore_key_lockfile"] ?? "";
@@ -400,7 +401,7 @@ test("cache-key-suffix works via kebab-case env (production form)", async () => 
 });
 
 test("target_cache_key always derived from narrow lock prefix + SHA", async () => {
-  const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "once" });
+  const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "once", INPUT_TARGET_CACHE: "true" });
   const key = outputs["target_cache_key"] ?? "";
   const narrow = outputs["target_cache_restore_key_lock"] ?? "";
   assert.ok(key.startsWith(narrow), `expected ${key} to start with ${narrow}`);
@@ -919,6 +920,17 @@ test("rust-backtrace rejects unknown values", async () => {
 
 // --- cache umbrella ---
 
+test("default cache policy keeps only the zccache build cache enabled", async () => {
+  const { result } = await run();
+  assert.equal(result.buildCache.mode, "once");
+  assert.equal(result.targetCache.enabled, false);
+  assert.equal(result.cargoRegistryCache.enabled, false);
+  assert.equal(result.envExports["SETUP_SOLDR_BUILD_CACHE_MODE"], "once");
+  assert.equal(result.envExports["SOLDR_BUILD_CACHE_MODE"], "full");
+  assert.equal(result.envExports["SOLDR_TARGET_CACHE_MODE"], "off");
+  assert.equal(result.envExports["SOLDR_SKIP_CARGO_REGISTRY_SAVE"], undefined);
+});
+
 test("cache=false cascades to disable build-cache, target-cache, and cargo-registry-cache", async () => {
   const { result } = await run({}, {
     INPUT_CACHE: "false",
@@ -970,7 +982,7 @@ test("cache-shutdown-on-idle rejects malformed values", async () => {
 test(
   "cargo-registry-cache extraBasenames bundles .global-cache + git (#102 PR 1-2)",
   async () => {
-    const { result } = await run();
+    const { result } = await run({}, { INPUT_CARGO_REGISTRY_CACHE: "true" });
     const extras = result.cargoRegistryCache.extraBasenames;
     assert.ok(
       extras.includes(".global-cache"),
@@ -989,7 +1001,7 @@ test(
     // The extras are basenames, not full paths — compressCache joins them
     // against dirname(path). Verify the parent is $CARGO_HOME so the saved
     // archive lays out as <cargoHome>/{registry,.global-cache,git}/.
-    const { result } = await run();
+    const { result } = await run({}, { INPUT_CARGO_REGISTRY_CACHE: "true" });
     const parent = path.dirname(result.cargoRegistryCache.path);
     assert.equal(
       parent,
@@ -1006,7 +1018,7 @@ test(
     // (prefix + lock hash + toolchain digest + sha + suffix) cannot
     // incorporate the new path names or warm caches on existing consumers
     // would invalidate.
-    const { result } = await run();
+    const { result } = await run({}, { INPUT_CARGO_REGISTRY_CACHE: "true" });
     // 1) Key shape: prefix `setup-soldr-cargoregistry-v1-<os>-<arch>-<lock>-<digest>-<sha>`.
     const key = result.cargoRegistryCache.key;
     assert.match(
