@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.9.11 - 2026-05-28
+
+- Add the cleanup sub-action for workflows that need to quiesce soldr/zccache
+  before post-job cache saves.
+- Formalize `prebuild-deps: soldr-cook`, including layered cook cache support
+  for soldr `0.7.38+`.
+- Harden the real-cache benchmark workflow so warm/cold setup-soldr paths use
+  real GitHub cache actions and stable cook-production shaping.
 - Default to soldr `0.7.42`, and seed zccache from the zccache trio bundled
   inside soldr release archives before using the legacy cross-repo zccache
   release fallback.
