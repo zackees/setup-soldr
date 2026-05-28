@@ -432,15 +432,14 @@ export async function resolveSetup(
   }
   const buildCachePrefix = `setup-soldr-buildcache-v2-${runnerOs}-${runnerArch}`;
   const buildCacheToolchainPrefix = `${buildCachePrefix}-${digest}-`;
-  // Coarse, content-addressed build-cache key (setup-soldr#237). The actual
-  // key is assembled below, once `cargoLockHash` is known. It is deliberately
-  // NOT keyed on the commit SHA or `cache-key-suffix`: zccache's store is
-  // content-addressed, so a single shared entry per (platform, toolchain,
-  // Cargo.lock) lets every job and every commit warm-reuse it. Keying on the
-  // SHA exact-missed on every commit, and the per-suffix restore-key fallback
-  // then restored a *different* job's archive (e.g. an `msrv` job loading a
-  // `-dylint` cache) → ~0% zccache hits. See the "Coarse keys" rule in
-  // CLAUDE.md.
+  // Build-cache key (setup-soldr#237): platform + toolchain (digest) + per-job
+  // suffix + Cargo.lock — but NOT the commit SHA. Dropping the SHA is the fix:
+  // it made the key exact-miss on every commit, after which the fallback grabbed
+  // a *different* job's archive → 0 hits. We KEEP the per-job suffix (and scope
+  // the fallback to it, see the BuildCachePlan below) so each job restores its
+  // OWN store, warm across commits — sharing one store across jobs that compile
+  // different things (check vs doc vs test) was over-broad and still hit 0%.
+  // Assembled below once `cargoLockHash` is known.
 
   // ---- target cache ----
   const targetDirInput = inputs.targetDir.trim() || "target";
@@ -453,12 +452,12 @@ export async function resolveSetup(
   const lockfilePath = resolveLockfilePath(workspace, targetCachePath, inputs.lockfile);
   const cargoLockHash = lockfilePath ? await shortFileHash(lockfilePath, "no-lock") : "no-lock";
 
-  // setup-soldr#237: coarse build-cache key — platform + toolchain (digest) +
-  // Cargo.lock only. No commit SHA, no cache-key-suffix, so all jobs sharing a
-  // toolchain restore one accumulating, content-addressed store and actually
-  // warm-hit. main.ts's restore ladder (toolchain prefix → os-arch prefix)
-  // still covers Cargo.lock changes.
-  const buildCacheKey = `${buildCacheToolchainPrefix}${cargoLockHash}`;
+  // setup-soldr#237: per-job, SHA-independent build-cache key. The per-job
+  // suffix keeps each job restoring its own store; dropping the SHA makes it
+  // warm across commits. The fallback (BuildCachePlan below) is scoped to this
+  // job prefix only, never another job's store.
+  const buildCacheJobPrefix = `${buildCacheToolchainPrefix}${sanitizedSuffix ? `${sanitizedSuffix}-` : ""}`;
+  const buildCacheKey = `${buildCacheJobPrefix}${cargoLockHash}`;
   const buildCacheParentKey = "";
 
   const legacyTargetCacheModeInput = inputs.targetCacheMode;
@@ -830,8 +829,11 @@ export async function resolveSetup(
   const buildCache: BuildCachePlan = {
     key: buildCacheKey,
     restoreKeyParent: buildCacheParentKey,
-    restoreKeyToolchain: buildCacheToolchainPrefix,
-    restoreKeyOsArch: `${buildCachePrefix}-`,
+    // setup-soldr#237: job-scoped fallback only — newest entry for THIS job at
+    // any Cargo.lock, never another job's store. The old bare toolchain/os-arch
+    // restore-keys matched any job and caused cross-job restores → 0 hits.
+    restoreKeyToolchain: buildCacheJobPrefix,
+    restoreKeyOsArch: "",
     path: zccacheCacheDir,
     mode: buildCacheMode,
   };
