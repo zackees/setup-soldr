@@ -462,3 +462,276 @@ export function renderMultiSessionRollup(rollup: MultiSessionRollup): string {
   lines.push("</details>");
   return lines.join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// Cook reuse-mismatch detection (issue #235).
+// ---------------------------------------------------------------------------
+
+/**
+ * Inputs for the post-phase "cook produced no reuse" check. Every value is
+ * read post-hoc in post.ts: setup-soldr cannot know at cook time which
+ * profile or toolchain the consumer's later cargo step will use, so the
+ * zero-reuse fingerprint is only observable after the job's compiles ran.
+ */
+export interface CookReuseMismatchInput {
+  /** prebuild-deps cook was enabled this run. */
+  cookEnabled: boolean;
+  /** Cooked deps were present this run — cook ran (cold) or its cache restored (warm). */
+  cookProducedDeps: boolean;
+  /** Job-wide compile-cache hit count, or null when unavailable. */
+  hits: number | null;
+  /** Job-wide compile-cache miss count, or null when unavailable. */
+  misses: number | null;
+  /** Raw `prebuild-deps-flags` value, used only to tailor the suggested fix. */
+  cookFlags: string;
+}
+
+export interface CookReuseMismatch {
+  /** True when cook supplied deps but the session reused none of them. */
+  mismatch: boolean;
+  /** Actionable one-paragraph warning; empty string when !mismatch. */
+  message: string;
+}
+
+/** True when the cook flag string requests a non-dev (release-ish) profile. */
+export function cookFlagsRequestRelease(flags: string): boolean {
+  const tokens = flags.trim().split(/\s+/).filter((t) => t.length > 0);
+  if (tokens.includes("--release")) return true;
+  const i = tokens.indexOf("--profile");
+  if (i >= 0) {
+    const profile = tokens[i + 1];
+    if (profile && profile !== "dev" && profile !== "test") return true;
+  }
+  return false;
+}
+
+/**
+ * Detect the "warm/ran cook, zero downstream reuse" fingerprint: cook
+ * supplied dependency artifacts this run, yet the compile-cache session
+ * recorded misses with zero hits. That means none of the cooked artifacts
+ * matched what the job actually compiled — almost always a profile,
+ * toolchain, or emit-kind mismatch between cook and the job's cargo step.
+ *
+ * Pure + tolerant: missing counters (null) yield no signal rather than a
+ * false positive, so a job whose stats couldn't be read stays quiet. Only
+ * the unambiguous `hits === 0 && misses > 0` case fires, to keep CI quiet.
+ */
+export function detectCookReuseMismatch(input: CookReuseMismatchInput): CookReuseMismatch {
+  if (!input.cookEnabled || !input.cookProducedDeps) {
+    return { mismatch: false, message: "" };
+  }
+  const { hits, misses } = input;
+  if (hits === null || misses === null) return { mismatch: false, message: "" };
+  if (!(hits === 0 && misses > 0)) return { mismatch: false, message: "" };
+
+  const lead =
+    `soldr cook prebuilt dependencies, but this job's compile cache recorded ` +
+    `${misses} miss(es) and 0 hit(s) — none of the cooked artifacts were reused.`;
+  let cause: string;
+  if (cookFlagsRequestRelease(input.cookFlags)) {
+    cause =
+      ` cook ran with prebuild-deps-flags='${input.cookFlags.trim()}' (release profile), but ` +
+      `cargo check/clippy/doc/test compile in the dev (debug) profile, which is a different ` +
+      `cache key. Set prebuild-deps-flags: "" to cook in the debug profile so this job reuses ` +
+      `it, or prebuild-deps: none if the job compiles under a different toolchain (build-cache ` +
+      `still carries that work across runs).`;
+  } else {
+    cause =
+      ` This usually means the job compiled under a different rust toolchain or profile than ` +
+      `setup-soldr's cook (for example a nightly dylint/driver pass). cook cannot warm a ` +
+      `different-toolchain compile; rely on the build-cache layer there, or set ` +
+      `prebuild-deps: none to skip the unused cook.`;
+  }
+  return { mismatch: true, message: lead + cause };
+}
+
+// ---------------------------------------------------------------------------
+// Compile-cache activity verification (issue #227).
+//
+// A job that is *supposed* to exercise the compile cache but reports
+// `hits + misses == 0` either bypassed zccache (wrong RUSTC_WRAPPER, no
+// SOLDR_CACHE_DIR, missing shims) or the measurement is invalid (stats file
+// not found). Treating that as success silently launders a broken cache into
+// "warm-cache evidence". This opt-in guard turns the zero-count into a loud,
+// diagnosable signal while preserving legitimate bypass cases.
+// ---------------------------------------------------------------------------
+
+export type VerifyCompileCacheMode = "off" | "warn" | "error";
+
+export interface CompileCacheVerifyInput {
+  /** Parsed `verify-compile-cache` mode. */
+  mode: VerifyCompileCacheMode;
+  /** Action installed the real soldr (enable:true), not the passthrough stub. */
+  enabled: boolean;
+  /** build-cache layer is on (compile caching is expected this run). */
+  buildCacheEnabled: boolean;
+  /** `soldr cache report` status: ok / missing / unsupported / error. */
+  reportStatus: string;
+  hits: number | null;
+  misses: number | null;
+  /** Environment snapshot used to point at the likely bypass cause. */
+  env: {
+    rustcWrapper?: string;
+    soldrCacheDir?: string;
+    zccacheCacheDir?: string;
+    shimsDir?: string;
+    statsPath?: string;
+  };
+}
+
+export interface CompileCacheVerifyResult {
+  /** ok = cache observed work; invalid-measurement = zero-count; skipped = not checked. */
+  status: "ok" | "invalid-measurement" | "skipped";
+  /** Caller should fail the post step. */
+  fail: boolean;
+  /** Human-readable message (empty when status === "ok" or quietly skipped). */
+  message: string;
+}
+
+/** Parse the `verify-compile-cache` input into a mode. */
+export function parseVerifyCompileCacheMode(value: string): VerifyCompileCacheMode {
+  const v = value.trim().toLowerCase();
+  if (v === "error" || v === "fail" || v === "true" || v === "1" || v === "yes" || v === "on") {
+    return "error";
+  }
+  if (v === "warn" || v === "warning") return "warn";
+  return "off";
+}
+
+/**
+ * Verify the compile cache observed cacheable work. Pure: all I/O is hoisted
+ * into the `input` snapshot so this is unit-testable. Returns `skipped` for
+ * every legitimate bypass (mode off, passthrough stub, build-cache disabled,
+ * unreadable report, or null counters) so the guard never fails a job that
+ * wasn't supposed to compile.
+ */
+export function verifyCompileCacheActivity(
+  input: CompileCacheVerifyInput,
+): CompileCacheVerifyResult {
+  if (input.mode === "off") return { status: "skipped", fail: false, message: "" };
+  if (!input.enabled) {
+    return {
+      status: "skipped",
+      fail: false,
+      message: "verify-compile-cache: skipped (enable:false passthrough — no soldr to measure).",
+    };
+  }
+  if (!input.buildCacheEnabled) {
+    return {
+      status: "skipped",
+      fail: false,
+      message: "verify-compile-cache: skipped (build-cache disabled — compile caching opted out).",
+    };
+  }
+  if (input.reportStatus !== "ok") {
+    return {
+      status: "skipped",
+      fail: false,
+      message:
+        `verify-compile-cache: skipped (compile-cache report status '${input.reportStatus}' ` +
+        `— stats unavailable, nothing to verify).`,
+    };
+  }
+  if (input.hits === null || input.misses === null) {
+    return {
+      status: "skipped",
+      fail: false,
+      message: "verify-compile-cache: skipped (hit/miss counters unavailable).",
+    };
+  }
+  if (input.hits + input.misses > 0) {
+    return { status: "ok", fail: false, message: "" };
+  }
+
+  // hits + misses == 0 while compile caching was expected → bypass / invalid.
+  const checks: string[] = [];
+  const rw = input.env.rustcWrapper?.trim();
+  checks.push(
+    rw
+      ? `RUSTC_WRAPPER=${rw}`
+      : "RUSTC_WRAPPER is unset (cargo never routed compiles through the cache wrapper)",
+  );
+  checks.push(
+    input.env.soldrCacheDir?.trim()
+      ? `SOLDR_CACHE_DIR=${input.env.soldrCacheDir.trim()}`
+      : "SOLDR_CACHE_DIR is unset",
+  );
+  checks.push(
+    input.env.zccacheCacheDir?.trim()
+      ? `ZCCACHE_CACHE_DIR=${input.env.zccacheCacheDir.trim()}`
+      : "ZCCACHE_CACHE_DIR is unset",
+  );
+  if (input.env.shimsDir?.trim()) checks.push(`shims dir: ${input.env.shimsDir.trim()}`);
+  checks.push(
+    input.env.statsPath?.trim()
+      ? `stats file: ${input.env.statsPath.trim()}`
+      : "no per-session stats file was discovered",
+  );
+
+  const message =
+    "verify-compile-cache: compile cache recorded 0 hits and 0 misses, but compile caching " +
+    "was expected this run — the build was NOT routed through zccache (bypassed) or the " +
+    "measurement is invalid. This is treated as a failed cache measurement, not warm-cache " +
+    "evidence. Likely cause — inspect: " +
+    checks.join("; ") +
+    ". If this job intentionally compiles nothing (or runs under enable:false / build-cache:false), " +
+    "set verify-compile-cache: off or leave it unset.";
+
+  return { status: "invalid-measurement", fail: input.mode === "error", message };
+}
+
+// ---------------------------------------------------------------------------
+// Delta-aware build-cache save gating (issues #230 / #214).
+//
+// On a fallback (restore-key) hit the build-cache key differs from what was
+// restored, so the default behavior re-saves the whole (multi-GiB) payload —
+// even when the job compiled almost nothing new. On Windows that archive +
+// upload can dominate the job (#214). This gate skips the re-save when the
+// session's new-compile signal is below a threshold, but stays conservative:
+// it never blocks a cold seed (no restore) and never fires on an unreadable
+// counter, so a real cache can always be seeded.
+// ---------------------------------------------------------------------------
+
+export interface BuildCacheSaveGateInput {
+  /** A cache was restored this run (exact or restore-key fallback). */
+  restored: boolean;
+  /** zccache compilations recorded this session — the useful-delta proxy. */
+  newCompiles: number | null;
+  /** `build-cache-save-min-compiles`. <= 0 disables the gate (always save). */
+  minCompiles: number;
+}
+
+export interface BuildCacheSaveGate {
+  /** Skip the build-cache save. */
+  skip: boolean;
+  /** Reason text (measured delta + threshold) when skip; empty otherwise. */
+  reason: string;
+}
+
+/** Parse `build-cache-save-min-compiles` (default 1; empty → 1; clamped ≥ 0). */
+export function parseMinCompiles(value: string): number {
+  const trimmed = value.trim();
+  if (trimmed === "") return 1;
+  const n = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(n) || n < 0) return 1;
+  return n;
+}
+
+/**
+ * Decide whether to skip the build-cache save based on the useful compile
+ * delta. Pure. Skips only when: the gate is enabled (minCompiles > 0), a cache
+ * was restored (so skipping doesn't lose a cold seed), the compile count is
+ * known, and it is below the threshold.
+ */
+export function decideBuildCacheSave(input: BuildCacheSaveGateInput): BuildCacheSaveGate {
+  if (input.minCompiles <= 0) return { skip: false, reason: "" };
+  if (!input.restored) return { skip: false, reason: "" };
+  if (input.newCompiles === null) return { skip: false, reason: "" };
+  if (input.newCompiles < input.minCompiles) {
+    return {
+      skip: true,
+      reason: `${input.newCompiles} new compile(s) < build-cache-save-min-compiles=${input.minCompiles}`,
+    };
+  }
+  return { skip: false, reason: "" };
+}

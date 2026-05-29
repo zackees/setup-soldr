@@ -1069,3 +1069,297 @@ test("PR4 setMultiSessionOutputs: skips emission when sessionCount <= 1 (no fals
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------
+// #235 — cook reuse-mismatch detection.
+// ---------------------------------------------------------------------------
+
+interface CookMismatchModule {
+  detectCookReuseMismatch: (input: {
+    cookEnabled: boolean;
+    cookProducedDeps: boolean;
+    hits: number | null;
+    misses: number | null;
+    cookFlags: string;
+  }) => { mismatch: boolean; message: string };
+  cookFlagsRequestRelease: (flags: string) => boolean;
+}
+
+async function cookMod(): Promise<CookMismatchModule> {
+  return (await import("../src/lib/compile-cache-stats.js")) as unknown as CookMismatchModule;
+}
+
+test("#235 cookFlagsRequestRelease: detects release-profile flag shapes", async () => {
+  const { cookFlagsRequestRelease } = await cookMod();
+  assert.equal(cookFlagsRequestRelease("--release"), true);
+  assert.equal(cookFlagsRequestRelease("--release --target x86_64-unknown-linux-gnu"), true);
+  assert.equal(cookFlagsRequestRelease("--profile release"), true);
+  assert.equal(cookFlagsRequestRelease("--profile bench"), true);
+  assert.equal(cookFlagsRequestRelease(""), false);
+  assert.equal(cookFlagsRequestRelease("--profile dev"), false);
+  assert.equal(cookFlagsRequestRelease("--target x86_64-unknown-linux-gnu"), false);
+});
+
+test("#235 detectCookReuseMismatch: release cook + zero reuse fires with debug-profile hint", async () => {
+  const { detectCookReuseMismatch } = await cookMod();
+  // The #192 fingerprint: warm cook, 35 misses, 0 hits.
+  const r = detectCookReuseMismatch({
+    cookEnabled: true,
+    cookProducedDeps: true,
+    hits: 0,
+    misses: 35,
+    cookFlags: "--release",
+  });
+  assert.equal(r.mismatch, true);
+  assert.match(r.message, /35 miss/);
+  assert.match(r.message, /prebuild-deps-flags: ""/);
+  assert.match(r.message, /release profile/);
+});
+
+test("#235 detectCookReuseMismatch: debug cook + zero reuse fires with toolchain hint", async () => {
+  const { detectCookReuseMismatch } = await cookMod();
+  const r = detectCookReuseMismatch({
+    cookEnabled: true,
+    cookProducedDeps: true,
+    hits: 0,
+    misses: 12,
+    cookFlags: "",
+  });
+  assert.equal(r.mismatch, true);
+  assert.match(r.message, /different rust toolchain or profile/);
+  assert.match(r.message, /build-cache/);
+});
+
+test("#235 detectCookReuseMismatch: stays quiet when cook produced reuse", async () => {
+  const { detectCookReuseMismatch } = await cookMod();
+  const r = detectCookReuseMismatch({
+    cookEnabled: true,
+    cookProducedDeps: true,
+    hits: 40,
+    misses: 5,
+    cookFlags: "--release",
+  });
+  assert.equal(r.mismatch, false);
+  assert.equal(r.message, "");
+});
+
+test("#235 detectCookReuseMismatch: no signal when cook disabled or produced no deps", async () => {
+  const { detectCookReuseMismatch } = await cookMod();
+  assert.equal(
+    detectCookReuseMismatch({
+      cookEnabled: false,
+      cookProducedDeps: true,
+      hits: 0,
+      misses: 9,
+      cookFlags: "--release",
+    }).mismatch,
+    false,
+  );
+  assert.equal(
+    detectCookReuseMismatch({
+      cookEnabled: true,
+      cookProducedDeps: false,
+      hits: 0,
+      misses: 9,
+      cookFlags: "--release",
+    }).mismatch,
+    false,
+  );
+});
+
+test("#235 detectCookReuseMismatch: tolerant of missing counters (no false positive)", async () => {
+  const { detectCookReuseMismatch } = await cookMod();
+  assert.equal(
+    detectCookReuseMismatch({
+      cookEnabled: true,
+      cookProducedDeps: true,
+      hits: null,
+      misses: null,
+      cookFlags: "--release",
+    }).mismatch,
+    false,
+  );
+  // misses present but zero → nothing was compiled, so no mismatch.
+  assert.equal(
+    detectCookReuseMismatch({
+      cookEnabled: true,
+      cookProducedDeps: true,
+      hits: 0,
+      misses: 0,
+      cookFlags: "--release",
+    }).mismatch,
+    false,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// #227 — compile-cache activity verification (zero-count guard).
+// ---------------------------------------------------------------------------
+
+interface VerifyModule {
+  parseVerifyCompileCacheMode: (value: string) => "off" | "warn" | "error";
+  verifyCompileCacheActivity: (input: {
+    mode: "off" | "warn" | "error";
+    enabled: boolean;
+    buildCacheEnabled: boolean;
+    reportStatus: string;
+    hits: number | null;
+    misses: number | null;
+    env: {
+      rustcWrapper?: string;
+      soldrCacheDir?: string;
+      zccacheCacheDir?: string;
+      shimsDir?: string;
+      statsPath?: string;
+    };
+  }) => { status: "ok" | "invalid-measurement" | "skipped"; fail: boolean; message: string };
+}
+
+async function verifyMod(): Promise<VerifyModule> {
+  return (await import("../src/lib/compile-cache-stats.js")) as unknown as VerifyModule;
+}
+
+const okEnv = { rustcWrapper: "/usr/bin/zccache", soldrCacheDir: "/c/soldr", zccacheCacheDir: "/c/z" };
+
+test("#227 parseVerifyCompileCacheMode: maps aliases", async () => {
+  const { parseVerifyCompileCacheMode } = await verifyMod();
+  assert.equal(parseVerifyCompileCacheMode(""), "off");
+  assert.equal(parseVerifyCompileCacheMode("off"), "off");
+  assert.equal(parseVerifyCompileCacheMode("warn"), "warn");
+  assert.equal(parseVerifyCompileCacheMode("warning"), "warn");
+  assert.equal(parseVerifyCompileCacheMode("error"), "error");
+  assert.equal(parseVerifyCompileCacheMode("true"), "error");
+  assert.equal(parseVerifyCompileCacheMode("YES"), "error");
+});
+
+test("#227 verifyCompileCacheActivity: zero counts in error mode fails with bypass diagnostics", async () => {
+  const { verifyCompileCacheActivity } = await verifyMod();
+  const r = verifyCompileCacheActivity({
+    mode: "error",
+    enabled: true,
+    buildCacheEnabled: true,
+    reportStatus: "ok",
+    hits: 0,
+    misses: 0,
+    env: { soldrCacheDir: "/c/soldr", zccacheCacheDir: "/c/z", statsPath: "/c/z/logs/x.json" },
+  });
+  assert.equal(r.status, "invalid-measurement");
+  assert.equal(r.fail, true);
+  assert.match(r.message, /0 hits and 0 misses/);
+  assert.match(r.message, /RUSTC_WRAPPER is unset/);
+});
+
+test("#227 verifyCompileCacheActivity: zero counts in warn mode does not fail", async () => {
+  const { verifyCompileCacheActivity } = await verifyMod();
+  const r = verifyCompileCacheActivity({
+    mode: "warn",
+    enabled: true,
+    buildCacheEnabled: true,
+    reportStatus: "ok",
+    hits: 0,
+    misses: 0,
+    env: okEnv,
+  });
+  assert.equal(r.status, "invalid-measurement");
+  assert.equal(r.fail, false);
+});
+
+test("#227 verifyCompileCacheActivity: nonzero counts pass", async () => {
+  const { verifyCompileCacheActivity } = await verifyMod();
+  const r = verifyCompileCacheActivity({
+    mode: "error",
+    enabled: true,
+    buildCacheEnabled: true,
+    reportStatus: "ok",
+    hits: 3,
+    misses: 7,
+    env: okEnv,
+  });
+  assert.equal(r.status, "ok");
+  assert.equal(r.fail, false);
+  assert.equal(r.message, "");
+});
+
+test("#227 verifyCompileCacheActivity: legitimate bypasses skip, never fail", async () => {
+  const { verifyCompileCacheActivity } = await verifyMod();
+  const base = {
+    buildCacheEnabled: true,
+    reportStatus: "ok",
+    hits: 0,
+    misses: 0,
+    env: okEnv,
+  } as const;
+  // mode off
+  assert.equal(verifyCompileCacheActivity({ ...base, mode: "off", enabled: true }).status, "skipped");
+  // passthrough (enable:false)
+  const pass = verifyCompileCacheActivity({ ...base, mode: "error", enabled: false });
+  assert.equal(pass.status, "skipped");
+  assert.equal(pass.fail, false);
+  // build-cache disabled
+  assert.equal(
+    verifyCompileCacheActivity({ ...base, mode: "error", enabled: true, buildCacheEnabled: false }).status,
+    "skipped",
+  );
+  // report not ok
+  assert.equal(
+    verifyCompileCacheActivity({ ...base, mode: "error", enabled: true, reportStatus: "missing" }).status,
+    "skipped",
+  );
+  // null counters
+  assert.equal(
+    verifyCompileCacheActivity({ ...base, mode: "error", enabled: true, hits: null, misses: null }).status,
+    "skipped",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// #230 / #214 — delta-aware build-cache save gate.
+// ---------------------------------------------------------------------------
+
+interface GateModule {
+  parseMinCompiles: (value: string) => number;
+  decideBuildCacheSave: (input: {
+    restored: boolean;
+    newCompiles: number | null;
+    minCompiles: number;
+  }) => { skip: boolean; reason: string };
+}
+
+async function gateMod(): Promise<GateModule> {
+  return (await import("../src/lib/compile-cache-stats.js")) as unknown as GateModule;
+}
+
+test("#230 parseMinCompiles: empty/invalid → 1, clamps negative, honors 0", async () => {
+  const { parseMinCompiles } = await gateMod();
+  assert.equal(parseMinCompiles(""), 1);
+  assert.equal(parseMinCompiles("  "), 1);
+  assert.equal(parseMinCompiles("abc"), 1);
+  assert.equal(parseMinCompiles("-3"), 1);
+  assert.equal(parseMinCompiles("0"), 0);
+  assert.equal(parseMinCompiles("10"), 10);
+});
+
+test("#230 decideBuildCacheSave: skips warm fallback with zero new compiles", async () => {
+  const { decideBuildCacheSave } = await gateMod();
+  const r = decideBuildCacheSave({ restored: true, newCompiles: 0, minCompiles: 1 });
+  assert.equal(r.skip, true);
+  assert.match(r.reason, /0 new compile/);
+  assert.match(r.reason, /min-compiles=1/);
+});
+
+test("#230 decideBuildCacheSave: saves when new compiles meet threshold", async () => {
+  const { decideBuildCacheSave } = await gateMod();
+  assert.equal(decideBuildCacheSave({ restored: true, newCompiles: 5, minCompiles: 1 }).skip, false);
+  // raised threshold skips a small delta
+  assert.equal(decideBuildCacheSave({ restored: true, newCompiles: 5, minCompiles: 10 }).skip, true);
+});
+
+test("#230 decideBuildCacheSave: never gates a cold seed, disabled gate, or unknown count", async () => {
+  const { decideBuildCacheSave } = await gateMod();
+  // cold seed (nothing restored) always saves
+  assert.equal(decideBuildCacheSave({ restored: false, newCompiles: 0, minCompiles: 1 }).skip, false);
+  // gate disabled
+  assert.equal(decideBuildCacheSave({ restored: true, newCompiles: 0, minCompiles: 0 }).skip, false);
+  // unreadable count → save (no regression)
+  assert.equal(decideBuildCacheSave({ restored: true, newCompiles: null, minCompiles: 1 }).skip, false);
+});

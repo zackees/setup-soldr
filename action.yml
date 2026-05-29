@@ -114,6 +114,21 @@ inputs:
       Default "true"; set to "false" to opt out of zccache artifact caching.
     required: false
     default: "true"
+  build-cache-save-min-compiles:
+    description: >
+      Delta-aware build-cache save gate (issues #230 / #214). When a build
+      cache was restored this run (exact or restore-key fallback) and the
+      session recorded fewer than this many new compiles (zccache misses),
+      setup-soldr skips re-saving the build-cache — the restored entry already
+      holds everything, so re-uploading the (often multi-GiB) payload under a
+      fallback key just duplicates it and dominates the Windows post step.
+      Default "1": skip only when literally nothing new was compiled (the safe
+      floor). Raise it (e.g. "10") to also skip tiny deltas, or set "0" to
+      disable the gate and always save. Never gates a cold seed (no restore)
+      or an unreadable compile count, so a real cache is always seedable.
+      Per-phase save timings (compress vs upload) are logged regardless.
+    required: false
+    default: "1"
   build-cache-mode:
     description: >
       Rust build cache mode. "once" is the default full-snapshot-on-miss mode
@@ -121,6 +136,23 @@ inputs:
       resaving the full target tree. "thin" is the bounded dependency-artifact
       alternative. "full" opts into normal whole-target restore/save behavior
       and should be treated as unbounded.
+    required: false
+    default: ""
+  seed-isolated-build-cache:
+    description: >
+      Optional newline- or comma-separated list of isolated SOLDR_CACHE_DIR
+      roots to pre-seed from the build-cache this action restores (issue #240).
+      Use this when a later self-test phase deliberately switches to a fresh
+      SOLDR_CACHE_DIR for daemon isolation (e.g. coverage / integration jobs
+      following zccache#430/#421) — without seeding, that isolated phase
+      discards the warm build-cache and recompiles from scratch every run.
+      setup-soldr copies ONLY the content-addressed zccache artifact store
+      (the same file classes the build-cache save keeps: artifacts and their
+      in-place compiler stdout/stderr replay metadata) into
+      `<root>/cache/zccache` for each listed root. Live daemon state — logs,
+      sockets, pidfiles, lock/temp files, and standalone diagnostics — is never
+      copied, so the isolated daemon keeps its own session. Best-effort: seed
+      failures are logged, never fatal. Default empty (no seeding).
     required: false
     default: ""
   zccache-seed-strict:
@@ -335,6 +367,22 @@ inputs:
       installed soldr supports `cache report --chrome-trace`.
     required: false
     default: "summarize"
+  verify-compile-cache:
+    description: >
+      Guard against silently-bypassed compile caching. When a job is expected
+      to exercise zccache but the session reports hits + misses == 0, the build
+      was not routed through the cache (bypass) or the measurement is invalid —
+      reporting that as a successful warm cache is misleading. Values: "off"
+      (default, no check), "warn" (emit a GitHub Actions warning with the
+      likely bypass cause), "error"/"true" (fail the post step). Legitimate
+      bypasses are always skipped, never failed: enable:false passthrough,
+      build-cache:false, an unreadable compile-cache report, or unavailable
+      hit/miss counters. The diagnostic names RUSTC_WRAPPER, SOLDR_CACHE_DIR,
+      ZCCACHE_CACHE_DIR, the shims dir, and the session stats path so the
+      bypass is actionable. Sets the compile-cache-verification output to
+      ok / invalid-measurement / skipped.
+    required: false
+    default: "off"
   stats:
     description: >
       Controls diagnostic output for cache operations. "none" suppresses all
@@ -467,13 +515,16 @@ inputs:
     default: "soldr-cook"
   prebuild-deps-flags:
     description: >
-      Additional flags forwarded to `soldr cook`. Default
-      "--release" matches the typical CI scenario. Pass empty to
-      use cook's debug-profile default. Examples:
+      Additional flags forwarded to `soldr cook`. The profile MUST
+      match what the job actually compiles or the cooked artifacts
+      are never reused: pass empty ("") for dev/debug jobs (cargo
+      check/clippy/doc/test), keep "--release" only for jobs that
+      build a release artifact. Examples:
       "--release --target x86_64-unknown-linux-musl",
       "--profile release-lto", "--workspace". These flags are
       hashed into the cache key — different flags = different
-      cache entry.
+      cache entry. See README "Match cook to what your job actually
+      compiles".
     required: false
     default: "--release"
   prebuild-deps-delta-cache:
@@ -631,6 +682,13 @@ outputs:
     description: Path to the directory containing the PATH shims written by setup-soldr.
   compile-cache-session-status:
     description: Compile-cache session status (ok / missing / unsupported / error).
+  compile-cache-verification:
+    description: >
+      Result of the verify-compile-cache zero-count guard: "ok" (the cache
+      observed cacheable work), "invalid-measurement" (hits + misses == 0 while
+      compile caching was expected — bypassed or invalid), or "skipped" (the
+      check did not run, e.g. verify-compile-cache: off or a legitimate
+      bypass).
   compile-cache-hit-rate:
     description: Compile-cache hit rate (0.0–1.0) for the last session, or empty when unavailable.
   compile-cache-hits:

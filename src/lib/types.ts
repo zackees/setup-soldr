@@ -120,6 +120,9 @@ export interface RawInputs {
   journalPrintRaw: string;
   crossTargets: string;
   crossTool: string;
+  verifyCompileCache: string;
+  seedIsolatedBuildCache: string;
+  buildCacheSaveMinCompiles: string;
 }
 
 /**

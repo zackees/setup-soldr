@@ -23,8 +23,13 @@ import { StatsCollector } from "./lib/stats-collector.js";
 import {
   aggregateSessions,
   collectArchivedSessionStats,
+  decideBuildCacheSave,
+  detectCookReuseMismatch,
+  parseMinCompiles,
+  parseVerifyCompileCacheMode,
   renderInsights,
   renderMultiSessionRollup,
+  verifyCompileCacheActivity,
   type MultiSessionRollup,
 } from "./lib/compile-cache-stats.js";
 import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
@@ -49,8 +54,14 @@ type SaveStatus =
   | "exact-hit-skip"
   | "missing-dir-skip"
   | "oversize-skip"
+  | "tiny-delta-skip"
   | "saved"
   | "failed";
+
+interface CacheSavePhaseTimings {
+  compressMs?: number;
+  uploadMs?: number;
+}
 
 interface CacheSaveResult {
   status: SaveStatus;
@@ -63,6 +74,10 @@ interface CacheSaveResult {
   inflatedBytes?: number | null;
   fileCount?: number | null;
   payload?: CachePayloadCensus | null;
+  /** Per-phase save timing (issue #214). */
+  phaseTimings?: CacheSavePhaseTimings;
+  /** Reason text for a gated skip (e.g. tiny-delta). */
+  skip_reason?: string;
 }
 
 interface CacheLayerSummary {
@@ -347,6 +362,11 @@ async function saveOne(opts: {
   let inflatedBytes: number | null = null;
   let fileCount: number | null = null;
   let payload: CachePayloadCensus | null = null;
+  // Per-phase save timing (#214): separate the archive+compress phase from the
+  // cache reservation+upload phase so a slow Windows post step is diagnosable.
+  let compressMs = 0;
+  let uploadMs = 0;
+  const compressStart = Date.now();
   try {
     const result = await compressCache({
       cacheDir,
@@ -367,6 +387,7 @@ async function saveOne(opts: {
     inflatedBytes = result.inflatedBytes;
     fileCount = result.fileCount;
     payload = result.payload;
+    compressMs = Date.now() - compressStart;
     if (result.skippedReason === "payload-too-large") {
       log(`${label}: payload exceeded cache-payload-max-bytes, skipping save`);
       return {
@@ -376,6 +397,7 @@ async function saveOne(opts: {
         inflatedBytes,
         fileCount,
         payload,
+        phaseTimings: { compressMs },
       };
     }
   } catch (err) {
@@ -385,8 +407,13 @@ async function saveOne(opts: {
   }
   const pathsToSave = archivePath ? [archivePath] : [cacheDir];
   try {
+    const uploadStart = Date.now();
     const id = await cache.saveCache(pathsToSave, key);
-    log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"}`);
+    uploadMs = Date.now() - uploadStart;
+    log(
+      `${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"} ` +
+        `(compress=${compressMs}ms upload=${uploadMs}ms)`,
+    );
     return {
       status: "saved",
       cache_dir: cacheDir,
@@ -397,6 +424,7 @@ async function saveOne(opts: {
       inflatedBytes,
       fileCount,
       payload,
+      phaseTimings: { compressMs, uploadMs },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -411,6 +439,7 @@ async function saveOne(opts: {
       inflatedBytes,
       fileCount,
       payload,
+      phaseTimings: { compressMs, uploadMs },
     };
   }
 }
@@ -680,6 +709,8 @@ function saveText(save: CacheSaveResult): string {
       return "skipped missing dir";
     case "oversize-skip":
       return "skipped oversize payload";
+    case "tiny-delta-skip":
+      return save.skip_reason ? `skipped tiny delta (${save.skip_reason})` : "skipped tiny delta";
     case "failed":
       return save.error ? `failed: ${save.error}` : "failed";
     case "disabled":
@@ -1213,27 +1244,52 @@ export async function run(): Promise<void> {
     }
   }
 
-  // Build cache
+  // Build cache. A delta-aware gate (#230/#214) skips the expensive
+  // archive+upload when the session compiled nothing new AND a cache was
+  // already restored — the restored entry already holds everything, so
+  // re-saving under a fallback key just uploads a duplicate multi-GiB payload.
   const buildSaveStart = Date.now();
-  const buildSave = restoreState.buildCacheEnabled
-    ? await saveOne({
-        cacheDir: result.buildCache.path,
-        codec: result.targetCacheCompress,
-        level: result.targetCacheCompressLevel,
-        key: result.buildCache.key,
-        matchedKey: buildCacheMatched,
-        label: "build-cache",
-        debug: debugMode,
-        log: debugLog,
-        payloadProfile: "zccache-build-cache",
-        payloadPolicy,
-      })
-    : Object.assign(disabledSave(), {
-        archiveBytes: null,
-        inflatedBytes: null,
-        fileCount: null,
-        payload: null,
-      });
+  const buildCacheRestored = buildCacheMatched.trim().length > 0;
+  const buildDeltaMisses = restoreState.buildCacheEnabled
+    ? numberStat(readZccacheSessionSummary(result.buildCache.path).stats, "misses") ?? null
+    : null;
+  const buildSaveGate = decideBuildCacheSave({
+    restored: buildCacheRestored,
+    newCompiles: buildDeltaMisses,
+    minCompiles: parseMinCompiles(rawInputs.buildCacheSaveMinCompiles),
+  });
+  let buildSave: CacheSaveResultWithStats;
+  if (!restoreState.buildCacheEnabled) {
+    buildSave = Object.assign(disabledSave(), {
+      archiveBytes: null,
+      inflatedBytes: null,
+      fileCount: null,
+      payload: null,
+    });
+  } else if (buildSaveGate.skip) {
+    log(`build-cache: skipping save — ${buildSaveGate.reason} (set build-cache-save-min-compiles: 0 to force-save)`);
+    buildSave = Object.assign(
+      {
+        status: "tiny-delta-skip" as const,
+        cache_dir: result.buildCache.path,
+        skip_reason: buildSaveGate.reason,
+      },
+      { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null },
+    );
+  } else {
+    buildSave = await saveOne({
+      cacheDir: result.buildCache.path,
+      codec: result.targetCacheCompress,
+      level: result.targetCacheCompressLevel,
+      key: result.buildCache.key,
+      matchedKey: buildCacheMatched,
+      label: "build-cache",
+      debug: debugMode,
+      log: debugLog,
+      payloadProfile: "zccache-build-cache",
+      payloadPolicy,
+    });
+  }
   if (buildSave.status === "saved" || buildSave.status === "oversize-skip") {
     postCollector.record({
       label: "build-cache", operation: "save", hit: false,
@@ -1787,6 +1843,81 @@ export async function run(): Promise<void> {
     setMultiSessionOutputs(finalSummary.multi_session_rollup);
   }
   writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary, compileCacheStats), log);
+
+  // Job-wide compile-cache hit/miss counts, read post-hoc from the
+  // multi-session rollup (preferred) or the last-session report. Shared by
+  // the cook reuse-mismatch warning (#235) and the zero-count guard (#227).
+  let jobHits: number | null = null;
+  let jobMisses: number | null = null;
+  {
+    const rollup = finalSummary.multi_session_rollup;
+    if (rollup && rollup.sessionCount > 0) {
+      jobHits = rollup.totalHits;
+      jobMisses = rollup.totalMisses;
+    } else if (
+      finalSummary.compile_cache_report.status === "ok" &&
+      finalSummary.compile_cache_report.report
+    ) {
+      const last = finalSummary.compile_cache_report.report["last_session"] as
+        | Record<string, unknown>
+        | null;
+      if (last) {
+        jobHits = numberStat(last, "hits") ?? null;
+        jobMisses = numberStat(last, "misses") ?? null;
+      }
+    }
+  }
+
+  // Cook reuse-mismatch warning (issue #235). Post-hoc only: setup-soldr
+  // can't know the consumer's downstream cargo profile/toolchain at cook
+  // time, so the "cook ran but nothing reused it" fingerprint is only
+  // observable here, after the job's compiles have been recorded.
+  {
+    const cookSignal = detectCookReuseMismatch({
+      cookEnabled: core.getState("cookEnabled") === "true",
+      cookProducedDeps:
+        core.getState("cookHit") === "true" || core.getState("cookRan") === "true",
+      hits: jobHits,
+      misses: jobMisses,
+      cookFlags: rawInputs.prebuildDepsFlags,
+    });
+    if (cookSignal.mismatch) core.warning(cookSignal.message);
+  }
+
+  // Compile-cache activity verification (issue #227). Opt-in via
+  // verify-compile-cache. When a job that is expected to exercise zccache
+  // reports hits+misses==0, the build bypassed the cache (or the measurement
+  // is invalid) — fail or warn instead of laundering it into warm-cache
+  // evidence. Every legitimate bypass (passthrough, build-cache off, no
+  // stats) is reported as a quiet skip.
+  {
+    const verify = verifyCompileCacheActivity({
+      mode: parseVerifyCompileCacheMode(rawInputs.verifyCompileCache),
+      enabled: !passthrough,
+      buildCacheEnabled: restoreState.buildCacheEnabled,
+      reportStatus: finalSummary.compile_cache_report.status,
+      hits: jobHits,
+      misses: jobMisses,
+      env: {
+        rustcWrapper: process.env["RUSTC_WRAPPER"],
+        soldrCacheDir: process.env["SOLDR_CACHE_DIR"],
+        zccacheCacheDir: process.env["ZCCACHE_CACHE_DIR"],
+        shimsDir: process.env["SETUP_SOLDR_SHIMS_DIR"],
+        statsPath:
+          finalSummary.compile_cache_report.status === "ok"
+            ? resolveZccacheSessionStatsPath(result.buildCache.path)
+            : undefined,
+      },
+    });
+    core.setOutput("compile-cache-verification", verify.status);
+    if (verify.fail) {
+      core.setFailed(verify.message);
+    } else if (verify.status === "invalid-measurement") {
+      core.warning(verify.message);
+    } else if (verify.message && loggingEnabled(rawInputs.logging)) {
+      log(verify.message);
+    }
+  }
 
   // PR3 — insights mode side-effects: emit GH annotations + optional
   // chrome-trace artifact upload. These run only when the user explicitly
