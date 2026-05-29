@@ -2,6 +2,37 @@
 
 ## Unreleased
 
+## v0.9.14 - 2026-05-28
+
+- Warn when `soldr cook` ran or restored but the compile-cache session reused
+  none of it (`hits == 0 && misses > 0`) — the profile/toolchain/emit-kind
+  mismatch fingerprint — naming the likely fix (`prebuild-deps-flags: ""`).
+  (#235)
+- Add the opt-in `verify-compile-cache` guard (`off`/`warn`/`error`): flag or
+  fail a job that is expected to exercise zccache but reports
+  `hits + misses == 0`, with bypass diagnostics (RUSTC_WRAPPER, SOLDR_CACHE_DIR,
+  ZCCACHE_CACHE_DIR, shims) and a new `compile-cache-verification` output.
+  Legitimate passthrough / build-cache-off / no-compile jobs are skipped. (#227)
+- Add delta-aware build-cache save gating (`build-cache-save-min-compiles`,
+  default `1`): skip re-saving a restored cache when nothing new compiled so a
+  fallback-key hit does not re-upload a duplicate multi-GiB payload. Log
+  per-phase save timing (compress vs upload) for slow-Windows-post diagnosis.
+  (#230, #214)
+- Add `seed-isolated-build-cache`: pre-seed an isolated `SOLDR_CACHE_DIR` with
+  the content-addressed zccache artifact store (no logs/sockets/live daemon
+  state) so daemon-isolated coverage/integration self-test phases start warm.
+  (#240)
+- Make the build-cache payload allow/deny file-class contract explicit and
+  tested; preserve compiler stdout/stderr replay metadata stored inside zccache
+  artifacts dirs while trimming standalone diagnostics. (#229)
+- Harden the cache-mode benchmark: zccache hit/miss/compile columns on cook
+  warm rows, an in-script per-cell timeout with a timeout row and
+  still-running-child capture, a p95 aggregate, and a `reps=3` preset.
+  (#192, #191)
+- Document the per-layer cache policy defaults (default-on/off/opt-in), a
+  pre-trim migration path, the Windows cargo-registry restore cost, the cook
+  profile/toolchain/emit axes, and a cache-inspection guide. (#193, #231, #232)
+
 ## v0.9.13 - 2026-05-28
 
 - Default to soldr `0.7.43`, copy the bundled `cargo-chef` binary from soldr
