@@ -15,6 +15,59 @@ test("src/post.ts imports cleanly and exposes `run`", async () => {
   assert.equal(typeof mod.run, "function");
 });
 
+test("#247 resolveZccacheSessionJournalPath finds the journal under the private-daemon layout", async () => {
+  const mod = (await import("../src/post.js")) as {
+    resolveZccacheSessionJournalPath: (cacheDir: string) => string;
+  };
+  const root = mkTmp("journal-private-");
+  try {
+    const cache = path.join(root, "zccache");
+    // soldr's private daemon session layout: NOT <cache>/logs/, but
+    // <cache>/private/<id>/logs/last-session.jsonl
+    const sessLogs = path.join(cache, "private", "soldr-dev-abc123", "logs");
+    fs.mkdirSync(sessLogs, { recursive: true });
+    const journal = path.join(sessLogs, "last-session.jsonl");
+    fs.writeFileSync(journal, '{"outcome":"miss"}\n');
+
+    const resolved = mod.resolveZccacheSessionJournalPath(cache);
+    assert.equal(resolved, journal);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("#247 resolveZccacheSessionJournalPath falls back to the bare logs path when nothing exists", async () => {
+  const mod = (await import("../src/post.js")) as {
+    resolveZccacheSessionJournalPath: (cacheDir: string) => string;
+  };
+  const root = mkTmp("journal-empty-");
+  try {
+    const cache = path.join(root, "zccache");
+    fs.mkdirSync(cache, { recursive: true });
+    const resolved = mod.resolveZccacheSessionJournalPath(cache);
+    assert.equal(resolved, path.join(cache, "logs", "last-session.jsonl"));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("#247 resolveZccacheSessionJournalPath prefers the bare logs path when present (legacy layout)", async () => {
+  const mod = (await import("../src/post.js")) as {
+    resolveZccacheSessionJournalPath: (cacheDir: string) => string;
+  };
+  const root = mkTmp("journal-legacy-");
+  try {
+    const cache = path.join(root, "zccache");
+    fs.mkdirSync(path.join(cache, "logs"), { recursive: true });
+    const bare = path.join(cache, "logs", "last-session.jsonl");
+    fs.writeFileSync(bare, '{"outcome":"hit"}\n');
+    const resolved = mod.resolveZccacheSessionJournalPath(cache);
+    assert.equal(resolved, bare);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("post.run no-ops when no resolveResult state present", async () => {
   const mod = (await import("../src/post.js")) as { run: () => Promise<void> };
   // Make sure GITHUB_STATE points at a temp file with no key set.

@@ -579,19 +579,41 @@ function readZccacheSessionSummary(buildCachePath: string): ZccacheSessionSummar
   }
 }
 
-function resolveZccacheSessionStatsPath(buildCachePath: string): string {
-  const defaultPath = path.join(buildCachePath, "logs", "last-session-stats.json");
+/**
+ * Resolve a per-session zccache log file (e.g. `last-session-stats.json` or
+ * `last-session.jsonl`) across the layouts soldr may use. soldr's private
+ * daemon sessions write under `<cache>/private/<session-id>/logs/`, NOT the
+ * bare `<cache>/logs/` — so a path built with just `<cache>/logs/<file>` is
+ * silently empty under the default layout (setup-soldr#247). Probe, in order:
+ *   1. `<cache>/logs/<file>` (legacy / non-private layout)
+ *   2. `<cache>/private/<id>/logs/<file>` and `<cache>/private/<id>/<file>`
+ *   3. `<cache>/logs/archive/<session>/logs/<file>` and `.../<file>`
+ * most-recent-mtime wins; falls back to the legacy default path.
+ */
+function resolveZccacheSessionFilePath(buildCachePath: string, filename: string): string {
+  const defaultPath = path.join(buildCachePath, "logs", filename);
   if (fileExists(defaultPath)) return defaultPath;
 
   const candidates = [
-    ...collectSessionStatsCandidates(path.join(buildCachePath, "private")),
-    ...collectSessionStatsCandidates(path.join(buildCachePath, "logs", "archive")),
+    ...collectSessionFileCandidates(path.join(buildCachePath, "private"), filename),
+    ...collectSessionFileCandidates(path.join(buildCachePath, "logs", "archive"), filename),
   ];
   candidates.sort((a, b) => b.mtimeMs - a.mtimeMs || a.path.localeCompare(b.path));
   return candidates[0]?.path ?? defaultPath;
 }
 
-function collectSessionStatsCandidates(root: string): Array<{ path: string; mtimeMs: number }> {
+function resolveZccacheSessionStatsPath(buildCachePath: string): string {
+  return resolveZccacheSessionFilePath(buildCachePath, "last-session-stats.json");
+}
+
+export function resolveZccacheSessionJournalPath(buildCachePath: string): string {
+  return resolveZccacheSessionFilePath(buildCachePath, "last-session.jsonl");
+}
+
+function collectSessionFileCandidates(
+  root: string,
+  filename: string,
+): Array<{ path: string; mtimeMs: number }> {
   let entries: fs.Dirent[];
   try {
     if (!fs.statSync(root).isDirectory()) return [];
@@ -603,13 +625,13 @@ function collectSessionStatsCandidates(root: string): Array<{ path: string; mtim
   const out: Array<{ path: string; mtimeMs: number }> = [];
   for (const ent of entries) {
     if (!ent.isDirectory()) continue;
-    const candidate = path.join(root, ent.name, "logs", "last-session-stats.json");
-    const archiveCandidate = path.join(root, ent.name, "last-session-stats.json");
-    for (const statsPath of [candidate, archiveCandidate]) {
+    const candidate = path.join(root, ent.name, "logs", filename);
+    const archiveCandidate = path.join(root, ent.name, filename);
+    for (const filePath of [candidate, archiveCandidate]) {
       try {
-        const stat = fs.statSync(statsPath);
+        const stat = fs.statSync(filePath);
         if (stat.isFile()) {
-          out.push({ path: statsPath, mtimeMs: stat.mtimeMs });
+          out.push({ path: filePath, mtimeMs: stat.mtimeMs });
         }
       } catch {
         // Candidate shape not present; try the next known layout.
@@ -1962,7 +1984,10 @@ export async function run(): Promise<void> {
     // resolve-setup.ts's env exports). When `logging: true` is on we
     // surface its contents so the reader can answer "warm reported 0
     // hits — why did each lookup miss" without another build.
-    const journalPath = path.join(result.buildCache.path, "logs", "last-session.jsonl");
+    // Resolve the journal the same private-dir-aware way as the stats file —
+    // soldr's private daemon sessions write it under
+    // `<cache>/private/<id>/logs/`, not the bare `<cache>/logs/` (#247).
+    const journalPath = resolveZccacheSessionJournalPath(result.buildCache.path);
     // Forward the verbatim `report` field from `soldr cache report --json`
     // so dumpDiagnostics can format its `rollups` (per-extension /
     // per-crate / slowest_entries) breakdown.
