@@ -27,6 +27,7 @@ function fixtureRawInputs(): RawInputs {
     cache: "true",
     cacheDir: "",
     cacheKeySuffix: "zccache-demo",
+    cachePreset: "",
     toolchain: "",
     toolchainFile: "rust-toolchain.toml",
     trustMode: "",

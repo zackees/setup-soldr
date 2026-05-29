@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- Add the `cache-preset` umbrella input (`minimal` | `foundation` | `full`)
+  that fills any cache-affecting input the consumer leaves unset; explicit
+  fine-grained inputs always win over the preset. `foundation` matches the
+  current historical default (no behavior change); `minimal` is the cook-only,
+  no-zccache-state shape; `full` opts every layer in. The resolved preset is
+  surfaced via the new `cache-preset-effective` output. (#251)
+- Standardize `build-cache-mode: thin` as the resolved default when
+  `target-cache` is opted in (either explicitly or via `cache-preset: full`)
+  and `build-cache-mode` is unset. The heavier `once` rust-plan bundle and the
+  unbounded `full` whole-target restore remain available as explicit opt-ins.
+  When `target-cache` is off, the resolved mode stays `once` to preserve the
+  env-visible `SETUP_SOLDR_BUILD_CACHE_MODE` value for downstream tools.
+  Existing workflows with `target-cache: true` but no explicit
+  `build-cache-mode` see a shape change (`once` → `thin`); keep `once` by
+  setting it explicitly. (#251)
+- Add `enabled: boolean` to `BuildCachePlan` so the build-cache layer's
+  resolved on/off state is observable alongside `TargetCachePlan.enabled` and
+  `CargoRegistryCachePlan.enabled`. (#251)
+
 ## v0.9.16 - 2026-05-29
 
 - Default to soldr `0.7.44`, which carries the `soldr cook` project-restore fix

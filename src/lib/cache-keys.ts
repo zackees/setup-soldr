@@ -193,7 +193,14 @@ export function normalizeBuildCacheMode(
   log?: (m: string) => void,
 ): "once" | "thin" | "full" {
   const explicitMode = value.trim().toLowerCase();
-  const mode = explicitMode || "once";
+  // When the caller opts into target-cache without an explicit mode
+  // (allowLegacyTranslation is the "target-cache requested + no explicit
+  // build-cache-mode" signal from resolve-setup), default to the bounded
+  // "thin" shape rather than the heavier "once" rust-plan bundle. The
+  // resolved mode is unused when target-cache is off, so keeping "once" as
+  // the no-target-cache default preserves the SETUP_SOLDR_BUILD_CACHE_MODE
+  // env value for downstream tools that read it. (#251)
+  const mode = explicitMode || (allowLegacyTranslation ? "thin" : "once");
   if (!["once", "thin", "full"].includes(mode)) {
     throw new Error(`invalid build-cache-mode '${value}'; expected once, thin, or full`);
   }

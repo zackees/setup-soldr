@@ -1264,3 +1264,112 @@ test("crossToolCaches: setting cross-targets does NOT change the other cache key
     "cargo-registry-cache key must be stable",
   );
 });
+
+// ============================================================================
+// cache-preset umbrella (#251 Proposal B) — explicit-wins precedence, mapping
+// per preset, no-preset (default) case, invalid value rejection.
+// ============================================================================
+
+test("cache-preset: empty (default) does not mutate inputs; historical defaults apply", async () => {
+  const { result } = await run({});
+  assert.equal(result.cachePresetEffective, "");
+  assert.equal(result.buildCache.enabled, true, "historical default keeps build-cache on");
+  assert.equal(result.targetCache.enabled, false, "historical default keeps target-cache off");
+  assert.equal(result.cargoRegistryCache.enabled, false, "historical default keeps registry off");
+});
+
+test("cache-preset: foundation matches the historical default (#251)", async () => {
+  const { result } = await run({}, { INPUT_CACHE_PRESET: "foundation" });
+  assert.equal(result.cachePresetEffective, "foundation");
+  assert.equal(result.buildCache.enabled, true);
+  assert.equal(result.targetCache.enabled, false);
+  assert.equal(result.cargoRegistryCache.enabled, false);
+});
+
+test("cache-preset: minimal disables build-cache + target-cache + cargo-registry-cache (#251)", async () => {
+  const { result } = await run({}, { INPUT_CACHE_PRESET: "minimal" });
+  assert.equal(result.cachePresetEffective, "minimal");
+  assert.equal(result.buildCache.enabled, false, "minimal turns build-cache off");
+  assert.equal(result.targetCache.enabled, false);
+  assert.equal(result.cargoRegistryCache.enabled, false);
+});
+
+test("cache-preset: full enables target-cache + cargo-registry + thin build-cache-mode (#251)", async () => {
+  const { result } = await run({}, { INPUT_CACHE_PRESET: "full" });
+  assert.equal(result.cachePresetEffective, "full");
+  assert.equal(result.buildCache.enabled, true);
+  assert.equal(result.targetCache.enabled, true, "full opts target-cache in");
+  assert.equal(result.cargoRegistryCache.enabled, true, "full opts cargo-registry-cache in");
+  assert.equal(result.buildCache.mode, "thin", "full standardizes build-cache-mode=thin");
+});
+
+test("cache-preset: explicit fine-grained inputs override the preset (#251)", async () => {
+  // cache-preset: minimal would set build-cache=false; explicit override wins.
+  const { result } = await run({}, {
+    INPUT_CACHE_PRESET: "minimal",
+    INPUT_BUILD_CACHE: "true",
+  });
+  assert.equal(result.cachePresetEffective, "minimal");
+  assert.equal(result.buildCache.enabled, true, "explicit build-cache=true beats minimal preset");
+});
+
+test("cache-preset: explicit target-cache=true under minimal still opts in (#251)", async () => {
+  const { result } = await run({}, {
+    INPUT_CACHE_PRESET: "minimal",
+    INPUT_TARGET_CACHE: "true",
+  });
+  assert.equal(result.targetCache.enabled, false, "minimal disables build-cache, gating target-cache off");
+  // Build-cache is the gate for target-cache (line ~495 of resolve-setup); minimal
+  // turns build-cache off so target-cache cannot enable. The explicit-wins rule
+  // is still honored at input level — the cascade just gates it later.
+});
+
+test("cache-preset: full + explicit build-cache-mode=full keeps full (#251)", async () => {
+  const { result } = await run({}, {
+    INPUT_CACHE_PRESET: "full",
+    INPUT_BUILD_CACHE_MODE: "full",
+  });
+  assert.equal(result.buildCache.mode, "full", "explicit build-cache-mode beats preset's thin");
+});
+
+test("cache-preset: invalid value throws", async () => {
+  await assert.rejects(
+    run({}, { INPUT_CACHE_PRESET: "kitchen-sink" }),
+    /invalid cache-preset 'kitchen-sink'/,
+  );
+});
+
+test("cache-preset: cache-preset-effective output mirrors the resolved preset (#251)", async () => {
+  const { outputs } = await run({}, { INPUT_CACHE_PRESET: "full" });
+  assert.equal(outputs["cache-preset-effective"], "full");
+});
+
+test("cache-preset: no preset surfaces empty cache-preset-effective output (#251)", async () => {
+  const { outputs } = await run({});
+  assert.equal(outputs["cache-preset-effective"], "");
+});
+
+// ============================================================================
+// build-cache-mode thin-default flip (#251 Proposal A) — empty + target-cache
+// opt-in resolves to thin; no target-cache leaves SETUP_SOLDR_BUILD_CACHE_MODE
+// at "once" for env-visible compatibility.
+// ============================================================================
+
+test("build-cache-mode: empty + target-cache=true resolves to thin (#251)", async () => {
+  const { result, outputs } = await run({}, { INPUT_TARGET_CACHE: "true" });
+  assert.equal(result.buildCache.mode, "thin");
+  assert.equal(outputs["build-cache-mode"], "thin");
+});
+
+test("build-cache-mode: empty + target-cache=false (default) stays once (#251)", async () => {
+  const { result } = await run({});
+  assert.equal(result.buildCache.mode, "once");
+});
+
+test("build-cache-mode: explicit value beats the thin-default flip (#251)", async () => {
+  const { result } = await run({}, {
+    INPUT_TARGET_CACHE: "true",
+    INPUT_BUILD_CACHE_MODE: "once",
+  });
+  assert.equal(result.buildCache.mode, "once");
+});

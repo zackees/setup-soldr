@@ -271,6 +271,79 @@ export async function resolveSetup(
     ? path.resolve(ctx.runnerTemp)
     : path.resolve(path.join(workspace, ".tmp"));
 
+  // ---- cache-preset resolution (#251) ----
+  // The umbrella `cache-preset` fills any cache-affecting input the consumer
+  // left unset; explicit fine-grained inputs always win. Resolved BEFORE the
+  // per-layer reads below so downstream logic only sees the post-preset
+  // values. The historical default of each input is the fallback when
+  // neither an explicit value nor a preset is set, which keeps behavior
+  // identical for consumers who never set `cache-preset`.
+  const cachePresetRaw = inputs.cachePreset.trim().toLowerCase();
+  const validCachePresets = ["minimal", "foundation", "full"] as const;
+  type CachePreset = (typeof validCachePresets)[number];
+  if (cachePresetRaw && !(validCachePresets as readonly string[]).includes(cachePresetRaw)) {
+    throw new Error(
+      `invalid cache-preset '${inputs.cachePreset}'; expected one of ${validCachePresets.join(", ")}`,
+    );
+  }
+  const cachePresetEffective = (cachePresetRaw || "") as "" | CachePreset;
+
+  const cachePresetMap: Record<
+    CachePreset,
+    {
+      buildCache: string;
+      targetCache: string;
+      cargoRegistryCache: string;
+      prebuildDeps: string;
+      buildCacheMode: string;
+    }
+  > = {
+    minimal: {
+      buildCache: "false",
+      targetCache: "false",
+      cargoRegistryCache: "false",
+      prebuildDeps: "soldr-cook",
+      buildCacheMode: "",
+    },
+    foundation: {
+      buildCache: "true",
+      targetCache: "false",
+      cargoRegistryCache: "false",
+      prebuildDeps: "soldr-cook",
+      buildCacheMode: "",
+    },
+    full: {
+      buildCache: "true",
+      targetCache: "true",
+      cargoRegistryCache: "true",
+      prebuildDeps: "soldr-cook",
+      buildCacheMode: "thin",
+    },
+  };
+  const cachePresetCfg = cachePresetEffective ? cachePresetMap[cachePresetEffective] : null;
+
+  // Explicit non-empty user value wins; else preset value when a preset is
+  // set; else leave empty so the existing downstream fall-through
+  // (`inputs.X.trim() || "<historical default>"`) applies as before. This
+  // preserves behavior for consumers who never set `cache-preset` — only
+  // unset inputs *under a preset* are filled here. Mutating `inputs` folds
+  // the resolution into the single source of truth that downstream code
+  // (here + main.ts + cook-cache.ts) reads from.
+  if (cachePresetCfg) {
+    const fillFromPreset = (explicit: string, presetValue: string): string => {
+      const e = explicit.trim();
+      return e ? e : presetValue;
+    };
+    inputs.buildCache = fillFromPreset(inputs.buildCache, cachePresetCfg.buildCache);
+    inputs.targetCache = fillFromPreset(inputs.targetCache, cachePresetCfg.targetCache);
+    inputs.cargoRegistryCache = fillFromPreset(
+      inputs.cargoRegistryCache,
+      cachePresetCfg.cargoRegistryCache,
+    );
+    inputs.prebuildDeps = fillFromPreset(inputs.prebuildDeps, cachePresetCfg.prebuildDeps);
+    inputs.buildCacheMode = fillFromPreset(inputs.buildCacheMode, cachePresetCfg.buildCacheMode);
+  }
+
   // ---- cache roots ----
   const requestedCacheDir = inputs.cacheDir.trim();
   const cacheRoot = requestedCacheDir
@@ -827,6 +900,7 @@ export async function resolveSetup(
     layout: setupCacheLayoutValue,
   };
   const buildCache: BuildCachePlan = {
+    enabled: buildCacheEnabled,
     key: buildCacheKey,
     restoreKeyParent: buildCacheParentKey,
     // setup-soldr#237: job-scoped fallback only — newest entry for THIS job at
@@ -958,6 +1032,7 @@ export async function resolveSetup(
     stats,
     debugMode,
     cacheShutdownOnIdleSeconds,
+    cachePresetEffective,
   };
 }
 
