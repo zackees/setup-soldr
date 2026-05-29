@@ -690,6 +690,64 @@ been observed at roughly 47–50 s — a key reason it is default-off and should
 opted into only where the workload measures a net win over upload/retention
 cost.
 
+### Cache policy presets
+
+The `cache-preset` input expresses cache *policy intent* in one line. It fills
+any cache-affecting input the consumer leaves unset; **explicit fine-grained
+inputs always win** over the preset:
+
+| Preset | `build-cache` | `target-cache` | `cargo-registry-cache` | `prebuild-deps` | `build-cache-mode` |
+|---|---|---|---|---|---|
+| `minimal`             | `false` | `false` | `false` | `soldr-cook` | (unset → `once` env-visible) |
+| `foundation` (today's default) | `true`  | `false` | `false` | `soldr-cook` | (unset → `once` env-visible) |
+| `full`                | `true`  | `true`  | `true`  | `soldr-cook` | `thin` |
+
+When `cache-preset` is empty (the default), every fine-grained input keeps its
+own historical default — so existing workflows see no behavior change. Set
+`cache-preset: minimal` to get the cook-only, no-zccache-state shape in one
+line; set `cache-preset: full` to opt into every layer (with `thin` as the
+target/ artifact shape — see Proposal A below for why thin is the standardized
+default whenever `target-cache: true`).
+
+```yaml
+# Cook-only, smallest footprint — workspaces that get little zccache
+# warm-hit value can opt out cleanly without disabling cook.
+- uses: zackees/setup-soldr@v0
+  with:
+    cache-preset: minimal
+```
+
+```yaml
+# Foundation + everything heavy — for workspaces that measured a net win
+# from the larger target/ + cargo-registry caches.
+- uses: zackees/setup-soldr@v0
+  with:
+    cache-preset: full
+```
+
+```yaml
+# Foundation with an explicit override — explicit fine-grained inputs always
+# win, so this disables build-cache without affecting the rest of the preset.
+- uses: zackees/setup-soldr@v0
+  with:
+    cache-preset: foundation
+    build-cache: false   # explicit wins over the preset's true
+```
+
+The resolved preset is surfaced via the `cache-preset-effective` output for
+diagnostics.
+
+#### `build-cache-mode: thin` is the resolved default when `target-cache: true`
+
+When `target-cache` is opted in (either explicitly or via `cache-preset: full`)
+and `build-cache-mode` is left unset, the resolved mode is **`thin`** — the
+bounded dependency-artifact shape that pairs with `target-cache-profile:
+thin-v1`. The heavier `once` rust-plan bundle and the unbounded `full`
+whole-target restore remain available as explicit opt-ins. When `target-cache`
+is off, the resolved mode stays `once` (it is unused for caching but is still
+surfaced via the `SETUP_SOLDR_BUILD_CACHE_MODE` env var for downstream tools).
+(#251)
+
 ### Inspecting cache behavior
 
 Reading the action's own diagnostics is the fastest way to tell whether a cache

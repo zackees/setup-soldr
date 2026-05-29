@@ -51,6 +51,7 @@ export function buildOutputs(result: ResolveResult): Record<string, string> {
     "dylint-driver-path": result.dylintCache.driverPath,
     "shims-dir": result.shimsDir,
     "toolchain": result.toolchain.channel,
+    "cache-preset-effective": result.cachePresetEffective,
   };
 
   // Legacy underscored aliases retained for backwards compatibility with

@@ -72,6 +72,7 @@ export interface RawInputs {
   cache: string;
   cacheDir: string;
   cacheKeySuffix: string;
+  cachePreset: string;
   toolchain: string;
   toolchainFile: string;
   trustMode: string;
@@ -154,6 +155,7 @@ export interface SetupCachePlan {
  * Build-cache key plan (zccache compilation cache).
  */
 export interface BuildCachePlan {
+  enabled: boolean;
   key: string;
   restoreKeyParent: string;
   restoreKeyToolchain: string;
@@ -330,6 +332,11 @@ export interface ResolveResult {
   // When set, exported as ZCCACHE_IDLE_TIMEOUT / SCCACHE_IDLE_TIMEOUT
   // so the cache daemon self-exits after the given idle window.
   cacheShutdownOnIdleSeconds: number | null;
+
+  // Resolved `cache-preset` umbrella value ("minimal" | "foundation" |
+  // "full"), or "" when no preset was set. Surfaced via the
+  // `cache-preset-effective` output. (#251)
+  cachePresetEffective: "" | "minimal" | "foundation" | "full";
 }
 
 /**

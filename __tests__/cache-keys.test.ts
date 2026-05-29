@@ -131,8 +131,18 @@ test("normalizeLegacyTargetCacheMode rejects unknown", () => {
   assert.throws(() => normalizeLegacyTargetCacheMode("warm"));
 });
 
-test("normalizeBuildCacheMode defaults to 'once' when empty + no legacy", () => {
-  assert.equal(normalizeBuildCacheMode("", "", true), "once");
+test("normalizeBuildCacheMode defaults to 'thin' when empty + target-cache requested (#251)", () => {
+  // allowLegacyTranslation=true is the "target-cache opted in without an
+  // explicit build-cache-mode" signal from resolve-setup; the bounded
+  // "thin" shape is the standardized default in that case.
+  assert.equal(normalizeBuildCacheMode("", "", true), "thin");
+});
+
+test("normalizeBuildCacheMode defaults to 'once' when empty + target-cache off", () => {
+  // When target-cache is off, the resolved mode is unused for caching but
+  // is still surfaced via SETUP_SOLDR_BUILD_CACHE_MODE — keep "once" there
+  // to preserve env-visible behavior for downstream tools. (#251)
+  assert.equal(normalizeBuildCacheMode("", "", false), "once");
 });
 
 test("normalizeBuildCacheMode translates legacy hot -> thin", () => {

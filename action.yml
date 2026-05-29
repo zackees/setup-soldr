@@ -59,6 +59,28 @@ inputs:
     description: Optional extra suffix appended to the cache key.
     required: false
     default: ""
+  cache-preset:
+    description: >
+      One-line cache policy umbrella. Fills any cache-affecting input that
+      the consumer leaves unset; explicit fine-grained inputs always win
+      (so setting `target-cache: true` keeps that, even under
+      `cache-preset: minimal`). Valid values:
+
+        - "minimal":    build-cache=false, target-cache=false,
+                        cargo-registry-cache=false, prebuild-deps=soldr-cook
+                        (cook-only; smallest footprint).
+        - "foundation": build-cache=true, target-cache=false,
+                        cargo-registry-cache=false, prebuild-deps=soldr-cook
+                        (the current default; no behavior change).
+        - "full":       build-cache=true, target-cache=true,
+                        cargo-registry-cache=true, prebuild-deps=soldr-cook,
+                        build-cache-mode=thin (heavy, opt-in).
+
+      Empty default keeps each fine-grained input on its historical default
+      (foundation policy). The resolved preset is surfaced via the
+      `cache-preset-effective` output. (#251)
+    required: false
+    default: ""
   toolchain:
     description: Override the exact Rust toolchain channel string. When empty, toolchain-file is used if present, otherwise stable.
     required: false
@@ -111,9 +133,11 @@ inputs:
   build-cache:
     description: >
       Restore and save Soldr/zccache build cache state across workflow runs.
-      Default "true"; set to "false" to opt out of zccache artifact caching.
+      Empty (default) resolves to "true" unless `cache-preset` overrides it
+      (e.g. `cache-preset: minimal` resolves it to "false"). Set explicitly
+      ("true"/"false") to override any preset. (#251)
     required: false
-    default: "true"
+    default: ""
   build-cache-save-min-compiles:
     description: >
       Delta-aware build-cache save gate (issues #230 / #214). When a build
@@ -131,11 +155,18 @@ inputs:
     default: "1"
   build-cache-mode:
     description: >
-      Rust build cache mode. "once" is the default full-snapshot-on-miss mode
-      that restores only the local rust-plan bundle on later hits without
-      resaving the full target tree. "thin" is the bounded dependency-artifact
-      alternative. "full" opts into normal whole-target restore/save behavior
-      and should be treated as unbounded.
+      Rust build cache mode. "thin" (the resolved default when `target-cache`
+      is opted in) is the bounded dependency-artifact shape. "once" preserves
+      the legacy full-snapshot-on-miss behavior that restores only the local
+      rust-plan bundle on later hits without resaving the full target tree.
+      "full" opts into normal whole-target restore/save behavior and should
+      be treated as unbounded.
+
+      Empty default resolves to "thin" when `target-cache: true` is set
+      (either explicitly or via `cache-preset: full`); otherwise empty
+      resolves to "once" — which is unused when target-cache is off but is
+      still surfaced via the `SETUP_SOLDR_BUILD_CACHE_MODE` env var for
+      downstream tools that read it. (#251)
     required: false
     default: ""
   seed-isolated-build-cache:
@@ -166,11 +197,12 @@ inputs:
     default: "false"
   target-cache:
     description: >
-      Deprecated compatibility input. Default "false" to keep setup-soldr's
-      default cache footprint small. Set to "true" to enable Rust target
-      artifact caching; prefer build-cache-mode for selecting once, thin, or full.
+      Deprecated compatibility input. Empty (default) resolves to "false"
+      unless `cache-preset: full` overrides it. Set to "true" to enable
+      Rust target artifact caching; prefer `build-cache-mode` for selecting
+      once/thin/full. (#251 cache-preset)
     required: false
-    default: "false"
+    default: ""
   target-cache-mode:
     description: >
       Deprecated compatibility input translated into build-cache-mode.
@@ -301,8 +333,11 @@ inputs:
       explicit basenames (registry, .global-cache, git) rather than the
       full $CARGO_HOME so accidentally-staged secrets never enter the
       archive.
+
+      Empty (default) resolves to "false" unless `cache-preset: full`
+      overrides it. (#251 cache-preset)
     required: false
-    default: "false"
+    default: ""
   dylint-cache:
     description: >
       Explicit opt-in cache for Dylint tooling. When "true", setup-soldr
@@ -498,9 +533,11 @@ inputs:
       cargo invocations. "soldr-cook" is the named long-enduring dependency
       cache mode; "cargo-chef" remains a compatibility alias for older
       workflows. When the cache hits on the Cargo.lock hash, target/deps/
-      is pre-warmed so the user's first build starts hot. Default
-      "soldr-cook". Set to "none" to skip. Other values reserved for future
-      strategies.
+      is pre-warmed so the user's first build starts hot. Empty (default)
+      resolves to "soldr-cook" — every preset (minimal/foundation/full)
+      keeps cook on, so opt out explicitly with `prebuild-deps: none` if
+      you want to skip. Other values reserved for future strategies.
+      (#251 cache-preset)
 
       Cache key is content-addressable on
       (os, arch, libc, rustc_release, flags_hash, Cargo.lock hash,
@@ -615,6 +652,11 @@ outputs:
     description: Primary key used for the action-managed cache/state root.
   cache-restore-status:
     description: Diagnostic restore status for the action-managed cache/state root.
+  cache-preset-effective:
+    description: >
+      The resolved `cache-preset` value (one of "minimal", "foundation",
+      "full") that filled unset cache-affecting inputs this run. Empty
+      string when no preset was set. (#251)
   build-cache-hit:
     description: >
       Whether the action restored the Soldr-owned zccache compilation
