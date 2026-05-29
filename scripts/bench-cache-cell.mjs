@@ -69,6 +69,32 @@ const soloToolchainBasePaths = pathsForLayer("solo-toolchain", { env, workloadDi
 const csvRows = [];
 await writeCsv(csvRows);
 
+// --- per-cell wall-clock watchdog --------------------------------------------
+// A hung child (stuck cargo/soldr) must not tie up the runner indefinitely. We
+// track the active phase name in a module-level variable and arm a timer that,
+// on expiry, flushes a phase=timeout row capturing the stuck phase + any
+// still-running child, then exits non-zero. BENCH_CELL_TIMEOUT_MS (or
+// --timeout-ms=) overrides the default; <=0 disables the watchdog entirely.
+const DEFAULT_CELL_TIMEOUT_MS = 20 * 60 * 1000; // 20 minutes
+const cellTimeoutMs = parseTimeoutMs(args["timeout-ms"] ?? process.env.BENCH_CELL_TIMEOUT_MS);
+const cellStartMs = nowMs();
+let activePhase = "init";
+let timedOut = false;
+const liveChildren = new Set();
+let cellTimer = null;
+if (cellTimeoutMs > 0) {
+  cellTimer = setTimeout(() => { onCellTimeout().catch(() => process.exit(124)); }, cellTimeoutMs);
+  if (typeof cellTimer.unref === "function") cellTimer.unref();
+}
+// Once the watchdog has fired, the main flow's pending awaits (a killed child
+// rejects its run() promise) must not crash with a stack trace before we exit
+// cleanly with 124. Swallow any post-timeout rejection.
+process.on("unhandledRejection", (err) => {
+  if (timedOut) return;
+  console.error(`bench-cache-cell: unhandled rejection: ${err?.stack ?? err}`);
+  process.exit(1);
+});
+
 log(`[bench] layer=${args.layer} workload=${args.workload} rep=${rep} paths=${layerPaths.length}`);
 
 if (args["pre-snapshot-out"]) {
@@ -94,6 +120,7 @@ const preSnapshotStates = tracksSoloToolchainDelta
 let snapshotResult = null;
 let coldPrebuildS = 0;
 if (cookProduction) {
+  activePhase = "cook-prebuild";
   const tCookStart = nowMs();
   await runSoldrCook(workloadDir, env, cookFlags);
   coldPrebuildS = (nowMs() - tCookStart) / 1000;
@@ -103,6 +130,7 @@ if (cookProduction) {
 }
 
 // --- 1. cold build -----------------------------------------------------------
+activePhase = "cold";
 const tColdStart = nowMs();
 let wallColdS = 0;
 if (skipBuild) {
@@ -114,6 +142,7 @@ wallColdS = coldPrebuildS + (nowMs() - tColdStart) / 1000;
 log(`[bench] cold build wall=${wallColdS.toFixed(2)}s`);
 
 if (!snapshotResult) {
+  activePhase = "snapshot";
   await quiesceCacheDaemonsBeforeSnapshot(env, workloadDir);
   snapshotResult = await snapshotLayer();
 } else {
@@ -165,6 +194,7 @@ if (shouldWipeBuildCacheBeforeWarm(args.layer)) {
 }
 
 if (snapshots.length > 0) {
+  activePhase = "restore";
   for (const s of snapshots) {
     const restoreLive = shouldWipe && !unsafeSnapshotKeys.has(pathKey(s));
     const restoreRoot = restoreLive ? s.parent : path.join(runnerTemp, "sim-restore", args.layer);
@@ -177,16 +207,24 @@ if (snapshots.length > 0) {
 }
 
 if (shouldWarmBuild) {
+  activePhase = "warm";
   const tWarmStart = nowMs();
   if (!skipBuild) await runCargoBuild(workloadDir, env);
   const wallWarmS = (nowMs() - tWarmStart) / 1000;
   log(`[bench] warm build wall=${wallWarmS.toFixed(2)}s`);
+
+  // #192: capture zccache hit/miss/compile counts so a warm build that
+  // recompiled everything (0 hits) is visible in the CSV. Best-effort: never
+  // throw if soldr is absent or the report shape changes.
+  const zstats = await captureZccacheStats(env);
+  log(`[bench] warm zccache hits=${zstats.hits ?? "n/a"} misses=${zstats.misses ?? "n/a"} compilations=${zstats.compilations ?? "n/a"}`);
 
   csvRows.push(csvRow({
     os: runnerOs, layer: args.layer, phase: "warm", wallClockS: round(wallWarmS, 2),
     saveTimeS: "", restoreTimeS: round(restoreTimeS, 2),
     compressedMb, inflatedMb, ratio,
     workload: args.workload, rep,
+    zccacheHits: zstats.hits, zccacheMisses: zstats.misses, zccacheCompilations: zstats.compilations,
   }));
   await writeCsv(csvRows);
 } else if (snapshots.length > 0 || soloToolchainDeltaEmpty) {
@@ -200,6 +238,8 @@ if (shouldWarmBuild) {
   await writeCsv(csvRows);
 }
 
+activePhase = "done";
+if (cellTimer) clearTimeout(cellTimer);
 log(`[bench] wrote ${out} (${csvRows.length} row(s))`);
 
 // ============================== helpers ======================================
@@ -221,18 +261,132 @@ function parseCookFlags(raw) {
     .filter((s) => s.length > 0);
 }
 
+function parseTimeoutMs(raw) {
+  if (raw === undefined || raw === null || `${raw}`.trim() === "") return DEFAULT_CELL_TIMEOUT_MS;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return DEFAULT_CELL_TIMEOUT_MS;
+  return n; // <=0 disables the watchdog
+}
+
+// On watchdog expiry: write a phase=timeout row that captures the active phase
+// (in the workload column as "<workload>:timeout-in-<phase>") and the elapsed
+// wall clock, flush partial CSV, record still-running children to a sidecar
+// diagnostics file, then exit non-zero.
+async function onCellTimeout() {
+  timedOut = true;
+  const elapsedS = round((nowMs() - cellStartMs) / 1000, 2);
+  const stuck = [...liveChildren].map((c) => ({ pid: c.pid ?? null, cmd: c.__benchCmd ?? "" }));
+  console.error(`bench-cache-cell: TIMEOUT after ${elapsedS}s in phase=${activePhase} ` +
+    `(layer=${args.layer} workload=${args.workload} rep=${rep}); ${stuck.length} child(ren) still running`);
+
+  // Kill the still-running children so their inherited stdio handles close and
+  // this process can exit cleanly (otherwise the parent waits on orphaned pipes,
+  // notably on Windows). On Windows a shell-wrapped child spawns a grandchild,
+  // so use taskkill /T to tear down the whole tree by PID.
+  await killLiveChildren();
+
+  csvRows.push(csvRow({
+    os: runnerOs, layer: args.layer, phase: "timeout", wallClockS: elapsedS,
+    saveTimeS: "", restoreTimeS: "",
+    compressedMb: "", inflatedMb: "", ratio: "",
+    workload: `${args.workload}:timeout-in-${activePhase}`, rep,
+  }));
+  try { await writeCsv(csvRows); } catch { /* best-effort flush */ }
+
+  const diagPath = `${path.resolve(out)}.timeout.json`;
+  try {
+    await fsp.writeFile(diagPath, JSON.stringify({
+      version: 1,
+      layer: args.layer, workload: args.workload, rep,
+      activePhase, elapsedS, timeoutMs: cellTimeoutMs,
+      liveChildren: stuck,
+    }, null, 2), "utf8");
+    console.error(`bench-cache-cell: wrote timeout diagnostics to ${diagPath}`);
+  } catch { /* best-effort */ }
+
+  for (const c of stuck) {
+    console.error(`bench-cache-cell:   still-running pid=${c.pid} cmd=${c.cmd}`);
+  }
+  process.exit(124);
+}
+
+// #192: best-effort capture of last-session zccache hit/miss/compile counts via
+// `soldr cache report --json`. Returns empty strings (CSV-safe) when soldr is
+// absent, the command fails, or the JSON shape is unrecognized — never throws.
+async function captureZccacheStats(envExt) {
+  const empty = { hits: "", misses: "", compilations: "" };
+  const soldr = envExt.SOLDR_BINARY?.trim() || "soldr";
+  let result;
+  try {
+    result = await runBestEffort(soldr, ["cache", "report", "--json"], { env: envExt });
+  } catch {
+    return empty;
+  }
+  if (result.status !== "exit" || result.code !== 0 || !result.stdout) return empty;
+  let parsed;
+  try {
+    parsed = JSON.parse(result.stdout);
+  } catch {
+    return empty;
+  }
+  return extractZccacheStats(parsed);
+}
+
+// Pull hits/misses/compilations out of a `soldr cache report --json` payload.
+// Tolerates a few shapes: a flat object, a {last_session|lastSession|stats}
+// wrapper, or top-level keys. Missing fields become "".
+function extractZccacheStats(parsed) {
+  const empty = { hits: "", misses: "", compilations: "" };
+  if (!parsed || typeof parsed !== "object") return empty;
+  const node = parsed.last_session ?? parsed.lastSession ?? parsed.stats ?? parsed;
+  if (!node || typeof node !== "object") return empty;
+  return {
+    hits: pickCount(node, ["hits", "cache_hits", "cacheHits"]),
+    misses: pickCount(node, ["misses", "cache_misses", "cacheMisses"]),
+    compilations: pickCount(node, ["compilations", "compiles", "compilation_count", "compilationCount"]),
+  };
+}
+
+function pickCount(node, keys) {
+  for (const k of keys) {
+    const v = node[k];
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+  }
+  return "";
+}
+
+async function killLiveChildren() {
+  const kills = [];
+  for (const c of liveChildren) {
+    if (c.pid == null) continue;
+    if (process.platform === "win32") {
+      kills.push(new Promise((resolve) => {
+        let killer;
+        try {
+          killer = spawn("taskkill", ["/pid", String(c.pid), "/T", "/F"], { stdio: "ignore" });
+        } catch { resolve(); return; }
+        killer.on("error", () => resolve());
+        killer.on("exit", () => resolve());
+      }));
+    }
+    try { c.kill("SIGKILL"); } catch { /* best-effort */ }
+  }
+  await Promise.all(kills);
+}
+
 function die(msg) { console.error(`bench-cache-cell: ${msg}`); process.exit(2); }
 function log(msg) { console.log(msg); }
 function nowMs() { return Number(process.hrtime.bigint() / 1_000_000n); }
 function round(n, d) { return Math.round(n * 10 ** d) / 10 ** d; }
 
 function csvHeader() {
-  return "os,layer,phase,wall_clock_s,save_time_s,restore_time_s,compressed_mb,inflated_mb,ratio,workload,rep,cache_backend,compression_model";
+  return "os,layer,phase,wall_clock_s,save_time_s,restore_time_s,compressed_mb,inflated_mb,ratio,workload,rep,cache_backend,compression_model,zccache_hits,zccache_misses,zccache_compilations";
 }
 function csvRow(r) {
   return [r.os, r.layer, r.phase, r.wallClockS, r.saveTimeS, r.restoreTimeS,
           r.compressedMb, r.inflatedMb, r.ratio, r.workload, r.rep,
-          r.cacheBackend ?? cacheBackend, r.compressionModel ?? compressionModel].join(",");
+          r.cacheBackend ?? cacheBackend, r.compressionModel ?? compressionModel,
+          r.zccacheHits ?? "", r.zccacheMisses ?? "", r.zccacheCompilations ?? ""].join(",");
 }
 
 async function writeCsv(rows) {
@@ -483,9 +637,22 @@ async function dirSizeBytes(dir) {
 
 function run(cmd, argv, opts = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, argv, spawnOptionsForCommand(cmd, { stdio: "inherit", ...opts }));
-    child.on("error", reject);
-    child.on("exit", (code) => code === 0 ? resolve() : reject(new Error(`${cmd} exited ${code}`)));
+    // Pipe (not "inherit") child stdio and forward it to our own streams. This
+    // keeps the child's output handles owned by THIS process rather than by our
+    // caller's pipes, so when the watchdog hard-exits a stuck child, the
+    // caller's pipe to us closes promptly instead of being held open by an
+    // orphaned grandchild.
+    const child = spawn(cmd, argv, spawnOptionsForCommand(cmd, { stdio: ["inherit", "pipe", "pipe"], ...opts }));
+    trackChild(child, cmd, argv);
+    child.stdout?.on("data", (d) => { process.stdout.write(d); });
+    child.stderr?.on("data", (d) => { process.stderr.write(d); });
+    // After the watchdog fires it kills children; the resulting non-zero/null
+    // exit must neither reject (which would crash before the timeout row is
+    // flushed) nor resolve (which would let the main flow race onCellTimeout's
+    // exit). Once timed out, this promise simply never settles — onCellTimeout
+    // owns process termination.
+    child.on("error", (err) => { untrackChild(child); if (timedOut) return; reject(err); });
+    child.on("exit", (code) => { untrackChild(child); if (timedOut) return; code === 0 ? resolve() : reject(new Error(`${cmd} exited ${code}`)); });
   });
 }
 
@@ -495,14 +662,26 @@ function runBestEffort(cmd, argv, opts = {}) {
     try {
       child = spawn(cmd, argv, spawnOptionsForCommand(cmd, { stdio: ["ignore", "pipe", "pipe"], ...opts }));
     } catch (err) {
-      resolve({ status: "error", code: null, stderr: "", error: err });
+      resolve({ status: "error", code: null, stdout: "", stderr: "", error: err });
       return;
     }
+    trackChild(child, cmd, argv);
+    let stdout = "";
     let stderr = "";
+    child.stdout?.on("data", (data) => { stdout += data.toString(); });
     child.stderr?.on("data", (data) => { stderr += data.toString(); });
-    child.on("error", (err) => resolve({ status: "error", code: null, stderr, error: err }));
-    child.on("exit", (code) => resolve({ status: "exit", code, stderr, error: null }));
+    child.on("error", (err) => { untrackChild(child); resolve({ status: "error", code: null, stdout, stderr, error: err }); });
+    child.on("exit", (code) => { untrackChild(child); resolve({ status: "exit", code, stdout, stderr, error: null }); });
   });
+}
+
+function trackChild(child, cmd, argv) {
+  child.__benchCmd = `${cmd} ${(argv ?? []).join(" ")}`.trim();
+  liveChildren.add(child);
+}
+
+function untrackChild(child) {
+  liveChildren.delete(child);
 }
 
 function spawnOptionsForCommand(cmd, opts) {

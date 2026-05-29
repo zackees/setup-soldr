@@ -15,7 +15,8 @@ const inputDir = process.argv[2];
 if (!inputDir) { console.error("usage: collate-bench.mjs <input-dir>"); process.exit(2); }
 
 const HEADER_LEGACY = "os,layer,phase,wall_clock_s,save_time_s,restore_time_s,compressed_mb,inflated_mb,ratio,workload,rep";
-const HEADER = HEADER_LEGACY + ",cache_backend,compression_model";
+const HEADER_NOZC = HEADER_LEGACY + ",cache_backend,compression_model";
+const HEADER = HEADER_NOZC + ",zccache_hits,zccache_misses,zccache_compilations";
 const HEADER_OUT = HEADER + ",speedup_s,net_benefit_s,mb_per_second_saved,break_even_warm_hits,cold_plus_save_s";
 
 const rows = [];
@@ -24,7 +25,7 @@ walk(inputDir, (file) => {
   const lines = fs.readFileSync(file, "utf8").split(/\r?\n/).filter(Boolean);
   if (lines.length === 0) return;
   const header = lines[0];
-  if (header !== HEADER && header !== HEADER_LEGACY) {
+  if (header !== HEADER && header !== HEADER_NOZC && header !== HEADER_LEGACY) {
     console.error(`collate-bench: skip ${file} (unexpected header)`);
     return;
   }
@@ -77,6 +78,7 @@ for (const r of sorted) {
     r.os, r.layer, r.phase, r.wall_clock_s, r.save_time_s, r.restore_time_s,
     r.compressed_mb, r.inflated_mb, r.ratio, r.workload, r.rep,
     r.cache_backend, r.compression_model,
+    r.zccache_hits, r.zccache_misses, r.zccache_compilations,
     speedup, netBenefit, mbPerSecond, breakEvenWarmHits, coldPlusSave,
   ].join(","));
 }
@@ -95,13 +97,18 @@ function walk(dir, visit) {
 
 function parseRow(line, header) {
   const c = line.split(",");
+  const hasBackend = header === HEADER || header === HEADER_NOZC;
+  const hasZccache = header === HEADER;
   return {
     os: c[0], layer: c[1], phase: c[2],
     wall_clock_s: c[3], save_time_s: c[4], restore_time_s: c[5],
     compressed_mb: c[6], inflated_mb: c[7], ratio: c[8],
     workload: c[9], rep: c[10],
-    cache_backend: header === HEADER ? c[11] : "local-tar-zstd",
-    compression_model: header === HEADER ? c[12] : "zstd-19-long27",
+    cache_backend: hasBackend ? c[11] : "local-tar-zstd",
+    compression_model: hasBackend ? c[12] : "zstd-19-long27",
+    zccache_hits: hasZccache ? (c[13] ?? "") : "",
+    zccache_misses: hasZccache ? (c[14] ?? "") : "",
+    zccache_compilations: hasZccache ? (c[15] ?? "") : "",
   };
 }
 

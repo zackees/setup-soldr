@@ -179,6 +179,47 @@ test("planTarPayload zccache build-cache profile keeps private artifacts, trims 
   }
 });
 
+test("planTarPayload preserves compiler stdout/stderr replay metadata inside artifacts dirs (#229)", async () => {
+  const root = mkTmp("payload-zccache-replay-");
+  try {
+    const cache = path.join(root, "zccache");
+    const privateSession = path.join(cache, "private", "soldr-dev-9");
+    fs.mkdirSync(path.join(cache, "artifacts"), { recursive: true });
+    fs.mkdirSync(path.join(privateSession, "artifacts"), { recursive: true });
+    fs.mkdirSync(path.join(cache, "state"), { recursive: true });
+    // Replay metadata stored INSIDE artifacts dirs — must be kept even though
+    // the suffixes (.stderr/.stdout/.out/.err/.txt) are diagnostic-shaped.
+    fs.writeFileSync(path.join(cache, "artifacts", "compile.stderr"), Buffer.alloc(3));
+    fs.writeFileSync(path.join(cache, "artifacts", "compile.stdout"), Buffer.alloc(5));
+    fs.writeFileSync(path.join(privateSession, "artifacts", "build.out"), Buffer.alloc(7));
+    fs.writeFileSync(path.join(privateSession, "artifacts", "warn.err"), Buffer.alloc(9));
+    fs.writeFileSync(path.join(cache, "artifacts", "real-hash"), Buffer.alloc(11));
+    // Standalone sidecars OUTSIDE any artifacts dir — must be trimmed.
+    fs.writeFileSync(path.join(cache, "state", "daemon.stderr"), Buffer.alloc(13));
+    fs.writeFileSync(path.join(cache, "session.jsonl"), Buffer.alloc(17));
+
+    const plan = await planTarPayload({
+      parent: root,
+      inputBasenames: ["zccache"],
+      topN: 5,
+      profile: "zccache-build-cache",
+    });
+
+    assert.deepEqual(plan.manifestEntries.sort(), [
+      "zccache/artifacts/compile.stderr",
+      "zccache/artifacts/compile.stdout",
+      "zccache/artifacts/real-hash",
+      "zccache/private/soldr-dev-9/artifacts/build.out",
+      "zccache/private/soldr-dev-9/artifacts/warn.err",
+    ]);
+    const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry]));
+    // Only the two standalone sidecars (daemon.stderr, session.jsonl) trimmed.
+    assert.equal(skipped.get("diagnostic-log-file")?.count, 2);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("planTarPayload archives symlink entries without following external targets", async () => {
   const root = mkTmp("payload-symlink-");
   try {

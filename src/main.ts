@@ -21,6 +21,7 @@ import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js
 import { ensureShims } from "./lib/ensure-shims.js";
 import { seedZccache } from "./lib/zccache-seed.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
+import { parseIsolatedSeedTargets, seedIsolatedBuildCache } from "./lib/seed-isolated-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import {
   walkSnapshot,
@@ -417,6 +418,25 @@ export async function run(): Promise<void> {
       archiveBytes: buildArchiveBytes, inflatedBytes: buildInflatedBytes, fileCount: buildFileCount,
       durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
     });
+
+    // Seed an isolated SOLDR_CACHE_DIR from the just-restored build-cache
+    // artifact store (issue #240). Opt-in: only fires when the consumer
+    // declares the isolated root(s) it switches its self-test phase to, so a
+    // daemon-isolated coverage/integration phase starts warm instead of cold.
+    const seedTargets = parseIsolatedSeedTargets(inputs.seedIsolatedBuildCache);
+    if (seedTargets.length > 0) {
+      try {
+        seedIsolatedBuildCache({
+          sourceZccacheDir: buildCachePath,
+          targetSoldrRoots: seedTargets,
+          log: (msg) => logger.log(msg),
+        });
+      } catch (err) {
+        logger.log(
+          `seed-isolated-build-cache: failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
   })();
 
   // Cargo-registry restore moved here from after-cook. It writes only

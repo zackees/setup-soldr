@@ -470,6 +470,9 @@ preferred for new workflows.
 | `lockfile` | Optional `Cargo.lock` path used for Rust artifact cache keying. Empty infers `Cargo.lock` next to `target-dir`, then workspace `Cargo.lock`. |
 | `build-cache` | Restore and save Soldr/zccache build cache state across runs. Default `true`; set to `false` to opt out. |
 | `build-cache-mode` | Rust build cache mode. Default `once` saves a full snapshot on miss, then restores only the local rust-plan bundle on later hits without resaving the full target tree. `thin` is the bounded dependency-artifact alternative. `full` opts into normal whole-target restore/save behavior and should be treated as unbounded. |
+| `build-cache-save-min-compiles` | Delta-aware build-cache save gate. Default `1`: when a cache was restored and the session compiled nothing new (zccache misses below this count), skip re-saving the build-cache so a fallback-key hit doesn't re-upload a duplicate multi-GiB payload. Raise to also skip tiny deltas; set `0` to always save. Never gates a cold seed. |
+| `seed-isolated-build-cache` | Optional newline/comma-separated isolated `SOLDR_CACHE_DIR` roots to pre-seed from the restored build-cache (issue #240). Copies only the content-addressed zccache artifact store (no logs/sockets/live daemon state) into `<root>/cache/zccache`, so a daemon-isolated coverage/integration phase starts warm instead of cold. Default empty (no seeding). |
+| `verify-compile-cache` | Guard against silently-bypassed compile caching. `off` (default) no check; `warn` emits a warning when a job expected to use zccache reports `hits + misses == 0`; `error`/`true` fails the post step. Names the likely bypass (RUSTC_WRAPPER, SOLDR_CACHE_DIR, ZCCACHE_CACHE_DIR, shims) and sets the `compile-cache-verification` output. Legitimate no-compile / passthrough / build-cache-off jobs are skipped, never failed. |
 | `zccache-seed-strict` | When `true`, setup fails if setup-soldr cannot seed soldr's pinned zccache install from a vendored or managed release source. Default `false` keeps the seed best-effort and allows soldr's normal managed fallback path. Enable this in repos where a later `cargo install zccache` fallback is unacceptable. |
 | `prebuild-deps` | Dependency prebuild mode. Default `soldr-cook` runs `soldr cook` and restores/saves a long-enduring dependency cache; set to `none` to skip. `cargo-chef` is accepted as a legacy alias. |
 | `prebuild-deps-flags` | Flags forwarded to `soldr cook`; default `--release`. Material flags are hashed into the cook cache key. |
@@ -596,6 +599,35 @@ setup-soldr skips the cook restore/run because the target cache already
 contains the same dependency artifacts. Set `prebuild-deps: none` when a
 workflow should rely only on target/build/cache layers.
 
+### Match cook to what your job actually compiles
+
+cook only speeds a job up when the cooked dependency artifacts share a cache
+key with what the job compiles. Three independent axes have to line up — a
+mismatch on **any one** means the cooked artifacts are never reused, so cook
+spends wall-clock time and uploads artifacts the job rebuilds from scratch:
+
+- **Profile.** `prebuild-deps-flags` defaults to `--release`, but
+  `cargo check` / `clippy` / `doc` / `test` compile in the **dev (debug)**
+  profile. A release `.rlib` is a different cache entry than a debug one. For
+  debug jobs, set `prebuild-deps-flags: ""` so cook builds debug deps; keep
+  `--release` only for jobs that actually build a release artifact.
+- **Toolchain.** cook runs under the toolchain setup-soldr pins (`toolchain:` /
+  `rust-toolchain.toml`). A job phase that compiles under a *different*
+  toolchain — e.g. a nightly Dylint driver pass — cannot reuse a stable cook,
+  because the rustc release is part of the key.
+- **Emit kind.** `check`-style metadata compiles and full codegen builds are
+  keyed separately.
+
+`prebuild-deps: none` disables **cook only** — it does *not* disable
+`build-cache`, which is the cross-run save-state for your job's own compiles
+and stays on by default. So a job whose cook can never match (e.g. a
+different-toolchain pass) still carries its build work forward via
+`build-cache`; reach for `none` only when the cook itself is pure waste.
+
+setup-soldr's post step emits a warning when it detects the mismatch
+fingerprint — a cook that ran or restored, yet the compile-cache session
+recorded misses with zero hits — naming the likely fix.
+
 ## Dylint Tool Cache
 
 `dylint-cache: true` enables an exact-key cache for workflows that install
@@ -618,16 +650,16 @@ The action keeps the default cache path small: zccache build-cache and soldr-coo
 stay on, while the largest optional payloads must be opted into after measuring
 save cost, restore cost, and hit rate for the current workload.
 
-| Layer | Default policy | Benchmark expectation |
-|---|---|---|
-| `build` / zccache state | Default warm path. Private daemon artifact payloads and diagnostics are pruned before save. | Do not treat a low restore time as success if warm zccache stats still show zero hits. |
-| `soldr-cook` | Default dependency prebuild path; skipped only when an opted-in target-cache already covers the same lockfile/build shape. | Compare `cook`, `cook-production`, and target-cache rows before changing defaults. |
-| `target` / `target-cache: true` | Opt-in large warm path. | Should show low warm wall time and roughly one-hit payback after save cost. |
-| `cargo-registry` | Opt-in companion layer. Gate keep/retire decisions on multi-run or real-cache data. | Should beat noise after save cost and should never stall without a bounded timeout artifact. |
-| `setup-cache` | Mechanics/install layer. | Report save/restore mechanics separately from build warm speedup. |
-| `soldr-mini` | Mechanics/install layer. | Report save/restore mechanics separately from build warm speedup. |
-| `solo-toolchain` | Delta-only and opt-in. | Default stable on hosted runners should produce an empty or tiny delta. |
-| `all-on` benchmark mode | Diagnostic only. | Must not archive hosted-runner Rust toolchains unless explicitly requested. |
+| Layer | Default | Default policy | Benchmark expectation |
+|---|---|---|---|
+| `build` / zccache state | `default-on` | Default warm path. Private daemon artifact payloads and diagnostics are pruned before save. | Do not treat a low restore time as success if warm zccache stats still show zero hits. |
+| `soldr-cook` | `default-on` | Default dependency prebuild path (`prebuild-deps: soldr-cook`); skipped only when an opted-in target-cache already covers the same lockfile/build shape. | Compare `cook`, `cook-production`, and target-cache rows before changing defaults. |
+| `target` / `target-cache: true` | `default-off` | Opt-in large warm path. Set `target-cache: true` after measuring payback. | Should show low warm wall time and roughly one-hit payback after save cost. |
+| `cargo-registry` | `default-off` | Opt-in companion layer (`cargo-registry-cache: true`). Gate keep/retire decisions on multi-run or real-cache data. | Should beat noise after save cost and should never stall without a bounded timeout artifact. |
+| `setup-cache` | `default-on` | Mechanics/install layer; part of the always-on `cache` umbrella switch. | Report save/restore mechanics separately from build warm speedup. |
+| `soldr-mini` | `default-on` | Mechanics/install layer (binary-only, keyed on version+platform). | Report save/restore mechanics separately from build warm speedup. |
+| `solo-toolchain` | `default-off` | Delta-only and opt-in. | Default stable on hosted runners should produce an empty or tiny delta. |
+| `all-on` benchmark mode | `opt-in-by-workload` | Benchmark-only mode, never a runtime default. Diagnostic only. | Must not archive hosted-runner Rust toolchains unless explicitly requested. |
 
 `bench-cache-modes.yml` labels synthetic local tar/zstd results in the CSV and
 summary. Use `break_even_warm_hits` rather than restore-only net benefit when
@@ -636,6 +668,68 @@ service check, dispatch the workflow with
 `cache_backend=local-tar-zstd+actions-cache-smoke`; this keeps the normal local
 matrix and adds a two-job target-cache save/restore smoke using
 `@actions/cache`, emitted as `cache_backend=actions-cache`.
+
+### Recovering pre-trim cache behavior (migration)
+
+PR [#219](https://github.com/zackees/setup-soldr/pull/219) ("Trim default cache
+footprint") made the two largest optional layers — `target-cache` and
+`cargo-registry-cache` — default-off so the default warm path stays small and
+fast to restore. A workflow that measured a net win from the older,
+larger-cache behavior re-enables it explicitly:
+
+- `target-cache: true` (or `build-cache-mode: full`) restores the full `target/`
+  artifact tree across runs again, rather than the default `once` rust-plan
+  bundle.
+- `cargo-registry-cache: true` caches `~/.cargo/registry` directly as a
+  fast-zstd archive again.
+
+These are opt-in because they pay a real save/restore cost that only some
+workloads earn back. The `cargo-registry-cache` restore is especially expensive
+on Windows: the registry is tens of thousands of small files, and restore has
+been observed at roughly 47–50 s — a key reason it is default-off and should be
+opted into only where the workload measures a net win over upload/retention
+cost.
+
+### Inspecting cache behavior
+
+Reading the action's own diagnostics is the fastest way to tell whether a cache
+layer is actually paying off:
+
+- **Payload census.** Cache saves emit a census of the largest files and
+  directories in the tar payload. `cache-payload-top-n` (default `10`) controls
+  how many entries are retained; set `0` to keep only aggregate counts. Use this
+  to find which subtree is inflating a save.
+- **Skipped file classes.** The post-step GitHub step summary lists the file
+  classes trimmed before save and why, so you can confirm the trim happened.
+  The build-cache save profile keeps the reusable content-addressed store —
+  everything under a zccache `artifacts/` directory, including
+  `zccache/private/*/artifacts/**` and the compiler stdout/stderr replay
+  metadata stored there (excluding it produced restored-but-zero-hit caches,
+  see [#398](https://github.com/zackees/setup-soldr/issues/398)) — and trims
+  only the `logs/` subtree and standalone diagnostic sidecars (`*.jsonl`,
+  `*.log`, `*.txt`, `*.out`, `*.err`, `*.stdout`, `*.stderr`, `*.trace`) that
+  live outside any artifacts dir.
+- **Compile-cache hits/misses.** With `compile-cache-stats: summarize` (default)
+  the summary renders per-session totals and the action exports
+  `compile-cache-hits`, `compile-cache-misses`, `compile-cache-hit-rate`, and
+  `compile-cache-compilations` outputs. `detailed` adds per-extension and
+  per-tool rollups.
+- **Reading a zero-hit result.** A warm run with `hits + misses == 0` means the
+  compile cache was bypassed entirely or the measurement is invalid — not a
+  success. A fast restore time with zero hits is a red flag, not a win: the
+  build either compiled nothing through zccache or never consulted the restored
+  cache. Treat zero-hit warm runs as a configuration bug to investigate, not as
+  evidence the cache is working. Set `verify-compile-cache: warn` (or `error`)
+  to have the post step flag/fail that case automatically — it names the likely
+  bypass (RUSTC_WRAPPER, SOLDR_CACHE_DIR, ZCCACHE_CACHE_DIR, shims) and sets the
+  `compile-cache-verification` output. Legitimate no-compile jobs are skipped,
+  never failed.
+- **Save gating + timing.** The build-cache save logs per-phase timing
+  (`compress=…ms upload=…ms`) so a slow post step is diagnosable. On a
+  restore-key (fallback) hit where the session compiled nothing new, the save is
+  skipped (`build-cache-save-min-compiles`, default `1`) to avoid re-uploading a
+  duplicate multi-GiB payload; raise the threshold to also skip tiny deltas, or
+  set `0` to always save.
 
 ## Known limitations
 

@@ -72,5 +72,8 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     journalPrintRaw: get("journal-print-raw"),
     crossTargets: get("cross-targets"),
     crossTool: get("cross-tool"),
+    verifyCompileCache: get("verify-compile-cache"),
+    seedIsolatedBuildCache: get("seed-isolated-build-cache"),
+    buildCacheSaveMinCompiles: get("build-cache-save-min-compiles"),
   };
 }

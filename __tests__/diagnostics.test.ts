@@ -75,6 +75,9 @@ function fixtureRawInputs(): RawInputs {
     journalPrintRaw: "",
     crossTargets: "",
     crossTool: "auto",
+    verifyCompileCache: "off",
+    seedIsolatedBuildCache: "",
+    buildCacheSaveMinCompiles: "1",
   };
 }
 

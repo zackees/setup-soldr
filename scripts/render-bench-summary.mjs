@@ -39,6 +39,9 @@ const cols = {
   breakEven: header.indexOf("break_even_warm_hits"),
   cacheBackend: header.indexOf("cache_backend"),
   compressionModel: header.indexOf("compression_model"),
+  zccacheHits: header.indexOf("zccache_hits"),
+  zccacheMisses: header.indexOf("zccache_misses"),
+  zccacheCompilations: header.indexOf("zccache_compilations"),
 };
 
 if (cols.cacheBackend >= 0 || cols.compressionModel >= 0) {
@@ -60,10 +63,24 @@ if (aggregates.length) {
   out.push("");
   out.push("### Rep aggregates");
   out.push("");
-  out.push("| os | workload | layer | reps | warm_wall_s_min | warm_wall_s_p50 | warm_wall_s_max | net_benefit_s_p50 | break_even_hits_p50 |");
-  out.push("|---|---|---|---|---|---|---|---|---|");
+  out.push("| os | workload | layer | reps | warm_wall_s_min | warm_wall_s_p50 | warm_wall_s_p95 | warm_wall_s_max | net_benefit_s_p50 | break_even_hits_p50 |");
+  out.push("|---|---|---|---|---|---|---|---|---|---|");
   for (const a of aggregates) {
-    out.push(`| ${a.os} | ${a.workload} | ${a.layer} | ${a.reps} | ${a.wallMin} | ${a.wallP50} | ${a.wallMax} | ${a.netP50} | ${a.breakEvenP50} |`);
+    out.push(`| ${a.os} | ${a.workload} | ${a.layer} | ${a.reps} | ${a.wallMin} | ${a.wallP50} | ${a.wallP95} | ${a.wallMax} | ${a.netP50} | ${a.breakEvenP50} |`);
+  }
+}
+
+// #192: surface zccache hit/miss/compile counts for cook warm rows so a
+// "warm cook recompiled everything (0 hits)" result is visible at a glance.
+const zccacheRows = cookWarmZccacheRows(rows, cols);
+if (zccacheRows.length) {
+  out.push("");
+  out.push("### zccache stats (cook warm rows)");
+  out.push("");
+  out.push("| os | workload | layer | hits | misses | compilations | note |");
+  out.push("|---|---|---|---|---|---|---|");
+  for (const z of zccacheRows) {
+    out.push(`| ${z.os} | ${z.workload} | ${z.layer} | ${z.hits} | ${z.misses} | ${z.compilations} | ${z.note} |`);
   }
 }
 
@@ -128,12 +145,51 @@ function warmAggregates(allRows, columns) {
       reps: g.walls.length,
       wallMin: fmt(Math.min(...g.walls)),
       wallP50: fmt(p50(g.walls)),
+      wallP95: fmt(p95(g.walls)),
       wallMax: fmt(Math.max(...g.walls)),
       netP50: fmt(p50(g.nets)),
       breakEvenP50: fmt(p50(g.breakEvens)),
     }))
     .filter((g) => g.reps > 0)
     .sort((a, b) => a.os.localeCompare(b.os) || a.workload.localeCompare(b.workload) || a.layer.localeCompare(b.layer));
+}
+
+// #192: collect cook/cook-production warm rows that carry zccache stats. The
+// note column calls out the degenerate "0 hits" case so a warm cook that
+// recompiled everything stands out in the rendered summary.
+function cookWarmZccacheRows(allRows, columns) {
+  if (columns.phase < 0 || columns.layer < 0 || columns.zccacheHits < 0) return [];
+  const result = [];
+  for (const r of allRows) {
+    if (r[columns.phase] !== "warm") continue;
+    const layer = r[columns.layer];
+    if (layer !== "cook" && layer !== "cook-production") continue;
+    const hits = numAt(r, columns.zccacheHits);
+    const misses = numAt(r, columns.zccacheMisses);
+    const compilations = numAt(r, columns.zccacheCompilations);
+    const hitsCell = cellOf(r, columns.zccacheHits);
+    const missesCell = cellOf(r, columns.zccacheMisses);
+    const compilationsCell = cellOf(r, columns.zccacheCompilations);
+    if (hitsCell === "" && missesCell === "" && compilationsCell === "") continue;
+    let note = "";
+    if (Number.isFinite(hits) && hits === 0) note = "WARM COOK, 0 HITS - recompiled everything";
+    else if (Number.isFinite(hits) && Number.isFinite(compilations) && compilations > hits) note = "more compilations than hits";
+    result.push({
+      os: columns.os >= 0 ? r[columns.os] : "(unknown)",
+      workload: columns.workload >= 0 ? r[columns.workload] : "(unknown)",
+      layer,
+      hits: hitsCell,
+      misses: missesCell,
+      compilations: compilationsCell,
+      note,
+    });
+  }
+  return result;
+}
+
+function cellOf(row, column) {
+  if (column < 0) return "";
+  return row[column] ?? "";
 }
 
 function pushNumber(out, raw) {
@@ -143,9 +199,21 @@ function pushNumber(out, raw) {
 }
 
 function p50(values) {
+  return percentile(values, 0.5);
+}
+
+function p95(values) {
+  return percentile(values, 0.95);
+}
+
+// Nearest-rank percentile on a 0-indexed sorted array. Matches the existing
+// p50 lower-median behavior (floor of the fractional rank) so single-rep runs
+// and the original p50 callers keep their values.
+function percentile(values, q) {
   if (values.length === 0) return NaN;
   const sorted = values.slice().sort((a, b) => a - b);
-  return sorted[Math.floor((sorted.length - 1) / 2)];
+  const idx = Math.floor((sorted.length - 1) * q);
+  return sorted[idx];
 }
 
 function numAt(row, column) {

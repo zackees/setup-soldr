@@ -92,7 +92,29 @@ const TRANSIENT_SUFFIXES: Array<[string, string]> = [
   [".partial", "transient-temp-file"],
 ];
 
-const ZCCACHE_DIAGNOSTIC_FILE_SUFFIXES = [
+// ---------------------------------------------------------------------------
+// Build-cache payload file-class contract (issue #229).
+//
+// The zccache build-cache save profile has an explicit, tested allow/deny
+// contract so a future refactor can't silently start vacuuming diagnostic
+// sidecars into the cache (or, worse, start dropping reusable artifacts):
+//
+//   ALLOW (always kept): anything under a zccache *artifacts* directory —
+//     `zccache/artifacts/**` and `zccache/private/<session>/artifacts/**`.
+//     These hold the reusable compiled artifacts AND the compiler
+//     stdout/stderr replay metadata zccache stores alongside them, so a
+//     `.stderr`/`.out`/`.txt` *inside* an artifacts dir is replay data, not a
+//     standalone log, and must survive (see #398 — excluding private
+//     artifacts produced restored-but-0-hit caches).
+//
+//   DENY (trimmed): the `logs/` subtree at any depth (reason
+//     `diagnostic-log-dir`) and standalone diagnostic sidecars matching
+//     BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES *outside* any artifacts dir
+//     (reason `diagnostic-log-file`).
+// ---------------------------------------------------------------------------
+
+/** Standalone diagnostic/log sidecar suffixes denied outside artifacts dirs. */
+export const BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES = [
   ".jsonl",
   ".log",
   ".trace",
@@ -101,7 +123,21 @@ const ZCCACHE_DIAGNOSTIC_FILE_SUFFIXES = [
   ".err",
   ".stdout",
   ".stderr",
-];
+] as const;
+
+/**
+ * True when a build-cache tar path is inside a zccache artifacts directory —
+ * the allowlist that preserves reusable artifacts and their in-place compiler
+ * stdout/stderr replay metadata. Matches `zccache/artifacts/**` and
+ * `zccache/private/<session>/artifacts/**`. Pure; tar path uses "/" separators.
+ */
+export function isZccacheArtifactPayloadPath(tarPath: string): boolean {
+  const parts = tarPath.split("/").map((part) => part.toLowerCase());
+  if (parts[0] !== "zccache") return false;
+  if (parts[1] === "artifacts") return true;
+  if (parts[1] === "private" && parts.length >= 4 && parts[3] === "artifacts") return true;
+  return false;
+}
 
 function normalizeTopN(value: number | undefined): number {
   if (value === undefined || !Number.isFinite(value)) return DEFAULT_PAYLOAD_TOP_N;
@@ -140,27 +176,20 @@ function reasonForTransientPath(relativePath: string, profile: CachePayloadProfi
     if (lowerParts.includes("logs")) {
       return "diagnostic-log-dir";
     }
-    const isPrivateArtifacts =
-      lowerParts[1] === "private" &&
-      lowerParts.length >= 4 &&
-      lowerParts[3] === "artifacts";
     // setup-soldr#398: do NOT exclude `private/<session>/artifacts/**`. That is
     // exactly where the zccache daemon stores its reusable compiled artifacts —
     // excluding them produced a build-cache that restored with an exact key hit
     // but 0 zccache hits (verified on real zccache CI + locally: tarring the
     // store WITH these artifacts restores ~100% hits, WITHOUT them 0%). The
-    // 0.9.12 exclusion treated them as throwaway "private daemon payloads" to
-    // trim footprint, but they ARE the cache; a small useless cache is worse
-    // than a larger reusable one (footprint is still bounded by
-    // cache-payload-max-bytes). We keep `isPrivateArtifacts` only so the
-    // diagnostic-suffix filter below never drops a real artifact file.
-
-    const isPublicArtifact = lowerParts[1] === "artifacts";
-    const isArtifactPayload = isPublicArtifact || isPrivateArtifacts;
+    // allow rule below (isZccacheArtifactPayloadPath) keeps every file under an
+    // artifacts dir — including the compiler stdout/stderr replay metadata
+    // zccache stores there — so the diagnostic-suffix filter never drops a real
+    // artifact file. See the BUILD_CACHE_*_SUFFIXES contract above (#229).
+    const isArtifactPayload = isZccacheArtifactPayloadPath(lowerParts.join("/"));
     const basename = lowerParts[lowerParts.length - 1] ?? "";
     if (
       !isArtifactPayload &&
-      ZCCACHE_DIAGNOSTIC_FILE_SUFFIXES.some((suffix) => basename.endsWith(suffix))
+      BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES.some((suffix) => basename.endsWith(suffix))
     ) {
       return "diagnostic-log-file";
     }
