@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v0.9.15 - 2026-05-29
+
+- Fix the `[compile_journal]` diagnostic (emitted with `logging: true`) to find
+  the per-invocation journal under soldr's private daemon session layout
+  (`<cache>/private/<id>/logs/last-session.jsonl`) instead of only the bare
+  `<cache>/logs/` path. The warm-miss dump (miss-reason histogram,
+  `slowest_misses`, rollups) was previously silently empty by default. (#247)
+
 ## v0.9.14 - 2026-05-28
 
 - Warn when `soldr cook` ran or restored but the compile-cache session reused
