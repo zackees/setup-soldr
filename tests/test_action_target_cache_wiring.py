@@ -79,6 +79,9 @@ EXPECTED_INPUTS = {
     "journal-print-raw",
     "cross-targets",
     "cross-tool",
+    "verify-compile-cache",
+    "seed-isolated-build-cache",
+    "build-cache-save-min-compiles",
 }
 
 
@@ -133,6 +136,7 @@ EXPECTED_OUTPUTS = {
     "compile-cache-summary-json",
     "compile-cache-sessions-total",
     "compile-cache-overall-hit-rate",
+    "compile-cache-verification",
 }
 
 
