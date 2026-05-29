@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v0.9.16 - 2026-05-29
+
+- Default to soldr `0.7.44`, which carries the `soldr cook` project-restore fix
+  (zackees/soldr#566): `cargo chef cook` no longer leaves the workspace in its
+  stubbed `0.0.1` skeleton state, so builds after the cook prebuild compile real
+  source at the real version. This stabilizes first-party compile-cache keys
+  across cold→warm runs (the residual first-party warm-miss in #236 / #448 /
+  zccache#448).
+
 ## v0.9.15 - 2026-05-29
 
 - Fix the `[compile_journal]` diagnostic (emitted with `logging: true`) to find
