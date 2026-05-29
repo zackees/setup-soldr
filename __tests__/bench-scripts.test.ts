@@ -457,12 +457,21 @@ test("render-bench-summary reports p95 and surfaces 0-hit cook warm rows (#191/#
   assert.match(stdout, /WARM COOK, 0 HITS/);
 });
 
+// expand-bench-matrix prints raw matrix JSON to stdout only when GITHUB_OUTPUT
+// is unset; with it set (as in CI) it writes the file and logs a "wrote
+// matrix=..." line instead. Strip it so these tests parse JSON either way.
+function matrixEnv(extra: Record<string, string>): NodeJS.ProcessEnv {
+  const env = { ...process.env, ...extra };
+  delete env["GITHUB_OUTPUT"];
+  return env;
+}
+
 test("expand-bench-matrix honors the standard reps preset (#191)", async () => {
   const { stdout } = await execFileAsync(process.execPath, [
     "scripts/expand-bench-matrix.mjs",
     "--reps-preset=standard",
   ], {
-    env: { ...process.env, INPUT_LAYERS: "target", INPUT_OSES: "ubuntu-24.04", INPUT_REPS: "" },
+    env: matrixEnv({ INPUT_LAYERS: "target", INPUT_OSES: "ubuntu-24.04", INPUT_REPS: "" }),
   });
   const matrix = JSON.parse(stdout.trim());
   const reps = matrix.include.filter((c: { layer: string }) => c.layer === "target");
@@ -472,7 +481,7 @@ test("expand-bench-matrix honors the standard reps preset (#191)", async () => {
 
 test("expand-bench-matrix keeps reps=1 default backward compatible (#191)", async () => {
   const { stdout } = await execFileAsync(process.execPath, ["scripts/expand-bench-matrix.mjs"], {
-    env: { ...process.env, INPUT_LAYERS: "target", INPUT_OSES: "ubuntu-24.04", INPUT_REPS: "" },
+    env: matrixEnv({ INPUT_LAYERS: "target", INPUT_OSES: "ubuntu-24.04", INPUT_REPS: "" }),
   });
   const matrix = JSON.parse(stdout.trim());
   assert.equal(matrix.include.filter((c: { layer: string }) => c.layer === "target").length, 1);
