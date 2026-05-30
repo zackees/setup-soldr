@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.9.19 - 2026-05-30
+
 - Default to soldr `0.7.45`, which bundles zccache `1.11.7` carrying the
   depgraph drift-detection fix (zackees/zccache#449 → PR #450): prevents
   stale-artifact hits that produced undefined-symbol link errors when
