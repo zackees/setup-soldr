@@ -20,6 +20,28 @@ import * as exec from "@actions/exec";
 /** Min soldr version with parallel-extract `soldr load`. Released in 0.7.46 alongside zackees/soldr#575. */
 export const MIN_SOLDR_VERSION_FOR_LOAD = "0.7.46";
 
+/**
+ * Min soldr version safe to use for `soldr save`/`soldr load` round-trip
+ * on cargo-registry cache. 0.7.47 includes zackees/soldr#591 (+x bit
+ * preservation); 0.7.46 alone would corrupt executable cache files
+ * (cargo `build-script-build` failed `execve` with EACCES). (#263)
+ */
+export const MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP = "0.7.47";
+
+/**
+ * Env var that opts cargo-registry-cache into the `soldr save`/`soldr load`
+ * round-trip. Default off so the v0.9.20 wire-in stays dormant and the
+ * legacy tar+zstd path keeps running until #263's measurement validates
+ * the Windows wall-clock improvement.
+ */
+export const CARGO_REGISTRY_VIA_SOLDR_ENV = "SOLDR_CARGO_REGISTRY_VIA_SOLDR";
+
+/** True when [[CARGO_REGISTRY_VIA_SOLDR_ENV]] is set to a truthy value. */
+export function cargoRegistryViaSoldrEnvOn(): boolean {
+  const raw = (process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] ?? "").trim().toLowerCase();
+  return raw !== "" && raw !== "0" && raw !== "false" && raw !== "no" && raw !== "off";
+}
+
 /** Filename of the manifest at the root of every `soldr save` archive. */
 const SOLDR_MANIFEST_NAME = "SOLDR_MANIFEST.pb";
 
@@ -137,4 +159,99 @@ export async function tryLoadViaSoldr(opts: SoldrLoadOpts): Promise<SoldrLoadRes
   if (opts.debug) log(`[debug] soldr-load-shim: invoking ${opts.soldrPath} ${args.join(" ")}`);
   await exec.exec(opts.soldrPath, args);
   return { used: true, durationMs: Date.now() - t0 };
+}
+
+export interface SoldrSaveResult {
+  used: boolean;
+  archivePath: string | null;
+  archiveBytes: number;
+  durationMs: number;
+}
+
+export interface SoldrSaveOpts {
+  cacheDir: string;
+  archivePath: string;
+  soldrPath: string;
+  soldrVersion: string;
+  /**
+   * If non-empty, fall back to legacy compression. soldr save bundles
+   * one directory; extras (cargo's `.global-cache`, `git/`) require
+   * pre-staging that this helper doesn't do today. (#263)
+   */
+  extraBasenames?: string[];
+  debug?: boolean;
+  log?: (msg: string) => void;
+}
+
+/**
+ * Attempt to bundle the cache directory via `soldr save` so the matching
+ * `soldr load` (in main.ts) can pick up the parallel-extract path. Returns
+ * `{ used: false }` when gated off (env var, missing binary, too-old
+ * version, extras present, or any throw). Produces a soldr-format archive
+ * with `SOLDR_MANIFEST.pb` at the root + `cache/...` entries. (#263)
+ */
+export async function trySaveViaSoldr(opts: SoldrSaveOpts): Promise<SoldrSaveResult> {
+  const t0 = Date.now();
+  const noOp: SoldrSaveResult = { used: false, archivePath: null, archiveBytes: 0, durationMs: 0 };
+  const log = opts.log ?? ((): void => undefined);
+  if (!cargoRegistryViaSoldrEnvOn()) {
+    if (opts.debug) {
+      log(
+        `[debug] soldr-save-shim: ${CARGO_REGISTRY_VIA_SOLDR_ENV} not set; deferring to legacy tar+zstd save`,
+      );
+    }
+    return noOp;
+  }
+  if (!opts.soldrPath) {
+    if (opts.debug) log(`[debug] soldr-save-shim: no soldr binary path supplied`);
+    return noOp;
+  }
+  if (!semverGte(opts.soldrVersion, MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP)) {
+    if (opts.debug) {
+      log(
+        `[debug] soldr-save-shim: soldr ${opts.soldrVersion} < ${MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP}; falling back to legacy save`,
+      );
+    }
+    return noOp;
+  }
+  if (opts.extraBasenames && opts.extraBasenames.length > 0) {
+    if (opts.debug) {
+      log(
+        `[debug] soldr-save-shim: extraBasenames=[${opts.extraBasenames.join(",")}] not yet supported by soldr save; falling back to legacy`,
+      );
+    }
+    return noOp;
+  }
+  try {
+    const st = await fs.stat(opts.cacheDir);
+    if (!st.isDirectory()) return noOp;
+  } catch {
+    return noOp;
+  }
+  const args: string[] = [
+    "save",
+    "--cache-dir",
+    opts.cacheDir,
+    "--out",
+    opts.archivePath,
+  ];
+  if (opts.debug) log(`[debug] soldr-save-shim: invoking ${opts.soldrPath} ${args.join(" ")}`);
+  try {
+    await exec.exec(opts.soldrPath, args);
+  } catch (err) {
+    if (opts.debug) {
+      log(
+        `[debug] soldr-save-shim: invocation threw: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+    return noOp;
+  }
+  let archiveBytes = 0;
+  try {
+    archiveBytes = (await fs.stat(opts.archivePath)).size;
+  } catch {
+    // Soldr save claimed success but archive vanished — fall back.
+    return noOp;
+  }
+  return { used: true, archivePath: opts.archivePath, archiveBytes, durationMs: Date.now() - t0 };
 }

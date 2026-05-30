@@ -9,7 +9,11 @@ import {
   detectSoldrManifest,
   semverGte,
   tryLoadViaSoldr,
+  trySaveViaSoldr,
+  cargoRegistryViaSoldrEnvOn,
+  CARGO_REGISTRY_VIA_SOLDR_ENV,
   MIN_SOLDR_VERSION_FOR_LOAD,
+  MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
 } from "../src/lib/soldr-load-shim.js";
 
 test("semverGte: handles MAJOR.MINOR.PATCH ordering", () => {
@@ -124,6 +128,99 @@ test("tryLoadViaSoldr: returns used=false when archive missing", async () => {
     assert.equal(r.used, false);
   } finally {
     await fs.rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test("cargoRegistryViaSoldrEnvOn: env-var truthy/falsy behavior", () => {
+  const orig = process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+  try {
+    delete process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+    assert.equal(cargoRegistryViaSoldrEnvOn(), false);
+    process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "";
+    assert.equal(cargoRegistryViaSoldrEnvOn(), false);
+    process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "0";
+    assert.equal(cargoRegistryViaSoldrEnvOn(), false);
+    process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "false";
+    assert.equal(cargoRegistryViaSoldrEnvOn(), false);
+    process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "1";
+    assert.equal(cargoRegistryViaSoldrEnvOn(), true);
+    process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "true";
+    assert.equal(cargoRegistryViaSoldrEnvOn(), true);
+    process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "yes";
+    assert.equal(cargoRegistryViaSoldrEnvOn(), true);
+  } finally {
+    if (orig === undefined) delete process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+    else process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = orig;
+  }
+});
+
+test("trySaveViaSoldr: gated off when env var unset (default)", async () => {
+  const orig = process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+  delete process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+  try {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "soldr-save-shim-"));
+    try {
+      await fs.mkdir(path.join(tmp, "cache"));
+      const r = await trySaveViaSoldr({
+        cacheDir: path.join(tmp, "cache"),
+        archivePath: path.join(tmp, "out.tar.zst"),
+        soldrPath: "/fake/path/soldr",
+        soldrVersion: MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
+      });
+      assert.equal(r.used, false);
+    } finally {
+      await fs.rm(tmp, { recursive: true, force: true });
+    }
+  } finally {
+    if (orig === undefined) delete process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+    else process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = orig;
+  }
+});
+
+test("trySaveViaSoldr: gated off when soldr version is too old (even with env on)", async () => {
+  const orig = process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+  process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "1";
+  try {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "soldr-save-shim-"));
+    try {
+      await fs.mkdir(path.join(tmp, "cache"));
+      const r = await trySaveViaSoldr({
+        cacheDir: path.join(tmp, "cache"),
+        archivePath: path.join(tmp, "out.tar.zst"),
+        soldrPath: "/fake/path/soldr",
+        soldrVersion: "0.7.46", // one below the 0.7.47 minimum
+      });
+      assert.equal(r.used, false);
+    } finally {
+      await fs.rm(tmp, { recursive: true, force: true });
+    }
+  } finally {
+    if (orig === undefined) delete process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+    else process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = orig;
+  }
+});
+
+test("trySaveViaSoldr: gated off when extraBasenames is non-empty (#263 limitation)", async () => {
+  const orig = process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+  process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "1";
+  try {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "soldr-save-shim-"));
+    try {
+      await fs.mkdir(path.join(tmp, "cache"));
+      const r = await trySaveViaSoldr({
+        cacheDir: path.join(tmp, "cache"),
+        archivePath: path.join(tmp, "out.tar.zst"),
+        soldrPath: "/fake/path/soldr",
+        soldrVersion: MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
+        extraBasenames: [".global-cache", "git"],
+      });
+      assert.equal(r.used, false);
+    } finally {
+      await fs.rm(tmp, { recursive: true, force: true });
+    }
+  } finally {
+    if (orig === undefined) delete process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
+    else process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = orig;
   }
 });
 
