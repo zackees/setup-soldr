@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add `target-cache-save-min-compiles` (default `1`) — delta-aware save gate
+  for the Rust target/ artifact cache, mirroring `build-cache-save-min-compiles`.
+  When `target-cache` is opted in and the cache was restored from a fallback
+  key, target-cache save is now skipped if the session compiled fewer than
+  N new units; the restored entry already holds everything, so re-saving
+  under a new key would just re-upload a duplicate multi-GiB payload. Closes
+  the residual #214 follow-up for opt-in target-cache consumers. (#255)
+
 ## v0.9.17 - 2026-05-29
 
 - Add the `cache-preset` umbrella input (`minimal` | `foundation` | `full`)

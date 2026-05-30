@@ -24,6 +24,7 @@ import {
   aggregateSessions,
   collectArchivedSessionStats,
   decideBuildCacheSave,
+  decideTargetCacheSave,
   detectCookReuseMismatch,
   parseMinCompiles,
   parseVerifyCompileCacheMode,
@@ -1375,6 +1376,34 @@ export async function run(): Promise<void> {
           { archiveBytes: null as number | null },
         );
       } else {
+        // Delta-aware target-cache save gate (#255). Mirrors the build-cache
+        // gate at line ~1278: when target-cache was restored from a fallback
+        // key and the session recorded fewer than N new compiles, the
+        // restored entry already holds everything — re-saving under a new
+        // key just re-uploads a duplicate multi-GiB payload. Reuses the
+        // build-cache session's delta count (a single zccache session backs
+        // both layers); when build-cache is disabled the count is null and
+        // the gate is a no-op.
+        const targetCacheRestored = targetMatched.trim().length > 0;
+        const targetSaveGate = decideTargetCacheSave({
+          restored: targetCacheRestored,
+          newCompiles: buildDeltaMisses,
+          minCompiles: parseMinCompiles(rawInputs.targetCacheSaveMinCompiles),
+        });
+        if (targetSaveGate.skip) {
+          log(
+            `target-cache: skipping save — ${targetSaveGate.reason} ` +
+              `(set target-cache-save-min-compiles: 0 to force-save)`,
+          );
+          targetCacheSave = Object.assign(
+            {
+              status: "tiny-delta-skip" as const,
+              cache_dir: existingPaths.join(","),
+              skip_reason: targetSaveGate.reason,
+            },
+            { archiveBytes: null as number | null },
+          );
+        } else {
         const targetSaveStart = Date.now();
         try {
           const id = await cache.saveCache(existingPaths, targetKey);
@@ -1430,6 +1459,7 @@ export async function run(): Promise<void> {
             { archiveBytes: null as number | null },
           );
         }
+        } // close: delta-gate else (save path) — #255
       }
     }
   }

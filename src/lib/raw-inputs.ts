@@ -76,5 +76,6 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     verifyCompileCache: get("verify-compile-cache"),
     seedIsolatedBuildCache: get("seed-isolated-build-cache"),
     buildCacheSaveMinCompiles: get("build-cache-save-min-compiles"),
+    targetCacheSaveMinCompiles: get("target-cache-save-min-compiles"),
   };
 }

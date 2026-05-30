@@ -83,6 +83,7 @@ EXPECTED_INPUTS = {
     "verify-compile-cache",
     "seed-isolated-build-cache",
     "build-cache-save-min-compiles",
+    "target-cache-save-min-compiles",
 }
 
 

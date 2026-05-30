@@ -1323,6 +1323,11 @@ interface GateModule {
     newCompiles: number | null;
     minCompiles: number;
   }) => { skip: boolean; reason: string };
+  decideTargetCacheSave: (input: {
+    restored: boolean;
+    newCompiles: number | null;
+    minCompiles: number;
+  }) => { skip: boolean; reason: string };
 }
 
 async function gateMod(): Promise<GateModule> {
@@ -1362,4 +1367,19 @@ test("#230 decideBuildCacheSave: never gates a cold seed, disabled gate, or unkn
   assert.equal(decideBuildCacheSave({ restored: true, newCompiles: 0, minCompiles: 0 }).skip, false);
   // unreadable count → save (no regression)
   assert.equal(decideBuildCacheSave({ restored: true, newCompiles: null, minCompiles: 1 }).skip, false);
+});
+
+test("#255 decideTargetCacheSave: same semantics as build, but reason names target-cache input", async () => {
+  const { decideTargetCacheSave } = await gateMod();
+  // skip on warm fallback + zero new compiles
+  const skipped = decideTargetCacheSave({ restored: true, newCompiles: 0, minCompiles: 1 });
+  assert.equal(skipped.skip, true);
+  assert.match(skipped.reason, /0 new compile/);
+  assert.match(skipped.reason, /target-cache-save-min-compiles=1/);
+  // saves when delta meets threshold
+  assert.equal(decideTargetCacheSave({ restored: true, newCompiles: 5, minCompiles: 1 }).skip, false);
+  // never gates cold seed / disabled gate / unknown count
+  assert.equal(decideTargetCacheSave({ restored: false, newCompiles: 0, minCompiles: 1 }).skip, false);
+  assert.equal(decideTargetCacheSave({ restored: true, newCompiles: 0, minCompiles: 0 }).skip, false);
+  assert.equal(decideTargetCacheSave({ restored: true, newCompiles: null, minCompiles: 1 }).skip, false);
 });

@@ -153,6 +153,20 @@ inputs:
       Per-phase save timings (compress vs upload) are logged regardless.
     required: false
     default: "1"
+  target-cache-save-min-compiles:
+    description: >
+      Delta-aware target-cache save gate (#255). Mirror of
+      `build-cache-save-min-compiles` for the Rust `target/` artifact cache:
+      when the target-cache was restored from a fallback key and the session
+      recorded fewer than this many new compiles, skip the target-cache save
+      — the restored entry already holds everything, so re-saving under a
+      new key just re-uploads a duplicate multi-GiB payload. Default "1":
+      skip only when literally nothing new was compiled. Raise to also skip
+      tiny deltas, or set "0" to disable the gate. Never gates an exact-key
+      hit (those already short-circuit) or a cold seed (no restore). Has no
+      effect when `target-cache` is off (the default).
+    required: false
+    default: "1"
   build-cache-mode:
     description: >
       Rust build cache mode. "thin" (the resolved default when `target-cache`
