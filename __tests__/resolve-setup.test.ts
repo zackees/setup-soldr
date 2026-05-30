@@ -1278,6 +1278,53 @@ test("cache-preset: empty (default) does not mutate inputs; historical defaults 
   assert.equal(result.cargoRegistryCache.enabled, false, "historical default keeps registry off");
 });
 
+// ============================================================================
+// #267: implicit cargo-registry-cache pairing when prebuild-deps=soldr-cook.
+// ============================================================================
+
+test("prebuild-deps=soldr-cook implicitly enables cargo-registry-cache (#267)", async () => {
+  const { result } = await run({}, { INPUT_PREBUILD_DEPS: "soldr-cook" });
+  assert.equal(
+    result.cargoRegistryCache.enabled,
+    true,
+    "soldr-cook prebuild without explicit cargo-registry-cache should default registry on",
+  );
+});
+
+test("prebuild-deps=soldr-cook + explicit cargo-registry-cache=false respects user (#267)", async () => {
+  const { result } = await run({}, {
+    INPUT_PREBUILD_DEPS: "soldr-cook",
+    INPUT_CARGO_REGISTRY_CACHE: "false",
+  });
+  assert.equal(
+    result.cargoRegistryCache.enabled,
+    false,
+    "explicit cargo-registry-cache=false must beat the #267 implicit pairing",
+  );
+});
+
+test("prebuild-deps=none does not flip cargo-registry-cache (#267)", async () => {
+  const { result } = await run({}, { INPUT_PREBUILD_DEPS: "none" });
+  assert.equal(
+    result.cargoRegistryCache.enabled,
+    false,
+    "no cook = no implicit pairing; cargo-registry-cache stays at historical default",
+  );
+});
+
+test("cache-preset=minimal + prebuild-deps still produces cargo-registry-cache=false (#267)", async () => {
+  // Preset explicitly sets cargoRegistryCache="false", which is non-empty
+  // after fillFromPreset, so the #267 implicit-pairing logic does NOT
+  // override it. Minimal stays minimal.
+  const { result } = await run({}, { INPUT_CACHE_PRESET: "minimal" });
+  assert.equal(result.cachePresetEffective, "minimal");
+  assert.equal(
+    result.cargoRegistryCache.enabled,
+    false,
+    "minimal preset (cargo-registry-cache=false explicit) beats #267 pairing",
+  );
+});
+
 test("cache-preset: foundation matches the historical default (#251)", async () => {
   const { result } = await run({}, { INPUT_CACHE_PRESET: "foundation" });
   assert.equal(result.cachePresetEffective, "foundation");
