@@ -236,3 +236,39 @@ Cache code is famously easy to write and famously hard to validate. Before landi
 2. Measure the **typical pinned case** (specific channel, one extra target). Confirm only the delta lands in the cache, not the runner's pre-existing toolchain.
 3. **Cold restore smoke test**: untar the cache into a clean `$RUSTUP_HOME` and run `rustup show` + `rustc --version`. Catches "the cache restored but rustup can't see it" failures.
 4. **Stat the archive size** before and after `--long=27`, before and after `-19` — cache stats are diagnostic gold. Pipe through `statsCollector` (`src/lib/stats-collector.ts`) so warm runs surface size drift over time.
+
+## Monitoring GitHub PR checks (jq pitfall)
+
+GitHub's PR `statusCheckRollup` returns two distinct GraphQL types and they use **different field names** for their state:
+
+| `__typename`     | Producer                           | State field                      |
+|------------------|------------------------------------|----------------------------------|
+| `CheckRun`       | GitHub Actions, most CI providers  | `.conclusion` (settled) + `.status` (live) |
+| `StatusContext`  | Legacy/external bots (e.g. **CodeRabbit**, some legacy CI) | `.state` (`SUCCESS`/`PENDING`/`FAILURE`/`ERROR`) |
+
+A polling loop that only checks `CheckRun` fields will spin forever on a PR with a `StatusContext` entry, because neither `.conclusion` nor `.status` is ever set on that entry — they're `null`, so a filter like `select(.status != "COMPLETED" and .conclusion == null)` matches it on every poll.
+
+**Wrong** (hung indefinitely on PR #288 against the CodeRabbit entry):
+```bash
+until [ "$(gh pr view $PR --json statusCheckRollup --jq \
+  '[.statusCheckRollup[] | select(.status != "COMPLETED" and .conclusion == null)] | length' \
+)" = "0" ]; do sleep 45; done
+```
+
+**Right** — coalesce all three fields and treat `null` as still pending:
+```bash
+until [ "$(gh pr view $PR --json statusCheckRollup --jq \
+  '[.statusCheckRollup[] | select(((.conclusion // .state // .status) // "PENDING") | IN("PENDING","QUEUED","IN_PROGRESS"))] | length' \
+)" = "0" ]; do sleep 45; done
+```
+
+Or filter explicitly per `__typename`:
+```jq
+[.statusCheckRollup[] | (
+  if .__typename == "CheckRun" then .conclusion
+  elif .__typename == "StatusContext" then .state
+  else null end
+) // "PENDING"] | map(select(. == "PENDING" or . == "IN_PROGRESS"))
+```
+
+Same trap exists when grouping completed-check counts (`group_by(.conclusion)` misses StatusContext entries entirely). Always coalesce `.conclusion // .state` before grouping.
