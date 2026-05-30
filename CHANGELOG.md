@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## v0.9.20 - 2026-05-30
+
+- Default to soldr `0.7.47`, which lands:
+  - zackees/soldr#581 — parallel per-file extraction in `soldr load`
+    (the foundation for the Windows cargo-registry-cache wall-clock
+    fix; bottleneck was Defender's per-CreateFile scan + NTFS MFT/USN
+    overhead serialized on a single tar-extract thread).
+  - zackees/soldr#583 — new `--profile-extract` flag (also
+    `SOLDR_PROFILE_EXTRACT=1`) that emits per-worker job counts +
+    per-file extract latency percentiles for tuning; `--auto-defender-exclude`
+    CLI placeholder on Windows (real `Add-MpPreference` lifecycle is a
+    follow-up that needs an internal module-graph cleanup).
+  - zackees/soldr#591 — fix: per-worker `chmod` restores the Unix +x
+    bit on cache-file restore, so cargo `build-script-build` binaries
+    round-tripped through `soldr save`/`load` are still executable
+    (regression from #581 — `std::fs::write` doesn't carry the tar
+    header's mode the way `entry.unpack()` did).
+- Restore-side wire-in for `soldr load` in the cargo-registry-cache
+  restore path. New `src/lib/soldr-load-shim.ts` detects soldr-format
+  archives (sniffs first tar entry for `SOLDR_MANIFEST.pb`) and
+  branches to `soldr load --archive X --cache-dir Y` when the
+  installed soldr is ≥ `0.7.46` and the archive matches. Otherwise
+  falls through unconditionally to the existing tar+zstd path — no
+  signature churn on `decompressCache`; the other four layers
+  (build, target, cook, mini) keep their existing path. The wire-in
+  is currently dormant for setup-soldr-produced archives (still tar
+  format on the save side); save-side switch tracked at #263 — once
+  that lands, the Windows cargo-registry-cache restore wall-clock
+  drops from ~50 s to a target of < 25 s. (#260, #261, #262)
+
 ## v0.9.19 - 2026-05-30
 
 - Default to soldr `0.7.45`, which bundles zccache `1.11.7` carrying the
