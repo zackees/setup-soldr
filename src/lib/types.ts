@@ -124,6 +124,7 @@ export interface RawInputs {
   verifyCompileCache: string;
   seedIsolatedBuildCache: string;
   buildCacheSaveMinCompiles: string;
+  targetCacheSaveMinCompiles: string;
 }
 
 /**

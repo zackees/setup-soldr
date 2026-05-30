@@ -79,6 +79,7 @@ function fixtureRawInputs(): RawInputs {
     verifyCompileCache: "off",
     seedIsolatedBuildCache: "",
     buildCacheSaveMinCompiles: "1",
+    targetCacheSaveMinCompiles: "1",
   };
 }
 

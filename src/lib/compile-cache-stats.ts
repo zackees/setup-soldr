@@ -718,20 +718,42 @@ export function parseMinCompiles(value: string): number {
 }
 
 /**
- * Decide whether to skip the build-cache save based on the useful compile
+ * Decide whether to skip a layered cache save based on the useful compile
  * delta. Pure. Skips only when: the gate is enabled (minCompiles > 0), a cache
  * was restored (so skipping doesn't lose a cold seed), the compile count is
- * known, and it is below the threshold.
+ * known, and it is below the threshold. `gateName` controls the input name
+ * surfaced in the reason text so the log line matches the action.yml input
+ * the consumer would adjust.
  */
-export function decideBuildCacheSave(input: BuildCacheSaveGateInput): BuildCacheSaveGate {
+function decideCacheSaveGate(
+  input: BuildCacheSaveGateInput,
+  gateName: string,
+): BuildCacheSaveGate {
   if (input.minCompiles <= 0) return { skip: false, reason: "" };
   if (!input.restored) return { skip: false, reason: "" };
   if (input.newCompiles === null) return { skip: false, reason: "" };
   if (input.newCompiles < input.minCompiles) {
     return {
       skip: true,
-      reason: `${input.newCompiles} new compile(s) < build-cache-save-min-compiles=${input.minCompiles}`,
+      reason: `${input.newCompiles} new compile(s) < ${gateName}=${input.minCompiles}`,
     };
   }
   return { skip: false, reason: "" };
+}
+
+/**
+ * Decide whether to skip the build-cache (zccache state) save. See
+ * `decideCacheSaveGate`; this is the build-cache-named wrapper.
+ */
+export function decideBuildCacheSave(input: BuildCacheSaveGateInput): BuildCacheSaveGate {
+  return decideCacheSaveGate(input, "build-cache-save-min-compiles");
+}
+
+/**
+ * Decide whether to skip the target-cache (Rust target/ artifact) save. Same
+ * delta-gate semantics as the build-cache, with the target-cache input name in
+ * the reason text. (#255)
+ */
+export function decideTargetCacheSave(input: BuildCacheSaveGateInput): BuildCacheSaveGate {
+  return decideCacheSaveGate(input, "target-cache-save-min-compiles");
 }
