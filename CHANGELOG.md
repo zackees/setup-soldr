@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.9.17 - 2026-05-29
+
 - Add the `cache-preset` umbrella input (`minimal` | `foundation` | `full`)
   that fills any cache-affecting input the consumer leaves unset; explicit
   fine-grained inputs always win over the preset. `foundation` matches the
