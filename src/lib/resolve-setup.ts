@@ -637,7 +637,30 @@ export async function resolveSetup(
   // the target-cache, just not the content-addressed zccache build-cache.
 
   // ---- cargo registry cache ----
-  const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "false");
+  // #267: when prebuild-deps includes `soldr-cook` AND the user (or a
+  // preset they're using) has NOT explicitly set cargo-registry-cache,
+  // default it to `true`. Cook restores `target/` build artifacts but
+  // does NOT restore `$CARGO_HOME/registry`, so cargo re-downloads every
+  // crate source on the next build — the "I set cook, why is it still
+  // downloading?" trap. Presets that explicitly set
+  // `cargoRegistryCache: "false"` (minimal, foundation) survive because
+  // `inputs.cargoRegistryCache` is non-empty after `fillFromPreset`
+  // runs; the `||` short-circuits before reaching the implicit default.
+  const cookPrebuildEnabled = inputs.prebuildDeps.trim().includes("soldr-cook");
+  const cargoRegistryDefault = cookPrebuildEnabled ? "true" : "false";
+  const cargoRegistryCacheRawInput = inputs.cargoRegistryCache.trim();
+  const cargoRegistryCachePaired =
+    cookPrebuildEnabled && cargoRegistryCacheRawInput === "";
+  if (cargoRegistryCachePaired) {
+    log(
+      "setup-soldr: defaulting cargo-registry-cache=true because prebuild-deps=soldr-cook " +
+        "(see setup-soldr#267 — pairs to avoid re-downloading every crate source on next " +
+        "build). Set cargo-registry-cache=false explicitly to opt out.",
+    );
+  }
+  const cargoRegistryCacheRequested = isTruthy(
+    cargoRegistryCacheRawInput || cargoRegistryDefault,
+  );
   const cargoRegistryCachePath = path.join(cargoHome, "registry");
   // setup-soldr#102: bundle additional `$CARGO_HOME` siblings into the same
   // cargo-registry archive so we close the cache-retention gaps without

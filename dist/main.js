@@ -630,7 +630,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.downloadCacheStorageSDK = exports.downloadCacheHttpClientConcurrent = exports.downloadCacheHttpClient = exports.DownloadProgress = void 0;
 const core = __importStar(__nccwpck_require__(467));
-const http_client_1 = __nccwpck_require__(289);
+const http_client_1 = __nccwpck_require__(288);
 const storage_blob_1 = __nccwpck_require__(454);
 const buffer = __importStar(__nccwpck_require__(125));
 const fs = __importStar(__nccwpck_require__(539));
@@ -5243,7 +5243,7 @@ function rangeResponseFromModel(response) {
 "use strict";
 
 
-const { MessageChannel, receiveMessageOnPort } = __nccwpck_require__(324)
+const { MessageChannel, receiveMessageOnPort } = __nccwpck_require__(323)
 
 const corsSafeListedMethods = ['GET', 'HEAD', 'POST']
 const corsSafeListedMethodsSet = new Set(corsSafeListedMethods)
@@ -5790,7 +5790,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.saveCache = exports.reserveCache = exports.downloadCache = exports.getCacheEntry = void 0;
 const core = __importStar(__nccwpck_require__(467));
-const http_client_1 = __nccwpck_require__(289);
+const http_client_1 = __nccwpck_require__(288);
 const auth_1 = __nccwpck_require__(28);
 const fs = __importStar(__nccwpck_require__(539));
 const url_1 = __nccwpck_require__(89);
@@ -6487,7 +6487,7 @@ const fsp = __importStar(__nccwpck_require__(114));
 const path = __importStar(__nccwpck_require__(515));
 const exec = __importStar(__nccwpck_require__(19));
 const cache = __importStar(__nccwpck_require__(219));
-const cache_compress_js_1 = __nccwpck_require__(283);
+const cache_compress_js_1 = __nccwpck_require__(282);
 const COOK_KEY_PREFIX = "cook";
 const COOK_BASE_KEY_PREFIX = "cook-base-v2";
 const COOK_DELTA_KEY_PREFIX = "cook-delta-v2";
@@ -10555,7 +10555,7 @@ const errors_1 = __nccwpck_require__(309);
 const config_1 = __nccwpck_require__(39);
 const cacheUtils_1 = __nccwpck_require__(78);
 const auth_1 = __nccwpck_require__(28);
-const http_client_1 = __nccwpck_require__(289);
+const http_client_1 = __nccwpck_require__(288);
 const cache_twirp_client_1 = __nccwpck_require__(443);
 const util_1 = __nccwpck_require__(300);
 /**
@@ -10983,7 +10983,7 @@ exports.ContainerClient = void 0;
 const core_rest_pipeline_1 = __nccwpck_require__(107);
 const core_util_1 = __nccwpck_require__(15);
 const core_auth_1 = __nccwpck_require__(522);
-const storage_common_1 = __nccwpck_require__(280);
+const storage_common_1 = __nccwpck_require__(279);
 const Pipeline_js_1 = __nccwpck_require__(187);
 const StorageClient_js_1 = __nccwpck_require__(461);
 const tracing_js_1 = __nccwpck_require__(33);
@@ -14003,13 +14003,13 @@ exports.generateBlobSASQueryParametersInternal = generateBlobSASQueryParametersI
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 const BlobSASPermissions_js_1 = __nccwpck_require__(511);
-const ContainerSASPermissions_js_1 = __nccwpck_require__(284);
-const storage_common_1 = __nccwpck_require__(280);
+const ContainerSASPermissions_js_1 = __nccwpck_require__(283);
+const storage_common_1 = __nccwpck_require__(279);
 const SasIPRange_js_1 = __nccwpck_require__(365);
 const SASQueryParameters_js_1 = __nccwpck_require__(534);
 const constants_js_1 = __nccwpck_require__(154);
 const utils_common_js_1 = __nccwpck_require__(160);
-const storage_common_2 = __nccwpck_require__(280);
+const storage_common_2 = __nccwpck_require__(279);
 function generateBlobSASQueryParameters(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName) {
     return generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName).sasQueryParameters;
 }
@@ -18675,7 +18675,7 @@ const fs = __importStar(__nccwpck_require__(252));
 const fsp = __importStar(__nccwpck_require__(114));
 const path = __importStar(__nccwpck_require__(515));
 const cache = __importStar(__nccwpck_require__(219));
-const cache_compress_js_1 = __nccwpck_require__(283);
+const cache_compress_js_1 = __nccwpck_require__(282);
 const MINI_KEY_PREFIX = "soldr-mini";
 /**
  * Build the mini-cache key. Deliberately coarse — only the dimensions
@@ -22599,7 +22599,7 @@ __export(src_exports, {
 });
 module.exports = __toCommonJS(src_exports);
 var import_pipeline = __nccwpck_require__(248);
-var import_createPipelineFromOptions = __nccwpck_require__(285);
+var import_createPipelineFromOptions = __nccwpck_require__(284);
 var import_defaultHttpClient = __nccwpck_require__(239);
 var import_httpHeaders = __nccwpck_require__(246);
 var import_pipelineRequest = __nccwpck_require__(21);
@@ -27306,7 +27306,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.OidcClient = void 0;
-const http_client_1 = __nccwpck_require__(289);
+const http_client_1 = __nccwpck_require__(288);
 const auth_1 = __nccwpck_require__(28);
 const core_1 = __nccwpck_require__(467);
 class OidcClient {
@@ -27903,7 +27903,7 @@ __export(xml_exports, {
   stringifyXML: () => stringifyXML
 });
 module.exports = __toCommonJS(xml_exports);
-var import_fast_xml_parser = __nccwpck_require__(327);
+var import_fast_xml_parser = __nccwpck_require__(326);
 var import_xml_common = __nccwpck_require__(22);
 function getCommonOptions(options) {
   return {
@@ -30932,7 +30932,7 @@ if (util.nodeMajor > 16 || (util.nodeMajor === 16 && util.nodeMinor >= 8)) {
   module.exports.setGlobalOrigin = setGlobalOrigin
   module.exports.getGlobalOrigin = getGlobalOrigin
 
-  const { CacheStorage } = __nccwpck_require__(287)
+  const { CacheStorage } = __nccwpck_require__(286)
   const { kConstruct } = __nccwpck_require__(162)
 
   // Cache & CacheStorage are tightly coupled with fetch. Even if it may run
@@ -30999,7 +30999,7 @@ const tslib_1 = __nccwpck_require__(221);
 tslib_1.__exportStar(__nccwpck_require__(124), exports);
 tslib_1.__exportStar(__nccwpck_require__(185), exports);
 tslib_1.__exportStar(__nccwpck_require__(128), exports);
-tslib_1.__exportStar(__nccwpck_require__(322), exports);
+tslib_1.__exportStar(__nccwpck_require__(321), exports);
 tslib_1.__exportStar(__nccwpck_require__(214), exports);
 tslib_1.__exportStar(__nccwpck_require__(273), exports);
 //# sourceMappingURL=index.js.map
@@ -41827,7 +41827,7 @@ const core_client_1 = __nccwpck_require__(446);
 const core_xml_1 = __nccwpck_require__(198);
 const core_auth_1 = __nccwpck_require__(522);
 const log_js_1 = __nccwpck_require__(112);
-const storage_common_1 = __nccwpck_require__(280);
+const storage_common_1 = __nccwpck_require__(279);
 const constants_js_1 = __nccwpck_require__(154);
 Object.defineProperty(exports, "StorageOAuthScopes", ({ enumerable: true, get: function () { return constants_js_1.StorageOAuthScopes; } }));
 /**
@@ -42140,7 +42140,7 @@ const core_util_1 = __nccwpck_require__(15);
 const core_util_2 = __nccwpck_require__(15);
 const BlobDownloadResponse_js_1 = __nccwpck_require__(432);
 const BlobQueryResponse_js_1 = __nccwpck_require__(205);
-const storage_common_1 = __nccwpck_require__(280);
+const storage_common_1 = __nccwpck_require__(279);
 const models_js_1 = __nccwpck_require__(421);
 const PageBlobRangeResponse_js_1 = __nccwpck_require__(30);
 const Pipeline_js_1 = __nccwpck_require__(187);
@@ -42148,7 +42148,7 @@ const BlobStartCopyFromUrlPoller_js_1 = __nccwpck_require__(542);
 const Range_js_1 = __nccwpck_require__(110);
 const StorageClient_js_1 = __nccwpck_require__(461);
 const Batch_js_1 = __nccwpck_require__(97);
-const storage_common_2 = __nccwpck_require__(280);
+const storage_common_2 = __nccwpck_require__(279);
 const constants_js_1 = __nccwpck_require__(154);
 const tracing_js_1 = __nccwpck_require__(33);
 const utils_common_js_1 = __nccwpck_require__(160);
@@ -48773,7 +48773,7 @@ const cacheHttpClient = __importStar(__nccwpck_require__(36));
 const cacheTwirpClient = __importStar(__nccwpck_require__(64));
 const config_1 = __nccwpck_require__(39);
 const tar_1 = __nccwpck_require__(447);
-const http_client_1 = __nccwpck_require__(289);
+const http_client_1 = __nccwpck_require__(288);
 class ValidationError extends Error {
     constructor(message) {
         super(message);
@@ -51030,7 +51030,7 @@ exports.safeTrimTrailingSeparator = safeTrimTrailingSeparator;
 module.exports = __nccwpck_require__(293)
 module.exports.async = __nccwpck_require__(417)
 module.exports.stream = __nccwpck_require__(426)
-module.exports.prettyError = __nccwpck_require__(282)
+module.exports.prettyError = __nccwpck_require__(281)
 
 
 /***/ }),
@@ -51390,7 +51390,7 @@ exports.getCmdPath = getCmdPath;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createHttpPoller = void 0;
 const tslib_1 = __nccwpck_require__(221);
-var poller_js_1 = __nccwpck_require__(325);
+var poller_js_1 = __nccwpck_require__(324);
 Object.defineProperty(exports, "createHttpPoller", ({ enumerable: true, get: function () { return poller_js_1.createHttpPoller; } }));
 /**
  * This can be uncommented to expose the protocol-agnostic poller
@@ -53150,7 +53150,7 @@ module.exports = require("node:fs");
 
 const { webidl } = __nccwpck_require__(463)
 const { kEnumerableProperty } = __nccwpck_require__(72)
-const { MessagePort } = __nccwpck_require__(324)
+const { MessagePort } = __nccwpck_require__(323)
 
 /**
  * @see https://html.spec.whatwg.org/multipage/comms.html#messageevent
@@ -54108,7 +54108,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.retryHttpClientResponse = exports.retryTypedResponse = exports.retry = exports.isRetryableStatusCode = exports.isServerErrorStatusCode = exports.isSuccessStatusCode = void 0;
 const core = __importStar(__nccwpck_require__(467));
-const http_client_1 = __nccwpck_require__(289);
+const http_client_1 = __nccwpck_require__(288);
 const constants_1 = __nccwpck_require__(48);
 function isSuccessStatusCode(statusCode) {
     if (!statusCode) {
@@ -55448,6 +55448,2471 @@ module.exports = decodeText
 /***/ }),
 
 /***/ 279:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BaseRequestPolicy = exports.getCachedDefaultHttpClient = void 0;
+const tslib_1 = __nccwpck_require__(221);
+tslib_1.__exportStar(__nccwpck_require__(368), exports);
+var cache_js_1 = __nccwpck_require__(256);
+Object.defineProperty(exports, "getCachedDefaultHttpClient", ({ enumerable: true, get: function () { return cache_js_1.getCachedDefaultHttpClient; } }));
+tslib_1.__exportStar(__nccwpck_require__(86), exports);
+tslib_1.__exportStar(__nccwpck_require__(161), exports);
+tslib_1.__exportStar(__nccwpck_require__(402), exports);
+tslib_1.__exportStar(__nccwpck_require__(101), exports);
+tslib_1.__exportStar(__nccwpck_require__(265), exports);
+tslib_1.__exportStar(__nccwpck_require__(331), exports);
+var RequestPolicy_js_1 = __nccwpck_require__(49);
+Object.defineProperty(exports, "BaseRequestPolicy", ({ enumerable: true, get: function () { return RequestPolicy_js_1.BaseRequestPolicy; } }));
+tslib_1.__exportStar(__nccwpck_require__(99), exports);
+tslib_1.__exportStar(__nccwpck_require__(313), exports);
+tslib_1.__exportStar(__nccwpck_require__(212), exports);
+tslib_1.__exportStar(__nccwpck_require__(471), exports);
+tslib_1.__exportStar(__nccwpck_require__(172), exports);
+tslib_1.__exportStar(__nccwpck_require__(132), exports);
+tslib_1.__exportStar(__nccwpck_require__(80), exports);
+tslib_1.__exportStar(__nccwpck_require__(434), exports);
+tslib_1.__exportStar(__nccwpck_require__(174), exports);
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 280:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const tslib_1 = __nccwpck_require__(221);
+tslib_1.__exportStar(__nccwpck_require__(234), exports);
+tslib_1.__exportStar(__nccwpck_require__(224), exports);
+tslib_1.__exportStar(__nccwpck_require__(50), exports);
+tslib_1.__exportStar(__nccwpck_require__(285), exports);
+tslib_1.__exportStar(__nccwpck_require__(27), exports);
+tslib_1.__exportStar(__nccwpck_require__(360), exports);
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 281:
+/***/ ((module) => {
+
+"use strict";
+
+module.exports = prettyError
+
+function prettyError (err, buf) {
+  /* istanbul ignore if */
+  if (err.pos == null || err.line == null) return err
+  let msg = err.message
+  msg += ` at row ${err.line + 1}, col ${err.col + 1}, pos ${err.pos}:\n`
+
+  /* istanbul ignore else */
+  if (buf && buf.split) {
+    const lines = buf.split(/\n/)
+    const lineNumWidth = String(Math.min(lines.length, err.line + 3)).length
+    let linePadding = ' '
+    while (linePadding.length < lineNumWidth) linePadding += ' '
+    for (let ii = Math.max(0, err.line - 1); ii < Math.min(lines.length, err.line + 2); ++ii) {
+      let lineNum = String(ii + 1)
+      if (lineNum.length < lineNumWidth) lineNum = ' ' + lineNum
+      if (err.line === ii) {
+        msg += lineNum + '> ' + lines[ii] + '\n'
+        msg += linePadding + '  '
+        for (let hh = 0; hh < err.col; ++hh) {
+          msg += ' '
+        }
+        msg += '^\n'
+      } else {
+        msg += lineNum + ': ' + lines[ii] + '\n'
+      }
+    }
+  }
+  err.message = msg + '\n'
+  return err
+}
+
+
+/***/ }),
+
+/***/ 282:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Tar+zstd cache compression helpers. Owned by Agent 2.
+//
+// Used by src/main.ts (restore: auto-detect .tar.zst, decompress in place)
+// and src/post.ts (save: tar+zstd the cache dir).
+//
+// Acceptance criterion #1 + #2 of zackees/setup-soldr#70: post-job tar+zstd
+// at level configured by target-cache-compress-level, restore auto-detects
+// zstd vs gzip magic bytes for back-compat.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES = void 0;
+exports.walkDirSize = walkDirSize;
+exports.isZccacheArtifactPayloadPath = isZccacheArtifactPayloadPath;
+exports.detectCompressMagic = detectCompressMagic;
+exports.planTarPayload = planTarPayload;
+exports.decompressCache = decompressCache;
+exports.compressCache = compressCache;
+const fs = __importStar(__nccwpck_require__(114));
+const os = __importStar(__nccwpck_require__(387));
+const path = __importStar(__nccwpck_require__(515));
+const core = __importStar(__nccwpck_require__(467));
+const exec = __importStar(__nccwpck_require__(19));
+const io = __importStar(__nccwpck_require__(299));
+/**
+ * Recursively walk a directory and sum file sizes.
+ */
+async function walkDirSize(dir) {
+    let bytes = 0;
+    let files = 0;
+    async function walk(d) {
+        let entries;
+        try {
+            entries = await fs.readdir(d, { withFileTypes: true });
+        }
+        catch {
+            return;
+        }
+        for (const entry of entries) {
+            const full = path.join(d, entry.name);
+            if (entry.isDirectory()) {
+                await walk(full);
+            }
+            else if (entry.isFile()) {
+                try {
+                    bytes += (await fs.stat(full)).size;
+                    files++;
+                }
+                catch {
+                    // skip inaccessible files
+                }
+            }
+        }
+    }
+    await walk(dir);
+    return { bytes, files };
+}
+function fmtBytesDebug(n) {
+    if (n < 1024)
+        return `${n}B`;
+    if (n < 1024 * 1024)
+        return `${(n / 1024).toFixed(1)}KB`;
+    if (n < 1024 * 1024 * 1024)
+        return `${(n / 1024 / 1024).toFixed(1)}MB`;
+    return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
+}
+const DEFAULT_PAYLOAD_TOP_N = 10;
+const MAX_SKIP_SAMPLES = 8;
+const TRANSIENT_EXACT_BASENAMES = new Set([
+    ".package-cache",
+    ".package-cache-mutate",
+    "zccache.pid",
+    "sccache.pid",
+]);
+const ARCHIVE_SUFFIXES = [
+    ".tar",
+    ".tar.zst",
+    ".tar.gz",
+    ".tgz",
+    ".zip",
+    ".zst.tmp",
+];
+const TRANSIENT_SUFFIXES = [
+    [".sock", "transient-socket-path"],
+    [".socket", "transient-socket-path"],
+    [".pid", "transient-pid-file"],
+    [".lock", "transient-lock-file"],
+    [".lck", "transient-lock-file"],
+    [".tmp", "transient-temp-file"],
+    [".temp", "transient-temp-file"],
+    [".part", "transient-temp-file"],
+    [".partial", "transient-temp-file"],
+];
+// ---------------------------------------------------------------------------
+// Build-cache payload file-class contract (issue #229).
+//
+// The zccache build-cache save profile has an explicit, tested allow/deny
+// contract so a future refactor can't silently start vacuuming diagnostic
+// sidecars into the cache (or, worse, start dropping reusable artifacts):
+//
+//   ALLOW (always kept): anything under a zccache *artifacts* directory —
+//     `zccache/artifacts/**` and `zccache/private/<session>/artifacts/**`.
+//     These hold the reusable compiled artifacts AND the compiler
+//     stdout/stderr replay metadata zccache stores alongside them, so a
+//     `.stderr`/`.out`/`.txt` *inside* an artifacts dir is replay data, not a
+//     standalone log, and must survive (see #398 — excluding private
+//     artifacts produced restored-but-0-hit caches).
+//
+//   DENY (trimmed): the `logs/` subtree at any depth (reason
+//     `diagnostic-log-dir`) and standalone diagnostic sidecars matching
+//     BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES *outside* any artifacts dir
+//     (reason `diagnostic-log-file`).
+// ---------------------------------------------------------------------------
+/** Standalone diagnostic/log sidecar suffixes denied outside artifacts dirs. */
+exports.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES = [
+    ".jsonl",
+    ".log",
+    ".trace",
+    ".txt",
+    ".out",
+    ".err",
+    ".stdout",
+    ".stderr",
+];
+/**
+ * True when a build-cache tar path is inside a zccache artifacts directory —
+ * the allowlist that preserves reusable artifacts and their in-place compiler
+ * stdout/stderr replay metadata. Matches `zccache/artifacts/**` and
+ * `zccache/private/<session>/artifacts/**`. Pure; tar path uses "/" separators.
+ */
+function isZccacheArtifactPayloadPath(tarPath) {
+    const parts = tarPath.split("/").map((part) => part.toLowerCase());
+    if (parts[0] !== "zccache")
+        return false;
+    if (parts[1] === "artifacts")
+        return true;
+    if (parts[1] === "private" && parts.length >= 4 && parts[3] === "artifacts")
+        return true;
+    return false;
+}
+function normalizeTopN(value) {
+    if (value === undefined || !Number.isFinite(value))
+        return DEFAULT_PAYLOAD_TOP_N;
+    return Math.max(0, Math.min(50, Math.floor(value)));
+}
+function comparePayloadEntry(a, b) {
+    if (a.bytes !== b.bytes)
+        return b.bytes - a.bytes;
+    return a.path.localeCompare(b.path);
+}
+function toTarPath(relativePath) {
+    return relativePath.split(path.sep).join("/");
+}
+function reasonForTransientBasename(name) {
+    const lower = name.toLowerCase();
+    if (TRANSIENT_EXACT_BASENAMES.has(lower))
+        return "transient-cargo-mutex";
+    for (const suffix of ARCHIVE_SUFFIXES) {
+        if (lower.endsWith(suffix))
+            return "archive-file";
+    }
+    for (const [suffix, reason] of TRANSIENT_SUFFIXES) {
+        if (lower.endsWith(suffix))
+            return reason;
+    }
+    return null;
+}
+function reasonForTransientPath(relativePath, profile) {
+    const tarPath = toTarPath(relativePath);
+    const parts = tarPath.split("/");
+    if (parts.length >= 2 && parts[1]?.toLowerCase() === "logs") {
+        return "diagnostic-log-dir";
+    }
+    if (profile === "zccache-build-cache" && parts[0]?.toLowerCase() === "zccache") {
+        const lowerParts = parts.map((part) => part.toLowerCase());
+        if (lowerParts.includes("logs")) {
+            return "diagnostic-log-dir";
+        }
+        // setup-soldr#398: do NOT exclude `private/<session>/artifacts/**`. That is
+        // exactly where the zccache daemon stores its reusable compiled artifacts —
+        // excluding them produced a build-cache that restored with an exact key hit
+        // but 0 zccache hits (verified on real zccache CI + locally: tarring the
+        // store WITH these artifacts restores ~100% hits, WITHOUT them 0%). The
+        // allow rule below (isZccacheArtifactPayloadPath) keeps every file under an
+        // artifacts dir — including the compiler stdout/stderr replay metadata
+        // zccache stores there — so the diagnostic-suffix filter never drops a real
+        // artifact file. See the BUILD_CACHE_*_SUFFIXES contract above (#229).
+        const isArtifactPayload = isZccacheArtifactPayloadPath(lowerParts.join("/"));
+        const basename = lowerParts[lowerParts.length - 1] ?? "";
+        if (!isArtifactPayload &&
+            exports.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES.some((suffix) => basename.endsWith(suffix))) {
+            return "diagnostic-log-file";
+        }
+    }
+    return null;
+}
+function payloadSubtreePath(tarPath, profile) {
+    const parts = tarPath.split("/");
+    if (profile === "zccache-build-cache" && parts[0] === "zccache") {
+        if (parts[1] === "private" && parts.length >= 3) {
+            return parts.slice(0, 3).join("/");
+        }
+        if (parts.length >= 3) {
+            return parts.slice(0, 2).join("/");
+        }
+        return "zccache";
+    }
+    if (parts.length <= 2) {
+        return parts[0] ?? tarPath;
+    }
+    return parts.slice(0, 2).join("/");
+}
+function reasonForSpecialFile(stats) {
+    if (stats.isSocket())
+        return "special-socket";
+    if (stats.isFIFO())
+        return "special-fifo";
+    if (stats.isBlockDevice())
+        return "special-block-device";
+    if (stats.isCharacterDevice())
+        return "special-character-device";
+    return "unsupported-file-type";
+}
+function reasonForAccessError(err) {
+    const code = err.code;
+    if (code === "ENOENT" || code === "ENOTDIR")
+        return "vanished";
+    if (code === "EACCES" || code === "EPERM")
+        return "inaccessible";
+    return "inaccessible";
+}
+function hasManifestUnsafeName(relativePath) {
+    return relativePath.includes("\n") || relativePath.includes("\r");
+}
+function makeSkipRecorder() {
+    const skipped = new Map();
+    return {
+        add(reason, sample) {
+            const current = skipped.get(reason) ?? { reason, count: 0, samples: [] };
+            current.count++;
+            if (current.samples.length < MAX_SKIP_SAMPLES) {
+                current.samples.push(sample);
+            }
+            skipped.set(reason, current);
+        },
+        summaries() {
+            return Array.from(skipped.values()).sort((a, b) => a.reason.localeCompare(b.reason));
+        },
+    };
+}
+/**
+ * Read the first 4 bytes of a file and identify the compression codec.
+ *   zstd:  0x28 B5 2F FD
+ *   gzip:  0x1F 8B
+ */
+async function detectCompressMagic(filePath) {
+    let handle = null;
+    try {
+        handle = await fs.open(filePath, "r");
+        const buf = Buffer.alloc(4);
+        const { bytesRead } = await handle.read(buf, 0, 4, 0);
+        if (bytesRead >= 4 && buf[0] === 0x28 && buf[1] === 0xb5 && buf[2] === 0x2f && buf[3] === 0xfd) {
+            return "zstd";
+        }
+        if (bytesRead >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
+            return "gzip";
+        }
+        return "unknown";
+    }
+    catch {
+        return "unknown";
+    }
+    finally {
+        if (handle)
+            await handle.close().catch(() => undefined);
+    }
+}
+async function ensureDir(dir) {
+    await fs.mkdir(dir, { recursive: true });
+}
+async function pathExists(p) {
+    try {
+        await fs.access(p);
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
+const EMPTY_WALK = {
+    bytes: 0,
+    files: 0,
+    symlinks: 0,
+    directories: 0,
+};
+/**
+ * Preflight every tar input with lstat before compression.
+ *
+ * This keeps daemon sockets, cargo mutex files, partial archives, and other
+ * transient/special files out of the manifest that tar receives. Symlinks are
+ * archived as symlink entries and are not followed, so links pointing outside
+ * the cache root do not pull external content into the cache.
+ */
+async function planTarPayload(opts) {
+    const topN = normalizeTopN(opts.topN);
+    const profile = opts.profile ?? "generic";
+    const skip = makeSkipRecorder();
+    const manifestEntries = [];
+    const fileEntries = [];
+    const dirEntries = [];
+    const subtreeEntries = new Map();
+    const inputs = [];
+    const addSubtreeFile = (tarPath, bytes) => {
+        const group = payloadSubtreePath(tarPath, profile);
+        const current = subtreeEntries.get(group) ?? { path: group, bytes: 0, files: 0 };
+        current.bytes += bytes;
+        current.files++;
+        subtreeEntries.set(group, current);
+    };
+    const walk = async (absolutePath, relativePath) => {
+        if (hasManifestUnsafeName(relativePath)) {
+            skip.add("unsupported-name", toTarPath(relativePath));
+            return EMPTY_WALK;
+        }
+        const transientReason = reasonForTransientBasename(path.basename(relativePath));
+        if (transientReason) {
+            skip.add(transientReason, toTarPath(relativePath));
+            return EMPTY_WALK;
+        }
+        const transientPathReason = reasonForTransientPath(relativePath, profile);
+        if (transientPathReason) {
+            skip.add(transientPathReason, toTarPath(relativePath));
+            return EMPTY_WALK;
+        }
+        let stats;
+        try {
+            stats = await fs.lstat(absolutePath);
+        }
+        catch (err) {
+            skip.add(reasonForAccessError(err), toTarPath(relativePath));
+            return EMPTY_WALK;
+        }
+        const tarPath = toTarPath(relativePath);
+        if (stats.isSymbolicLink()) {
+            manifestEntries.push(tarPath);
+            return { ...EMPTY_WALK, symlinks: 1 };
+        }
+        if (stats.isFile()) {
+            manifestEntries.push(tarPath);
+            fileEntries.push({ path: tarPath, bytes: stats.size });
+            addSubtreeFile(tarPath, stats.size);
+            return { bytes: stats.size, files: 1, symlinks: 0, directories: 0 };
+        }
+        if (!stats.isDirectory()) {
+            skip.add(reasonForSpecialFile(stats), tarPath);
+            return EMPTY_WALK;
+        }
+        let entries;
+        try {
+            entries = await fs.readdir(absolutePath, { withFileTypes: true });
+        }
+        catch (err) {
+            skip.add(reasonForAccessError(err), tarPath);
+            return EMPTY_WALK;
+        }
+        entries.sort((a, b) => a.name.localeCompare(b.name));
+        let bytes = 0;
+        let files = 0;
+        let symlinks = 0;
+        let directories = 1;
+        for (const entry of entries) {
+            const childRelative = path.join(relativePath, entry.name);
+            const child = await walk(path.join(absolutePath, entry.name), childRelative);
+            bytes += child.bytes;
+            files += child.files;
+            symlinks += child.symlinks;
+            directories += child.directories;
+        }
+        dirEntries.push({ path: tarPath, bytes });
+        return { bytes, files, symlinks, directories };
+    };
+    let bytes = 0;
+    let files = 0;
+    let symlinks = 0;
+    let directories = 0;
+    const seen = new Set();
+    for (const rawBasename of opts.inputBasenames) {
+        const basename = rawBasename.trim();
+        if (!basename || seen.has(basename))
+            continue;
+        seen.add(basename);
+        if (path.isAbsolute(basename) ||
+            basename === "." ||
+            basename === ".." ||
+            basename.includes("/") ||
+            basename.includes("\\")) {
+            skip.add("unsupported-input-basename", basename);
+            continue;
+        }
+        inputs.push(basename);
+        const result = await walk(path.join(opts.parent, basename), basename);
+        bytes += result.bytes;
+        files += result.files;
+        symlinks += result.symlinks;
+        directories += result.directories;
+    }
+    fileEntries.sort(comparePayloadEntry);
+    dirEntries.sort(comparePayloadEntry);
+    const topSubtrees = Array.from(subtreeEntries.values()).sort((a, b) => {
+        if (a.bytes !== b.bytes)
+            return b.bytes - a.bytes;
+        if (a.files !== b.files)
+            return b.files - a.files;
+        return a.path.localeCompare(b.path);
+    });
+    return {
+        bytes,
+        files,
+        symlinks,
+        directories,
+        inputs,
+        topFiles: fileEntries.slice(0, topN),
+        topDirectories: dirEntries.slice(0, topN),
+        topSubtrees: topSubtrees.slice(0, topN),
+        skipped: skip.summaries(),
+        manifestEntries,
+    };
+}
+function publicPayload(plan) {
+    return {
+        bytes: plan.bytes,
+        files: plan.files,
+        symlinks: plan.symlinks,
+        directories: plan.directories,
+        inputs: plan.inputs,
+        topFiles: plan.topFiles,
+        topDirectories: plan.topDirectories,
+        topSubtrees: plan.topSubtrees,
+        skipped: plan.skipped,
+    };
+}
+/**
+ * Decompress <cache-dir>.tar.zst (or .tar.gz) into <cache-dir>.
+ *
+ *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <extractRoot>`.
+ *   gzip: `tar -xzf <archive> -C <extractRoot>`.
+ *
+ * `extractRoot` is `dirname(targetDir)` because compressCache writes
+ * archives via `tar -cf - -C <parent> <basename>` — the archive's
+ * top-level directory IS `<basename>`. If we extract into <targetDir>
+ * directly, that <basename> gets nested twice and the contents end up
+ * at <targetDir>/<basename>/... where zccache and cargo can't find them.
+ * That double-nesting is the root cause of the long-standing zccache
+ * "0 hits despite restored artifacts" symptom.
+ *
+ * Returns compressed/inflated byte counts and file count (the count is
+ * taken from <targetDir> after extraction, so consumers see exactly
+ * what landed in the cache dir).
+ * When debug=true, logs diagnostics via the supplied log fn.
+ */
+async function decompressCache(opts) {
+    const { archivePath, targetDir, debug = false, log = () => undefined, longWindow } = opts;
+    // Ensure both <targetDir> exists (zccache may have already populated it)
+    // and the extract root (which is the parent) is writable.
+    await ensureDir(targetDir);
+    const extractRoot = path.dirname(targetDir);
+    await ensureDir(extractRoot);
+    let archiveBytes = 0;
+    try {
+        archiveBytes = (await fs.stat(archivePath)).size;
+    }
+    catch { /* archive may not exist */ }
+    const magic = await detectCompressMagic(archivePath);
+    if (debug) {
+        log(`[debug] decompress ${path.basename(archivePath)}: magic=${magic} archive=${fmtBytesDebug(archiveBytes)}`);
+    }
+    if (magic === "gzip") {
+        if (debug)
+            log(`[debug] decompress cmd: tar -xzf ${archivePath} -C ${extractRoot}`);
+        await exec.exec("tar", ["-xzf", archivePath, "-C", extractRoot]);
+    }
+    else if (magic === "zstd") {
+        const zstdPath = await io.which("zstd", false);
+        const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
+        if (!zstdPath) {
+            if (debug)
+                log(`[debug] decompress cmd (fallback): tar --use-compress-program "zstd -d${longFlag.length ? ` --long=${longWindow}` : ""}" -xf ${archivePath} -C ${extractRoot}`);
+            // Fall back: route the decompression through tar's --use-compress-program
+            // so we can pass through --long when the archive needs it. tar --zstd
+            // doesn't accept extra zstd flags directly.
+            const program = longFlag.length ? `zstd -d --long=${longWindow}` : "zstd -d";
+            await exec.exec("tar", ["--use-compress-program", program, "-xf", archivePath, "-C", extractRoot]);
+        }
+        else {
+            if (debug)
+                log(`[debug] decompress cmd: zstd -d ${longFlag.join(" ")} -c ${archivePath} | tar -xf - -C ${extractRoot}`);
+            await runPipe([zstdPath, ["-d", ...longFlag, "-c", archivePath]], ["tar", ["-xf", "-", "-C", extractRoot]]);
+        }
+    }
+    else {
+        throw new Error(`decompressCache: unrecognized archive magic for ${archivePath}`);
+    }
+    const { bytes: inflatedBytes, files: fileCount } = await walkDirSize(targetDir);
+    if (debug) {
+        const ratio = archiveBytes > 0 && inflatedBytes > 0 ? (archiveBytes / inflatedBytes).toFixed(2) : "n/a";
+        log(`[debug] decompress result: inflated=${fmtBytesDebug(inflatedBytes)} files=${fileCount} ratio=${ratio}`);
+    }
+    return { archiveBytes, inflatedBytes, fileCount };
+}
+/**
+ * tar -cf - <cache-dir-basename> | zstd -T0 -<level> > <cache-dir>.tar.zst
+ *
+ * When codec=="none" or zstd is not installed, returns archivePath=null and
+ * leaves the caller to use the default actions/cache compression.
+ * When debug=true, walks the source dir for byte/file counts and logs ratios.
+ */
+async function compressCache(opts) {
+    const { cacheDir, codec, level, debug = false, log = () => undefined, longWindow, ultra, extraBasenames = [], payloadWarnBytes = null, payloadMaxBytes = null, payloadOversizeAction = "skip", payloadTopN, payloadProfile = "generic", label, } = opts;
+    const nullResult = {
+        archivePath: null,
+        archiveBytes: 0,
+        inflatedBytes: null,
+        fileCount: null,
+        payload: null,
+    };
+    if (codec === "none")
+        return nullResult;
+    const zstdPath = await io.which("zstd", false);
+    if (!zstdPath) {
+        core.warning("setup-soldr: zstd binary not found on PATH; falling back to actions/cache default codec");
+        return nullResult;
+    }
+    if (!(await pathExists(cacheDir))) {
+        core.warning(`setup-soldr: cache dir ${cacheDir} does not exist, skipping compression`);
+        return nullResult;
+    }
+    const parent = path.dirname(cacheDir);
+    const basename = path.basename(cacheDir);
+    // Filter sibling basenames to ones that actually exist under the parent —
+    // tar errors on missing inputs, and cargo-registry's `.global-cache` /
+    // `git/` may legitimately be absent on a cold checkout.
+    const presentExtras = [];
+    for (const extra of extraBasenames) {
+        if (!extra || extra === basename)
+            continue;
+        if (await pathExists(path.join(parent, extra))) {
+            presentExtras.push(extra);
+        }
+        else if (debug) {
+            log(`[debug] compress: skipping missing sibling basename '${extra}' under ${parent}`);
+        }
+    }
+    const displayLabel = label ?? basename;
+    const tarInputs = [basename, ...presentExtras];
+    let payload = await planTarPayload({
+        parent,
+        inputBasenames: tarInputs,
+        topN: payloadTopN,
+        profile: payloadProfile,
+    });
+    let payloadCensus = publicPayload(payload);
+    let inflatedBytes = payload.bytes;
+    let fileCount = payload.files;
+    if (debug) {
+        const skipped = payload.skipped.reduce((sum, entry) => sum + entry.count, 0);
+        log(`[debug] compress ${displayLabel}: input=${fmtBytesDebug(payload.bytes)} ` +
+            `files=${payload.files} symlinks=${payload.symlinks} dirs=${payload.directories} skipped=${skipped}`);
+        if (payload.topFiles.length > 0) {
+            log(`[debug] compress ${displayLabel}: largest files ` +
+                payload.topFiles.map((entry) => `${entry.path}=${fmtBytesDebug(entry.bytes)}`).join(", "));
+        }
+        if (payload.skipped.length > 0) {
+            log(`[debug] compress ${displayLabel}: skipped ` +
+                payload.skipped.map((entry) => `${entry.reason}=${entry.count}`).join(", "));
+        }
+    }
+    if (payloadWarnBytes !== null && payloadWarnBytes > 0 && payload.bytes > payloadWarnBytes) {
+        const largest = payload.topFiles
+            .slice(0, 5)
+            .map((entry) => `${entry.path} (${fmtBytesDebug(entry.bytes)})`)
+            .join(", ");
+        core.warning(`setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression ` +
+            `(>${fmtBytesDebug(payloadWarnBytes)}). Largest files: ${largest || "none"}`);
+    }
+    if (payloadMaxBytes !== null && payloadMaxBytes > 0 && payload.bytes > payloadMaxBytes) {
+        const message = `setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression, ` +
+            `exceeding cache-payload-max-bytes=${fmtBytesDebug(payloadMaxBytes)}`;
+        if (payloadOversizeAction === "fail") {
+            throw new Error(message);
+        }
+        core.warning(`${message}; skipping cache save`);
+        return {
+            archivePath: null,
+            archiveBytes: 0,
+            inflatedBytes,
+            fileCount,
+            payload: payloadCensus,
+            skippedReason: "payload-too-large",
+        };
+    }
+    const archivePath = `${cacheDir}.tar.zst`;
+    // Best-effort cleanup of any previous archive.
+    await fs.rm(archivePath, { force: true }).catch(() => undefined);
+    const levelNumeric = parseLevel(level);
+    const levelFlag = `-${levelNumeric}`;
+    const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
+    const ultraFlag = ultra || levelNumeric >= 20 ? ["--ultra"] : [];
+    const writeArchiveFromManifest = async (entries) => {
+        const manifestDir = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-tar-"));
+        const manifestPath = path.join(manifestDir, "manifest.txt");
+        try {
+            await fs.writeFile(manifestPath, entries.map((entry) => `${entry}\n`).join(""), "utf8");
+            if (debug) {
+                log(`[debug] compress cmd: tar -cf - -C ${parent} -T ${manifestPath} | ` +
+                    `zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}` +
+                    `${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`);
+            }
+            await runPipe(["tar", ["-cf", "-", "-C", parent, "-T", manifestPath]], [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]]);
+        }
+        finally {
+            await fs.rm(manifestDir, { recursive: true, force: true }).catch(() => undefined);
+        }
+    };
+    try {
+        await writeArchiveFromManifest(payload.manifestEntries);
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        log(`${displayLabel}: tar failed after payload preflight (${message}); retrying once with a fresh scan`);
+        await fs.rm(archivePath, { force: true }).catch(() => undefined);
+        payload = await planTarPayload({
+            parent,
+            inputBasenames: tarInputs,
+            topN: payloadTopN,
+            profile: payloadProfile,
+        });
+        payloadCensus = publicPayload(payload);
+        inflatedBytes = payload.bytes;
+        fileCount = payload.files;
+        if (debug) {
+            log(`[debug] compress ${displayLabel}: retry input=${fmtBytesDebug(payload.bytes)} ` +
+                `files=${payload.files} symlinks=${payload.symlinks} dirs=${payload.directories}`);
+        }
+        await writeArchiveFromManifest(payload.manifestEntries);
+    }
+    let archiveBytes = 0;
+    try {
+        archiveBytes = (await fs.stat(archivePath)).size;
+    }
+    catch { /* archive may not exist */ }
+    if (debug && inflatedBytes !== null && inflatedBytes > 0) {
+        log(`[debug] compress result: archive=${fmtBytesDebug(archiveBytes)} ratio=${(archiveBytes / inflatedBytes).toFixed(2)}`);
+    }
+    return { archivePath, archiveBytes, inflatedBytes, fileCount, payload: payloadCensus };
+}
+function parseLevel(value) {
+    const trimmed = (value ?? "").toString().trim();
+    if (!trimmed)
+        return 3;
+    const parsed = Number(trimmed);
+    if (Number.isNaN(parsed) || !Number.isFinite(parsed))
+        return 3;
+    const clamped = Math.max(1, Math.min(22, Math.floor(parsed)));
+    return clamped;
+}
+/**
+ * Run two processes piped together: producer.stdout -> consumer.stdin.
+ * Bubbles non-zero exit codes from either side.
+ */
+async function runPipe(producer, consumer) {
+    const { spawn } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 201, 23));
+    const [pCmd, pArgs] = producer;
+    const [cCmd, cArgs] = consumer;
+    await new Promise((resolve, reject) => {
+        const prod = spawn(pCmd, pArgs, { stdio: ["ignore", "pipe", "inherit"] });
+        const cons = spawn(cCmd, cArgs, { stdio: ["pipe", "inherit", "inherit"] });
+        prod.on("error", (err) => reject(err));
+        cons.on("error", (err) => reject(err));
+        if (prod.stdout && cons.stdin) {
+            prod.stdout.pipe(cons.stdin);
+        }
+        let prodExit = null;
+        let consExit = null;
+        const maybeDone = () => {
+            if (prodExit !== null && consExit !== null) {
+                if (prodExit !== 0) {
+                    reject(new Error(`${pCmd} exited with code ${prodExit}`));
+                }
+                else if (consExit !== 0) {
+                    reject(new Error(`${cCmd} exited with code ${consExit}`));
+                }
+                else {
+                    resolve();
+                }
+            }
+        };
+        prod.on("close", (code) => {
+            prodExit = code ?? 0;
+            maybeDone();
+        });
+        cons.on("close", (code) => {
+            consExit = code ?? 0;
+            maybeDone();
+        });
+    });
+}
+
+
+/***/ }),
+
+/***/ 283:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ContainerSASPermissions = void 0;
+/**
+ * This is a helper class to construct a string representing the permissions granted by a ServiceSAS to a container.
+ * Setting a value to true means that any SAS which uses these permissions will grant permissions for that operation.
+ * Once all the values are set, this should be serialized with toString and set as the permissions field on a
+ * {@link BlobSASSignatureValues} object. It is possible to construct the permissions string without this class, but
+ * the order of the permissions is particular and this class guarantees correctness.
+ */
+class ContainerSASPermissions {
+    /**
+     * Creates an {@link ContainerSASPermissions} from the specified permissions string. This method will throw an
+     * Error if it encounters a character that does not correspond to a valid permission.
+     *
+     * @param permissions -
+     */
+    static parse(permissions) {
+        const containerSASPermissions = new ContainerSASPermissions();
+        for (const char of permissions) {
+            switch (char) {
+                case "r":
+                    containerSASPermissions.read = true;
+                    break;
+                case "a":
+                    containerSASPermissions.add = true;
+                    break;
+                case "c":
+                    containerSASPermissions.create = true;
+                    break;
+                case "w":
+                    containerSASPermissions.write = true;
+                    break;
+                case "d":
+                    containerSASPermissions.delete = true;
+                    break;
+                case "l":
+                    containerSASPermissions.list = true;
+                    break;
+                case "t":
+                    containerSASPermissions.tag = true;
+                    break;
+                case "x":
+                    containerSASPermissions.deleteVersion = true;
+                    break;
+                case "m":
+                    containerSASPermissions.move = true;
+                    break;
+                case "e":
+                    containerSASPermissions.execute = true;
+                    break;
+                case "i":
+                    containerSASPermissions.setImmutabilityPolicy = true;
+                    break;
+                case "y":
+                    containerSASPermissions.permanentDelete = true;
+                    break;
+                case "f":
+                    containerSASPermissions.filterByTags = true;
+                    break;
+                default:
+                    throw new RangeError(`Invalid permission ${char}`);
+            }
+        }
+        return containerSASPermissions;
+    }
+    /**
+     * Creates a {@link ContainerSASPermissions} from a raw object which contains same keys as it
+     * and boolean values for them.
+     *
+     * @param permissionLike -
+     */
+    static from(permissionLike) {
+        const containerSASPermissions = new ContainerSASPermissions();
+        if (permissionLike.read) {
+            containerSASPermissions.read = true;
+        }
+        if (permissionLike.add) {
+            containerSASPermissions.add = true;
+        }
+        if (permissionLike.create) {
+            containerSASPermissions.create = true;
+        }
+        if (permissionLike.write) {
+            containerSASPermissions.write = true;
+        }
+        if (permissionLike.delete) {
+            containerSASPermissions.delete = true;
+        }
+        if (permissionLike.list) {
+            containerSASPermissions.list = true;
+        }
+        if (permissionLike.deleteVersion) {
+            containerSASPermissions.deleteVersion = true;
+        }
+        if (permissionLike.tag) {
+            containerSASPermissions.tag = true;
+        }
+        if (permissionLike.move) {
+            containerSASPermissions.move = true;
+        }
+        if (permissionLike.execute) {
+            containerSASPermissions.execute = true;
+        }
+        if (permissionLike.setImmutabilityPolicy) {
+            containerSASPermissions.setImmutabilityPolicy = true;
+        }
+        if (permissionLike.permanentDelete) {
+            containerSASPermissions.permanentDelete = true;
+        }
+        if (permissionLike.filterByTags) {
+            containerSASPermissions.filterByTags = true;
+        }
+        return containerSASPermissions;
+    }
+    /**
+     * Specifies Read access granted.
+     */
+    read = false;
+    /**
+     * Specifies Add access granted.
+     */
+    add = false;
+    /**
+     * Specifies Create access granted.
+     */
+    create = false;
+    /**
+     * Specifies Write access granted.
+     */
+    write = false;
+    /**
+     * Specifies Delete access granted.
+     */
+    delete = false;
+    /**
+     * Specifies Delete version access granted.
+     */
+    deleteVersion = false;
+    /**
+     * Specifies List access granted.
+     */
+    list = false;
+    /**
+     * Specfies Tag access granted.
+     */
+    tag = false;
+    /**
+     * Specifies Move access granted.
+     */
+    move = false;
+    /**
+     * Specifies Execute access granted.
+     */
+    execute = false;
+    /**
+     * Specifies SetImmutabilityPolicy access granted.
+     */
+    setImmutabilityPolicy = false;
+    /**
+     * Specifies that Permanent Delete is permitted.
+     */
+    permanentDelete = false;
+    /**
+     * Specifies that Filter Blobs by Tags is permitted.
+     */
+    filterByTags = false;
+    /**
+     * Converts the given permissions to a string. Using this method will guarantee the permissions are in an
+     * order accepted by the service.
+     *
+     * The order of the characters should be as specified here to ensure correctness.
+     * @see https://learn.microsoft.com/rest/api/storageservices/constructing-a-service-sas
+     *
+     */
+    toString() {
+        const permissions = [];
+        if (this.read) {
+            permissions.push("r");
+        }
+        if (this.add) {
+            permissions.push("a");
+        }
+        if (this.create) {
+            permissions.push("c");
+        }
+        if (this.write) {
+            permissions.push("w");
+        }
+        if (this.delete) {
+            permissions.push("d");
+        }
+        if (this.deleteVersion) {
+            permissions.push("x");
+        }
+        if (this.list) {
+            permissions.push("l");
+        }
+        if (this.tag) {
+            permissions.push("t");
+        }
+        if (this.move) {
+            permissions.push("m");
+        }
+        if (this.execute) {
+            permissions.push("e");
+        }
+        if (this.setImmutabilityPolicy) {
+            permissions.push("i");
+        }
+        if (this.permanentDelete) {
+            permissions.push("y");
+        }
+        if (this.filterByTags) {
+            permissions.push("f");
+        }
+        return permissions.join("");
+    }
+}
+exports.ContainerSASPermissions = ContainerSASPermissions;
+//# sourceMappingURL=ContainerSASPermissions.js.map
+
+/***/ }),
+
+/***/ 284:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var createPipelineFromOptions_exports = {};
+__export(createPipelineFromOptions_exports, {
+  createPipelineFromOptions: () => createPipelineFromOptions
+});
+module.exports = __toCommonJS(createPipelineFromOptions_exports);
+var import_logPolicy = __nccwpck_require__(74);
+var import_pipeline = __nccwpck_require__(248);
+var import_redirectPolicy = __nccwpck_require__(346);
+var import_userAgentPolicy = __nccwpck_require__(394);
+var import_multipartPolicy = __nccwpck_require__(274);
+var import_decompressResponsePolicy = __nccwpck_require__(242);
+var import_defaultRetryPolicy = __nccwpck_require__(58);
+var import_formDataPolicy = __nccwpck_require__(271);
+var import_core_util = __nccwpck_require__(15);
+var import_proxyPolicy = __nccwpck_require__(480);
+var import_setClientRequestIdPolicy = __nccwpck_require__(156);
+var import_agentPolicy = __nccwpck_require__(235);
+var import_tlsPolicy = __nccwpck_require__(383);
+var import_tracingPolicy = __nccwpck_require__(341);
+var import_wrapAbortSignalLikePolicy = __nccwpck_require__(262);
+function createPipelineFromOptions(options) {
+  const pipeline = (0, import_pipeline.createEmptyPipeline)();
+  if (import_core_util.isNodeLike) {
+    if (options.agent) {
+      pipeline.addPolicy((0, import_agentPolicy.agentPolicy)(options.agent));
+    }
+    if (options.tlsOptions) {
+      pipeline.addPolicy((0, import_tlsPolicy.tlsPolicy)(options.tlsOptions));
+    }
+    pipeline.addPolicy((0, import_proxyPolicy.proxyPolicy)(options.proxyOptions));
+    pipeline.addPolicy((0, import_decompressResponsePolicy.decompressResponsePolicy)());
+  }
+  pipeline.addPolicy((0, import_wrapAbortSignalLikePolicy.wrapAbortSignalLikePolicy)());
+  pipeline.addPolicy((0, import_formDataPolicy.formDataPolicy)(), { beforePolicies: [import_multipartPolicy.multipartPolicyName] });
+  pipeline.addPolicy((0, import_userAgentPolicy.userAgentPolicy)(options.userAgentOptions));
+  pipeline.addPolicy((0, import_setClientRequestIdPolicy.setClientRequestIdPolicy)(options.telemetryOptions?.clientRequestIdHeaderName));
+  pipeline.addPolicy((0, import_multipartPolicy.multipartPolicy)(), { afterPhase: "Deserialize" });
+  pipeline.addPolicy((0, import_defaultRetryPolicy.defaultRetryPolicy)(options.retryOptions), { phase: "Retry" });
+  pipeline.addPolicy((0, import_tracingPolicy.tracingPolicy)({ ...options.userAgentOptions, ...options.loggingOptions }), {
+    afterPhase: "Retry"
+  });
+  if (import_core_util.isNodeLike) {
+    pipeline.addPolicy((0, import_redirectPolicy.redirectPolicy)(options.redirectOptions), { afterPhase: "Retry" });
+  }
+  pipeline.addPolicy((0, import_logPolicy.logPolicy)(options.loggingOptions), { afterPhase: "Sign" });
+  return pipeline;
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 285:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PageBlobImpl = void 0;
+const tslib_1 = __nccwpck_require__(221);
+const coreClient = tslib_1.__importStar(__nccwpck_require__(446));
+const Mappers = tslib_1.__importStar(__nccwpck_require__(184));
+const Parameters = tslib_1.__importStar(__nccwpck_require__(68));
+/** Class containing PageBlob operations. */
+class PageBlobImpl {
+    client;
+    /**
+     * Initialize a new instance of the class PageBlob class.
+     * @param client Reference to the service client
+     */
+    constructor(client) {
+        this.client = client;
+    }
+    /**
+     * The Create operation creates a new page blob.
+     * @param contentLength The length of the request.
+     * @param blobContentLength This header specifies the maximum size for the page blob, up to 1 TB. The
+     *                          page blob size must be aligned to a 512-byte boundary.
+     * @param options The options parameters.
+     */
+    create(contentLength, blobContentLength, options) {
+        return this.client.sendOperationRequest({ contentLength, blobContentLength, options }, createOperationSpec);
+    }
+    /**
+     * The Upload Pages operation writes a range of pages to a page blob
+     * @param contentLength The length of the request.
+     * @param body Initial data
+     * @param options The options parameters.
+     */
+    uploadPages(contentLength, body, options) {
+        return this.client.sendOperationRequest({ contentLength, body, options }, uploadPagesOperationSpec);
+    }
+    /**
+     * The Clear Pages operation clears a set of pages from a page blob
+     * @param contentLength The length of the request.
+     * @param options The options parameters.
+     */
+    clearPages(contentLength, options) {
+        return this.client.sendOperationRequest({ contentLength, options }, clearPagesOperationSpec);
+    }
+    /**
+     * The Upload Pages operation writes a range of pages to a page blob where the contents are read from a
+     * URL
+     * @param sourceUrl Specify a URL to the copy source.
+     * @param sourceRange Bytes of source data in the specified range. The length of this range should
+     *                    match the ContentLength header and x-ms-range/Range destination range header.
+     * @param contentLength The length of the request.
+     * @param range The range of bytes to which the source range would be written. The range should be 512
+     *              aligned and range-end is required.
+     * @param options The options parameters.
+     */
+    uploadPagesFromURL(sourceUrl, sourceRange, contentLength, range, options) {
+        return this.client.sendOperationRequest({ sourceUrl, sourceRange, contentLength, range, options }, uploadPagesFromURLOperationSpec);
+    }
+    /**
+     * The Get Page Ranges operation returns the list of valid page ranges for a page blob or snapshot of a
+     * page blob
+     * @param options The options parameters.
+     */
+    getPageRanges(options) {
+        return this.client.sendOperationRequest({ options }, getPageRangesOperationSpec);
+    }
+    /**
+     * The Get Page Ranges Diff operation returns the list of valid page ranges for a page blob that were
+     * changed between target blob and previous snapshot.
+     * @param options The options parameters.
+     */
+    getPageRangesDiff(options) {
+        return this.client.sendOperationRequest({ options }, getPageRangesDiffOperationSpec);
+    }
+    /**
+     * Resize the Blob
+     * @param blobContentLength This header specifies the maximum size for the page blob, up to 1 TB. The
+     *                          page blob size must be aligned to a 512-byte boundary.
+     * @param options The options parameters.
+     */
+    resize(blobContentLength, options) {
+        return this.client.sendOperationRequest({ blobContentLength, options }, resizeOperationSpec);
+    }
+    /**
+     * Update the sequence number of the blob
+     * @param sequenceNumberAction Required if the x-ms-blob-sequence-number header is set for the request.
+     *                             This property applies to page blobs only. This property indicates how the service should modify the
+     *                             blob's sequence number
+     * @param options The options parameters.
+     */
+    updateSequenceNumber(sequenceNumberAction, options) {
+        return this.client.sendOperationRequest({ sequenceNumberAction, options }, updateSequenceNumberOperationSpec);
+    }
+    /**
+     * The Copy Incremental operation copies a snapshot of the source page blob to a destination page blob.
+     * The snapshot is copied such that only the differential changes between the previously copied
+     * snapshot are transferred to the destination. The copied snapshots are complete copies of the
+     * original snapshot and can be read or copied from as usual. This API is supported since REST version
+     * 2016-05-31.
+     * @param copySource Specifies the name of the source page blob snapshot. This value is a URL of up to
+     *                   2 KB in length that specifies a page blob snapshot. The value should be URL-encoded as it would
+     *                   appear in a request URI. The source blob must either be public or must be authenticated via a shared
+     *                   access signature.
+     * @param options The options parameters.
+     */
+    copyIncremental(copySource, options) {
+        return this.client.sendOperationRequest({ copySource, options }, copyIncrementalOperationSpec);
+    }
+}
+exports.PageBlobImpl = PageBlobImpl;
+// Operation Specifications
+const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
+const createOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.PageBlobCreateHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobCreateExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.timeoutInSeconds],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.contentLength,
+        Parameters.metadata,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.blobCacheControl,
+        Parameters.blobContentType,
+        Parameters.blobContentMD5,
+        Parameters.blobContentEncoding,
+        Parameters.blobContentLanguage,
+        Parameters.blobContentDisposition,
+        Parameters.immutabilityPolicyExpiry,
+        Parameters.immutabilityPolicyMode,
+        Parameters.encryptionScope,
+        Parameters.tier,
+        Parameters.blobTagsString,
+        Parameters.legalHold1,
+        Parameters.blobType,
+        Parameters.blobContentLength,
+        Parameters.blobSequenceNumber,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const uploadPagesOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.PageBlobUploadPagesHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobUploadPagesExceptionHeaders,
+        },
+    },
+    requestBody: Parameters.body1,
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp19],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.contentLength,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.range,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.encryptionScope,
+        Parameters.transactionalContentMD5,
+        Parameters.transactionalContentCrc64,
+        Parameters.contentType1,
+        Parameters.accept2,
+        Parameters.pageWrite,
+        Parameters.ifSequenceNumberLessThanOrEqualTo,
+        Parameters.ifSequenceNumberLessThan,
+        Parameters.ifSequenceNumberEqualTo,
+    ],
+    isXML: true,
+    contentType: "application/xml; charset=utf-8",
+    mediaType: "binary",
+    serializer: xmlSerializer,
+};
+const clearPagesOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.PageBlobClearPagesHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobClearPagesExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp19],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.contentLength,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.range,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.encryptionScope,
+        Parameters.ifSequenceNumberLessThanOrEqualTo,
+        Parameters.ifSequenceNumberLessThan,
+        Parameters.ifSequenceNumberEqualTo,
+        Parameters.pageWrite1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const uploadPagesFromURLOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        201: {
+            headersMapper: Mappers.PageBlobUploadPagesFromURLHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobUploadPagesFromURLExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp19],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.contentLength,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.encryptionScope,
+        Parameters.sourceIfModifiedSince,
+        Parameters.sourceIfUnmodifiedSince,
+        Parameters.sourceIfMatch,
+        Parameters.sourceIfNoneMatch,
+        Parameters.sourceContentMD5,
+        Parameters.copySourceAuthorization,
+        Parameters.fileRequestIntent,
+        Parameters.pageWrite,
+        Parameters.ifSequenceNumberLessThanOrEqualTo,
+        Parameters.ifSequenceNumberLessThan,
+        Parameters.ifSequenceNumberEqualTo,
+        Parameters.sourceUrl,
+        Parameters.sourceRange,
+        Parameters.sourceContentCrc64,
+        Parameters.range1,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const getPageRangesOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.PageList,
+            headersMapper: Mappers.PageBlobGetPageRangesHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobGetPageRangesExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.marker,
+        Parameters.maxPageSize,
+        Parameters.snapshot,
+        Parameters.comp20,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.range,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const getPageRangesDiffOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "GET",
+    responses: {
+        200: {
+            bodyMapper: Mappers.PageList,
+            headersMapper: Mappers.PageBlobGetPageRangesDiffHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobGetPageRangesDiffExceptionHeaders,
+        },
+    },
+    queryParameters: [
+        Parameters.timeoutInSeconds,
+        Parameters.marker,
+        Parameters.maxPageSize,
+        Parameters.snapshot,
+        Parameters.comp20,
+        Parameters.prevsnapshot,
+    ],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.range,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.prevSnapshotUrl,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const resizeOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        200: {
+            headersMapper: Mappers.PageBlobResizeHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobResizeExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.comp, Parameters.timeoutInSeconds],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.encryptionKey,
+        Parameters.encryptionKeySha256,
+        Parameters.encryptionAlgorithm,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.encryptionScope,
+        Parameters.blobContentLength,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const updateSequenceNumberOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        200: {
+            headersMapper: Mappers.PageBlobUpdateSequenceNumberHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobUpdateSequenceNumberExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.comp, Parameters.timeoutInSeconds],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.leaseId,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.blobSequenceNumber,
+        Parameters.sequenceNumberAction,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+const copyIncrementalOperationSpec = {
+    path: "/{containerName}/{blob}",
+    httpMethod: "PUT",
+    responses: {
+        202: {
+            headersMapper: Mappers.PageBlobCopyIncrementalHeaders,
+        },
+        default: {
+            bodyMapper: Mappers.StorageError,
+            headersMapper: Mappers.PageBlobCopyIncrementalExceptionHeaders,
+        },
+    },
+    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp21],
+    urlParameters: [Parameters.url],
+    headerParameters: [
+        Parameters.version,
+        Parameters.requestId,
+        Parameters.accept1,
+        Parameters.ifModifiedSince,
+        Parameters.ifUnmodifiedSince,
+        Parameters.ifMatch,
+        Parameters.ifNoneMatch,
+        Parameters.ifTags,
+        Parameters.copySource,
+    ],
+    isXML: true,
+    serializer: xmlSerializer,
+};
+//# sourceMappingURL=pageBlob.js.map
+
+/***/ }),
+
+/***/ 286:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const { kConstruct } = __nccwpck_require__(162)
+const { Cache } = __nccwpck_require__(13)
+const { webidl } = __nccwpck_require__(463)
+const { kEnumerableProperty } = __nccwpck_require__(72)
+
+class CacheStorage {
+  /**
+   * @see https://w3c.github.io/ServiceWorker/#dfn-relevant-name-to-cache-map
+   * @type {Map<string, import('./cache').requestResponseList}
+   */
+  #caches = new Map()
+
+  constructor () {
+    if (arguments[0] !== kConstruct) {
+      webidl.illegalConstructor()
+    }
+  }
+
+  async match (request, options = {}) {
+    webidl.brandCheck(this, CacheStorage)
+    webidl.argumentLengthCheck(arguments, 1, { header: 'CacheStorage.match' })
+
+    request = webidl.converters.RequestInfo(request)
+    options = webidl.converters.MultiCacheQueryOptions(options)
+
+    // 1.
+    if (options.cacheName != null) {
+      // 1.1.1.1
+      if (this.#caches.has(options.cacheName)) {
+        // 1.1.1.1.1
+        const cacheList = this.#caches.get(options.cacheName)
+        const cache = new Cache(kConstruct, cacheList)
+
+        return await cache.match(request, options)
+      }
+    } else { // 2.
+      // 2.2
+      for (const cacheList of this.#caches.values()) {
+        const cache = new Cache(kConstruct, cacheList)
+
+        // 2.2.1.2
+        const response = await cache.match(request, options)
+
+        if (response !== undefined) {
+          return response
+        }
+      }
+    }
+  }
+
+  /**
+   * @see https://w3c.github.io/ServiceWorker/#cache-storage-has
+   * @param {string} cacheName
+   * @returns {Promise<boolean>}
+   */
+  async has (cacheName) {
+    webidl.brandCheck(this, CacheStorage)
+    webidl.argumentLengthCheck(arguments, 1, { header: 'CacheStorage.has' })
+
+    cacheName = webidl.converters.DOMString(cacheName)
+
+    // 2.1.1
+    // 2.2
+    return this.#caches.has(cacheName)
+  }
+
+  /**
+   * @see https://w3c.github.io/ServiceWorker/#dom-cachestorage-open
+   * @param {string} cacheName
+   * @returns {Promise<Cache>}
+   */
+  async open (cacheName) {
+    webidl.brandCheck(this, CacheStorage)
+    webidl.argumentLengthCheck(arguments, 1, { header: 'CacheStorage.open' })
+
+    cacheName = webidl.converters.DOMString(cacheName)
+
+    // 2.1
+    if (this.#caches.has(cacheName)) {
+      // await caches.open('v1') !== await caches.open('v1')
+
+      // 2.1.1
+      const cache = this.#caches.get(cacheName)
+
+      // 2.1.1.1
+      return new Cache(kConstruct, cache)
+    }
+
+    // 2.2
+    const cache = []
+
+    // 2.3
+    this.#caches.set(cacheName, cache)
+
+    // 2.4
+    return new Cache(kConstruct, cache)
+  }
+
+  /**
+   * @see https://w3c.github.io/ServiceWorker/#cache-storage-delete
+   * @param {string} cacheName
+   * @returns {Promise<boolean>}
+   */
+  async delete (cacheName) {
+    webidl.brandCheck(this, CacheStorage)
+    webidl.argumentLengthCheck(arguments, 1, { header: 'CacheStorage.delete' })
+
+    cacheName = webidl.converters.DOMString(cacheName)
+
+    return this.#caches.delete(cacheName)
+  }
+
+  /**
+   * @see https://w3c.github.io/ServiceWorker/#cache-storage-keys
+   * @returns {string[]}
+   */
+  async keys () {
+    webidl.brandCheck(this, CacheStorage)
+
+    // 2.1
+    const keys = this.#caches.keys()
+
+    // 2.2
+    return [...keys]
+  }
+}
+
+Object.defineProperties(CacheStorage.prototype, {
+  [Symbol.toStringTag]: {
+    value: 'CacheStorage',
+    configurable: true
+  },
+  match: kEnumerableProperty,
+  has: kEnumerableProperty,
+  open: kEnumerableProperty,
+  delete: kEnumerableProperty,
+  keys: kEnumerableProperty
+})
+
+module.exports = {
+  CacheStorage
+}
+
+
+/***/ }),
+
+/***/ 287:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createClientPipeline = createClientPipeline;
+const deserializationPolicy_js_1 = __nccwpck_require__(90);
+const core_rest_pipeline_1 = __nccwpck_require__(107);
+const serializationPolicy_js_1 = __nccwpck_require__(497);
+/**
+ * Creates a new Pipeline for use with a Service Client.
+ * Adds in deserializationPolicy by default.
+ * Also adds in bearerTokenAuthenticationPolicy if passed a TokenCredential.
+ * @param options - Options to customize the created pipeline.
+ */
+function createClientPipeline(options = {}) {
+    const pipeline = (0, core_rest_pipeline_1.createPipelineFromOptions)(options ?? {});
+    if (options.credentialOptions) {
+        pipeline.addPolicy((0, core_rest_pipeline_1.bearerTokenAuthenticationPolicy)({
+            credential: options.credentialOptions.credential,
+            scopes: options.credentialOptions.credentialScopes,
+        }));
+    }
+    pipeline.addPolicy((0, serializationPolicy_js_1.serializationPolicy)(options.serializationOptions), { phase: "Serialize" });
+    pipeline.addPolicy((0, deserializationPolicy_js_1.deserializationPolicy)(options.deserializationOptions), {
+        phase: "Deserialize",
+    });
+    return pipeline;
+}
+//# sourceMappingURL=pipeline.js.map
+
+/***/ }),
+
+/***/ 288:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.HttpClient = exports.isHttps = exports.HttpClientResponse = exports.HttpClientError = exports.getProxyUrl = exports.MediaTypes = exports.Headers = exports.HttpCodes = void 0;
+const http = __importStar(__nccwpck_require__(334));
+const https = __importStar(__nccwpck_require__(73));
+const pm = __importStar(__nccwpck_require__(315));
+const tunnel = __importStar(__nccwpck_require__(528));
+const undici_1 = __nccwpck_require__(169);
+var HttpCodes;
+(function (HttpCodes) {
+    HttpCodes[HttpCodes["OK"] = 200] = "OK";
+    HttpCodes[HttpCodes["MultipleChoices"] = 300] = "MultipleChoices";
+    HttpCodes[HttpCodes["MovedPermanently"] = 301] = "MovedPermanently";
+    HttpCodes[HttpCodes["ResourceMoved"] = 302] = "ResourceMoved";
+    HttpCodes[HttpCodes["SeeOther"] = 303] = "SeeOther";
+    HttpCodes[HttpCodes["NotModified"] = 304] = "NotModified";
+    HttpCodes[HttpCodes["UseProxy"] = 305] = "UseProxy";
+    HttpCodes[HttpCodes["SwitchProxy"] = 306] = "SwitchProxy";
+    HttpCodes[HttpCodes["TemporaryRedirect"] = 307] = "TemporaryRedirect";
+    HttpCodes[HttpCodes["PermanentRedirect"] = 308] = "PermanentRedirect";
+    HttpCodes[HttpCodes["BadRequest"] = 400] = "BadRequest";
+    HttpCodes[HttpCodes["Unauthorized"] = 401] = "Unauthorized";
+    HttpCodes[HttpCodes["PaymentRequired"] = 402] = "PaymentRequired";
+    HttpCodes[HttpCodes["Forbidden"] = 403] = "Forbidden";
+    HttpCodes[HttpCodes["NotFound"] = 404] = "NotFound";
+    HttpCodes[HttpCodes["MethodNotAllowed"] = 405] = "MethodNotAllowed";
+    HttpCodes[HttpCodes["NotAcceptable"] = 406] = "NotAcceptable";
+    HttpCodes[HttpCodes["ProxyAuthenticationRequired"] = 407] = "ProxyAuthenticationRequired";
+    HttpCodes[HttpCodes["RequestTimeout"] = 408] = "RequestTimeout";
+    HttpCodes[HttpCodes["Conflict"] = 409] = "Conflict";
+    HttpCodes[HttpCodes["Gone"] = 410] = "Gone";
+    HttpCodes[HttpCodes["TooManyRequests"] = 429] = "TooManyRequests";
+    HttpCodes[HttpCodes["InternalServerError"] = 500] = "InternalServerError";
+    HttpCodes[HttpCodes["NotImplemented"] = 501] = "NotImplemented";
+    HttpCodes[HttpCodes["BadGateway"] = 502] = "BadGateway";
+    HttpCodes[HttpCodes["ServiceUnavailable"] = 503] = "ServiceUnavailable";
+    HttpCodes[HttpCodes["GatewayTimeout"] = 504] = "GatewayTimeout";
+})(HttpCodes || (exports.HttpCodes = HttpCodes = {}));
+var Headers;
+(function (Headers) {
+    Headers["Accept"] = "accept";
+    Headers["ContentType"] = "content-type";
+})(Headers || (exports.Headers = Headers = {}));
+var MediaTypes;
+(function (MediaTypes) {
+    MediaTypes["ApplicationJson"] = "application/json";
+})(MediaTypes || (exports.MediaTypes = MediaTypes = {}));
+/**
+ * Returns the proxy URL, depending upon the supplied url and proxy environment variables.
+ * @param serverUrl  The server URL where the request will be sent. For example, https://api.github.com
+ */
+function getProxyUrl(serverUrl) {
+    const proxyUrl = pm.getProxyUrl(new URL(serverUrl));
+    return proxyUrl ? proxyUrl.href : '';
+}
+exports.getProxyUrl = getProxyUrl;
+const HttpRedirectCodes = [
+    HttpCodes.MovedPermanently,
+    HttpCodes.ResourceMoved,
+    HttpCodes.SeeOther,
+    HttpCodes.TemporaryRedirect,
+    HttpCodes.PermanentRedirect
+];
+const HttpResponseRetryCodes = [
+    HttpCodes.BadGateway,
+    HttpCodes.ServiceUnavailable,
+    HttpCodes.GatewayTimeout
+];
+const RetryableHttpVerbs = ['OPTIONS', 'GET', 'DELETE', 'HEAD'];
+const ExponentialBackoffCeiling = 10;
+const ExponentialBackoffTimeSlice = 5;
+class HttpClientError extends Error {
+    constructor(message, statusCode) {
+        super(message);
+        this.name = 'HttpClientError';
+        this.statusCode = statusCode;
+        Object.setPrototypeOf(this, HttpClientError.prototype);
+    }
+}
+exports.HttpClientError = HttpClientError;
+class HttpClientResponse {
+    constructor(message) {
+        this.message = message;
+    }
+    readBody() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+                let output = Buffer.alloc(0);
+                this.message.on('data', (chunk) => {
+                    output = Buffer.concat([output, chunk]);
+                });
+                this.message.on('end', () => {
+                    resolve(output.toString());
+                });
+            }));
+        });
+    }
+    readBodyBuffer() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+                const chunks = [];
+                this.message.on('data', (chunk) => {
+                    chunks.push(chunk);
+                });
+                this.message.on('end', () => {
+                    resolve(Buffer.concat(chunks));
+                });
+            }));
+        });
+    }
+}
+exports.HttpClientResponse = HttpClientResponse;
+function isHttps(requestUrl) {
+    const parsedUrl = new URL(requestUrl);
+    return parsedUrl.protocol === 'https:';
+}
+exports.isHttps = isHttps;
+class HttpClient {
+    constructor(userAgent, handlers, requestOptions) {
+        this._ignoreSslError = false;
+        this._allowRedirects = true;
+        this._allowRedirectDowngrade = false;
+        this._maxRedirects = 50;
+        this._allowRetries = false;
+        this._maxRetries = 1;
+        this._keepAlive = false;
+        this._disposed = false;
+        this.userAgent = userAgent;
+        this.handlers = handlers || [];
+        this.requestOptions = requestOptions;
+        if (requestOptions) {
+            if (requestOptions.ignoreSslError != null) {
+                this._ignoreSslError = requestOptions.ignoreSslError;
+            }
+            this._socketTimeout = requestOptions.socketTimeout;
+            if (requestOptions.allowRedirects != null) {
+                this._allowRedirects = requestOptions.allowRedirects;
+            }
+            if (requestOptions.allowRedirectDowngrade != null) {
+                this._allowRedirectDowngrade = requestOptions.allowRedirectDowngrade;
+            }
+            if (requestOptions.maxRedirects != null) {
+                this._maxRedirects = Math.max(requestOptions.maxRedirects, 0);
+            }
+            if (requestOptions.keepAlive != null) {
+                this._keepAlive = requestOptions.keepAlive;
+            }
+            if (requestOptions.allowRetries != null) {
+                this._allowRetries = requestOptions.allowRetries;
+            }
+            if (requestOptions.maxRetries != null) {
+                this._maxRetries = requestOptions.maxRetries;
+            }
+        }
+    }
+    options(requestUrl, additionalHeaders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('OPTIONS', requestUrl, null, additionalHeaders || {});
+        });
+    }
+    get(requestUrl, additionalHeaders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('GET', requestUrl, null, additionalHeaders || {});
+        });
+    }
+    del(requestUrl, additionalHeaders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('DELETE', requestUrl, null, additionalHeaders || {});
+        });
+    }
+    post(requestUrl, data, additionalHeaders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('POST', requestUrl, data, additionalHeaders || {});
+        });
+    }
+    patch(requestUrl, data, additionalHeaders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('PATCH', requestUrl, data, additionalHeaders || {});
+        });
+    }
+    put(requestUrl, data, additionalHeaders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('PUT', requestUrl, data, additionalHeaders || {});
+        });
+    }
+    head(requestUrl, additionalHeaders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('HEAD', requestUrl, null, additionalHeaders || {});
+        });
+    }
+    sendStream(verb, requestUrl, stream, additionalHeaders) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request(verb, requestUrl, stream, additionalHeaders);
+        });
+    }
+    /**
+     * Gets a typed object from an endpoint
+     * Be aware that not found returns a null.  Other errors (4xx, 5xx) reject the promise
+     */
+    getJson(requestUrl, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            const res = yield this.get(requestUrl, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
+    }
+    postJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.post(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
+    }
+    putJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.put(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
+    }
+    patchJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.patch(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
+    }
+    /**
+     * Makes a raw http request.
+     * All other methods such as get, post, patch, and request ultimately call this.
+     * Prefer get, del, post and patch
+     */
+    request(verb, requestUrl, data, headers) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._disposed) {
+                throw new Error('Client has already been disposed.');
+            }
+            const parsedUrl = new URL(requestUrl);
+            let info = this._prepareRequest(verb, parsedUrl, headers);
+            // Only perform retries on reads since writes may not be idempotent.
+            const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb)
+                ? this._maxRetries + 1
+                : 1;
+            let numTries = 0;
+            let response;
+            do {
+                response = yield this.requestRaw(info, data);
+                // Check if it's an authentication challenge
+                if (response &&
+                    response.message &&
+                    response.message.statusCode === HttpCodes.Unauthorized) {
+                    let authenticationHandler;
+                    for (const handler of this.handlers) {
+                        if (handler.canHandleAuthentication(response)) {
+                            authenticationHandler = handler;
+                            break;
+                        }
+                    }
+                    if (authenticationHandler) {
+                        return authenticationHandler.handleAuthentication(this, info, data);
+                    }
+                    else {
+                        // We have received an unauthorized response but have no handlers to handle it.
+                        // Let the response return to the caller.
+                        return response;
+                    }
+                }
+                let redirectsRemaining = this._maxRedirects;
+                while (response.message.statusCode &&
+                    HttpRedirectCodes.includes(response.message.statusCode) &&
+                    this._allowRedirects &&
+                    redirectsRemaining > 0) {
+                    const redirectUrl = response.message.headers['location'];
+                    if (!redirectUrl) {
+                        // if there's no location to redirect to, we won't
+                        break;
+                    }
+                    const parsedRedirectUrl = new URL(redirectUrl);
+                    if (parsedUrl.protocol === 'https:' &&
+                        parsedUrl.protocol !== parsedRedirectUrl.protocol &&
+                        !this._allowRedirectDowngrade) {
+                        throw new Error('Redirect from HTTPS to HTTP protocol. This downgrade is not allowed for security reasons. If you want to allow this behavior, set the allowRedirectDowngrade option to true.');
+                    }
+                    // we need to finish reading the response before reassigning response
+                    // which will leak the open socket.
+                    yield response.readBody();
+                    // strip authorization header if redirected to a different hostname
+                    if (parsedRedirectUrl.hostname !== parsedUrl.hostname) {
+                        for (const header in headers) {
+                            // header names are case insensitive
+                            if (header.toLowerCase() === 'authorization') {
+                                delete headers[header];
+                            }
+                        }
+                    }
+                    // let's make the request with the new redirectUrl
+                    info = this._prepareRequest(verb, parsedRedirectUrl, headers);
+                    response = yield this.requestRaw(info, data);
+                    redirectsRemaining--;
+                }
+                if (!response.message.statusCode ||
+                    !HttpResponseRetryCodes.includes(response.message.statusCode)) {
+                    // If not a retry code, return immediately instead of retrying
+                    return response;
+                }
+                numTries += 1;
+                if (numTries < maxTries) {
+                    yield response.readBody();
+                    yield this._performExponentialBackoff(numTries);
+                }
+            } while (numTries < maxTries);
+            return response;
+        });
+    }
+    /**
+     * Needs to be called if keepAlive is set to true in request options.
+     */
+    dispose() {
+        if (this._agent) {
+            this._agent.destroy();
+        }
+        this._disposed = true;
+    }
+    /**
+     * Raw request.
+     * @param info
+     * @param data
+     */
+    requestRaw(info, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                function callbackForResult(err, res) {
+                    if (err) {
+                        reject(err);
+                    }
+                    else if (!res) {
+                        // If `err` is not passed, then `res` must be passed.
+                        reject(new Error('Unknown error'));
+                    }
+                    else {
+                        resolve(res);
+                    }
+                }
+                this.requestRawWithCallback(info, data, callbackForResult);
+            });
+        });
+    }
+    /**
+     * Raw request with callback.
+     * @param info
+     * @param data
+     * @param onResult
+     */
+    requestRawWithCallback(info, data, onResult) {
+        if (typeof data === 'string') {
+            if (!info.options.headers) {
+                info.options.headers = {};
+            }
+            info.options.headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
+        }
+        let callbackCalled = false;
+        function handleResult(err, res) {
+            if (!callbackCalled) {
+                callbackCalled = true;
+                onResult(err, res);
+            }
+        }
+        const req = info.httpModule.request(info.options, (msg) => {
+            const res = new HttpClientResponse(msg);
+            handleResult(undefined, res);
+        });
+        let socket;
+        req.on('socket', sock => {
+            socket = sock;
+        });
+        // If we ever get disconnected, we want the socket to timeout eventually
+        req.setTimeout(this._socketTimeout || 3 * 60000, () => {
+            if (socket) {
+                socket.end();
+            }
+            handleResult(new Error(`Request timeout: ${info.options.path}`));
+        });
+        req.on('error', function (err) {
+            // err has statusCode property
+            // res should have headers
+            handleResult(err);
+        });
+        if (data && typeof data === 'string') {
+            req.write(data, 'utf8');
+        }
+        if (data && typeof data !== 'string') {
+            data.on('close', function () {
+                req.end();
+            });
+            data.pipe(req);
+        }
+        else {
+            req.end();
+        }
+    }
+    /**
+     * Gets an http agent. This function is useful when you need an http agent that handles
+     * routing through a proxy server - depending upon the url and proxy environment variables.
+     * @param serverUrl  The server URL where the request will be sent. For example, https://api.github.com
+     */
+    getAgent(serverUrl) {
+        const parsedUrl = new URL(serverUrl);
+        return this._getAgent(parsedUrl);
+    }
+    getAgentDispatcher(serverUrl) {
+        const parsedUrl = new URL(serverUrl);
+        const proxyUrl = pm.getProxyUrl(parsedUrl);
+        const useProxy = proxyUrl && proxyUrl.hostname;
+        if (!useProxy) {
+            return;
+        }
+        return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
+    }
+    _prepareRequest(method, requestUrl, headers) {
+        const info = {};
+        info.parsedUrl = requestUrl;
+        const usingSsl = info.parsedUrl.protocol === 'https:';
+        info.httpModule = usingSsl ? https : http;
+        const defaultPort = usingSsl ? 443 : 80;
+        info.options = {};
+        info.options.host = info.parsedUrl.hostname;
+        info.options.port = info.parsedUrl.port
+            ? parseInt(info.parsedUrl.port)
+            : defaultPort;
+        info.options.path =
+            (info.parsedUrl.pathname || '') + (info.parsedUrl.search || '');
+        info.options.method = method;
+        info.options.headers = this._mergeHeaders(headers);
+        if (this.userAgent != null) {
+            info.options.headers['user-agent'] = this.userAgent;
+        }
+        info.options.agent = this._getAgent(info.parsedUrl);
+        // gives handlers an opportunity to participate
+        if (this.handlers) {
+            for (const handler of this.handlers) {
+                handler.prepareRequest(info.options);
+            }
+        }
+        return info;
+    }
+    _mergeHeaders(headers) {
+        if (this.requestOptions && this.requestOptions.headers) {
+            return Object.assign({}, lowercaseKeys(this.requestOptions.headers), lowercaseKeys(headers || {}));
+        }
+        return lowercaseKeys(headers || {});
+    }
+    _getExistingOrDefaultHeader(additionalHeaders, header, _default) {
+        let clientHeader;
+        if (this.requestOptions && this.requestOptions.headers) {
+            clientHeader = lowercaseKeys(this.requestOptions.headers)[header];
+        }
+        return additionalHeaders[header] || clientHeader || _default;
+    }
+    _getAgent(parsedUrl) {
+        let agent;
+        const proxyUrl = pm.getProxyUrl(parsedUrl);
+        const useProxy = proxyUrl && proxyUrl.hostname;
+        if (this._keepAlive && useProxy) {
+            agent = this._proxyAgent;
+        }
+        if (!useProxy) {
+            agent = this._agent;
+        }
+        // if agent is already assigned use that agent.
+        if (agent) {
+            return agent;
+        }
+        const usingSsl = parsedUrl.protocol === 'https:';
+        let maxSockets = 100;
+        if (this.requestOptions) {
+            maxSockets = this.requestOptions.maxSockets || http.globalAgent.maxSockets;
+        }
+        // This is `useProxy` again, but we need to check `proxyURl` directly for TypeScripts's flow analysis.
+        if (proxyUrl && proxyUrl.hostname) {
+            const agentOptions = {
+                maxSockets,
+                keepAlive: this._keepAlive,
+                proxy: Object.assign(Object.assign({}, ((proxyUrl.username || proxyUrl.password) && {
+                    proxyAuth: `${proxyUrl.username}:${proxyUrl.password}`
+                })), { host: proxyUrl.hostname, port: proxyUrl.port })
+            };
+            let tunnelAgent;
+            const overHttps = proxyUrl.protocol === 'https:';
+            if (usingSsl) {
+                tunnelAgent = overHttps ? tunnel.httpsOverHttps : tunnel.httpsOverHttp;
+            }
+            else {
+                tunnelAgent = overHttps ? tunnel.httpOverHttps : tunnel.httpOverHttp;
+            }
+            agent = tunnelAgent(agentOptions);
+            this._proxyAgent = agent;
+        }
+        // if tunneling agent isn't assigned create a new agent
+        if (!agent) {
+            const options = { keepAlive: this._keepAlive, maxSockets };
+            agent = usingSsl ? new https.Agent(options) : new http.Agent(options);
+            this._agent = agent;
+        }
+        if (usingSsl && this._ignoreSslError) {
+            // we don't want to set NODE_TLS_REJECT_UNAUTHORIZED=0 since that will affect request for entire process
+            // http.RequestOptions doesn't expose a way to modify RequestOptions.agent.options
+            // we have to cast it to any and change it directly
+            agent.options = Object.assign(agent.options || {}, {
+                rejectUnauthorized: false
+            });
+        }
+        return agent;
+    }
+    _getProxyAgentDispatcher(parsedUrl, proxyUrl) {
+        let proxyAgent;
+        if (this._keepAlive) {
+            proxyAgent = this._proxyAgentDispatcher;
+        }
+        // if agent is already assigned use that agent.
+        if (proxyAgent) {
+            return proxyAgent;
+        }
+        const usingSsl = parsedUrl.protocol === 'https:';
+        proxyAgent = new undici_1.ProxyAgent(Object.assign({ uri: proxyUrl.href, pipelining: !this._keepAlive ? 0 : 1 }, ((proxyUrl.username || proxyUrl.password) && {
+            token: `Basic ${Buffer.from(`${proxyUrl.username}:${proxyUrl.password}`).toString('base64')}`
+        })));
+        this._proxyAgentDispatcher = proxyAgent;
+        if (usingSsl && this._ignoreSslError) {
+            // we don't want to set NODE_TLS_REJECT_UNAUTHORIZED=0 since that will affect request for entire process
+            // http.RequestOptions doesn't expose a way to modify RequestOptions.agent.options
+            // we have to cast it to any and change it directly
+            proxyAgent.options = Object.assign(proxyAgent.options.requestTls || {}, {
+                rejectUnauthorized: false
+            });
+        }
+        return proxyAgent;
+    }
+    _performExponentialBackoff(retryNumber) {
+        return __awaiter(this, void 0, void 0, function* () {
+            retryNumber = Math.min(ExponentialBackoffCeiling, retryNumber);
+            const ms = ExponentialBackoffTimeSlice * Math.pow(2, retryNumber);
+            return new Promise(resolve => setTimeout(() => resolve(), ms));
+        });
+    }
+    _processResponse(res, options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                const statusCode = res.message.statusCode || 0;
+                const response = {
+                    statusCode,
+                    result: null,
+                    headers: {}
+                };
+                // not found leads to null obj returned
+                if (statusCode === HttpCodes.NotFound) {
+                    resolve(response);
+                }
+                // get the result from the body
+                function dateTimeDeserializer(key, value) {
+                    if (typeof value === 'string') {
+                        const a = new Date(value);
+                        if (!isNaN(a.valueOf())) {
+                            return a;
+                        }
+                    }
+                    return value;
+                }
+                let obj;
+                let contents;
+                try {
+                    contents = yield res.readBody();
+                    if (contents && contents.length > 0) {
+                        if (options && options.deserializeDates) {
+                            obj = JSON.parse(contents, dateTimeDeserializer);
+                        }
+                        else {
+                            obj = JSON.parse(contents);
+                        }
+                        response.result = obj;
+                    }
+                    response.headers = res.message.headers;
+                }
+                catch (err) {
+                    // Invalid resource (contents not json);  leaving result obj null
+                }
+                // note that 3xx redirects are handled by the http layer.
+                if (statusCode > 299) {
+                    let msg;
+                    // if exception/error in body, attempt to get better error
+                    if (obj && obj.message) {
+                        msg = obj.message;
+                    }
+                    else if (contents && contents.length > 0) {
+                        // it may be the case that the exception is in the body message as string
+                        msg = contents;
+                    }
+                    else {
+                        msg = `Failed request: (${statusCode})`;
+                    }
+                    const err = new HttpClientError(msg, statusCode);
+                    err.result = response.result;
+                    reject(err);
+                }
+                else {
+                    resolve(response);
+                }
+            }));
+        });
+    }
+}
+exports.HttpClient = HttpClient;
+const lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 289:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -55498,7 +57963,7 @@ const path = __importStar(__nccwpck_require__(515));
 const core = __importStar(__nccwpck_require__(467));
 const cache = __importStar(__nccwpck_require__(219));
 const log_utils_js_1 = __nccwpck_require__(357);
-const resolve_setup_js_1 = __nccwpck_require__(314);
+const resolve_setup_js_1 = __nccwpck_require__(327);
 const phase_timing_js_1 = __nccwpck_require__(342);
 const ensure_rust_toolchain_js_1 = __nccwpck_require__(363);
 const ensure_soldr_js_1 = __nccwpck_require__(81);
@@ -55508,7 +57973,7 @@ const normalize_source_mtime_js_1 = __nccwpck_require__(82);
 const detect_shared_target_warning_js_1 = __nccwpck_require__(433);
 const ensure_shims_js_1 = __nccwpck_require__(1);
 const zccache_seed_js_1 = __nccwpck_require__(210);
-const cache_compress_js_1 = __nccwpck_require__(283);
+const cache_compress_js_1 = __nccwpck_require__(282);
 const soldr_load_shim_js_1 = __nccwpck_require__(32);
 const seed_isolated_cache_js_1 = __nccwpck_require__(532);
 const stats_collector_js_1 = __nccwpck_require__(481);
@@ -55517,7 +57982,7 @@ const solo_toolchain_cache_js_1 = __nccwpck_require__(499);
 const cook_cache_js_1 = __nccwpck_require__(42);
 const soldr_mini_cache_js_1 = __nccwpck_require__(91);
 const diagnostics_js_1 = __nccwpck_require__(465);
-const shim_bypass_check_js_1 = __nccwpck_require__(317);
+const shim_bypass_check_js_1 = __nccwpck_require__(316);
 const cross_bootstrap_js_1 = __nccwpck_require__(117);
 const source_mtime_snapshot_js_1 = __nccwpck_require__(413);
 /**
@@ -56649,2471 +59114,6 @@ if (typeof process !== "undefined" &&
 
 /***/ }),
 
-/***/ 280:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BaseRequestPolicy = exports.getCachedDefaultHttpClient = void 0;
-const tslib_1 = __nccwpck_require__(221);
-tslib_1.__exportStar(__nccwpck_require__(368), exports);
-var cache_js_1 = __nccwpck_require__(256);
-Object.defineProperty(exports, "getCachedDefaultHttpClient", ({ enumerable: true, get: function () { return cache_js_1.getCachedDefaultHttpClient; } }));
-tslib_1.__exportStar(__nccwpck_require__(86), exports);
-tslib_1.__exportStar(__nccwpck_require__(161), exports);
-tslib_1.__exportStar(__nccwpck_require__(402), exports);
-tslib_1.__exportStar(__nccwpck_require__(101), exports);
-tslib_1.__exportStar(__nccwpck_require__(265), exports);
-tslib_1.__exportStar(__nccwpck_require__(331), exports);
-var RequestPolicy_js_1 = __nccwpck_require__(49);
-Object.defineProperty(exports, "BaseRequestPolicy", ({ enumerable: true, get: function () { return RequestPolicy_js_1.BaseRequestPolicy; } }));
-tslib_1.__exportStar(__nccwpck_require__(99), exports);
-tslib_1.__exportStar(__nccwpck_require__(313), exports);
-tslib_1.__exportStar(__nccwpck_require__(212), exports);
-tslib_1.__exportStar(__nccwpck_require__(471), exports);
-tslib_1.__exportStar(__nccwpck_require__(172), exports);
-tslib_1.__exportStar(__nccwpck_require__(132), exports);
-tslib_1.__exportStar(__nccwpck_require__(80), exports);
-tslib_1.__exportStar(__nccwpck_require__(434), exports);
-tslib_1.__exportStar(__nccwpck_require__(174), exports);
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 281:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tslib_1 = __nccwpck_require__(221);
-tslib_1.__exportStar(__nccwpck_require__(234), exports);
-tslib_1.__exportStar(__nccwpck_require__(224), exports);
-tslib_1.__exportStar(__nccwpck_require__(50), exports);
-tslib_1.__exportStar(__nccwpck_require__(286), exports);
-tslib_1.__exportStar(__nccwpck_require__(27), exports);
-tslib_1.__exportStar(__nccwpck_require__(360), exports);
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 282:
-/***/ ((module) => {
-
-"use strict";
-
-module.exports = prettyError
-
-function prettyError (err, buf) {
-  /* istanbul ignore if */
-  if (err.pos == null || err.line == null) return err
-  let msg = err.message
-  msg += ` at row ${err.line + 1}, col ${err.col + 1}, pos ${err.pos}:\n`
-
-  /* istanbul ignore else */
-  if (buf && buf.split) {
-    const lines = buf.split(/\n/)
-    const lineNumWidth = String(Math.min(lines.length, err.line + 3)).length
-    let linePadding = ' '
-    while (linePadding.length < lineNumWidth) linePadding += ' '
-    for (let ii = Math.max(0, err.line - 1); ii < Math.min(lines.length, err.line + 2); ++ii) {
-      let lineNum = String(ii + 1)
-      if (lineNum.length < lineNumWidth) lineNum = ' ' + lineNum
-      if (err.line === ii) {
-        msg += lineNum + '> ' + lines[ii] + '\n'
-        msg += linePadding + '  '
-        for (let hh = 0; hh < err.col; ++hh) {
-          msg += ' '
-        }
-        msg += '^\n'
-      } else {
-        msg += lineNum + ': ' + lines[ii] + '\n'
-      }
-    }
-  }
-  err.message = msg + '\n'
-  return err
-}
-
-
-/***/ }),
-
-/***/ 283:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Tar+zstd cache compression helpers. Owned by Agent 2.
-//
-// Used by src/main.ts (restore: auto-detect .tar.zst, decompress in place)
-// and src/post.ts (save: tar+zstd the cache dir).
-//
-// Acceptance criterion #1 + #2 of zackees/setup-soldr#70: post-job tar+zstd
-// at level configured by target-cache-compress-level, restore auto-detects
-// zstd vs gzip magic bytes for back-compat.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES = void 0;
-exports.walkDirSize = walkDirSize;
-exports.isZccacheArtifactPayloadPath = isZccacheArtifactPayloadPath;
-exports.detectCompressMagic = detectCompressMagic;
-exports.planTarPayload = planTarPayload;
-exports.decompressCache = decompressCache;
-exports.compressCache = compressCache;
-const fs = __importStar(__nccwpck_require__(114));
-const os = __importStar(__nccwpck_require__(387));
-const path = __importStar(__nccwpck_require__(515));
-const core = __importStar(__nccwpck_require__(467));
-const exec = __importStar(__nccwpck_require__(19));
-const io = __importStar(__nccwpck_require__(299));
-/**
- * Recursively walk a directory and sum file sizes.
- */
-async function walkDirSize(dir) {
-    let bytes = 0;
-    let files = 0;
-    async function walk(d) {
-        let entries;
-        try {
-            entries = await fs.readdir(d, { withFileTypes: true });
-        }
-        catch {
-            return;
-        }
-        for (const entry of entries) {
-            const full = path.join(d, entry.name);
-            if (entry.isDirectory()) {
-                await walk(full);
-            }
-            else if (entry.isFile()) {
-                try {
-                    bytes += (await fs.stat(full)).size;
-                    files++;
-                }
-                catch {
-                    // skip inaccessible files
-                }
-            }
-        }
-    }
-    await walk(dir);
-    return { bytes, files };
-}
-function fmtBytesDebug(n) {
-    if (n < 1024)
-        return `${n}B`;
-    if (n < 1024 * 1024)
-        return `${(n / 1024).toFixed(1)}KB`;
-    if (n < 1024 * 1024 * 1024)
-        return `${(n / 1024 / 1024).toFixed(1)}MB`;
-    return `${(n / 1024 / 1024 / 1024).toFixed(2)}GB`;
-}
-const DEFAULT_PAYLOAD_TOP_N = 10;
-const MAX_SKIP_SAMPLES = 8;
-const TRANSIENT_EXACT_BASENAMES = new Set([
-    ".package-cache",
-    ".package-cache-mutate",
-    "zccache.pid",
-    "sccache.pid",
-]);
-const ARCHIVE_SUFFIXES = [
-    ".tar",
-    ".tar.zst",
-    ".tar.gz",
-    ".tgz",
-    ".zip",
-    ".zst.tmp",
-];
-const TRANSIENT_SUFFIXES = [
-    [".sock", "transient-socket-path"],
-    [".socket", "transient-socket-path"],
-    [".pid", "transient-pid-file"],
-    [".lock", "transient-lock-file"],
-    [".lck", "transient-lock-file"],
-    [".tmp", "transient-temp-file"],
-    [".temp", "transient-temp-file"],
-    [".part", "transient-temp-file"],
-    [".partial", "transient-temp-file"],
-];
-// ---------------------------------------------------------------------------
-// Build-cache payload file-class contract (issue #229).
-//
-// The zccache build-cache save profile has an explicit, tested allow/deny
-// contract so a future refactor can't silently start vacuuming diagnostic
-// sidecars into the cache (or, worse, start dropping reusable artifacts):
-//
-//   ALLOW (always kept): anything under a zccache *artifacts* directory —
-//     `zccache/artifacts/**` and `zccache/private/<session>/artifacts/**`.
-//     These hold the reusable compiled artifacts AND the compiler
-//     stdout/stderr replay metadata zccache stores alongside them, so a
-//     `.stderr`/`.out`/`.txt` *inside* an artifacts dir is replay data, not a
-//     standalone log, and must survive (see #398 — excluding private
-//     artifacts produced restored-but-0-hit caches).
-//
-//   DENY (trimmed): the `logs/` subtree at any depth (reason
-//     `diagnostic-log-dir`) and standalone diagnostic sidecars matching
-//     BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES *outside* any artifacts dir
-//     (reason `diagnostic-log-file`).
-// ---------------------------------------------------------------------------
-/** Standalone diagnostic/log sidecar suffixes denied outside artifacts dirs. */
-exports.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES = [
-    ".jsonl",
-    ".log",
-    ".trace",
-    ".txt",
-    ".out",
-    ".err",
-    ".stdout",
-    ".stderr",
-];
-/**
- * True when a build-cache tar path is inside a zccache artifacts directory —
- * the allowlist that preserves reusable artifacts and their in-place compiler
- * stdout/stderr replay metadata. Matches `zccache/artifacts/**` and
- * `zccache/private/<session>/artifacts/**`. Pure; tar path uses "/" separators.
- */
-function isZccacheArtifactPayloadPath(tarPath) {
-    const parts = tarPath.split("/").map((part) => part.toLowerCase());
-    if (parts[0] !== "zccache")
-        return false;
-    if (parts[1] === "artifacts")
-        return true;
-    if (parts[1] === "private" && parts.length >= 4 && parts[3] === "artifacts")
-        return true;
-    return false;
-}
-function normalizeTopN(value) {
-    if (value === undefined || !Number.isFinite(value))
-        return DEFAULT_PAYLOAD_TOP_N;
-    return Math.max(0, Math.min(50, Math.floor(value)));
-}
-function comparePayloadEntry(a, b) {
-    if (a.bytes !== b.bytes)
-        return b.bytes - a.bytes;
-    return a.path.localeCompare(b.path);
-}
-function toTarPath(relativePath) {
-    return relativePath.split(path.sep).join("/");
-}
-function reasonForTransientBasename(name) {
-    const lower = name.toLowerCase();
-    if (TRANSIENT_EXACT_BASENAMES.has(lower))
-        return "transient-cargo-mutex";
-    for (const suffix of ARCHIVE_SUFFIXES) {
-        if (lower.endsWith(suffix))
-            return "archive-file";
-    }
-    for (const [suffix, reason] of TRANSIENT_SUFFIXES) {
-        if (lower.endsWith(suffix))
-            return reason;
-    }
-    return null;
-}
-function reasonForTransientPath(relativePath, profile) {
-    const tarPath = toTarPath(relativePath);
-    const parts = tarPath.split("/");
-    if (parts.length >= 2 && parts[1]?.toLowerCase() === "logs") {
-        return "diagnostic-log-dir";
-    }
-    if (profile === "zccache-build-cache" && parts[0]?.toLowerCase() === "zccache") {
-        const lowerParts = parts.map((part) => part.toLowerCase());
-        if (lowerParts.includes("logs")) {
-            return "diagnostic-log-dir";
-        }
-        // setup-soldr#398: do NOT exclude `private/<session>/artifacts/**`. That is
-        // exactly where the zccache daemon stores its reusable compiled artifacts —
-        // excluding them produced a build-cache that restored with an exact key hit
-        // but 0 zccache hits (verified on real zccache CI + locally: tarring the
-        // store WITH these artifacts restores ~100% hits, WITHOUT them 0%). The
-        // allow rule below (isZccacheArtifactPayloadPath) keeps every file under an
-        // artifacts dir — including the compiler stdout/stderr replay metadata
-        // zccache stores there — so the diagnostic-suffix filter never drops a real
-        // artifact file. See the BUILD_CACHE_*_SUFFIXES contract above (#229).
-        const isArtifactPayload = isZccacheArtifactPayloadPath(lowerParts.join("/"));
-        const basename = lowerParts[lowerParts.length - 1] ?? "";
-        if (!isArtifactPayload &&
-            exports.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES.some((suffix) => basename.endsWith(suffix))) {
-            return "diagnostic-log-file";
-        }
-    }
-    return null;
-}
-function payloadSubtreePath(tarPath, profile) {
-    const parts = tarPath.split("/");
-    if (profile === "zccache-build-cache" && parts[0] === "zccache") {
-        if (parts[1] === "private" && parts.length >= 3) {
-            return parts.slice(0, 3).join("/");
-        }
-        if (parts.length >= 3) {
-            return parts.slice(0, 2).join("/");
-        }
-        return "zccache";
-    }
-    if (parts.length <= 2) {
-        return parts[0] ?? tarPath;
-    }
-    return parts.slice(0, 2).join("/");
-}
-function reasonForSpecialFile(stats) {
-    if (stats.isSocket())
-        return "special-socket";
-    if (stats.isFIFO())
-        return "special-fifo";
-    if (stats.isBlockDevice())
-        return "special-block-device";
-    if (stats.isCharacterDevice())
-        return "special-character-device";
-    return "unsupported-file-type";
-}
-function reasonForAccessError(err) {
-    const code = err.code;
-    if (code === "ENOENT" || code === "ENOTDIR")
-        return "vanished";
-    if (code === "EACCES" || code === "EPERM")
-        return "inaccessible";
-    return "inaccessible";
-}
-function hasManifestUnsafeName(relativePath) {
-    return relativePath.includes("\n") || relativePath.includes("\r");
-}
-function makeSkipRecorder() {
-    const skipped = new Map();
-    return {
-        add(reason, sample) {
-            const current = skipped.get(reason) ?? { reason, count: 0, samples: [] };
-            current.count++;
-            if (current.samples.length < MAX_SKIP_SAMPLES) {
-                current.samples.push(sample);
-            }
-            skipped.set(reason, current);
-        },
-        summaries() {
-            return Array.from(skipped.values()).sort((a, b) => a.reason.localeCompare(b.reason));
-        },
-    };
-}
-/**
- * Read the first 4 bytes of a file and identify the compression codec.
- *   zstd:  0x28 B5 2F FD
- *   gzip:  0x1F 8B
- */
-async function detectCompressMagic(filePath) {
-    let handle = null;
-    try {
-        handle = await fs.open(filePath, "r");
-        const buf = Buffer.alloc(4);
-        const { bytesRead } = await handle.read(buf, 0, 4, 0);
-        if (bytesRead >= 4 && buf[0] === 0x28 && buf[1] === 0xb5 && buf[2] === 0x2f && buf[3] === 0xfd) {
-            return "zstd";
-        }
-        if (bytesRead >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
-            return "gzip";
-        }
-        return "unknown";
-    }
-    catch {
-        return "unknown";
-    }
-    finally {
-        if (handle)
-            await handle.close().catch(() => undefined);
-    }
-}
-async function ensureDir(dir) {
-    await fs.mkdir(dir, { recursive: true });
-}
-async function pathExists(p) {
-    try {
-        await fs.access(p);
-        return true;
-    }
-    catch {
-        return false;
-    }
-}
-const EMPTY_WALK = {
-    bytes: 0,
-    files: 0,
-    symlinks: 0,
-    directories: 0,
-};
-/**
- * Preflight every tar input with lstat before compression.
- *
- * This keeps daemon sockets, cargo mutex files, partial archives, and other
- * transient/special files out of the manifest that tar receives. Symlinks are
- * archived as symlink entries and are not followed, so links pointing outside
- * the cache root do not pull external content into the cache.
- */
-async function planTarPayload(opts) {
-    const topN = normalizeTopN(opts.topN);
-    const profile = opts.profile ?? "generic";
-    const skip = makeSkipRecorder();
-    const manifestEntries = [];
-    const fileEntries = [];
-    const dirEntries = [];
-    const subtreeEntries = new Map();
-    const inputs = [];
-    const addSubtreeFile = (tarPath, bytes) => {
-        const group = payloadSubtreePath(tarPath, profile);
-        const current = subtreeEntries.get(group) ?? { path: group, bytes: 0, files: 0 };
-        current.bytes += bytes;
-        current.files++;
-        subtreeEntries.set(group, current);
-    };
-    const walk = async (absolutePath, relativePath) => {
-        if (hasManifestUnsafeName(relativePath)) {
-            skip.add("unsupported-name", toTarPath(relativePath));
-            return EMPTY_WALK;
-        }
-        const transientReason = reasonForTransientBasename(path.basename(relativePath));
-        if (transientReason) {
-            skip.add(transientReason, toTarPath(relativePath));
-            return EMPTY_WALK;
-        }
-        const transientPathReason = reasonForTransientPath(relativePath, profile);
-        if (transientPathReason) {
-            skip.add(transientPathReason, toTarPath(relativePath));
-            return EMPTY_WALK;
-        }
-        let stats;
-        try {
-            stats = await fs.lstat(absolutePath);
-        }
-        catch (err) {
-            skip.add(reasonForAccessError(err), toTarPath(relativePath));
-            return EMPTY_WALK;
-        }
-        const tarPath = toTarPath(relativePath);
-        if (stats.isSymbolicLink()) {
-            manifestEntries.push(tarPath);
-            return { ...EMPTY_WALK, symlinks: 1 };
-        }
-        if (stats.isFile()) {
-            manifestEntries.push(tarPath);
-            fileEntries.push({ path: tarPath, bytes: stats.size });
-            addSubtreeFile(tarPath, stats.size);
-            return { bytes: stats.size, files: 1, symlinks: 0, directories: 0 };
-        }
-        if (!stats.isDirectory()) {
-            skip.add(reasonForSpecialFile(stats), tarPath);
-            return EMPTY_WALK;
-        }
-        let entries;
-        try {
-            entries = await fs.readdir(absolutePath, { withFileTypes: true });
-        }
-        catch (err) {
-            skip.add(reasonForAccessError(err), tarPath);
-            return EMPTY_WALK;
-        }
-        entries.sort((a, b) => a.name.localeCompare(b.name));
-        let bytes = 0;
-        let files = 0;
-        let symlinks = 0;
-        let directories = 1;
-        for (const entry of entries) {
-            const childRelative = path.join(relativePath, entry.name);
-            const child = await walk(path.join(absolutePath, entry.name), childRelative);
-            bytes += child.bytes;
-            files += child.files;
-            symlinks += child.symlinks;
-            directories += child.directories;
-        }
-        dirEntries.push({ path: tarPath, bytes });
-        return { bytes, files, symlinks, directories };
-    };
-    let bytes = 0;
-    let files = 0;
-    let symlinks = 0;
-    let directories = 0;
-    const seen = new Set();
-    for (const rawBasename of opts.inputBasenames) {
-        const basename = rawBasename.trim();
-        if (!basename || seen.has(basename))
-            continue;
-        seen.add(basename);
-        if (path.isAbsolute(basename) ||
-            basename === "." ||
-            basename === ".." ||
-            basename.includes("/") ||
-            basename.includes("\\")) {
-            skip.add("unsupported-input-basename", basename);
-            continue;
-        }
-        inputs.push(basename);
-        const result = await walk(path.join(opts.parent, basename), basename);
-        bytes += result.bytes;
-        files += result.files;
-        symlinks += result.symlinks;
-        directories += result.directories;
-    }
-    fileEntries.sort(comparePayloadEntry);
-    dirEntries.sort(comparePayloadEntry);
-    const topSubtrees = Array.from(subtreeEntries.values()).sort((a, b) => {
-        if (a.bytes !== b.bytes)
-            return b.bytes - a.bytes;
-        if (a.files !== b.files)
-            return b.files - a.files;
-        return a.path.localeCompare(b.path);
-    });
-    return {
-        bytes,
-        files,
-        symlinks,
-        directories,
-        inputs,
-        topFiles: fileEntries.slice(0, topN),
-        topDirectories: dirEntries.slice(0, topN),
-        topSubtrees: topSubtrees.slice(0, topN),
-        skipped: skip.summaries(),
-        manifestEntries,
-    };
-}
-function publicPayload(plan) {
-    return {
-        bytes: plan.bytes,
-        files: plan.files,
-        symlinks: plan.symlinks,
-        directories: plan.directories,
-        inputs: plan.inputs,
-        topFiles: plan.topFiles,
-        topDirectories: plan.topDirectories,
-        topSubtrees: plan.topSubtrees,
-        skipped: plan.skipped,
-    };
-}
-/**
- * Decompress <cache-dir>.tar.zst (or .tar.gz) into <cache-dir>.
- *
- *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <extractRoot>`.
- *   gzip: `tar -xzf <archive> -C <extractRoot>`.
- *
- * `extractRoot` is `dirname(targetDir)` because compressCache writes
- * archives via `tar -cf - -C <parent> <basename>` — the archive's
- * top-level directory IS `<basename>`. If we extract into <targetDir>
- * directly, that <basename> gets nested twice and the contents end up
- * at <targetDir>/<basename>/... where zccache and cargo can't find them.
- * That double-nesting is the root cause of the long-standing zccache
- * "0 hits despite restored artifacts" symptom.
- *
- * Returns compressed/inflated byte counts and file count (the count is
- * taken from <targetDir> after extraction, so consumers see exactly
- * what landed in the cache dir).
- * When debug=true, logs diagnostics via the supplied log fn.
- */
-async function decompressCache(opts) {
-    const { archivePath, targetDir, debug = false, log = () => undefined, longWindow } = opts;
-    // Ensure both <targetDir> exists (zccache may have already populated it)
-    // and the extract root (which is the parent) is writable.
-    await ensureDir(targetDir);
-    const extractRoot = path.dirname(targetDir);
-    await ensureDir(extractRoot);
-    let archiveBytes = 0;
-    try {
-        archiveBytes = (await fs.stat(archivePath)).size;
-    }
-    catch { /* archive may not exist */ }
-    const magic = await detectCompressMagic(archivePath);
-    if (debug) {
-        log(`[debug] decompress ${path.basename(archivePath)}: magic=${magic} archive=${fmtBytesDebug(archiveBytes)}`);
-    }
-    if (magic === "gzip") {
-        if (debug)
-            log(`[debug] decompress cmd: tar -xzf ${archivePath} -C ${extractRoot}`);
-        await exec.exec("tar", ["-xzf", archivePath, "-C", extractRoot]);
-    }
-    else if (magic === "zstd") {
-        const zstdPath = await io.which("zstd", false);
-        const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
-        if (!zstdPath) {
-            if (debug)
-                log(`[debug] decompress cmd (fallback): tar --use-compress-program "zstd -d${longFlag.length ? ` --long=${longWindow}` : ""}" -xf ${archivePath} -C ${extractRoot}`);
-            // Fall back: route the decompression through tar's --use-compress-program
-            // so we can pass through --long when the archive needs it. tar --zstd
-            // doesn't accept extra zstd flags directly.
-            const program = longFlag.length ? `zstd -d --long=${longWindow}` : "zstd -d";
-            await exec.exec("tar", ["--use-compress-program", program, "-xf", archivePath, "-C", extractRoot]);
-        }
-        else {
-            if (debug)
-                log(`[debug] decompress cmd: zstd -d ${longFlag.join(" ")} -c ${archivePath} | tar -xf - -C ${extractRoot}`);
-            await runPipe([zstdPath, ["-d", ...longFlag, "-c", archivePath]], ["tar", ["-xf", "-", "-C", extractRoot]]);
-        }
-    }
-    else {
-        throw new Error(`decompressCache: unrecognized archive magic for ${archivePath}`);
-    }
-    const { bytes: inflatedBytes, files: fileCount } = await walkDirSize(targetDir);
-    if (debug) {
-        const ratio = archiveBytes > 0 && inflatedBytes > 0 ? (archiveBytes / inflatedBytes).toFixed(2) : "n/a";
-        log(`[debug] decompress result: inflated=${fmtBytesDebug(inflatedBytes)} files=${fileCount} ratio=${ratio}`);
-    }
-    return { archiveBytes, inflatedBytes, fileCount };
-}
-/**
- * tar -cf - <cache-dir-basename> | zstd -T0 -<level> > <cache-dir>.tar.zst
- *
- * When codec=="none" or zstd is not installed, returns archivePath=null and
- * leaves the caller to use the default actions/cache compression.
- * When debug=true, walks the source dir for byte/file counts and logs ratios.
- */
-async function compressCache(opts) {
-    const { cacheDir, codec, level, debug = false, log = () => undefined, longWindow, ultra, extraBasenames = [], payloadWarnBytes = null, payloadMaxBytes = null, payloadOversizeAction = "skip", payloadTopN, payloadProfile = "generic", label, } = opts;
-    const nullResult = {
-        archivePath: null,
-        archiveBytes: 0,
-        inflatedBytes: null,
-        fileCount: null,
-        payload: null,
-    };
-    if (codec === "none")
-        return nullResult;
-    const zstdPath = await io.which("zstd", false);
-    if (!zstdPath) {
-        core.warning("setup-soldr: zstd binary not found on PATH; falling back to actions/cache default codec");
-        return nullResult;
-    }
-    if (!(await pathExists(cacheDir))) {
-        core.warning(`setup-soldr: cache dir ${cacheDir} does not exist, skipping compression`);
-        return nullResult;
-    }
-    const parent = path.dirname(cacheDir);
-    const basename = path.basename(cacheDir);
-    // Filter sibling basenames to ones that actually exist under the parent —
-    // tar errors on missing inputs, and cargo-registry's `.global-cache` /
-    // `git/` may legitimately be absent on a cold checkout.
-    const presentExtras = [];
-    for (const extra of extraBasenames) {
-        if (!extra || extra === basename)
-            continue;
-        if (await pathExists(path.join(parent, extra))) {
-            presentExtras.push(extra);
-        }
-        else if (debug) {
-            log(`[debug] compress: skipping missing sibling basename '${extra}' under ${parent}`);
-        }
-    }
-    const displayLabel = label ?? basename;
-    const tarInputs = [basename, ...presentExtras];
-    let payload = await planTarPayload({
-        parent,
-        inputBasenames: tarInputs,
-        topN: payloadTopN,
-        profile: payloadProfile,
-    });
-    let payloadCensus = publicPayload(payload);
-    let inflatedBytes = payload.bytes;
-    let fileCount = payload.files;
-    if (debug) {
-        const skipped = payload.skipped.reduce((sum, entry) => sum + entry.count, 0);
-        log(`[debug] compress ${displayLabel}: input=${fmtBytesDebug(payload.bytes)} ` +
-            `files=${payload.files} symlinks=${payload.symlinks} dirs=${payload.directories} skipped=${skipped}`);
-        if (payload.topFiles.length > 0) {
-            log(`[debug] compress ${displayLabel}: largest files ` +
-                payload.topFiles.map((entry) => `${entry.path}=${fmtBytesDebug(entry.bytes)}`).join(", "));
-        }
-        if (payload.skipped.length > 0) {
-            log(`[debug] compress ${displayLabel}: skipped ` +
-                payload.skipped.map((entry) => `${entry.reason}=${entry.count}`).join(", "));
-        }
-    }
-    if (payloadWarnBytes !== null && payloadWarnBytes > 0 && payload.bytes > payloadWarnBytes) {
-        const largest = payload.topFiles
-            .slice(0, 5)
-            .map((entry) => `${entry.path} (${fmtBytesDebug(entry.bytes)})`)
-            .join(", ");
-        core.warning(`setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression ` +
-            `(>${fmtBytesDebug(payloadWarnBytes)}). Largest files: ${largest || "none"}`);
-    }
-    if (payloadMaxBytes !== null && payloadMaxBytes > 0 && payload.bytes > payloadMaxBytes) {
-        const message = `setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression, ` +
-            `exceeding cache-payload-max-bytes=${fmtBytesDebug(payloadMaxBytes)}`;
-        if (payloadOversizeAction === "fail") {
-            throw new Error(message);
-        }
-        core.warning(`${message}; skipping cache save`);
-        return {
-            archivePath: null,
-            archiveBytes: 0,
-            inflatedBytes,
-            fileCount,
-            payload: payloadCensus,
-            skippedReason: "payload-too-large",
-        };
-    }
-    const archivePath = `${cacheDir}.tar.zst`;
-    // Best-effort cleanup of any previous archive.
-    await fs.rm(archivePath, { force: true }).catch(() => undefined);
-    const levelNumeric = parseLevel(level);
-    const levelFlag = `-${levelNumeric}`;
-    const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
-    const ultraFlag = ultra || levelNumeric >= 20 ? ["--ultra"] : [];
-    const writeArchiveFromManifest = async (entries) => {
-        const manifestDir = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-tar-"));
-        const manifestPath = path.join(manifestDir, "manifest.txt");
-        try {
-            await fs.writeFile(manifestPath, entries.map((entry) => `${entry}\n`).join(""), "utf8");
-            if (debug) {
-                log(`[debug] compress cmd: tar -cf - -C ${parent} -T ${manifestPath} | ` +
-                    `zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}` +
-                    `${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`);
-            }
-            await runPipe(["tar", ["-cf", "-", "-C", parent, "-T", manifestPath]], [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]]);
-        }
-        finally {
-            await fs.rm(manifestDir, { recursive: true, force: true }).catch(() => undefined);
-        }
-    };
-    try {
-        await writeArchiveFromManifest(payload.manifestEntries);
-    }
-    catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        log(`${displayLabel}: tar failed after payload preflight (${message}); retrying once with a fresh scan`);
-        await fs.rm(archivePath, { force: true }).catch(() => undefined);
-        payload = await planTarPayload({
-            parent,
-            inputBasenames: tarInputs,
-            topN: payloadTopN,
-            profile: payloadProfile,
-        });
-        payloadCensus = publicPayload(payload);
-        inflatedBytes = payload.bytes;
-        fileCount = payload.files;
-        if (debug) {
-            log(`[debug] compress ${displayLabel}: retry input=${fmtBytesDebug(payload.bytes)} ` +
-                `files=${payload.files} symlinks=${payload.symlinks} dirs=${payload.directories}`);
-        }
-        await writeArchiveFromManifest(payload.manifestEntries);
-    }
-    let archiveBytes = 0;
-    try {
-        archiveBytes = (await fs.stat(archivePath)).size;
-    }
-    catch { /* archive may not exist */ }
-    if (debug && inflatedBytes !== null && inflatedBytes > 0) {
-        log(`[debug] compress result: archive=${fmtBytesDebug(archiveBytes)} ratio=${(archiveBytes / inflatedBytes).toFixed(2)}`);
-    }
-    return { archivePath, archiveBytes, inflatedBytes, fileCount, payload: payloadCensus };
-}
-function parseLevel(value) {
-    const trimmed = (value ?? "").toString().trim();
-    if (!trimmed)
-        return 3;
-    const parsed = Number(trimmed);
-    if (Number.isNaN(parsed) || !Number.isFinite(parsed))
-        return 3;
-    const clamped = Math.max(1, Math.min(22, Math.floor(parsed)));
-    return clamped;
-}
-/**
- * Run two processes piped together: producer.stdout -> consumer.stdin.
- * Bubbles non-zero exit codes from either side.
- */
-async function runPipe(producer, consumer) {
-    const { spawn } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 201, 23));
-    const [pCmd, pArgs] = producer;
-    const [cCmd, cArgs] = consumer;
-    await new Promise((resolve, reject) => {
-        const prod = spawn(pCmd, pArgs, { stdio: ["ignore", "pipe", "inherit"] });
-        const cons = spawn(cCmd, cArgs, { stdio: ["pipe", "inherit", "inherit"] });
-        prod.on("error", (err) => reject(err));
-        cons.on("error", (err) => reject(err));
-        if (prod.stdout && cons.stdin) {
-            prod.stdout.pipe(cons.stdin);
-        }
-        let prodExit = null;
-        let consExit = null;
-        const maybeDone = () => {
-            if (prodExit !== null && consExit !== null) {
-                if (prodExit !== 0) {
-                    reject(new Error(`${pCmd} exited with code ${prodExit}`));
-                }
-                else if (consExit !== 0) {
-                    reject(new Error(`${cCmd} exited with code ${consExit}`));
-                }
-                else {
-                    resolve();
-                }
-            }
-        };
-        prod.on("close", (code) => {
-            prodExit = code ?? 0;
-            maybeDone();
-        });
-        cons.on("close", (code) => {
-            consExit = code ?? 0;
-            maybeDone();
-        });
-    });
-}
-
-
-/***/ }),
-
-/***/ 284:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ContainerSASPermissions = void 0;
-/**
- * This is a helper class to construct a string representing the permissions granted by a ServiceSAS to a container.
- * Setting a value to true means that any SAS which uses these permissions will grant permissions for that operation.
- * Once all the values are set, this should be serialized with toString and set as the permissions field on a
- * {@link BlobSASSignatureValues} object. It is possible to construct the permissions string without this class, but
- * the order of the permissions is particular and this class guarantees correctness.
- */
-class ContainerSASPermissions {
-    /**
-     * Creates an {@link ContainerSASPermissions} from the specified permissions string. This method will throw an
-     * Error if it encounters a character that does not correspond to a valid permission.
-     *
-     * @param permissions -
-     */
-    static parse(permissions) {
-        const containerSASPermissions = new ContainerSASPermissions();
-        for (const char of permissions) {
-            switch (char) {
-                case "r":
-                    containerSASPermissions.read = true;
-                    break;
-                case "a":
-                    containerSASPermissions.add = true;
-                    break;
-                case "c":
-                    containerSASPermissions.create = true;
-                    break;
-                case "w":
-                    containerSASPermissions.write = true;
-                    break;
-                case "d":
-                    containerSASPermissions.delete = true;
-                    break;
-                case "l":
-                    containerSASPermissions.list = true;
-                    break;
-                case "t":
-                    containerSASPermissions.tag = true;
-                    break;
-                case "x":
-                    containerSASPermissions.deleteVersion = true;
-                    break;
-                case "m":
-                    containerSASPermissions.move = true;
-                    break;
-                case "e":
-                    containerSASPermissions.execute = true;
-                    break;
-                case "i":
-                    containerSASPermissions.setImmutabilityPolicy = true;
-                    break;
-                case "y":
-                    containerSASPermissions.permanentDelete = true;
-                    break;
-                case "f":
-                    containerSASPermissions.filterByTags = true;
-                    break;
-                default:
-                    throw new RangeError(`Invalid permission ${char}`);
-            }
-        }
-        return containerSASPermissions;
-    }
-    /**
-     * Creates a {@link ContainerSASPermissions} from a raw object which contains same keys as it
-     * and boolean values for them.
-     *
-     * @param permissionLike -
-     */
-    static from(permissionLike) {
-        const containerSASPermissions = new ContainerSASPermissions();
-        if (permissionLike.read) {
-            containerSASPermissions.read = true;
-        }
-        if (permissionLike.add) {
-            containerSASPermissions.add = true;
-        }
-        if (permissionLike.create) {
-            containerSASPermissions.create = true;
-        }
-        if (permissionLike.write) {
-            containerSASPermissions.write = true;
-        }
-        if (permissionLike.delete) {
-            containerSASPermissions.delete = true;
-        }
-        if (permissionLike.list) {
-            containerSASPermissions.list = true;
-        }
-        if (permissionLike.deleteVersion) {
-            containerSASPermissions.deleteVersion = true;
-        }
-        if (permissionLike.tag) {
-            containerSASPermissions.tag = true;
-        }
-        if (permissionLike.move) {
-            containerSASPermissions.move = true;
-        }
-        if (permissionLike.execute) {
-            containerSASPermissions.execute = true;
-        }
-        if (permissionLike.setImmutabilityPolicy) {
-            containerSASPermissions.setImmutabilityPolicy = true;
-        }
-        if (permissionLike.permanentDelete) {
-            containerSASPermissions.permanentDelete = true;
-        }
-        if (permissionLike.filterByTags) {
-            containerSASPermissions.filterByTags = true;
-        }
-        return containerSASPermissions;
-    }
-    /**
-     * Specifies Read access granted.
-     */
-    read = false;
-    /**
-     * Specifies Add access granted.
-     */
-    add = false;
-    /**
-     * Specifies Create access granted.
-     */
-    create = false;
-    /**
-     * Specifies Write access granted.
-     */
-    write = false;
-    /**
-     * Specifies Delete access granted.
-     */
-    delete = false;
-    /**
-     * Specifies Delete version access granted.
-     */
-    deleteVersion = false;
-    /**
-     * Specifies List access granted.
-     */
-    list = false;
-    /**
-     * Specfies Tag access granted.
-     */
-    tag = false;
-    /**
-     * Specifies Move access granted.
-     */
-    move = false;
-    /**
-     * Specifies Execute access granted.
-     */
-    execute = false;
-    /**
-     * Specifies SetImmutabilityPolicy access granted.
-     */
-    setImmutabilityPolicy = false;
-    /**
-     * Specifies that Permanent Delete is permitted.
-     */
-    permanentDelete = false;
-    /**
-     * Specifies that Filter Blobs by Tags is permitted.
-     */
-    filterByTags = false;
-    /**
-     * Converts the given permissions to a string. Using this method will guarantee the permissions are in an
-     * order accepted by the service.
-     *
-     * The order of the characters should be as specified here to ensure correctness.
-     * @see https://learn.microsoft.com/rest/api/storageservices/constructing-a-service-sas
-     *
-     */
-    toString() {
-        const permissions = [];
-        if (this.read) {
-            permissions.push("r");
-        }
-        if (this.add) {
-            permissions.push("a");
-        }
-        if (this.create) {
-            permissions.push("c");
-        }
-        if (this.write) {
-            permissions.push("w");
-        }
-        if (this.delete) {
-            permissions.push("d");
-        }
-        if (this.deleteVersion) {
-            permissions.push("x");
-        }
-        if (this.list) {
-            permissions.push("l");
-        }
-        if (this.tag) {
-            permissions.push("t");
-        }
-        if (this.move) {
-            permissions.push("m");
-        }
-        if (this.execute) {
-            permissions.push("e");
-        }
-        if (this.setImmutabilityPolicy) {
-            permissions.push("i");
-        }
-        if (this.permanentDelete) {
-            permissions.push("y");
-        }
-        if (this.filterByTags) {
-            permissions.push("f");
-        }
-        return permissions.join("");
-    }
-}
-exports.ContainerSASPermissions = ContainerSASPermissions;
-//# sourceMappingURL=ContainerSASPermissions.js.map
-
-/***/ }),
-
-/***/ 285:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var createPipelineFromOptions_exports = {};
-__export(createPipelineFromOptions_exports, {
-  createPipelineFromOptions: () => createPipelineFromOptions
-});
-module.exports = __toCommonJS(createPipelineFromOptions_exports);
-var import_logPolicy = __nccwpck_require__(74);
-var import_pipeline = __nccwpck_require__(248);
-var import_redirectPolicy = __nccwpck_require__(346);
-var import_userAgentPolicy = __nccwpck_require__(394);
-var import_multipartPolicy = __nccwpck_require__(274);
-var import_decompressResponsePolicy = __nccwpck_require__(242);
-var import_defaultRetryPolicy = __nccwpck_require__(58);
-var import_formDataPolicy = __nccwpck_require__(271);
-var import_core_util = __nccwpck_require__(15);
-var import_proxyPolicy = __nccwpck_require__(480);
-var import_setClientRequestIdPolicy = __nccwpck_require__(156);
-var import_agentPolicy = __nccwpck_require__(235);
-var import_tlsPolicy = __nccwpck_require__(383);
-var import_tracingPolicy = __nccwpck_require__(341);
-var import_wrapAbortSignalLikePolicy = __nccwpck_require__(262);
-function createPipelineFromOptions(options) {
-  const pipeline = (0, import_pipeline.createEmptyPipeline)();
-  if (import_core_util.isNodeLike) {
-    if (options.agent) {
-      pipeline.addPolicy((0, import_agentPolicy.agentPolicy)(options.agent));
-    }
-    if (options.tlsOptions) {
-      pipeline.addPolicy((0, import_tlsPolicy.tlsPolicy)(options.tlsOptions));
-    }
-    pipeline.addPolicy((0, import_proxyPolicy.proxyPolicy)(options.proxyOptions));
-    pipeline.addPolicy((0, import_decompressResponsePolicy.decompressResponsePolicy)());
-  }
-  pipeline.addPolicy((0, import_wrapAbortSignalLikePolicy.wrapAbortSignalLikePolicy)());
-  pipeline.addPolicy((0, import_formDataPolicy.formDataPolicy)(), { beforePolicies: [import_multipartPolicy.multipartPolicyName] });
-  pipeline.addPolicy((0, import_userAgentPolicy.userAgentPolicy)(options.userAgentOptions));
-  pipeline.addPolicy((0, import_setClientRequestIdPolicy.setClientRequestIdPolicy)(options.telemetryOptions?.clientRequestIdHeaderName));
-  pipeline.addPolicy((0, import_multipartPolicy.multipartPolicy)(), { afterPhase: "Deserialize" });
-  pipeline.addPolicy((0, import_defaultRetryPolicy.defaultRetryPolicy)(options.retryOptions), { phase: "Retry" });
-  pipeline.addPolicy((0, import_tracingPolicy.tracingPolicy)({ ...options.userAgentOptions, ...options.loggingOptions }), {
-    afterPhase: "Retry"
-  });
-  if (import_core_util.isNodeLike) {
-    pipeline.addPolicy((0, import_redirectPolicy.redirectPolicy)(options.redirectOptions), { afterPhase: "Retry" });
-  }
-  pipeline.addPolicy((0, import_logPolicy.logPolicy)(options.loggingOptions), { afterPhase: "Sign" });
-  return pipeline;
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-
-
-/***/ }),
-
-/***/ 286:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PageBlobImpl = void 0;
-const tslib_1 = __nccwpck_require__(221);
-const coreClient = tslib_1.__importStar(__nccwpck_require__(446));
-const Mappers = tslib_1.__importStar(__nccwpck_require__(184));
-const Parameters = tslib_1.__importStar(__nccwpck_require__(68));
-/** Class containing PageBlob operations. */
-class PageBlobImpl {
-    client;
-    /**
-     * Initialize a new instance of the class PageBlob class.
-     * @param client Reference to the service client
-     */
-    constructor(client) {
-        this.client = client;
-    }
-    /**
-     * The Create operation creates a new page blob.
-     * @param contentLength The length of the request.
-     * @param blobContentLength This header specifies the maximum size for the page blob, up to 1 TB. The
-     *                          page blob size must be aligned to a 512-byte boundary.
-     * @param options The options parameters.
-     */
-    create(contentLength, blobContentLength, options) {
-        return this.client.sendOperationRequest({ contentLength, blobContentLength, options }, createOperationSpec);
-    }
-    /**
-     * The Upload Pages operation writes a range of pages to a page blob
-     * @param contentLength The length of the request.
-     * @param body Initial data
-     * @param options The options parameters.
-     */
-    uploadPages(contentLength, body, options) {
-        return this.client.sendOperationRequest({ contentLength, body, options }, uploadPagesOperationSpec);
-    }
-    /**
-     * The Clear Pages operation clears a set of pages from a page blob
-     * @param contentLength The length of the request.
-     * @param options The options parameters.
-     */
-    clearPages(contentLength, options) {
-        return this.client.sendOperationRequest({ contentLength, options }, clearPagesOperationSpec);
-    }
-    /**
-     * The Upload Pages operation writes a range of pages to a page blob where the contents are read from a
-     * URL
-     * @param sourceUrl Specify a URL to the copy source.
-     * @param sourceRange Bytes of source data in the specified range. The length of this range should
-     *                    match the ContentLength header and x-ms-range/Range destination range header.
-     * @param contentLength The length of the request.
-     * @param range The range of bytes to which the source range would be written. The range should be 512
-     *              aligned and range-end is required.
-     * @param options The options parameters.
-     */
-    uploadPagesFromURL(sourceUrl, sourceRange, contentLength, range, options) {
-        return this.client.sendOperationRequest({ sourceUrl, sourceRange, contentLength, range, options }, uploadPagesFromURLOperationSpec);
-    }
-    /**
-     * The Get Page Ranges operation returns the list of valid page ranges for a page blob or snapshot of a
-     * page blob
-     * @param options The options parameters.
-     */
-    getPageRanges(options) {
-        return this.client.sendOperationRequest({ options }, getPageRangesOperationSpec);
-    }
-    /**
-     * The Get Page Ranges Diff operation returns the list of valid page ranges for a page blob that were
-     * changed between target blob and previous snapshot.
-     * @param options The options parameters.
-     */
-    getPageRangesDiff(options) {
-        return this.client.sendOperationRequest({ options }, getPageRangesDiffOperationSpec);
-    }
-    /**
-     * Resize the Blob
-     * @param blobContentLength This header specifies the maximum size for the page blob, up to 1 TB. The
-     *                          page blob size must be aligned to a 512-byte boundary.
-     * @param options The options parameters.
-     */
-    resize(blobContentLength, options) {
-        return this.client.sendOperationRequest({ blobContentLength, options }, resizeOperationSpec);
-    }
-    /**
-     * Update the sequence number of the blob
-     * @param sequenceNumberAction Required if the x-ms-blob-sequence-number header is set for the request.
-     *                             This property applies to page blobs only. This property indicates how the service should modify the
-     *                             blob's sequence number
-     * @param options The options parameters.
-     */
-    updateSequenceNumber(sequenceNumberAction, options) {
-        return this.client.sendOperationRequest({ sequenceNumberAction, options }, updateSequenceNumberOperationSpec);
-    }
-    /**
-     * The Copy Incremental operation copies a snapshot of the source page blob to a destination page blob.
-     * The snapshot is copied such that only the differential changes between the previously copied
-     * snapshot are transferred to the destination. The copied snapshots are complete copies of the
-     * original snapshot and can be read or copied from as usual. This API is supported since REST version
-     * 2016-05-31.
-     * @param copySource Specifies the name of the source page blob snapshot. This value is a URL of up to
-     *                   2 KB in length that specifies a page blob snapshot. The value should be URL-encoded as it would
-     *                   appear in a request URI. The source blob must either be public or must be authenticated via a shared
-     *                   access signature.
-     * @param options The options parameters.
-     */
-    copyIncremental(copySource, options) {
-        return this.client.sendOperationRequest({ copySource, options }, copyIncrementalOperationSpec);
-    }
-}
-exports.PageBlobImpl = PageBlobImpl;
-// Operation Specifications
-const xmlSerializer = coreClient.createSerializer(Mappers, /* isXml */ true);
-const createOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.PageBlobCreateHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobCreateExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.timeoutInSeconds],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.contentLength,
-        Parameters.metadata,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.blobCacheControl,
-        Parameters.blobContentType,
-        Parameters.blobContentMD5,
-        Parameters.blobContentEncoding,
-        Parameters.blobContentLanguage,
-        Parameters.blobContentDisposition,
-        Parameters.immutabilityPolicyExpiry,
-        Parameters.immutabilityPolicyMode,
-        Parameters.encryptionScope,
-        Parameters.tier,
-        Parameters.blobTagsString,
-        Parameters.legalHold1,
-        Parameters.blobType,
-        Parameters.blobContentLength,
-        Parameters.blobSequenceNumber,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const uploadPagesOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.PageBlobUploadPagesHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobUploadPagesExceptionHeaders,
-        },
-    },
-    requestBody: Parameters.body1,
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp19],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.contentLength,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.range,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.encryptionScope,
-        Parameters.transactionalContentMD5,
-        Parameters.transactionalContentCrc64,
-        Parameters.contentType1,
-        Parameters.accept2,
-        Parameters.pageWrite,
-        Parameters.ifSequenceNumberLessThanOrEqualTo,
-        Parameters.ifSequenceNumberLessThan,
-        Parameters.ifSequenceNumberEqualTo,
-    ],
-    isXML: true,
-    contentType: "application/xml; charset=utf-8",
-    mediaType: "binary",
-    serializer: xmlSerializer,
-};
-const clearPagesOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.PageBlobClearPagesHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobClearPagesExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp19],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.contentLength,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.range,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.encryptionScope,
-        Parameters.ifSequenceNumberLessThanOrEqualTo,
-        Parameters.ifSequenceNumberLessThan,
-        Parameters.ifSequenceNumberEqualTo,
-        Parameters.pageWrite1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const uploadPagesFromURLOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        201: {
-            headersMapper: Mappers.PageBlobUploadPagesFromURLHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobUploadPagesFromURLExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp19],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.contentLength,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.encryptionScope,
-        Parameters.sourceIfModifiedSince,
-        Parameters.sourceIfUnmodifiedSince,
-        Parameters.sourceIfMatch,
-        Parameters.sourceIfNoneMatch,
-        Parameters.sourceContentMD5,
-        Parameters.copySourceAuthorization,
-        Parameters.fileRequestIntent,
-        Parameters.pageWrite,
-        Parameters.ifSequenceNumberLessThanOrEqualTo,
-        Parameters.ifSequenceNumberLessThan,
-        Parameters.ifSequenceNumberEqualTo,
-        Parameters.sourceUrl,
-        Parameters.sourceRange,
-        Parameters.sourceContentCrc64,
-        Parameters.range1,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const getPageRangesOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.PageList,
-            headersMapper: Mappers.PageBlobGetPageRangesHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobGetPageRangesExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.marker,
-        Parameters.maxPageSize,
-        Parameters.snapshot,
-        Parameters.comp20,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.range,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const getPageRangesDiffOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "GET",
-    responses: {
-        200: {
-            bodyMapper: Mappers.PageList,
-            headersMapper: Mappers.PageBlobGetPageRangesDiffHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobGetPageRangesDiffExceptionHeaders,
-        },
-    },
-    queryParameters: [
-        Parameters.timeoutInSeconds,
-        Parameters.marker,
-        Parameters.maxPageSize,
-        Parameters.snapshot,
-        Parameters.comp20,
-        Parameters.prevsnapshot,
-    ],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.range,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.prevSnapshotUrl,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const resizeOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        200: {
-            headersMapper: Mappers.PageBlobResizeHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobResizeExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.comp, Parameters.timeoutInSeconds],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.encryptionKey,
-        Parameters.encryptionKeySha256,
-        Parameters.encryptionAlgorithm,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.encryptionScope,
-        Parameters.blobContentLength,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const updateSequenceNumberOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        200: {
-            headersMapper: Mappers.PageBlobUpdateSequenceNumberHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobUpdateSequenceNumberExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.comp, Parameters.timeoutInSeconds],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.leaseId,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.blobSequenceNumber,
-        Parameters.sequenceNumberAction,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-const copyIncrementalOperationSpec = {
-    path: "/{containerName}/{blob}",
-    httpMethod: "PUT",
-    responses: {
-        202: {
-            headersMapper: Mappers.PageBlobCopyIncrementalHeaders,
-        },
-        default: {
-            bodyMapper: Mappers.StorageError,
-            headersMapper: Mappers.PageBlobCopyIncrementalExceptionHeaders,
-        },
-    },
-    queryParameters: [Parameters.timeoutInSeconds, Parameters.comp21],
-    urlParameters: [Parameters.url],
-    headerParameters: [
-        Parameters.version,
-        Parameters.requestId,
-        Parameters.accept1,
-        Parameters.ifModifiedSince,
-        Parameters.ifUnmodifiedSince,
-        Parameters.ifMatch,
-        Parameters.ifNoneMatch,
-        Parameters.ifTags,
-        Parameters.copySource,
-    ],
-    isXML: true,
-    serializer: xmlSerializer,
-};
-//# sourceMappingURL=pageBlob.js.map
-
-/***/ }),
-
-/***/ 287:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const { kConstruct } = __nccwpck_require__(162)
-const { Cache } = __nccwpck_require__(13)
-const { webidl } = __nccwpck_require__(463)
-const { kEnumerableProperty } = __nccwpck_require__(72)
-
-class CacheStorage {
-  /**
-   * @see https://w3c.github.io/ServiceWorker/#dfn-relevant-name-to-cache-map
-   * @type {Map<string, import('./cache').requestResponseList}
-   */
-  #caches = new Map()
-
-  constructor () {
-    if (arguments[0] !== kConstruct) {
-      webidl.illegalConstructor()
-    }
-  }
-
-  async match (request, options = {}) {
-    webidl.brandCheck(this, CacheStorage)
-    webidl.argumentLengthCheck(arguments, 1, { header: 'CacheStorage.match' })
-
-    request = webidl.converters.RequestInfo(request)
-    options = webidl.converters.MultiCacheQueryOptions(options)
-
-    // 1.
-    if (options.cacheName != null) {
-      // 1.1.1.1
-      if (this.#caches.has(options.cacheName)) {
-        // 1.1.1.1.1
-        const cacheList = this.#caches.get(options.cacheName)
-        const cache = new Cache(kConstruct, cacheList)
-
-        return await cache.match(request, options)
-      }
-    } else { // 2.
-      // 2.2
-      for (const cacheList of this.#caches.values()) {
-        const cache = new Cache(kConstruct, cacheList)
-
-        // 2.2.1.2
-        const response = await cache.match(request, options)
-
-        if (response !== undefined) {
-          return response
-        }
-      }
-    }
-  }
-
-  /**
-   * @see https://w3c.github.io/ServiceWorker/#cache-storage-has
-   * @param {string} cacheName
-   * @returns {Promise<boolean>}
-   */
-  async has (cacheName) {
-    webidl.brandCheck(this, CacheStorage)
-    webidl.argumentLengthCheck(arguments, 1, { header: 'CacheStorage.has' })
-
-    cacheName = webidl.converters.DOMString(cacheName)
-
-    // 2.1.1
-    // 2.2
-    return this.#caches.has(cacheName)
-  }
-
-  /**
-   * @see https://w3c.github.io/ServiceWorker/#dom-cachestorage-open
-   * @param {string} cacheName
-   * @returns {Promise<Cache>}
-   */
-  async open (cacheName) {
-    webidl.brandCheck(this, CacheStorage)
-    webidl.argumentLengthCheck(arguments, 1, { header: 'CacheStorage.open' })
-
-    cacheName = webidl.converters.DOMString(cacheName)
-
-    // 2.1
-    if (this.#caches.has(cacheName)) {
-      // await caches.open('v1') !== await caches.open('v1')
-
-      // 2.1.1
-      const cache = this.#caches.get(cacheName)
-
-      // 2.1.1.1
-      return new Cache(kConstruct, cache)
-    }
-
-    // 2.2
-    const cache = []
-
-    // 2.3
-    this.#caches.set(cacheName, cache)
-
-    // 2.4
-    return new Cache(kConstruct, cache)
-  }
-
-  /**
-   * @see https://w3c.github.io/ServiceWorker/#cache-storage-delete
-   * @param {string} cacheName
-   * @returns {Promise<boolean>}
-   */
-  async delete (cacheName) {
-    webidl.brandCheck(this, CacheStorage)
-    webidl.argumentLengthCheck(arguments, 1, { header: 'CacheStorage.delete' })
-
-    cacheName = webidl.converters.DOMString(cacheName)
-
-    return this.#caches.delete(cacheName)
-  }
-
-  /**
-   * @see https://w3c.github.io/ServiceWorker/#cache-storage-keys
-   * @returns {string[]}
-   */
-  async keys () {
-    webidl.brandCheck(this, CacheStorage)
-
-    // 2.1
-    const keys = this.#caches.keys()
-
-    // 2.2
-    return [...keys]
-  }
-}
-
-Object.defineProperties(CacheStorage.prototype, {
-  [Symbol.toStringTag]: {
-    value: 'CacheStorage',
-    configurable: true
-  },
-  match: kEnumerableProperty,
-  has: kEnumerableProperty,
-  open: kEnumerableProperty,
-  delete: kEnumerableProperty,
-  keys: kEnumerableProperty
-})
-
-module.exports = {
-  CacheStorage
-}
-
-
-/***/ }),
-
-/***/ 288:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createClientPipeline = createClientPipeline;
-const deserializationPolicy_js_1 = __nccwpck_require__(90);
-const core_rest_pipeline_1 = __nccwpck_require__(107);
-const serializationPolicy_js_1 = __nccwpck_require__(497);
-/**
- * Creates a new Pipeline for use with a Service Client.
- * Adds in deserializationPolicy by default.
- * Also adds in bearerTokenAuthenticationPolicy if passed a TokenCredential.
- * @param options - Options to customize the created pipeline.
- */
-function createClientPipeline(options = {}) {
-    const pipeline = (0, core_rest_pipeline_1.createPipelineFromOptions)(options ?? {});
-    if (options.credentialOptions) {
-        pipeline.addPolicy((0, core_rest_pipeline_1.bearerTokenAuthenticationPolicy)({
-            credential: options.credentialOptions.credential,
-            scopes: options.credentialOptions.credentialScopes,
-        }));
-    }
-    pipeline.addPolicy((0, serializationPolicy_js_1.serializationPolicy)(options.serializationOptions), { phase: "Serialize" });
-    pipeline.addPolicy((0, deserializationPolicy_js_1.deserializationPolicy)(options.deserializationOptions), {
-        phase: "Deserialize",
-    });
-    return pipeline;
-}
-//# sourceMappingURL=pipeline.js.map
-
-/***/ }),
-
-/***/ 289:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.HttpClient = exports.isHttps = exports.HttpClientResponse = exports.HttpClientError = exports.getProxyUrl = exports.MediaTypes = exports.Headers = exports.HttpCodes = void 0;
-const http = __importStar(__nccwpck_require__(334));
-const https = __importStar(__nccwpck_require__(73));
-const pm = __importStar(__nccwpck_require__(316));
-const tunnel = __importStar(__nccwpck_require__(528));
-const undici_1 = __nccwpck_require__(169);
-var HttpCodes;
-(function (HttpCodes) {
-    HttpCodes[HttpCodes["OK"] = 200] = "OK";
-    HttpCodes[HttpCodes["MultipleChoices"] = 300] = "MultipleChoices";
-    HttpCodes[HttpCodes["MovedPermanently"] = 301] = "MovedPermanently";
-    HttpCodes[HttpCodes["ResourceMoved"] = 302] = "ResourceMoved";
-    HttpCodes[HttpCodes["SeeOther"] = 303] = "SeeOther";
-    HttpCodes[HttpCodes["NotModified"] = 304] = "NotModified";
-    HttpCodes[HttpCodes["UseProxy"] = 305] = "UseProxy";
-    HttpCodes[HttpCodes["SwitchProxy"] = 306] = "SwitchProxy";
-    HttpCodes[HttpCodes["TemporaryRedirect"] = 307] = "TemporaryRedirect";
-    HttpCodes[HttpCodes["PermanentRedirect"] = 308] = "PermanentRedirect";
-    HttpCodes[HttpCodes["BadRequest"] = 400] = "BadRequest";
-    HttpCodes[HttpCodes["Unauthorized"] = 401] = "Unauthorized";
-    HttpCodes[HttpCodes["PaymentRequired"] = 402] = "PaymentRequired";
-    HttpCodes[HttpCodes["Forbidden"] = 403] = "Forbidden";
-    HttpCodes[HttpCodes["NotFound"] = 404] = "NotFound";
-    HttpCodes[HttpCodes["MethodNotAllowed"] = 405] = "MethodNotAllowed";
-    HttpCodes[HttpCodes["NotAcceptable"] = 406] = "NotAcceptable";
-    HttpCodes[HttpCodes["ProxyAuthenticationRequired"] = 407] = "ProxyAuthenticationRequired";
-    HttpCodes[HttpCodes["RequestTimeout"] = 408] = "RequestTimeout";
-    HttpCodes[HttpCodes["Conflict"] = 409] = "Conflict";
-    HttpCodes[HttpCodes["Gone"] = 410] = "Gone";
-    HttpCodes[HttpCodes["TooManyRequests"] = 429] = "TooManyRequests";
-    HttpCodes[HttpCodes["InternalServerError"] = 500] = "InternalServerError";
-    HttpCodes[HttpCodes["NotImplemented"] = 501] = "NotImplemented";
-    HttpCodes[HttpCodes["BadGateway"] = 502] = "BadGateway";
-    HttpCodes[HttpCodes["ServiceUnavailable"] = 503] = "ServiceUnavailable";
-    HttpCodes[HttpCodes["GatewayTimeout"] = 504] = "GatewayTimeout";
-})(HttpCodes || (exports.HttpCodes = HttpCodes = {}));
-var Headers;
-(function (Headers) {
-    Headers["Accept"] = "accept";
-    Headers["ContentType"] = "content-type";
-})(Headers || (exports.Headers = Headers = {}));
-var MediaTypes;
-(function (MediaTypes) {
-    MediaTypes["ApplicationJson"] = "application/json";
-})(MediaTypes || (exports.MediaTypes = MediaTypes = {}));
-/**
- * Returns the proxy URL, depending upon the supplied url and proxy environment variables.
- * @param serverUrl  The server URL where the request will be sent. For example, https://api.github.com
- */
-function getProxyUrl(serverUrl) {
-    const proxyUrl = pm.getProxyUrl(new URL(serverUrl));
-    return proxyUrl ? proxyUrl.href : '';
-}
-exports.getProxyUrl = getProxyUrl;
-const HttpRedirectCodes = [
-    HttpCodes.MovedPermanently,
-    HttpCodes.ResourceMoved,
-    HttpCodes.SeeOther,
-    HttpCodes.TemporaryRedirect,
-    HttpCodes.PermanentRedirect
-];
-const HttpResponseRetryCodes = [
-    HttpCodes.BadGateway,
-    HttpCodes.ServiceUnavailable,
-    HttpCodes.GatewayTimeout
-];
-const RetryableHttpVerbs = ['OPTIONS', 'GET', 'DELETE', 'HEAD'];
-const ExponentialBackoffCeiling = 10;
-const ExponentialBackoffTimeSlice = 5;
-class HttpClientError extends Error {
-    constructor(message, statusCode) {
-        super(message);
-        this.name = 'HttpClientError';
-        this.statusCode = statusCode;
-        Object.setPrototypeOf(this, HttpClientError.prototype);
-    }
-}
-exports.HttpClientError = HttpClientError;
-class HttpClientResponse {
-    constructor(message) {
-        this.message = message;
-    }
-    readBody() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
-                let output = Buffer.alloc(0);
-                this.message.on('data', (chunk) => {
-                    output = Buffer.concat([output, chunk]);
-                });
-                this.message.on('end', () => {
-                    resolve(output.toString());
-                });
-            }));
-        });
-    }
-    readBodyBuffer() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
-                const chunks = [];
-                this.message.on('data', (chunk) => {
-                    chunks.push(chunk);
-                });
-                this.message.on('end', () => {
-                    resolve(Buffer.concat(chunks));
-                });
-            }));
-        });
-    }
-}
-exports.HttpClientResponse = HttpClientResponse;
-function isHttps(requestUrl) {
-    const parsedUrl = new URL(requestUrl);
-    return parsedUrl.protocol === 'https:';
-}
-exports.isHttps = isHttps;
-class HttpClient {
-    constructor(userAgent, handlers, requestOptions) {
-        this._ignoreSslError = false;
-        this._allowRedirects = true;
-        this._allowRedirectDowngrade = false;
-        this._maxRedirects = 50;
-        this._allowRetries = false;
-        this._maxRetries = 1;
-        this._keepAlive = false;
-        this._disposed = false;
-        this.userAgent = userAgent;
-        this.handlers = handlers || [];
-        this.requestOptions = requestOptions;
-        if (requestOptions) {
-            if (requestOptions.ignoreSslError != null) {
-                this._ignoreSslError = requestOptions.ignoreSslError;
-            }
-            this._socketTimeout = requestOptions.socketTimeout;
-            if (requestOptions.allowRedirects != null) {
-                this._allowRedirects = requestOptions.allowRedirects;
-            }
-            if (requestOptions.allowRedirectDowngrade != null) {
-                this._allowRedirectDowngrade = requestOptions.allowRedirectDowngrade;
-            }
-            if (requestOptions.maxRedirects != null) {
-                this._maxRedirects = Math.max(requestOptions.maxRedirects, 0);
-            }
-            if (requestOptions.keepAlive != null) {
-                this._keepAlive = requestOptions.keepAlive;
-            }
-            if (requestOptions.allowRetries != null) {
-                this._allowRetries = requestOptions.allowRetries;
-            }
-            if (requestOptions.maxRetries != null) {
-                this._maxRetries = requestOptions.maxRetries;
-            }
-        }
-    }
-    options(requestUrl, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.request('OPTIONS', requestUrl, null, additionalHeaders || {});
-        });
-    }
-    get(requestUrl, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.request('GET', requestUrl, null, additionalHeaders || {});
-        });
-    }
-    del(requestUrl, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.request('DELETE', requestUrl, null, additionalHeaders || {});
-        });
-    }
-    post(requestUrl, data, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.request('POST', requestUrl, data, additionalHeaders || {});
-        });
-    }
-    patch(requestUrl, data, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.request('PATCH', requestUrl, data, additionalHeaders || {});
-        });
-    }
-    put(requestUrl, data, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.request('PUT', requestUrl, data, additionalHeaders || {});
-        });
-    }
-    head(requestUrl, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.request('HEAD', requestUrl, null, additionalHeaders || {});
-        });
-    }
-    sendStream(verb, requestUrl, stream, additionalHeaders) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return this.request(verb, requestUrl, stream, additionalHeaders);
-        });
-    }
-    /**
-     * Gets a typed object from an endpoint
-     * Be aware that not found returns a null.  Other errors (4xx, 5xx) reject the promise
-     */
-    getJson(requestUrl, additionalHeaders = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
-            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-            const res = yield this.get(requestUrl, additionalHeaders);
-            return this._processResponse(res, this.requestOptions);
-        });
-    }
-    postJson(requestUrl, obj, additionalHeaders = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const data = JSON.stringify(obj, null, 2);
-            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-            const res = yield this.post(requestUrl, data, additionalHeaders);
-            return this._processResponse(res, this.requestOptions);
-        });
-    }
-    putJson(requestUrl, obj, additionalHeaders = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const data = JSON.stringify(obj, null, 2);
-            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-            const res = yield this.put(requestUrl, data, additionalHeaders);
-            return this._processResponse(res, this.requestOptions);
-        });
-    }
-    patchJson(requestUrl, obj, additionalHeaders = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const data = JSON.stringify(obj, null, 2);
-            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-            const res = yield this.patch(requestUrl, data, additionalHeaders);
-            return this._processResponse(res, this.requestOptions);
-        });
-    }
-    /**
-     * Makes a raw http request.
-     * All other methods such as get, post, patch, and request ultimately call this.
-     * Prefer get, del, post and patch
-     */
-    request(verb, requestUrl, data, headers) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this._disposed) {
-                throw new Error('Client has already been disposed.');
-            }
-            const parsedUrl = new URL(requestUrl);
-            let info = this._prepareRequest(verb, parsedUrl, headers);
-            // Only perform retries on reads since writes may not be idempotent.
-            const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb)
-                ? this._maxRetries + 1
-                : 1;
-            let numTries = 0;
-            let response;
-            do {
-                response = yield this.requestRaw(info, data);
-                // Check if it's an authentication challenge
-                if (response &&
-                    response.message &&
-                    response.message.statusCode === HttpCodes.Unauthorized) {
-                    let authenticationHandler;
-                    for (const handler of this.handlers) {
-                        if (handler.canHandleAuthentication(response)) {
-                            authenticationHandler = handler;
-                            break;
-                        }
-                    }
-                    if (authenticationHandler) {
-                        return authenticationHandler.handleAuthentication(this, info, data);
-                    }
-                    else {
-                        // We have received an unauthorized response but have no handlers to handle it.
-                        // Let the response return to the caller.
-                        return response;
-                    }
-                }
-                let redirectsRemaining = this._maxRedirects;
-                while (response.message.statusCode &&
-                    HttpRedirectCodes.includes(response.message.statusCode) &&
-                    this._allowRedirects &&
-                    redirectsRemaining > 0) {
-                    const redirectUrl = response.message.headers['location'];
-                    if (!redirectUrl) {
-                        // if there's no location to redirect to, we won't
-                        break;
-                    }
-                    const parsedRedirectUrl = new URL(redirectUrl);
-                    if (parsedUrl.protocol === 'https:' &&
-                        parsedUrl.protocol !== parsedRedirectUrl.protocol &&
-                        !this._allowRedirectDowngrade) {
-                        throw new Error('Redirect from HTTPS to HTTP protocol. This downgrade is not allowed for security reasons. If you want to allow this behavior, set the allowRedirectDowngrade option to true.');
-                    }
-                    // we need to finish reading the response before reassigning response
-                    // which will leak the open socket.
-                    yield response.readBody();
-                    // strip authorization header if redirected to a different hostname
-                    if (parsedRedirectUrl.hostname !== parsedUrl.hostname) {
-                        for (const header in headers) {
-                            // header names are case insensitive
-                            if (header.toLowerCase() === 'authorization') {
-                                delete headers[header];
-                            }
-                        }
-                    }
-                    // let's make the request with the new redirectUrl
-                    info = this._prepareRequest(verb, parsedRedirectUrl, headers);
-                    response = yield this.requestRaw(info, data);
-                    redirectsRemaining--;
-                }
-                if (!response.message.statusCode ||
-                    !HttpResponseRetryCodes.includes(response.message.statusCode)) {
-                    // If not a retry code, return immediately instead of retrying
-                    return response;
-                }
-                numTries += 1;
-                if (numTries < maxTries) {
-                    yield response.readBody();
-                    yield this._performExponentialBackoff(numTries);
-                }
-            } while (numTries < maxTries);
-            return response;
-        });
-    }
-    /**
-     * Needs to be called if keepAlive is set to true in request options.
-     */
-    dispose() {
-        if (this._agent) {
-            this._agent.destroy();
-        }
-        this._disposed = true;
-    }
-    /**
-     * Raw request.
-     * @param info
-     * @param data
-     */
-    requestRaw(info, data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                function callbackForResult(err, res) {
-                    if (err) {
-                        reject(err);
-                    }
-                    else if (!res) {
-                        // If `err` is not passed, then `res` must be passed.
-                        reject(new Error('Unknown error'));
-                    }
-                    else {
-                        resolve(res);
-                    }
-                }
-                this.requestRawWithCallback(info, data, callbackForResult);
-            });
-        });
-    }
-    /**
-     * Raw request with callback.
-     * @param info
-     * @param data
-     * @param onResult
-     */
-    requestRawWithCallback(info, data, onResult) {
-        if (typeof data === 'string') {
-            if (!info.options.headers) {
-                info.options.headers = {};
-            }
-            info.options.headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
-        }
-        let callbackCalled = false;
-        function handleResult(err, res) {
-            if (!callbackCalled) {
-                callbackCalled = true;
-                onResult(err, res);
-            }
-        }
-        const req = info.httpModule.request(info.options, (msg) => {
-            const res = new HttpClientResponse(msg);
-            handleResult(undefined, res);
-        });
-        let socket;
-        req.on('socket', sock => {
-            socket = sock;
-        });
-        // If we ever get disconnected, we want the socket to timeout eventually
-        req.setTimeout(this._socketTimeout || 3 * 60000, () => {
-            if (socket) {
-                socket.end();
-            }
-            handleResult(new Error(`Request timeout: ${info.options.path}`));
-        });
-        req.on('error', function (err) {
-            // err has statusCode property
-            // res should have headers
-            handleResult(err);
-        });
-        if (data && typeof data === 'string') {
-            req.write(data, 'utf8');
-        }
-        if (data && typeof data !== 'string') {
-            data.on('close', function () {
-                req.end();
-            });
-            data.pipe(req);
-        }
-        else {
-            req.end();
-        }
-    }
-    /**
-     * Gets an http agent. This function is useful when you need an http agent that handles
-     * routing through a proxy server - depending upon the url and proxy environment variables.
-     * @param serverUrl  The server URL where the request will be sent. For example, https://api.github.com
-     */
-    getAgent(serverUrl) {
-        const parsedUrl = new URL(serverUrl);
-        return this._getAgent(parsedUrl);
-    }
-    getAgentDispatcher(serverUrl) {
-        const parsedUrl = new URL(serverUrl);
-        const proxyUrl = pm.getProxyUrl(parsedUrl);
-        const useProxy = proxyUrl && proxyUrl.hostname;
-        if (!useProxy) {
-            return;
-        }
-        return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
-    }
-    _prepareRequest(method, requestUrl, headers) {
-        const info = {};
-        info.parsedUrl = requestUrl;
-        const usingSsl = info.parsedUrl.protocol === 'https:';
-        info.httpModule = usingSsl ? https : http;
-        const defaultPort = usingSsl ? 443 : 80;
-        info.options = {};
-        info.options.host = info.parsedUrl.hostname;
-        info.options.port = info.parsedUrl.port
-            ? parseInt(info.parsedUrl.port)
-            : defaultPort;
-        info.options.path =
-            (info.parsedUrl.pathname || '') + (info.parsedUrl.search || '');
-        info.options.method = method;
-        info.options.headers = this._mergeHeaders(headers);
-        if (this.userAgent != null) {
-            info.options.headers['user-agent'] = this.userAgent;
-        }
-        info.options.agent = this._getAgent(info.parsedUrl);
-        // gives handlers an opportunity to participate
-        if (this.handlers) {
-            for (const handler of this.handlers) {
-                handler.prepareRequest(info.options);
-            }
-        }
-        return info;
-    }
-    _mergeHeaders(headers) {
-        if (this.requestOptions && this.requestOptions.headers) {
-            return Object.assign({}, lowercaseKeys(this.requestOptions.headers), lowercaseKeys(headers || {}));
-        }
-        return lowercaseKeys(headers || {});
-    }
-    _getExistingOrDefaultHeader(additionalHeaders, header, _default) {
-        let clientHeader;
-        if (this.requestOptions && this.requestOptions.headers) {
-            clientHeader = lowercaseKeys(this.requestOptions.headers)[header];
-        }
-        return additionalHeaders[header] || clientHeader || _default;
-    }
-    _getAgent(parsedUrl) {
-        let agent;
-        const proxyUrl = pm.getProxyUrl(parsedUrl);
-        const useProxy = proxyUrl && proxyUrl.hostname;
-        if (this._keepAlive && useProxy) {
-            agent = this._proxyAgent;
-        }
-        if (!useProxy) {
-            agent = this._agent;
-        }
-        // if agent is already assigned use that agent.
-        if (agent) {
-            return agent;
-        }
-        const usingSsl = parsedUrl.protocol === 'https:';
-        let maxSockets = 100;
-        if (this.requestOptions) {
-            maxSockets = this.requestOptions.maxSockets || http.globalAgent.maxSockets;
-        }
-        // This is `useProxy` again, but we need to check `proxyURl` directly for TypeScripts's flow analysis.
-        if (proxyUrl && proxyUrl.hostname) {
-            const agentOptions = {
-                maxSockets,
-                keepAlive: this._keepAlive,
-                proxy: Object.assign(Object.assign({}, ((proxyUrl.username || proxyUrl.password) && {
-                    proxyAuth: `${proxyUrl.username}:${proxyUrl.password}`
-                })), { host: proxyUrl.hostname, port: proxyUrl.port })
-            };
-            let tunnelAgent;
-            const overHttps = proxyUrl.protocol === 'https:';
-            if (usingSsl) {
-                tunnelAgent = overHttps ? tunnel.httpsOverHttps : tunnel.httpsOverHttp;
-            }
-            else {
-                tunnelAgent = overHttps ? tunnel.httpOverHttps : tunnel.httpOverHttp;
-            }
-            agent = tunnelAgent(agentOptions);
-            this._proxyAgent = agent;
-        }
-        // if tunneling agent isn't assigned create a new agent
-        if (!agent) {
-            const options = { keepAlive: this._keepAlive, maxSockets };
-            agent = usingSsl ? new https.Agent(options) : new http.Agent(options);
-            this._agent = agent;
-        }
-        if (usingSsl && this._ignoreSslError) {
-            // we don't want to set NODE_TLS_REJECT_UNAUTHORIZED=0 since that will affect request for entire process
-            // http.RequestOptions doesn't expose a way to modify RequestOptions.agent.options
-            // we have to cast it to any and change it directly
-            agent.options = Object.assign(agent.options || {}, {
-                rejectUnauthorized: false
-            });
-        }
-        return agent;
-    }
-    _getProxyAgentDispatcher(parsedUrl, proxyUrl) {
-        let proxyAgent;
-        if (this._keepAlive) {
-            proxyAgent = this._proxyAgentDispatcher;
-        }
-        // if agent is already assigned use that agent.
-        if (proxyAgent) {
-            return proxyAgent;
-        }
-        const usingSsl = parsedUrl.protocol === 'https:';
-        proxyAgent = new undici_1.ProxyAgent(Object.assign({ uri: proxyUrl.href, pipelining: !this._keepAlive ? 0 : 1 }, ((proxyUrl.username || proxyUrl.password) && {
-            token: `Basic ${Buffer.from(`${proxyUrl.username}:${proxyUrl.password}`).toString('base64')}`
-        })));
-        this._proxyAgentDispatcher = proxyAgent;
-        if (usingSsl && this._ignoreSslError) {
-            // we don't want to set NODE_TLS_REJECT_UNAUTHORIZED=0 since that will affect request for entire process
-            // http.RequestOptions doesn't expose a way to modify RequestOptions.agent.options
-            // we have to cast it to any and change it directly
-            proxyAgent.options = Object.assign(proxyAgent.options.requestTls || {}, {
-                rejectUnauthorized: false
-            });
-        }
-        return proxyAgent;
-    }
-    _performExponentialBackoff(retryNumber) {
-        return __awaiter(this, void 0, void 0, function* () {
-            retryNumber = Math.min(ExponentialBackoffCeiling, retryNumber);
-            const ms = ExponentialBackoffTimeSlice * Math.pow(2, retryNumber);
-            return new Promise(resolve => setTimeout(() => resolve(), ms));
-        });
-    }
-    _processResponse(res, options) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                const statusCode = res.message.statusCode || 0;
-                const response = {
-                    statusCode,
-                    result: null,
-                    headers: {}
-                };
-                // not found leads to null obj returned
-                if (statusCode === HttpCodes.NotFound) {
-                    resolve(response);
-                }
-                // get the result from the body
-                function dateTimeDeserializer(key, value) {
-                    if (typeof value === 'string') {
-                        const a = new Date(value);
-                        if (!isNaN(a.valueOf())) {
-                            return a;
-                        }
-                    }
-                    return value;
-                }
-                let obj;
-                let contents;
-                try {
-                    contents = yield res.readBody();
-                    if (contents && contents.length > 0) {
-                        if (options && options.deserializeDates) {
-                            obj = JSON.parse(contents, dateTimeDeserializer);
-                        }
-                        else {
-                            obj = JSON.parse(contents);
-                        }
-                        response.result = obj;
-                    }
-                    response.headers = res.message.headers;
-                }
-                catch (err) {
-                    // Invalid resource (contents not json);  leaving result obj null
-                }
-                // note that 3xx redirects are handled by the http layer.
-                if (statusCode > 299) {
-                    let msg;
-                    // if exception/error in body, attempt to get better error
-                    if (obj && obj.message) {
-                        msg = obj.message;
-                    }
-                    else if (contents && contents.length > 0) {
-                        // it may be the case that the exception is in the body message as string
-                        msg = contents;
-                    }
-                    else {
-                        msg = `Failed request: (${statusCode})`;
-                    }
-                    const err = new HttpClientError(msg, statusCode);
-                    err.result = response.result;
-                    reject(err);
-                }
-                else {
-                    resolve(response);
-                }
-            }));
-        });
-    }
-}
-exports.HttpClient = HttpClient;
-const lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
 /***/ 290:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -59177,7 +59177,7 @@ var import_formDataPolicy = __nccwpck_require__(345);
 var import_logPolicy = __nccwpck_require__(108);
 var import_multipartPolicy = __nccwpck_require__(175);
 var import_proxyPolicy = __nccwpck_require__(41);
-var import_redirectPolicy = __nccwpck_require__(323);
+var import_redirectPolicy = __nccwpck_require__(322);
 var import_tlsPolicy = __nccwpck_require__(225);
 var import_userAgentPolicy = __nccwpck_require__(366);
 // Annotate the CommonJS export names for ESM import in node:
@@ -59358,7 +59358,7 @@ function buildOutputs(result) {
 module.exports = parseString
 
 const TOMLParser = __nccwpck_require__(351)
-const prettyError = __nccwpck_require__(282)
+const prettyError = __nccwpck_require__(281)
 
 function parseString (str) {
   if (global.Buffer && global.Buffer.isBuffer(str)) {
@@ -62703,6 +62703,1225 @@ exports.CredentialPolicy = CredentialPolicy;
 /***/ }),
 
 /***/ 314:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BatchResponseParser = void 0;
+const core_rest_pipeline_1 = __nccwpck_require__(107);
+const core_http_compat_1 = __nccwpck_require__(75);
+const constants_js_1 = __nccwpck_require__(154);
+const BatchUtils_js_1 = __nccwpck_require__(261);
+const log_js_1 = __nccwpck_require__(112);
+const HTTP_HEADER_DELIMITER = ": ";
+const SPACE_DELIMITER = " ";
+const NOT_FOUND = -1;
+/**
+ * Util class for parsing batch response.
+ */
+class BatchResponseParser {
+    batchResponse;
+    responseBatchBoundary;
+    perResponsePrefix;
+    batchResponseEnding;
+    subRequests;
+    constructor(batchResponse, subRequests) {
+        if (!batchResponse || !batchResponse.contentType) {
+            // In special case(reported), server may return invalid content-type which could not be parsed.
+            throw new RangeError("batchResponse is malformed or doesn't contain valid content-type.");
+        }
+        if (!subRequests || subRequests.size === 0) {
+            // This should be prevent during coding.
+            throw new RangeError("Invalid state: subRequests is not provided or size is 0.");
+        }
+        this.batchResponse = batchResponse;
+        this.subRequests = subRequests;
+        this.responseBatchBoundary = this.batchResponse.contentType.split("=")[1];
+        this.perResponsePrefix = `--${this.responseBatchBoundary}${constants_js_1.HTTP_LINE_ENDING}`;
+        this.batchResponseEnding = `--${this.responseBatchBoundary}--`;
+    }
+    // For example of response, please refer to https://learn.microsoft.com/rest/api/storageservices/blob-batch#response
+    async parseBatchResponse() {
+        // When logic reach here, suppose batch request has already succeeded with 202, so we can further parse
+        // sub request's response.
+        if (this.batchResponse._response.status !== constants_js_1.HTTPURLConnection.HTTP_ACCEPTED) {
+            throw new Error(`Invalid state: batch request failed with status: '${this.batchResponse._response.status}'.`);
+        }
+        const responseBodyAsText = await (0, BatchUtils_js_1.getBodyAsText)(this.batchResponse);
+        const subResponses = responseBodyAsText
+            .split(this.batchResponseEnding)[0] // string after ending is useless
+            .split(this.perResponsePrefix)
+            .slice(1); // string before first response boundary is useless
+        const subResponseCount = subResponses.length;
+        // Defensive coding in case of potential error parsing.
+        // Note: subResponseCount == 1 is special case where sub request is invalid.
+        // We try to prevent such cases through early validation, e.g. validate sub request count >= 1.
+        // While in unexpected sub request invalid case, we allow sub response to be parsed and return to user.
+        if (subResponseCount !== this.subRequests.size && subResponseCount !== 1) {
+            throw new Error("Invalid state: sub responses' count is not equal to sub requests' count.");
+        }
+        const deserializedSubResponses = new Array(subResponseCount);
+        let subResponsesSucceededCount = 0;
+        let subResponsesFailedCount = 0;
+        // Parse sub subResponses.
+        for (let index = 0; index < subResponseCount; index++) {
+            const subResponse = subResponses[index];
+            const deserializedSubResponse = {};
+            deserializedSubResponse.headers = (0, core_http_compat_1.toHttpHeadersLike)((0, core_rest_pipeline_1.createHttpHeaders)());
+            const responseLines = subResponse.split(`${constants_js_1.HTTP_LINE_ENDING}`);
+            let subRespHeaderStartFound = false;
+            let subRespHeaderEndFound = false;
+            let subRespFailed = false;
+            let contentId = NOT_FOUND;
+            for (const responseLine of responseLines) {
+                if (!subRespHeaderStartFound) {
+                    // Convention line to indicate content ID
+                    if (responseLine.startsWith(constants_js_1.HeaderConstants.CONTENT_ID)) {
+                        contentId = parseInt(responseLine.split(HTTP_HEADER_DELIMITER)[1]);
+                    }
+                    // Http version line with status code indicates the start of sub request's response.
+                    // Example: HTTP/1.1 202 Accepted
+                    if (responseLine.startsWith(constants_js_1.HTTP_VERSION_1_1)) {
+                        subRespHeaderStartFound = true;
+                        const tokens = responseLine.split(SPACE_DELIMITER);
+                        deserializedSubResponse.status = parseInt(tokens[1]);
+                        deserializedSubResponse.statusMessage = tokens.slice(2).join(SPACE_DELIMITER);
+                    }
+                    continue; // Skip convention headers not specifically for sub request i.e. Content-Type: application/http and Content-ID: *
+                }
+                if (responseLine.trim() === "") {
+                    // Sub response's header start line already found, and the first empty line indicates header end line found.
+                    if (!subRespHeaderEndFound) {
+                        subRespHeaderEndFound = true;
+                    }
+                    continue; // Skip empty line
+                }
+                // Note: when code reach here, it indicates subRespHeaderStartFound == true
+                if (!subRespHeaderEndFound) {
+                    if (responseLine.indexOf(HTTP_HEADER_DELIMITER) === -1) {
+                        // Defensive coding to prevent from missing valuable lines.
+                        throw new Error(`Invalid state: find non-empty line '${responseLine}' without HTTP header delimiter '${HTTP_HEADER_DELIMITER}'.`);
+                    }
+                    // Parse headers of sub response.
+                    const tokens = responseLine.split(HTTP_HEADER_DELIMITER);
+                    deserializedSubResponse.headers.set(tokens[0], tokens[1]);
+                    if (tokens[0] === constants_js_1.HeaderConstants.X_MS_ERROR_CODE) {
+                        deserializedSubResponse.errorCode = tokens[1];
+                        subRespFailed = true;
+                    }
+                }
+                else {
+                    // Assemble body of sub response.
+                    if (!deserializedSubResponse.bodyAsText) {
+                        deserializedSubResponse.bodyAsText = "";
+                    }
+                    deserializedSubResponse.bodyAsText += responseLine;
+                }
+            } // Inner for end
+            // The response will contain the Content-ID header for each corresponding subrequest response to use for tracking.
+            // The Content-IDs are set to a valid index in the subrequests we sent. In the status code 202 path, we could expect it
+            // to be 1-1 mapping from the [0, subRequests.size) to the Content-IDs returned. If not, we simply don't return that
+            // unexpected subResponse in the parsed reponse and we can always look it up in the raw response for debugging purpose.
+            if (contentId !== NOT_FOUND &&
+                Number.isInteger(contentId) &&
+                contentId >= 0 &&
+                contentId < this.subRequests.size &&
+                deserializedSubResponses[contentId] === undefined) {
+                deserializedSubResponse._request = this.subRequests.get(contentId);
+                deserializedSubResponses[contentId] = deserializedSubResponse;
+            }
+            else {
+                log_js_1.logger.error(`subResponses[${index}] is dropped as the Content-ID is not found or invalid, Content-ID: ${contentId}`);
+            }
+            if (subRespFailed) {
+                subResponsesFailedCount++;
+            }
+            else {
+                subResponsesSucceededCount++;
+            }
+        }
+        return {
+            subResponses: deserializedSubResponses,
+            subResponsesSucceededCount: subResponsesSucceededCount,
+            subResponsesFailedCount: subResponsesFailedCount,
+        };
+    }
+}
+exports.BatchResponseParser = BatchResponseParser;
+//# sourceMappingURL=BatchResponseParser.js.map
+
+/***/ }),
+
+/***/ 315:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.checkBypass = exports.getProxyUrl = void 0;
+function getProxyUrl(reqUrl) {
+    const usingSsl = reqUrl.protocol === 'https:';
+    if (checkBypass(reqUrl)) {
+        return undefined;
+    }
+    const proxyVar = (() => {
+        if (usingSsl) {
+            return process.env['https_proxy'] || process.env['HTTPS_PROXY'];
+        }
+        else {
+            return process.env['http_proxy'] || process.env['HTTP_PROXY'];
+        }
+    })();
+    if (proxyVar) {
+        try {
+            return new DecodedURL(proxyVar);
+        }
+        catch (_a) {
+            if (!proxyVar.startsWith('http://') && !proxyVar.startsWith('https://'))
+                return new DecodedURL(`http://${proxyVar}`);
+        }
+    }
+    else {
+        return undefined;
+    }
+}
+exports.getProxyUrl = getProxyUrl;
+function checkBypass(reqUrl) {
+    if (!reqUrl.hostname) {
+        return false;
+    }
+    const reqHost = reqUrl.hostname;
+    if (isLoopbackAddress(reqHost)) {
+        return true;
+    }
+    const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
+    if (!noProxy) {
+        return false;
+    }
+    // Determine the request port
+    let reqPort;
+    if (reqUrl.port) {
+        reqPort = Number(reqUrl.port);
+    }
+    else if (reqUrl.protocol === 'http:') {
+        reqPort = 80;
+    }
+    else if (reqUrl.protocol === 'https:') {
+        reqPort = 443;
+    }
+    // Format the request hostname and hostname with port
+    const upperReqHosts = [reqUrl.hostname.toUpperCase()];
+    if (typeof reqPort === 'number') {
+        upperReqHosts.push(`${upperReqHosts[0]}:${reqPort}`);
+    }
+    // Compare request host against noproxy
+    for (const upperNoProxyItem of noProxy
+        .split(',')
+        .map(x => x.trim().toUpperCase())
+        .filter(x => x)) {
+        if (upperNoProxyItem === '*' ||
+            upperReqHosts.some(x => x === upperNoProxyItem ||
+                x.endsWith(`.${upperNoProxyItem}`) ||
+                (upperNoProxyItem.startsWith('.') &&
+                    x.endsWith(`${upperNoProxyItem}`)))) {
+            return true;
+        }
+    }
+    return false;
+}
+exports.checkBypass = checkBypass;
+function isLoopbackAddress(host) {
+    const hostLower = host.toLowerCase();
+    return (hostLower === 'localhost' ||
+        hostLower.startsWith('127.') ||
+        hostLower.startsWith('[::1]') ||
+        hostLower.startsWith('[0:0:0:0:0:0:0:1]'));
+}
+class DecodedURL extends URL {
+    constructor(url, base) {
+        super(url, base);
+        this._decodedUsername = decodeURIComponent(super.username);
+        this._decodedPassword = decodeURIComponent(super.password);
+    }
+    get username() {
+        return this._decodedUsername;
+    }
+    get password() {
+        return this._decodedPassword;
+    }
+}
+//# sourceMappingURL=proxy.js.map
+
+/***/ }),
+
+/***/ 316:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Shim-bypass diagnostic.
+//
+// When `shims: true` is requested, setup-soldr writes shim scripts (cargo,
+// rustfmt, clippy-driver, rustc, rustdoc) into `shimsDir` and prepends that
+// directory to PATH. Those shims re-exec the soldr binary, which in turn
+// routes compile work through zccache.
+//
+// The shims only fire when a child process actually resolves `cargo` /
+// `rustc` through PATH and the shim dir is at the front of PATH. A handful
+// of common workflow patterns silently bypass them:
+//
+//   - `CARGO=<abs path to ~/.cargo/bin/cargo>` — maturin and other Python
+//     packaging tools honor this env var and exec it directly, skipping
+//     PATH resolution entirely.
+//   - `RUSTC=<abs path to rustup toolchain rustc>` — same story for any
+//     build script that respects RUSTC.
+//   - `RUSTC_WRAPPER=<something other than soldr/zccache>` — installs a
+//     competing wrapper in the slot soldr expects to own.
+//   - `~/.cargo/bin` (the rustup-installed cargo) sits earlier on PATH
+//     than the setup-soldr shim dir.
+//
+// In all of those cases, caching looks configured but the heavy compile
+// work runs through plain cargo/rustc and never visits zccache. Emit an
+// advisory warning so the workflow author can either drop the override or
+// reorder PATH. See issue #160.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SHIMMED_TOOLS = void 0;
+exports.diagnoseShimBypass = diagnoseShimBypass;
+const path = __importStar(__nccwpck_require__(515));
+/** Tools we write shims for. Mirror of ROUTED_TOOLS in ensure-shims.ts. */
+const SHIMMED_TOOLS = ["cargo", "rustfmt", "clippy-driver", "rustc", "rustdoc"];
+exports.SHIMMED_TOOLS = SHIMMED_TOOLS;
+/**
+ * Normalize a filesystem path for case-insensitive comparison on Windows.
+ * On POSIX, returns the input verbatim.
+ */
+function normalizePath(p, platform) {
+    const trimmed = p.trim();
+    if (!trimmed)
+        return "";
+    // Strip trailing slash/backslash so "C:/foo" and "C:/foo/" compare equal.
+    const stripped = trimmed.replace(/[\\/]+$/, "");
+    if (platform === "win32") {
+        return stripped.replace(/\//g, "\\").toLowerCase();
+    }
+    return stripped;
+}
+/**
+ * Return true when `candidate` lives inside (or equals) `dir`. Both inputs
+ * are normalized first. Used to detect when an absolute CARGO/RUSTC
+ * override happens to point into the shim dir (legitimate, no warning).
+ */
+function pathInsideDir(candidate, dir, platform) {
+    const c = normalizePath(candidate, platform);
+    const d = normalizePath(dir, platform);
+    if (!c || !d)
+        return false;
+    if (c === d)
+        return true;
+    const sep = platform === "win32" ? "\\" : "/";
+    return c.startsWith(d + sep);
+}
+/**
+ * Look up the basename without an executable extension on Windows.
+ * On POSIX, returns the basename verbatim. Used so "cargo.cmd" vs "cargo"
+ * compares equal when checking if a CARGO override points at a shim.
+ */
+function execBasename(p, platform) {
+    const variant = platform === "win32" ? path.win32 : path.posix;
+    const base = variant.basename(p.trim());
+    if (platform === "win32") {
+        return base.replace(/\.(cmd|bat|exe)$/i, "").toLowerCase();
+    }
+    return base;
+}
+/** Platform-aware absolute-path check. `path.isAbsolute` defers to the host
+ *  os, so a Windows path like `C:\\...` is not considered absolute on a Linux
+ *  CI runner — that breaks tests that exercise the win32 branch from Linux. */
+function isAbsoluteFor(p, platform) {
+    return platform === "win32" ? path.win32.isAbsolute(p) : path.posix.isAbsolute(p);
+}
+/** Platform-aware `path.join` so the suggested shim path in the warning
+ *  uses the right separator regardless of host. */
+function joinFor(platform, ...parts) {
+    return (platform === "win32" ? path.win32 : path.posix).join(...parts);
+}
+/**
+ * Detect known shim-bypass conditions and return a list of warning
+ * messages. Empty list = no problems.
+ *
+ * Each message is self-contained: it names the offending var or PATH
+ * entry, explains the consequence, and suggests a fix. Callers should
+ * pipe each one through `core.warning(...)`.
+ */
+function diagnoseShimBypass(input) {
+    if (!input.shimsEnabled)
+        return [];
+    const platform = input.platform ?? process.platform;
+    const sep = input.pathSep ?? (platform === "win32" ? ";" : ":");
+    const shimDir = (input.shimDir ?? "").trim();
+    if (!shimDir)
+        return [];
+    const warnings = [];
+    const normShim = normalizePath(shimDir, platform);
+    // ---- PATH ordering check ----
+    // Walk PATH; if the first non-empty entry is not the shim dir, the user
+    // has another dir at the front that may shadow our shims for at least
+    // one of the routed tools. We emit a single warning per non-shim entry
+    // that precedes the shim dir.
+    const pathEntries = (input.path ?? "")
+        .split(sep)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+    const shimIndex = pathEntries.findIndex((d) => normalizePath(d, platform) === normShim);
+    if (shimIndex < 0) {
+        warnings.push(`setup-soldr: shim directory ${shimDir} is not present on PATH. ` +
+            `Compile work will bypass zccache/soldr because cargo, rustc, and ` +
+            `other tools will resolve through their original locations. ` +
+            `Make sure no later workflow step replaces or clears PATH; ` +
+            `if a step prepends a custom toolchain dir, append the shim dir ` +
+            `back to the front of PATH.`);
+    }
+    else if (shimIndex > 0) {
+        const earlier = pathEntries.slice(0, shimIndex);
+        warnings.push(`setup-soldr: PATH has ${earlier.length} ${earlier.length === 1 ? "entry" : "entries"} ahead of the shim directory ${shimDir} ` +
+            `(first offender: ${earlier[0]}). ` +
+            `If any of those directories contain a cargo, rustc, rustfmt, ` +
+            `clippy-driver, or rustdoc binary, those will be picked up first ` +
+            `and compile work will bypass zccache/soldr. ` +
+            `Move the shim directory to the front of PATH or remove the ` +
+            `overriding entries.`);
+    }
+    // ---- CARGO env override ----
+    if (input.cargoEnv && input.cargoEnv.trim()) {
+        const c = input.cargoEnv.trim();
+        const isAbsolute = isAbsoluteFor(c, platform);
+        const insideShim = pathInsideDir(c, shimDir, platform);
+        const shimMatchByName = execBasename(c, platform) === "cargo" && insideShim;
+        if (isAbsolute && !shimMatchByName && !insideShim) {
+            warnings.push(`setup-soldr: CARGO env var is set to ${c}, which is not the ` +
+                `setup-soldr cargo shim (${shimDir}). Tools that honor CARGO ` +
+                `(maturin, build scripts, cargo-* subcommands spawned out-of-process) ` +
+                `will exec that binary directly and bypass zccache/soldr. ` +
+                `Unset CARGO, or set it to the shim at ${joinFor(platform, shimDir, platform === "win32" ? "cargo.cmd" : "cargo")}.`);
+        }
+    }
+    // ---- RUSTC env override ----
+    if (input.rustcEnv && input.rustcEnv.trim()) {
+        const r = input.rustcEnv.trim();
+        const isAbsolute = isAbsoluteFor(r, platform);
+        const insideShim = pathInsideDir(r, shimDir, platform);
+        const shimMatchByName = execBasename(r, platform) === "rustc" && insideShim;
+        if (isAbsolute && !shimMatchByName && !insideShim) {
+            warnings.push(`setup-soldr: RUSTC env var is set to ${r}, which is not the ` +
+                `setup-soldr rustc shim (${shimDir}). Build scripts and cargo ` +
+                `itself will exec that binary directly and bypass zccache/soldr. ` +
+                `Unset RUSTC, or set it to the shim at ${joinFor(platform, shimDir, platform === "win32" ? "rustc.cmd" : "rustc")}.`);
+        }
+    }
+    // ---- RUSTC_WRAPPER override ----
+    // soldr's design is that zccache sits in the RUSTC_WRAPPER slot. If the
+    // user (or another action) set RUSTC_WRAPPER to anything *other than*
+    // the soldr binary or a zccache binary, they've installed a competing
+    // wrapper and zccache will not be invoked.
+    if (input.rustcWrapperEnv && input.rustcWrapperEnv.trim()) {
+        const w = input.rustcWrapperEnv.trim();
+        const wName = execBasename(w, platform);
+        const soldr = (input.soldrBinary ?? "").trim();
+        const soldrName = soldr ? execBasename(soldr, platform) : "";
+        const normW = normalizePath(w, platform);
+        const normSoldr = soldr ? normalizePath(soldr, platform) : "";
+        const matchesSoldr = !!normSoldr && normW === normSoldr;
+        const matchesSoldrByName = wName === "soldr";
+        const matchesZccache = wName === "zccache" || wName === "zccache-server";
+        if (!matchesSoldr && !matchesSoldrByName && !matchesZccache) {
+            warnings.push(`setup-soldr: RUSTC_WRAPPER is set to ${w}, which is neither the ` +
+                `soldr binary nor a zccache binary. This installs a competing ` +
+                `wrapper in the slot soldr expects to own; compile work will ` +
+                `bypass zccache and no caching will occur. ` +
+                `Unset RUSTC_WRAPPER and let soldr manage the wrapper slot.`);
+        }
+    }
+    return warnings;
+}
+
+
+/***/ }),
+
+/***/ 317:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isPrimitiveBody = isPrimitiveBody;
+exports.isDuration = isDuration;
+exports.isValidUuid = isValidUuid;
+exports.flattenResponse = flattenResponse;
+/**
+ * A type guard for a primitive response body.
+ * @param value - Value to test
+ *
+ * @internal
+ */
+function isPrimitiveBody(value, mapperTypeName) {
+    return (mapperTypeName !== "Composite" &&
+        mapperTypeName !== "Dictionary" &&
+        (typeof value === "string" ||
+            typeof value === "number" ||
+            typeof value === "boolean" ||
+            mapperTypeName?.match(/^(Date|DateTime|DateTimeRfc1123|UnixTime|ByteArray|Base64Url)$/i) !==
+                null ||
+            value === undefined ||
+            value === null));
+}
+const validateISODuration = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
+/**
+ * Returns true if the given string is in ISO 8601 format.
+ * @param value - The value to be validated for ISO 8601 duration format.
+ * @internal
+ */
+function isDuration(value) {
+    return validateISODuration.test(value);
+}
+const validUuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i;
+/**
+ * Returns true if the provided uuid is valid.
+ *
+ * @param uuid - The uuid that needs to be validated.
+ *
+ * @internal
+ */
+function isValidUuid(uuid) {
+    return validUuidRegex.test(uuid);
+}
+/**
+ * Maps the response as follows:
+ * - wraps the response body if needed (typically if its type is primitive).
+ * - returns null if the combination of the headers and the body is empty.
+ * - otherwise, returns the combination of the headers and the body.
+ *
+ * @param responseObject - a representation of the parsed response
+ * @returns the response that will be returned to the user which can be null and/or wrapped
+ *
+ * @internal
+ */
+function handleNullableResponseAndWrappableBody(responseObject) {
+    const combinedHeadersAndBody = {
+        ...responseObject.headers,
+        ...responseObject.body,
+    };
+    if (responseObject.hasNullableType &&
+        Object.getOwnPropertyNames(combinedHeadersAndBody).length === 0) {
+        return responseObject.shouldWrapBody ? { body: null } : null;
+    }
+    else {
+        return responseObject.shouldWrapBody
+            ? {
+                ...responseObject.headers,
+                body: responseObject.body,
+            }
+            : combinedHeadersAndBody;
+    }
+}
+/**
+ * Take a `FullOperationResponse` and turn it into a flat
+ * response object to hand back to the consumer.
+ * @param fullResponse - The processed response from the operation request
+ * @param responseSpec - The response map from the OperationSpec
+ *
+ * @internal
+ */
+function flattenResponse(fullResponse, responseSpec) {
+    const parsedHeaders = fullResponse.parsedHeaders;
+    // head methods never have a body, but we return a boolean set to body property
+    // to indicate presence/absence of the resource
+    if (fullResponse.request.method === "HEAD") {
+        return {
+            ...parsedHeaders,
+            body: fullResponse.parsedBody,
+        };
+    }
+    const bodyMapper = responseSpec && responseSpec.bodyMapper;
+    const isNullable = Boolean(bodyMapper?.nullable);
+    const expectedBodyTypeName = bodyMapper?.type.name;
+    /** If the body is asked for, we look at the expected body type to handle it */
+    if (expectedBodyTypeName === "Stream") {
+        return {
+            ...parsedHeaders,
+            blobBody: fullResponse.blobBody,
+            readableStreamBody: fullResponse.readableStreamBody,
+        };
+    }
+    const modelProperties = (expectedBodyTypeName === "Composite" &&
+        bodyMapper.type.modelProperties) ||
+        {};
+    const isPageableResponse = Object.keys(modelProperties).some((k) => modelProperties[k].serializedName === "");
+    if (expectedBodyTypeName === "Sequence" || isPageableResponse) {
+        const arrayResponse = fullResponse.parsedBody ?? [];
+        for (const key of Object.keys(modelProperties)) {
+            if (modelProperties[key].serializedName) {
+                arrayResponse[key] = fullResponse.parsedBody?.[key];
+            }
+        }
+        if (parsedHeaders) {
+            for (const key of Object.keys(parsedHeaders)) {
+                arrayResponse[key] = parsedHeaders[key];
+            }
+        }
+        return isNullable &&
+            !fullResponse.parsedBody &&
+            !parsedHeaders &&
+            Object.getOwnPropertyNames(modelProperties).length === 0
+            ? null
+            : arrayResponse;
+    }
+    return handleNullableResponseAndWrappableBody({
+        body: fullResponse.parsedBody,
+        headers: parsedHeaders,
+        hasNullableType: isNullable,
+        shouldWrapBody: isPrimitiveBody(fullResponse.parsedBody, expectedBodyTypeName),
+    });
+}
+//# sourceMappingURL=utils.js.map
+
+/***/ }),
+
+/***/ 318:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.buildCreatePoller = void 0;
+const operation_js_1 = __nccwpck_require__(146);
+const constants_js_1 = __nccwpck_require__(63);
+const core_util_1 = __nccwpck_require__(15);
+const createStateProxy = () => ({
+    /**
+     * The state at this point is created to be of type OperationState<TResult>.
+     * It will be updated later to be of type TState when the
+     * customer-provided callback, `updateState`, is called during polling.
+     */
+    initState: (config) => ({ status: "running", config }),
+    setCanceled: (state) => (state.status = "canceled"),
+    setError: (state, error) => (state.error = error),
+    setResult: (state, result) => (state.result = result),
+    setRunning: (state) => (state.status = "running"),
+    setSucceeded: (state) => (state.status = "succeeded"),
+    setFailed: (state) => (state.status = "failed"),
+    getError: (state) => state.error,
+    getResult: (state) => state.result,
+    isCanceled: (state) => state.status === "canceled",
+    isFailed: (state) => state.status === "failed",
+    isRunning: (state) => state.status === "running",
+    isSucceeded: (state) => state.status === "succeeded",
+});
+/**
+ * Returns a poller factory.
+ */
+function buildCreatePoller(inputs) {
+    const { getOperationLocation, getStatusFromInitialResponse, getStatusFromPollResponse, isOperationError, getResourceLocation, getPollingInterval, getError, resolveOnUnsuccessful, } = inputs;
+    return async ({ init, poll }, options) => {
+        const { processResult, updateState, withOperationLocation: withOperationLocationCallback, intervalInMs = constants_js_1.POLL_INTERVAL_IN_MS, restoreFrom, } = options || {};
+        const stateProxy = createStateProxy();
+        const withOperationLocation = withOperationLocationCallback
+            ? (() => {
+                let called = false;
+                return (operationLocation, isUpdated) => {
+                    if (isUpdated)
+                        withOperationLocationCallback(operationLocation);
+                    else if (!called)
+                        withOperationLocationCallback(operationLocation);
+                    called = true;
+                };
+            })()
+            : undefined;
+        const state = restoreFrom
+            ? (0, operation_js_1.deserializeState)(restoreFrom)
+            : await (0, operation_js_1.initOperation)({
+                init,
+                stateProxy,
+                processResult,
+                getOperationStatus: getStatusFromInitialResponse,
+                withOperationLocation,
+                setErrorAsResult: !resolveOnUnsuccessful,
+            });
+        let resultPromise;
+        const abortController = new AbortController();
+        const handlers = new Map();
+        const handleProgressEvents = async () => handlers.forEach((h) => h(state));
+        const cancelErrMsg = "Operation was canceled";
+        let currentPollIntervalInMs = intervalInMs;
+        const poller = {
+            getOperationState: () => state,
+            getResult: () => state.result,
+            isDone: () => ["succeeded", "failed", "canceled"].includes(state.status),
+            isStopped: () => resultPromise === undefined,
+            stopPolling: () => {
+                abortController.abort();
+            },
+            toString: () => JSON.stringify({
+                state,
+            }),
+            onProgress: (callback) => {
+                const s = Symbol();
+                handlers.set(s, callback);
+                return () => handlers.delete(s);
+            },
+            pollUntilDone: (pollOptions) => (resultPromise !== null && resultPromise !== void 0 ? resultPromise : (resultPromise = (async () => {
+                const { abortSignal: inputAbortSignal } = pollOptions || {};
+                // In the future we can use AbortSignal.any() instead
+                function abortListener() {
+                    abortController.abort();
+                }
+                const abortSignal = abortController.signal;
+                if (inputAbortSignal === null || inputAbortSignal === void 0 ? void 0 : inputAbortSignal.aborted) {
+                    abortController.abort();
+                }
+                else if (!abortSignal.aborted) {
+                    inputAbortSignal === null || inputAbortSignal === void 0 ? void 0 : inputAbortSignal.addEventListener("abort", abortListener, { once: true });
+                }
+                try {
+                    if (!poller.isDone()) {
+                        await poller.poll({ abortSignal });
+                        while (!poller.isDone()) {
+                            await (0, core_util_1.delay)(currentPollIntervalInMs, { abortSignal });
+                            await poller.poll({ abortSignal });
+                        }
+                    }
+                }
+                finally {
+                    inputAbortSignal === null || inputAbortSignal === void 0 ? void 0 : inputAbortSignal.removeEventListener("abort", abortListener);
+                }
+                if (resolveOnUnsuccessful) {
+                    return poller.getResult();
+                }
+                else {
+                    switch (state.status) {
+                        case "succeeded":
+                            return poller.getResult();
+                        case "canceled":
+                            throw new Error(cancelErrMsg);
+                        case "failed":
+                            throw state.error;
+                        case "notStarted":
+                        case "running":
+                            throw new Error(`Polling completed without succeeding or failing`);
+                    }
+                }
+            })().finally(() => {
+                resultPromise = undefined;
+            }))),
+            async poll(pollOptions) {
+                if (resolveOnUnsuccessful) {
+                    if (poller.isDone())
+                        return;
+                }
+                else {
+                    switch (state.status) {
+                        case "succeeded":
+                            return;
+                        case "canceled":
+                            throw new Error(cancelErrMsg);
+                        case "failed":
+                            throw state.error;
+                    }
+                }
+                await (0, operation_js_1.pollOperation)({
+                    poll,
+                    state,
+                    stateProxy,
+                    getOperationLocation,
+                    isOperationError,
+                    withOperationLocation,
+                    getPollingInterval,
+                    getOperationStatus: getStatusFromPollResponse,
+                    getResourceLocation,
+                    processResult,
+                    getError,
+                    updateState,
+                    options: pollOptions,
+                    setDelay: (pollIntervalInMs) => {
+                        currentPollIntervalInMs = pollIntervalInMs;
+                    },
+                    setErrorAsResult: !resolveOnUnsuccessful,
+                });
+                await handleProgressEvents();
+                if (!resolveOnUnsuccessful) {
+                    switch (state.status) {
+                        case "canceled":
+                            throw new Error(cancelErrMsg);
+                        case "failed":
+                            throw state.error;
+                    }
+                }
+            },
+        };
+        return poller;
+    };
+}
+exports.buildCreatePoller = buildCreatePoller;
+//# sourceMappingURL=poller.js.map
+
+/***/ }),
+
+/***/ 319:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ServiceClient = void 0;
+const core_rest_pipeline_1 = __nccwpck_require__(107);
+const pipeline_js_1 = __nccwpck_require__(287);
+const utils_js_1 = __nccwpck_require__(317);
+const httpClientCache_js_1 = __nccwpck_require__(403);
+const operationHelpers_js_1 = __nccwpck_require__(439);
+const urlHelpers_js_1 = __nccwpck_require__(241);
+const interfaceHelpers_js_1 = __nccwpck_require__(404);
+const log_js_1 = __nccwpck_require__(489);
+/**
+ * Initializes a new instance of the ServiceClient.
+ */
+class ServiceClient {
+    /**
+     * If specified, this is the base URI that requests will be made against for this ServiceClient.
+     * If it is not specified, then all OperationSpecs must contain a baseUrl property.
+     */
+    _endpoint;
+    /**
+     * The default request content type for the service.
+     * Used if no requestContentType is present on an OperationSpec.
+     */
+    _requestContentType;
+    /**
+     * Set to true if the request is sent over HTTP instead of HTTPS
+     */
+    _allowInsecureConnection;
+    /**
+     * The HTTP client that will be used to send requests.
+     */
+    _httpClient;
+    /**
+     * The pipeline used by this client to make requests
+     */
+    pipeline;
+    /**
+     * The ServiceClient constructor
+     * @param options - The service client options that govern the behavior of the client.
+     */
+    constructor(options = {}) {
+        this._requestContentType = options.requestContentType;
+        this._endpoint = options.endpoint ?? options.baseUri;
+        if (options.baseUri) {
+            log_js_1.logger.warning("The baseUri option for SDK Clients has been deprecated, please use endpoint instead.");
+        }
+        this._allowInsecureConnection = options.allowInsecureConnection;
+        this._httpClient = options.httpClient || (0, httpClientCache_js_1.getCachedDefaultHttpClient)();
+        this.pipeline = options.pipeline || createDefaultPipeline(options);
+        if (options.additionalPolicies?.length) {
+            for (const { policy, position } of options.additionalPolicies) {
+                // Sign happens after Retry and is commonly needed to occur
+                // before policies that intercept post-retry.
+                const afterPhase = position === "perRetry" ? "Sign" : undefined;
+                this.pipeline.addPolicy(policy, {
+                    afterPhase,
+                });
+            }
+        }
+    }
+    /**
+     * Send the provided httpRequest.
+     */
+    async sendRequest(request) {
+        return this.pipeline.sendRequest(this._httpClient, request);
+    }
+    /**
+     * Send an HTTP request that is populated using the provided OperationSpec.
+     * @typeParam T - The typed result of the request, based on the OperationSpec.
+     * @param operationArguments - The arguments that the HTTP request's templated values will be populated from.
+     * @param operationSpec - The OperationSpec to use to populate the httpRequest.
+     */
+    async sendOperationRequest(operationArguments, operationSpec) {
+        const endpoint = operationSpec.baseUrl || this._endpoint;
+        if (!endpoint) {
+            throw new Error("If operationSpec.baseUrl is not specified, then the ServiceClient must have a endpoint string property that contains the base URL to use.");
+        }
+        // Templatized URLs sometimes reference properties on the ServiceClient child class,
+        // so we have to pass `this` below in order to search these properties if they're
+        // not part of OperationArguments
+        const url = (0, urlHelpers_js_1.getRequestUrl)(endpoint, operationSpec, operationArguments, this);
+        const request = (0, core_rest_pipeline_1.createPipelineRequest)({
+            url,
+        });
+        request.method = operationSpec.httpMethod;
+        const operationInfo = (0, operationHelpers_js_1.getOperationRequestInfo)(request);
+        operationInfo.operationSpec = operationSpec;
+        operationInfo.operationArguments = operationArguments;
+        const contentType = operationSpec.contentType || this._requestContentType;
+        if (contentType && operationSpec.requestBody) {
+            request.headers.set("Content-Type", contentType);
+        }
+        const options = operationArguments.options;
+        if (options) {
+            const requestOptions = options.requestOptions;
+            if (requestOptions) {
+                if (requestOptions.timeout) {
+                    request.timeout = requestOptions.timeout;
+                }
+                if (requestOptions.onUploadProgress) {
+                    request.onUploadProgress = requestOptions.onUploadProgress;
+                }
+                if (requestOptions.onDownloadProgress) {
+                    request.onDownloadProgress = requestOptions.onDownloadProgress;
+                }
+                if (requestOptions.shouldDeserialize !== undefined) {
+                    operationInfo.shouldDeserialize = requestOptions.shouldDeserialize;
+                }
+                if (requestOptions.allowInsecureConnection) {
+                    request.allowInsecureConnection = true;
+                }
+            }
+            if (options.abortSignal) {
+                request.abortSignal = options.abortSignal;
+            }
+            if (options.tracingOptions) {
+                request.tracingOptions = options.tracingOptions;
+            }
+        }
+        if (this._allowInsecureConnection) {
+            request.allowInsecureConnection = true;
+        }
+        if (request.streamResponseStatusCodes === undefined) {
+            request.streamResponseStatusCodes = (0, interfaceHelpers_js_1.getStreamingResponseStatusCodes)(operationSpec);
+        }
+        try {
+            const rawResponse = await this.sendRequest(request);
+            const flatResponse = (0, utils_js_1.flattenResponse)(rawResponse, operationSpec.responses[rawResponse.status]);
+            if (options?.onResponse) {
+                options.onResponse(rawResponse, flatResponse);
+            }
+            return flatResponse;
+        }
+        catch (error) {
+            if (typeof error === "object" && error?.response) {
+                const rawResponse = error.response;
+                const flatResponse = (0, utils_js_1.flattenResponse)(rawResponse, operationSpec.responses[error.statusCode] || operationSpec.responses["default"]);
+                error.details = flatResponse;
+                if (options?.onResponse) {
+                    options.onResponse(rawResponse, flatResponse, error);
+                }
+            }
+            throw error;
+        }
+    }
+}
+exports.ServiceClient = ServiceClient;
+function createDefaultPipeline(options) {
+    const credentialScopes = getCredentialScopes(options);
+    const credentialOptions = options.credential && credentialScopes
+        ? { credentialScopes, credential: options.credential }
+        : undefined;
+    return (0, pipeline_js_1.createClientPipeline)({
+        ...options,
+        credentialOptions,
+    });
+}
+function getCredentialScopes(options) {
+    if (options.credentialScopes) {
+        return options.credentialScopes;
+    }
+    if (options.endpoint) {
+        return `${options.endpoint}/.default`;
+    }
+    if (options.baseUri) {
+        return `${options.baseUri}/.default`;
+    }
+    if (options.credential && !options.credentialScopes) {
+        throw new Error(`When using credentials, the ServiceClientOptions must contain either a endpoint or a credentialScopes. Unable to create a bearerTokenAuthenticationPolicy`);
+    }
+    return undefined;
+}
+//# sourceMappingURL=serviceClient.js.map
+
+/***/ }),
+
+/***/ 320:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var createPipelineFromOptions_exports = {};
+__export(createPipelineFromOptions_exports, {
+  createPipelineFromOptions: () => createPipelineFromOptions
+});
+module.exports = __toCommonJS(createPipelineFromOptions_exports);
+var import_logPolicy = __nccwpck_require__(108);
+var import_pipeline = __nccwpck_require__(533);
+var import_redirectPolicy = __nccwpck_require__(322);
+var import_userAgentPolicy = __nccwpck_require__(366);
+var import_decompressResponsePolicy = __nccwpck_require__(361);
+var import_defaultRetryPolicy = __nccwpck_require__(330);
+var import_formDataPolicy = __nccwpck_require__(345);
+var import_checkEnvironment = __nccwpck_require__(445);
+var import_proxyPolicy = __nccwpck_require__(41);
+var import_agentPolicy = __nccwpck_require__(472);
+var import_tlsPolicy = __nccwpck_require__(225);
+var import_multipartPolicy = __nccwpck_require__(175);
+function createPipelineFromOptions(options) {
+  const pipeline = (0, import_pipeline.createEmptyPipeline)();
+  if (import_checkEnvironment.isNodeLike) {
+    if (options.agent) {
+      pipeline.addPolicy((0, import_agentPolicy.agentPolicy)(options.agent));
+    }
+    if (options.tlsOptions) {
+      pipeline.addPolicy((0, import_tlsPolicy.tlsPolicy)(options.tlsOptions));
+    }
+    pipeline.addPolicy((0, import_proxyPolicy.proxyPolicy)(options.proxyOptions));
+    pipeline.addPolicy((0, import_decompressResponsePolicy.decompressResponsePolicy)());
+  }
+  pipeline.addPolicy((0, import_formDataPolicy.formDataPolicy)(), { beforePolicies: [import_multipartPolicy.multipartPolicyName] });
+  pipeline.addPolicy((0, import_userAgentPolicy.userAgentPolicy)(options.userAgentOptions));
+  pipeline.addPolicy((0, import_multipartPolicy.multipartPolicy)(), { afterPhase: "Deserialize" });
+  pipeline.addPolicy((0, import_defaultRetryPolicy.defaultRetryPolicy)(options.retryOptions), { phase: "Retry" });
+  if (import_checkEnvironment.isNodeLike) {
+    pipeline.addPolicy((0, import_redirectPolicy.redirectPolicy)(options.redirectOptions), { afterPhase: "Retry" });
+  }
+  pipeline.addPolicy((0, import_logPolicy.logPolicy)(options.loggingOptions), { afterPhase: "Sign" });
+  return pipeline;
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=createPipelineFromOptions.js.map
+
+
+/***/ }),
+
+/***/ 321:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=pageBlob.js.map
+
+/***/ }),
+
+/***/ 322:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var redirectPolicy_exports = {};
+__export(redirectPolicy_exports, {
+  redirectPolicy: () => redirectPolicy,
+  redirectPolicyName: () => redirectPolicyName
+});
+module.exports = __toCommonJS(redirectPolicy_exports);
+var import_log = __nccwpck_require__(157);
+const redirectPolicyName = "redirectPolicy";
+const allowedRedirect = ["GET", "HEAD"];
+function redirectPolicy(options = {}) {
+  const { maxRetries = 20, allowCrossOriginRedirects = false } = options;
+  return {
+    name: redirectPolicyName,
+    async sendRequest(request, next) {
+      const response = await next(request);
+      return handleRedirect(next, response, maxRetries, allowCrossOriginRedirects);
+    }
+  };
+}
+async function handleRedirect(next, response, maxRetries, allowCrossOriginRedirects, currentRetries = 0) {
+  const { request, status, headers } = response;
+  const locationHeader = headers.get("location");
+  if (locationHeader && (status === 300 || status === 301 && allowedRedirect.includes(request.method) || status === 302 && allowedRedirect.includes(request.method) || status === 303 && request.method === "POST" || status === 307) && currentRetries < maxRetries) {
+    const url = new URL(locationHeader, request.url);
+    if (!allowCrossOriginRedirects) {
+      const originalUrl = new URL(request.url);
+      if (url.origin !== originalUrl.origin) {
+        import_log.logger.verbose(
+          `Skipping cross-origin redirect from ${originalUrl.origin} to ${url.origin}.`
+        );
+        return response;
+      }
+    }
+    request.url = url.toString();
+    if (status === 303) {
+      request.method = "GET";
+      request.headers.delete("Content-Length");
+      delete request.body;
+    }
+    request.headers.delete("Authorization");
+    const res = await next(request);
+    return handleRedirect(next, res, maxRetries, allowCrossOriginRedirects, currentRetries + 1);
+  }
+  return response;
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+//# sourceMappingURL=redirectPolicy.js.map
+
+
+/***/ }),
+
+/***/ 323:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("worker_threads");
+
+/***/ }),
+
+/***/ 324:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.createHttpPoller = void 0;
+const operation_js_1 = __nccwpck_require__(54);
+const poller_js_1 = __nccwpck_require__(318);
+/**
+ * Creates a poller that can be used to poll a long-running operation.
+ * @param lro - Description of the long-running operation
+ * @param options - options to configure the poller
+ * @returns an initialized poller
+ */
+async function createHttpPoller(lro, options) {
+    const { resourceLocationConfig, intervalInMs, processResult, restoreFrom, updateState, withOperationLocation, resolveOnUnsuccessful = false, } = options || {};
+    return (0, poller_js_1.buildCreatePoller)({
+        getStatusFromInitialResponse: operation_js_1.getStatusFromInitialResponse,
+        getStatusFromPollResponse: operation_js_1.getOperationStatus,
+        isOperationError: operation_js_1.isOperationError,
+        getOperationLocation: operation_js_1.getOperationLocation,
+        getResourceLocation: operation_js_1.getResourceLocation,
+        getPollingInterval: operation_js_1.parseRetryAfter,
+        getError: operation_js_1.getErrorFromResponse,
+        resolveOnUnsuccessful,
+    })({
+        init: async () => {
+            const response = await lro.sendInitialRequest();
+            const config = (0, operation_js_1.inferLroMode)({
+                rawResponse: response.rawResponse,
+                requestPath: lro.requestPath,
+                requestMethod: lro.requestMethod,
+                resourceLocationConfig,
+            });
+            return Object.assign({ response, operationLocation: config === null || config === void 0 ? void 0 : config.operationLocation, resourceLocation: config === null || config === void 0 ? void 0 : config.resourceLocation }, ((config === null || config === void 0 ? void 0 : config.mode) ? { metadata: { mode: config.mode } } : {}));
+        },
+        poll: lro.sendPollRequest,
+    }, {
+        intervalInMs,
+        withOperationLocation,
+        restoreFrom,
+        updateState,
+        processResult: processResult
+            ? ({ flatResponse }, state) => processResult(flatResponse, state)
+            : ({ flatResponse }) => flatResponse,
+    });
+}
+exports.createHttpPoller = createHttpPoller;
+//# sourceMappingURL=poller.js.map
+
+/***/ }),
+
+/***/ 325:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("perf_hooks");
+
+/***/ }),
+
+/***/ 326:
+/***/ ((module) => {
+
+(()=>{"use strict";var t={d:(e,n)=>{for(var i in n)t.o(n,i)&&!t.o(e,i)&&Object.defineProperty(e,i,{enumerable:!0,get:n[i]})},o:(t,e)=>Object.prototype.hasOwnProperty.call(t,e),r:t=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})}},e={};t.r(e),t.d(e,{XMLBuilder:()=>ie,XMLParser:()=>Lt,XMLValidator:()=>se});const n=":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD",i=new RegExp("^["+n+"]["+n+"\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*$");function s(t,e){const n=[];let i=e.exec(t);for(;i;){const s=[];s.startIndex=e.lastIndex-i[0].length;const r=i.length;for(let t=0;t<r;t++)s.push(i[t]);n.push(s),i=e.exec(t)}return n}const r=function(t){return!(null==i.exec(t))},o=["hasOwnProperty","toString","valueOf","__defineGetter__","__defineSetter__","__lookupGetter__","__lookupSetter__"],a=["__proto__","constructor","prototype"],h={allowBooleanAttributes:!1,unpairedTags:[]};function l(t,e){e=Object.assign({},h,e);const n=[];let i=!1,s=!1;"\ufeff"===t[0]&&(t=t.substr(1));for(let r=0;r<t.length;r++)if("<"===t[r]&&"?"===t[r+1]){if(r+=2,r=p(t,r),r.err)return r}else{if("<"!==t[r]){if(u(t[r]))continue;return b("InvalidChar","char '"+t[r]+"' is not expected.",w(t,r))}{let o=r;if(r++,"!"===t[r]){r=c(t,r);continue}{let a=!1;"/"===t[r]&&(a=!0,r++);let h="";for(;r<t.length&&">"!==t[r]&&" "!==t[r]&&"\t"!==t[r]&&"\n"!==t[r]&&"\r"!==t[r];r++)h+=t[r];if(h=h.trim(),"/"===h[h.length-1]&&(h=h.substring(0,h.length-1),r--),!E(h)){let e;return e=0===h.trim().length?"Invalid space after '<'.":"Tag '"+h+"' is an invalid name.",b("InvalidTag",e,w(t,r))}const l=g(t,r);if(!1===l)return b("InvalidAttr","Attributes for '"+h+"' have open quote.",w(t,r));let d=l.value;if(r=l.index,"/"===d[d.length-1]){const n=r-d.length;d=d.substring(0,d.length-1);const s=x(d,e);if(!0!==s)return b(s.err.code,s.err.msg,w(t,n+s.err.line));i=!0}else if(a){if(!l.tagClosed)return b("InvalidTag","Closing tag '"+h+"' doesn't have proper closing.",w(t,r));if(d.trim().length>0)return b("InvalidTag","Closing tag '"+h+"' can't have attributes or invalid starting.",w(t,o));if(0===n.length)return b("InvalidTag","Closing tag '"+h+"' has not been opened.",w(t,o));{const e=n.pop();if(h!==e.tagName){let n=w(t,e.tagStartPos);return b("InvalidTag","Expected closing tag '"+e.tagName+"' (opened in line "+n.line+", col "+n.col+") instead of closing tag '"+h+"'.",w(t,o))}0==n.length&&(s=!0)}}else{const a=x(d,e);if(!0!==a)return b(a.err.code,a.err.msg,w(t,r-d.length+a.err.line));if(!0===s)return b("InvalidXml","Multiple possible root nodes found.",w(t,r));-1!==e.unpairedTags.indexOf(h)||n.push({tagName:h,tagStartPos:o}),i=!0}for(r++;r<t.length;r++)if("<"===t[r]){if("!"===t[r+1]){r++,r=c(t,r);continue}if("?"!==t[r+1])break;if(r=p(t,++r),r.err)return r}else if("&"===t[r]){const e=N(t,r);if(-1==e)return b("InvalidChar","char '&' is not expected.",w(t,r));r=e}else if(!0===s&&!u(t[r]))return b("InvalidXml","Extra text at the end",w(t,r));"<"===t[r]&&r--}}}return i?1==n.length?b("InvalidTag","Unclosed tag '"+n[0].tagName+"'.",w(t,n[0].tagStartPos)):!(n.length>0)||b("InvalidXml","Invalid '"+JSON.stringify(n.map(t=>t.tagName),null,4).replace(/\r?\n/g,"")+"' found.",{line:1,col:1}):b("InvalidXml","Start tag expected.",1)}function u(t){return" "===t||"\t"===t||"\n"===t||"\r"===t}function p(t,e){const n=e;for(;e<t.length;e++)if("?"==t[e]||" "==t[e]){const i=t.substr(n,e-n);if(e>5&&"xml"===i)return b("InvalidXml","XML declaration allowed only at the start of the document.",w(t,e));if("?"==t[e]&&">"==t[e+1]){e++;break}continue}return e}function c(t,e){if(t.length>e+5&&"-"===t[e+1]&&"-"===t[e+2]){for(e+=3;e<t.length;e++)if("-"===t[e]&&"-"===t[e+1]&&">"===t[e+2]){e+=2;break}}else if(t.length>e+8&&"D"===t[e+1]&&"O"===t[e+2]&&"C"===t[e+3]&&"T"===t[e+4]&&"Y"===t[e+5]&&"P"===t[e+6]&&"E"===t[e+7]){let n=1;for(e+=8;e<t.length;e++)if("<"===t[e])n++;else if(">"===t[e]&&(n--,0===n))break}else if(t.length>e+9&&"["===t[e+1]&&"C"===t[e+2]&&"D"===t[e+3]&&"A"===t[e+4]&&"T"===t[e+5]&&"A"===t[e+6]&&"["===t[e+7])for(e+=8;e<t.length;e++)if("]"===t[e]&&"]"===t[e+1]&&">"===t[e+2]){e+=2;break}return e}const d='"',f="'";function g(t,e){let n="",i="",s=!1;for(;e<t.length;e++){if(t[e]===d||t[e]===f)""===i?i=t[e]:i!==t[e]||(i="");else if(">"===t[e]&&""===i){s=!0;break}n+=t[e]}return""===i&&{value:n,index:e,tagClosed:s}}const m=new RegExp("(\\s*)([^\\s=]+)(\\s*=)?(\\s*(['\"])(([\\s\\S])*?)\\5)?","g");function x(t,e){const n=s(t,m),i={};for(let t=0;t<n.length;t++){if(0===n[t][1].length)return b("InvalidAttr","Attribute '"+n[t][2]+"' has no space in starting.",v(n[t]));if(void 0!==n[t][3]&&void 0===n[t][4])return b("InvalidAttr","Attribute '"+n[t][2]+"' is without value.",v(n[t]));if(void 0===n[t][3]&&!e.allowBooleanAttributes)return b("InvalidAttr","boolean attribute '"+n[t][2]+"' is not allowed.",v(n[t]));const s=n[t][2];if(!y(s))return b("InvalidAttr","Attribute '"+s+"' is an invalid name.",v(n[t]));if(Object.prototype.hasOwnProperty.call(i,s))return b("InvalidAttr","Attribute '"+s+"' is repeated.",v(n[t]));i[s]=1}return!0}function N(t,e){if(";"===t[++e])return-1;if("#"===t[e])return function(t,e){let n=/\d/;for("x"===t[e]&&(e++,n=/[\da-fA-F]/);e<t.length;e++){if(";"===t[e])return e;if(!t[e].match(n))break}return-1}(t,++e);let n=0;for(;e<t.length;e++,n++)if(!(t[e].match(/\w/)&&n<20)){if(";"===t[e])break;return-1}return e}function b(t,e,n){return{err:{code:t,msg:e,line:n.line||n,col:n.col}}}function y(t){return r(t)}function E(t){return r(t)}function w(t,e){const n=t.substring(0,e).split(/\r?\n/);return{line:n.length,col:n[n.length-1].length+1}}function v(t){return t.startIndex+t[1].length}const S=t=>o.includes(t)?"__"+t:t,_={preserveOrder:!1,attributeNamePrefix:"@_",attributesGroupName:!1,textNodeName:"#text",ignoreAttributes:!0,removeNSPrefix:!1,allowBooleanAttributes:!1,parseTagValue:!0,parseAttributeValue:!1,trimValues:!0,cdataPropName:!1,numberParseOptions:{hex:!0,leadingZeros:!0,eNotation:!0},tagValueProcessor:function(t,e){return e},attributeValueProcessor:function(t,e){return e},stopNodes:[],alwaysCreateTextNode:!1,isArray:()=>!1,commentPropName:!1,unpairedTags:[],processEntities:!0,htmlEntities:!1,entityDecoder:null,ignoreDeclaration:!1,ignorePiTags:!1,transformTagName:!1,transformAttributeName:!1,updateTag:function(t,e,n){return t},captureMetaData:!1,maxNestedTags:100,strictReservedNames:!0,jPath:!0,onDangerousProperty:S};function A(t,e){if("string"!=typeof t)return;const n=t.toLowerCase();if(o.some(t=>n===t.toLowerCase()))throw new Error(`[SECURITY] Invalid ${e}: "${t}" is a reserved JavaScript keyword that could cause prototype pollution`);if(a.some(t=>n===t.toLowerCase()))throw new Error(`[SECURITY] Invalid ${e}: "${t}" is a reserved JavaScript keyword that could cause prototype pollution`)}function T(t,e){return"boolean"==typeof t?{enabled:t,maxEntitySize:1e4,maxExpansionDepth:1e4,maxTotalExpansions:1/0,maxExpandedLength:1e5,maxEntityCount:1e3,allowedTags:null,tagFilter:null,appliesTo:"all"}:"object"==typeof t&&null!==t?{enabled:!1!==t.enabled,maxEntitySize:Math.max(1,t.maxEntitySize??1e4),maxExpansionDepth:Math.max(1,t.maxExpansionDepth??1e4),maxTotalExpansions:Math.max(1,t.maxTotalExpansions??1/0),maxExpandedLength:Math.max(1,t.maxExpandedLength??1e5),maxEntityCount:Math.max(1,t.maxEntityCount??1e3),allowedTags:t.allowedTags??null,tagFilter:t.tagFilter??null,appliesTo:t.appliesTo??"all"}:T(!0)}const C=function(t){const e=Object.assign({},_,t),n=[{value:e.attributeNamePrefix,name:"attributeNamePrefix"},{value:e.attributesGroupName,name:"attributesGroupName"},{value:e.textNodeName,name:"textNodeName"},{value:e.cdataPropName,name:"cdataPropName"},{value:e.commentPropName,name:"commentPropName"}];for(const{value:t,name:e}of n)t&&A(t,e);return null===e.onDangerousProperty&&(e.onDangerousProperty=S),e.processEntities=T(e.processEntities,e.htmlEntities),e.unpairedTagsSet=new Set(e.unpairedTags),e.stopNodes&&Array.isArray(e.stopNodes)&&(e.stopNodes=e.stopNodes.map(t=>"string"==typeof t&&t.startsWith("*.")?".."+t.substring(2):t)),e};let P;P="function"!=typeof Symbol?"@@xmlMetadata":Symbol("XML Node Metadata");class ${constructor(t){this.tagname=t,this.child=[],this[":@"]=Object.create(null)}add(t,e){"__proto__"===t&&(t="#__proto__"),this.child.push({[t]:e})}addChild(t,e){"__proto__"===t.tagname&&(t.tagname="#__proto__"),t[":@"]&&Object.keys(t[":@"]).length>0?this.child.push({[t.tagname]:t.child,":@":t[":@"]}):this.child.push({[t.tagname]:t.child}),void 0!==e&&(this.child[this.child.length-1][P]={startIndex:e})}static getMetaDataSymbol(){return P}}const O=":A-Za-z_À-ÖØ-öø-˿Ͱ-ͽͿ-҆҈-῿‌-‍⁰-↏Ⰰ-⿯、-퟿豈-﷏ﷰ-�",I=":A-Za-z_À-˿Ͱ-ͽͿ-҆҈-῿‌-‍⁰-↏Ⰰ-⿯、-퟿豈-﷏ﷰ-�𐀀-󯿿",V=I+"\\-\\.\\d·̀-ͯ҇‿-⁀",D=(t,e,n="")=>{const i=`[${t.replace(":","")}][${e.replace(":","")}]*`;return{name:new RegExp(`^[${t}][${e}]*$`,n),ncName:new RegExp(`^${i}$`,n),qName:new RegExp(`^${i}(?::${i})?$`,n),nmToken:new RegExp(`^[${e}]+$`,n),nmTokens:new RegExp(`^[${e}]+(?:\\s+[${e}]+)*$`,n)}},M=D(O,O+"\\-\\.\\d·̀-ͯ‿-⁀"),j=D(I,V,"u"),L=(t,{xmlVersion:e="1.0"}={})=>((t="1.0")=>"1.1"===t?j:M)(e).qName.test(t);class k{constructor(t,e){this.suppressValidationErr=!t,this.options=t,this.xmlVersion=e||1}setXmlVersion(t=1){this.xmlVersion=t}readDocType(t,e){const n=Object.create(null);let i=0;if("O"!==t[e+3]||"C"!==t[e+4]||"T"!==t[e+5]||"Y"!==t[e+6]||"P"!==t[e+7]||"E"!==t[e+8])throw new Error("Invalid Tag instead of DOCTYPE");{e+=9;let s=1,r=!1,o=!1,a="";for(;e<t.length;e++)if("<"!==t[e]||o)if(">"===t[e]){if(o?"-"===t[e-1]&&"-"===t[e-2]&&(o=!1,s--):s--,0===s)break}else"["===t[e]?r=!0:a+=t[e];else{if(r&&F(t,"!ENTITY",e)){let s,r;if(e+=7,[s,r,e]=this.readEntityExp(t,e+1,this.suppressValidationErr),-1===r.indexOf("&")){if(!1!==this.options.enabled&&null!=this.options.maxEntityCount&&i>=this.options.maxEntityCount)throw new Error(`Entity count (${i+1}) exceeds maximum allowed (${this.options.maxEntityCount})`);n[s]=r,i++}}else if(r&&F(t,"!ELEMENT",e)){e+=8;const{index:n}=this.readElementExp(t,e+1);e=n}else if(r&&F(t,"!ATTLIST",e))e+=8;else if(r&&F(t,"!NOTATION",e)){e+=9;const{index:n}=this.readNotationExp(t,e+1,this.suppressValidationErr);e=n}else{if(!F(t,"!--",e))throw new Error("Invalid DOCTYPE");o=!0}s++,a=""}if(0!==s)throw new Error("Unclosed DOCTYPE")}return{entities:n,i:e}}readEntityExp(t,e){const n=e=R(t,e);for(;e<t.length&&!/\s/.test(t[e])&&'"'!==t[e]&&"'"!==t[e];)e++;let i=t.substring(n,e);if(G(i,{xmlVersion:this.xmlVersion}),e=R(t,e),!this.suppressValidationErr){if("SYSTEM"===t.substring(e,e+6).toUpperCase())throw new Error("External entities are not supported");if("%"===t[e])throw new Error("Parameter entities are not supported")}let s="";if([e,s]=this.readIdentifierVal(t,e,"entity"),!1!==this.options.enabled&&null!=this.options.maxEntitySize&&s.length>this.options.maxEntitySize)throw new Error(`Entity "${i}" size (${s.length}) exceeds maximum allowed size (${this.options.maxEntitySize})`);return[i,s,--e]}readNotationExp(t,e){const n=e=R(t,e);for(;e<t.length&&!/\s/.test(t[e]);)e++;let i=t.substring(n,e);!this.suppressValidationErr&&G(i,{xmlVersion:this.xmlVersion}),e=R(t,e);const s=t.substring(e,e+6).toUpperCase();if(!this.suppressValidationErr&&"SYSTEM"!==s&&"PUBLIC"!==s)throw new Error(`Expected SYSTEM or PUBLIC, found "${s}"`);e+=s.length,e=R(t,e);let r=null,o=null;if("PUBLIC"===s)[e,r]=this.readIdentifierVal(t,e,"publicIdentifier"),'"'!==t[e=R(t,e)]&&"'"!==t[e]||([e,o]=this.readIdentifierVal(t,e,"systemIdentifier"));else if("SYSTEM"===s&&([e,o]=this.readIdentifierVal(t,e,"systemIdentifier"),!this.suppressValidationErr&&!o))throw new Error("Missing mandatory system identifier for SYSTEM notation");return{notationName:i,publicIdentifier:r,systemIdentifier:o,index:--e}}readIdentifierVal(t,e,n){let i="";const s=t[e];if('"'!==s&&"'"!==s)throw new Error(`Expected quoted string, found "${s}"`);const r=++e;for(;e<t.length&&t[e]!==s;)e++;if(i=t.substring(r,e),t[e]!==s)throw new Error(`Unterminated ${n} value`);return[++e,i]}readElementExp(t,e){const n=e=R(t,e);for(;e<t.length&&!/\s/.test(t[e]);)e++;let i=t.substring(n,e);if(!this.suppressValidationErr&&!L(i,{xmlVersion:this.xmlVersion}))throw new Error(`Invalid element name: "${i}"`);let s="";if("E"===t[e=R(t,e)]&&F(t,"MPTY",e))e+=4;else if("A"===t[e]&&F(t,"NY",e))e+=2;else if("("===t[e]){const n=++e;for(;e<t.length&&")"!==t[e];)e++;if(s=t.substring(n,e),")"!==t[e])throw new Error("Unterminated content model")}else if(!this.suppressValidationErr)throw new Error(`Invalid Element Expression, found "${t[e]}"`);return{elementName:i,contentModel:s.trim(),index:e}}readAttlistExp(t,e){let n=e=R(t,e);for(;e<t.length&&!/\s/.test(t[e]);)e++;let i=t.substring(n,e);for(G(i,{xmlVersion:this.xmlVersion}),n=e=R(t,e);e<t.length&&!/\s/.test(t[e]);)e++;let s=t.substring(n,e);if(!G(s,{xmlVersion:this.xmlVersion}))throw new Error(`Invalid attribute name: "${s}"`);e=R(t,e);let r="";if("NOTATION"===t.substring(e,e+8).toUpperCase()){if(r="NOTATION","("!==t[e=R(t,e+=8)])throw new Error(`Expected '(', found "${t[e]}"`);e++;let n=[];for(;e<t.length&&")"!==t[e];){const i=e;for(;e<t.length&&"|"!==t[e]&&")"!==t[e];)e++;let s=t.substring(i,e);if(s=s.trim(),!G(s,{xmlVersion:this.xmlVersion}))throw new Error(`Invalid notation name: "${s}"`);n.push(s),"|"===t[e]&&(e++,e=R(t,e))}if(")"!==t[e])throw new Error("Unterminated list of notations");e++,r+=" ("+n.join("|")+")"}else{const n=e;for(;e<t.length&&!/\s/.test(t[e]);)e++;r+=t.substring(n,e);const i=["CDATA","ID","IDREF","IDREFS","ENTITY","ENTITIES","NMTOKEN","NMTOKENS"];if(!this.suppressValidationErr&&!i.includes(r.toUpperCase()))throw new Error(`Invalid attribute type: "${r}"`)}e=R(t,e);let o="";return"#REQUIRED"===t.substring(e,e+8).toUpperCase()?(o="#REQUIRED",e+=8):"#IMPLIED"===t.substring(e,e+7).toUpperCase()?(o="#IMPLIED",e+=7):[e,o]=this.readIdentifierVal(t,e,"ATTLIST"),{elementName:i,attributeName:s,attributeType:r,defaultValue:o,index:e}}}const R=(t,e)=>{for(;e<t.length&&/\s/.test(t[e]);)e++;return e};function F(t,e,n){for(let i=0;i<e.length;i++)if(e[i]!==t[n+i+1])return!1;return!0}function G(t,e){if(L(t,{xmlVersion:e}))return t;throw new Error(`Invalid entity name ${t}`)}const U=/^[-+]?0x[a-fA-F0-9]+$/,B=/^0b[01]+$/,W=/^0o[0-7]+$/,z=/^([\-\+])?(0*)([0-9]*(\.[0-9]*)?)$/,X={hex:!0,binary:!1,octal:!1,leadingZeros:!0,decimalPoint:".",eNotation:!0,infinity:"original"};const Y=/^([-+])?(0*)(\d*(\.\d*)?[eE][-\+]?\d+)$/;function q(t,e){const n=t.trim();if(2!==e&&8!==e||(t=n.substring(2)),parseInt)return parseInt(t,e);if(Number.parseInt)return Number.parseInt(t,e);if(window&&window.parseInt)return window.parseInt(t,e);throw new Error("parseInt, Number.parseInt, window.parseInt are not supported")}class Z{constructor(t){this._matcher=t}get separator(){return this._matcher.separator}getCurrentTag(){const t=this._matcher.path;return t.length>0?t[t.length-1].tag:void 0}getCurrentNamespace(){const t=this._matcher.path;return t.length>0?t[t.length-1].namespace:void 0}getAttrValue(t){const e=this._matcher.path;if(0!==e.length)return e[e.length-1].values?.[t]}hasAttr(t){const e=this._matcher.path;if(0===e.length)return!1;const n=e[e.length-1];return void 0!==n.values&&t in n.values}getPosition(){const t=this._matcher.path;return 0===t.length?-1:t[t.length-1].position??0}getCounter(){const t=this._matcher.path;return 0===t.length?-1:t[t.length-1].counter??0}getIndex(){return this.getPosition()}getDepth(){return this._matcher.path.length}toString(t,e=!0){return this._matcher.toString(t,e)}toArray(){return this._matcher.path.map(t=>t.tag)}matches(t){return this._matcher.matches(t)}matchesAny(t){return t.matchesAny(this._matcher)}}class J{constructor(t={}){this.separator=t.separator||".",this.path=[],this.siblingStacks=[],this._pathStringCache=null,this._view=new Z(this)}push(t,e=null,n=null){this._pathStringCache=null,this.path.length>0&&(this.path[this.path.length-1].values=void 0);const i=this.path.length;this.siblingStacks[i]||(this.siblingStacks[i]=new Map);const s=this.siblingStacks[i],r=n?`${n}:${t}`:t,o=s.get(r)||0;let a=0;for(const t of s.values())a+=t;s.set(r,o+1);const h={tag:t,position:a,counter:o};null!=n&&(h.namespace=n),null!=e&&(h.values=e),this.path.push(h)}pop(){if(0===this.path.length)return;this._pathStringCache=null;const t=this.path.pop();return this.siblingStacks.length>this.path.length+1&&(this.siblingStacks.length=this.path.length+1),t}updateCurrent(t){if(this.path.length>0){const e=this.path[this.path.length-1];null!=t&&(e.values=t)}}getCurrentTag(){return this.path.length>0?this.path[this.path.length-1].tag:void 0}getCurrentNamespace(){return this.path.length>0?this.path[this.path.length-1].namespace:void 0}getAttrValue(t){if(0!==this.path.length)return this.path[this.path.length-1].values?.[t]}hasAttr(t){if(0===this.path.length)return!1;const e=this.path[this.path.length-1];return void 0!==e.values&&t in e.values}getPosition(){return 0===this.path.length?-1:this.path[this.path.length-1].position??0}getCounter(){return 0===this.path.length?-1:this.path[this.path.length-1].counter??0}getIndex(){return this.getPosition()}getDepth(){return this.path.length}toString(t,e=!0){const n=t||this.separator;if(n===this.separator&&!0===e){if(null!==this._pathStringCache)return this._pathStringCache;const t=this.path.map(t=>t.namespace?`${t.namespace}:${t.tag}`:t.tag).join(n);return this._pathStringCache=t,t}return this.path.map(t=>e&&t.namespace?`${t.namespace}:${t.tag}`:t.tag).join(n)}toArray(){return this.path.map(t=>t.tag)}reset(){this._pathStringCache=null,this.path=[],this.siblingStacks=[]}matches(t){const e=t.segments;return 0!==e.length&&(t.hasDeepWildcard()?this._matchWithDeepWildcard(e):this._matchSimple(e))}_matchSimple(t){if(this.path.length!==t.length)return!1;for(let e=0;e<t.length;e++)if(!this._matchSegment(t[e],this.path[e],e===this.path.length-1))return!1;return!0}_matchWithDeepWildcard(t){let e=this.path.length-1,n=t.length-1;for(;n>=0&&e>=0;){const i=t[n];if("deep-wildcard"===i.type){if(n--,n<0)return!0;const i=t[n];let s=!1;for(let t=e;t>=0;t--)if(this._matchSegment(i,this.path[t],t===this.path.length-1)){e=t-1,n--,s=!0;break}if(!s)return!1}else{if(!this._matchSegment(i,this.path[e],e===this.path.length-1))return!1;e--,n--}}return n<0}_matchSegment(t,e,n){if("*"!==t.tag&&t.tag!==e.tag)return!1;if(void 0!==t.namespace&&"*"!==t.namespace&&t.namespace!==e.namespace)return!1;if(void 0!==t.attrName){if(!n)return!1;if(!e.values||!(t.attrName in e.values))return!1;if(void 0!==t.attrValue&&String(e.values[t.attrName])!==String(t.attrValue))return!1}if(void 0!==t.position){if(!n)return!1;const i=e.counter??0;if("first"===t.position&&0!==i)return!1;if("odd"===t.position&&i%2!=1)return!1;if("even"===t.position&&i%2!=0)return!1;if("nth"===t.position&&i!==t.positionValue)return!1}return!0}matchesAny(t){return t.matchesAny(this)}snapshot(){return{path:this.path.map(t=>({...t})),siblingStacks:this.siblingStacks.map(t=>new Map(t))}}restore(t){this._pathStringCache=null,this.path=t.path.map(t=>({...t})),this.siblingStacks=t.siblingStacks.map(t=>new Map(t))}readOnly(){return this._view}}class K{constructor(t,e={},n){this.pattern=t,this.separator=e.separator||".",this.segments=this._parse(t),this.data=n,this._hasDeepWildcard=this.segments.some(t=>"deep-wildcard"===t.type),this._hasAttributeCondition=this.segments.some(t=>void 0!==t.attrName),this._hasPositionSelector=this.segments.some(t=>void 0!==t.position)}_parse(t){const e=[];let n=0,i="";for(;n<t.length;)t[n]===this.separator?n+1<t.length&&t[n+1]===this.separator?(i.trim()&&(e.push(this._parseSegment(i.trim())),i=""),e.push({type:"deep-wildcard"}),n+=2):(i.trim()&&e.push(this._parseSegment(i.trim())),i="",n++):(i+=t[n],n++);return i.trim()&&e.push(this._parseSegment(i.trim())),e}_parseSegment(t){const e={type:"tag"};let n=null,i=t;const s=t.match(/^([^\[]+)(\[[^\]]*\])(.*)$/);if(s&&(i=s[1]+s[3],s[2])){const t=s[2].slice(1,-1);t&&(n=t)}let r,o,a=i;if(i.includes("::")){const e=i.indexOf("::");if(r=i.substring(0,e).trim(),a=i.substring(e+2).trim(),!r)throw new Error(`Invalid namespace in pattern: ${t}`)}let h=null;if(a.includes(":")){const t=a.lastIndexOf(":"),e=a.substring(0,t).trim(),n=a.substring(t+1).trim();["first","last","odd","even"].includes(n)||/^nth\(\d+\)$/.test(n)?(o=e,h=n):o=a}else o=a;if(!o)throw new Error(`Invalid segment pattern: ${t}`);if(e.tag=o,r&&(e.namespace=r),n)if(n.includes("=")){const t=n.indexOf("=");e.attrName=n.substring(0,t).trim(),e.attrValue=n.substring(t+1).trim()}else e.attrName=n.trim();if(h){const t=h.match(/^nth\((\d+)\)$/);t?(e.position="nth",e.positionValue=parseInt(t[1],10)):e.position=h}return e}get length(){return this.segments.length}hasDeepWildcard(){return this._hasDeepWildcard}hasAttributeCondition(){return this._hasAttributeCondition}hasPositionSelector(){return this._hasPositionSelector}toString(){return this.pattern}}class Q{constructor(){this._byDepthAndTag=new Map,this._wildcardByDepth=new Map,this._deepWildcards=[],this._patterns=new Set,this._sealed=!1}add(t){if(this._sealed)throw new TypeError("ExpressionSet is sealed. Create a new ExpressionSet to add more expressions.");if(this._patterns.has(t.pattern))return this;if(this._patterns.add(t.pattern),t.hasDeepWildcard())return this._deepWildcards.push(t),this;const e=t.length,n=t.segments[t.segments.length-1],i=n?.tag;if(i&&"*"!==i){const n=`${e}:${i}`;this._byDepthAndTag.has(n)||this._byDepthAndTag.set(n,[]),this._byDepthAndTag.get(n).push(t)}else this._wildcardByDepth.has(e)||this._wildcardByDepth.set(e,[]),this._wildcardByDepth.get(e).push(t);return this}addAll(t){for(const e of t)this.add(e);return this}has(t){return this._patterns.has(t.pattern)}get size(){return this._patterns.size}seal(){return this._sealed=!0,this}get isSealed(){return this._sealed}matchesAny(t){return null!==this.findMatch(t)}findMatch(t){const e=t.getDepth(),n=`${e}:${t.getCurrentTag()}`,i=this._byDepthAndTag.get(n);if(i)for(let e=0;e<i.length;e++)if(t.matches(i[e]))return i[e];const s=this._wildcardByDepth.get(e);if(s)for(let e=0;e<s.length;e++)if(t.matches(s[e]))return s[e];for(let e=0;e<this._deepWildcards.length;e++)if(t.matches(this._deepWildcards[e]))return this._deepWildcards[e];return null}}const H={cent:"¢",pound:"£",curren:"¤",yen:"¥",euro:"€",dollar:"$",euro:"€",fnof:"ƒ",inr:"₹",af:"؋",birr:"ብር",peso:"₱",rub:"₽",won:"₩",yuan:"¥",cedil:"¸"},tt={amp:"&",apos:"'",gt:">",lt:"<",quot:'"'},et={nbsp:" ",copy:"©",reg:"®",trade:"™",mdash:"—",ndash:"–",hellip:"…",laquo:"«",raquo:"»",lsquo:"‘",rsquo:"’",ldquo:"“",rdquo:"”",bull:"•",para:"¶",sect:"§",deg:"°",frac12:"½",frac14:"¼",frac34:"¾"},nt=new Set("!?\\\\/[]$%{}^&*()<>|+");function it(t){if("#"===t[0])throw new Error(`[EntityReplacer] Invalid character '#' in entity name: "${t}"`);for(const e of t)if(nt.has(e))throw new Error(`[EntityReplacer] Invalid character '${e}' in entity name: "${t}"`);return t}function st(...t){const e=Object.create(null);for(const n of t)if(n)for(const t of Object.keys(n)){const i=n[t];if("string"==typeof i)e[t]=i;else if(i&&"object"==typeof i&&void 0!==i.val){const n=i.val;"string"==typeof n&&(e[t]=n)}}return e}const rt="external",ot="base",at="all",ht=Object.freeze({allow:0,leave:1,remove:2,throw:3}),lt=new Set([9,10,13]);class ut{constructor(t={}){var e;this._limit=t.limit||{},this._maxTotalExpansions=this._limit.maxTotalExpansions||0,this._maxExpandedLength=this._limit.maxExpandedLength||0,this._postCheck="function"==typeof t.postCheck?t.postCheck:t=>t,this._limitTiers=(e=this._limit.applyLimitsTo??rt)&&e!==rt?e===at?new Set([at]):e===ot?new Set([ot]):Array.isArray(e)?new Set(e):new Set([rt]):new Set([rt]),this._numericAllowed=t.numericAllowed??!0,this._baseMap=st(tt,t.namedEntities||null),this._externalMap=Object.create(null),this._inputMap=Object.create(null),this._totalExpansions=0,this._expandedLength=0,this._removeSet=new Set(t.remove&&Array.isArray(t.remove)?t.remove:[]),this._leaveSet=new Set(t.leave&&Array.isArray(t.leave)?t.leave:[]);const n=function(t){if(!t)return{xmlVersion:1,onLevel:ht.allow,nullLevel:ht.remove};const e=1.1===t.xmlVersion?1.1:1,n=ht[t.onNCR]??ht.allow,i=ht[t.nullNCR]??ht.remove;return{xmlVersion:e,onLevel:n,nullLevel:Math.max(i,ht.remove)}}(t.ncr);this._ncrXmlVersion=n.xmlVersion,this._ncrOnLevel=n.onLevel,this._ncrNullLevel=n.nullLevel}setExternalEntities(t){if(t)for(const e of Object.keys(t))it(e);this._externalMap=st(t)}addExternalEntity(t,e){it(t),"string"==typeof e&&-1===e.indexOf("&")&&(this._externalMap[t]=e)}addInputEntities(t){this._totalExpansions=0,this._expandedLength=0,this._inputMap=st(t)}reset(){return this._inputMap=Object.create(null),this._totalExpansions=0,this._expandedLength=0,this}setXmlVersion(t){this._ncrXmlVersion=1.1===t?1.1:1}decode(t){if("string"!=typeof t||0===t.length)return t;const e=t,n=[],i=t.length;let s=0,r=0;const o=this._maxTotalExpansions>0,a=this._maxExpandedLength>0,h=o||a;for(;r<i;){if(38!==t.charCodeAt(r)){r++;continue}let e=r+1;for(;e<i&&59!==t.charCodeAt(e)&&e-r<=32;)e++;if(e>=i||59!==t.charCodeAt(e)){r++;continue}const l=t.slice(r+1,e);if(0===l.length){r++;continue}let u,p;if(this._removeSet.has(l))u="",void 0===p&&(p=rt);else{if(this._leaveSet.has(l)){r++;continue}if(35===l.charCodeAt(0)){const t=this._resolveNCR(l);if(void 0===t){r++;continue}u=t,p=ot}else{const t=this._resolveName(l);u=t?.value,p=t?.tier}}if(void 0!==u){if(r>s&&n.push(t.slice(s,r)),n.push(u),s=e+1,r=s,h&&this._tierCounts(p)){if(o&&(this._totalExpansions++,this._totalExpansions>this._maxTotalExpansions))throw new Error(`[EntityReplacer] Entity expansion count limit exceeded: ${this._totalExpansions} > ${this._maxTotalExpansions}`);if(a){const t=u.length-(l.length+2);if(t>0&&(this._expandedLength+=t,this._expandedLength>this._maxExpandedLength))throw new Error(`[EntityReplacer] Expanded content length limit exceeded: ${this._expandedLength} > ${this._maxExpandedLength}`)}}}else r++}s<i&&n.push(t.slice(s));const l=0===n.length?t:n.join("");return this._postCheck(l,e)}_tierCounts(t){return!!this._limitTiers.has(at)||this._limitTiers.has(t)}_resolveName(t){return t in this._inputMap?{value:this._inputMap[t],tier:rt}:t in this._externalMap?{value:this._externalMap[t],tier:rt}:t in this._baseMap?{value:this._baseMap[t],tier:ot}:void 0}_classifyNCR(t){return 0===t?this._ncrNullLevel:t>=55296&&t<=57343||1===this._ncrXmlVersion&&t>=1&&t<=31&&!lt.has(t)?ht.remove:-1}_applyNCRAction(t,e,n){switch(t){case ht.allow:return String.fromCodePoint(n);case ht.remove:return"";case ht.leave:return;case ht.throw:throw new Error(`[EntityDecoder] Prohibited numeric character reference &${e}; (U+${n.toString(16).toUpperCase().padStart(4,"0")})`);default:return String.fromCodePoint(n)}}_resolveNCR(t){const e=t.charCodeAt(1);let n;if(n=120===e||88===e?parseInt(t.slice(2),16):parseInt(t.slice(1),10),Number.isNaN(n)||n<0||n>1114111)return;const i=this._classifyNCR(n);if(!this._numericAllowed&&i<ht.remove)return;const s=-1===i?this._ncrOnLevel:Math.max(this._ncrOnLevel,i);return this._applyNCRAction(s,t,n)}}function pt(t,e){if(!t)return{};const n=e.attributesGroupName?t[e.attributesGroupName]:t;if(!n)return{};const i={};for(const t in n)t.startsWith(e.attributeNamePrefix)?i[t.substring(e.attributeNamePrefix.length)]=n[t]:i[t]=n[t];return i}function ct(t){if(!t||"string"!=typeof t)return;const e=t.indexOf(":");if(-1!==e&&e>0){const n=t.substring(0,e);if("xmlns"!==n)return n}}class dt{constructor(t,e){var n;this.options=t,this.currentNode=null,this.tagsNodeStack=[],this.parseXml=Nt,this.parseTextData=ft,this.resolveNameSpace=gt,this.buildAttributesMap=xt,this.isItStopNode=wt,this.replaceEntitiesValue=yt,this.readStopNodeData=At,this.saveTextToParentTag=Et,this.addChild=bt,this.ignoreAttributesFn="function"==typeof(n=this.options.ignoreAttributes)?n:Array.isArray(n)?t=>{for(const e of n){if("string"==typeof e&&t===e)return!0;if(e instanceof RegExp&&e.test(t))return!0}}:()=>!1,this.entityExpansionCount=0,this.currentExpandedLength=0;let i={...tt};this.options.entityDecoder?this.entityDecoder=this.options.entityDecoder:("object"==typeof this.options.htmlEntities?i=this.options.htmlEntities:!0===this.options.htmlEntities&&(i={...et,...H}),this.entityDecoder=new ut({namedEntities:{...i,...e},numericAllowed:this.options.htmlEntities,limit:{maxTotalExpansions:this.options.processEntities.maxTotalExpansions,maxExpandedLength:this.options.processEntities.maxExpandedLength,applyLimitsTo:this.options.processEntities.appliesTo}})),this.matcher=new J,this.readonlyMatcher=this.matcher.readOnly(),this.isCurrentNodeStopNode=!1,this.stopNodeExpressionsSet=new Q;const s=this.options.stopNodes;if(s&&s.length>0){for(let t=0;t<s.length;t++){const e=s[t];"string"==typeof e?this.stopNodeExpressionsSet.add(new K(e)):e instanceof K&&this.stopNodeExpressionsSet.add(e)}this.stopNodeExpressionsSet.seal()}}}function ft(t,e,n,i,s,r,o){const a=this.options;if(void 0!==t&&(a.trimValues&&!i&&(t=t.trim()),t.length>0)){o||(t=this.replaceEntitiesValue(t,e,n));const i=a.jPath?n.toString():n,h=a.tagValueProcessor(e,t,i,s,r);return null==h?t:typeof h!=typeof t||h!==t?h:a.trimValues||t.trim()===t?Tt(t,a.parseTagValue,a.numberParseOptions):t}}function gt(t){if(this.options.removeNSPrefix){const e=t.split(":"),n="/"===t.charAt(0)?"/":"";if("xmlns"===e[0])return"";2===e.length&&(t=n+e[1])}return t}const mt=new RegExp("([^\\s=]+)\\s*(=\\s*(['\"])([\\s\\S]*?)\\3)?","gm");function xt(t,e,n,i=!1){const r=this.options;if(!0===i||!0!==r.ignoreAttributes&&"string"==typeof t){const i=s(t,mt),o=i.length,a={},h=new Array(o);let l=!1;const u={};for(let t=0;t<o;t++){const e=this.resolveNameSpace(i[t][1]),s=i[t][4];if(e.length&&void 0!==s){let i=s;r.trimValues&&(i=i.trim()),i=this.replaceEntitiesValue(i,n,this.readonlyMatcher),h[t]=i,u[e]=i,l=!0}}l&&"object"==typeof e&&e.updateCurrent&&e.updateCurrent(u);const p=r.jPath?e.toString():this.readonlyMatcher;let c=!1;for(let t=0;t<o;t++){const e=this.resolveNameSpace(i[t][1]);if(this.ignoreAttributesFn(e,p))continue;let n=r.attributeNamePrefix+e;if(e.length)if(r.transformAttributeName&&(n=r.transformAttributeName(n)),n=Pt(n,r),void 0!==i[t][4]){const i=h[t],s=r.attributeValueProcessor(e,i,p);a[n]=null==s?i:typeof s!=typeof i||s!==i?s:Tt(i,r.parseAttributeValue,r.numberParseOptions),c=!0}else r.allowBooleanAttributes&&(a[n]=!0,c=!0)}if(!c)return;if(r.attributesGroupName&&!r.preserveOrder){const t={};return t[r.attributesGroupName]=a,t}return a}}const Nt=function(t){t=t.replace(/\r\n?/g,"\n");const e=new $("!xml");let n=e,i="";this.matcher.reset(),this.entityDecoder.reset(),this.entityExpansionCount=0,this.currentExpandedLength=0;const s=this.options,r=new k(s.processEntities),o=t.length;for(let a=0;a<o;a++)if("<"===t[a]){const h=t.charCodeAt(a+1);if(47===h){const e=vt(t,">",a,"Closing Tag is not closed.");let r=t.substring(a+2,e).trim();if(s.removeNSPrefix){const t=r.indexOf(":");-1!==t&&(r=r.substr(t+1))}r=Ct(s.transformTagName,r,"",s).tagName,n&&(i=this.saveTextToParentTag(i,n,this.readonlyMatcher));const o=this.matcher.getCurrentTag();if(r&&s.unpairedTagsSet.has(r))throw new Error(`Unpaired tag can not be used as closing tag: </${r}>`);o&&s.unpairedTagsSet.has(o)&&(this.matcher.pop(),this.tagsNodeStack.pop()),this.matcher.pop(),this.isCurrentNodeStopNode=!1,n=this.tagsNodeStack.pop(),i="",a=e}else if(63===h){let e=_t(t,a,!1,"?>");if(!e)throw new Error("Pi Tag is not closed.");i=this.saveTextToParentTag(i,n,this.readonlyMatcher);const o=this.buildAttributesMap(e.tagExp,this.matcher,e.tagName,!0);if(o){const t=o[this.options.attributeNamePrefix+"version"];this.entityDecoder.setXmlVersion(Number(t)||1),r.setXmlVersion(Number(t)||1)}if(s.ignoreDeclaration&&"?xml"===e.tagName||s.ignorePiTags);else{const t=new $(e.tagName);t.add(s.textNodeName,""),e.tagName!==e.tagExp&&e.attrExpPresent&&!0!==s.ignoreAttributes&&(t[":@"]=o),this.addChild(n,t,this.readonlyMatcher,a)}a=e.closeIndex+1}else if(33===h&&45===t.charCodeAt(a+2)&&45===t.charCodeAt(a+3)){const e=vt(t,"--\x3e",a+4,"Comment is not closed.");if(s.commentPropName){const r=t.substring(a+4,e-2);i=this.saveTextToParentTag(i,n,this.readonlyMatcher),n.add(s.commentPropName,[{[s.textNodeName]:r}])}a=e}else if(33===h&&68===t.charCodeAt(a+2)){const e=r.readDocType(t,a);this.entityDecoder.addInputEntities(e.entities),a=e.i}else if(33===h&&91===t.charCodeAt(a+2)){const e=vt(t,"]]>",a,"CDATA is not closed.")-2,r=t.substring(a+9,e);i=this.saveTextToParentTag(i,n,this.readonlyMatcher);let o=this.parseTextData(r,n.tagname,this.readonlyMatcher,!0,!1,!0,!0);null==o&&(o=""),s.cdataPropName?n.add(s.cdataPropName,[{[s.textNodeName]:r}]):n.add(s.textNodeName,o),a=e+2}else{let r=_t(t,a,s.removeNSPrefix);if(!r){const e=t.substring(Math.max(0,a-50),Math.min(o,a+50));throw new Error(`readTagExp returned undefined at position ${a}. Context: "${e}"`)}let h=r.tagName;const l=r.rawTagName;let u=r.tagExp,p=r.attrExpPresent,c=r.closeIndex;if(({tagName:h,tagExp:u}=Ct(s.transformTagName,h,u,s)),s.strictReservedNames&&(h===s.commentPropName||h===s.cdataPropName||h===s.textNodeName||h===s.attributesGroupName))throw new Error(`Invalid tag name: ${h}`);n&&i&&"!xml"!==n.tagname&&(i=this.saveTextToParentTag(i,n,this.readonlyMatcher,!1));const d=n;d&&s.unpairedTagsSet.has(d.tagname)&&(n=this.tagsNodeStack.pop(),this.matcher.pop());let f=!1;u.length>0&&u.lastIndexOf("/")===u.length-1&&(f=!0,"/"===h[h.length-1]?(h=h.substr(0,h.length-1),u=h):u=u.substr(0,u.length-1),p=h!==u);let g,m=null,x={};g=ct(l),h!==e.tagname&&this.matcher.push(h,{},g),h!==u&&p&&(m=this.buildAttributesMap(u,this.matcher,h),m&&(x=pt(m,s))),h!==e.tagname&&(this.isCurrentNodeStopNode=this.isItStopNode());const N=a;if(this.isCurrentNodeStopNode){let e="";if(f)a=r.closeIndex;else if(s.unpairedTagsSet.has(h))a=r.closeIndex;else{const n=this.readStopNodeData(t,l,c+1);if(!n)throw new Error(`Unexpected end of ${l}`);a=n.i,e=n.tagContent}const i=new $(h);m&&(i[":@"]=m),i.add(s.textNodeName,e),this.matcher.pop(),this.isCurrentNodeStopNode=!1,this.addChild(n,i,this.readonlyMatcher,N)}else{if(f){({tagName:h,tagExp:u}=Ct(s.transformTagName,h,u,s));const t=new $(h);m&&(t[":@"]=m),this.addChild(n,t,this.readonlyMatcher,N),this.matcher.pop(),this.isCurrentNodeStopNode=!1}else{if(s.unpairedTagsSet.has(h)){const t=new $(h);m&&(t[":@"]=m),this.addChild(n,t,this.readonlyMatcher,N),this.matcher.pop(),this.isCurrentNodeStopNode=!1,a=r.closeIndex;continue}{const t=new $(h);if(this.tagsNodeStack.length>s.maxNestedTags)throw new Error("Maximum nested tags exceeded");this.tagsNodeStack.push(n),m&&(t[":@"]=m),this.addChild(n,t,this.readonlyMatcher,N),n=t}}i="",a=c}}}else i+=t[a];return e.child};function bt(t,e,n,i){this.options.captureMetaData||(i=void 0);const s=this.options.jPath?n.toString():n,r=this.options.updateTag(e.tagname,s,e[":@"]);!1===r||("string"==typeof r?(e.tagname=r,t.addChild(e,i)):t.addChild(e,i))}function yt(t,e,n){const i=this.options.processEntities;if(!i||!i.enabled)return t;if(i.allowedTags){const s=this.options.jPath?n.toString():n;if(!(Array.isArray(i.allowedTags)?i.allowedTags.includes(e):i.allowedTags(e,s)))return t}if(i.tagFilter){const s=this.options.jPath?n.toString():n;if(!i.tagFilter(e,s))return t}return this.entityDecoder.decode(t)}function Et(t,e,n,i){return t&&(void 0===i&&(i=0===e.child.length),void 0!==(t=this.parseTextData(t,e.tagname,n,!1,!!e[":@"]&&0!==Object.keys(e[":@"]).length,i))&&""!==t&&e.add(this.options.textNodeName,t),t=""),t}function wt(){return 0!==this.stopNodeExpressionsSet.size&&this.matcher.matchesAny(this.stopNodeExpressionsSet)}function vt(t,e,n,i){const s=t.indexOf(e,n);if(-1===s)throw new Error(i);return s+e.length-1}function St(t,e,n,i){const s=t.indexOf(e,n);if(-1===s)throw new Error(i);return s}function _t(t,e,n,i=">"){const s=function(t,e,n=">"){let i=0;const s=t.length,r=n.charCodeAt(0),o=n.length>1?n.charCodeAt(1):-1;let a="",h=e;for(let n=e;n<s;n++){const e=t.charCodeAt(n);if(i)e===i&&(i=0);else if(34===e||39===e)i=e;else if(e===r){if(-1===o)return a+=t.substring(h,n),{data:a,index:n};if(t.charCodeAt(n+1)===o)return a+=t.substring(h,n),{data:a,index:n}}else 9!==e||i||(a+=t.substring(h,n)+" ",h=n+1)}}(t,e+1,i);if(!s)return;let r=s.data;const o=s.index,a=r.search(/\s/);let h=r,l=!0;-1!==a&&(h=r.substring(0,a),r=r.substring(a+1).trimStart());const u=h;if(n){const t=h.indexOf(":");-1!==t&&(h=h.substr(t+1),l=h!==s.data.substr(t+1))}return{tagName:h,tagExp:r,closeIndex:o,attrExpPresent:l,rawTagName:u}}function At(t,e,n){const i=n;let s=1;const r=t.length;for(;n<r;n++)if("<"===t[n]){const r=t.charCodeAt(n+1);if(47===r){const r=St(t,">",n,`${e} is not closed`);if(t.substring(n+2,r).trim()===e&&(s--,0===s))return{tagContent:t.substring(i,n),i:r};n=r}else if(63===r)n=vt(t,"?>",n+1,"StopNode is not closed.");else if(33===r&&45===t.charCodeAt(n+2)&&45===t.charCodeAt(n+3))n=vt(t,"--\x3e",n+3,"StopNode is not closed.");else if(33===r&&91===t.charCodeAt(n+2))n=vt(t,"]]>",n,"StopNode is not closed.")-2;else{const i=_t(t,n,!1);i&&((i&&i.tagName)===e&&"/"!==i.tagExp[i.tagExp.length-1]&&s++,n=i.closeIndex)}}}function Tt(t,e,n){if(e&&"string"==typeof t){const e=t.trim();return"true"===e||"false"!==e&&function(t,e={}){if(e=Object.assign({},X,e),!t||"string"!=typeof t)return t;let n=t.trim();if(0===n.length)return t;if(void 0!==e.skipLike&&e.skipLike.test(n))return t;if("0"===n)return 0;if(e.hex&&U.test(n))return q(n,16);if(e.binary&&B.test(n))return q(n,2);if(e.octal&&W.test(n))return q(n,8);if(isFinite(n)){if(n.includes("e")||n.includes("E"))return function(t,e,n){if(!n.eNotation)return t;const i=e.match(Y);if(i){let s=i[1]||"";const r=-1===i[3].indexOf("e")?"E":"e",o=i[2],a=s?t[o.length+1]===r:t[o.length]===r;return o.length>1&&a?t:(1!==o.length||!i[3].startsWith(`.${r}`)&&i[3][0]!==r)&&o.length>0?n.leadingZeros&&!a?(e=(i[1]||"")+i[3],Number(e)):t:Number(e)}return t}(t,n,e);{const s=z.exec(n);if(s){const r=s[1]||"",o=s[2];let a=(i=s[3])&&-1!==i.indexOf(".")?("."===(i=i.replace(/0+$/,""))?i="0":"."===i[0]?i="0"+i:"."===i[i.length-1]&&(i=i.substring(0,i.length-1)),i):i;const h=r?"."===t[o.length+1]:"."===t[o.length];if(!e.leadingZeros&&(o.length>1||1===o.length&&!h))return t;{const i=Number(n),s=String(i);if(0===i)return i;if(-1!==s.search(/[eE]/))return e.eNotation?i:t;if(-1!==n.indexOf("."))return"0"===s||s===a||s===`${r}${a}`?i:t;let h=o?a:n;return o?h===s||r+h===s?i:t:h===s||h===r+s?i:t}}return t}}var i;return function(t,e,n){const i=e===1/0;switch(n.infinity.toLowerCase()){case"null":return null;case"infinity":return e;case"string":return i?"Infinity":"-Infinity";default:return t}}(t,Number(n),e)}(t,n)}return void 0!==t?t:""}function Ct(t,e,n,i){if(t){const i=t(e);n===e&&(n=i),e=i}return{tagName:e=Pt(e,i),tagExp:n}}function Pt(t,e){if(a.includes(t))throw new Error(`[SECURITY] Invalid name: "${t}" is a reserved JavaScript keyword that could cause prototype pollution`);return o.includes(t)?e.onDangerousProperty(t):t}const $t=$.getMetaDataSymbol();function Ot(t,e){if(!t||"object"!=typeof t)return{};if(!e)return t;const n={};for(const i in t)i.startsWith(e)?n[i.substring(e.length)]=t[i]:n[i]=t[i];return n}function It(t,e,n,i){return Vt(t,e,n,i)}function Vt(t,e,n,i){let s;const r={};for(let o=0;o<t.length;o++){const a=t[o],h=Dt(a);if(void 0!==h&&h!==e.textNodeName){const t=Ot(a[":@"]||{},e.attributeNamePrefix);n.push(h,t)}if(h===e.textNodeName)void 0===s?s=a[h]:s+=""+a[h];else{if(void 0===h)continue;if(a[h]){let t=Vt(a[h],e,n,i);const s=jt(t,e);if(0===Object.keys(t).length&&e.alwaysCreateTextNode&&(t[e.textNodeName]=""),a[":@"]?Mt(t,a[":@"],i,e):1!==Object.keys(t).length||void 0===t[e.textNodeName]||e.alwaysCreateTextNode?0===Object.keys(t).length&&(e.alwaysCreateTextNode?t[e.textNodeName]="":t=""):t=t[e.textNodeName],void 0!==a[$t]&&"object"==typeof t&&null!==t&&(t[$t]=a[$t]),void 0!==r[h]&&Object.prototype.hasOwnProperty.call(r,h))Array.isArray(r[h])||(r[h]=[r[h]]),r[h].push(t);else{const n=e.jPath?i.toString():i;e.isArray(h,n,s)?r[h]=[t]:r[h]=t}void 0!==h&&h!==e.textNodeName&&n.pop()}}}return"string"==typeof s?s.length>0&&(r[e.textNodeName]=s):void 0!==s&&(r[e.textNodeName]=s),r}function Dt(t){const e=Object.keys(t);for(let t=0;t<e.length;t++){const n=e[t];if(":@"!==n)return n}}function Mt(t,e,n,i){if(e){const s=Object.keys(e),r=s.length;for(let o=0;o<r;o++){const r=s[o],a=r.startsWith(i.attributeNamePrefix)?r.substring(i.attributeNamePrefix.length):r,h=i.jPath?n.toString()+"."+a:n;i.isArray(r,h,!0,!0)?t[r]=[e[r]]:t[r]=e[r]}}}function jt(t,e){const{textNodeName:n}=e,i=Object.keys(t).length;return 0===i||!(1!==i||!t[n]&&"boolean"!=typeof t[n]&&0!==t[n])}class Lt{constructor(t){this.externalEntities={},this.options=C(t)}parse(t,e){if("string"!=typeof t&&t.toString)t=t.toString();else if("string"!=typeof t)throw new Error("XML data is accepted in String or Bytes[] form.");if(e){!0===e&&(e={});const n=l(t,e);if(!0!==n)throw Error(`${n.err.msg}:${n.err.line}:${n.err.col}`)}const n=new dt(this.options,this.externalEntities),i=n.parseXml(t);return this.options.preserveOrder||void 0===i?i:It(i,this.options,n.matcher,n.readonlyMatcher)}addEntity(t,e){if(-1!==e.indexOf("&"))throw new Error("Entity value can't have '&'");if(-1!==t.indexOf("&")||-1!==t.indexOf(";"))throw new Error("An entity must be set without '&' and ';'. Eg. use '#xD' for '&#xD;'");if("&"===e)throw new Error("An entity with value '&' is not permitted");this.externalEntities[t]=e}static getMetaDataSymbol(){return $.getMetaDataSymbol()}}function kt(t){return String(t).replace(/--/g,"- -").replace(/--/g,"- -").replace(/-$/,"- ")}function Rt(t){return String(t).replace(/\]\]>/g,"]]]]><![CDATA[>")}function Ft(t){return String(t).replace(/"/g,"&quot;").replace(/'/g,"&apos;")}function Gt(t,e,n,i,s){return n.sanitizeName?L(t,{xmlVersion:s})?t:n.sanitizeName(t,{isAttribute:e,matcher:i.readOnly()}):t}function Ut(t,e){let n="";e.format&&(n="\n");const i=[];if(e.stopNodes&&Array.isArray(e.stopNodes))for(let t=0;t<e.stopNodes.length;t++){const n=e.stopNodes[t];"string"==typeof n?i.push(new K(n)):n instanceof K&&i.push(n)}const s=function(t,e){if(!Array.isArray(t)||0===t.length)return"1.0";const n=t[0];if("?xml"===Yt(n)){const t=n[":@"];if(t){const n=e.attributeNamePrefix+"version";if(t[n])return t[n]}}return"1.0"}(t,e);return Bt(t,e,n,new J,i,s)}function Bt(t,e,n,i,s,r){let o="",a=!1;if(e.maxNestedTags&&i.getDepth()>e.maxNestedTags)throw new Error("Maximum nested tags exceeded");if(!Array.isArray(t)){if(null!=t){let n=t.toString();return n=Jt(n,e),n}return""}for(let h=0;h<t.length;h++){const l=t[h],u=Yt(l);if(void 0===u)continue;const p=u===e.textNodeName||u===e.cdataPropName||u===e.commentPropName||"?"===u[0]?u:Gt(u,!1,e,i,r),c=Wt(l[":@"],e);i.push(p,c);const d=Zt(i,s);if(p===e.textNodeName){let t=l[u];d||(t=e.tagValueProcessor(p,t),t=Jt(t,e)),a&&(o+=n),o+=t,a=!1,i.pop();continue}if(p===e.cdataPropName){a&&(o+=n),o+=`<![CDATA[${Rt(l[u][0][e.textNodeName])}]]>`,a=!1,i.pop();continue}if(p===e.commentPropName){o+=n+`\x3c!--${kt(l[u][0][e.textNodeName])}--\x3e`,a=!0,i.pop();continue}if("?"===p[0]){o+=("?xml"===p?"":n)+`<${p}${qt(l[":@"],e,d,i,r)}?>`,a=!0,i.pop();continue}let f=n;""!==f&&(f+=e.indentBy);const g=n+`<${p}${qt(l[":@"],e,d,i,r)}`;let m;m=d?zt(l[u],e):Bt(l[u],e,f,i,s,r),-1!==e.unpairedTags.indexOf(p)?e.suppressUnpairedNode?o+=g+">":o+=g+"/>":m&&0!==m.length||!e.suppressEmptyNode?m&&m.endsWith(">")?o+=g+`>${m}${n}</${p}>`:(o+=g+">",m&&""!==n&&(m.includes("/>")||m.includes("</"))?o+=n+e.indentBy+m+n:o+=m,o+=`</${p}>`):o+=g+"/>",a=!0,i.pop()}return o}function Wt(t,e){if(!t||e.ignoreAttributes)return null;const n={};let i=!1;for(let s in t)Object.prototype.hasOwnProperty.call(t,s)&&(n[s.startsWith(e.attributeNamePrefix)?s.substr(e.attributeNamePrefix.length):s]=Ft(t[s]),i=!0);return i?n:null}function zt(t,e){if(!Array.isArray(t))return null!=t?t.toString():"";let n="";for(let i=0;i<t.length;i++){const s=t[i],r=Yt(s);if(r===e.textNodeName)n+=s[r];else if(r===e.cdataPropName)n+=s[r][0][e.textNodeName];else if(r===e.commentPropName)n+=s[r][0][e.textNodeName];else{if(r&&"?"===r[0])continue;if(r){const t=Xt(s[":@"],e),i=zt(s[r],e);i&&0!==i.length?n+=`<${r}${t}>${i}</${r}>`:n+=`<${r}${t}/>`}}}return n}function Xt(t,e){let n="";if(t&&!e.ignoreAttributes)for(let i in t){if(!Object.prototype.hasOwnProperty.call(t,i))continue;let s=t[i];!0===s&&e.suppressBooleanAttributes?n+=` ${i.substr(e.attributeNamePrefix.length)}`:n+=` ${i.substr(e.attributeNamePrefix.length)}="${Ft(s)}"`}return n}function Yt(t){const e=Object.keys(t);for(let n=0;n<e.length;n++){const i=e[n];if(Object.prototype.hasOwnProperty.call(t,i)&&":@"!==i)return i}}function qt(t,e,n,i,s){let r="";if(t&&!e.ignoreAttributes)for(let o in t){if(!Object.prototype.hasOwnProperty.call(t,o))continue;const a=o.substr(e.attributeNamePrefix.length),h=n?a:Gt(a,!0,e,i,s);let l;n?l=t[o]:(l=e.attributeValueProcessor(o,t[o]),l=Jt(l,e)),!0===l&&e.suppressBooleanAttributes?r+=` ${h}`:r+=` ${h}="${Ft(l)}"`}return r}function Zt(t,e){if(!e||0===e.length)return!1;for(let n=0;n<e.length;n++)if(t.matches(e[n]))return!0;return!1}function Jt(t,e){if(t&&t.length>0&&e.processEntities)for(let n=0;n<e.entities.length;n++){const i=e.entities[n];t=t.replace(i.regex,i.val)}return t}const Kt={attributeNamePrefix:"@_",attributesGroupName:!1,textNodeName:"#text",ignoreAttributes:!0,cdataPropName:!1,format:!1,indentBy:"  ",suppressEmptyNode:!1,suppressUnpairedNode:!0,suppressBooleanAttributes:!0,tagValueProcessor:function(t,e){return e},attributeValueProcessor:function(t,e){return e},preserveOrder:!1,commentPropName:!1,unpairedTags:[],entities:[{regex:new RegExp("&","g"),val:"&amp;"},{regex:new RegExp(">","g"),val:"&gt;"},{regex:new RegExp("<","g"),val:"&lt;"},{regex:new RegExp("'","g"),val:"&apos;"},{regex:new RegExp('"',"g"),val:"&quot;"}],processEntities:!0,stopNodes:[],oneListGroup:!1,maxNestedTags:100,jPath:!0,sanitizeName:!1};function Qt(t){if(this.options=Object.assign({},Kt,t),this.options.stopNodes&&Array.isArray(this.options.stopNodes)&&(this.options.stopNodes=this.options.stopNodes.map(t=>"string"==typeof t&&t.startsWith("*.")?".."+t.substring(2):t)),this.stopNodeExpressions=[],this.options.stopNodes&&Array.isArray(this.options.stopNodes))for(let t=0;t<this.options.stopNodes.length;t++){const e=this.options.stopNodes[t];"string"==typeof e?this.stopNodeExpressions.push(new K(e)):e instanceof K&&this.stopNodeExpressions.push(e)}var e;!0===this.options.ignoreAttributes||this.options.attributesGroupName?this.isAttribute=function(){return!1}:(this.ignoreAttributesFn="function"==typeof(e=this.options.ignoreAttributes)?e:Array.isArray(e)?t=>{for(const n of e){if("string"==typeof n&&t===n)return!0;if(n instanceof RegExp&&n.test(t))return!0}}:()=>!1,this.attrPrefixLen=this.options.attributeNamePrefix.length,this.isAttribute=ne),this.processTextOrObjNode=te,this.options.format?(this.indentate=ee,this.tagEndChar=">\n",this.newLine="\n"):(this.indentate=function(){return""},this.tagEndChar=">",this.newLine="")}function Ht(t,e,n,i,s){return n.sanitizeName?L(t,{xmlVersion:s})?t:n.sanitizeName(t,{isAttribute:e,matcher:i.readOnly()}):t}function te(t,e,n,i,s){const r=this.extractAttributes(t);if(i.push(e,r),this.checkStopNode(i)){const s=this.buildRawContent(t),r=this.buildAttributesForStopNode(t);return i.pop(),this.buildObjectNode(s,e,r,n)}const o=this.j2x(t,n+1,i,s);return i.pop(),"?"===e[0]?this.buildTextValNode("",e,o.attrStr,n,i):void 0!==t[this.options.textNodeName]&&1===Object.keys(t).length?this.buildTextValNode(t[this.options.textNodeName],e,o.attrStr,n,i):this.buildObjectNode(o.val,e,o.attrStr,n)}function ee(t){return this.options.indentBy.repeat(t)}function ne(t){return!(!t.startsWith(this.options.attributeNamePrefix)||t===this.options.textNodeName)&&t.substr(this.attrPrefixLen)}Qt.prototype.build=function(t){if(this.options.preserveOrder)return Ut(t,this.options);{Array.isArray(t)&&this.options.arrayNodeName&&this.options.arrayNodeName.length>1&&(t={[this.options.arrayNodeName]:t});const e=new J,n=function(t,e){const n=t["?xml"];if(n&&"object"==typeof n){if(e.attributesGroupName&&n[e.attributesGroupName]){const t=n[e.attributesGroupName][e.attributeNamePrefix+"version"];if(t)return t}const t=n[e.attributeNamePrefix+"version"];if(t)return t}return"1.0"}(t,this.options);return this.j2x(t,0,e,n).val}},Qt.prototype.j2x=function(t,e,n,i){let s="",r="";if(this.options.maxNestedTags&&n.getDepth()>=this.options.maxNestedTags)throw new Error("Maximum nested tags exceeded");const o=this.options.jPath?n.toString():n,a=this.checkStopNode(n);for(let h in t){if(!Object.prototype.hasOwnProperty.call(t,h))continue;const l=h===this.options.textNodeName||h===this.options.cdataPropName||h===this.options.commentPropName||this.options.attributesGroupName&&h===this.options.attributesGroupName||this.isAttribute(h)||"?"===h[0]?h:Ht(h,!1,this.options,n,i);if(void 0===t[h])this.isAttribute(h)&&(r+="");else if(null===t[h])this.isAttribute(h)||l===this.options.cdataPropName||l===this.options.commentPropName?r+="":"?"===l[0]?r+=this.indentate(e)+"<"+l+"?"+this.tagEndChar:r+=this.indentate(e)+"<"+l+"/"+this.tagEndChar;else if(t[h]instanceof Date)r+=this.buildTextValNode(t[h],l,"",e,n);else if("object"!=typeof t[h]){const u=this.isAttribute(h);if(u&&!this.ignoreAttributesFn(u,o)){const e=Ht(u,!0,this.options,n,i);s+=this.buildAttrPairStr(e,""+t[h],a)}else if(!u)if(h===this.options.textNodeName){let e=this.options.tagValueProcessor(h,""+t[h]);r+=this.replaceEntitiesValue(e)}else{n.push(l);const i=this.checkStopNode(n);if(n.pop(),i){const n=""+t[h];r+=""===n?this.indentate(e)+"<"+l+this.closeTag(l)+this.tagEndChar:this.indentate(e)+"<"+l+">"+n+"</"+l+this.tagEndChar}else r+=this.buildTextValNode(t[h],l,"",e,n)}}else if(Array.isArray(t[h])){const s=t[h].length;let o="",a="";for(let u=0;u<s;u++){const s=t[h][u];if(void 0===s);else if(null===s)"?"===l[0]?r+=this.indentate(e)+"<"+l+"?"+this.tagEndChar:r+=this.indentate(e)+"<"+l+"/"+this.tagEndChar;else if("object"==typeof s)if(this.options.oneListGroup){n.push(l);const t=this.j2x(s,e+1,n,i);n.pop(),o+=t.val,this.options.attributesGroupName&&s.hasOwnProperty(this.options.attributesGroupName)&&(a+=t.attrStr)}else o+=this.processTextOrObjNode(s,l,e,n,i);else if(this.options.oneListGroup){let t=this.options.tagValueProcessor(l,s);t=this.replaceEntitiesValue(t),o+=t}else{n.push(l);const t=this.checkStopNode(n);if(n.pop(),t){const t=""+s;o+=""===t?this.indentate(e)+"<"+l+this.closeTag(l)+this.tagEndChar:this.indentate(e)+"<"+l+">"+t+"</"+l+this.tagEndChar}else o+=this.buildTextValNode(s,l,"",e,n)}}this.options.oneListGroup&&(o=this.buildObjectNode(o,l,a,e)),r+=o}else if(this.options.attributesGroupName&&h===this.options.attributesGroupName){const e=Object.keys(t[h]),r=e.length;for(let o=0;o<r;o++){const r=Ht(e[o],!0,this.options,n,i);s+=this.buildAttrPairStr(r,""+t[h][e[o]],a)}}else r+=this.processTextOrObjNode(t[h],l,e,n,i)}return{attrStr:s,val:r}},Qt.prototype.buildAttrPairStr=function(t,e,n){return n||(e=this.options.attributeValueProcessor(t,""+e),e=this.replaceEntitiesValue(e)),this.options.suppressBooleanAttributes&&"true"===e?" "+t:" "+t+'="'+Ft(e)+'"'},Qt.prototype.extractAttributes=function(t){if(!t||"object"!=typeof t)return null;const e={};let n=!1;if(this.options.attributesGroupName&&t[this.options.attributesGroupName]){const i=t[this.options.attributesGroupName];for(let t in i)Object.prototype.hasOwnProperty.call(i,t)&&(e[t.startsWith(this.options.attributeNamePrefix)?t.substring(this.options.attributeNamePrefix.length):t]=Ft(i[t]),n=!0)}else for(let i in t){if(!Object.prototype.hasOwnProperty.call(t,i))continue;const s=this.isAttribute(i);s&&(e[s]=Ft(t[i]),n=!0)}return n?e:null},Qt.prototype.buildRawContent=function(t){if("string"==typeof t)return t;if("object"!=typeof t||null===t)return String(t);if(void 0!==t[this.options.textNodeName])return t[this.options.textNodeName];let e="";for(let n in t){if(!Object.prototype.hasOwnProperty.call(t,n))continue;if(this.isAttribute(n))continue;if(this.options.attributesGroupName&&n===this.options.attributesGroupName)continue;const i=t[n];if(n===this.options.textNodeName)e+=i;else if(Array.isArray(i)){for(let t of i)if("string"==typeof t||"number"==typeof t)e+=`<${n}>${t}</${n}>`;else if("object"==typeof t&&null!==t){const i=this.buildRawContent(t),s=this.buildAttributesForStopNode(t);e+=""===i?`<${n}${s}/>`:`<${n}${s}>${i}</${n}>`}}else if("object"==typeof i&&null!==i){const t=this.buildRawContent(i),s=this.buildAttributesForStopNode(i);e+=""===t?`<${n}${s}/>`:`<${n}${s}>${t}</${n}>`}else e+=`<${n}>${i}</${n}>`}return e},Qt.prototype.buildAttributesForStopNode=function(t){if(!t||"object"!=typeof t)return"";let e="";if(this.options.attributesGroupName&&t[this.options.attributesGroupName]){const n=t[this.options.attributesGroupName];for(let t in n){if(!Object.prototype.hasOwnProperty.call(n,t))continue;const i=t.startsWith(this.options.attributeNamePrefix)?t.substring(this.options.attributeNamePrefix.length):t,s=n[t];!0===s&&this.options.suppressBooleanAttributes?e+=" "+i:e+=" "+i+'="'+s+'"'}}else for(let n in t){if(!Object.prototype.hasOwnProperty.call(t,n))continue;const i=this.isAttribute(n);if(i){const s=t[n];!0===s&&this.options.suppressBooleanAttributes?e+=" "+i:e+=" "+i+'="'+s+'"'}}return e},Qt.prototype.buildObjectNode=function(t,e,n,i){if(""===t)return"?"===e[0]?this.indentate(i)+"<"+e+n+"?"+this.tagEndChar:this.indentate(i)+"<"+e+n+this.closeTag(e)+this.tagEndChar;if("?"===e[0])return this.indentate(i)+"<"+e+n+"?"+this.tagEndChar;{let s="</"+e+this.tagEndChar,r="";return"?"===e[0]&&(r="?",s=""),!n&&""!==n||-1!==t.indexOf("<")?!1!==this.options.commentPropName&&e===this.options.commentPropName&&0===r.length?this.indentate(i)+`\x3c!--${t}--\x3e`+this.newLine:this.indentate(i)+"<"+e+n+r+this.tagEndChar+t+this.indentate(i)+s:this.indentate(i)+"<"+e+n+r+">"+t+s}},Qt.prototype.closeTag=function(t){let e="";return-1!==this.options.unpairedTags.indexOf(t)?this.options.suppressUnpairedNode||(e="/"):e=this.options.suppressEmptyNode?"/":`></${t}`,e},Qt.prototype.checkStopNode=function(t){if(!this.stopNodeExpressions||0===this.stopNodeExpressions.length)return!1;for(let e=0;e<this.stopNodeExpressions.length;e++)if(t.matches(this.stopNodeExpressions[e]))return!0;return!1},Qt.prototype.buildTextValNode=function(t,e,n,i,s){if(!1!==this.options.cdataPropName&&e===this.options.cdataPropName){const e=Rt(t);return this.indentate(i)+`<![CDATA[${e}]]>`+this.newLine}if(!1!==this.options.commentPropName&&e===this.options.commentPropName){const e=kt(t);return this.indentate(i)+`\x3c!--${e}--\x3e`+this.newLine}if("?"===e[0])return this.indentate(i)+"<"+e+n+"?"+this.tagEndChar;{let s=this.options.tagValueProcessor(e,t);return s=this.replaceEntitiesValue(s),""===s?this.indentate(i)+"<"+e+n+this.closeTag(e)+this.tagEndChar:this.indentate(i)+"<"+e+n+">"+s+"</"+e+this.tagEndChar}},Qt.prototype.replaceEntitiesValue=function(t){if(t&&t.length>0&&this.options.processEntities)for(let e=0;e<this.options.entities.length;e++){const n=this.options.entities[e];t=t.replace(n.regex,n.val)}return t};const ie=Qt,se={validate:l};module.exports=e})();
+
+/***/ }),
+
+/***/ 327:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -63242,7 +64461,25 @@ async function resolveSetup(ctx, inputs, deps) {
     // suffix still scopes the action-managed setup-cache (`cacheKey` above) and
     // the target-cache, just not the content-addressed zccache build-cache.
     // ---- cargo registry cache ----
-    const cargoRegistryCacheRequested = isTruthy(inputs.cargoRegistryCache.trim() || "false");
+    // #267: when prebuild-deps includes `soldr-cook` AND the user (or a
+    // preset they're using) has NOT explicitly set cargo-registry-cache,
+    // default it to `true`. Cook restores `target/` build artifacts but
+    // does NOT restore `$CARGO_HOME/registry`, so cargo re-downloads every
+    // crate source on the next build — the "I set cook, why is it still
+    // downloading?" trap. Presets that explicitly set
+    // `cargoRegistryCache: "false"` (minimal, foundation) survive because
+    // `inputs.cargoRegistryCache` is non-empty after `fillFromPreset`
+    // runs; the `||` short-circuits before reaching the implicit default.
+    const cookPrebuildEnabled = inputs.prebuildDeps.trim().includes("soldr-cook");
+    const cargoRegistryDefault = cookPrebuildEnabled ? "true" : "false";
+    const cargoRegistryCacheRawInput = inputs.cargoRegistryCache.trim();
+    const cargoRegistryCachePaired = cookPrebuildEnabled && cargoRegistryCacheRawInput === "";
+    if (cargoRegistryCachePaired) {
+        log("setup-soldr: defaulting cargo-registry-cache=true because prebuild-deps=soldr-cook " +
+            "(see setup-soldr#267 — pairs to avoid re-downloading every crate source on next " +
+            "build). Set cargo-registry-cache=false explicitly to opt out.");
+    }
+    const cargoRegistryCacheRequested = isTruthy(cargoRegistryCacheRawInput || cargoRegistryDefault);
     const cargoRegistryCachePath = path.join(cargoHome, "registry");
     // setup-soldr#102: bundle additional `$CARGO_HOME` siblings into the same
     // cargo-registry archive so we close the cache-retention gaps without
@@ -63625,1225 +64862,6 @@ async function applyResolveResult(result) {
 // `buildOutputs` and `pythonDefaultJson` are re-exported at the top of
 // this file from their dedicated submodules.
 
-
-/***/ }),
-
-/***/ 315:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.BatchResponseParser = void 0;
-const core_rest_pipeline_1 = __nccwpck_require__(107);
-const core_http_compat_1 = __nccwpck_require__(75);
-const constants_js_1 = __nccwpck_require__(154);
-const BatchUtils_js_1 = __nccwpck_require__(261);
-const log_js_1 = __nccwpck_require__(112);
-const HTTP_HEADER_DELIMITER = ": ";
-const SPACE_DELIMITER = " ";
-const NOT_FOUND = -1;
-/**
- * Util class for parsing batch response.
- */
-class BatchResponseParser {
-    batchResponse;
-    responseBatchBoundary;
-    perResponsePrefix;
-    batchResponseEnding;
-    subRequests;
-    constructor(batchResponse, subRequests) {
-        if (!batchResponse || !batchResponse.contentType) {
-            // In special case(reported), server may return invalid content-type which could not be parsed.
-            throw new RangeError("batchResponse is malformed or doesn't contain valid content-type.");
-        }
-        if (!subRequests || subRequests.size === 0) {
-            // This should be prevent during coding.
-            throw new RangeError("Invalid state: subRequests is not provided or size is 0.");
-        }
-        this.batchResponse = batchResponse;
-        this.subRequests = subRequests;
-        this.responseBatchBoundary = this.batchResponse.contentType.split("=")[1];
-        this.perResponsePrefix = `--${this.responseBatchBoundary}${constants_js_1.HTTP_LINE_ENDING}`;
-        this.batchResponseEnding = `--${this.responseBatchBoundary}--`;
-    }
-    // For example of response, please refer to https://learn.microsoft.com/rest/api/storageservices/blob-batch#response
-    async parseBatchResponse() {
-        // When logic reach here, suppose batch request has already succeeded with 202, so we can further parse
-        // sub request's response.
-        if (this.batchResponse._response.status !== constants_js_1.HTTPURLConnection.HTTP_ACCEPTED) {
-            throw new Error(`Invalid state: batch request failed with status: '${this.batchResponse._response.status}'.`);
-        }
-        const responseBodyAsText = await (0, BatchUtils_js_1.getBodyAsText)(this.batchResponse);
-        const subResponses = responseBodyAsText
-            .split(this.batchResponseEnding)[0] // string after ending is useless
-            .split(this.perResponsePrefix)
-            .slice(1); // string before first response boundary is useless
-        const subResponseCount = subResponses.length;
-        // Defensive coding in case of potential error parsing.
-        // Note: subResponseCount == 1 is special case where sub request is invalid.
-        // We try to prevent such cases through early validation, e.g. validate sub request count >= 1.
-        // While in unexpected sub request invalid case, we allow sub response to be parsed and return to user.
-        if (subResponseCount !== this.subRequests.size && subResponseCount !== 1) {
-            throw new Error("Invalid state: sub responses' count is not equal to sub requests' count.");
-        }
-        const deserializedSubResponses = new Array(subResponseCount);
-        let subResponsesSucceededCount = 0;
-        let subResponsesFailedCount = 0;
-        // Parse sub subResponses.
-        for (let index = 0; index < subResponseCount; index++) {
-            const subResponse = subResponses[index];
-            const deserializedSubResponse = {};
-            deserializedSubResponse.headers = (0, core_http_compat_1.toHttpHeadersLike)((0, core_rest_pipeline_1.createHttpHeaders)());
-            const responseLines = subResponse.split(`${constants_js_1.HTTP_LINE_ENDING}`);
-            let subRespHeaderStartFound = false;
-            let subRespHeaderEndFound = false;
-            let subRespFailed = false;
-            let contentId = NOT_FOUND;
-            for (const responseLine of responseLines) {
-                if (!subRespHeaderStartFound) {
-                    // Convention line to indicate content ID
-                    if (responseLine.startsWith(constants_js_1.HeaderConstants.CONTENT_ID)) {
-                        contentId = parseInt(responseLine.split(HTTP_HEADER_DELIMITER)[1]);
-                    }
-                    // Http version line with status code indicates the start of sub request's response.
-                    // Example: HTTP/1.1 202 Accepted
-                    if (responseLine.startsWith(constants_js_1.HTTP_VERSION_1_1)) {
-                        subRespHeaderStartFound = true;
-                        const tokens = responseLine.split(SPACE_DELIMITER);
-                        deserializedSubResponse.status = parseInt(tokens[1]);
-                        deserializedSubResponse.statusMessage = tokens.slice(2).join(SPACE_DELIMITER);
-                    }
-                    continue; // Skip convention headers not specifically for sub request i.e. Content-Type: application/http and Content-ID: *
-                }
-                if (responseLine.trim() === "") {
-                    // Sub response's header start line already found, and the first empty line indicates header end line found.
-                    if (!subRespHeaderEndFound) {
-                        subRespHeaderEndFound = true;
-                    }
-                    continue; // Skip empty line
-                }
-                // Note: when code reach here, it indicates subRespHeaderStartFound == true
-                if (!subRespHeaderEndFound) {
-                    if (responseLine.indexOf(HTTP_HEADER_DELIMITER) === -1) {
-                        // Defensive coding to prevent from missing valuable lines.
-                        throw new Error(`Invalid state: find non-empty line '${responseLine}' without HTTP header delimiter '${HTTP_HEADER_DELIMITER}'.`);
-                    }
-                    // Parse headers of sub response.
-                    const tokens = responseLine.split(HTTP_HEADER_DELIMITER);
-                    deserializedSubResponse.headers.set(tokens[0], tokens[1]);
-                    if (tokens[0] === constants_js_1.HeaderConstants.X_MS_ERROR_CODE) {
-                        deserializedSubResponse.errorCode = tokens[1];
-                        subRespFailed = true;
-                    }
-                }
-                else {
-                    // Assemble body of sub response.
-                    if (!deserializedSubResponse.bodyAsText) {
-                        deserializedSubResponse.bodyAsText = "";
-                    }
-                    deserializedSubResponse.bodyAsText += responseLine;
-                }
-            } // Inner for end
-            // The response will contain the Content-ID header for each corresponding subrequest response to use for tracking.
-            // The Content-IDs are set to a valid index in the subrequests we sent. In the status code 202 path, we could expect it
-            // to be 1-1 mapping from the [0, subRequests.size) to the Content-IDs returned. If not, we simply don't return that
-            // unexpected subResponse in the parsed reponse and we can always look it up in the raw response for debugging purpose.
-            if (contentId !== NOT_FOUND &&
-                Number.isInteger(contentId) &&
-                contentId >= 0 &&
-                contentId < this.subRequests.size &&
-                deserializedSubResponses[contentId] === undefined) {
-                deserializedSubResponse._request = this.subRequests.get(contentId);
-                deserializedSubResponses[contentId] = deserializedSubResponse;
-            }
-            else {
-                log_js_1.logger.error(`subResponses[${index}] is dropped as the Content-ID is not found or invalid, Content-ID: ${contentId}`);
-            }
-            if (subRespFailed) {
-                subResponsesFailedCount++;
-            }
-            else {
-                subResponsesSucceededCount++;
-            }
-        }
-        return {
-            subResponses: deserializedSubResponses,
-            subResponsesSucceededCount: subResponsesSucceededCount,
-            subResponsesFailedCount: subResponsesFailedCount,
-        };
-    }
-}
-exports.BatchResponseParser = BatchResponseParser;
-//# sourceMappingURL=BatchResponseParser.js.map
-
-/***/ }),
-
-/***/ 316:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.checkBypass = exports.getProxyUrl = void 0;
-function getProxyUrl(reqUrl) {
-    const usingSsl = reqUrl.protocol === 'https:';
-    if (checkBypass(reqUrl)) {
-        return undefined;
-    }
-    const proxyVar = (() => {
-        if (usingSsl) {
-            return process.env['https_proxy'] || process.env['HTTPS_PROXY'];
-        }
-        else {
-            return process.env['http_proxy'] || process.env['HTTP_PROXY'];
-        }
-    })();
-    if (proxyVar) {
-        try {
-            return new DecodedURL(proxyVar);
-        }
-        catch (_a) {
-            if (!proxyVar.startsWith('http://') && !proxyVar.startsWith('https://'))
-                return new DecodedURL(`http://${proxyVar}`);
-        }
-    }
-    else {
-        return undefined;
-    }
-}
-exports.getProxyUrl = getProxyUrl;
-function checkBypass(reqUrl) {
-    if (!reqUrl.hostname) {
-        return false;
-    }
-    const reqHost = reqUrl.hostname;
-    if (isLoopbackAddress(reqHost)) {
-        return true;
-    }
-    const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
-    if (!noProxy) {
-        return false;
-    }
-    // Determine the request port
-    let reqPort;
-    if (reqUrl.port) {
-        reqPort = Number(reqUrl.port);
-    }
-    else if (reqUrl.protocol === 'http:') {
-        reqPort = 80;
-    }
-    else if (reqUrl.protocol === 'https:') {
-        reqPort = 443;
-    }
-    // Format the request hostname and hostname with port
-    const upperReqHosts = [reqUrl.hostname.toUpperCase()];
-    if (typeof reqPort === 'number') {
-        upperReqHosts.push(`${upperReqHosts[0]}:${reqPort}`);
-    }
-    // Compare request host against noproxy
-    for (const upperNoProxyItem of noProxy
-        .split(',')
-        .map(x => x.trim().toUpperCase())
-        .filter(x => x)) {
-        if (upperNoProxyItem === '*' ||
-            upperReqHosts.some(x => x === upperNoProxyItem ||
-                x.endsWith(`.${upperNoProxyItem}`) ||
-                (upperNoProxyItem.startsWith('.') &&
-                    x.endsWith(`${upperNoProxyItem}`)))) {
-            return true;
-        }
-    }
-    return false;
-}
-exports.checkBypass = checkBypass;
-function isLoopbackAddress(host) {
-    const hostLower = host.toLowerCase();
-    return (hostLower === 'localhost' ||
-        hostLower.startsWith('127.') ||
-        hostLower.startsWith('[::1]') ||
-        hostLower.startsWith('[0:0:0:0:0:0:0:1]'));
-}
-class DecodedURL extends URL {
-    constructor(url, base) {
-        super(url, base);
-        this._decodedUsername = decodeURIComponent(super.username);
-        this._decodedPassword = decodeURIComponent(super.password);
-    }
-    get username() {
-        return this._decodedUsername;
-    }
-    get password() {
-        return this._decodedPassword;
-    }
-}
-//# sourceMappingURL=proxy.js.map
-
-/***/ }),
-
-/***/ 317:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Shim-bypass diagnostic.
-//
-// When `shims: true` is requested, setup-soldr writes shim scripts (cargo,
-// rustfmt, clippy-driver, rustc, rustdoc) into `shimsDir` and prepends that
-// directory to PATH. Those shims re-exec the soldr binary, which in turn
-// routes compile work through zccache.
-//
-// The shims only fire when a child process actually resolves `cargo` /
-// `rustc` through PATH and the shim dir is at the front of PATH. A handful
-// of common workflow patterns silently bypass them:
-//
-//   - `CARGO=<abs path to ~/.cargo/bin/cargo>` — maturin and other Python
-//     packaging tools honor this env var and exec it directly, skipping
-//     PATH resolution entirely.
-//   - `RUSTC=<abs path to rustup toolchain rustc>` — same story for any
-//     build script that respects RUSTC.
-//   - `RUSTC_WRAPPER=<something other than soldr/zccache>` — installs a
-//     competing wrapper in the slot soldr expects to own.
-//   - `~/.cargo/bin` (the rustup-installed cargo) sits earlier on PATH
-//     than the setup-soldr shim dir.
-//
-// In all of those cases, caching looks configured but the heavy compile
-// work runs through plain cargo/rustc and never visits zccache. Emit an
-// advisory warning so the workflow author can either drop the override or
-// reorder PATH. See issue #160.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SHIMMED_TOOLS = void 0;
-exports.diagnoseShimBypass = diagnoseShimBypass;
-const path = __importStar(__nccwpck_require__(515));
-/** Tools we write shims for. Mirror of ROUTED_TOOLS in ensure-shims.ts. */
-const SHIMMED_TOOLS = ["cargo", "rustfmt", "clippy-driver", "rustc", "rustdoc"];
-exports.SHIMMED_TOOLS = SHIMMED_TOOLS;
-/**
- * Normalize a filesystem path for case-insensitive comparison on Windows.
- * On POSIX, returns the input verbatim.
- */
-function normalizePath(p, platform) {
-    const trimmed = p.trim();
-    if (!trimmed)
-        return "";
-    // Strip trailing slash/backslash so "C:/foo" and "C:/foo/" compare equal.
-    const stripped = trimmed.replace(/[\\/]+$/, "");
-    if (platform === "win32") {
-        return stripped.replace(/\//g, "\\").toLowerCase();
-    }
-    return stripped;
-}
-/**
- * Return true when `candidate` lives inside (or equals) `dir`. Both inputs
- * are normalized first. Used to detect when an absolute CARGO/RUSTC
- * override happens to point into the shim dir (legitimate, no warning).
- */
-function pathInsideDir(candidate, dir, platform) {
-    const c = normalizePath(candidate, platform);
-    const d = normalizePath(dir, platform);
-    if (!c || !d)
-        return false;
-    if (c === d)
-        return true;
-    const sep = platform === "win32" ? "\\" : "/";
-    return c.startsWith(d + sep);
-}
-/**
- * Look up the basename without an executable extension on Windows.
- * On POSIX, returns the basename verbatim. Used so "cargo.cmd" vs "cargo"
- * compares equal when checking if a CARGO override points at a shim.
- */
-function execBasename(p, platform) {
-    const variant = platform === "win32" ? path.win32 : path.posix;
-    const base = variant.basename(p.trim());
-    if (platform === "win32") {
-        return base.replace(/\.(cmd|bat|exe)$/i, "").toLowerCase();
-    }
-    return base;
-}
-/** Platform-aware absolute-path check. `path.isAbsolute` defers to the host
- *  os, so a Windows path like `C:\\...` is not considered absolute on a Linux
- *  CI runner — that breaks tests that exercise the win32 branch from Linux. */
-function isAbsoluteFor(p, platform) {
-    return platform === "win32" ? path.win32.isAbsolute(p) : path.posix.isAbsolute(p);
-}
-/** Platform-aware `path.join` so the suggested shim path in the warning
- *  uses the right separator regardless of host. */
-function joinFor(platform, ...parts) {
-    return (platform === "win32" ? path.win32 : path.posix).join(...parts);
-}
-/**
- * Detect known shim-bypass conditions and return a list of warning
- * messages. Empty list = no problems.
- *
- * Each message is self-contained: it names the offending var or PATH
- * entry, explains the consequence, and suggests a fix. Callers should
- * pipe each one through `core.warning(...)`.
- */
-function diagnoseShimBypass(input) {
-    if (!input.shimsEnabled)
-        return [];
-    const platform = input.platform ?? process.platform;
-    const sep = input.pathSep ?? (platform === "win32" ? ";" : ":");
-    const shimDir = (input.shimDir ?? "").trim();
-    if (!shimDir)
-        return [];
-    const warnings = [];
-    const normShim = normalizePath(shimDir, platform);
-    // ---- PATH ordering check ----
-    // Walk PATH; if the first non-empty entry is not the shim dir, the user
-    // has another dir at the front that may shadow our shims for at least
-    // one of the routed tools. We emit a single warning per non-shim entry
-    // that precedes the shim dir.
-    const pathEntries = (input.path ?? "")
-        .split(sep)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-    const shimIndex = pathEntries.findIndex((d) => normalizePath(d, platform) === normShim);
-    if (shimIndex < 0) {
-        warnings.push(`setup-soldr: shim directory ${shimDir} is not present on PATH. ` +
-            `Compile work will bypass zccache/soldr because cargo, rustc, and ` +
-            `other tools will resolve through their original locations. ` +
-            `Make sure no later workflow step replaces or clears PATH; ` +
-            `if a step prepends a custom toolchain dir, append the shim dir ` +
-            `back to the front of PATH.`);
-    }
-    else if (shimIndex > 0) {
-        const earlier = pathEntries.slice(0, shimIndex);
-        warnings.push(`setup-soldr: PATH has ${earlier.length} ${earlier.length === 1 ? "entry" : "entries"} ahead of the shim directory ${shimDir} ` +
-            `(first offender: ${earlier[0]}). ` +
-            `If any of those directories contain a cargo, rustc, rustfmt, ` +
-            `clippy-driver, or rustdoc binary, those will be picked up first ` +
-            `and compile work will bypass zccache/soldr. ` +
-            `Move the shim directory to the front of PATH or remove the ` +
-            `overriding entries.`);
-    }
-    // ---- CARGO env override ----
-    if (input.cargoEnv && input.cargoEnv.trim()) {
-        const c = input.cargoEnv.trim();
-        const isAbsolute = isAbsoluteFor(c, platform);
-        const insideShim = pathInsideDir(c, shimDir, platform);
-        const shimMatchByName = execBasename(c, platform) === "cargo" && insideShim;
-        if (isAbsolute && !shimMatchByName && !insideShim) {
-            warnings.push(`setup-soldr: CARGO env var is set to ${c}, which is not the ` +
-                `setup-soldr cargo shim (${shimDir}). Tools that honor CARGO ` +
-                `(maturin, build scripts, cargo-* subcommands spawned out-of-process) ` +
-                `will exec that binary directly and bypass zccache/soldr. ` +
-                `Unset CARGO, or set it to the shim at ${joinFor(platform, shimDir, platform === "win32" ? "cargo.cmd" : "cargo")}.`);
-        }
-    }
-    // ---- RUSTC env override ----
-    if (input.rustcEnv && input.rustcEnv.trim()) {
-        const r = input.rustcEnv.trim();
-        const isAbsolute = isAbsoluteFor(r, platform);
-        const insideShim = pathInsideDir(r, shimDir, platform);
-        const shimMatchByName = execBasename(r, platform) === "rustc" && insideShim;
-        if (isAbsolute && !shimMatchByName && !insideShim) {
-            warnings.push(`setup-soldr: RUSTC env var is set to ${r}, which is not the ` +
-                `setup-soldr rustc shim (${shimDir}). Build scripts and cargo ` +
-                `itself will exec that binary directly and bypass zccache/soldr. ` +
-                `Unset RUSTC, or set it to the shim at ${joinFor(platform, shimDir, platform === "win32" ? "rustc.cmd" : "rustc")}.`);
-        }
-    }
-    // ---- RUSTC_WRAPPER override ----
-    // soldr's design is that zccache sits in the RUSTC_WRAPPER slot. If the
-    // user (or another action) set RUSTC_WRAPPER to anything *other than*
-    // the soldr binary or a zccache binary, they've installed a competing
-    // wrapper and zccache will not be invoked.
-    if (input.rustcWrapperEnv && input.rustcWrapperEnv.trim()) {
-        const w = input.rustcWrapperEnv.trim();
-        const wName = execBasename(w, platform);
-        const soldr = (input.soldrBinary ?? "").trim();
-        const soldrName = soldr ? execBasename(soldr, platform) : "";
-        const normW = normalizePath(w, platform);
-        const normSoldr = soldr ? normalizePath(soldr, platform) : "";
-        const matchesSoldr = !!normSoldr && normW === normSoldr;
-        const matchesSoldrByName = wName === "soldr";
-        const matchesZccache = wName === "zccache" || wName === "zccache-server";
-        if (!matchesSoldr && !matchesSoldrByName && !matchesZccache) {
-            warnings.push(`setup-soldr: RUSTC_WRAPPER is set to ${w}, which is neither the ` +
-                `soldr binary nor a zccache binary. This installs a competing ` +
-                `wrapper in the slot soldr expects to own; compile work will ` +
-                `bypass zccache and no caching will occur. ` +
-                `Unset RUSTC_WRAPPER and let soldr manage the wrapper slot.`);
-        }
-    }
-    return warnings;
-}
-
-
-/***/ }),
-
-/***/ 318:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isPrimitiveBody = isPrimitiveBody;
-exports.isDuration = isDuration;
-exports.isValidUuid = isValidUuid;
-exports.flattenResponse = flattenResponse;
-/**
- * A type guard for a primitive response body.
- * @param value - Value to test
- *
- * @internal
- */
-function isPrimitiveBody(value, mapperTypeName) {
-    return (mapperTypeName !== "Composite" &&
-        mapperTypeName !== "Dictionary" &&
-        (typeof value === "string" ||
-            typeof value === "number" ||
-            typeof value === "boolean" ||
-            mapperTypeName?.match(/^(Date|DateTime|DateTimeRfc1123|UnixTime|ByteArray|Base64Url)$/i) !==
-                null ||
-            value === undefined ||
-            value === null));
-}
-const validateISODuration = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
-/**
- * Returns true if the given string is in ISO 8601 format.
- * @param value - The value to be validated for ISO 8601 duration format.
- * @internal
- */
-function isDuration(value) {
-    return validateISODuration.test(value);
-}
-const validUuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i;
-/**
- * Returns true if the provided uuid is valid.
- *
- * @param uuid - The uuid that needs to be validated.
- *
- * @internal
- */
-function isValidUuid(uuid) {
-    return validUuidRegex.test(uuid);
-}
-/**
- * Maps the response as follows:
- * - wraps the response body if needed (typically if its type is primitive).
- * - returns null if the combination of the headers and the body is empty.
- * - otherwise, returns the combination of the headers and the body.
- *
- * @param responseObject - a representation of the parsed response
- * @returns the response that will be returned to the user which can be null and/or wrapped
- *
- * @internal
- */
-function handleNullableResponseAndWrappableBody(responseObject) {
-    const combinedHeadersAndBody = {
-        ...responseObject.headers,
-        ...responseObject.body,
-    };
-    if (responseObject.hasNullableType &&
-        Object.getOwnPropertyNames(combinedHeadersAndBody).length === 0) {
-        return responseObject.shouldWrapBody ? { body: null } : null;
-    }
-    else {
-        return responseObject.shouldWrapBody
-            ? {
-                ...responseObject.headers,
-                body: responseObject.body,
-            }
-            : combinedHeadersAndBody;
-    }
-}
-/**
- * Take a `FullOperationResponse` and turn it into a flat
- * response object to hand back to the consumer.
- * @param fullResponse - The processed response from the operation request
- * @param responseSpec - The response map from the OperationSpec
- *
- * @internal
- */
-function flattenResponse(fullResponse, responseSpec) {
-    const parsedHeaders = fullResponse.parsedHeaders;
-    // head methods never have a body, but we return a boolean set to body property
-    // to indicate presence/absence of the resource
-    if (fullResponse.request.method === "HEAD") {
-        return {
-            ...parsedHeaders,
-            body: fullResponse.parsedBody,
-        };
-    }
-    const bodyMapper = responseSpec && responseSpec.bodyMapper;
-    const isNullable = Boolean(bodyMapper?.nullable);
-    const expectedBodyTypeName = bodyMapper?.type.name;
-    /** If the body is asked for, we look at the expected body type to handle it */
-    if (expectedBodyTypeName === "Stream") {
-        return {
-            ...parsedHeaders,
-            blobBody: fullResponse.blobBody,
-            readableStreamBody: fullResponse.readableStreamBody,
-        };
-    }
-    const modelProperties = (expectedBodyTypeName === "Composite" &&
-        bodyMapper.type.modelProperties) ||
-        {};
-    const isPageableResponse = Object.keys(modelProperties).some((k) => modelProperties[k].serializedName === "");
-    if (expectedBodyTypeName === "Sequence" || isPageableResponse) {
-        const arrayResponse = fullResponse.parsedBody ?? [];
-        for (const key of Object.keys(modelProperties)) {
-            if (modelProperties[key].serializedName) {
-                arrayResponse[key] = fullResponse.parsedBody?.[key];
-            }
-        }
-        if (parsedHeaders) {
-            for (const key of Object.keys(parsedHeaders)) {
-                arrayResponse[key] = parsedHeaders[key];
-            }
-        }
-        return isNullable &&
-            !fullResponse.parsedBody &&
-            !parsedHeaders &&
-            Object.getOwnPropertyNames(modelProperties).length === 0
-            ? null
-            : arrayResponse;
-    }
-    return handleNullableResponseAndWrappableBody({
-        body: fullResponse.parsedBody,
-        headers: parsedHeaders,
-        hasNullableType: isNullable,
-        shouldWrapBody: isPrimitiveBody(fullResponse.parsedBody, expectedBodyTypeName),
-    });
-}
-//# sourceMappingURL=utils.js.map
-
-/***/ }),
-
-/***/ 319:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.buildCreatePoller = void 0;
-const operation_js_1 = __nccwpck_require__(146);
-const constants_js_1 = __nccwpck_require__(63);
-const core_util_1 = __nccwpck_require__(15);
-const createStateProxy = () => ({
-    /**
-     * The state at this point is created to be of type OperationState<TResult>.
-     * It will be updated later to be of type TState when the
-     * customer-provided callback, `updateState`, is called during polling.
-     */
-    initState: (config) => ({ status: "running", config }),
-    setCanceled: (state) => (state.status = "canceled"),
-    setError: (state, error) => (state.error = error),
-    setResult: (state, result) => (state.result = result),
-    setRunning: (state) => (state.status = "running"),
-    setSucceeded: (state) => (state.status = "succeeded"),
-    setFailed: (state) => (state.status = "failed"),
-    getError: (state) => state.error,
-    getResult: (state) => state.result,
-    isCanceled: (state) => state.status === "canceled",
-    isFailed: (state) => state.status === "failed",
-    isRunning: (state) => state.status === "running",
-    isSucceeded: (state) => state.status === "succeeded",
-});
-/**
- * Returns a poller factory.
- */
-function buildCreatePoller(inputs) {
-    const { getOperationLocation, getStatusFromInitialResponse, getStatusFromPollResponse, isOperationError, getResourceLocation, getPollingInterval, getError, resolveOnUnsuccessful, } = inputs;
-    return async ({ init, poll }, options) => {
-        const { processResult, updateState, withOperationLocation: withOperationLocationCallback, intervalInMs = constants_js_1.POLL_INTERVAL_IN_MS, restoreFrom, } = options || {};
-        const stateProxy = createStateProxy();
-        const withOperationLocation = withOperationLocationCallback
-            ? (() => {
-                let called = false;
-                return (operationLocation, isUpdated) => {
-                    if (isUpdated)
-                        withOperationLocationCallback(operationLocation);
-                    else if (!called)
-                        withOperationLocationCallback(operationLocation);
-                    called = true;
-                };
-            })()
-            : undefined;
-        const state = restoreFrom
-            ? (0, operation_js_1.deserializeState)(restoreFrom)
-            : await (0, operation_js_1.initOperation)({
-                init,
-                stateProxy,
-                processResult,
-                getOperationStatus: getStatusFromInitialResponse,
-                withOperationLocation,
-                setErrorAsResult: !resolveOnUnsuccessful,
-            });
-        let resultPromise;
-        const abortController = new AbortController();
-        const handlers = new Map();
-        const handleProgressEvents = async () => handlers.forEach((h) => h(state));
-        const cancelErrMsg = "Operation was canceled";
-        let currentPollIntervalInMs = intervalInMs;
-        const poller = {
-            getOperationState: () => state,
-            getResult: () => state.result,
-            isDone: () => ["succeeded", "failed", "canceled"].includes(state.status),
-            isStopped: () => resultPromise === undefined,
-            stopPolling: () => {
-                abortController.abort();
-            },
-            toString: () => JSON.stringify({
-                state,
-            }),
-            onProgress: (callback) => {
-                const s = Symbol();
-                handlers.set(s, callback);
-                return () => handlers.delete(s);
-            },
-            pollUntilDone: (pollOptions) => (resultPromise !== null && resultPromise !== void 0 ? resultPromise : (resultPromise = (async () => {
-                const { abortSignal: inputAbortSignal } = pollOptions || {};
-                // In the future we can use AbortSignal.any() instead
-                function abortListener() {
-                    abortController.abort();
-                }
-                const abortSignal = abortController.signal;
-                if (inputAbortSignal === null || inputAbortSignal === void 0 ? void 0 : inputAbortSignal.aborted) {
-                    abortController.abort();
-                }
-                else if (!abortSignal.aborted) {
-                    inputAbortSignal === null || inputAbortSignal === void 0 ? void 0 : inputAbortSignal.addEventListener("abort", abortListener, { once: true });
-                }
-                try {
-                    if (!poller.isDone()) {
-                        await poller.poll({ abortSignal });
-                        while (!poller.isDone()) {
-                            await (0, core_util_1.delay)(currentPollIntervalInMs, { abortSignal });
-                            await poller.poll({ abortSignal });
-                        }
-                    }
-                }
-                finally {
-                    inputAbortSignal === null || inputAbortSignal === void 0 ? void 0 : inputAbortSignal.removeEventListener("abort", abortListener);
-                }
-                if (resolveOnUnsuccessful) {
-                    return poller.getResult();
-                }
-                else {
-                    switch (state.status) {
-                        case "succeeded":
-                            return poller.getResult();
-                        case "canceled":
-                            throw new Error(cancelErrMsg);
-                        case "failed":
-                            throw state.error;
-                        case "notStarted":
-                        case "running":
-                            throw new Error(`Polling completed without succeeding or failing`);
-                    }
-                }
-            })().finally(() => {
-                resultPromise = undefined;
-            }))),
-            async poll(pollOptions) {
-                if (resolveOnUnsuccessful) {
-                    if (poller.isDone())
-                        return;
-                }
-                else {
-                    switch (state.status) {
-                        case "succeeded":
-                            return;
-                        case "canceled":
-                            throw new Error(cancelErrMsg);
-                        case "failed":
-                            throw state.error;
-                    }
-                }
-                await (0, operation_js_1.pollOperation)({
-                    poll,
-                    state,
-                    stateProxy,
-                    getOperationLocation,
-                    isOperationError,
-                    withOperationLocation,
-                    getPollingInterval,
-                    getOperationStatus: getStatusFromPollResponse,
-                    getResourceLocation,
-                    processResult,
-                    getError,
-                    updateState,
-                    options: pollOptions,
-                    setDelay: (pollIntervalInMs) => {
-                        currentPollIntervalInMs = pollIntervalInMs;
-                    },
-                    setErrorAsResult: !resolveOnUnsuccessful,
-                });
-                await handleProgressEvents();
-                if (!resolveOnUnsuccessful) {
-                    switch (state.status) {
-                        case "canceled":
-                            throw new Error(cancelErrMsg);
-                        case "failed":
-                            throw state.error;
-                    }
-                }
-            },
-        };
-        return poller;
-    };
-}
-exports.buildCreatePoller = buildCreatePoller;
-//# sourceMappingURL=poller.js.map
-
-/***/ }),
-
-/***/ 320:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ServiceClient = void 0;
-const core_rest_pipeline_1 = __nccwpck_require__(107);
-const pipeline_js_1 = __nccwpck_require__(288);
-const utils_js_1 = __nccwpck_require__(318);
-const httpClientCache_js_1 = __nccwpck_require__(403);
-const operationHelpers_js_1 = __nccwpck_require__(439);
-const urlHelpers_js_1 = __nccwpck_require__(241);
-const interfaceHelpers_js_1 = __nccwpck_require__(404);
-const log_js_1 = __nccwpck_require__(489);
-/**
- * Initializes a new instance of the ServiceClient.
- */
-class ServiceClient {
-    /**
-     * If specified, this is the base URI that requests will be made against for this ServiceClient.
-     * If it is not specified, then all OperationSpecs must contain a baseUrl property.
-     */
-    _endpoint;
-    /**
-     * The default request content type for the service.
-     * Used if no requestContentType is present on an OperationSpec.
-     */
-    _requestContentType;
-    /**
-     * Set to true if the request is sent over HTTP instead of HTTPS
-     */
-    _allowInsecureConnection;
-    /**
-     * The HTTP client that will be used to send requests.
-     */
-    _httpClient;
-    /**
-     * The pipeline used by this client to make requests
-     */
-    pipeline;
-    /**
-     * The ServiceClient constructor
-     * @param options - The service client options that govern the behavior of the client.
-     */
-    constructor(options = {}) {
-        this._requestContentType = options.requestContentType;
-        this._endpoint = options.endpoint ?? options.baseUri;
-        if (options.baseUri) {
-            log_js_1.logger.warning("The baseUri option for SDK Clients has been deprecated, please use endpoint instead.");
-        }
-        this._allowInsecureConnection = options.allowInsecureConnection;
-        this._httpClient = options.httpClient || (0, httpClientCache_js_1.getCachedDefaultHttpClient)();
-        this.pipeline = options.pipeline || createDefaultPipeline(options);
-        if (options.additionalPolicies?.length) {
-            for (const { policy, position } of options.additionalPolicies) {
-                // Sign happens after Retry and is commonly needed to occur
-                // before policies that intercept post-retry.
-                const afterPhase = position === "perRetry" ? "Sign" : undefined;
-                this.pipeline.addPolicy(policy, {
-                    afterPhase,
-                });
-            }
-        }
-    }
-    /**
-     * Send the provided httpRequest.
-     */
-    async sendRequest(request) {
-        return this.pipeline.sendRequest(this._httpClient, request);
-    }
-    /**
-     * Send an HTTP request that is populated using the provided OperationSpec.
-     * @typeParam T - The typed result of the request, based on the OperationSpec.
-     * @param operationArguments - The arguments that the HTTP request's templated values will be populated from.
-     * @param operationSpec - The OperationSpec to use to populate the httpRequest.
-     */
-    async sendOperationRequest(operationArguments, operationSpec) {
-        const endpoint = operationSpec.baseUrl || this._endpoint;
-        if (!endpoint) {
-            throw new Error("If operationSpec.baseUrl is not specified, then the ServiceClient must have a endpoint string property that contains the base URL to use.");
-        }
-        // Templatized URLs sometimes reference properties on the ServiceClient child class,
-        // so we have to pass `this` below in order to search these properties if they're
-        // not part of OperationArguments
-        const url = (0, urlHelpers_js_1.getRequestUrl)(endpoint, operationSpec, operationArguments, this);
-        const request = (0, core_rest_pipeline_1.createPipelineRequest)({
-            url,
-        });
-        request.method = operationSpec.httpMethod;
-        const operationInfo = (0, operationHelpers_js_1.getOperationRequestInfo)(request);
-        operationInfo.operationSpec = operationSpec;
-        operationInfo.operationArguments = operationArguments;
-        const contentType = operationSpec.contentType || this._requestContentType;
-        if (contentType && operationSpec.requestBody) {
-            request.headers.set("Content-Type", contentType);
-        }
-        const options = operationArguments.options;
-        if (options) {
-            const requestOptions = options.requestOptions;
-            if (requestOptions) {
-                if (requestOptions.timeout) {
-                    request.timeout = requestOptions.timeout;
-                }
-                if (requestOptions.onUploadProgress) {
-                    request.onUploadProgress = requestOptions.onUploadProgress;
-                }
-                if (requestOptions.onDownloadProgress) {
-                    request.onDownloadProgress = requestOptions.onDownloadProgress;
-                }
-                if (requestOptions.shouldDeserialize !== undefined) {
-                    operationInfo.shouldDeserialize = requestOptions.shouldDeserialize;
-                }
-                if (requestOptions.allowInsecureConnection) {
-                    request.allowInsecureConnection = true;
-                }
-            }
-            if (options.abortSignal) {
-                request.abortSignal = options.abortSignal;
-            }
-            if (options.tracingOptions) {
-                request.tracingOptions = options.tracingOptions;
-            }
-        }
-        if (this._allowInsecureConnection) {
-            request.allowInsecureConnection = true;
-        }
-        if (request.streamResponseStatusCodes === undefined) {
-            request.streamResponseStatusCodes = (0, interfaceHelpers_js_1.getStreamingResponseStatusCodes)(operationSpec);
-        }
-        try {
-            const rawResponse = await this.sendRequest(request);
-            const flatResponse = (0, utils_js_1.flattenResponse)(rawResponse, operationSpec.responses[rawResponse.status]);
-            if (options?.onResponse) {
-                options.onResponse(rawResponse, flatResponse);
-            }
-            return flatResponse;
-        }
-        catch (error) {
-            if (typeof error === "object" && error?.response) {
-                const rawResponse = error.response;
-                const flatResponse = (0, utils_js_1.flattenResponse)(rawResponse, operationSpec.responses[error.statusCode] || operationSpec.responses["default"]);
-                error.details = flatResponse;
-                if (options?.onResponse) {
-                    options.onResponse(rawResponse, flatResponse, error);
-                }
-            }
-            throw error;
-        }
-    }
-}
-exports.ServiceClient = ServiceClient;
-function createDefaultPipeline(options) {
-    const credentialScopes = getCredentialScopes(options);
-    const credentialOptions = options.credential && credentialScopes
-        ? { credentialScopes, credential: options.credential }
-        : undefined;
-    return (0, pipeline_js_1.createClientPipeline)({
-        ...options,
-        credentialOptions,
-    });
-}
-function getCredentialScopes(options) {
-    if (options.credentialScopes) {
-        return options.credentialScopes;
-    }
-    if (options.endpoint) {
-        return `${options.endpoint}/.default`;
-    }
-    if (options.baseUri) {
-        return `${options.baseUri}/.default`;
-    }
-    if (options.credential && !options.credentialScopes) {
-        throw new Error(`When using credentials, the ServiceClientOptions must contain either a endpoint or a credentialScopes. Unable to create a bearerTokenAuthenticationPolicy`);
-    }
-    return undefined;
-}
-//# sourceMappingURL=serviceClient.js.map
-
-/***/ }),
-
-/***/ 321:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var createPipelineFromOptions_exports = {};
-__export(createPipelineFromOptions_exports, {
-  createPipelineFromOptions: () => createPipelineFromOptions
-});
-module.exports = __toCommonJS(createPipelineFromOptions_exports);
-var import_logPolicy = __nccwpck_require__(108);
-var import_pipeline = __nccwpck_require__(533);
-var import_redirectPolicy = __nccwpck_require__(323);
-var import_userAgentPolicy = __nccwpck_require__(366);
-var import_decompressResponsePolicy = __nccwpck_require__(361);
-var import_defaultRetryPolicy = __nccwpck_require__(330);
-var import_formDataPolicy = __nccwpck_require__(345);
-var import_checkEnvironment = __nccwpck_require__(445);
-var import_proxyPolicy = __nccwpck_require__(41);
-var import_agentPolicy = __nccwpck_require__(472);
-var import_tlsPolicy = __nccwpck_require__(225);
-var import_multipartPolicy = __nccwpck_require__(175);
-function createPipelineFromOptions(options) {
-  const pipeline = (0, import_pipeline.createEmptyPipeline)();
-  if (import_checkEnvironment.isNodeLike) {
-    if (options.agent) {
-      pipeline.addPolicy((0, import_agentPolicy.agentPolicy)(options.agent));
-    }
-    if (options.tlsOptions) {
-      pipeline.addPolicy((0, import_tlsPolicy.tlsPolicy)(options.tlsOptions));
-    }
-    pipeline.addPolicy((0, import_proxyPolicy.proxyPolicy)(options.proxyOptions));
-    pipeline.addPolicy((0, import_decompressResponsePolicy.decompressResponsePolicy)());
-  }
-  pipeline.addPolicy((0, import_formDataPolicy.formDataPolicy)(), { beforePolicies: [import_multipartPolicy.multipartPolicyName] });
-  pipeline.addPolicy((0, import_userAgentPolicy.userAgentPolicy)(options.userAgentOptions));
-  pipeline.addPolicy((0, import_multipartPolicy.multipartPolicy)(), { afterPhase: "Deserialize" });
-  pipeline.addPolicy((0, import_defaultRetryPolicy.defaultRetryPolicy)(options.retryOptions), { phase: "Retry" });
-  if (import_checkEnvironment.isNodeLike) {
-    pipeline.addPolicy((0, import_redirectPolicy.redirectPolicy)(options.redirectOptions), { afterPhase: "Retry" });
-  }
-  pipeline.addPolicy((0, import_logPolicy.logPolicy)(options.loggingOptions), { afterPhase: "Sign" });
-  return pipeline;
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=createPipelineFromOptions.js.map
-
-
-/***/ }),
-
-/***/ 322:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=pageBlob.js.map
-
-/***/ }),
-
-/***/ 323:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var redirectPolicy_exports = {};
-__export(redirectPolicy_exports, {
-  redirectPolicy: () => redirectPolicy,
-  redirectPolicyName: () => redirectPolicyName
-});
-module.exports = __toCommonJS(redirectPolicy_exports);
-var import_log = __nccwpck_require__(157);
-const redirectPolicyName = "redirectPolicy";
-const allowedRedirect = ["GET", "HEAD"];
-function redirectPolicy(options = {}) {
-  const { maxRetries = 20, allowCrossOriginRedirects = false } = options;
-  return {
-    name: redirectPolicyName,
-    async sendRequest(request, next) {
-      const response = await next(request);
-      return handleRedirect(next, response, maxRetries, allowCrossOriginRedirects);
-    }
-  };
-}
-async function handleRedirect(next, response, maxRetries, allowCrossOriginRedirects, currentRetries = 0) {
-  const { request, status, headers } = response;
-  const locationHeader = headers.get("location");
-  if (locationHeader && (status === 300 || status === 301 && allowedRedirect.includes(request.method) || status === 302 && allowedRedirect.includes(request.method) || status === 303 && request.method === "POST" || status === 307) && currentRetries < maxRetries) {
-    const url = new URL(locationHeader, request.url);
-    if (!allowCrossOriginRedirects) {
-      const originalUrl = new URL(request.url);
-      if (url.origin !== originalUrl.origin) {
-        import_log.logger.verbose(
-          `Skipping cross-origin redirect from ${originalUrl.origin} to ${url.origin}.`
-        );
-        return response;
-      }
-    }
-    request.url = url.toString();
-    if (status === 303) {
-      request.method = "GET";
-      request.headers.delete("Content-Length");
-      delete request.body;
-    }
-    request.headers.delete("Authorization");
-    const res = await next(request);
-    return handleRedirect(next, res, maxRetries, allowCrossOriginRedirects, currentRetries + 1);
-  }
-  return response;
-}
-// Annotate the CommonJS export names for ESM import in node:
-0 && (0);
-//# sourceMappingURL=redirectPolicy.js.map
-
-
-/***/ }),
-
-/***/ 324:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("worker_threads");
-
-/***/ }),
-
-/***/ 325:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createHttpPoller = void 0;
-const operation_js_1 = __nccwpck_require__(54);
-const poller_js_1 = __nccwpck_require__(319);
-/**
- * Creates a poller that can be used to poll a long-running operation.
- * @param lro - Description of the long-running operation
- * @param options - options to configure the poller
- * @returns an initialized poller
- */
-async function createHttpPoller(lro, options) {
-    const { resourceLocationConfig, intervalInMs, processResult, restoreFrom, updateState, withOperationLocation, resolveOnUnsuccessful = false, } = options || {};
-    return (0, poller_js_1.buildCreatePoller)({
-        getStatusFromInitialResponse: operation_js_1.getStatusFromInitialResponse,
-        getStatusFromPollResponse: operation_js_1.getOperationStatus,
-        isOperationError: operation_js_1.isOperationError,
-        getOperationLocation: operation_js_1.getOperationLocation,
-        getResourceLocation: operation_js_1.getResourceLocation,
-        getPollingInterval: operation_js_1.parseRetryAfter,
-        getError: operation_js_1.getErrorFromResponse,
-        resolveOnUnsuccessful,
-    })({
-        init: async () => {
-            const response = await lro.sendInitialRequest();
-            const config = (0, operation_js_1.inferLroMode)({
-                rawResponse: response.rawResponse,
-                requestPath: lro.requestPath,
-                requestMethod: lro.requestMethod,
-                resourceLocationConfig,
-            });
-            return Object.assign({ response, operationLocation: config === null || config === void 0 ? void 0 : config.operationLocation, resourceLocation: config === null || config === void 0 ? void 0 : config.resourceLocation }, ((config === null || config === void 0 ? void 0 : config.mode) ? { metadata: { mode: config.mode } } : {}));
-        },
-        poll: lro.sendPollRequest,
-    }, {
-        intervalInMs,
-        withOperationLocation,
-        restoreFrom,
-        updateState,
-        processResult: processResult
-            ? ({ flatResponse }, state) => processResult(flatResponse, state)
-            : ({ flatResponse }) => flatResponse,
-    });
-}
-exports.createHttpPoller = createHttpPoller;
-//# sourceMappingURL=poller.js.map
-
-/***/ }),
-
-/***/ 326:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("perf_hooks");
-
-/***/ }),
-
-/***/ 327:
-/***/ ((module) => {
-
-(()=>{"use strict";var t={d:(e,n)=>{for(var i in n)t.o(n,i)&&!t.o(e,i)&&Object.defineProperty(e,i,{enumerable:!0,get:n[i]})},o:(t,e)=>Object.prototype.hasOwnProperty.call(t,e),r:t=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})}},e={};t.r(e),t.d(e,{XMLBuilder:()=>ie,XMLParser:()=>Lt,XMLValidator:()=>se});const n=":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD",i=new RegExp("^["+n+"]["+n+"\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*$");function s(t,e){const n=[];let i=e.exec(t);for(;i;){const s=[];s.startIndex=e.lastIndex-i[0].length;const r=i.length;for(let t=0;t<r;t++)s.push(i[t]);n.push(s),i=e.exec(t)}return n}const r=function(t){return!(null==i.exec(t))},o=["hasOwnProperty","toString","valueOf","__defineGetter__","__defineSetter__","__lookupGetter__","__lookupSetter__"],a=["__proto__","constructor","prototype"],h={allowBooleanAttributes:!1,unpairedTags:[]};function l(t,e){e=Object.assign({},h,e);const n=[];let i=!1,s=!1;"\ufeff"===t[0]&&(t=t.substr(1));for(let r=0;r<t.length;r++)if("<"===t[r]&&"?"===t[r+1]){if(r+=2,r=p(t,r),r.err)return r}else{if("<"!==t[r]){if(u(t[r]))continue;return b("InvalidChar","char '"+t[r]+"' is not expected.",w(t,r))}{let o=r;if(r++,"!"===t[r]){r=c(t,r);continue}{let a=!1;"/"===t[r]&&(a=!0,r++);let h="";for(;r<t.length&&">"!==t[r]&&" "!==t[r]&&"\t"!==t[r]&&"\n"!==t[r]&&"\r"!==t[r];r++)h+=t[r];if(h=h.trim(),"/"===h[h.length-1]&&(h=h.substring(0,h.length-1),r--),!E(h)){let e;return e=0===h.trim().length?"Invalid space after '<'.":"Tag '"+h+"' is an invalid name.",b("InvalidTag",e,w(t,r))}const l=g(t,r);if(!1===l)return b("InvalidAttr","Attributes for '"+h+"' have open quote.",w(t,r));let d=l.value;if(r=l.index,"/"===d[d.length-1]){const n=r-d.length;d=d.substring(0,d.length-1);const s=x(d,e);if(!0!==s)return b(s.err.code,s.err.msg,w(t,n+s.err.line));i=!0}else if(a){if(!l.tagClosed)return b("InvalidTag","Closing tag '"+h+"' doesn't have proper closing.",w(t,r));if(d.trim().length>0)return b("InvalidTag","Closing tag '"+h+"' can't have attributes or invalid starting.",w(t,o));if(0===n.length)return b("InvalidTag","Closing tag '"+h+"' has not been opened.",w(t,o));{const e=n.pop();if(h!==e.tagName){let n=w(t,e.tagStartPos);return b("InvalidTag","Expected closing tag '"+e.tagName+"' (opened in line "+n.line+", col "+n.col+") instead of closing tag '"+h+"'.",w(t,o))}0==n.length&&(s=!0)}}else{const a=x(d,e);if(!0!==a)return b(a.err.code,a.err.msg,w(t,r-d.length+a.err.line));if(!0===s)return b("InvalidXml","Multiple possible root nodes found.",w(t,r));-1!==e.unpairedTags.indexOf(h)||n.push({tagName:h,tagStartPos:o}),i=!0}for(r++;r<t.length;r++)if("<"===t[r]){if("!"===t[r+1]){r++,r=c(t,r);continue}if("?"!==t[r+1])break;if(r=p(t,++r),r.err)return r}else if("&"===t[r]){const e=N(t,r);if(-1==e)return b("InvalidChar","char '&' is not expected.",w(t,r));r=e}else if(!0===s&&!u(t[r]))return b("InvalidXml","Extra text at the end",w(t,r));"<"===t[r]&&r--}}}return i?1==n.length?b("InvalidTag","Unclosed tag '"+n[0].tagName+"'.",w(t,n[0].tagStartPos)):!(n.length>0)||b("InvalidXml","Invalid '"+JSON.stringify(n.map(t=>t.tagName),null,4).replace(/\r?\n/g,"")+"' found.",{line:1,col:1}):b("InvalidXml","Start tag expected.",1)}function u(t){return" "===t||"\t"===t||"\n"===t||"\r"===t}function p(t,e){const n=e;for(;e<t.length;e++)if("?"==t[e]||" "==t[e]){const i=t.substr(n,e-n);if(e>5&&"xml"===i)return b("InvalidXml","XML declaration allowed only at the start of the document.",w(t,e));if("?"==t[e]&&">"==t[e+1]){e++;break}continue}return e}function c(t,e){if(t.length>e+5&&"-"===t[e+1]&&"-"===t[e+2]){for(e+=3;e<t.length;e++)if("-"===t[e]&&"-"===t[e+1]&&">"===t[e+2]){e+=2;break}}else if(t.length>e+8&&"D"===t[e+1]&&"O"===t[e+2]&&"C"===t[e+3]&&"T"===t[e+4]&&"Y"===t[e+5]&&"P"===t[e+6]&&"E"===t[e+7]){let n=1;for(e+=8;e<t.length;e++)if("<"===t[e])n++;else if(">"===t[e]&&(n--,0===n))break}else if(t.length>e+9&&"["===t[e+1]&&"C"===t[e+2]&&"D"===t[e+3]&&"A"===t[e+4]&&"T"===t[e+5]&&"A"===t[e+6]&&"["===t[e+7])for(e+=8;e<t.length;e++)if("]"===t[e]&&"]"===t[e+1]&&">"===t[e+2]){e+=2;break}return e}const d='"',f="'";function g(t,e){let n="",i="",s=!1;for(;e<t.length;e++){if(t[e]===d||t[e]===f)""===i?i=t[e]:i!==t[e]||(i="");else if(">"===t[e]&&""===i){s=!0;break}n+=t[e]}return""===i&&{value:n,index:e,tagClosed:s}}const m=new RegExp("(\\s*)([^\\s=]+)(\\s*=)?(\\s*(['\"])(([\\s\\S])*?)\\5)?","g");function x(t,e){const n=s(t,m),i={};for(let t=0;t<n.length;t++){if(0===n[t][1].length)return b("InvalidAttr","Attribute '"+n[t][2]+"' has no space in starting.",v(n[t]));if(void 0!==n[t][3]&&void 0===n[t][4])return b("InvalidAttr","Attribute '"+n[t][2]+"' is without value.",v(n[t]));if(void 0===n[t][3]&&!e.allowBooleanAttributes)return b("InvalidAttr","boolean attribute '"+n[t][2]+"' is not allowed.",v(n[t]));const s=n[t][2];if(!y(s))return b("InvalidAttr","Attribute '"+s+"' is an invalid name.",v(n[t]));if(Object.prototype.hasOwnProperty.call(i,s))return b("InvalidAttr","Attribute '"+s+"' is repeated.",v(n[t]));i[s]=1}return!0}function N(t,e){if(";"===t[++e])return-1;if("#"===t[e])return function(t,e){let n=/\d/;for("x"===t[e]&&(e++,n=/[\da-fA-F]/);e<t.length;e++){if(";"===t[e])return e;if(!t[e].match(n))break}return-1}(t,++e);let n=0;for(;e<t.length;e++,n++)if(!(t[e].match(/\w/)&&n<20)){if(";"===t[e])break;return-1}return e}function b(t,e,n){return{err:{code:t,msg:e,line:n.line||n,col:n.col}}}function y(t){return r(t)}function E(t){return r(t)}function w(t,e){const n=t.substring(0,e).split(/\r?\n/);return{line:n.length,col:n[n.length-1].length+1}}function v(t){return t.startIndex+t[1].length}const S=t=>o.includes(t)?"__"+t:t,_={preserveOrder:!1,attributeNamePrefix:"@_",attributesGroupName:!1,textNodeName:"#text",ignoreAttributes:!0,removeNSPrefix:!1,allowBooleanAttributes:!1,parseTagValue:!0,parseAttributeValue:!1,trimValues:!0,cdataPropName:!1,numberParseOptions:{hex:!0,leadingZeros:!0,eNotation:!0},tagValueProcessor:function(t,e){return e},attributeValueProcessor:function(t,e){return e},stopNodes:[],alwaysCreateTextNode:!1,isArray:()=>!1,commentPropName:!1,unpairedTags:[],processEntities:!0,htmlEntities:!1,entityDecoder:null,ignoreDeclaration:!1,ignorePiTags:!1,transformTagName:!1,transformAttributeName:!1,updateTag:function(t,e,n){return t},captureMetaData:!1,maxNestedTags:100,strictReservedNames:!0,jPath:!0,onDangerousProperty:S};function A(t,e){if("string"!=typeof t)return;const n=t.toLowerCase();if(o.some(t=>n===t.toLowerCase()))throw new Error(`[SECURITY] Invalid ${e}: "${t}" is a reserved JavaScript keyword that could cause prototype pollution`);if(a.some(t=>n===t.toLowerCase()))throw new Error(`[SECURITY] Invalid ${e}: "${t}" is a reserved JavaScript keyword that could cause prototype pollution`)}function T(t,e){return"boolean"==typeof t?{enabled:t,maxEntitySize:1e4,maxExpansionDepth:1e4,maxTotalExpansions:1/0,maxExpandedLength:1e5,maxEntityCount:1e3,allowedTags:null,tagFilter:null,appliesTo:"all"}:"object"==typeof t&&null!==t?{enabled:!1!==t.enabled,maxEntitySize:Math.max(1,t.maxEntitySize??1e4),maxExpansionDepth:Math.max(1,t.maxExpansionDepth??1e4),maxTotalExpansions:Math.max(1,t.maxTotalExpansions??1/0),maxExpandedLength:Math.max(1,t.maxExpandedLength??1e5),maxEntityCount:Math.max(1,t.maxEntityCount??1e3),allowedTags:t.allowedTags??null,tagFilter:t.tagFilter??null,appliesTo:t.appliesTo??"all"}:T(!0)}const C=function(t){const e=Object.assign({},_,t),n=[{value:e.attributeNamePrefix,name:"attributeNamePrefix"},{value:e.attributesGroupName,name:"attributesGroupName"},{value:e.textNodeName,name:"textNodeName"},{value:e.cdataPropName,name:"cdataPropName"},{value:e.commentPropName,name:"commentPropName"}];for(const{value:t,name:e}of n)t&&A(t,e);return null===e.onDangerousProperty&&(e.onDangerousProperty=S),e.processEntities=T(e.processEntities,e.htmlEntities),e.unpairedTagsSet=new Set(e.unpairedTags),e.stopNodes&&Array.isArray(e.stopNodes)&&(e.stopNodes=e.stopNodes.map(t=>"string"==typeof t&&t.startsWith("*.")?".."+t.substring(2):t)),e};let P;P="function"!=typeof Symbol?"@@xmlMetadata":Symbol("XML Node Metadata");class ${constructor(t){this.tagname=t,this.child=[],this[":@"]=Object.create(null)}add(t,e){"__proto__"===t&&(t="#__proto__"),this.child.push({[t]:e})}addChild(t,e){"__proto__"===t.tagname&&(t.tagname="#__proto__"),t[":@"]&&Object.keys(t[":@"]).length>0?this.child.push({[t.tagname]:t.child,":@":t[":@"]}):this.child.push({[t.tagname]:t.child}),void 0!==e&&(this.child[this.child.length-1][P]={startIndex:e})}static getMetaDataSymbol(){return P}}const O=":A-Za-z_À-ÖØ-öø-˿Ͱ-ͽͿ-҆҈-῿‌-‍⁰-↏Ⰰ-⿯、-퟿豈-﷏ﷰ-�",I=":A-Za-z_À-˿Ͱ-ͽͿ-҆҈-῿‌-‍⁰-↏Ⰰ-⿯、-퟿豈-﷏ﷰ-�𐀀-󯿿",V=I+"\\-\\.\\d·̀-ͯ҇‿-⁀",D=(t,e,n="")=>{const i=`[${t.replace(":","")}][${e.replace(":","")}]*`;return{name:new RegExp(`^[${t}][${e}]*$`,n),ncName:new RegExp(`^${i}$`,n),qName:new RegExp(`^${i}(?::${i})?$`,n),nmToken:new RegExp(`^[${e}]+$`,n),nmTokens:new RegExp(`^[${e}]+(?:\\s+[${e}]+)*$`,n)}},M=D(O,O+"\\-\\.\\d·̀-ͯ‿-⁀"),j=D(I,V,"u"),L=(t,{xmlVersion:e="1.0"}={})=>((t="1.0")=>"1.1"===t?j:M)(e).qName.test(t);class k{constructor(t,e){this.suppressValidationErr=!t,this.options=t,this.xmlVersion=e||1}setXmlVersion(t=1){this.xmlVersion=t}readDocType(t,e){const n=Object.create(null);let i=0;if("O"!==t[e+3]||"C"!==t[e+4]||"T"!==t[e+5]||"Y"!==t[e+6]||"P"!==t[e+7]||"E"!==t[e+8])throw new Error("Invalid Tag instead of DOCTYPE");{e+=9;let s=1,r=!1,o=!1,a="";for(;e<t.length;e++)if("<"!==t[e]||o)if(">"===t[e]){if(o?"-"===t[e-1]&&"-"===t[e-2]&&(o=!1,s--):s--,0===s)break}else"["===t[e]?r=!0:a+=t[e];else{if(r&&F(t,"!ENTITY",e)){let s,r;if(e+=7,[s,r,e]=this.readEntityExp(t,e+1,this.suppressValidationErr),-1===r.indexOf("&")){if(!1!==this.options.enabled&&null!=this.options.maxEntityCount&&i>=this.options.maxEntityCount)throw new Error(`Entity count (${i+1}) exceeds maximum allowed (${this.options.maxEntityCount})`);n[s]=r,i++}}else if(r&&F(t,"!ELEMENT",e)){e+=8;const{index:n}=this.readElementExp(t,e+1);e=n}else if(r&&F(t,"!ATTLIST",e))e+=8;else if(r&&F(t,"!NOTATION",e)){e+=9;const{index:n}=this.readNotationExp(t,e+1,this.suppressValidationErr);e=n}else{if(!F(t,"!--",e))throw new Error("Invalid DOCTYPE");o=!0}s++,a=""}if(0!==s)throw new Error("Unclosed DOCTYPE")}return{entities:n,i:e}}readEntityExp(t,e){const n=e=R(t,e);for(;e<t.length&&!/\s/.test(t[e])&&'"'!==t[e]&&"'"!==t[e];)e++;let i=t.substring(n,e);if(G(i,{xmlVersion:this.xmlVersion}),e=R(t,e),!this.suppressValidationErr){if("SYSTEM"===t.substring(e,e+6).toUpperCase())throw new Error("External entities are not supported");if("%"===t[e])throw new Error("Parameter entities are not supported")}let s="";if([e,s]=this.readIdentifierVal(t,e,"entity"),!1!==this.options.enabled&&null!=this.options.maxEntitySize&&s.length>this.options.maxEntitySize)throw new Error(`Entity "${i}" size (${s.length}) exceeds maximum allowed size (${this.options.maxEntitySize})`);return[i,s,--e]}readNotationExp(t,e){const n=e=R(t,e);for(;e<t.length&&!/\s/.test(t[e]);)e++;let i=t.substring(n,e);!this.suppressValidationErr&&G(i,{xmlVersion:this.xmlVersion}),e=R(t,e);const s=t.substring(e,e+6).toUpperCase();if(!this.suppressValidationErr&&"SYSTEM"!==s&&"PUBLIC"!==s)throw new Error(`Expected SYSTEM or PUBLIC, found "${s}"`);e+=s.length,e=R(t,e);let r=null,o=null;if("PUBLIC"===s)[e,r]=this.readIdentifierVal(t,e,"publicIdentifier"),'"'!==t[e=R(t,e)]&&"'"!==t[e]||([e,o]=this.readIdentifierVal(t,e,"systemIdentifier"));else if("SYSTEM"===s&&([e,o]=this.readIdentifierVal(t,e,"systemIdentifier"),!this.suppressValidationErr&&!o))throw new Error("Missing mandatory system identifier for SYSTEM notation");return{notationName:i,publicIdentifier:r,systemIdentifier:o,index:--e}}readIdentifierVal(t,e,n){let i="";const s=t[e];if('"'!==s&&"'"!==s)throw new Error(`Expected quoted string, found "${s}"`);const r=++e;for(;e<t.length&&t[e]!==s;)e++;if(i=t.substring(r,e),t[e]!==s)throw new Error(`Unterminated ${n} value`);return[++e,i]}readElementExp(t,e){const n=e=R(t,e);for(;e<t.length&&!/\s/.test(t[e]);)e++;let i=t.substring(n,e);if(!this.suppressValidationErr&&!L(i,{xmlVersion:this.xmlVersion}))throw new Error(`Invalid element name: "${i}"`);let s="";if("E"===t[e=R(t,e)]&&F(t,"MPTY",e))e+=4;else if("A"===t[e]&&F(t,"NY",e))e+=2;else if("("===t[e]){const n=++e;for(;e<t.length&&")"!==t[e];)e++;if(s=t.substring(n,e),")"!==t[e])throw new Error("Unterminated content model")}else if(!this.suppressValidationErr)throw new Error(`Invalid Element Expression, found "${t[e]}"`);return{elementName:i,contentModel:s.trim(),index:e}}readAttlistExp(t,e){let n=e=R(t,e);for(;e<t.length&&!/\s/.test(t[e]);)e++;let i=t.substring(n,e);for(G(i,{xmlVersion:this.xmlVersion}),n=e=R(t,e);e<t.length&&!/\s/.test(t[e]);)e++;let s=t.substring(n,e);if(!G(s,{xmlVersion:this.xmlVersion}))throw new Error(`Invalid attribute name: "${s}"`);e=R(t,e);let r="";if("NOTATION"===t.substring(e,e+8).toUpperCase()){if(r="NOTATION","("!==t[e=R(t,e+=8)])throw new Error(`Expected '(', found "${t[e]}"`);e++;let n=[];for(;e<t.length&&")"!==t[e];){const i=e;for(;e<t.length&&"|"!==t[e]&&")"!==t[e];)e++;let s=t.substring(i,e);if(s=s.trim(),!G(s,{xmlVersion:this.xmlVersion}))throw new Error(`Invalid notation name: "${s}"`);n.push(s),"|"===t[e]&&(e++,e=R(t,e))}if(")"!==t[e])throw new Error("Unterminated list of notations");e++,r+=" ("+n.join("|")+")"}else{const n=e;for(;e<t.length&&!/\s/.test(t[e]);)e++;r+=t.substring(n,e);const i=["CDATA","ID","IDREF","IDREFS","ENTITY","ENTITIES","NMTOKEN","NMTOKENS"];if(!this.suppressValidationErr&&!i.includes(r.toUpperCase()))throw new Error(`Invalid attribute type: "${r}"`)}e=R(t,e);let o="";return"#REQUIRED"===t.substring(e,e+8).toUpperCase()?(o="#REQUIRED",e+=8):"#IMPLIED"===t.substring(e,e+7).toUpperCase()?(o="#IMPLIED",e+=7):[e,o]=this.readIdentifierVal(t,e,"ATTLIST"),{elementName:i,attributeName:s,attributeType:r,defaultValue:o,index:e}}}const R=(t,e)=>{for(;e<t.length&&/\s/.test(t[e]);)e++;return e};function F(t,e,n){for(let i=0;i<e.length;i++)if(e[i]!==t[n+i+1])return!1;return!0}function G(t,e){if(L(t,{xmlVersion:e}))return t;throw new Error(`Invalid entity name ${t}`)}const U=/^[-+]?0x[a-fA-F0-9]+$/,B=/^0b[01]+$/,W=/^0o[0-7]+$/,z=/^([\-\+])?(0*)([0-9]*(\.[0-9]*)?)$/,X={hex:!0,binary:!1,octal:!1,leadingZeros:!0,decimalPoint:".",eNotation:!0,infinity:"original"};const Y=/^([-+])?(0*)(\d*(\.\d*)?[eE][-\+]?\d+)$/;function q(t,e){const n=t.trim();if(2!==e&&8!==e||(t=n.substring(2)),parseInt)return parseInt(t,e);if(Number.parseInt)return Number.parseInt(t,e);if(window&&window.parseInt)return window.parseInt(t,e);throw new Error("parseInt, Number.parseInt, window.parseInt are not supported")}class Z{constructor(t){this._matcher=t}get separator(){return this._matcher.separator}getCurrentTag(){const t=this._matcher.path;return t.length>0?t[t.length-1].tag:void 0}getCurrentNamespace(){const t=this._matcher.path;return t.length>0?t[t.length-1].namespace:void 0}getAttrValue(t){const e=this._matcher.path;if(0!==e.length)return e[e.length-1].values?.[t]}hasAttr(t){const e=this._matcher.path;if(0===e.length)return!1;const n=e[e.length-1];return void 0!==n.values&&t in n.values}getPosition(){const t=this._matcher.path;return 0===t.length?-1:t[t.length-1].position??0}getCounter(){const t=this._matcher.path;return 0===t.length?-1:t[t.length-1].counter??0}getIndex(){return this.getPosition()}getDepth(){return this._matcher.path.length}toString(t,e=!0){return this._matcher.toString(t,e)}toArray(){return this._matcher.path.map(t=>t.tag)}matches(t){return this._matcher.matches(t)}matchesAny(t){return t.matchesAny(this._matcher)}}class J{constructor(t={}){this.separator=t.separator||".",this.path=[],this.siblingStacks=[],this._pathStringCache=null,this._view=new Z(this)}push(t,e=null,n=null){this._pathStringCache=null,this.path.length>0&&(this.path[this.path.length-1].values=void 0);const i=this.path.length;this.siblingStacks[i]||(this.siblingStacks[i]=new Map);const s=this.siblingStacks[i],r=n?`${n}:${t}`:t,o=s.get(r)||0;let a=0;for(const t of s.values())a+=t;s.set(r,o+1);const h={tag:t,position:a,counter:o};null!=n&&(h.namespace=n),null!=e&&(h.values=e),this.path.push(h)}pop(){if(0===this.path.length)return;this._pathStringCache=null;const t=this.path.pop();return this.siblingStacks.length>this.path.length+1&&(this.siblingStacks.length=this.path.length+1),t}updateCurrent(t){if(this.path.length>0){const e=this.path[this.path.length-1];null!=t&&(e.values=t)}}getCurrentTag(){return this.path.length>0?this.path[this.path.length-1].tag:void 0}getCurrentNamespace(){return this.path.length>0?this.path[this.path.length-1].namespace:void 0}getAttrValue(t){if(0!==this.path.length)return this.path[this.path.length-1].values?.[t]}hasAttr(t){if(0===this.path.length)return!1;const e=this.path[this.path.length-1];return void 0!==e.values&&t in e.values}getPosition(){return 0===this.path.length?-1:this.path[this.path.length-1].position??0}getCounter(){return 0===this.path.length?-1:this.path[this.path.length-1].counter??0}getIndex(){return this.getPosition()}getDepth(){return this.path.length}toString(t,e=!0){const n=t||this.separator;if(n===this.separator&&!0===e){if(null!==this._pathStringCache)return this._pathStringCache;const t=this.path.map(t=>t.namespace?`${t.namespace}:${t.tag}`:t.tag).join(n);return this._pathStringCache=t,t}return this.path.map(t=>e&&t.namespace?`${t.namespace}:${t.tag}`:t.tag).join(n)}toArray(){return this.path.map(t=>t.tag)}reset(){this._pathStringCache=null,this.path=[],this.siblingStacks=[]}matches(t){const e=t.segments;return 0!==e.length&&(t.hasDeepWildcard()?this._matchWithDeepWildcard(e):this._matchSimple(e))}_matchSimple(t){if(this.path.length!==t.length)return!1;for(let e=0;e<t.length;e++)if(!this._matchSegment(t[e],this.path[e],e===this.path.length-1))return!1;return!0}_matchWithDeepWildcard(t){let e=this.path.length-1,n=t.length-1;for(;n>=0&&e>=0;){const i=t[n];if("deep-wildcard"===i.type){if(n--,n<0)return!0;const i=t[n];let s=!1;for(let t=e;t>=0;t--)if(this._matchSegment(i,this.path[t],t===this.path.length-1)){e=t-1,n--,s=!0;break}if(!s)return!1}else{if(!this._matchSegment(i,this.path[e],e===this.path.length-1))return!1;e--,n--}}return n<0}_matchSegment(t,e,n){if("*"!==t.tag&&t.tag!==e.tag)return!1;if(void 0!==t.namespace&&"*"!==t.namespace&&t.namespace!==e.namespace)return!1;if(void 0!==t.attrName){if(!n)return!1;if(!e.values||!(t.attrName in e.values))return!1;if(void 0!==t.attrValue&&String(e.values[t.attrName])!==String(t.attrValue))return!1}if(void 0!==t.position){if(!n)return!1;const i=e.counter??0;if("first"===t.position&&0!==i)return!1;if("odd"===t.position&&i%2!=1)return!1;if("even"===t.position&&i%2!=0)return!1;if("nth"===t.position&&i!==t.positionValue)return!1}return!0}matchesAny(t){return t.matchesAny(this)}snapshot(){return{path:this.path.map(t=>({...t})),siblingStacks:this.siblingStacks.map(t=>new Map(t))}}restore(t){this._pathStringCache=null,this.path=t.path.map(t=>({...t})),this.siblingStacks=t.siblingStacks.map(t=>new Map(t))}readOnly(){return this._view}}class K{constructor(t,e={},n){this.pattern=t,this.separator=e.separator||".",this.segments=this._parse(t),this.data=n,this._hasDeepWildcard=this.segments.some(t=>"deep-wildcard"===t.type),this._hasAttributeCondition=this.segments.some(t=>void 0!==t.attrName),this._hasPositionSelector=this.segments.some(t=>void 0!==t.position)}_parse(t){const e=[];let n=0,i="";for(;n<t.length;)t[n]===this.separator?n+1<t.length&&t[n+1]===this.separator?(i.trim()&&(e.push(this._parseSegment(i.trim())),i=""),e.push({type:"deep-wildcard"}),n+=2):(i.trim()&&e.push(this._parseSegment(i.trim())),i="",n++):(i+=t[n],n++);return i.trim()&&e.push(this._parseSegment(i.trim())),e}_parseSegment(t){const e={type:"tag"};let n=null,i=t;const s=t.match(/^([^\[]+)(\[[^\]]*\])(.*)$/);if(s&&(i=s[1]+s[3],s[2])){const t=s[2].slice(1,-1);t&&(n=t)}let r,o,a=i;if(i.includes("::")){const e=i.indexOf("::");if(r=i.substring(0,e).trim(),a=i.substring(e+2).trim(),!r)throw new Error(`Invalid namespace in pattern: ${t}`)}let h=null;if(a.includes(":")){const t=a.lastIndexOf(":"),e=a.substring(0,t).trim(),n=a.substring(t+1).trim();["first","last","odd","even"].includes(n)||/^nth\(\d+\)$/.test(n)?(o=e,h=n):o=a}else o=a;if(!o)throw new Error(`Invalid segment pattern: ${t}`);if(e.tag=o,r&&(e.namespace=r),n)if(n.includes("=")){const t=n.indexOf("=");e.attrName=n.substring(0,t).trim(),e.attrValue=n.substring(t+1).trim()}else e.attrName=n.trim();if(h){const t=h.match(/^nth\((\d+)\)$/);t?(e.position="nth",e.positionValue=parseInt(t[1],10)):e.position=h}return e}get length(){return this.segments.length}hasDeepWildcard(){return this._hasDeepWildcard}hasAttributeCondition(){return this._hasAttributeCondition}hasPositionSelector(){return this._hasPositionSelector}toString(){return this.pattern}}class Q{constructor(){this._byDepthAndTag=new Map,this._wildcardByDepth=new Map,this._deepWildcards=[],this._patterns=new Set,this._sealed=!1}add(t){if(this._sealed)throw new TypeError("ExpressionSet is sealed. Create a new ExpressionSet to add more expressions.");if(this._patterns.has(t.pattern))return this;if(this._patterns.add(t.pattern),t.hasDeepWildcard())return this._deepWildcards.push(t),this;const e=t.length,n=t.segments[t.segments.length-1],i=n?.tag;if(i&&"*"!==i){const n=`${e}:${i}`;this._byDepthAndTag.has(n)||this._byDepthAndTag.set(n,[]),this._byDepthAndTag.get(n).push(t)}else this._wildcardByDepth.has(e)||this._wildcardByDepth.set(e,[]),this._wildcardByDepth.get(e).push(t);return this}addAll(t){for(const e of t)this.add(e);return this}has(t){return this._patterns.has(t.pattern)}get size(){return this._patterns.size}seal(){return this._sealed=!0,this}get isSealed(){return this._sealed}matchesAny(t){return null!==this.findMatch(t)}findMatch(t){const e=t.getDepth(),n=`${e}:${t.getCurrentTag()}`,i=this._byDepthAndTag.get(n);if(i)for(let e=0;e<i.length;e++)if(t.matches(i[e]))return i[e];const s=this._wildcardByDepth.get(e);if(s)for(let e=0;e<s.length;e++)if(t.matches(s[e]))return s[e];for(let e=0;e<this._deepWildcards.length;e++)if(t.matches(this._deepWildcards[e]))return this._deepWildcards[e];return null}}const H={cent:"¢",pound:"£",curren:"¤",yen:"¥",euro:"€",dollar:"$",euro:"€",fnof:"ƒ",inr:"₹",af:"؋",birr:"ብር",peso:"₱",rub:"₽",won:"₩",yuan:"¥",cedil:"¸"},tt={amp:"&",apos:"'",gt:">",lt:"<",quot:'"'},et={nbsp:" ",copy:"©",reg:"®",trade:"™",mdash:"—",ndash:"–",hellip:"…",laquo:"«",raquo:"»",lsquo:"‘",rsquo:"’",ldquo:"“",rdquo:"”",bull:"•",para:"¶",sect:"§",deg:"°",frac12:"½",frac14:"¼",frac34:"¾"},nt=new Set("!?\\\\/[]$%{}^&*()<>|+");function it(t){if("#"===t[0])throw new Error(`[EntityReplacer] Invalid character '#' in entity name: "${t}"`);for(const e of t)if(nt.has(e))throw new Error(`[EntityReplacer] Invalid character '${e}' in entity name: "${t}"`);return t}function st(...t){const e=Object.create(null);for(const n of t)if(n)for(const t of Object.keys(n)){const i=n[t];if("string"==typeof i)e[t]=i;else if(i&&"object"==typeof i&&void 0!==i.val){const n=i.val;"string"==typeof n&&(e[t]=n)}}return e}const rt="external",ot="base",at="all",ht=Object.freeze({allow:0,leave:1,remove:2,throw:3}),lt=new Set([9,10,13]);class ut{constructor(t={}){var e;this._limit=t.limit||{},this._maxTotalExpansions=this._limit.maxTotalExpansions||0,this._maxExpandedLength=this._limit.maxExpandedLength||0,this._postCheck="function"==typeof t.postCheck?t.postCheck:t=>t,this._limitTiers=(e=this._limit.applyLimitsTo??rt)&&e!==rt?e===at?new Set([at]):e===ot?new Set([ot]):Array.isArray(e)?new Set(e):new Set([rt]):new Set([rt]),this._numericAllowed=t.numericAllowed??!0,this._baseMap=st(tt,t.namedEntities||null),this._externalMap=Object.create(null),this._inputMap=Object.create(null),this._totalExpansions=0,this._expandedLength=0,this._removeSet=new Set(t.remove&&Array.isArray(t.remove)?t.remove:[]),this._leaveSet=new Set(t.leave&&Array.isArray(t.leave)?t.leave:[]);const n=function(t){if(!t)return{xmlVersion:1,onLevel:ht.allow,nullLevel:ht.remove};const e=1.1===t.xmlVersion?1.1:1,n=ht[t.onNCR]??ht.allow,i=ht[t.nullNCR]??ht.remove;return{xmlVersion:e,onLevel:n,nullLevel:Math.max(i,ht.remove)}}(t.ncr);this._ncrXmlVersion=n.xmlVersion,this._ncrOnLevel=n.onLevel,this._ncrNullLevel=n.nullLevel}setExternalEntities(t){if(t)for(const e of Object.keys(t))it(e);this._externalMap=st(t)}addExternalEntity(t,e){it(t),"string"==typeof e&&-1===e.indexOf("&")&&(this._externalMap[t]=e)}addInputEntities(t){this._totalExpansions=0,this._expandedLength=0,this._inputMap=st(t)}reset(){return this._inputMap=Object.create(null),this._totalExpansions=0,this._expandedLength=0,this}setXmlVersion(t){this._ncrXmlVersion=1.1===t?1.1:1}decode(t){if("string"!=typeof t||0===t.length)return t;const e=t,n=[],i=t.length;let s=0,r=0;const o=this._maxTotalExpansions>0,a=this._maxExpandedLength>0,h=o||a;for(;r<i;){if(38!==t.charCodeAt(r)){r++;continue}let e=r+1;for(;e<i&&59!==t.charCodeAt(e)&&e-r<=32;)e++;if(e>=i||59!==t.charCodeAt(e)){r++;continue}const l=t.slice(r+1,e);if(0===l.length){r++;continue}let u,p;if(this._removeSet.has(l))u="",void 0===p&&(p=rt);else{if(this._leaveSet.has(l)){r++;continue}if(35===l.charCodeAt(0)){const t=this._resolveNCR(l);if(void 0===t){r++;continue}u=t,p=ot}else{const t=this._resolveName(l);u=t?.value,p=t?.tier}}if(void 0!==u){if(r>s&&n.push(t.slice(s,r)),n.push(u),s=e+1,r=s,h&&this._tierCounts(p)){if(o&&(this._totalExpansions++,this._totalExpansions>this._maxTotalExpansions))throw new Error(`[EntityReplacer] Entity expansion count limit exceeded: ${this._totalExpansions} > ${this._maxTotalExpansions}`);if(a){const t=u.length-(l.length+2);if(t>0&&(this._expandedLength+=t,this._expandedLength>this._maxExpandedLength))throw new Error(`[EntityReplacer] Expanded content length limit exceeded: ${this._expandedLength} > ${this._maxExpandedLength}`)}}}else r++}s<i&&n.push(t.slice(s));const l=0===n.length?t:n.join("");return this._postCheck(l,e)}_tierCounts(t){return!!this._limitTiers.has(at)||this._limitTiers.has(t)}_resolveName(t){return t in this._inputMap?{value:this._inputMap[t],tier:rt}:t in this._externalMap?{value:this._externalMap[t],tier:rt}:t in this._baseMap?{value:this._baseMap[t],tier:ot}:void 0}_classifyNCR(t){return 0===t?this._ncrNullLevel:t>=55296&&t<=57343||1===this._ncrXmlVersion&&t>=1&&t<=31&&!lt.has(t)?ht.remove:-1}_applyNCRAction(t,e,n){switch(t){case ht.allow:return String.fromCodePoint(n);case ht.remove:return"";case ht.leave:return;case ht.throw:throw new Error(`[EntityDecoder] Prohibited numeric character reference &${e}; (U+${n.toString(16).toUpperCase().padStart(4,"0")})`);default:return String.fromCodePoint(n)}}_resolveNCR(t){const e=t.charCodeAt(1);let n;if(n=120===e||88===e?parseInt(t.slice(2),16):parseInt(t.slice(1),10),Number.isNaN(n)||n<0||n>1114111)return;const i=this._classifyNCR(n);if(!this._numericAllowed&&i<ht.remove)return;const s=-1===i?this._ncrOnLevel:Math.max(this._ncrOnLevel,i);return this._applyNCRAction(s,t,n)}}function pt(t,e){if(!t)return{};const n=e.attributesGroupName?t[e.attributesGroupName]:t;if(!n)return{};const i={};for(const t in n)t.startsWith(e.attributeNamePrefix)?i[t.substring(e.attributeNamePrefix.length)]=n[t]:i[t]=n[t];return i}function ct(t){if(!t||"string"!=typeof t)return;const e=t.indexOf(":");if(-1!==e&&e>0){const n=t.substring(0,e);if("xmlns"!==n)return n}}class dt{constructor(t,e){var n;this.options=t,this.currentNode=null,this.tagsNodeStack=[],this.parseXml=Nt,this.parseTextData=ft,this.resolveNameSpace=gt,this.buildAttributesMap=xt,this.isItStopNode=wt,this.replaceEntitiesValue=yt,this.readStopNodeData=At,this.saveTextToParentTag=Et,this.addChild=bt,this.ignoreAttributesFn="function"==typeof(n=this.options.ignoreAttributes)?n:Array.isArray(n)?t=>{for(const e of n){if("string"==typeof e&&t===e)return!0;if(e instanceof RegExp&&e.test(t))return!0}}:()=>!1,this.entityExpansionCount=0,this.currentExpandedLength=0;let i={...tt};this.options.entityDecoder?this.entityDecoder=this.options.entityDecoder:("object"==typeof this.options.htmlEntities?i=this.options.htmlEntities:!0===this.options.htmlEntities&&(i={...et,...H}),this.entityDecoder=new ut({namedEntities:{...i,...e},numericAllowed:this.options.htmlEntities,limit:{maxTotalExpansions:this.options.processEntities.maxTotalExpansions,maxExpandedLength:this.options.processEntities.maxExpandedLength,applyLimitsTo:this.options.processEntities.appliesTo}})),this.matcher=new J,this.readonlyMatcher=this.matcher.readOnly(),this.isCurrentNodeStopNode=!1,this.stopNodeExpressionsSet=new Q;const s=this.options.stopNodes;if(s&&s.length>0){for(let t=0;t<s.length;t++){const e=s[t];"string"==typeof e?this.stopNodeExpressionsSet.add(new K(e)):e instanceof K&&this.stopNodeExpressionsSet.add(e)}this.stopNodeExpressionsSet.seal()}}}function ft(t,e,n,i,s,r,o){const a=this.options;if(void 0!==t&&(a.trimValues&&!i&&(t=t.trim()),t.length>0)){o||(t=this.replaceEntitiesValue(t,e,n));const i=a.jPath?n.toString():n,h=a.tagValueProcessor(e,t,i,s,r);return null==h?t:typeof h!=typeof t||h!==t?h:a.trimValues||t.trim()===t?Tt(t,a.parseTagValue,a.numberParseOptions):t}}function gt(t){if(this.options.removeNSPrefix){const e=t.split(":"),n="/"===t.charAt(0)?"/":"";if("xmlns"===e[0])return"";2===e.length&&(t=n+e[1])}return t}const mt=new RegExp("([^\\s=]+)\\s*(=\\s*(['\"])([\\s\\S]*?)\\3)?","gm");function xt(t,e,n,i=!1){const r=this.options;if(!0===i||!0!==r.ignoreAttributes&&"string"==typeof t){const i=s(t,mt),o=i.length,a={},h=new Array(o);let l=!1;const u={};for(let t=0;t<o;t++){const e=this.resolveNameSpace(i[t][1]),s=i[t][4];if(e.length&&void 0!==s){let i=s;r.trimValues&&(i=i.trim()),i=this.replaceEntitiesValue(i,n,this.readonlyMatcher),h[t]=i,u[e]=i,l=!0}}l&&"object"==typeof e&&e.updateCurrent&&e.updateCurrent(u);const p=r.jPath?e.toString():this.readonlyMatcher;let c=!1;for(let t=0;t<o;t++){const e=this.resolveNameSpace(i[t][1]);if(this.ignoreAttributesFn(e,p))continue;let n=r.attributeNamePrefix+e;if(e.length)if(r.transformAttributeName&&(n=r.transformAttributeName(n)),n=Pt(n,r),void 0!==i[t][4]){const i=h[t],s=r.attributeValueProcessor(e,i,p);a[n]=null==s?i:typeof s!=typeof i||s!==i?s:Tt(i,r.parseAttributeValue,r.numberParseOptions),c=!0}else r.allowBooleanAttributes&&(a[n]=!0,c=!0)}if(!c)return;if(r.attributesGroupName&&!r.preserveOrder){const t={};return t[r.attributesGroupName]=a,t}return a}}const Nt=function(t){t=t.replace(/\r\n?/g,"\n");const e=new $("!xml");let n=e,i="";this.matcher.reset(),this.entityDecoder.reset(),this.entityExpansionCount=0,this.currentExpandedLength=0;const s=this.options,r=new k(s.processEntities),o=t.length;for(let a=0;a<o;a++)if("<"===t[a]){const h=t.charCodeAt(a+1);if(47===h){const e=vt(t,">",a,"Closing Tag is not closed.");let r=t.substring(a+2,e).trim();if(s.removeNSPrefix){const t=r.indexOf(":");-1!==t&&(r=r.substr(t+1))}r=Ct(s.transformTagName,r,"",s).tagName,n&&(i=this.saveTextToParentTag(i,n,this.readonlyMatcher));const o=this.matcher.getCurrentTag();if(r&&s.unpairedTagsSet.has(r))throw new Error(`Unpaired tag can not be used as closing tag: </${r}>`);o&&s.unpairedTagsSet.has(o)&&(this.matcher.pop(),this.tagsNodeStack.pop()),this.matcher.pop(),this.isCurrentNodeStopNode=!1,n=this.tagsNodeStack.pop(),i="",a=e}else if(63===h){let e=_t(t,a,!1,"?>");if(!e)throw new Error("Pi Tag is not closed.");i=this.saveTextToParentTag(i,n,this.readonlyMatcher);const o=this.buildAttributesMap(e.tagExp,this.matcher,e.tagName,!0);if(o){const t=o[this.options.attributeNamePrefix+"version"];this.entityDecoder.setXmlVersion(Number(t)||1),r.setXmlVersion(Number(t)||1)}if(s.ignoreDeclaration&&"?xml"===e.tagName||s.ignorePiTags);else{const t=new $(e.tagName);t.add(s.textNodeName,""),e.tagName!==e.tagExp&&e.attrExpPresent&&!0!==s.ignoreAttributes&&(t[":@"]=o),this.addChild(n,t,this.readonlyMatcher,a)}a=e.closeIndex+1}else if(33===h&&45===t.charCodeAt(a+2)&&45===t.charCodeAt(a+3)){const e=vt(t,"--\x3e",a+4,"Comment is not closed.");if(s.commentPropName){const r=t.substring(a+4,e-2);i=this.saveTextToParentTag(i,n,this.readonlyMatcher),n.add(s.commentPropName,[{[s.textNodeName]:r}])}a=e}else if(33===h&&68===t.charCodeAt(a+2)){const e=r.readDocType(t,a);this.entityDecoder.addInputEntities(e.entities),a=e.i}else if(33===h&&91===t.charCodeAt(a+2)){const e=vt(t,"]]>",a,"CDATA is not closed.")-2,r=t.substring(a+9,e);i=this.saveTextToParentTag(i,n,this.readonlyMatcher);let o=this.parseTextData(r,n.tagname,this.readonlyMatcher,!0,!1,!0,!0);null==o&&(o=""),s.cdataPropName?n.add(s.cdataPropName,[{[s.textNodeName]:r}]):n.add(s.textNodeName,o),a=e+2}else{let r=_t(t,a,s.removeNSPrefix);if(!r){const e=t.substring(Math.max(0,a-50),Math.min(o,a+50));throw new Error(`readTagExp returned undefined at position ${a}. Context: "${e}"`)}let h=r.tagName;const l=r.rawTagName;let u=r.tagExp,p=r.attrExpPresent,c=r.closeIndex;if(({tagName:h,tagExp:u}=Ct(s.transformTagName,h,u,s)),s.strictReservedNames&&(h===s.commentPropName||h===s.cdataPropName||h===s.textNodeName||h===s.attributesGroupName))throw new Error(`Invalid tag name: ${h}`);n&&i&&"!xml"!==n.tagname&&(i=this.saveTextToParentTag(i,n,this.readonlyMatcher,!1));const d=n;d&&s.unpairedTagsSet.has(d.tagname)&&(n=this.tagsNodeStack.pop(),this.matcher.pop());let f=!1;u.length>0&&u.lastIndexOf("/")===u.length-1&&(f=!0,"/"===h[h.length-1]?(h=h.substr(0,h.length-1),u=h):u=u.substr(0,u.length-1),p=h!==u);let g,m=null,x={};g=ct(l),h!==e.tagname&&this.matcher.push(h,{},g),h!==u&&p&&(m=this.buildAttributesMap(u,this.matcher,h),m&&(x=pt(m,s))),h!==e.tagname&&(this.isCurrentNodeStopNode=this.isItStopNode());const N=a;if(this.isCurrentNodeStopNode){let e="";if(f)a=r.closeIndex;else if(s.unpairedTagsSet.has(h))a=r.closeIndex;else{const n=this.readStopNodeData(t,l,c+1);if(!n)throw new Error(`Unexpected end of ${l}`);a=n.i,e=n.tagContent}const i=new $(h);m&&(i[":@"]=m),i.add(s.textNodeName,e),this.matcher.pop(),this.isCurrentNodeStopNode=!1,this.addChild(n,i,this.readonlyMatcher,N)}else{if(f){({tagName:h,tagExp:u}=Ct(s.transformTagName,h,u,s));const t=new $(h);m&&(t[":@"]=m),this.addChild(n,t,this.readonlyMatcher,N),this.matcher.pop(),this.isCurrentNodeStopNode=!1}else{if(s.unpairedTagsSet.has(h)){const t=new $(h);m&&(t[":@"]=m),this.addChild(n,t,this.readonlyMatcher,N),this.matcher.pop(),this.isCurrentNodeStopNode=!1,a=r.closeIndex;continue}{const t=new $(h);if(this.tagsNodeStack.length>s.maxNestedTags)throw new Error("Maximum nested tags exceeded");this.tagsNodeStack.push(n),m&&(t[":@"]=m),this.addChild(n,t,this.readonlyMatcher,N),n=t}}i="",a=c}}}else i+=t[a];return e.child};function bt(t,e,n,i){this.options.captureMetaData||(i=void 0);const s=this.options.jPath?n.toString():n,r=this.options.updateTag(e.tagname,s,e[":@"]);!1===r||("string"==typeof r?(e.tagname=r,t.addChild(e,i)):t.addChild(e,i))}function yt(t,e,n){const i=this.options.processEntities;if(!i||!i.enabled)return t;if(i.allowedTags){const s=this.options.jPath?n.toString():n;if(!(Array.isArray(i.allowedTags)?i.allowedTags.includes(e):i.allowedTags(e,s)))return t}if(i.tagFilter){const s=this.options.jPath?n.toString():n;if(!i.tagFilter(e,s))return t}return this.entityDecoder.decode(t)}function Et(t,e,n,i){return t&&(void 0===i&&(i=0===e.child.length),void 0!==(t=this.parseTextData(t,e.tagname,n,!1,!!e[":@"]&&0!==Object.keys(e[":@"]).length,i))&&""!==t&&e.add(this.options.textNodeName,t),t=""),t}function wt(){return 0!==this.stopNodeExpressionsSet.size&&this.matcher.matchesAny(this.stopNodeExpressionsSet)}function vt(t,e,n,i){const s=t.indexOf(e,n);if(-1===s)throw new Error(i);return s+e.length-1}function St(t,e,n,i){const s=t.indexOf(e,n);if(-1===s)throw new Error(i);return s}function _t(t,e,n,i=">"){const s=function(t,e,n=">"){let i=0;const s=t.length,r=n.charCodeAt(0),o=n.length>1?n.charCodeAt(1):-1;let a="",h=e;for(let n=e;n<s;n++){const e=t.charCodeAt(n);if(i)e===i&&(i=0);else if(34===e||39===e)i=e;else if(e===r){if(-1===o)return a+=t.substring(h,n),{data:a,index:n};if(t.charCodeAt(n+1)===o)return a+=t.substring(h,n),{data:a,index:n}}else 9!==e||i||(a+=t.substring(h,n)+" ",h=n+1)}}(t,e+1,i);if(!s)return;let r=s.data;const o=s.index,a=r.search(/\s/);let h=r,l=!0;-1!==a&&(h=r.substring(0,a),r=r.substring(a+1).trimStart());const u=h;if(n){const t=h.indexOf(":");-1!==t&&(h=h.substr(t+1),l=h!==s.data.substr(t+1))}return{tagName:h,tagExp:r,closeIndex:o,attrExpPresent:l,rawTagName:u}}function At(t,e,n){const i=n;let s=1;const r=t.length;for(;n<r;n++)if("<"===t[n]){const r=t.charCodeAt(n+1);if(47===r){const r=St(t,">",n,`${e} is not closed`);if(t.substring(n+2,r).trim()===e&&(s--,0===s))return{tagContent:t.substring(i,n),i:r};n=r}else if(63===r)n=vt(t,"?>",n+1,"StopNode is not closed.");else if(33===r&&45===t.charCodeAt(n+2)&&45===t.charCodeAt(n+3))n=vt(t,"--\x3e",n+3,"StopNode is not closed.");else if(33===r&&91===t.charCodeAt(n+2))n=vt(t,"]]>",n,"StopNode is not closed.")-2;else{const i=_t(t,n,!1);i&&((i&&i.tagName)===e&&"/"!==i.tagExp[i.tagExp.length-1]&&s++,n=i.closeIndex)}}}function Tt(t,e,n){if(e&&"string"==typeof t){const e=t.trim();return"true"===e||"false"!==e&&function(t,e={}){if(e=Object.assign({},X,e),!t||"string"!=typeof t)return t;let n=t.trim();if(0===n.length)return t;if(void 0!==e.skipLike&&e.skipLike.test(n))return t;if("0"===n)return 0;if(e.hex&&U.test(n))return q(n,16);if(e.binary&&B.test(n))return q(n,2);if(e.octal&&W.test(n))return q(n,8);if(isFinite(n)){if(n.includes("e")||n.includes("E"))return function(t,e,n){if(!n.eNotation)return t;const i=e.match(Y);if(i){let s=i[1]||"";const r=-1===i[3].indexOf("e")?"E":"e",o=i[2],a=s?t[o.length+1]===r:t[o.length]===r;return o.length>1&&a?t:(1!==o.length||!i[3].startsWith(`.${r}`)&&i[3][0]!==r)&&o.length>0?n.leadingZeros&&!a?(e=(i[1]||"")+i[3],Number(e)):t:Number(e)}return t}(t,n,e);{const s=z.exec(n);if(s){const r=s[1]||"",o=s[2];let a=(i=s[3])&&-1!==i.indexOf(".")?("."===(i=i.replace(/0+$/,""))?i="0":"."===i[0]?i="0"+i:"."===i[i.length-1]&&(i=i.substring(0,i.length-1)),i):i;const h=r?"."===t[o.length+1]:"."===t[o.length];if(!e.leadingZeros&&(o.length>1||1===o.length&&!h))return t;{const i=Number(n),s=String(i);if(0===i)return i;if(-1!==s.search(/[eE]/))return e.eNotation?i:t;if(-1!==n.indexOf("."))return"0"===s||s===a||s===`${r}${a}`?i:t;let h=o?a:n;return o?h===s||r+h===s?i:t:h===s||h===r+s?i:t}}return t}}var i;return function(t,e,n){const i=e===1/0;switch(n.infinity.toLowerCase()){case"null":return null;case"infinity":return e;case"string":return i?"Infinity":"-Infinity";default:return t}}(t,Number(n),e)}(t,n)}return void 0!==t?t:""}function Ct(t,e,n,i){if(t){const i=t(e);n===e&&(n=i),e=i}return{tagName:e=Pt(e,i),tagExp:n}}function Pt(t,e){if(a.includes(t))throw new Error(`[SECURITY] Invalid name: "${t}" is a reserved JavaScript keyword that could cause prototype pollution`);return o.includes(t)?e.onDangerousProperty(t):t}const $t=$.getMetaDataSymbol();function Ot(t,e){if(!t||"object"!=typeof t)return{};if(!e)return t;const n={};for(const i in t)i.startsWith(e)?n[i.substring(e.length)]=t[i]:n[i]=t[i];return n}function It(t,e,n,i){return Vt(t,e,n,i)}function Vt(t,e,n,i){let s;const r={};for(let o=0;o<t.length;o++){const a=t[o],h=Dt(a);if(void 0!==h&&h!==e.textNodeName){const t=Ot(a[":@"]||{},e.attributeNamePrefix);n.push(h,t)}if(h===e.textNodeName)void 0===s?s=a[h]:s+=""+a[h];else{if(void 0===h)continue;if(a[h]){let t=Vt(a[h],e,n,i);const s=jt(t,e);if(0===Object.keys(t).length&&e.alwaysCreateTextNode&&(t[e.textNodeName]=""),a[":@"]?Mt(t,a[":@"],i,e):1!==Object.keys(t).length||void 0===t[e.textNodeName]||e.alwaysCreateTextNode?0===Object.keys(t).length&&(e.alwaysCreateTextNode?t[e.textNodeName]="":t=""):t=t[e.textNodeName],void 0!==a[$t]&&"object"==typeof t&&null!==t&&(t[$t]=a[$t]),void 0!==r[h]&&Object.prototype.hasOwnProperty.call(r,h))Array.isArray(r[h])||(r[h]=[r[h]]),r[h].push(t);else{const n=e.jPath?i.toString():i;e.isArray(h,n,s)?r[h]=[t]:r[h]=t}void 0!==h&&h!==e.textNodeName&&n.pop()}}}return"string"==typeof s?s.length>0&&(r[e.textNodeName]=s):void 0!==s&&(r[e.textNodeName]=s),r}function Dt(t){const e=Object.keys(t);for(let t=0;t<e.length;t++){const n=e[t];if(":@"!==n)return n}}function Mt(t,e,n,i){if(e){const s=Object.keys(e),r=s.length;for(let o=0;o<r;o++){const r=s[o],a=r.startsWith(i.attributeNamePrefix)?r.substring(i.attributeNamePrefix.length):r,h=i.jPath?n.toString()+"."+a:n;i.isArray(r,h,!0,!0)?t[r]=[e[r]]:t[r]=e[r]}}}function jt(t,e){const{textNodeName:n}=e,i=Object.keys(t).length;return 0===i||!(1!==i||!t[n]&&"boolean"!=typeof t[n]&&0!==t[n])}class Lt{constructor(t){this.externalEntities={},this.options=C(t)}parse(t,e){if("string"!=typeof t&&t.toString)t=t.toString();else if("string"!=typeof t)throw new Error("XML data is accepted in String or Bytes[] form.");if(e){!0===e&&(e={});const n=l(t,e);if(!0!==n)throw Error(`${n.err.msg}:${n.err.line}:${n.err.col}`)}const n=new dt(this.options,this.externalEntities),i=n.parseXml(t);return this.options.preserveOrder||void 0===i?i:It(i,this.options,n.matcher,n.readonlyMatcher)}addEntity(t,e){if(-1!==e.indexOf("&"))throw new Error("Entity value can't have '&'");if(-1!==t.indexOf("&")||-1!==t.indexOf(";"))throw new Error("An entity must be set without '&' and ';'. Eg. use '#xD' for '&#xD;'");if("&"===e)throw new Error("An entity with value '&' is not permitted");this.externalEntities[t]=e}static getMetaDataSymbol(){return $.getMetaDataSymbol()}}function kt(t){return String(t).replace(/--/g,"- -").replace(/--/g,"- -").replace(/-$/,"- ")}function Rt(t){return String(t).replace(/\]\]>/g,"]]]]><![CDATA[>")}function Ft(t){return String(t).replace(/"/g,"&quot;").replace(/'/g,"&apos;")}function Gt(t,e,n,i,s){return n.sanitizeName?L(t,{xmlVersion:s})?t:n.sanitizeName(t,{isAttribute:e,matcher:i.readOnly()}):t}function Ut(t,e){let n="";e.format&&(n="\n");const i=[];if(e.stopNodes&&Array.isArray(e.stopNodes))for(let t=0;t<e.stopNodes.length;t++){const n=e.stopNodes[t];"string"==typeof n?i.push(new K(n)):n instanceof K&&i.push(n)}const s=function(t,e){if(!Array.isArray(t)||0===t.length)return"1.0";const n=t[0];if("?xml"===Yt(n)){const t=n[":@"];if(t){const n=e.attributeNamePrefix+"version";if(t[n])return t[n]}}return"1.0"}(t,e);return Bt(t,e,n,new J,i,s)}function Bt(t,e,n,i,s,r){let o="",a=!1;if(e.maxNestedTags&&i.getDepth()>e.maxNestedTags)throw new Error("Maximum nested tags exceeded");if(!Array.isArray(t)){if(null!=t){let n=t.toString();return n=Jt(n,e),n}return""}for(let h=0;h<t.length;h++){const l=t[h],u=Yt(l);if(void 0===u)continue;const p=u===e.textNodeName||u===e.cdataPropName||u===e.commentPropName||"?"===u[0]?u:Gt(u,!1,e,i,r),c=Wt(l[":@"],e);i.push(p,c);const d=Zt(i,s);if(p===e.textNodeName){let t=l[u];d||(t=e.tagValueProcessor(p,t),t=Jt(t,e)),a&&(o+=n),o+=t,a=!1,i.pop();continue}if(p===e.cdataPropName){a&&(o+=n),o+=`<![CDATA[${Rt(l[u][0][e.textNodeName])}]]>`,a=!1,i.pop();continue}if(p===e.commentPropName){o+=n+`\x3c!--${kt(l[u][0][e.textNodeName])}--\x3e`,a=!0,i.pop();continue}if("?"===p[0]){o+=("?xml"===p?"":n)+`<${p}${qt(l[":@"],e,d,i,r)}?>`,a=!0,i.pop();continue}let f=n;""!==f&&(f+=e.indentBy);const g=n+`<${p}${qt(l[":@"],e,d,i,r)}`;let m;m=d?zt(l[u],e):Bt(l[u],e,f,i,s,r),-1!==e.unpairedTags.indexOf(p)?e.suppressUnpairedNode?o+=g+">":o+=g+"/>":m&&0!==m.length||!e.suppressEmptyNode?m&&m.endsWith(">")?o+=g+`>${m}${n}</${p}>`:(o+=g+">",m&&""!==n&&(m.includes("/>")||m.includes("</"))?o+=n+e.indentBy+m+n:o+=m,o+=`</${p}>`):o+=g+"/>",a=!0,i.pop()}return o}function Wt(t,e){if(!t||e.ignoreAttributes)return null;const n={};let i=!1;for(let s in t)Object.prototype.hasOwnProperty.call(t,s)&&(n[s.startsWith(e.attributeNamePrefix)?s.substr(e.attributeNamePrefix.length):s]=Ft(t[s]),i=!0);return i?n:null}function zt(t,e){if(!Array.isArray(t))return null!=t?t.toString():"";let n="";for(let i=0;i<t.length;i++){const s=t[i],r=Yt(s);if(r===e.textNodeName)n+=s[r];else if(r===e.cdataPropName)n+=s[r][0][e.textNodeName];else if(r===e.commentPropName)n+=s[r][0][e.textNodeName];else{if(r&&"?"===r[0])continue;if(r){const t=Xt(s[":@"],e),i=zt(s[r],e);i&&0!==i.length?n+=`<${r}${t}>${i}</${r}>`:n+=`<${r}${t}/>`}}}return n}function Xt(t,e){let n="";if(t&&!e.ignoreAttributes)for(let i in t){if(!Object.prototype.hasOwnProperty.call(t,i))continue;let s=t[i];!0===s&&e.suppressBooleanAttributes?n+=` ${i.substr(e.attributeNamePrefix.length)}`:n+=` ${i.substr(e.attributeNamePrefix.length)}="${Ft(s)}"`}return n}function Yt(t){const e=Object.keys(t);for(let n=0;n<e.length;n++){const i=e[n];if(Object.prototype.hasOwnProperty.call(t,i)&&":@"!==i)return i}}function qt(t,e,n,i,s){let r="";if(t&&!e.ignoreAttributes)for(let o in t){if(!Object.prototype.hasOwnProperty.call(t,o))continue;const a=o.substr(e.attributeNamePrefix.length),h=n?a:Gt(a,!0,e,i,s);let l;n?l=t[o]:(l=e.attributeValueProcessor(o,t[o]),l=Jt(l,e)),!0===l&&e.suppressBooleanAttributes?r+=` ${h}`:r+=` ${h}="${Ft(l)}"`}return r}function Zt(t,e){if(!e||0===e.length)return!1;for(let n=0;n<e.length;n++)if(t.matches(e[n]))return!0;return!1}function Jt(t,e){if(t&&t.length>0&&e.processEntities)for(let n=0;n<e.entities.length;n++){const i=e.entities[n];t=t.replace(i.regex,i.val)}return t}const Kt={attributeNamePrefix:"@_",attributesGroupName:!1,textNodeName:"#text",ignoreAttributes:!0,cdataPropName:!1,format:!1,indentBy:"  ",suppressEmptyNode:!1,suppressUnpairedNode:!0,suppressBooleanAttributes:!0,tagValueProcessor:function(t,e){return e},attributeValueProcessor:function(t,e){return e},preserveOrder:!1,commentPropName:!1,unpairedTags:[],entities:[{regex:new RegExp("&","g"),val:"&amp;"},{regex:new RegExp(">","g"),val:"&gt;"},{regex:new RegExp("<","g"),val:"&lt;"},{regex:new RegExp("'","g"),val:"&apos;"},{regex:new RegExp('"',"g"),val:"&quot;"}],processEntities:!0,stopNodes:[],oneListGroup:!1,maxNestedTags:100,jPath:!0,sanitizeName:!1};function Qt(t){if(this.options=Object.assign({},Kt,t),this.options.stopNodes&&Array.isArray(this.options.stopNodes)&&(this.options.stopNodes=this.options.stopNodes.map(t=>"string"==typeof t&&t.startsWith("*.")?".."+t.substring(2):t)),this.stopNodeExpressions=[],this.options.stopNodes&&Array.isArray(this.options.stopNodes))for(let t=0;t<this.options.stopNodes.length;t++){const e=this.options.stopNodes[t];"string"==typeof e?this.stopNodeExpressions.push(new K(e)):e instanceof K&&this.stopNodeExpressions.push(e)}var e;!0===this.options.ignoreAttributes||this.options.attributesGroupName?this.isAttribute=function(){return!1}:(this.ignoreAttributesFn="function"==typeof(e=this.options.ignoreAttributes)?e:Array.isArray(e)?t=>{for(const n of e){if("string"==typeof n&&t===n)return!0;if(n instanceof RegExp&&n.test(t))return!0}}:()=>!1,this.attrPrefixLen=this.options.attributeNamePrefix.length,this.isAttribute=ne),this.processTextOrObjNode=te,this.options.format?(this.indentate=ee,this.tagEndChar=">\n",this.newLine="\n"):(this.indentate=function(){return""},this.tagEndChar=">",this.newLine="")}function Ht(t,e,n,i,s){return n.sanitizeName?L(t,{xmlVersion:s})?t:n.sanitizeName(t,{isAttribute:e,matcher:i.readOnly()}):t}function te(t,e,n,i,s){const r=this.extractAttributes(t);if(i.push(e,r),this.checkStopNode(i)){const s=this.buildRawContent(t),r=this.buildAttributesForStopNode(t);return i.pop(),this.buildObjectNode(s,e,r,n)}const o=this.j2x(t,n+1,i,s);return i.pop(),"?"===e[0]?this.buildTextValNode("",e,o.attrStr,n,i):void 0!==t[this.options.textNodeName]&&1===Object.keys(t).length?this.buildTextValNode(t[this.options.textNodeName],e,o.attrStr,n,i):this.buildObjectNode(o.val,e,o.attrStr,n)}function ee(t){return this.options.indentBy.repeat(t)}function ne(t){return!(!t.startsWith(this.options.attributeNamePrefix)||t===this.options.textNodeName)&&t.substr(this.attrPrefixLen)}Qt.prototype.build=function(t){if(this.options.preserveOrder)return Ut(t,this.options);{Array.isArray(t)&&this.options.arrayNodeName&&this.options.arrayNodeName.length>1&&(t={[this.options.arrayNodeName]:t});const e=new J,n=function(t,e){const n=t["?xml"];if(n&&"object"==typeof n){if(e.attributesGroupName&&n[e.attributesGroupName]){const t=n[e.attributesGroupName][e.attributeNamePrefix+"version"];if(t)return t}const t=n[e.attributeNamePrefix+"version"];if(t)return t}return"1.0"}(t,this.options);return this.j2x(t,0,e,n).val}},Qt.prototype.j2x=function(t,e,n,i){let s="",r="";if(this.options.maxNestedTags&&n.getDepth()>=this.options.maxNestedTags)throw new Error("Maximum nested tags exceeded");const o=this.options.jPath?n.toString():n,a=this.checkStopNode(n);for(let h in t){if(!Object.prototype.hasOwnProperty.call(t,h))continue;const l=h===this.options.textNodeName||h===this.options.cdataPropName||h===this.options.commentPropName||this.options.attributesGroupName&&h===this.options.attributesGroupName||this.isAttribute(h)||"?"===h[0]?h:Ht(h,!1,this.options,n,i);if(void 0===t[h])this.isAttribute(h)&&(r+="");else if(null===t[h])this.isAttribute(h)||l===this.options.cdataPropName||l===this.options.commentPropName?r+="":"?"===l[0]?r+=this.indentate(e)+"<"+l+"?"+this.tagEndChar:r+=this.indentate(e)+"<"+l+"/"+this.tagEndChar;else if(t[h]instanceof Date)r+=this.buildTextValNode(t[h],l,"",e,n);else if("object"!=typeof t[h]){const u=this.isAttribute(h);if(u&&!this.ignoreAttributesFn(u,o)){const e=Ht(u,!0,this.options,n,i);s+=this.buildAttrPairStr(e,""+t[h],a)}else if(!u)if(h===this.options.textNodeName){let e=this.options.tagValueProcessor(h,""+t[h]);r+=this.replaceEntitiesValue(e)}else{n.push(l);const i=this.checkStopNode(n);if(n.pop(),i){const n=""+t[h];r+=""===n?this.indentate(e)+"<"+l+this.closeTag(l)+this.tagEndChar:this.indentate(e)+"<"+l+">"+n+"</"+l+this.tagEndChar}else r+=this.buildTextValNode(t[h],l,"",e,n)}}else if(Array.isArray(t[h])){const s=t[h].length;let o="",a="";for(let u=0;u<s;u++){const s=t[h][u];if(void 0===s);else if(null===s)"?"===l[0]?r+=this.indentate(e)+"<"+l+"?"+this.tagEndChar:r+=this.indentate(e)+"<"+l+"/"+this.tagEndChar;else if("object"==typeof s)if(this.options.oneListGroup){n.push(l);const t=this.j2x(s,e+1,n,i);n.pop(),o+=t.val,this.options.attributesGroupName&&s.hasOwnProperty(this.options.attributesGroupName)&&(a+=t.attrStr)}else o+=this.processTextOrObjNode(s,l,e,n,i);else if(this.options.oneListGroup){let t=this.options.tagValueProcessor(l,s);t=this.replaceEntitiesValue(t),o+=t}else{n.push(l);const t=this.checkStopNode(n);if(n.pop(),t){const t=""+s;o+=""===t?this.indentate(e)+"<"+l+this.closeTag(l)+this.tagEndChar:this.indentate(e)+"<"+l+">"+t+"</"+l+this.tagEndChar}else o+=this.buildTextValNode(s,l,"",e,n)}}this.options.oneListGroup&&(o=this.buildObjectNode(o,l,a,e)),r+=o}else if(this.options.attributesGroupName&&h===this.options.attributesGroupName){const e=Object.keys(t[h]),r=e.length;for(let o=0;o<r;o++){const r=Ht(e[o],!0,this.options,n,i);s+=this.buildAttrPairStr(r,""+t[h][e[o]],a)}}else r+=this.processTextOrObjNode(t[h],l,e,n,i)}return{attrStr:s,val:r}},Qt.prototype.buildAttrPairStr=function(t,e,n){return n||(e=this.options.attributeValueProcessor(t,""+e),e=this.replaceEntitiesValue(e)),this.options.suppressBooleanAttributes&&"true"===e?" "+t:" "+t+'="'+Ft(e)+'"'},Qt.prototype.extractAttributes=function(t){if(!t||"object"!=typeof t)return null;const e={};let n=!1;if(this.options.attributesGroupName&&t[this.options.attributesGroupName]){const i=t[this.options.attributesGroupName];for(let t in i)Object.prototype.hasOwnProperty.call(i,t)&&(e[t.startsWith(this.options.attributeNamePrefix)?t.substring(this.options.attributeNamePrefix.length):t]=Ft(i[t]),n=!0)}else for(let i in t){if(!Object.prototype.hasOwnProperty.call(t,i))continue;const s=this.isAttribute(i);s&&(e[s]=Ft(t[i]),n=!0)}return n?e:null},Qt.prototype.buildRawContent=function(t){if("string"==typeof t)return t;if("object"!=typeof t||null===t)return String(t);if(void 0!==t[this.options.textNodeName])return t[this.options.textNodeName];let e="";for(let n in t){if(!Object.prototype.hasOwnProperty.call(t,n))continue;if(this.isAttribute(n))continue;if(this.options.attributesGroupName&&n===this.options.attributesGroupName)continue;const i=t[n];if(n===this.options.textNodeName)e+=i;else if(Array.isArray(i)){for(let t of i)if("string"==typeof t||"number"==typeof t)e+=`<${n}>${t}</${n}>`;else if("object"==typeof t&&null!==t){const i=this.buildRawContent(t),s=this.buildAttributesForStopNode(t);e+=""===i?`<${n}${s}/>`:`<${n}${s}>${i}</${n}>`}}else if("object"==typeof i&&null!==i){const t=this.buildRawContent(i),s=this.buildAttributesForStopNode(i);e+=""===t?`<${n}${s}/>`:`<${n}${s}>${t}</${n}>`}else e+=`<${n}>${i}</${n}>`}return e},Qt.prototype.buildAttributesForStopNode=function(t){if(!t||"object"!=typeof t)return"";let e="";if(this.options.attributesGroupName&&t[this.options.attributesGroupName]){const n=t[this.options.attributesGroupName];for(let t in n){if(!Object.prototype.hasOwnProperty.call(n,t))continue;const i=t.startsWith(this.options.attributeNamePrefix)?t.substring(this.options.attributeNamePrefix.length):t,s=n[t];!0===s&&this.options.suppressBooleanAttributes?e+=" "+i:e+=" "+i+'="'+s+'"'}}else for(let n in t){if(!Object.prototype.hasOwnProperty.call(t,n))continue;const i=this.isAttribute(n);if(i){const s=t[n];!0===s&&this.options.suppressBooleanAttributes?e+=" "+i:e+=" "+i+'="'+s+'"'}}return e},Qt.prototype.buildObjectNode=function(t,e,n,i){if(""===t)return"?"===e[0]?this.indentate(i)+"<"+e+n+"?"+this.tagEndChar:this.indentate(i)+"<"+e+n+this.closeTag(e)+this.tagEndChar;if("?"===e[0])return this.indentate(i)+"<"+e+n+"?"+this.tagEndChar;{let s="</"+e+this.tagEndChar,r="";return"?"===e[0]&&(r="?",s=""),!n&&""!==n||-1!==t.indexOf("<")?!1!==this.options.commentPropName&&e===this.options.commentPropName&&0===r.length?this.indentate(i)+`\x3c!--${t}--\x3e`+this.newLine:this.indentate(i)+"<"+e+n+r+this.tagEndChar+t+this.indentate(i)+s:this.indentate(i)+"<"+e+n+r+">"+t+s}},Qt.prototype.closeTag=function(t){let e="";return-1!==this.options.unpairedTags.indexOf(t)?this.options.suppressUnpairedNode||(e="/"):e=this.options.suppressEmptyNode?"/":`></${t}`,e},Qt.prototype.checkStopNode=function(t){if(!this.stopNodeExpressions||0===this.stopNodeExpressions.length)return!1;for(let e=0;e<this.stopNodeExpressions.length;e++)if(t.matches(this.stopNodeExpressions[e]))return!0;return!1},Qt.prototype.buildTextValNode=function(t,e,n,i,s){if(!1!==this.options.cdataPropName&&e===this.options.cdataPropName){const e=Rt(t);return this.indentate(i)+`<![CDATA[${e}]]>`+this.newLine}if(!1!==this.options.commentPropName&&e===this.options.commentPropName){const e=kt(t);return this.indentate(i)+`\x3c!--${e}--\x3e`+this.newLine}if("?"===e[0])return this.indentate(i)+"<"+e+n+"?"+this.tagEndChar;{let s=this.options.tagValueProcessor(e,t);return s=this.replaceEntitiesValue(s),""===s?this.indentate(i)+"<"+e+n+this.closeTag(e)+this.tagEndChar:this.indentate(i)+"<"+e+n+">"+s+"</"+e+this.tagEndChar}},Qt.prototype.replaceEntitiesValue=function(t){if(t&&t.length>0&&this.options.processEntities)for(let e=0;e<this.options.entities.length;e++){const n=this.options.entities[e];t=t.replace(n.regex,n.val)}return t};const ie=Qt,se={validate:l};module.exports=e})();
 
 /***/ }),
 
@@ -65745,7 +65763,7 @@ const core_util_1 = __nccwpck_require__(15);
 const core_auth_1 = __nccwpck_require__(522);
 const core_rest_pipeline_1 = __nccwpck_require__(107);
 const core_util_2 = __nccwpck_require__(15);
-const storage_common_1 = __nccwpck_require__(280);
+const storage_common_1 = __nccwpck_require__(279);
 const Clients_js_1 = __nccwpck_require__(189);
 const Mutex_js_1 = __nccwpck_require__(526);
 const Pipeline_js_1 = __nccwpck_require__(187);
@@ -74441,7 +74459,7 @@ const core_util_1 = __nccwpck_require__(15);
 const Pipeline_js_1 = __nccwpck_require__(187);
 const ContainerClient_js_1 = __nccwpck_require__(67);
 const utils_common_js_1 = __nccwpck_require__(160);
-const storage_common_1 = __nccwpck_require__(280);
+const storage_common_1 = __nccwpck_require__(279);
 const utils_common_js_2 = __nccwpck_require__(160);
 const tracing_js_1 = __nccwpck_require__(33);
 const BlobBatchClient_js_1 = __nccwpck_require__(407);
@@ -75150,11 +75168,11 @@ exports.BlobServiceClient = BlobServiceClient;
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BlobBatchClient = void 0;
-const BatchResponseParser_js_1 = __nccwpck_require__(315);
+const BatchResponseParser_js_1 = __nccwpck_require__(314);
 const BatchUtils_js_1 = __nccwpck_require__(261);
 const BlobBatch_js_1 = __nccwpck_require__(339);
 const tracing_js_1 = __nccwpck_require__(33);
-const storage_common_1 = __nccwpck_require__(280);
+const storage_common_1 = __nccwpck_require__(279);
 const StorageContextClient_js_1 = __nccwpck_require__(270);
 const Pipeline_js_1 = __nccwpck_require__(187);
 const utils_common_js_1 = __nccwpck_require__(160);
@@ -76590,7 +76608,7 @@ module.exports = require("zlib");
 module.exports = parseAsync
 
 const TOMLParser = __nccwpck_require__(351)
-const prettyError = __nccwpck_require__(282)
+const prettyError = __nccwpck_require__(281)
 
 function parseAsync (str, opts) {
   if (!opts) opts = {}
@@ -80112,9 +80130,9 @@ exports.authorizeRequestOnTenantChallenge = exports.authorizeRequestOnClaimChall
 var serializer_js_1 = __nccwpck_require__(488);
 Object.defineProperty(exports, "createSerializer", ({ enumerable: true, get: function () { return serializer_js_1.createSerializer; } }));
 Object.defineProperty(exports, "MapperTypeNames", ({ enumerable: true, get: function () { return serializer_js_1.MapperTypeNames; } }));
-var serviceClient_js_1 = __nccwpck_require__(320);
+var serviceClient_js_1 = __nccwpck_require__(319);
 Object.defineProperty(exports, "ServiceClient", ({ enumerable: true, get: function () { return serviceClient_js_1.ServiceClient; } }));
-var pipeline_js_1 = __nccwpck_require__(288);
+var pipeline_js_1 = __nccwpck_require__(287);
 Object.defineProperty(exports, "createClientPipeline", ({ enumerable: true, get: function () { return pipeline_js_1.createClientPipeline; } }));
 var interfaces_js_1 = __nccwpck_require__(105);
 Object.defineProperty(exports, "XML_ATTRKEY", ({ enumerable: true, get: function () { return interfaces_js_1.XML_ATTRKEY; } }));
@@ -81087,7 +81105,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageClient = void 0;
 const tslib_1 = __nccwpck_require__(221);
 const coreHttpCompat = tslib_1.__importStar(__nccwpck_require__(75));
-const index_js_1 = __nccwpck_require__(281);
+const index_js_1 = __nccwpck_require__(280);
 class StorageClient extends coreHttpCompat.ExtendedServiceClient {
     url;
     version;
@@ -81171,7 +81189,7 @@ tslib_1.__exportStar(__nccwpck_require__(178), exports);
 tslib_1.__exportStar(__nccwpck_require__(511), exports);
 var BlobSASSignatureValues_js_1 = __nccwpck_require__(71);
 Object.defineProperty(exports, "generateBlobSASQueryParameters", ({ enumerable: true, get: function () { return BlobSASSignatureValues_js_1.generateBlobSASQueryParameters; } }));
-tslib_1.__exportStar(__nccwpck_require__(284), exports);
+tslib_1.__exportStar(__nccwpck_require__(283), exports);
 var models_js_1 = __nccwpck_require__(421);
 Object.defineProperty(exports, "BlockBlobTier", ({ enumerable: true, get: function () { return models_js_1.BlockBlobTier; } }));
 Object.defineProperty(exports, "PremiumPageBlobTier", ({ enumerable: true, get: function () { return models_js_1.PremiumPageBlobTier; } }));
@@ -81182,7 +81200,7 @@ Object.defineProperty(exports, "Pipeline", ({ enumerable: true, get: function ()
 Object.defineProperty(exports, "isPipelineLike", ({ enumerable: true, get: function () { return Pipeline_js_1.isPipelineLike; } }));
 Object.defineProperty(exports, "newPipeline", ({ enumerable: true, get: function () { return Pipeline_js_1.newPipeline; } }));
 Object.defineProperty(exports, "StorageOAuthScopes", ({ enumerable: true, get: function () { return Pipeline_js_1.StorageOAuthScopes; } }));
-var storage_common_1 = __nccwpck_require__(280);
+var storage_common_1 = __nccwpck_require__(279);
 Object.defineProperty(exports, "AnonymousCredential", ({ enumerable: true, get: function () { return storage_common_1.AnonymousCredential; } }));
 Object.defineProperty(exports, "AnonymousCredentialPolicy", ({ enumerable: true, get: function () { return storage_common_1.AnonymousCredentialPolicy; } }));
 Object.defineProperty(exports, "BaseRequestPolicy", ({ enumerable: true, get: function () { return storage_common_1.BaseRequestPolicy; } }));
@@ -88124,7 +88142,7 @@ exports.createSerializer = createSerializer;
 const tslib_1 = __nccwpck_require__(221);
 const base64 = tslib_1.__importStar(__nccwpck_require__(444));
 const interfaces_js_1 = __nccwpck_require__(105);
-const utils_js_1 = __nccwpck_require__(318);
+const utils_js_1 = __nccwpck_require__(317);
 class SerializerImpl {
     modelMappers;
     isXML;
@@ -90597,7 +90615,7 @@ const fsp = __importStar(__nccwpck_require__(114));
 const path = __importStar(__nccwpck_require__(515));
 const cache = __importStar(__nccwpck_require__(219));
 const exec = __importStar(__nccwpck_require__(19));
-const cache_compress_js_1 = __nccwpck_require__(283);
+const cache_compress_js_1 = __nccwpck_require__(282);
 /**
  * The two live roots whose deltas this cache layer tracks. The string keys
  * are also the directory names used inside the tarball staging layout.
@@ -90950,7 +90968,7 @@ __export(clientHelpers_exports, {
 });
 module.exports = __toCommonJS(clientHelpers_exports);
 var import_defaultHttpClient = __nccwpck_require__(377);
-var import_createPipelineFromOptions = __nccwpck_require__(321);
+var import_createPipelineFromOptions = __nccwpck_require__(320);
 var import_apiVersionPolicy = __nccwpck_require__(231);
 var import_credentials = __nccwpck_require__(192);
 var import_apiKeyAuthenticationPolicy = __nccwpck_require__(92);
@@ -93690,7 +93708,7 @@ module.exports = {
 
 const { redirectStatusSet, referrerPolicySet: referrerPolicyTokens, badPortsSet } = __nccwpck_require__(31)
 const { getGlobalOrigin } = __nccwpck_require__(145)
-const { performance } = __nccwpck_require__(326)
+const { performance } = __nccwpck_require__(325)
 const { isBlobLike, toUSVString, ReadableStreamFrom } = __nccwpck_require__(72)
 const assert = __nccwpck_require__(535)
 const { isUint8Array } = __nccwpck_require__(202)
@@ -95017,7 +95035,7 @@ const fs = __importStar(__nccwpck_require__(539));
 const mm = __importStar(__nccwpck_require__(336));
 const os = __importStar(__nccwpck_require__(98));
 const path = __importStar(__nccwpck_require__(251));
-const httpm = __importStar(__nccwpck_require__(289));
+const httpm = __importStar(__nccwpck_require__(288));
 const semver = __importStar(__nccwpck_require__(183));
 const stream = __importStar(__nccwpck_require__(136));
 const util = __importStar(__nccwpck_require__(129));
@@ -95752,7 +95770,7 @@ exports.shouldSeedBuildCacheEntry = shouldSeedBuildCacheEntry;
 exports.seedIsolatedBuildCache = seedIsolatedBuildCache;
 const fs = __importStar(__nccwpck_require__(252));
 const path = __importStar(__nccwpck_require__(515));
-const cache_compress_js_1 = __nccwpck_require__(283);
+const cache_compress_js_1 = __nccwpck_require__(282);
 const TRANSIENT_SEED_SUFFIXES = [".lock", ".lck", ".sock", ".pid", ".tmp", ".temp", ".part", ".partial"];
 /** Parse the `seed-isolated-build-cache` input into isolated SOLDR_CACHE_DIR roots. */
 function parseIsolatedSeedTargets(value) {
@@ -97184,7 +97202,7 @@ function makeBlobBeginCopyFromURLPollOperation(state) {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(279);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(289);
 /******/ 	module.exports = __webpack_exports__;
 /******/
 /******/ })()
