@@ -21,6 +21,7 @@ import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js
 import { ensureShims } from "./lib/ensure-shims.js";
 import { seedZccache } from "./lib/zccache-seed.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
+import { tryLoadViaSoldr } from "./lib/soldr-load-shim.js";
 import { parseIsolatedSeedTargets, seedIsolatedBuildCache } from "./lib/seed-isolated-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import {
@@ -461,21 +462,48 @@ export async function run(): Promise<void> {
     let regInflatedBytes: number | null = null;
     let regFileCount: number | null = null;
     if (fileExists(registryArchive)) {
-      const magic = await detectCompressMagic(registryArchive);
-      if (magic === "zstd" || magic === "gzip") {
+      // #260: try `soldr load` first for parallel extraction on Windows
+      // (Defender + NTFS bottleneck). Falls through to the legacy
+      // tar+zstd path when the archive isn't soldr-format or the
+      // installed soldr is too old.
+      let soldrLoadUsed = false;
+      try {
+        const sr = await tryLoadViaSoldr({
+          archivePath: registryArchive,
+          targetDir: result.cargoRegistryCache.path,
+          soldrPath: result.soldrPath,
+          soldrVersion: result.soldrVersionResolved,
+          debug: debugMode,
+          log: debugLog,
+          autoDefenderExclude: process.platform === "win32",
+        });
+        soldrLoadUsed = sr.used;
+      } catch (err) {
+        logger.log(
+          `cargo-registry soldr load failed (will fall back to tar+zstd): ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      if (soldrLoadUsed) {
         try {
-          const dr = await decompressCache({
-            archivePath: registryArchive,
-            targetDir: result.cargoRegistryCache.path,
-            debug: debugMode, log: debugLog,
-          });
-          regArchiveBytes = dr.archiveBytes;
-          regInflatedBytes = dr.inflatedBytes;
-          regFileCount = dr.fileCount;
-        } catch (err) {
-          logger.log(
-            `cargo-registry decompress failed: ${err instanceof Error ? err.message : String(err)}`,
-          );
+          regArchiveBytes = (await fs.promises.stat(registryArchive)).size;
+        } catch { /* archive may have been removed mid-flight */ }
+      } else {
+        const magic = await detectCompressMagic(registryArchive);
+        if (magic === "zstd" || magic === "gzip") {
+          try {
+            const dr = await decompressCache({
+              archivePath: registryArchive,
+              targetDir: result.cargoRegistryCache.path,
+              debug: debugMode, log: debugLog,
+            });
+            regArchiveBytes = dr.archiveBytes;
+            regInflatedBytes = dr.inflatedBytes;
+            regFileCount = dr.fileCount;
+          } catch (err) {
+            logger.log(
+              `cargo-registry decompress failed: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
         }
       }
     }
