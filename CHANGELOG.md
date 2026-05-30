@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.9.18 - 2026-05-30
+
 - Add `target-cache-save-min-compiles` (default `1`) — delta-aware save gate
   for the Rust target/ artifact cache, mirroring `build-cache-save-min-compiles`.
   When `target-cache` is opted in and the cache was restored from a fallback
