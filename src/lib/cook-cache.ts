@@ -17,6 +17,7 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
+import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as cache from "@actions/cache";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
@@ -616,6 +617,10 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
   let archiveBytes: number | undefined;
   let inflatedBytes: number | undefined;
   let fileCount: number | undefined;
+  // #268 Fix B: capture compress wall-clock so a race-loss after a long
+  // compress is loud, not silent. Operators reading the log shouldn't
+  // have to scroll to spot 19 wasted minutes.
+  const compressStart = Date.now();
   try {
     const compress = await compressCache({
       cacheDir: targetDir,
@@ -635,6 +640,7 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
   if (!archivePath) {
     return { status: "failed", error: "compressCache returned null archive (zstd unavailable?)" };
   }
+  const compressMs = Date.now() - compressStart;
   try {
     const id = await cache.saveCache([archivePath], exactKey);
     if (id <= 0) {
@@ -646,6 +652,25 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
         `cook-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +
           `job already saved key=${exactKey} or repo cache budget is exhausted`,
       );
+      // #268 Fix B: when the compress was meaningfully expensive
+      // (>30s) and we end up discarding the upload, surface a top-
+      // level warning so it shows up in the job's annotations panel.
+      // Fix A (reserve key BEFORE compressing) is the real fix but
+      // requires plumbing two-phase cache APIs; this raises the
+      // visibility of the symptom in the meantime.
+      const COMPRESS_WASTE_WARN_MS = 30_000;
+      if (compressMs >= COMPRESS_WASTE_WARN_MS) {
+        const seconds = (compressMs / 1000).toFixed(0);
+        const archiveDisplay = archiveBytes
+          ? `${(archiveBytes / (1024 * 1024)).toFixed(1)} MiB`
+          : "unknown size";
+        core.warning(
+          `setup-soldr: cook-cache spent ${seconds}s compressing a ${archiveDisplay} ` +
+            `archive then lost the cache reservation race for key=${exactKey}. ` +
+            `That wall-clock was burned — see setup-soldr#268 for the fix-A (reserve ` +
+            `key BEFORE compressing) tracking issue.`,
+        );
+      }
       return {
         status: "skipped-race",
         cacheId: id,
@@ -725,6 +750,9 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
     args.push("--delta-from-manifest", opts.baseManifestPath as string);
   }
 
+  // #268 Fix B: capture compress wall-clock so a race-loss after a long
+  // compress is loud, not silent (mirrors the non-layered path above).
+  const compressStart = Date.now();
   const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
   if (run.code !== 0) {
     return {
@@ -733,6 +761,7 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
       archivePath,
     };
   }
+  const compressMs = Date.now() - compressStart;
 
   const report = saveReport(run.payload);
   const archiveBytes = report.archiveBytes ?? await archiveSize(archivePath);
@@ -743,6 +772,23 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
         `cook-cache-${layer}: save did not reserve a new entry (id=${id}) ` +
           `for key=${exactKey}`,
       );
+      // #268 Fix B: same surface-as-warning treatment as the non-
+      // layered path. The layered path uses `soldr save --zstd-level
+      // 19` which is the dominant wall-clock burner (zccache PR #480
+      // observed 19m 5s before losing the race).
+      const COMPRESS_WASTE_WARN_MS = 30_000;
+      if (compressMs >= COMPRESS_WASTE_WARN_MS) {
+        const seconds = (compressMs / 1000).toFixed(0);
+        const archiveDisplay = archiveBytes
+          ? `${(archiveBytes / (1024 * 1024)).toFixed(1)} MiB`
+          : "unknown size";
+        core.warning(
+          `setup-soldr: cook-cache-${layer} spent ${seconds}s compressing a ` +
+            `${archiveDisplay} archive then lost the cache reservation race for ` +
+            `key=${exactKey}. That wall-clock was burned — see setup-soldr#268 ` +
+            `for the fix-A (reserve key BEFORE compressing) tracking issue.`,
+        );
+      }
       return {
         status: "skipped-race",
         cacheId: id,
