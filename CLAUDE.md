@@ -272,3 +272,28 @@ Or filter explicitly per `__typename`:
 ```
 
 Same trap exists when grouping completed-check counts (`group_by(.conclusion)` misses StatusContext entries entirely). Always coalesce `.conclusion // .state` before grouping.
+
+### Second-order gotcha: jq `//` only replaces `null` / `false`, NOT empty strings
+
+When a CheckRun is still queued/in-progress, `gh pr view --json statusCheckRollup` returns `.conclusion: ""` (empty string), not `null`. The `//` alternative operator in jq treats `""` as **present** (the value is "set" to an empty string), so:
+
+```jq
+(.conclusion // .state // .status)   # returns "" when conclusion=""
+```
+
+…silently bottoms out at the empty string and never falls through to `.state` or `.status`. A polling loop that then does `select(. == "PENDING" or . == "IN_PROGRESS")` will **not** match the empty string and considers the queued job "settled" — exiting too early.
+
+**The robust pattern is explicit, not coalesced**: check the field that actually carries live state. For `CheckRun`, that's `.status == "COMPLETED"`; for `StatusContext`, it's `.state != "PENDING"`. Use a conditional, not `//`:
+
+```bash
+# Wait until every entry is genuinely settled (CheckRun.status=COMPLETED or
+# StatusContext.state in {SUCCESS,FAILURE,ERROR,EXPECTED}).
+until [ "$(gh pr view $PR --json statusCheckRollup --jq '
+  [.statusCheckRollup[] | select(
+    (.__typename == "CheckRun"      and .status != "COMPLETED") or
+    (.__typename == "StatusContext" and .state  == "PENDING")
+  )] | length
+')" = "0" ]; do sleep 30; done
+```
+
+This is the second face of the same family of bugs — the first hit (the original CodeRabbit miss) and this one (empty-string-vs-null) together cost ~10 minutes of stuck polling in one session. **Default to explicit per-typename checks; treat `//` as suspicious for any field that GitHub serializes as `""` when unset.**
