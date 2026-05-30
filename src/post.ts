@@ -341,8 +341,15 @@ async function saveOne(opts: {
   extraBasenames?: string[];
   payloadProfile?: CachePayloadProfile;
   payloadPolicy: CachePayloadPolicy;
+  /**
+   * When set, attempt to bundle the cache via `soldr save` so the matching
+   * `soldr load` on restore can use parallel-extract. Only meaningful for
+   * the cargo-registry layer today; gated on env + version inside
+   * `trySaveViaSoldr`. Falls through to legacy compression otherwise. (#263)
+   */
+  soldrSave?: { soldrPath: string; soldrVersion: string };
 }): Promise<CacheSaveResultWithStats> {
-  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadProfile, payloadPolicy } = opts;
+  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadProfile, payloadPolicy, soldrSave } = opts;
   const withStats = (r: CacheSaveResult): CacheSaveResultWithStats =>
     Object.assign(r, {
       archiveBytes: null,
@@ -368,28 +375,58 @@ async function saveOne(opts: {
   let compressMs = 0;
   let uploadMs = 0;
   const compressStart = Date.now();
+  let skippedReason: "payload-too-large" | undefined;
   try {
-    const result = await compressCache({
-      cacheDir,
-      codec,
-      level,
-      debug,
-      log,
-      extraBasenames,
-      payloadWarnBytes: payloadPolicy.warnBytes,
-      payloadMaxBytes: payloadPolicy.maxBytes,
-      payloadOversizeAction: payloadPolicy.oversizeAction,
-      payloadTopN: payloadPolicy.topN,
-      payloadProfile,
-      label,
-    });
-    archivePath = result.archivePath;
-    archiveBytes = result.archiveBytes || null;
-    inflatedBytes = result.inflatedBytes;
-    fileCount = result.fileCount;
-    payload = result.payload;
-    compressMs = Date.now() - compressStart;
-    if (result.skippedReason === "payload-too-large") {
+    // #263: try `soldr save` first when the caller opted in (env-gated
+    // inside trySaveViaSoldr). Produces a soldr-format archive that the
+    // matching `soldr load` on restore picks up for parallel extract.
+    // Falls through to legacy compressCache on any miss (no env, no
+    // binary, too-old version, extras present, throw).
+    if (soldrSave) {
+      const { trySaveViaSoldr } = await import("./lib/soldr-load-shim.js");
+      const candidateArchive = `${cacheDir}.tar.zst`;
+      const sr = await trySaveViaSoldr({
+        cacheDir,
+        archivePath: candidateArchive,
+        soldrPath: soldrSave.soldrPath,
+        soldrVersion: soldrSave.soldrVersion,
+        extraBasenames,
+        debug,
+        log,
+      });
+      if (sr.used) {
+        archivePath = sr.archivePath;
+        archiveBytes = sr.archiveBytes;
+        // inflatedBytes/fileCount/payload not collected on the soldr path —
+        // keep them null; postCollector accepts that shape.
+        compressMs = Date.now() - compressStart;
+        if (debug) log(`${label}: soldr save produced ${candidateArchive} (${archiveBytes} bytes, ${compressMs} ms)`);
+      }
+    }
+    if (archivePath === null) {
+      const result = await compressCache({
+        cacheDir,
+        codec,
+        level,
+        debug,
+        log,
+        extraBasenames,
+        payloadWarnBytes: payloadPolicy.warnBytes,
+        payloadMaxBytes: payloadPolicy.maxBytes,
+        payloadOversizeAction: payloadPolicy.oversizeAction,
+        payloadTopN: payloadPolicy.topN,
+        payloadProfile,
+        label,
+      });
+      archivePath = result.archivePath;
+      archiveBytes = result.archiveBytes || null;
+      inflatedBytes = result.inflatedBytes;
+      fileCount = result.fileCount;
+      payload = result.payload;
+      skippedReason = result.skippedReason;
+      compressMs = Date.now() - compressStart;
+    }
+    if (skippedReason === "payload-too-large") {
       log(`${label}: payload exceeded cache-payload-max-bytes, skipping save`);
       return {
         status: "oversize-skip",
@@ -1488,6 +1525,13 @@ export async function run(): Promise<void> {
       log: debugLog,
       extraBasenames: result.cargoRegistryCache.extraBasenames,
       payloadPolicy,
+      // #263: opt the cargo-registry layer into `soldr save`/`soldr load`
+      // round-trip (env-gated inside trySaveViaSoldr — default off until
+      // the Windows wall-clock measurement validates the win).
+      soldrSave: {
+        soldrPath: result.soldrPath || process.env["SOLDR_BINARY"]?.trim() || "",
+        soldrVersion: result.soldrVersionResolved || "",
+      },
     });
     if (cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip") {
       postCollector.record({
