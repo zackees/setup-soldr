@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.45`, which bundles zccache `1.11.7` carrying the
+  depgraph drift-detection fix (zackees/zccache#449 → PR #450): prevents
+  stale-artifact hits that produced undefined-symbol link errors when
+  transitive `.cpp.hpp` headers were modified in C++ unity builds.
+
 ## v0.9.18 - 2026-05-30
 
 - Add `target-cache-save-min-compiles` (default `1`) — delta-aware save gate
