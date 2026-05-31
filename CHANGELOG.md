@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.30 - 2026-05-31
+
+- Default to soldr `0.7.51`, which lands `soldr cook` warm-skip
+  (zackees/soldr#622, closes zackees/soldr#621). When the recipe
+  + rustc + soldr version match a previously-written marker file
+  in `target/`, soldr cook short-circuits Phase 2 (the cargo-chef
+  orchestration walk) — saving ~5 min on Coverage-shape workloads
+  and ~2.5 min on Integration-shape ones, with no behavior change
+  for cold runs or any case where the marker doesn't match.
+  Marker is schema-versioned, per-target-dir, and falls through
+  to the normal cook path on any read failure / mismatch / missing
+  file. README + action.yml default version bumped to 0.7.51.
+
 ## v0.9.29 - 2026-05-31
 
 - Post-step save table now includes build-cache + cargo-registry
