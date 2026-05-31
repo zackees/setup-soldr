@@ -281,3 +281,88 @@ test("systemRustupSatisfiesRequest fails when component missing", async () => {
   });
   assert.equal(ok, false);
 });
+
+test("systemRustupSatisfiesRequest FS fast-path skips rustup spawn when channel absent on disk (#304)", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "fs-probe-"));
+  const rustupHome = path.join(root, "rustup");
+  fs.mkdirSync(path.join(rustupHome, "toolchains", "nightly-x86_64-unknown-linux-gnu"), {
+    recursive: true,
+  });
+  const ts: ToolchainSpec = {
+    channel: "1.94.1",
+    cacheChannel: "1.94.1",
+    profile: "minimal",
+    components: [],
+    targets: [],
+    source: "default",
+    fileHash: "none",
+  };
+  let rustupCalls = 0;
+  try {
+    const ok = await systemRustupSatisfiesRequest({
+      cargoHome: "/fake/cargo",
+      rustupHome,
+      toolchain: ts,
+      env: {},
+      deps: {
+        which: async () => {
+          rustupCalls += 1;
+          return "/fake/rustup";
+        },
+        rustupInstalledNames: async () => {
+          rustupCalls += 1;
+          return new Set();
+        },
+      },
+    });
+    assert.equal(ok, false);
+    assert.equal(
+      rustupCalls,
+      0,
+      "FS readdir should rule out before any which()/rustup spawn",
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("systemRustupSatisfiesRequest FS fast-path matches channel from on-disk toolchain dir (#304)", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "fs-probe-"));
+  const rustupHome = path.join(root, "rustup");
+  fs.mkdirSync(path.join(rustupHome, "toolchains", "1.94.1-x86_64-unknown-linux-gnu"), {
+    recursive: true,
+  });
+  const ts: ToolchainSpec = {
+    channel: "1.94.1",
+    cacheChannel: "1.94.1",
+    profile: "minimal",
+    components: [],
+    targets: [],
+    source: "default",
+    fileHash: "none",
+  };
+  let installedNamesCalls = 0;
+  try {
+    const ok = await systemRustupSatisfiesRequest({
+      cargoHome: "/fake/cargo",
+      rustupHome,
+      toolchain: ts,
+      env: {},
+      deps: {
+        which: async () => "/fake/rustup",
+        rustupInstalledNames: async () => {
+          installedNamesCalls += 1;
+          return new Set();
+        },
+      },
+    });
+    assert.equal(ok, true);
+    assert.equal(
+      installedNamesCalls,
+      0,
+      "FS-only path with no components/targets must not call rustup at all",
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
