@@ -46745,7 +46745,45 @@ async function run() {
         const soloLevel = core.getState("soloToolchainLevel") || "9"; // #310
         log(`solo-toolchain-cache: post-step exactKey=${soloExactKey} matched=${soloMatchedKey} ` +
             `exactHit=${soloExactHit} incrementalEmpty=${soloIncrementalEmpty} saveDiffPath=${soloSaveDiffPath}`);
-        if (soloExactHit && soloIncrementalEmpty) {
+        // #313: pre-save lookupOnly probe. When several parallel jobs in
+        // the same workflow all enable solo-toolchain-cache with the SAME
+        // key (rustc × components × targets × soldr-version), each one
+        // compresses + uploads ~140-175 MB only for GitHub Actions Cache
+        // to reject all-but-one with id=-1. The wasted uploads dominate
+        // the post-step (~100 s × N parallel jobs).
+        let raceSkipped = false;
+        if (!(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
+            try {
+                const probeStart = Date.now();
+                const existing = await cache.restoreCache([], soloExactKey, [], { lookupOnly: true });
+                if (existing) {
+                    raceSkipped = true;
+                    log(`solo-toolchain-cache: pre-save lookupOnly probe found existing key=${existing} ` +
+                        `(probe ${Date.now() - probeStart}ms) — skipping stage+compress+upload (#313)`);
+                    postCollector.record({
+                        label: "solo-toolchain-cache",
+                        operation: "save",
+                        status: "race-precheck-skipped",
+                        hit: false,
+                        key: soloExactKey,
+                        matchedKey: soloMatchedKey,
+                        restoreKeys: [],
+                        archiveBytes: null,
+                        inflatedBytes: null,
+                        fileCount: null,
+                        durationMs: Date.now() - probeStart,
+                        timestamp: new Date().toISOString(),
+                    });
+                }
+            }
+            catch (err) {
+                log(`solo-toolchain-cache: lookupOnly probe failed (will attempt save anyway): ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
+        if (raceSkipped) {
+            // probe found an existing entry; nothing more to do for this layer
+        }
+        else if (soloExactHit && soloIncrementalEmpty) {
             log("solo-toolchain-cache: exact hit and no install delta — skipping save");
         }
         else if (!soloSaveDiffPath || !fs.existsSync(soloSaveDiffPath)) {
