@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## v0.9.31 - 2026-05-31
+
+- Parallel cook-cache base + delta restore (closes #295 Fix B, #296).
+  The previous serial `await base; if (base.matchedKey) await delta`
+  shape wasted ~11s of wall clock per warm run for zero correctness
+  benefit — the delta key is independently computed (includes
+  everything the base key does + source/git fingerprint), so the two
+  restores have no data dependency. Now run via `Promise.all([base,
+  delta])`. Contract preserved: when base missed, the delta archive
+  is semantically invalid and discarded so callers can rely on
+  `base.matchedKey === "" ⇒ delta.hit === false`. Validation rerun
+  for #621 showed cook-cache-delta MISS taking 11.2s wall clock
+  because it was waiting on base; this fix should shave that ~11s
+  off the parallel-restore phase on warm runs.
+
 ## v0.9.30 - 2026-05-31
 
 - Default to soldr `0.7.51`, which lands `soldr cook` warm-skip
