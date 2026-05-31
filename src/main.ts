@@ -11,7 +11,7 @@ import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { createLogger } from "./lib/log-utils.js";
 import { readRawInputs, resolveSetup, applyResolveResult } from "./lib/resolve-setup.js";
-import { markPhase, finishPhase } from "./lib/phase-timing.js";
+import { markPhase, finishPhase, setupPhaseSummaryOneLine } from "./lib/phase-timing.js";
 import { ensureRustToolchain } from "./lib/ensure-rust-toolchain.js";
 import { ensureSoldr } from "./lib/ensure-soldr.js";
 import { verifySoldr } from "./lib/verify-soldr.js";
@@ -1269,6 +1269,26 @@ export async function run(): Promise<void> {
       logger,
     });
   }
+
+  // #269-companion (setup side): one-line aggregate of where each
+  // setup phase's wall-clock went, before we finish the `action`
+  // phase. Mirrors the post-step `cache save totals:` line that
+  // ships from `StatsCollector.saveSummaryOneLine()`. Operators see
+  // the pre-build budget at a glance without scrolling raw
+  // SETUP_SOLDR_PHASE_*_START_MS env vars or hunting through the
+  // timeline. Phases in declared serial order:
+  const setupPhaseSummary = setupPhaseSummaryOneLine([
+    "resolve",
+    "parallel-restore",
+    "target-tree",
+    "toolchain",
+    "install",
+    "zccache-seed",
+    "verify",
+    "cross-bootstrap",
+    "cook",
+  ]);
+  if (setupPhaseSummary) core.info(setupPhaseSummary);
 
   await finishPhase("action");
 

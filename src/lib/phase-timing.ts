@@ -48,3 +48,42 @@ export async function finishPhase(phase: string): Promise<number> {
   core.setOutput(`${phase}_milliseconds`, String(elapsedMs));
   return seconds;
 }
+
+/**
+ * Read every recorded SETUP_SOLDR_PHASE_*_START_MS env var (in the
+ * declared order) and produce a one-line aggregate of how long each
+ * phase took. Durations are computed as the delta between adjacent
+ * phase start times; the final phase's duration is `now - phase_start`.
+ *
+ * Mirrors the post-step `cache save totals:` line from
+ * `StatsCollector.saveSummaryOneLine()`. Surfaces the pre-build
+ * budget at a glance instead of requiring operators to read raw
+ * SETUP_SOLDR_PHASE_*_START_MS env vars or scroll the timeline.
+ *
+ * Returns "" when no phase start markers are present (e.g. test
+ * harness running without env var infrastructure). Phases whose env
+ * var isn't set are silently skipped (passthrough mode, partial
+ * runs, etc.).
+ */
+export function setupPhaseSummaryOneLine(orderedPhases: readonly string[]): string {
+  const now = nowMs();
+  const records: Array<{ name: string; startMs: number }> = [];
+  for (const phase of orderedPhases) {
+    const raw = (process.env[phaseEnvName(phase)] ?? "").trim();
+    if (!raw) continue;
+    const parsed = Number(raw);
+    if (Number.isNaN(parsed) || !Number.isFinite(parsed)) continue;
+    records.push({ name: phase, startMs: Math.floor(parsed) });
+  }
+  if (records.length === 0) return "";
+
+  const segments: string[] = [];
+  for (let i = 0; i < records.length; i += 1) {
+    const cur = records[i]!;
+    const endMs = i + 1 < records.length ? records[i + 1]!.startMs : now;
+    const durMs = Math.max(0, endMs - cur.startMs);
+    segments.push(`${cur.name}=${(durMs / 1000).toFixed(1)}s`);
+  }
+  const totalMs = now - records[0]!.startMs;
+  return `setup phase totals: ${segments.join(" ")} total=${(totalMs / 1000).toFixed(1)}s`;
+}

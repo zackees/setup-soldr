@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { markPhase, finishPhase } from "../src/lib/phase-timing.js";
+import { markPhase, finishPhase, setupPhaseSummaryOneLine } from "../src/lib/phase-timing.js";
 
 function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -92,4 +92,52 @@ test("finishPhase handles invalid start values", async () => {
     assert.match(content, /\r?\n0\.000\r?\n/);
     delete process.env["SETUP_SOLDR_PHASE_BAD_START_MS"];
   });
+});
+
+test("setupPhaseSummaryOneLine returns '' when no phase env vars are set", () => {
+  // Clean any potentially-set test env vars first.
+  for (const key of Object.keys(process.env)) {
+    if (key.startsWith("SETUP_SOLDR_PHASE_") && key.endsWith("_START_MS")) {
+      delete process.env[key];
+    }
+  }
+  assert.equal(setupPhaseSummaryOneLine(["resolve", "toolchain"]), "");
+});
+
+test("setupPhaseSummaryOneLine computes durations between adjacent phase starts", () => {
+  // Synthetic timeline: t0 → t0+5000ms → t0+8000ms → now.
+  const t0 = Date.now() - 10_000;
+  process.env["SETUP_SOLDR_PHASE_RESOLVE_START_MS"] = String(t0);
+  process.env["SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS"] = String(t0 + 5000);
+  process.env["SETUP_SOLDR_PHASE_COOK_START_MS"] = String(t0 + 8000);
+  try {
+    const line = setupPhaseSummaryOneLine(["resolve", "toolchain", "cook"]);
+    // resolve: 5.0s, toolchain: 3.0s, cook: ~2s (now - t0 - 8000)
+    assert.match(line, /^setup phase totals: resolve=5\.0s toolchain=3\.0s cook=\d+\.\ds total=\d+\.\ds$/);
+  } finally {
+    delete process.env["SETUP_SOLDR_PHASE_RESOLVE_START_MS"];
+    delete process.env["SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS"];
+    delete process.env["SETUP_SOLDR_PHASE_COOK_START_MS"];
+  }
+});
+
+test("setupPhaseSummaryOneLine silently skips phases whose env var isn't set", () => {
+  for (const key of Object.keys(process.env)) {
+    if (key.startsWith("SETUP_SOLDR_PHASE_") && key.endsWith("_START_MS")) {
+      delete process.env[key];
+    }
+  }
+  const t0 = Date.now() - 5000;
+  process.env["SETUP_SOLDR_PHASE_RESOLVE_START_MS"] = String(t0);
+  // skip toolchain — only resolve + cook set
+  process.env["SETUP_SOLDR_PHASE_COOK_START_MS"] = String(t0 + 2000);
+  try {
+    const line = setupPhaseSummaryOneLine(["resolve", "toolchain", "cook"]);
+    // toolchain absent → just resolve + cook
+    assert.match(line, /^setup phase totals: resolve=2\.0s cook=\d+\.\ds total=\d+\.\ds$/);
+    assert.equal(line.includes("toolchain"), false);
+  } finally {
+    delete process.env["SETUP_SOLDR_PHASE_RESOLVE_START_MS"];
+    delete process.env["SETUP_SOLDR_PHASE_COOK_START_MS"];
+  }
 });
