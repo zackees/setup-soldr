@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.36 - 2026-05-31
+
+- solo-toolchain-cache default zstd compression dropped from -19 to
+  -9 (closes #310, #311). Measured first cold-save cycle on zccache
+  CI showed -19 produced a 140 MB archive in 104.8 s wall clock — 1.3
+  MB/s, dominating the entire post-step. The amortization argument
+  for -19 ("save once, restore N times") assumed save was cheap;
+  measurement showed it wasn't. At -9 the archive grows ~25% (~175
+  MB) but compress drops to ~10 s; restore stays bandwidth-bound at
+  ~70 MB/s either way. Net ~92 s shaved every cold-save cycle
+  (rustc / soldr version bump). Users can still override to "19"
+  explicitly.
+
 ## v0.9.35 - 2026-05-31
 
 - FS-first rustup probe (closes #304, #308). `systemRustupSatisfiesRequest`
