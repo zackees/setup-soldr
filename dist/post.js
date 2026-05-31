@@ -44756,6 +44756,31 @@ async function saveSoloCache(opts) {
     if (!archivePath) {
         return { status: "failed", error: "compressCache returned null archive (zstd unavailable?)" };
     }
+    // #313 followup: post-compress, pre-upload probe. When N parallel
+    // jobs in a workflow all save the same key, the pre-compress probe
+    // (post.ts) can't catch the race — all N see no cache. After
+    // compress (~10s at -9), the first job's save may have completed;
+    // a probe here catches that and skips the wasted upload. The probe
+    // requires a non-empty paths array even in lookupOnly mode, hence
+    // the throwaway directory.
+    try {
+        const probeDir = path.join(path.dirname(archivePath), ".solo-lookup-probe");
+        await ensureDir(probeDir);
+        const existing = await cache.restoreCache([probeDir], key, [], { lookupOnly: true });
+        if (existing) {
+            log(`solo-toolchain-cache: post-compress lookupOnly probe found existing key=${existing} — skipping upload (#313)`);
+            return {
+                status: "race-precheck-skipped",
+                archiveBytes,
+                inflatedBytes,
+                fileCount,
+                archivePath,
+            };
+        }
+    }
+    catch (err) {
+        log(`solo-toolchain-cache: post-compress lookupOnly probe failed (will attempt save anyway): ${err instanceof Error ? err.message : String(err)}`);
+    }
     try {
         const id = await cache.saveCache([archivePath], key);
         log(`solo-toolchain-cache: saved id=${id} key=${key} archive=${archivePath}`);
