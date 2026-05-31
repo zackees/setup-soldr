@@ -2,7 +2,23 @@
 
 ## Unreleased
 
-## v0.9.40 - 2026-05-31
+## v0.9.41 - 2026-05-31
+
+- Fix #316/#321 follow-up — align tar's top-level dir between save
+  and restore (closes #326). v0.9.40 cascade revealed
+  `solo-toolchain-cache: restored archive was empty`: the archive
+  WAS getting restored, but its tar top-level dir
+  (`setup-soldr-solo-stage-save/`) didn't match what restore reads
+  from (`staged/`). compressCache writes archives via `tar -cf - -C
+  parent basename(stagingDir)`, so save's stagingDir basename
+  controls the archive's contents. Now save uses
+  `${runnerTemp}/setup-soldr-solo-cache/staged` so basename ==
+  `staged` (matching restore's stagingOut basename). Also threads
+  canonical archive path explicitly via cacheArchivePath option
+  to decouple it from stagingDir layout. **Closes the solo-cache
+  series end-to-end** — with #305 + #310 + #313-#321 + #324 + #326
+  all in place, warm CI should see `toolchain=~3s
+  {rustup_install=0.0s solo_restore=~2-3s}`.
 
 - Skip `rustup install` when solo-toolchain-cache exact-hit verified
   (closes #323, #324). After #316/#321 unblocked solo-cache restore,
