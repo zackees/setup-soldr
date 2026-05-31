@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v0.9.21 - 2026-05-31
+
+- Implicit `cargo-registry-cache=true` pairing when `prebuild-deps: soldr-cook`
+  is set without an explicit `cargo-registry-cache` value (#267, #271).
+  Without the pairing, cook restored `target/` but `$CARGO_HOME/registry`
+  stayed cold — cargo then re-downloaded every `.crate` source on the next
+  build (the "cook is on, why is it still downloading?" trap caught on
+  zccache CI). Explicit user values + `cache-preset: minimal/foundation`
+  presets (which explicitly set `cargo-registry-cache: false`) still win.
+  A one-line log line announces the pairing so consumers see what happened.
+- Cook-cache race-loss after a long compress is now LOUD (#268 Fix B,
+  #272). When `actions/cache.saveCache` returns id<=0 (race lost) AND the
+  preceding compress burned >=30s, emit a top-level `core.warning(...)`
+  naming the wasted seconds + archive size + cache key. Previously this
+  was a single mid-log line operators had to scroll to find; now it
+  surfaces in the GitHub Actions annotations panel. Trigger case was
+  zccache PR #480 (19m 5s compress → race loss → silent skip). Fix A
+  (reserve key BEFORE compressing — the real ~19m→10s improvement)
+  remains tracked at #268.
+
 ## v0.9.20 - 2026-05-30
 
 - Default to soldr `0.7.47`, which lands:
