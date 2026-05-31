@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.9.37 - 2026-05-31
+
+- Pre-save lookupOnly probe for solo-toolchain-cache (closes #313,
+  #314). When N parallel jobs in a single workflow all enable
+  solo-toolchain-cache with the same key (rustc × components ×
+  targets × soldr-version), each one used to stage+compress+upload
+  the ~140-175 MB archive only for GitHub Actions Cache to reject
+  all-but-one with `id=-1`. zccache CI v0.9.35 showed 3 parallel
+  jobs each spending ~100s of post-step wall clock on wasted
+  uploads. Fix: probe with `restoreCache([], key, [], {lookupOnly:
+  true})` before staging; if the key already exists, skip the
+  whole stage+compress+upload chain. Expected savings on a 5-job
+  workflow: ~3-4 min per cold-save cycle. Race window narrowed to
+  ~50-200 ms (probe duration); worst case is 2 wasted uploads
+  instead of N.
+
 ## v0.9.36 - 2026-05-31
 
 - solo-toolchain-cache default zstd compression dropped from -19 to
