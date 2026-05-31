@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v0.9.27 - 2026-05-31
+
+- Record skipped save layers in the post-step save table (#287). The
+  v0.9.26 table from #285 only showed `status=saved` rows because
+  `postCollector.record()` was gated saved-only; skip cases (race-
+  precheck, tiny-delta, oversize, exact-hit, missing-target) just
+  emitted single-line logs. Now every save attempt records into the
+  StatsCollector, so the table renders every layer with its actual
+  status. archive/inflated/file totals still only count what
+  actually uploaded.
+
+  Why the skip-decisions matter as their own row: `cook-cache
+  skipped-race-precheck 0.1s` confirms #268 Fix A is firing;
+  `build-cache skipped tiny-delta 0.3s` confirms the save-min-compiles
+  gate is doing its job; `build-cache skipped oversize` flags that
+  `cache-payload-max-bytes` (default 6GiB since v0.9.24) may need
+  raising for this workload.
+
 ## v0.9.26 - 2026-05-31
 
 - Per-layer cache-save table alongside the one-line aggregate
