@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { markPhase, finishPhase, setupPhaseSummaryOneLine } from "../src/lib/phase-timing.js";
+import {
+  markPhase,
+  finishPhase,
+  setupPhaseSummaryOneLine,
+  timeSubPhase,
+} from "../src/lib/phase-timing.js";
 
 function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -118,6 +123,97 @@ test("setupPhaseSummaryOneLine computes durations between adjacent phase starts"
     delete process.env["SETUP_SOLDR_PHASE_RESOLVE_START_MS"];
     delete process.env["SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS"];
     delete process.env["SETUP_SOLDR_PHASE_COOK_START_MS"];
+  }
+});
+
+test("timeSubPhase records duration into SETUP_SOLDR_PHASE_<parent>_SUB_<name>_MS (#302)", async () => {
+  await withGithubEnvAndOutput(async () => {
+    delete process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_TOOLCHAIN_SPEC_MS"];
+    const result = await timeSubPhase("resolve", "toolchain-spec", async () => {
+      await new Promise((r) => setTimeout(r, 25));
+      return 42;
+    });
+    assert.equal(result, 42);
+    const raw = (process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_TOOLCHAIN_SPEC_MS"] ?? "").trim();
+    assert.ok(raw, "env var should be set");
+    const ms = Number(raw);
+    assert.ok(ms >= 20 && ms < 5000, `expected 20<=ms<5000, got ${ms}`);
+    delete process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_TOOLCHAIN_SPEC_MS"];
+  });
+});
+
+test("timeSubPhase aggregates across multiple calls with the same name (#302)", async () => {
+  await withGithubEnvAndOutput(async () => {
+    delete process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_RUSTUP_PROBE_MS"];
+    for (let i = 0; i < 3; i += 1) {
+      await timeSubPhase("resolve", "rustup-probe", async () => {
+        await new Promise((r) => setTimeout(r, 15));
+      });
+    }
+    const ms = Number((process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_RUSTUP_PROBE_MS"] ?? "").trim());
+    assert.ok(ms >= 40, `aggregated ms should be ~45+, got ${ms}`);
+    delete process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_RUSTUP_PROBE_MS"];
+  });
+});
+
+test("timeSubPhase records duration even when body throws (#302)", async () => {
+  await withGithubEnvAndOutput(async () => {
+    delete process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_BOOM_MS"];
+    await assert.rejects(
+      timeSubPhase("resolve", "boom", async () => {
+        await new Promise((r) => setTimeout(r, 10));
+        throw new Error("nope");
+      }),
+      /nope/,
+    );
+    const ms = Number((process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_BOOM_MS"] ?? "").trim());
+    assert.ok(ms >= 5, `expected ms>=5, got ${ms}`);
+    delete process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_BOOM_MS"];
+  });
+});
+
+test("setupPhaseSummaryOneLine appends {sub=Xs} breakdown when parent ≥ 1s (#302)", () => {
+  for (const key of Object.keys(process.env)) {
+    if (key.startsWith("SETUP_SOLDR_PHASE_")) delete process.env[key];
+  }
+  const t0 = Date.now() - 10_000;
+  process.env["SETUP_SOLDR_PHASE_RESOLVE_START_MS"] = String(t0);
+  process.env["SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS"] = String(t0 + 8000);
+  // resolve sub-phase: 5s on rustup-probe, 2s on ws-hash → resolve total 8s.
+  process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_RUSTUP_PROBE_MS"] = "5000";
+  process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_WS_HASH_MS"] = "2000";
+  try {
+    const line = setupPhaseSummaryOneLine(["resolve", "toolchain"]);
+    // resolve=8.0s {rustup-probe=5.0s ws-hash=2.0s}  — slowest first
+    // Sub-phase names are canonicalized to underscore form via env-var
+    // round-trip (rustup-probe → SETUP_SOLDR_PHASE_RESOLVE_SUB_RUSTUP_PROBE_MS
+    // → "rustup_probe" on display). Slowest first.
+    assert.match(
+      line,
+      /resolve=8\.0s \{rustup_probe=5\.0s ws_hash=2\.0s\}/,
+    );
+  } finally {
+    for (const key of Object.keys(process.env)) {
+      if (key.startsWith("SETUP_SOLDR_PHASE_")) delete process.env[key];
+    }
+  }
+});
+
+test("setupPhaseSummaryOneLine suppresses sub-phase detail when parent < 1s (#302)", () => {
+  for (const key of Object.keys(process.env)) {
+    if (key.startsWith("SETUP_SOLDR_PHASE_")) delete process.env[key];
+  }
+  const t0 = Date.now() - 100;
+  process.env["SETUP_SOLDR_PHASE_RESOLVE_START_MS"] = String(t0);
+  process.env["SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS"] = String(t0 + 50);
+  process.env["SETUP_SOLDR_PHASE_RESOLVE_SUB_NOISE_MS"] = "20";
+  try {
+    const line = setupPhaseSummaryOneLine(["resolve", "toolchain"]);
+    assert.equal(line.includes("{"), false, `should not include sub-phase detail: ${line}`);
+  } finally {
+    for (const key of Object.keys(process.env)) {
+      if (key.startsWith("SETUP_SOLDR_PHASE_")) delete process.env[key];
+    }
   }
 });
 

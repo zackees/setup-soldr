@@ -11,7 +11,12 @@ import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { createLogger } from "./lib/log-utils.js";
 import { readRawInputs, resolveSetup, applyResolveResult } from "./lib/resolve-setup.js";
-import { markPhase, finishPhase, setupPhaseSummaryOneLine } from "./lib/phase-timing.js";
+import {
+  markPhase,
+  finishPhase,
+  setupPhaseSummaryOneLine,
+  timeSubPhase,
+} from "./lib/phase-timing.js";
 import { ensureRustToolchain } from "./lib/ensure-rust-toolchain.js";
 import { ensureSoldr } from "./lib/ensure-soldr.js";
 import { verifySoldr } from "./lib/verify-soldr.js";
@@ -755,8 +760,10 @@ export async function run(): Promise<void> {
   let soloExactHit = false;
   // Pre-restore snapshot — only needed when solo cache is enabled, so
   // we can compute the full save-diff (post-install vs runner-image,
-  // not vs post-restore baseline).
-  const preRestoreSnapshot = soloEnabled ? await walkSnapshot(snapshotRoots) : null;
+  // not vs post-restore baseline). (#302: timed as sub-phase.)
+  const preRestoreSnapshot = soloEnabled
+    ? await timeSubPhase("toolchain", "snapshot-pre", () => walkSnapshot(snapshotRoots))
+    : null;
   if (soloEnabled) {
     soloKeys = buildSoloCacheKeys({
       runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
@@ -770,12 +777,14 @@ export async function run(): Promise<void> {
     logger.log(`solo-toolchain-cache: key=${soloKeys.exact}`);
     const restoreT0 = Date.now();
     const stagingDir = path.join(ctx.runnerTemp, "setup-soldr-solo-cache");
-    const restored = await restoreSoloCache({
-      keys: soloKeys,
-      rootMap: soloRootMap,
-      stagingDir,
-      log: (msg) => logger.log(msg),
-    });
+    const restored = await timeSubPhase("toolchain", "solo-restore", () =>
+      restoreSoloCache({
+        keys: soloKeys!,
+        rootMap: soloRootMap,
+        stagingDir,
+        log: (msg) => logger.log(msg),
+      }),
+    );
     soloMatchedKey = restored.matchedKey;
     let verifiedMatch = true;
     if (restored.verified && restored.matchedKey) {
@@ -813,9 +822,15 @@ export async function run(): Promise<void> {
   } else {
     core.saveState("soloToolchainEnabled", "false");
   }
-  const baselineSnapshot = await walkSnapshot(snapshotRoots);
-  await ensureRustToolchain({ resolveResult: result, setupCacheExactHit });
-  const postInstallSnapshot = await walkSnapshot(snapshotRoots);
+  const baselineSnapshot = await timeSubPhase("toolchain", "snapshot-base", () =>
+    walkSnapshot(snapshotRoots),
+  );
+  await timeSubPhase("toolchain", "rustup-install", () =>
+    ensureRustToolchain({ resolveResult: result, setupCacheExactHit }),
+  );
+  const postInstallSnapshot = await timeSubPhase("toolchain", "snapshot-post", () =>
+    walkSnapshot(snapshotRoots),
+  );
   const toolchainDiff = diffSnapshots(baselineSnapshot, postInstallSnapshot);
   const toolchainDiffStats = diffStats(toolchainDiff);
   // When solo cache is enabled, also compute the save-diff (post-install

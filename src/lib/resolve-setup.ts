@@ -45,6 +45,7 @@ import {
 } from "./detect-musl-cc.js";
 import { buildOutputs } from "./build-outputs.js";
 import { readRawInputs } from "./raw-inputs.js";
+import { timeSubPhase } from "./phase-timing.js";
 import {
   detectUserLinkerEnv,
   normalizeCompileCacheStats,
@@ -384,12 +385,18 @@ export async function resolveSetup(
   const soldrPath = path.join(binDir, soldrBinary);
 
   // ---- toolchain ----
-  const toolchain = await loadToolchainSpec({
-    workspace,
-    toolchainFile: inputs.toolchainFile || "rust-toolchain.toml",
-    toolchainOverride: inputs.toolchain,
-    log,
-  });
+  // #302: sub-phase timing on the awaits inside resolve so we can see
+  // which step is dominating (toolchain-spec / rustup-probe / hash walks
+  // / soldr-version fetch). Cheap finally-block bookkeeping; no behavior
+  // change for callers.
+  const toolchain = await timeSubPhase("resolve", "toolchain-spec", () =>
+    loadToolchainSpec({
+      workspace,
+      toolchainFile: inputs.toolchainFile || "rust-toolchain.toml",
+      toolchainOverride: inputs.toolchain,
+      log,
+    }),
+  );
 
   // ---- rustup home selection ----
   const explicitRustupHome = (env["RUSTUP_HOME"] ?? "").trim();
@@ -402,16 +409,20 @@ export async function resolveSetup(
     const runnerRustupHome = defaultHomeDir(env, ".rustup");
     let satisfied = false;
     if (deps?.systemRustupOverride) {
-      satisfied = await deps.systemRustupOverride(cargoHome, runnerRustupHome, toolchain);
+      satisfied = await timeSubPhase("resolve", "rustup-probe", () =>
+        deps.systemRustupOverride!(cargoHome, runnerRustupHome, toolchain),
+      );
     } else {
-      satisfied = await systemRustupSatisfiesRequest({
-        cargoHome,
-        rustupHome: runnerRustupHome,
-        toolchain,
-        env,
-        logger,
-        deps: deps?.systemRustup,
-      });
+      satisfied = await timeSubPhase("resolve", "rustup-probe", () =>
+        systemRustupSatisfiesRequest({
+          cargoHome,
+          rustupHome: runnerRustupHome,
+          toolchain,
+          env,
+          logger,
+          deps: deps?.systemRustup,
+        }),
+      );
     }
     if (satisfied) {
       rustupHome = runnerRustupHome;
@@ -457,12 +468,8 @@ export async function resolveSetup(
   const soldrRepo = inputs.repo.trim() || "zackees/soldr";
   const soldrRef = inputs.ref.trim();
   const soldrVersionRequested = inputs.version.trim();
-  const soldrVersionResolved = await resolveSoldrReleaseVersion(
-    soldrRepo,
-    soldrVersionRequested,
-    soldrRef,
-    env,
-    deps,
+  const soldrVersionResolved = await timeSubPhase("resolve", "soldr-version", () =>
+    resolveSoldrReleaseVersion(soldrRepo, soldrVersionRequested, soldrRef, env, deps),
   );
 
   const toolchainSignature = {
@@ -493,10 +500,9 @@ export async function resolveSetup(
   // vs .cargo/config.toml) and have no shared state, so running them
   // sequentially just wastes resolve-phase wall clock. Cheap correctness
   // improvement; no behavior change.
-  const [wsManifestHash, cargoConfigHashValue] = await Promise.all([
-    workspaceManifestHash(workspace),
-    cargoConfigHash(workspace),
-  ]);
+  const [wsManifestHash, cargoConfigHashValue] = await timeSubPhase("resolve", "ws-hash", () =>
+    Promise.all([workspaceManifestHash(workspace), cargoConfigHash(workspace)]),
+  );
 
   const suffix = inputs.cacheKeySuffix.trim();
   const sanitizedSuffix = suffix ? sanitizeFragment(suffix) : "";
@@ -530,7 +536,9 @@ export async function resolveSetup(
   targetCachePath = path.resolve(targetCachePath);
   makeDirs(targetCachePath);
   const lockfilePath = resolveLockfilePath(workspace, targetCachePath, inputs.lockfile);
-  const cargoLockHash = lockfilePath ? await shortFileHash(lockfilePath, "no-lock") : "no-lock";
+  const cargoLockHash = lockfilePath
+    ? await timeSubPhase("resolve", "lock-hash", () => shortFileHash(lockfilePath, "no-lock"))
+    : "no-lock";
 
   // setup-soldr#237: per-job, SHA-independent build-cache key. The per-job
   // suffix keeps each job restoring its own store; dropping the SHA makes it
