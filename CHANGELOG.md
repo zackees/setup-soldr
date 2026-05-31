@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.25 - 2026-05-31
+
+- One-line cache-save aggregate at end of post step (#269 minimal cut,
+  #283). After the existing per-layer `final cache summary:` line,
+  log a rolled-up budget view:
+
+      cache save totals: layers_saved=2/4 uploaded=1.25GB total_ms=24500
+
+  Pulls from existing `StatsCollector` op records — no new
+  instrumentation. Empty (no log line) when zero save ops were
+  recorded. Designed to surface post-step budget regressions on the
+  first run, not after manually scrolling per-layer records.
+
 ## v0.9.24 - 2026-05-31
 
 - Raise `cache-payload-max-bytes` default 2GiB → 6GiB (#279, #280).
