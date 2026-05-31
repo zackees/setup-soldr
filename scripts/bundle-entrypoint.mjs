@@ -19,7 +19,8 @@
 //        node scripts/bundle-entrypoint.mjs post
 //        node scripts/bundle-entrypoint.mjs cleanup
 
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { copyFileSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
+import { join as pathJoin } from "node:path";
 import { createHash } from "node:crypto";
 
 const name = process.argv[2];
@@ -35,13 +36,45 @@ if (name === "cleanup") {
   mkdirSync("cleanup/dist", { recursive: true });
 }
 
+// ncc produces side-chunk files (`<id>.index.js`) for any dynamic
+// import — `await import(...)` in our own code OR transitively inside
+// any npm dep (e.g. @actions/artifact → @azure/identity). The runtime
+// resolves `require('./<id>.index.js')` relative to the bundle's own
+// directory, so we MUST copy these chunks alongside dist/<name>.js or
+// the action crashes with `Cannot find module './<id>.index.js'` —
+// which is exactly what bit v0.9.22 in zccache CI on the cargo-
+// registry save path. When chunks are present we also SKIP the
+// module-ID renumbering below, because the renumbering touches
+// `__nccwpck_require__(<id>)` references that include the chunk IDs;
+// rewriting them would desync the bundle from the on-disk chunk
+// filenames. (Determinism for chunkless bundles is preserved.)
+const sourceDir = `dist-${name}`;
+const targetDir = name === "cleanup" ? "cleanup/dist" : "dist";
+const chunkFiles = readdirSync(sourceDir).filter(
+  (f) => /^\d+\.index\.js$/.test(f),
+);
+for (const chunk of chunkFiles) {
+  copyFileSync(pathJoin(sourceDir, chunk), pathJoin(targetDir, chunk));
+}
+if (chunkFiles.length > 0) {
+  console.log(
+    `bundle-entrypoint: copied ${chunkFiles.length} chunk(s) into ${targetDir}/ (renumbering disabled): ` +
+      chunkFiles.join(", "),
+  );
+}
+
 const buf = readFileSync(sourcePath);
 // Normalize CRLF -> LF. Standalone CR (without LF) is left alone - ncc bundles
 // don't emit lone CRs in practice and we want to fail loudly if they appear
 // rather than silently transform.
 const lfText = buf.toString("utf8").replace(/\r\n/g, "\n");
 
-const sortedText = stripTrailingLineWhitespace(sortWebpackModules(lfText));
+// Skip the sortWebpackModules renumbering when chunk files are
+// present — it would rewrite chunk-id references in the main bundle
+// and desync them from the on-disk `<id>.index.js` filenames.
+const sortedText = chunkFiles.length > 0
+  ? stripTrailingLineWhitespace(lfText)
+  : stripTrailingLineWhitespace(sortWebpackModules(lfText));
 
 const out = Buffer.from(sortedText, "utf8");
 writeFileSync(targetPath, out);
