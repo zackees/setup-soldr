@@ -1939,11 +1939,21 @@ export async function run(): Promise<void> {
     passthrough,
   );
   logFinalCacheSummary(finalSummary, log);
-  // #269 minimal cut: one-line save-aggregate so operators can see at a
-  // glance how many layers actually saved + total uploaded + total
-  // post-step wall-clock. Complements the existing "final cache
-  // summary:" line which is per-layer; this is the rolled-up budget
-  // view.
+  // #269: post-step save-aggregate visibility.
+  //
+  // Two views, both pulled from the existing StatsCollector records
+  // — no new instrumentation:
+  //
+  //   1. Per-layer table (`saveSummaryText`): one row per save op
+  //      showing label, status, archive bytes, file count, wall_ms.
+  //      Footer rolls up the totals. Shows WHICH layer ate the budget.
+  //   2. One-line aggregate (`saveSummaryOneLine`): the rolled-up
+  //      number at a glance for skim-readers.
+  //
+  // Logged in that order so an operator scanning bottom-up sees the
+  // one-liner first, then drops into the table if they want detail.
+  const saveTable = postCollector.saveSummaryText();
+  if (saveTable) log(saveTable);
   const saveTotals = postCollector.saveSummaryOneLine();
   if (saveTotals) log(saveTotals);
   if (compileCacheStats !== "none") {

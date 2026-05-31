@@ -45232,6 +45232,47 @@ class StatsCollector {
         const totalMs = saveOps.reduce((s, o) => s + o.durationMs, 0);
         return `cache save totals: layers_saved=${saved.length}/${saveOps.length} uploaded=${fmtBytes(totalBytes)} total_ms=${totalMs}`;
     }
+    /**
+     * Per-layer save table — the verbose companion to [[saveSummaryOneLine]].
+     * Mirrors [[summaryText]]'s shape for the restore side: columns for
+     * layer label, save status, archive bytes, file count, and wall-clock.
+     * Footer rolls up the same totals as the one-liner.
+     *
+     * Designed to surface post-step budget regressions on the FIRST read —
+     * the one-liner already gives the rolled-up number, but the table
+     * shows WHICH layer is eating which slice of the budget. (#269 full)
+     *
+     * Returns "" when no save ops were recorded.
+     */
+    saveSummaryText() {
+        const saveOps = this.ops.filter((o) => o.operation === "save");
+        if (saveOps.length === 0)
+            return "";
+        const CW = { cache: 20, status: 18, archive: 10, files: 8, time: 7 };
+        const header = [
+            "cache".padEnd(CW.cache),
+            "save status".padEnd(CW.status),
+            "archive".padStart(CW.archive),
+            "files".padStart(CW.files),
+            "time".padStart(CW.time),
+        ].join("  ");
+        const rule = "─".repeat(header.length);
+        const rows = saveOps.map((op) => {
+            const status = op.status ?? "?";
+            return [
+                op.label.padEnd(CW.cache),
+                status.padEnd(CW.status),
+                fmtBytes(op.archiveBytes).padStart(CW.archive),
+                (op.fileCount !== null ? String(op.fileCount) : "-").padStart(CW.files),
+                fmtMs(op.durationMs).padStart(CW.time),
+            ].join("  ");
+        });
+        const saved = saveOps.filter((o) => o.status === "saved");
+        const totalBytes = saved.reduce((s, o) => s + (o.archiveBytes ?? 0), 0);
+        const totalMs = saveOps.reduce((s, o) => s + o.durationMs, 0);
+        const footer = `${saved.length}/${saveOps.length} saved  total upload: ${fmtBytes(totalBytes)}  total wall: ${fmtMs(totalMs)}`;
+        return [header, rule, ...rows, rule, footer].join("\n");
+    }
     detailedJson() {
         const restoreOps = this.ops.filter((o) => o.operation === "restore");
         const saveOps = this.ops.filter((o) => o.operation === "save");
@@ -47028,11 +47069,22 @@ async function run() {
         targetCache: targetCacheSave,
     }, passthrough);
     logFinalCacheSummary(finalSummary, log);
-    // #269 minimal cut: one-line save-aggregate so operators can see at a
-    // glance how many layers actually saved + total uploaded + total
-    // post-step wall-clock. Complements the existing "final cache
-    // summary:" line which is per-layer; this is the rolled-up budget
-    // view.
+    // #269: post-step save-aggregate visibility.
+    //
+    // Two views, both pulled from the existing StatsCollector records
+    // — no new instrumentation:
+    //
+    //   1. Per-layer table (`saveSummaryText`): one row per save op
+    //      showing label, status, archive bytes, file count, wall_ms.
+    //      Footer rolls up the totals. Shows WHICH layer ate the budget.
+    //   2. One-line aggregate (`saveSummaryOneLine`): the rolled-up
+    //      number at a glance for skim-readers.
+    //
+    // Logged in that order so an operator scanning bottom-up sees the
+    // one-liner first, then drops into the table if they want detail.
+    const saveTable = postCollector.saveSummaryText();
+    if (saveTable)
+        log(saveTable);
     const saveTotals = postCollector.saveSummaryOneLine();
     if (saveTotals)
         log(saveTotals);
