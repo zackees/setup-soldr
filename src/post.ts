@@ -17,6 +17,14 @@ import { saveSoloCache, stageDiffForSave, type RootMap as SoloRootMap } from "./
 import type { SnapshotDiff } from "./lib/toolchain-snapshot.js";
 import { saveCookCache, saveLayeredCookCache } from "./lib/cook-cache.js";
 import { saveMiniCache } from "./lib/soldr-mini-cache.js";
+// Static import — the dynamic `await import("./lib/soldr-load-shim.js")`
+// form ncc compiled in #265 produced a side-chunk (`<id>.index.js`)
+// under `dist-post/`. Static keeps this in the main bundle (zero new
+// chunk file). `bundle-entrypoint.mjs` now also copies any *transitive*
+// chunk files (e.g. @actions/artifact → @azure/identity inner chunks)
+// into `dist/` so they resolve at runtime — but converting our own
+// dynamic import to static is the cleaner shape regardless.
+import { trySaveViaSoldr } from "./lib/soldr-load-shim.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
@@ -383,7 +391,6 @@ async function saveOne(opts: {
     // Falls through to legacy compressCache on any miss (no env, no
     // binary, too-old version, extras present, throw).
     if (soldrSave) {
-      const { trySaveViaSoldr } = await import("./lib/soldr-load-shim.js");
       const candidateArchive = `${cacheDir}.tar.zst`;
       const sr = await trySaveViaSoldr({
         cacheDir,
@@ -1207,6 +1214,8 @@ async function emitInsightsAnnotationsAndTrace(opts: {
     // @actions/artifact's runtime requirements aren't met (e.g. running
     // outside of a GitHub-hosted runner, which is the case for every
     // unit test in this repo). Any failure is logged-not-thrown.
+    // `bundle-entrypoint.mjs` copies the resulting side-chunks into
+    // `dist/` so the runtime require resolves.
     const artifact = await import("@actions/artifact");
     const client = new artifact.DefaultArtifactClient();
     const artifactName = `setup-soldr-trace-${runId}.json`;
