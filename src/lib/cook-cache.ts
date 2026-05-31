@@ -137,6 +137,13 @@ export interface CookSaveResult {
   status:
     | "saved"
     | "skipped-race"
+    /**
+     * Pre-compress probe via `cache.restoreCache({lookupOnly: true})`
+     * found an entry already at the exact key — likely a sibling job
+     * won the race. We bail out BEFORE compressing so we don't burn
+     * 19+ minutes on a soon-to-be-discarded archive. (#268 Fix A)
+     */
+    | "skipped-race-precheck"
     | "skipped-missing-target"
     | "skipped-missing-manifest"
     | "skipped-empty"
@@ -613,6 +620,46 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
   if (entryCount === 0) {
     return { status: "skipped-empty" };
   }
+  // #268 Fix A: pre-compress key-existence probe. `@actions/cache`'s
+  // `restoreCache(paths, key, _, { lookupOnly: true })` issues a
+  // HEAD-like call that returns the matched key (if any) without
+  // downloading anything. When it returns truthy, a parallel job has
+  // already saved this exact key — we'd lose the reservation race
+  // after a 19-min `--zstd-level 19` compress anyway, so we skip the
+  // compress entirely and avoid the wasted wall-clock. Restore-side
+  // benefits because the sibling job's entry is now the durable
+  // record. (See zccache PR #480 — 19m 5s burned for this exact race.)
+  //
+  // `paths` must match what `saveCache([archivePath], exactKey)` will
+  // pass later — `cacheUtils.getCacheVersion` hashes the path list
+  // into the cache version, so a mismatch returns null even on hit.
+  // `compressCache` derives archivePath as `${cacheDir}.tar.zst`
+  // (cache-compress.ts:743), so we can predict it without compressing.
+  const probeArchivePath = `${targetDir}.tar.zst`;
+  try {
+    const existing = await cache.restoreCache(
+      [probeArchivePath],
+      exactKey,
+      [],
+      { lookupOnly: true },
+    );
+    if (existing) {
+      log(
+        `cook-cache: pre-compress probe found existing entry for key=${exactKey} — ` +
+          `skipping compress + save to avoid the reservation-race wall-clock waste ` +
+          `(setup-soldr#268 Fix A)`,
+      );
+      return { status: "skipped-race-precheck" };
+    }
+  } catch (err) {
+    // Probe failure is non-fatal — proceed to the legacy compress+save
+    // path so we don't regress reliability.
+    if (debug) {
+      log(
+        `cook-cache: pre-compress key probe threw (${err instanceof Error ? err.message : String(err)}) — falling back to compress+save`,
+      );
+    }
+  }
   let archivePath: string | null = null;
   let archiveBytes: number | undefined;
   let inflatedBytes: number | undefined;
@@ -748,6 +795,34 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
   ];
   if (layer === "delta") {
     args.push("--delta-from-manifest", opts.baseManifestPath as string);
+  }
+
+  // #268 Fix A: pre-compress probe — bail out if a sibling job already
+  // saved this exact key. The layered path uses `soldr save
+  // --zstd-level 19` which is the dominant 19-minute wall-clock burner
+  // on the cook-base archive (zccache PR #480). Probe is a HEAD-like
+  // call costing ~100-1000 ms; far cheaper than the full compress.
+  // `paths` must match the later `saveCache([archivePath], exactKey)`
+  // — the version hash includes the path list (cacheUtils.getCacheVersion).
+  try {
+    const existing = await cache.restoreCache(
+      [archivePath],
+      exactKey,
+      [],
+      { lookupOnly: true },
+    );
+    if (existing) {
+      log(
+        `cook-cache-${layer}: pre-compress probe found existing entry for key=${exactKey} ` +
+          `— skipping compress + save (setup-soldr#268 Fix A)`,
+      );
+      return { status: "skipped-race-precheck", archivePath };
+    }
+  } catch (err) {
+    // Probe failure is non-fatal — fall through to legacy compress+save.
+    log(
+      `cook-cache-${layer}: pre-compress key probe threw (${err instanceof Error ? err.message : String(err)}) — falling back to compress+save`,
+    );
   }
 
   // #268 Fix B: capture compress wall-clock so a race-loss after a long
