@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## v0.9.32 - 2026-05-31
+
+- Parallelize independent workspace hash walks in the resolve phase
+  (#298). `workspaceManifestHash` + `cargoConfigHash` were running
+  sequentially via `await ; await` even though they're independent
+  file-system walks on disjoint subsets of the same workspace dir.
+  Now via `Promise.all([...])`. Small companion win to #296 — saves
+  resolve wall-clock equal to the smaller of the two hashes.
+
 ## v0.9.31 - 2026-05-31
 
 - Parallel cook-cache base + delta restore (closes #295 Fix B, #296).
