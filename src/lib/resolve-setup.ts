@@ -488,8 +488,15 @@ export async function resolveSetup(
   const runnerArch = sanitizeFragment((env["ACTION_ARCH"] ?? "unknown").toLowerCase());
   const cachePrefix = `setup-soldr-v4-${runnerOs}-${runnerArch}`;
   let cacheKey = `${cachePrefix}-${digest}`;
-  const wsManifestHash = await workspaceManifestHash(workspace);
-  const cargoConfigHashValue = await cargoConfigHash(workspace);
+  // #295-followup: parallelize the two independent workspace-wide hash
+  // walks. Both traverse different subsets of `workspace` (manifests
+  // vs .cargo/config.toml) and have no shared state, so running them
+  // sequentially just wastes resolve-phase wall clock. Cheap correctness
+  // improvement; no behavior change.
+  const [wsManifestHash, cargoConfigHashValue] = await Promise.all([
+    workspaceManifestHash(workspace),
+    cargoConfigHash(workspace),
+  ]);
 
   const suffix = inputs.cacheKeySuffix.trim();
   const sanitizedSuffix = suffix ? sanitizeFragment(suffix) : "";
