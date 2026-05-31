@@ -40,6 +40,7 @@ import {
   detectLibc,
   hashStringArray,
   restoreSoloCache,
+  soloCacheArchivePath,
   verifyRestoredToolchain,
   type RootMap as SoloRootMap,
 } from "./lib/solo-toolchain-cache.js";
@@ -786,6 +787,9 @@ export async function run(): Promise<void> {
         rootMap: soloRootMap,
         stagingDir,
         log: (msg) => logger.log(msg),
+        // #316 follow-up: pass canonical archive path explicitly so
+        // save and restore agree regardless of stagingDir layout.
+        cacheArchivePath: soloCacheArchivePath(ctx.runnerTemp),
       }),
     );
     soloMatchedKey = restored.matchedKey;

@@ -1651,7 +1651,13 @@ export async function run(): Promise<void> {
             "rustup-toolchains": path.join(result.rustupHome, "toolchains"),
             "cargo-bin": path.join(result.cargoHome, "bin"),
           };
-          const stagingDir = path.join(runnerTemp, "setup-soldr-solo-stage-save");
+          // #316 follow-up: the tar archive's top-level directory is
+          // `basename(stagingDir)`. restoreSoloCache extracts into
+          // `<stagingOut-parent>/` expecting the top-level entry name
+          // to match the basename it uses (`staged`). Save MUST use
+          // the same basename, or restore's `readdir(staged/)` returns
+          // empty and the cache hit looks like a miss.
+          const stagingDir = path.join(runnerTemp, "setup-soldr-solo-cache", "staged");
           const soloSaveStart = Date.now();
           const staged = await stageDiffForSave(
             { added, removed: [], changed: [] },
@@ -1667,6 +1673,11 @@ export async function run(): Promise<void> {
             level: soloLevel,
             debug: debugMode,
             log,
+            // #316 follow-up: canonical archive path MUST match restore.
+            // soloCacheArchivePath(runnerTemp) returns the same path
+            // restoreSoloCache uses, ensuring @actions/cache version
+            // hash agrees and restore can find the entry.
+            cacheArchivePath: soloCacheArchivePath(runnerTemp),
           });
           // #269: always record so the post-step save table shows
           // skipped/race-precheck/etc layers too, not just saved ones.
