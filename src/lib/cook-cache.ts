@@ -424,26 +424,38 @@ async function restoreOneLayer(
 export async function restoreLayeredCookCacheArchives(
   opts: CookLayeredRestoreOpts,
 ): Promise<CookLayeredRestoreResult> {
-  const base = await restoreOneLayer(
-    "cook-cache-base",
-    opts.baseKey,
-    opts.baseArchivePath,
-    [],
-    opts.log,
-  );
+  // #295: parallel-restore base + delta instead of the previous serial
+  // `await base; if (base.matchedKey) await delta` shape. The delta
+  // key is independently computed (includes everything the base key
+  // does + source/git fingerprint) so the two restores have no data
+  // dependency. Serializing them spent ~11s wall clock per warm run
+  // for zero correctness benefit — the delta restore on a base-MISS
+  // was always going to be skipped on the cook side anyway (cook
+  // never reads a delta archive when base wasn't restored). Cost when
+  // base misses: one extra HEAD round-trip, paid in parallel anyway
+  // and bounded by the larger restore. Saves up to ~11s in the
+  // typical warm-cache case (zackees/setup-soldr#295 measurement on
+  // Integration v0.9.30 rerun).
+  const [base, delta] = await Promise.all([
+    restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log),
+    restoreOneLayer(
+      "cook-cache-delta",
+      opts.deltaKey,
+      opts.deltaArchivePath,
+      opts.deltaRestoreKeys ?? [],
+      opts.log,
+    ),
+  ]);
+  // Preserve the pre-#295 contract: when base missed, the delta is
+  // semantically invalid even if it happened to restore (no base to
+  // overlay onto). Discard the delta archive in that case so callers
+  // can rely on `base.matchedKey === "" ⇒ delta.hit === false`.
   if (!base.matchedKey) {
     return {
       base,
       delta: { hit: false, matchedKey: "", archivePath: opts.deltaArchivePath, archiveBytes: 0 },
     };
   }
-  const delta = await restoreOneLayer(
-    "cook-cache-delta",
-    opts.deltaKey,
-    opts.deltaArchivePath,
-    opts.deltaRestoreKeys ?? [],
-    opts.log,
-  );
   return { base, delta };
 }
 
