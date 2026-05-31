@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## v0.9.39 - 2026-05-31
+
+- **MAJOR**: Fix solo-toolchain-cache restore-MISS-despite-cache-exists
+  (closes #316, #321). Save was passing
+  `/runner/temp/setup-soldr-solo-stage-save.tar.zst` and restore was
+  passing `/runner/temp/setup-soldr-solo-cache/solo-toolchain.tar.zst`
+  to `@actions/cache.{saveCache,restoreCache}`. The library SHA-hashes
+  the paths array into the cache "version" — different paths = different
+  version = restore returns MISS even when GitHub Actions Cache has an
+  entry with that key on the same branch scope. The cache was being
+  saved successfully on every workflow run but never restored,
+  explaining why `rustup_install=8s` persisted on warm CI despite the
+  entire #302/#304/#305/#310/#313/#314/#317/#319 series of plumbing
+  fixes. Added `soloCacheArchivePath(runnerTemp)` returning a
+  canonical path that both sides (including lookupOnly probes) now
+  use. Expected impact: solo-cache HITS materialize on warm runs;
+  `rustup_install` drops to ~0s; `solo_restore` becomes a real
+  ~3-5s ~170 MB extraction.
+
 ## v0.9.38 - 2026-05-31
 
 - Fix #313/#314 lookupOnly probe ALWAYS erroring in production
