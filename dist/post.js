@@ -44548,6 +44548,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.soloCacheArchivePath = soloCacheArchivePath;
 exports.detectLibc = detectLibc;
 exports.hashStringArray = hashStringArray;
 exports.buildSoloCacheKeys = buildSoloCacheKeys;
@@ -44568,6 +44569,21 @@ const cache_compress_js_1 = __nccwpck_require__(24978);
  * are also the directory names used inside the tarball staging layout.
  */
 const ROOT_TAGS = ["rustup-toolchains", "cargo-bin"];
+/**
+ * Canonical archive path passed to `@actions/cache.saveCache` and
+ * `restoreCache`. **MUST be identical on both sides.**
+ *
+ * `@actions/cache` derives a cache "version" from a SHA of the paths
+ * array; if save and restore pass different paths, the version differs
+ * and restore returns MISS even when the key matches an existing
+ * entry. Pre-#316 bug: save used `${stagingDir}.tar.zst` and restore
+ * used `<stagingDir>/solo-toolchain.tar.zst` — two different paths
+ * → permanent MISS on every warm run. This helper guarantees both
+ * sides agree.
+ */
+function soloCacheArchivePath(runnerTemp) {
+    return path.join(runnerTemp, "setup-soldr-solo-cache.tar.zst");
+}
 /**
  * Map this run's host platform to a libc tag. Conservative v1: assume
  * glibc on Linux unless we see a musl signal. macOS/Windows have no
@@ -44728,6 +44744,7 @@ async function walkAndApply(base, dir, liveBase, onApply) {
  */
 async function saveSoloCache(opts) {
     const { stagingDir, key, level, debug, log } = opts;
+    const cacheArchive = opts.cacheArchivePath ?? soloCacheArchivePath(path.dirname(stagingDir));
     if (!fs.existsSync(stagingDir)) {
         return { status: "failed", error: `staging dir missing: ${stagingDir}` };
     }
@@ -44756,6 +44773,24 @@ async function saveSoloCache(opts) {
     if (!archivePath) {
         return { status: "failed", error: "compressCache returned null archive (zstd unavailable?)" };
     }
+    // #316: rename the compress output to the canonical archive path
+    // BEFORE passing to cache.saveCache. @actions/cache hashes the paths
+    // array into the cache "version" — save+restore must agree on the
+    // path or restore returns MISS even when the key matches.
+    if (path.resolve(archivePath) !== path.resolve(cacheArchive)) {
+        try {
+            await fsp.rm(cacheArchive, { force: true });
+            await fsp.rename(archivePath, cacheArchive);
+            archivePath = cacheArchive;
+        }
+        catch (err) {
+            return {
+                status: "failed",
+                error: `failed to rename archive ${archivePath} -> ${cacheArchive}: ${err instanceof Error ? err.message : String(err)}`,
+                archivePath,
+            };
+        }
+    }
     // #313 followup: post-compress, pre-upload probe. When N parallel
     // jobs in a workflow all save the same key, the pre-compress probe
     // (post.ts) can't catch the race — all N see no cache. After
@@ -44764,9 +44799,12 @@ async function saveSoloCache(opts) {
     // requires a non-empty paths array even in lookupOnly mode, hence
     // the throwaway directory.
     try {
-        const probeDir = path.join(path.dirname(archivePath), ".solo-lookup-probe");
-        await ensureDir(probeDir);
-        const existing = await cache.restoreCache([probeDir], key, [], { lookupOnly: true });
+        // #316: use the canonical archive path for the probe too. The
+        // probe MUST hash the same paths as save+restore so the
+        // @actions/cache cache "version" matches; otherwise the probe
+        // sees MISS for entries that the actual restore would also miss
+        // for the wrong reason (path-version mismatch, not key absence).
+        const existing = await cache.restoreCache([cacheArchive], key, [], { lookupOnly: true });
         if (existing) {
             log(`solo-toolchain-cache: post-compress lookupOnly probe found existing key=${existing} — skipping upload (#313)`);
             return {
@@ -44808,7 +44846,9 @@ async function saveSoloCache(opts) {
  */
 async function restoreSoloCache(opts) {
     const { keys, rootMap, stagingDir, log } = opts;
-    const archivePath = path.join(stagingDir, "solo-toolchain.tar.zst");
+    // #316: use the canonical archive path that saveSoloCache also uses.
+    // Different paths → different cache version → permanent MISS.
+    const archivePath = opts.cacheArchivePath ?? soloCacheArchivePath(path.dirname(stagingDir));
     await ensureDir(path.dirname(archivePath));
     await fsp.rm(archivePath, { force: true });
     let matched;
@@ -46780,17 +46820,13 @@ async function run() {
         if (!(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
             try {
                 const probeStart = Date.now();
-                // @actions/cache.restoreCache requires a non-empty paths array
-                // even in lookupOnly mode (otherwise: "Path Validation Error:
-                // At least one directory or file path is required"). Pass a
-                // throwaway path; with lookupOnly the directory contents are
-                // never touched.
-                const probePath = path.join(runnerTemp, "setup-soldr-solo-lookup-probe");
-                try {
-                    fs.mkdirSync(probePath, { recursive: true });
-                }
-                catch { }
-                const existing = await cache.restoreCache([probePath], soloExactKey, [], { lookupOnly: true });
+                // #316: probe MUST use the same paths array that the actual
+                // save/restore use — @actions/cache hashes paths into the
+                // cache version. The canonical archive path is provided by
+                // soloCacheArchivePath. The file does not need to exist for
+                // lookupOnly (the library only hashes the path string).
+                const probeArchivePath = (0, solo_toolchain_cache_js_1.soloCacheArchivePath)(runnerTemp);
+                const existing = await cache.restoreCache([probeArchivePath], soloExactKey, [], { lookupOnly: true });
                 if (existing) {
                     raceSkipped = true;
                     log(`solo-toolchain-cache: pre-save lookupOnly probe found existing key=${existing} ` +
