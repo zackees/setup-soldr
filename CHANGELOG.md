@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.9.23 - 2026-05-31
+
+- Default to soldr `0.7.48`, which bundles zccache `1.11.8` carrying the
+  cross-clone cache-pollution fix (zackees/zccache#474 → PR #478): per-worktree
+  key for PCH + MSVC plus explicit triple prefix-map
+  (`-ffile-prefix-map` + `-fmacro-prefix-map` + `-fdebug-prefix-map`) for
+  clang/gcc. Without 1.11.8, `.obj` artifacts produced in worktree A leaked
+  into worktree B with original-clone absolute paths still embedded,
+  breaking downstream PCH builds with header-redefinition errors.
+- README + `action.yml` default version both bumped to 0.7.48.
+
 ## v0.9.22 - 2026-05-31
 
 - Pre-compress race probe in the cook-cache save path (#268 Fix A,
