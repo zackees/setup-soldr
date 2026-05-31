@@ -134,9 +134,25 @@ export function hashStringArray(items: string[]): string {
   return h.digest("hex").slice(0, 8);
 }
 
+/**
+ * #328: bump this whenever the on-disk format of the solo-cache
+ * changes incompatibly with prior versions (tar layout, archive
+ * basename, file selection rules, snapshot manifest schema, etc.).
+ * A bump forces all consumers to MISS their existing caches and
+ * save fresh entries with the new structure — no per-repo manual
+ * `gh cache delete` required.
+ *
+ * History:
+ *   v1: initial (#305) through v0.9.41.
+ *   v2: bumped for #326 — save's tar top-level dir was renamed
+ *       from `setup-soldr-solo-stage-save` to `staged`. v1 caches
+ *       are unreadable by v2 restorers ("archive was empty").
+ */
+const SOLO_CACHE_SCHEMA_VERSION = 2;
+
 export function buildSoloCacheKeys(parts: SoloCacheKeyParts): SoloCacheKeys {
   const release = parts.rustcRelease.trim() || "unresolved";
-  const base = `solo-toolchain-${parts.runnerOs}-${parts.runnerArch}-${parts.libc}-rustc${release}`;
+  const base = `solo-toolchain-v${SOLO_CACHE_SCHEMA_VERSION}-${parts.runnerOs}-${parts.runnerArch}-${parts.libc}-rustc${release}`;
   const exact = `${base}-c${parts.componentsHash}-t${parts.targetsHash}-soldr${parts.soldrVersion}`;
   return {
     exact,

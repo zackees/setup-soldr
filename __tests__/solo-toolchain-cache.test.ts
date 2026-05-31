@@ -62,7 +62,7 @@ test("buildSoloCacheKeys produces stable exact key with all parts", () => {
   });
   assert.equal(
     keys.exact,
-    "solo-toolchain-linux-x64-glibc-rustc1.84.1-cdeadbeef-tcafebabe-soldr0.7.28",
+    "solo-toolchain-v2-linux-x64-glibc-rustc1.84.1-cdeadbeef-tcafebabe-soldr0.7.28",
   );
 });
 
@@ -78,9 +78,9 @@ test("buildSoloCacheKeys restore-key ladder drops in the documented order", () =
   });
   // 1) drop soldr version, 2) also drop targets, 3) also drop components
   assert.deepEqual(keys.fallbacks, [
-    "solo-toolchain-linux-x64-glibc-rustc1.84.1-cch-tth-soldr",
-    "solo-toolchain-linux-x64-glibc-rustc1.84.1-cch-t-soldr",
-    "solo-toolchain-linux-x64-glibc-rustc1.84.1-c-t-soldr",
+    "solo-toolchain-v2-linux-x64-glibc-rustc1.84.1-cch-tth-soldr",
+    "solo-toolchain-v2-linux-x64-glibc-rustc1.84.1-cch-t-soldr",
+    "solo-toolchain-v2-linux-x64-glibc-rustc1.84.1-c-t-soldr",
   ]);
 });
 
