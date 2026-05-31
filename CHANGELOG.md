@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.9.33 - 2026-05-31
+
+- Parallel zstd decompression (closes #295 Fix A, #300). Single-flag
+  change to `decompressCache`: pass `-T0` so zstd uses all available
+  CPU cores. On 4-vCPU hosted Linux runners this should drop the
+  multi-GiB build-cache restore from ~17s (single-threaded ~60 MB/s)
+  to ~5-7s (~200+ MB/s). Applied to both the with-zstd-CLI and
+  fallback-via-tar paths in `cache-compress.ts`. `-T0` is supported
+  by all zstd ≥ 1.3.2 (Aug 2017) and is a no-op on single-core
+  hosts — safe to add unconditionally.
+
 ## v0.9.32 - 2026-05-31
 
 - Parallelize independent workspace hash walks in the resolve phase
