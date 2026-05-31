@@ -540,12 +540,16 @@ inputs:
   solo-toolchain-cache-level:
     description: >
       zstd compression level for the solo-toolchain-cache archive.
-      Long-lived caches benefit from higher compression because
-      save is rare and restore is constant-time. Default 19; -22
-      buys ~3 MB at 3x save time, not worth it on typical
-      toolchain content. See CLAUDE.md "Compression: zstd -19".
+      Default "9" — measured save = ~12 s on a 140 MB delta vs
+      "19" which measured at ~104 s (zccache CI v0.9.35, see #310).
+      The archive grows ~25% at -9 (140 MB → 175 MB), restore stays
+      bandwidth-bound at ~70 MB/s either way — the extra MB only
+      adds ~0.5 s per restore. Saves the win only after ≥ ~180
+      restores at the same key, which is rare in practice (every
+      rustc release / soldr version bump invalidates). Users with
+      truly long-lived workflows can override to "19" or "22".
     required: false
-    default: "19"
+    default: "9"
   prebuild-deps:
     description: >
       Pre-build dependencies via `soldr cook` before the workflow's own
