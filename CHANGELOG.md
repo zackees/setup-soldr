@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.9.42 - 2026-05-31
+
+- Add solo-cache schema-version to cache key (closes #328, #329).
+  Cache key prefix is now `solo-toolchain-v2-...`. Bumping the
+  schema constant invalidates all prior caches automatically —
+  prevents the "v0.9.40-saved cache is unreadable by v0.9.41
+  reader → manual `gh cache delete` required" foot-gun seen on
+  the #326 rollout. Future tar/format changes just bump the
+  constant. v2 also forces a fresh save of the new (#326)
+  staging-basename structure, so this release is what finally
+  delivers the warm-CI win that the #305/#310/#313-#321/#324/
+  #326 chain has been chasing: `toolchain=~3s {rustup_install=0.0s
+  solo_restore=~2-3s}`.
+
 ## v0.9.41 - 2026-05-31
 
 - Fix #316/#321 follow-up — align tar's top-level dir between save
