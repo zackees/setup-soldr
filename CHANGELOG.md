@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.9.40 - 2026-05-31
+
+- Skip `rustup install` when solo-toolchain-cache exact-hit verified
+  (closes #323, #324). After #316/#321 unblocked solo-cache restore,
+  data showed `toolchain=10.3s {rustup_install=8.4s solo_restore=2.0s}`
+  on zccache Clippy — the 2s restore worked, but ensureRustToolchain
+  was still called unconditionally, and `rustup toolchain install`
+  costs ~8s as a no-op on hosted runners (self-update check,
+  metadata fetch, profile diff). Now skipped on the verified
+  exact-hit path. **Final piece of the solo-cache series**: with
+  #305 + #310 + #313-#321 + #324 all in place, warm CI should now
+  see `toolchain=Xs {rustup_install=0.0s solo_restore=~2s}` —
+  delivering ~8 s per warm job × 5 jobs ≈ ~40 s/cycle in zccache.
+
 ## v0.9.39 - 2026-05-31
 
 - **MAJOR**: Fix solo-toolchain-cache restore-MISS-despite-cache-exists
