@@ -1607,21 +1607,23 @@ export async function run(): Promise<void> {
             debug: debugMode,
             log,
           });
-          if (saveResult.status === "saved") {
-            postCollector.record({
-              label: "solo-toolchain-cache",
-              operation: "save",
-              hit: false,
-              key: soloExactKey,
-              matchedKey: soloMatchedKey,
-              restoreKeys: [],
-              archiveBytes: saveResult.archiveBytes ?? null,
-              inflatedBytes: saveResult.inflatedBytes ?? null,
-              fileCount: saveResult.fileCount ?? null,
-              durationMs: Date.now() - soloSaveStart,
-              timestamp: new Date().toISOString(),
-            });
-          } else {
+          // #269: always record so the post-step save table shows
+          // skipped/race-precheck/etc layers too, not just saved ones.
+          postCollector.record({
+            label: "solo-toolchain-cache",
+            operation: "save",
+            status: saveResult.status,
+            hit: false,
+            key: soloExactKey,
+            matchedKey: soloMatchedKey,
+            restoreKeys: [],
+            archiveBytes: saveResult.status === "saved" ? (saveResult.archiveBytes ?? null) : null,
+            inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
+            fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
+            durationMs: Date.now() - soloSaveStart,
+            timestamp: new Date().toISOString(),
+          });
+          if (saveResult.status !== "saved") {
             log(`solo-toolchain-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
           }
         }
@@ -1682,21 +1684,23 @@ export async function run(): Promise<void> {
             baseManifestPath: cookBaseManifest,
             log,
           });
-          if (saveResult.status === "saved") {
-            postCollector.record({
-              label: `cook-cache-${cookSaveLayer}`,
-              operation: "save",
-              hit: false,
-              key: saveKey,
-              matchedKey: "",
-              restoreKeys: [],
-              archiveBytes: saveResult.archiveBytes ?? null,
-              inflatedBytes: saveResult.inflatedBytes ?? null,
-              fileCount: saveResult.fileCount ?? null,
-              durationMs: Date.now() - cookSaveStart,
-              timestamp: new Date().toISOString(),
-            });
-          } else {
+          // #269: always record so the save table includes skipped/
+          // race-precheck/oversize layers, not only saved ones.
+          postCollector.record({
+            label: `cook-cache-${cookSaveLayer}`,
+            operation: "save",
+            status: saveResult.status,
+            hit: false,
+            key: saveKey,
+            matchedKey: "",
+            restoreKeys: [],
+            archiveBytes: saveResult.status === "saved" ? (saveResult.archiveBytes ?? null) : null,
+            inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
+            fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
+            durationMs: Date.now() - cookSaveStart,
+            timestamp: new Date().toISOString(),
+          });
+          if (saveResult.status !== "saved") {
             log(`cook-cache-${cookSaveLayer}: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
           }
         } catch (err) {
@@ -1727,21 +1731,22 @@ export async function run(): Promise<void> {
             debug: debugMode,
             log,
           });
-          if (saveResult.status === "saved") {
-            postCollector.record({
-              label: "cook-cache",
-              operation: "save",
-              hit: false,
-              key: cookExactKey,
-              matchedKey: "",
-              restoreKeys: [],
-              archiveBytes: saveResult.archiveBytes ?? null,
-              inflatedBytes: saveResult.inflatedBytes ?? null,
-              fileCount: saveResult.fileCount ?? null,
-              durationMs: Date.now() - cookSaveStart,
-              timestamp: new Date().toISOString(),
-            });
-          } else {
+          // #269: always record (skipped layers too).
+          postCollector.record({
+            label: "cook-cache",
+            operation: "save",
+            status: saveResult.status,
+            hit: false,
+            key: cookExactKey,
+            matchedKey: "",
+            restoreKeys: [],
+            archiveBytes: saveResult.status === "saved" ? (saveResult.archiveBytes ?? null) : null,
+            inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
+            fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
+            durationMs: Date.now() - cookSaveStart,
+            timestamp: new Date().toISOString(),
+          });
+          if (saveResult.status !== "saved") {
             log(`cook-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
           }
         } catch (err) {
@@ -1781,21 +1786,22 @@ export async function run(): Promise<void> {
           debug: debugMode,
           log,
         });
-        if (saveResult.status === "saved") {
-          postCollector.record({
-            label: "soldr-mini-cache",
-            operation: "save",
-            hit: false,
-            key: miniExactKey,
-            matchedKey: "",
-            restoreKeys: [],
-            archiveBytes: saveResult.archiveBytes ?? null,
-            inflatedBytes: saveResult.inflatedBytes ?? null,
-            fileCount: saveResult.fileCount ?? null,
-            durationMs: Date.now() - miniSaveStart,
-            timestamp: new Date().toISOString(),
-          });
-        } else {
+        // #269: always record (skipped layers too).
+        postCollector.record({
+          label: "soldr-mini-cache",
+          operation: "save",
+          status: saveResult.status,
+          hit: false,
+          key: miniExactKey,
+          matchedKey: "",
+          restoreKeys: [],
+          archiveBytes: saveResult.status === "saved" ? (saveResult.archiveBytes ?? null) : null,
+          inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
+          fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
+          durationMs: Date.now() - miniSaveStart,
+          timestamp: new Date().toISOString(),
+        });
+        if (saveResult.status !== "saved") {
           log(
             `soldr-mini-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`,
           );
