@@ -1939,6 +1939,13 @@ export async function run(): Promise<void> {
     passthrough,
   );
   logFinalCacheSummary(finalSummary, log);
+  // #269 minimal cut: one-line save-aggregate so operators can see at a
+  // glance how many layers actually saved + total uploaded + total
+  // post-step wall-clock. Complements the existing "final cache
+  // summary:" line which is per-layer; this is the rolled-up budget
+  // view.
+  const saveTotals = postCollector.saveSummaryOneLine();
+  if (saveTotals) log(saveTotals);
   if (compileCacheStats !== "none") {
     setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);
     // PR4 — surface the two job-wide scalar outputs alongside the
