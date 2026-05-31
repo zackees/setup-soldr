@@ -754,7 +754,10 @@ export async function run(): Promise<void> {
     "cargo-bin": snapshotRoots[1] as string,
   };
   const soloEnabled = isTruthy(inputs.soloToolchainCache);
-  const soloLevel = (inputs.soloToolchainCacheLevel.trim() || "19");
+  // #310: default-changed from "19" → "9". Measured first-save cost
+  // dropped from ~104s → ~12s on 140 MB toolchain delta; restore stays
+  // bandwidth-bound either way.
+  const soloLevel = (inputs.soloToolchainCacheLevel.trim() || "9");
   let soloKeys: ReturnType<typeof buildSoloCacheKeys> | null = null;
   let soloMatchedKey = "";
   let soloExactHit = false;

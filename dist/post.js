@@ -46742,7 +46742,7 @@ async function run() {
         const soloExactHit = core.getState("soloToolchainExactHit") === "true";
         const soloIncrementalEmpty = core.getState("soloToolchainIncrementalEmpty") === "true";
         const soloSaveDiffPath = core.getState("soloToolchainSaveDiffPath");
-        const soloLevel = core.getState("soloToolchainLevel") || "19";
+        const soloLevel = core.getState("soloToolchainLevel") || "9"; // #310
         log(`solo-toolchain-cache: post-step exactKey=${soloExactKey} matched=${soloMatchedKey} ` +
             `exactHit=${soloExactHit} incrementalEmpty=${soloIncrementalEmpty} saveDiffPath=${soloSaveDiffPath}`);
         if (soloExactHit && soloIncrementalEmpty) {
