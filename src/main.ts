@@ -828,9 +828,22 @@ export async function run(): Promise<void> {
   const baselineSnapshot = await timeSubPhase("toolchain", "snapshot-base", () =>
     walkSnapshot(snapshotRoots),
   );
-  await timeSubPhase("toolchain", "rustup-install", () =>
-    ensureRustToolchain({ resolveResult: result, setupCacheExactHit }),
-  );
+  // #323: when solo-cache exact-hit AND verifyRestoredToolchain
+  // passed, the requested toolchain is already on disk from the
+  // restore. `rustup toolchain install` would be a no-op but still
+  // costs ~8s on hosted runners (self-update check, metadata fetch,
+  // profile diff). Skip the install entirely on the verified
+  // exact-hit path. The snapshot still runs so cache-save logic
+  // downstream sees an unchanged tree (install-delta empty).
+  if (soloExactHit) {
+    logger.log(
+      "toolchain: solo-cache exact-hit + verified — skipping rustup install (#323)",
+    );
+  } else {
+    await timeSubPhase("toolchain", "rustup-install", () =>
+      ensureRustToolchain({ resolveResult: result, setupCacheExactHit }),
+    );
+  }
   const postInstallSnapshot = await timeSubPhase("toolchain", "snapshot-post", () =>
     walkSnapshot(snapshotRoots),
   );
