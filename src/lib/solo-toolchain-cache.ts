@@ -270,7 +270,28 @@ async function walkAndApply(
       } catch { /* */ }
     } else if (d.isFile()) {
       await ensureDir(path.dirname(liveAbs));
-      await fsp.copyFile(abs, liveAbs);
+      // #331: prefer hardlink over copyFile. On hosted runners the
+      // staging dir and the live RUSTUP_HOME are on the same
+      // filesystem; hardlink is constant-time (creates a new
+      // directory entry pointing at the same inode) vs ~5s of
+      // sequential copy I/O for the ~580 MB toolchain content.
+      // Falls back to copyFile on cross-device (EXDEV) or
+      // filesystems that don't allow hardlinks (EPERM).
+      try {
+        await fsp.link(abs, liveAbs);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === "EEXIST") {
+          await fsp.unlink(liveAbs).catch(() => undefined);
+          try {
+            await fsp.link(abs, liveAbs);
+          } catch {
+            await fsp.copyFile(abs, liveAbs);
+          }
+        } else {
+          await fsp.copyFile(abs, liveAbs);
+        }
+      }
       onApply("file");
     }
   }
