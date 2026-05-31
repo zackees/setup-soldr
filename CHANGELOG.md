@@ -12,6 +12,18 @@
   into worktree B with original-clone absolute paths still embedded,
   breaking downstream PCH builds with header-redefinition errors.
 - README + `action.yml` default version both bumped to 0.7.48.
+- Hotfix #277: ncc side-chunk files (`<id>.index.js`) produced by ANY
+  dynamic `await import(...)` — including transitive imports inside
+  `@actions/artifact` → `@azure/identity` — are now COPIED alongside
+  `dist/post.js` (and `dist/main.js`, `cleanup/dist/index.js`). v0.9.22
+  shipped without those chunks because `scripts/bundle-entrypoint.mjs`
+  only copied the main bundle; the cargo-registry save path opted in via
+  `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` (#265) crashed with `Cannot find
+  module './84.index.js'` on zccache CI run 26698978997. Module-ID
+  renumbering is now skipped when chunks are present so chunk-reference
+  IDs stay in sync with on-disk filenames. Also converts our own
+  `await import("./lib/soldr-load-shim.js")` to static — one fewer
+  chunk to ship.
 
 ## v0.9.22 - 2026-05-31
 
