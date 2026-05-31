@@ -1359,16 +1359,21 @@ export async function run(): Promise<void> {
       payloadPolicy,
     });
   }
-  if (buildSave.status === "saved" || buildSave.status === "oversize-skip") {
-    postCollector.record({
-      label: "build-cache", operation: "save", hit: false,
-      key: result.buildCache.key, matchedKey: buildCacheMatched, restoreKeys: [],
-      status: buildSave.status,
-      archiveBytes: buildSave.archiveBytes, inflatedBytes: buildSave.inflatedBytes, fileCount: buildSave.fileCount,
-      payload: buildSave.payload,
-      durationMs: Date.now() - buildSaveStart, timestamp: new Date().toISOString(),
-    });
-  }
+  // #287 follow-up: record EVERY outcome (incl. tiny-delta-skip,
+  // exact-hit-skip, missing-dir-skip, failed) so the post-step save
+  // table shows every layer, not just saved/oversize-skip. archive/
+  // inflated/file fields stay null for non-saved statuses so totals
+  // only count actual uploads.
+  postCollector.record({
+    label: "build-cache", operation: "save", hit: false,
+    key: result.buildCache.key, matchedKey: buildCacheMatched, restoreKeys: [],
+    status: buildSave.status,
+    archiveBytes: buildSave.status === "saved" || buildSave.status === "oversize-skip" ? buildSave.archiveBytes : null,
+    inflatedBytes: buildSave.status === "saved" || buildSave.status === "oversize-skip" ? buildSave.inflatedBytes : null,
+    fileCount: buildSave.status === "saved" || buildSave.status === "oversize-skip" ? buildSave.fileCount : null,
+    payload: buildSave.status === "saved" || buildSave.status === "oversize-skip" ? buildSave.payload : null,
+    durationMs: Date.now() - buildSaveStart, timestamp: new Date().toISOString(),
+  });
 
   // Target cache. Previously slotted as `notManagedSave()` in the
   // finalSummary — i.e. restored in main.ts but never saved here. That
@@ -1542,18 +1547,18 @@ export async function run(): Promise<void> {
         soldrVersion: result.soldrVersionResolved || "",
       },
     });
-    if (cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip") {
-      postCollector.record({
-        label: "cargo-registry", operation: "save", hit: false,
-        key: result.cargoRegistryCache.key, matchedKey: registryMatched, restoreKeys: [],
-        status: cargoRegistrySave.status,
-        archiveBytes: cargoRegistrySave.archiveBytes,
-        inflatedBytes: cargoRegistrySave.inflatedBytes,
-        fileCount: cargoRegistrySave.fileCount,
-        payload: cargoRegistrySave.payload,
-        durationMs: Date.now() - regSaveStart, timestamp: new Date().toISOString(),
-      });
-    }
+    // #287 follow-up: record EVERY outcome so the post-step save
+    // table shows the layer no matter what its disposition.
+    postCollector.record({
+      label: "cargo-registry", operation: "save", hit: false,
+      key: result.cargoRegistryCache.key, matchedKey: registryMatched, restoreKeys: [],
+      status: cargoRegistrySave.status,
+      archiveBytes: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.archiveBytes : null,
+      inflatedBytes: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.inflatedBytes : null,
+      fileCount: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.fileCount : null,
+      payload: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.payload : null,
+      durationMs: Date.now() - regSaveStart, timestamp: new Date().toISOString(),
+    });
   }
 
   // Solo toolchain cache save. Opt-in via the `solo-toolchain-cache`
