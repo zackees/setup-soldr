@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v0.9.28 - 2026-05-31
+
+- One-line setup-phase summary at end of pre-build (#289, #283
+  companion). Reads the SETUP_SOLDR_PHASE_*_START_MS env vars
+  (already recorded by `markPhase`) and emits a one-line aggregate
+  showing each phase's wall-clock delta:
+
+      setup phase totals: resolve=8.5s parallel-restore=8.9s
+        target-tree=0.0s toolchain=8.9s install=2.2s zccache-seed=0.1s
+        verify=0.1s cross-bootstrap=0.0s cook=152.4s total=181.0s
+
+  Previously, identifying which pre-build phase consumed which slice
+  of the budget required raw env-var inspection. The aggregate makes
+  pre-build regressions visible on the first read — same shape as
+  the post-step `cache save totals:` line. Phases whose env var
+  isn't set (passthrough mode, test harness) are silently skipped.
+
 ## v0.9.27 - 2026-05-31
 
 - Record skipped save layers in the post-step save table (#287). The
