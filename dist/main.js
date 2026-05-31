@@ -999,7 +999,7 @@ exports.SearchState = SearchState;
 "use strict";
 
 
-const { InvalidArgumentError } = __nccwpck_require__(496)
+const { InvalidArgumentError } = __nccwpck_require__(495)
 const { kClients, kRunning, kClose, kDestroy, kDispatch, kInterceptors } = __nccwpck_require__(199)
 const DispatcherBase = __nccwpck_require__(64)
 const Pool = __nccwpck_require__(342)
@@ -10046,7 +10046,7 @@ const {
   ClientDestroyedError,
   ClientClosedError,
   InvalidArgumentError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const { kDestroy, kClose, kDispatch, kInterceptors } = __nccwpck_require__(199)
 
 const kDestroyed = Symbol('destroyed')
@@ -14013,7 +14013,7 @@ const { kDestroyed, kBodyUsed } = __nccwpck_require__(199)
 const { IncomingMessage } = __nccwpck_require__(334)
 const stream = __nccwpck_require__(136)
 const net = __nccwpck_require__(516)
-const { InvalidArgumentError } = __nccwpck_require__(496)
+const { InvalidArgumentError } = __nccwpck_require__(495)
 const { Blob } = __nccwpck_require__(125)
 const nodeUtil = __nccwpck_require__(129)
 const { stringify } = __nccwpck_require__(135)
@@ -18866,7 +18866,7 @@ const {
   HTTPParserError,
   ResponseExceededMaxSizeError,
   ClientDestroyedError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const buildConnector = __nccwpck_require__(269)
 const {
   kUrl,
@@ -22535,7 +22535,7 @@ function logPolicy(options = {}) {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const { addAbortListener } = __nccwpck_require__(71)
-const { RequestAbortedError } = __nccwpck_require__(496)
+const { RequestAbortedError } = __nccwpck_require__(495)
 
 const kListener = Symbol('kListener')
 const kSignal = Symbol('kSignal')
@@ -22638,7 +22638,7 @@ const {
   InvalidArgumentError,
   InvalidReturnValueError,
   RequestAbortedError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const util = __nccwpck_require__(71)
 const { AsyncResource } = __nccwpck_require__(434)
 const { addSignal, removeSignal } = __nccwpck_require__(108)
@@ -27320,7 +27320,7 @@ module.exports = {
 
 const assert = __nccwpck_require__(535)
 const { Readable } = __nccwpck_require__(136)
-const { RequestAbortedError, NotSupportedError, InvalidArgumentError } = __nccwpck_require__(496)
+const { RequestAbortedError, NotSupportedError, InvalidArgumentError } = __nccwpck_require__(495)
 const util = __nccwpck_require__(71)
 const { ReadableStreamFrom, toUSVString } = __nccwpck_require__(71)
 
@@ -28203,7 +28203,7 @@ const {
   kContentLength,
   kMockDispatch
 } = __nccwpck_require__(478)
-const { InvalidArgumentError } = __nccwpck_require__(496)
+const { InvalidArgumentError } = __nccwpck_require__(495)
 const { buildURL } = __nccwpck_require__(71)
 
 /**
@@ -31430,7 +31430,7 @@ function createTokenCycler(credential, tokenCyclerOptions) {
 
 const Client = __nccwpck_require__(93)
 const Dispatcher = __nccwpck_require__(485)
-const errors = __nccwpck_require__(496)
+const errors = __nccwpck_require__(495)
 const Pool = __nccwpck_require__(342)
 const BalancedPool = __nccwpck_require__(384)
 const Agent = __nccwpck_require__(6)
@@ -45982,7 +45982,7 @@ function isApiKeyCredential(credential) {
 const assert = __nccwpck_require__(535)
 const {
   ResponseStatusCodeError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const { toUSVString } = __nccwpck_require__(71)
 
 async function getResolveErrorBodyCallback ({ callback, body, contentType, statusCode, statusMessage, headers }) {
@@ -46735,7 +46735,7 @@ const {
 } = __nccwpck_require__(478)
 const { MockInterceptor } = __nccwpck_require__(141)
 const Symbols = __nccwpck_require__(199)
-const { InvalidArgumentError } = __nccwpck_require__(496)
+const { InvalidArgumentError } = __nccwpck_require__(495)
 
 /**
  * MockClient provides an API that extends the Client to influence the mockDispatches.
@@ -52723,7 +52723,7 @@ function agentPolicy(agent) {
 "use strict";
 
 
-const { UndiciError } = __nccwpck_require__(496)
+const { UndiciError } = __nccwpck_require__(495)
 
 class MockNotMatchedError extends UndiciError {
   constructor (message) {
@@ -55043,7 +55043,7 @@ exports.getDownloadOptions = getDownloadOptions;
 const net = __nccwpck_require__(516)
 const assert = __nccwpck_require__(535)
 const util = __nccwpck_require__(71)
-const { InvalidArgumentError, ConnectTimeoutError } = __nccwpck_require__(496)
+const { InvalidArgumentError, ConnectTimeoutError } = __nccwpck_require__(495)
 
 let tls // include tls conditionally since it is not always available
 
@@ -55603,7 +55603,7 @@ exports.listEnumNumbers = listEnumNumbers;
 const assert = __nccwpck_require__(535)
 
 const { kRetryHandlerDefaultRetry } = __nccwpck_require__(199)
-const { RequestRetryError } = __nccwpck_require__(496)
+const { RequestRetryError } = __nccwpck_require__(495)
 const { isDisturbed, parseHeaders, parseRangeHeader } = __nccwpck_require__(71)
 
 function calculateRetryAfterHeader (retryAfter) {
@@ -57105,7 +57105,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createClientPipeline = createClientPipeline;
 const deserializationPolicy_js_1 = __nccwpck_require__(90);
 const core_rest_pipeline_1 = __nccwpck_require__(106);
-const serializationPolicy_js_1 = __nccwpck_require__(498);
+const serializationPolicy_js_1 = __nccwpck_require__(497);
 /**
  * Creates a new Pipeline for use with a Service Client.
  * Adds in deserializationPolicy by default.
@@ -59959,7 +59959,7 @@ exports.AzureKeyCredential = AzureKeyCredential;
 const {
   InvalidArgumentError,
   NotSupportedError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const assert = __nccwpck_require__(535)
 const { kHTTP2BuildRequest, kHTTP2CopyHeaders, kHTTP1BuildRequest } = __nccwpck_require__(199)
 const util = __nccwpck_require__(71)
@@ -65747,7 +65747,7 @@ const {
 const Client = __nccwpck_require__(93)
 const {
   InvalidArgumentError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const util = __nccwpck_require__(71)
 const { kUrl, kInterceptors } = __nccwpck_require__(199)
 const buildConnector = __nccwpck_require__(269)
@@ -66063,7 +66063,7 @@ const { URL } = __nccwpck_require__(89)
 const Agent = __nccwpck_require__(6)
 const Pool = __nccwpck_require__(342)
 const DispatcherBase = __nccwpck_require__(64)
-const { InvalidArgumentError, RequestAbortedError } = __nccwpck_require__(496)
+const { InvalidArgumentError, RequestAbortedError } = __nccwpck_require__(495)
 const buildConnector = __nccwpck_require__(269)
 
 const kAgent = Symbol('proxy agent')
@@ -68472,7 +68472,7 @@ const {
 } = __nccwpck_require__(478)
 const { MockInterceptor } = __nccwpck_require__(141)
 const Symbols = __nccwpck_require__(199)
-const { InvalidArgumentError } = __nccwpck_require__(496)
+const { InvalidArgumentError } = __nccwpck_require__(495)
 
 /**
  * MockPool provides an API that extends the Pool to influence the mockDispatches.
@@ -68816,7 +68816,7 @@ const {
   InvalidArgumentError,
   InvalidReturnValueError,
   RequestAbortedError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const util = __nccwpck_require__(71)
 const { getResolveErrorBodyCallback } = __nccwpck_require__(193)
 const { AsyncResource } = __nccwpck_require__(434)
@@ -71608,7 +71608,7 @@ function createDefaultHttpClient() {
 
 
 const { AsyncResource } = __nccwpck_require__(434)
-const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(496)
+const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(495)
 const util = __nccwpck_require__(71)
 const { addSignal, removeSignal } = __nccwpck_require__(108)
 
@@ -71899,7 +71899,7 @@ module.exports = require("node:util");
 // We include a version number for the Dispatcher API. In case of breaking changes,
 // this version number must be increased to avoid conflicts.
 const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
-const { InvalidArgumentError } = __nccwpck_require__(496)
+const { InvalidArgumentError } = __nccwpck_require__(495)
 const Agent = __nccwpck_require__(6)
 
 if (getGlobalDispatcher() === undefined) {
@@ -71952,7 +71952,7 @@ const {
 const MockClient = __nccwpck_require__(203)
 const MockPool = __nccwpck_require__(353)
 const { matchValue, buildMockOptions } = __nccwpck_require__(8)
-const { InvalidArgumentError, UndiciError } = __nccwpck_require__(496)
+const { InvalidArgumentError, UndiciError } = __nccwpck_require__(495)
 const Dispatcher = __nccwpck_require__(485)
 const Pluralizer = __nccwpck_require__(257)
 const PendingInterceptorsFormatter = __nccwpck_require__(237)
@@ -72298,7 +72298,7 @@ function bearerAuthenticationPolicy(options) {
 const {
   BalancedPoolMissingUpstreamError,
   InvalidArgumentError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const {
   PoolBase,
   kClients,
@@ -72936,7 +72936,7 @@ function userAgentPolicy(options = {}) {
 const util = __nccwpck_require__(71)
 const { kBodyUsed } = __nccwpck_require__(199)
 const assert = __nccwpck_require__(535)
-const { InvalidArgumentError } = __nccwpck_require__(496)
+const { InvalidArgumentError } = __nccwpck_require__(495)
 const EE = __nccwpck_require__(477)
 
 const redirectableStatusCodes = [300, 301, 302, 303, 307, 308]
@@ -78736,7 +78736,7 @@ function getOperationRequestInfo(request) {
 "use strict";
 
 
-const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(496)
+const { InvalidArgumentError, RequestAbortedError, SocketError } = __nccwpck_require__(495)
 const { AsyncResource } = __nccwpck_require__(434)
 const util = __nccwpck_require__(71)
 const { addSignal, removeSignal } = __nccwpck_require__(108)
@@ -79505,7 +79505,7 @@ Object.defineProperty(exports, "XML_CHARKEY", ({ enumerable: true, get: function
 var deserializationPolicy_js_1 = __nccwpck_require__(90);
 Object.defineProperty(exports, "deserializationPolicy", ({ enumerable: true, get: function () { return deserializationPolicy_js_1.deserializationPolicy; } }));
 Object.defineProperty(exports, "deserializationPolicyName", ({ enumerable: true, get: function () { return deserializationPolicy_js_1.deserializationPolicyName; } }));
-var serializationPolicy_js_1 = __nccwpck_require__(498);
+var serializationPolicy_js_1 = __nccwpck_require__(497);
 Object.defineProperty(exports, "serializationPolicy", ({ enumerable: true, get: function () { return serializationPolicy_js_1.serializationPolicy; } }));
 Object.defineProperty(exports, "serializationPolicyName", ({ enumerable: true, get: function () { return serializationPolicy_js_1.serializationPolicyName; } }));
 var authorizeRequestOnClaimChallenge_js_1 = __nccwpck_require__(118);
@@ -89279,6 +89279,861 @@ function log(message, ...args) {
 /***/ }),
 
 /***/ 495:
+/***/ ((module) => {
+
+"use strict";
+
+
+class UndiciError extends Error {
+  constructor (message) {
+    super(message)
+    this.name = 'UndiciError'
+    this.code = 'UND_ERR'
+  }
+}
+
+class ConnectTimeoutError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, ConnectTimeoutError)
+    this.name = 'ConnectTimeoutError'
+    this.message = message || 'Connect Timeout Error'
+    this.code = 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+
+class HeadersTimeoutError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, HeadersTimeoutError)
+    this.name = 'HeadersTimeoutError'
+    this.message = message || 'Headers Timeout Error'
+    this.code = 'UND_ERR_HEADERS_TIMEOUT'
+  }
+}
+
+class HeadersOverflowError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, HeadersOverflowError)
+    this.name = 'HeadersOverflowError'
+    this.message = message || 'Headers Overflow Error'
+    this.code = 'UND_ERR_HEADERS_OVERFLOW'
+  }
+}
+
+class BodyTimeoutError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, BodyTimeoutError)
+    this.name = 'BodyTimeoutError'
+    this.message = message || 'Body Timeout Error'
+    this.code = 'UND_ERR_BODY_TIMEOUT'
+  }
+}
+
+class ResponseStatusCodeError extends UndiciError {
+  constructor (message, statusCode, headers, body) {
+    super(message)
+    Error.captureStackTrace(this, ResponseStatusCodeError)
+    this.name = 'ResponseStatusCodeError'
+    this.message = message || 'Response Status Code Error'
+    this.code = 'UND_ERR_RESPONSE_STATUS_CODE'
+    this.body = body
+    this.status = statusCode
+    this.statusCode = statusCode
+    this.headers = headers
+  }
+}
+
+class InvalidArgumentError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, InvalidArgumentError)
+    this.name = 'InvalidArgumentError'
+    this.message = message || 'Invalid Argument Error'
+    this.code = 'UND_ERR_INVALID_ARG'
+  }
+}
+
+class InvalidReturnValueError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, InvalidReturnValueError)
+    this.name = 'InvalidReturnValueError'
+    this.message = message || 'Invalid Return Value Error'
+    this.code = 'UND_ERR_INVALID_RETURN_VALUE'
+  }
+}
+
+class RequestAbortedError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, RequestAbortedError)
+    this.name = 'AbortError'
+    this.message = message || 'Request aborted'
+    this.code = 'UND_ERR_ABORTED'
+  }
+}
+
+class InformationalError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, InformationalError)
+    this.name = 'InformationalError'
+    this.message = message || 'Request information'
+    this.code = 'UND_ERR_INFO'
+  }
+}
+
+class RequestContentLengthMismatchError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, RequestContentLengthMismatchError)
+    this.name = 'RequestContentLengthMismatchError'
+    this.message = message || 'Request body length does not match content-length header'
+    this.code = 'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH'
+  }
+}
+
+class ResponseContentLengthMismatchError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, ResponseContentLengthMismatchError)
+    this.name = 'ResponseContentLengthMismatchError'
+    this.message = message || 'Response body length does not match content-length header'
+    this.code = 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH'
+  }
+}
+
+class ClientDestroyedError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, ClientDestroyedError)
+    this.name = 'ClientDestroyedError'
+    this.message = message || 'The client is destroyed'
+    this.code = 'UND_ERR_DESTROYED'
+  }
+}
+
+class ClientClosedError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, ClientClosedError)
+    this.name = 'ClientClosedError'
+    this.message = message || 'The client is closed'
+    this.code = 'UND_ERR_CLOSED'
+  }
+}
+
+class SocketError extends UndiciError {
+  constructor (message, socket) {
+    super(message)
+    Error.captureStackTrace(this, SocketError)
+    this.name = 'SocketError'
+    this.message = message || 'Socket error'
+    this.code = 'UND_ERR_SOCKET'
+    this.socket = socket
+  }
+}
+
+class NotSupportedError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, NotSupportedError)
+    this.name = 'NotSupportedError'
+    this.message = message || 'Not supported error'
+    this.code = 'UND_ERR_NOT_SUPPORTED'
+  }
+}
+
+class BalancedPoolMissingUpstreamError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, NotSupportedError)
+    this.name = 'MissingUpstreamError'
+    this.message = message || 'No upstream has been added to the BalancedPool'
+    this.code = 'UND_ERR_BPL_MISSING_UPSTREAM'
+  }
+}
+
+class HTTPParserError extends Error {
+  constructor (message, code, data) {
+    super(message)
+    Error.captureStackTrace(this, HTTPParserError)
+    this.name = 'HTTPParserError'
+    this.code = code ? `HPE_${code}` : undefined
+    this.data = data ? data.toString() : undefined
+  }
+}
+
+class ResponseExceededMaxSizeError extends UndiciError {
+  constructor (message) {
+    super(message)
+    Error.captureStackTrace(this, ResponseExceededMaxSizeError)
+    this.name = 'ResponseExceededMaxSizeError'
+    this.message = message || 'Response content exceeded max size'
+    this.code = 'UND_ERR_RES_EXCEEDED_MAX_SIZE'
+  }
+}
+
+class RequestRetryError extends UndiciError {
+  constructor (message, code, { headers, data }) {
+    super(message)
+    Error.captureStackTrace(this, RequestRetryError)
+    this.name = 'RequestRetryError'
+    this.message = message || 'Request retry error'
+    this.code = 'UND_ERR_REQ_RETRY'
+    this.statusCode = code
+    this.data = data
+    this.headers = headers
+  }
+}
+
+module.exports = {
+  HTTPParserError,
+  UndiciError,
+  HeadersTimeoutError,
+  HeadersOverflowError,
+  BodyTimeoutError,
+  RequestContentLengthMismatchError,
+  ConnectTimeoutError,
+  ResponseStatusCodeError,
+  InvalidArgumentError,
+  InvalidReturnValueError,
+  RequestAbortedError,
+  ClientDestroyedError,
+  ClientClosedError,
+  InformationalError,
+  SocketError,
+  NotSupportedError,
+  ResponseContentLengthMismatchError,
+  BalancedPoolMissingUpstreamError,
+  ResponseExceededMaxSizeError,
+  RequestRetryError
+}
+
+
+/***/ }),
+
+/***/ 496:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Seed an isolated SOLDR_CACHE_DIR from the restored build-cache (issue #240).
+//
+// zccache's daemon-isolation contract (zccache#430/#421) lets a self-test
+// phase (coverage/integration) run under a FRESH SOLDR_CACHE_DIR so the
+// builder daemon never leaks into the tests. The side effect is that the warm
+// build-cache setup-soldr restored is discarded, so the isolated phase
+// recompiles from scratch every run.
+//
+// This seeds the fresh dir with ONLY the content-addressed artifact store from
+// the restored build-cache — exactly the file classes the build-cache save
+// profile keeps (#229), and nothing live: no logs, no sockets/pidfiles, no
+// lock/temp files. Content-addressed artifacts are safe to share read-only
+// across the isolation boundary; live daemon state is not copied, so the
+// isolated daemon stays its own session.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseIsolatedSeedTargets = parseIsolatedSeedTargets;
+exports.shouldSeedBuildCacheEntry = shouldSeedBuildCacheEntry;
+exports.seedIsolatedBuildCache = seedIsolatedBuildCache;
+const fs = __importStar(__nccwpck_require__(252));
+const path = __importStar(__nccwpck_require__(515));
+const cache_compress_js_1 = __nccwpck_require__(83);
+const TRANSIENT_SEED_SUFFIXES = [".lock", ".lck", ".sock", ".pid", ".tmp", ".temp", ".part", ".partial"];
+/** Parse the `seed-isolated-build-cache` input into isolated SOLDR_CACHE_DIR roots. */
+function parseIsolatedSeedTargets(value) {
+    return value
+        .split(/[\n,]/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+}
+/**
+ * Decide whether a file inside the zccache store should be seeded into an
+ * isolated copy. Keeps the reusable content-addressed store; drops the
+ * `logs/` subtree, standalone diagnostic sidecars (outside artifacts dirs),
+ * and transient daemon files (sockets/locks/pidfiles/temp). `tarPath` is the
+ * path relative to the zccache parent using "/" separators (e.g.
+ * `zccache/artifacts/<hash>`).
+ */
+function shouldSeedBuildCacheEntry(tarPath) {
+    const parts = tarPath.split("/").map((p) => p.toLowerCase());
+    if (parts.includes("logs"))
+        return false;
+    const basename = parts[parts.length - 1] ?? "";
+    if (TRANSIENT_SEED_SUFFIXES.some((s) => basename.endsWith(s)))
+        return false;
+    // Diagnostic sidecars are dropped unless they live inside an artifacts dir,
+    // where they are compiler stdout/stderr replay metadata (see #229).
+    if (!(0, cache_compress_js_1.isZccacheArtifactPayloadPath)(tarPath) &&
+        cache_compress_js_1.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES.some((s) => basename.endsWith(s))) {
+        return false;
+    }
+    return true;
+}
+function copyTreeFiltered(srcRoot, destZccacheDir, relPrefix) {
+    let files = 0;
+    let bytes = 0;
+    const walk = (relDir) => {
+        const absDir = path.join(srcRoot, relDir);
+        let entries;
+        try {
+            entries = fs.readdirSync(absDir, { withFileTypes: true });
+        }
+        catch {
+            return;
+        }
+        for (const ent of entries) {
+            const rel = relDir ? `${relDir}/${ent.name}` : ent.name;
+            const tarPath = `${relPrefix}/${rel}`;
+            if (ent.isDirectory()) {
+                walk(rel);
+                continue;
+            }
+            // Only regular files are seeded — sockets/fifos/symlinks are skipped.
+            if (!ent.isFile())
+                continue;
+            if (!shouldSeedBuildCacheEntry(tarPath))
+                continue;
+            const srcFile = path.join(srcRoot, rel);
+            const destFile = path.join(destZccacheDir, rel);
+            try {
+                fs.mkdirSync(path.dirname(destFile), { recursive: true });
+                fs.copyFileSync(srcFile, destFile);
+                files += 1;
+                bytes += fs.statSync(destFile).size;
+            }
+            catch {
+                // Best-effort: a single uncopyable file must not abort the seed.
+            }
+        }
+    };
+    walk("");
+    return { files, bytes };
+}
+/**
+ * Copy the reusable artifact store from a restored build-cache zccache dir
+ * into one or more isolated SOLDR_CACHE_DIR roots. Best-effort: returns a
+ * result, never throws. The destination zccache store lives at
+ * `<root>/cache/zccache`, mirroring resolve-setup's derivation.
+ */
+function seedIsolatedBuildCache(opts) {
+    const log = opts.log ?? (() => { });
+    const destinations = [];
+    if (opts.targetSoldrRoots.length === 0) {
+        return { seeded: false, filesCopied: 0, bytesCopied: 0, destinations, skippedReason: "no-targets" };
+    }
+    let sourceIsDir = false;
+    try {
+        sourceIsDir = fs.statSync(opts.sourceZccacheDir).isDirectory();
+    }
+    catch {
+        sourceIsDir = false;
+    }
+    if (!sourceIsDir) {
+        log(`seed-isolated-build-cache: source zccache dir ${opts.sourceZccacheDir} not present — nothing to seed`);
+        return { seeded: false, filesCopied: 0, bytesCopied: 0, destinations, skippedReason: "no-source" };
+    }
+    let totalFiles = 0;
+    let totalBytes = 0;
+    // The store is rooted at a directory named "zccache" so tar paths read
+    // `zccache/...` and match the #229 contract predicates.
+    const relPrefix = path.basename(opts.sourceZccacheDir) || "zccache";
+    for (const root of opts.targetSoldrRoots) {
+        const destZccacheDir = path.join(root, "cache", "zccache");
+        if (path.resolve(destZccacheDir) === path.resolve(opts.sourceZccacheDir)) {
+            log(`seed-isolated-build-cache: target ${root} resolves to the source store — skipping self-seed`);
+            continue;
+        }
+        const { files, bytes } = copyTreeFiltered(opts.sourceZccacheDir, destZccacheDir, relPrefix);
+        totalFiles += files;
+        totalBytes += bytes;
+        destinations.push(destZccacheDir);
+        log(`seed-isolated-build-cache: seeded ${files} artifact file(s) (${bytes} bytes) → ${destZccacheDir}`);
+    }
+    return {
+        seeded: totalFiles > 0,
+        filesCopied: totalFiles,
+        bytesCopied: totalBytes,
+        destinations,
+    };
+}
+
+
+/***/ }),
+
+/***/ 497:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.serializationPolicyName = void 0;
+exports.serializationPolicy = serializationPolicy;
+exports.serializeHeaders = serializeHeaders;
+exports.serializeRequestBody = serializeRequestBody;
+const interfaces_js_1 = __nccwpck_require__(104);
+const operationHelpers_js_1 = __nccwpck_require__(437);
+const serializer_js_1 = __nccwpck_require__(487);
+const interfaceHelpers_js_1 = __nccwpck_require__(402);
+/**
+ * The programmatic identifier of the serializationPolicy.
+ */
+exports.serializationPolicyName = "serializationPolicy";
+/**
+ * This policy handles assembling the request body and headers using
+ * an OperationSpec and OperationArguments on the request.
+ */
+function serializationPolicy(options = {}) {
+    const stringifyXML = options.stringifyXML;
+    return {
+        name: exports.serializationPolicyName,
+        async sendRequest(request, next) {
+            const operationInfo = (0, operationHelpers_js_1.getOperationRequestInfo)(request);
+            const operationSpec = operationInfo?.operationSpec;
+            const operationArguments = operationInfo?.operationArguments;
+            if (operationSpec && operationArguments) {
+                serializeHeaders(request, operationArguments, operationSpec);
+                serializeRequestBody(request, operationArguments, operationSpec, stringifyXML);
+            }
+            return next(request);
+        },
+    };
+}
+/**
+ * @internal
+ */
+function serializeHeaders(request, operationArguments, operationSpec) {
+    if (operationSpec.headerParameters) {
+        for (const headerParameter of operationSpec.headerParameters) {
+            let headerValue = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, headerParameter);
+            if ((headerValue !== null && headerValue !== undefined) || headerParameter.mapper.required) {
+                headerValue = operationSpec.serializer.serialize(headerParameter.mapper, headerValue, (0, interfaceHelpers_js_1.getPathStringFromParameter)(headerParameter));
+                const headerCollectionPrefix = headerParameter.mapper
+                    .headerCollectionPrefix;
+                if (headerCollectionPrefix) {
+                    for (const key of Object.keys(headerValue)) {
+                        request.headers.set(headerCollectionPrefix + key, headerValue[key]);
+                    }
+                }
+                else {
+                    request.headers.set(headerParameter.mapper.serializedName || (0, interfaceHelpers_js_1.getPathStringFromParameter)(headerParameter), headerValue);
+                }
+            }
+        }
+    }
+    const customHeaders = operationArguments.options?.requestOptions?.customHeaders;
+    if (customHeaders) {
+        for (const customHeaderName of Object.keys(customHeaders)) {
+            request.headers.set(customHeaderName, customHeaders[customHeaderName]);
+        }
+    }
+}
+/**
+ * @internal
+ */
+function serializeRequestBody(request, operationArguments, operationSpec, stringifyXML = function () {
+    throw new Error("XML serialization unsupported!");
+}) {
+    const serializerOptions = operationArguments.options?.serializerOptions;
+    const updatedOptions = {
+        xml: {
+            rootName: serializerOptions?.xml.rootName ?? "",
+            includeRoot: serializerOptions?.xml.includeRoot ?? false,
+            xmlCharKey: serializerOptions?.xml.xmlCharKey ?? interfaces_js_1.XML_CHARKEY,
+        },
+    };
+    const xmlCharKey = updatedOptions.xml.xmlCharKey;
+    if (operationSpec.requestBody && operationSpec.requestBody.mapper) {
+        request.body = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, operationSpec.requestBody);
+        const bodyMapper = operationSpec.requestBody.mapper;
+        const { required, serializedName, xmlName, xmlElementName, xmlNamespace, xmlNamespacePrefix, nullable, } = bodyMapper;
+        const typeName = bodyMapper.type.name;
+        try {
+            if ((request.body !== undefined && request.body !== null) ||
+                (nullable && request.body === null) ||
+                required) {
+                const requestBodyParameterPathString = (0, interfaceHelpers_js_1.getPathStringFromParameter)(operationSpec.requestBody);
+                request.body = operationSpec.serializer.serialize(bodyMapper, request.body, requestBodyParameterPathString, updatedOptions);
+                const isStream = typeName === serializer_js_1.MapperTypeNames.Stream;
+                if (operationSpec.isXML) {
+                    const xmlnsKey = xmlNamespacePrefix ? `xmlns:${xmlNamespacePrefix}` : "xmlns";
+                    const value = getXmlValueWithNamespace(xmlNamespace, xmlnsKey, typeName, request.body, updatedOptions);
+                    if (typeName === serializer_js_1.MapperTypeNames.Sequence) {
+                        request.body = stringifyXML(prepareXMLRootList(value, xmlElementName || xmlName || serializedName, xmlnsKey, xmlNamespace), { rootName: xmlName || serializedName, xmlCharKey });
+                    }
+                    else if (!isStream) {
+                        request.body = stringifyXML(value, {
+                            rootName: xmlName || serializedName,
+                            xmlCharKey,
+                        });
+                    }
+                }
+                else if (typeName === serializer_js_1.MapperTypeNames.String &&
+                    (operationSpec.contentType?.match("text/plain") || operationSpec.mediaType === "text")) {
+                    // the String serializer has validated that request body is a string
+                    // so just send the string.
+                    return;
+                }
+                else if (!isStream) {
+                    request.body = JSON.stringify(request.body);
+                }
+            }
+        }
+        catch (error) {
+            throw new Error(`Error "${error.message}" occurred in serializing the payload - ${JSON.stringify(serializedName, undefined, "  ")}.`);
+        }
+    }
+    else if (operationSpec.formDataParameters && operationSpec.formDataParameters.length > 0) {
+        request.formData = {};
+        for (const formDataParameter of operationSpec.formDataParameters) {
+            const formDataParameterValue = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, formDataParameter);
+            if (formDataParameterValue !== undefined && formDataParameterValue !== null) {
+                const formDataParameterPropertyName = formDataParameter.mapper.serializedName || (0, interfaceHelpers_js_1.getPathStringFromParameter)(formDataParameter);
+                request.formData[formDataParameterPropertyName] = operationSpec.serializer.serialize(formDataParameter.mapper, formDataParameterValue, (0, interfaceHelpers_js_1.getPathStringFromParameter)(formDataParameter), updatedOptions);
+            }
+        }
+    }
+}
+/**
+ * Adds an xml namespace to the xml serialized object if needed, otherwise it just returns the value itself
+ */
+function getXmlValueWithNamespace(xmlNamespace, xmlnsKey, typeName, serializedValue, options) {
+    // Composite and Sequence schemas already got their root namespace set during serialization
+    // We just need to add xmlns to the other schema types
+    if (xmlNamespace && !["Composite", "Sequence", "Dictionary"].includes(typeName)) {
+        const result = {};
+        result[options.xml.xmlCharKey] = serializedValue;
+        result[interfaces_js_1.XML_ATTRKEY] = { [xmlnsKey]: xmlNamespace };
+        return result;
+    }
+    return serializedValue;
+}
+function prepareXMLRootList(obj, elementName, xmlNamespaceKey, xmlNamespace) {
+    if (!Array.isArray(obj)) {
+        obj = [obj];
+    }
+    if (!xmlNamespaceKey || !xmlNamespace) {
+        return { [elementName]: obj };
+    }
+    const result = { [elementName]: obj };
+    result[interfaces_js_1.XML_ATTRKEY] = { [xmlNamespaceKey]: xmlNamespace };
+    return result;
+}
+//# sourceMappingURL=serializationPolicy.js.map
+
+/***/ }),
+
+/***/ 498:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+var net = __nccwpck_require__(516);
+var tls = __nccwpck_require__(513);
+var http = __nccwpck_require__(334);
+var https = __nccwpck_require__(72);
+var events = __nccwpck_require__(477);
+var assert = __nccwpck_require__(535);
+var util = __nccwpck_require__(129);
+
+
+exports.httpOverHttp = httpOverHttp;
+exports.httpsOverHttp = httpsOverHttp;
+exports.httpOverHttps = httpOverHttps;
+exports.httpsOverHttps = httpsOverHttps;
+
+
+function httpOverHttp(options) {
+  var agent = new TunnelingAgent(options);
+  agent.request = http.request;
+  return agent;
+}
+
+function httpsOverHttp(options) {
+  var agent = new TunnelingAgent(options);
+  agent.request = http.request;
+  agent.createSocket = createSecureSocket;
+  agent.defaultPort = 443;
+  return agent;
+}
+
+function httpOverHttps(options) {
+  var agent = new TunnelingAgent(options);
+  agent.request = https.request;
+  return agent;
+}
+
+function httpsOverHttps(options) {
+  var agent = new TunnelingAgent(options);
+  agent.request = https.request;
+  agent.createSocket = createSecureSocket;
+  agent.defaultPort = 443;
+  return agent;
+}
+
+
+function TunnelingAgent(options) {
+  var self = this;
+  self.options = options || {};
+  self.proxyOptions = self.options.proxy || {};
+  self.maxSockets = self.options.maxSockets || http.Agent.defaultMaxSockets;
+  self.requests = [];
+  self.sockets = [];
+
+  self.on('free', function onFree(socket, host, port, localAddress) {
+    var options = toOptions(host, port, localAddress);
+    for (var i = 0, len = self.requests.length; i < len; ++i) {
+      var pending = self.requests[i];
+      if (pending.host === options.host && pending.port === options.port) {
+        // Detect the request to connect same origin server,
+        // reuse the connection.
+        self.requests.splice(i, 1);
+        pending.request.onSocket(socket);
+        return;
+      }
+    }
+    socket.destroy();
+    self.removeSocket(socket);
+  });
+}
+util.inherits(TunnelingAgent, events.EventEmitter);
+
+TunnelingAgent.prototype.addRequest = function addRequest(req, host, port, localAddress) {
+  var self = this;
+  var options = mergeOptions({request: req}, self.options, toOptions(host, port, localAddress));
+
+  if (self.sockets.length >= this.maxSockets) {
+    // We are over limit so we'll add it to the queue.
+    self.requests.push(options);
+    return;
+  }
+
+  // If we are under maxSockets create a new one.
+  self.createSocket(options, function(socket) {
+    socket.on('free', onFree);
+    socket.on('close', onCloseOrRemove);
+    socket.on('agentRemove', onCloseOrRemove);
+    req.onSocket(socket);
+
+    function onFree() {
+      self.emit('free', socket, options);
+    }
+
+    function onCloseOrRemove(err) {
+      self.removeSocket(socket);
+      socket.removeListener('free', onFree);
+      socket.removeListener('close', onCloseOrRemove);
+      socket.removeListener('agentRemove', onCloseOrRemove);
+    }
+  });
+};
+
+TunnelingAgent.prototype.createSocket = function createSocket(options, cb) {
+  var self = this;
+  var placeholder = {};
+  self.sockets.push(placeholder);
+
+  var connectOptions = mergeOptions({}, self.proxyOptions, {
+    method: 'CONNECT',
+    path: options.host + ':' + options.port,
+    agent: false,
+    headers: {
+      host: options.host + ':' + options.port
+    }
+  });
+  if (options.localAddress) {
+    connectOptions.localAddress = options.localAddress;
+  }
+  if (connectOptions.proxyAuth) {
+    connectOptions.headers = connectOptions.headers || {};
+    connectOptions.headers['Proxy-Authorization'] = 'Basic ' +
+        new Buffer(connectOptions.proxyAuth).toString('base64');
+  }
+
+  debug('making CONNECT request');
+  var connectReq = self.request(connectOptions);
+  connectReq.useChunkedEncodingByDefault = false; // for v0.6
+  connectReq.once('response', onResponse); // for v0.6
+  connectReq.once('upgrade', onUpgrade);   // for v0.6
+  connectReq.once('connect', onConnect);   // for v0.7 or later
+  connectReq.once('error', onError);
+  connectReq.end();
+
+  function onResponse(res) {
+    // Very hacky. This is necessary to avoid http-parser leaks.
+    res.upgrade = true;
+  }
+
+  function onUpgrade(res, socket, head) {
+    // Hacky.
+    process.nextTick(function() {
+      onConnect(res, socket, head);
+    });
+  }
+
+  function onConnect(res, socket, head) {
+    connectReq.removeAllListeners();
+    socket.removeAllListeners();
+
+    if (res.statusCode !== 200) {
+      debug('tunneling socket could not be established, statusCode=%d',
+        res.statusCode);
+      socket.destroy();
+      var error = new Error('tunneling socket could not be established, ' +
+        'statusCode=' + res.statusCode);
+      error.code = 'ECONNRESET';
+      options.request.emit('error', error);
+      self.removeSocket(placeholder);
+      return;
+    }
+    if (head.length > 0) {
+      debug('got illegal response body from proxy');
+      socket.destroy();
+      var error = new Error('got illegal response body from proxy');
+      error.code = 'ECONNRESET';
+      options.request.emit('error', error);
+      self.removeSocket(placeholder);
+      return;
+    }
+    debug('tunneling connection has established');
+    self.sockets[self.sockets.indexOf(placeholder)] = socket;
+    return cb(socket);
+  }
+
+  function onError(cause) {
+    connectReq.removeAllListeners();
+
+    debug('tunneling socket could not be established, cause=%s\n',
+          cause.message, cause.stack);
+    var error = new Error('tunneling socket could not be established, ' +
+                          'cause=' + cause.message);
+    error.code = 'ECONNRESET';
+    options.request.emit('error', error);
+    self.removeSocket(placeholder);
+  }
+};
+
+TunnelingAgent.prototype.removeSocket = function removeSocket(socket) {
+  var pos = this.sockets.indexOf(socket)
+  if (pos === -1) {
+    return;
+  }
+  this.sockets.splice(pos, 1);
+
+  var pending = this.requests.shift();
+  if (pending) {
+    // If we have pending requests and a socket gets closed a new one
+    // needs to be created to take over in the pool for the one that closed.
+    this.createSocket(pending, function(socket) {
+      pending.request.onSocket(socket);
+    });
+  }
+};
+
+function createSecureSocket(options, cb) {
+  var self = this;
+  TunnelingAgent.prototype.createSocket.call(self, options, function(socket) {
+    var hostHeader = options.request.getHeader('host');
+    var tlsOptions = mergeOptions({}, self.options, {
+      socket: socket,
+      servername: hostHeader ? hostHeader.replace(/:.*$/, '') : options.host
+    });
+
+    // 0 is dummy port for v0.6
+    var secureSocket = tls.connect(0, tlsOptions);
+    self.sockets[self.sockets.indexOf(socket)] = secureSocket;
+    cb(secureSocket);
+  });
+}
+
+
+function toOptions(host, port, localAddress) {
+  if (typeof host === 'string') { // since v0.10
+    return {
+      host: host,
+      port: port,
+      localAddress: localAddress
+    };
+  }
+  return host; // for v0.11 or later
+}
+
+function mergeOptions(target) {
+  for (var i = 1, len = arguments.length; i < len; ++i) {
+    var overrides = arguments[i];
+    if (typeof overrides === 'object') {
+      var keys = Object.keys(overrides);
+      for (var j = 0, keyLen = keys.length; j < keyLen; ++j) {
+        var k = keys[j];
+        if (overrides[k] !== undefined) {
+          target[k] = overrides[k];
+        }
+      }
+    }
+  }
+  return target;
+}
+
+
+var debug;
+if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
+  debug = function() {
+    var args = Array.prototype.slice.call(arguments);
+    if (typeof args[0] === 'string') {
+      args[0] = 'TUNNEL: ' + args[0];
+    } else {
+      args.unshift('TUNNEL:');
+    }
+    console.error.apply(console, args);
+  }
+} else {
+  debug = function() {};
+}
+exports.debug = debug; // for test
+
+
+/***/ }),
+
+/***/ 499:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -89341,7 +90196,7 @@ const ensure_shims_js_1 = __nccwpck_require__(1);
 const zccache_seed_js_1 = __nccwpck_require__(210);
 const cache_compress_js_1 = __nccwpck_require__(83);
 const soldr_load_shim_js_1 = __nccwpck_require__(32);
-const seed_isolated_cache_js_1 = __nccwpck_require__(497);
+const seed_isolated_cache_js_1 = __nccwpck_require__(496);
 const stats_collector_js_1 = __nccwpck_require__(440);
 const toolchain_snapshot_js_1 = __nccwpck_require__(466);
 const solo_toolchain_cache_js_1 = __nccwpck_require__(327);
@@ -90052,7 +90907,19 @@ async function run() {
         core.saveState("soloToolchainEnabled", "false");
     }
     const baselineSnapshot = await (0, phase_timing_js_1.timeSubPhase)("toolchain", "snapshot-base", () => (0, toolchain_snapshot_js_1.walkSnapshot)(snapshotRoots));
-    await (0, phase_timing_js_1.timeSubPhase)("toolchain", "rustup-install", () => (0, ensure_rust_toolchain_js_1.ensureRustToolchain)({ resolveResult: result, setupCacheExactHit }));
+    // #323: when solo-cache exact-hit AND verifyRestoredToolchain
+    // passed, the requested toolchain is already on disk from the
+    // restore. `rustup toolchain install` would be a no-op but still
+    // costs ~8s on hosted runners (self-update check, metadata fetch,
+    // profile diff). Skip the install entirely on the verified
+    // exact-hit path. The snapshot still runs so cache-save logic
+    // downstream sees an unchanged tree (install-delta empty).
+    if (soloExactHit) {
+        logger.log("toolchain: solo-cache exact-hit + verified — skipping rustup install (#323)");
+    }
+    else {
+        await (0, phase_timing_js_1.timeSubPhase)("toolchain", "rustup-install", () => (0, ensure_rust_toolchain_js_1.ensureRustToolchain)({ resolveResult: result, setupCacheExactHit }));
+    }
     const postInstallSnapshot = await (0, phase_timing_js_1.timeSubPhase)("toolchain", "snapshot-post", () => (0, toolchain_snapshot_js_1.walkSnapshot)(snapshotRoots));
     const toolchainDiff = (0, toolchain_snapshot_js_1.diffSnapshots)(baselineSnapshot, postInstallSnapshot);
     const toolchainDiffStats = (0, toolchain_snapshot_js_1.diffStats)(toolchainDiff);
@@ -90501,861 +91368,6 @@ if (typeof process !== "undefined" &&
         core.setFailed(`setup-soldr failed: ${message}`);
     });
 }
-
-
-/***/ }),
-
-/***/ 496:
-/***/ ((module) => {
-
-"use strict";
-
-
-class UndiciError extends Error {
-  constructor (message) {
-    super(message)
-    this.name = 'UndiciError'
-    this.code = 'UND_ERR'
-  }
-}
-
-class ConnectTimeoutError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, ConnectTimeoutError)
-    this.name = 'ConnectTimeoutError'
-    this.message = message || 'Connect Timeout Error'
-    this.code = 'UND_ERR_CONNECT_TIMEOUT'
-  }
-}
-
-class HeadersTimeoutError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, HeadersTimeoutError)
-    this.name = 'HeadersTimeoutError'
-    this.message = message || 'Headers Timeout Error'
-    this.code = 'UND_ERR_HEADERS_TIMEOUT'
-  }
-}
-
-class HeadersOverflowError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, HeadersOverflowError)
-    this.name = 'HeadersOverflowError'
-    this.message = message || 'Headers Overflow Error'
-    this.code = 'UND_ERR_HEADERS_OVERFLOW'
-  }
-}
-
-class BodyTimeoutError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, BodyTimeoutError)
-    this.name = 'BodyTimeoutError'
-    this.message = message || 'Body Timeout Error'
-    this.code = 'UND_ERR_BODY_TIMEOUT'
-  }
-}
-
-class ResponseStatusCodeError extends UndiciError {
-  constructor (message, statusCode, headers, body) {
-    super(message)
-    Error.captureStackTrace(this, ResponseStatusCodeError)
-    this.name = 'ResponseStatusCodeError'
-    this.message = message || 'Response Status Code Error'
-    this.code = 'UND_ERR_RESPONSE_STATUS_CODE'
-    this.body = body
-    this.status = statusCode
-    this.statusCode = statusCode
-    this.headers = headers
-  }
-}
-
-class InvalidArgumentError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, InvalidArgumentError)
-    this.name = 'InvalidArgumentError'
-    this.message = message || 'Invalid Argument Error'
-    this.code = 'UND_ERR_INVALID_ARG'
-  }
-}
-
-class InvalidReturnValueError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, InvalidReturnValueError)
-    this.name = 'InvalidReturnValueError'
-    this.message = message || 'Invalid Return Value Error'
-    this.code = 'UND_ERR_INVALID_RETURN_VALUE'
-  }
-}
-
-class RequestAbortedError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, RequestAbortedError)
-    this.name = 'AbortError'
-    this.message = message || 'Request aborted'
-    this.code = 'UND_ERR_ABORTED'
-  }
-}
-
-class InformationalError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, InformationalError)
-    this.name = 'InformationalError'
-    this.message = message || 'Request information'
-    this.code = 'UND_ERR_INFO'
-  }
-}
-
-class RequestContentLengthMismatchError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, RequestContentLengthMismatchError)
-    this.name = 'RequestContentLengthMismatchError'
-    this.message = message || 'Request body length does not match content-length header'
-    this.code = 'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH'
-  }
-}
-
-class ResponseContentLengthMismatchError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, ResponseContentLengthMismatchError)
-    this.name = 'ResponseContentLengthMismatchError'
-    this.message = message || 'Response body length does not match content-length header'
-    this.code = 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH'
-  }
-}
-
-class ClientDestroyedError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, ClientDestroyedError)
-    this.name = 'ClientDestroyedError'
-    this.message = message || 'The client is destroyed'
-    this.code = 'UND_ERR_DESTROYED'
-  }
-}
-
-class ClientClosedError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, ClientClosedError)
-    this.name = 'ClientClosedError'
-    this.message = message || 'The client is closed'
-    this.code = 'UND_ERR_CLOSED'
-  }
-}
-
-class SocketError extends UndiciError {
-  constructor (message, socket) {
-    super(message)
-    Error.captureStackTrace(this, SocketError)
-    this.name = 'SocketError'
-    this.message = message || 'Socket error'
-    this.code = 'UND_ERR_SOCKET'
-    this.socket = socket
-  }
-}
-
-class NotSupportedError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, NotSupportedError)
-    this.name = 'NotSupportedError'
-    this.message = message || 'Not supported error'
-    this.code = 'UND_ERR_NOT_SUPPORTED'
-  }
-}
-
-class BalancedPoolMissingUpstreamError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, NotSupportedError)
-    this.name = 'MissingUpstreamError'
-    this.message = message || 'No upstream has been added to the BalancedPool'
-    this.code = 'UND_ERR_BPL_MISSING_UPSTREAM'
-  }
-}
-
-class HTTPParserError extends Error {
-  constructor (message, code, data) {
-    super(message)
-    Error.captureStackTrace(this, HTTPParserError)
-    this.name = 'HTTPParserError'
-    this.code = code ? `HPE_${code}` : undefined
-    this.data = data ? data.toString() : undefined
-  }
-}
-
-class ResponseExceededMaxSizeError extends UndiciError {
-  constructor (message) {
-    super(message)
-    Error.captureStackTrace(this, ResponseExceededMaxSizeError)
-    this.name = 'ResponseExceededMaxSizeError'
-    this.message = message || 'Response content exceeded max size'
-    this.code = 'UND_ERR_RES_EXCEEDED_MAX_SIZE'
-  }
-}
-
-class RequestRetryError extends UndiciError {
-  constructor (message, code, { headers, data }) {
-    super(message)
-    Error.captureStackTrace(this, RequestRetryError)
-    this.name = 'RequestRetryError'
-    this.message = message || 'Request retry error'
-    this.code = 'UND_ERR_REQ_RETRY'
-    this.statusCode = code
-    this.data = data
-    this.headers = headers
-  }
-}
-
-module.exports = {
-  HTTPParserError,
-  UndiciError,
-  HeadersTimeoutError,
-  HeadersOverflowError,
-  BodyTimeoutError,
-  RequestContentLengthMismatchError,
-  ConnectTimeoutError,
-  ResponseStatusCodeError,
-  InvalidArgumentError,
-  InvalidReturnValueError,
-  RequestAbortedError,
-  ClientDestroyedError,
-  ClientClosedError,
-  InformationalError,
-  SocketError,
-  NotSupportedError,
-  ResponseContentLengthMismatchError,
-  BalancedPoolMissingUpstreamError,
-  ResponseExceededMaxSizeError,
-  RequestRetryError
-}
-
-
-/***/ }),
-
-/***/ 497:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Seed an isolated SOLDR_CACHE_DIR from the restored build-cache (issue #240).
-//
-// zccache's daemon-isolation contract (zccache#430/#421) lets a self-test
-// phase (coverage/integration) run under a FRESH SOLDR_CACHE_DIR so the
-// builder daemon never leaks into the tests. The side effect is that the warm
-// build-cache setup-soldr restored is discarded, so the isolated phase
-// recompiles from scratch every run.
-//
-// This seeds the fresh dir with ONLY the content-addressed artifact store from
-// the restored build-cache — exactly the file classes the build-cache save
-// profile keeps (#229), and nothing live: no logs, no sockets/pidfiles, no
-// lock/temp files. Content-addressed artifacts are safe to share read-only
-// across the isolation boundary; live daemon state is not copied, so the
-// isolated daemon stays its own session.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseIsolatedSeedTargets = parseIsolatedSeedTargets;
-exports.shouldSeedBuildCacheEntry = shouldSeedBuildCacheEntry;
-exports.seedIsolatedBuildCache = seedIsolatedBuildCache;
-const fs = __importStar(__nccwpck_require__(252));
-const path = __importStar(__nccwpck_require__(515));
-const cache_compress_js_1 = __nccwpck_require__(83);
-const TRANSIENT_SEED_SUFFIXES = [".lock", ".lck", ".sock", ".pid", ".tmp", ".temp", ".part", ".partial"];
-/** Parse the `seed-isolated-build-cache` input into isolated SOLDR_CACHE_DIR roots. */
-function parseIsolatedSeedTargets(value) {
-    return value
-        .split(/[\n,]/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-}
-/**
- * Decide whether a file inside the zccache store should be seeded into an
- * isolated copy. Keeps the reusable content-addressed store; drops the
- * `logs/` subtree, standalone diagnostic sidecars (outside artifacts dirs),
- * and transient daemon files (sockets/locks/pidfiles/temp). `tarPath` is the
- * path relative to the zccache parent using "/" separators (e.g.
- * `zccache/artifacts/<hash>`).
- */
-function shouldSeedBuildCacheEntry(tarPath) {
-    const parts = tarPath.split("/").map((p) => p.toLowerCase());
-    if (parts.includes("logs"))
-        return false;
-    const basename = parts[parts.length - 1] ?? "";
-    if (TRANSIENT_SEED_SUFFIXES.some((s) => basename.endsWith(s)))
-        return false;
-    // Diagnostic sidecars are dropped unless they live inside an artifacts dir,
-    // where they are compiler stdout/stderr replay metadata (see #229).
-    if (!(0, cache_compress_js_1.isZccacheArtifactPayloadPath)(tarPath) &&
-        cache_compress_js_1.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES.some((s) => basename.endsWith(s))) {
-        return false;
-    }
-    return true;
-}
-function copyTreeFiltered(srcRoot, destZccacheDir, relPrefix) {
-    let files = 0;
-    let bytes = 0;
-    const walk = (relDir) => {
-        const absDir = path.join(srcRoot, relDir);
-        let entries;
-        try {
-            entries = fs.readdirSync(absDir, { withFileTypes: true });
-        }
-        catch {
-            return;
-        }
-        for (const ent of entries) {
-            const rel = relDir ? `${relDir}/${ent.name}` : ent.name;
-            const tarPath = `${relPrefix}/${rel}`;
-            if (ent.isDirectory()) {
-                walk(rel);
-                continue;
-            }
-            // Only regular files are seeded — sockets/fifos/symlinks are skipped.
-            if (!ent.isFile())
-                continue;
-            if (!shouldSeedBuildCacheEntry(tarPath))
-                continue;
-            const srcFile = path.join(srcRoot, rel);
-            const destFile = path.join(destZccacheDir, rel);
-            try {
-                fs.mkdirSync(path.dirname(destFile), { recursive: true });
-                fs.copyFileSync(srcFile, destFile);
-                files += 1;
-                bytes += fs.statSync(destFile).size;
-            }
-            catch {
-                // Best-effort: a single uncopyable file must not abort the seed.
-            }
-        }
-    };
-    walk("");
-    return { files, bytes };
-}
-/**
- * Copy the reusable artifact store from a restored build-cache zccache dir
- * into one or more isolated SOLDR_CACHE_DIR roots. Best-effort: returns a
- * result, never throws. The destination zccache store lives at
- * `<root>/cache/zccache`, mirroring resolve-setup's derivation.
- */
-function seedIsolatedBuildCache(opts) {
-    const log = opts.log ?? (() => { });
-    const destinations = [];
-    if (opts.targetSoldrRoots.length === 0) {
-        return { seeded: false, filesCopied: 0, bytesCopied: 0, destinations, skippedReason: "no-targets" };
-    }
-    let sourceIsDir = false;
-    try {
-        sourceIsDir = fs.statSync(opts.sourceZccacheDir).isDirectory();
-    }
-    catch {
-        sourceIsDir = false;
-    }
-    if (!sourceIsDir) {
-        log(`seed-isolated-build-cache: source zccache dir ${opts.sourceZccacheDir} not present — nothing to seed`);
-        return { seeded: false, filesCopied: 0, bytesCopied: 0, destinations, skippedReason: "no-source" };
-    }
-    let totalFiles = 0;
-    let totalBytes = 0;
-    // The store is rooted at a directory named "zccache" so tar paths read
-    // `zccache/...` and match the #229 contract predicates.
-    const relPrefix = path.basename(opts.sourceZccacheDir) || "zccache";
-    for (const root of opts.targetSoldrRoots) {
-        const destZccacheDir = path.join(root, "cache", "zccache");
-        if (path.resolve(destZccacheDir) === path.resolve(opts.sourceZccacheDir)) {
-            log(`seed-isolated-build-cache: target ${root} resolves to the source store — skipping self-seed`);
-            continue;
-        }
-        const { files, bytes } = copyTreeFiltered(opts.sourceZccacheDir, destZccacheDir, relPrefix);
-        totalFiles += files;
-        totalBytes += bytes;
-        destinations.push(destZccacheDir);
-        log(`seed-isolated-build-cache: seeded ${files} artifact file(s) (${bytes} bytes) → ${destZccacheDir}`);
-    }
-    return {
-        seeded: totalFiles > 0,
-        filesCopied: totalFiles,
-        bytesCopied: totalBytes,
-        destinations,
-    };
-}
-
-
-/***/ }),
-
-/***/ 498:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.serializationPolicyName = void 0;
-exports.serializationPolicy = serializationPolicy;
-exports.serializeHeaders = serializeHeaders;
-exports.serializeRequestBody = serializeRequestBody;
-const interfaces_js_1 = __nccwpck_require__(104);
-const operationHelpers_js_1 = __nccwpck_require__(437);
-const serializer_js_1 = __nccwpck_require__(487);
-const interfaceHelpers_js_1 = __nccwpck_require__(402);
-/**
- * The programmatic identifier of the serializationPolicy.
- */
-exports.serializationPolicyName = "serializationPolicy";
-/**
- * This policy handles assembling the request body and headers using
- * an OperationSpec and OperationArguments on the request.
- */
-function serializationPolicy(options = {}) {
-    const stringifyXML = options.stringifyXML;
-    return {
-        name: exports.serializationPolicyName,
-        async sendRequest(request, next) {
-            const operationInfo = (0, operationHelpers_js_1.getOperationRequestInfo)(request);
-            const operationSpec = operationInfo?.operationSpec;
-            const operationArguments = operationInfo?.operationArguments;
-            if (operationSpec && operationArguments) {
-                serializeHeaders(request, operationArguments, operationSpec);
-                serializeRequestBody(request, operationArguments, operationSpec, stringifyXML);
-            }
-            return next(request);
-        },
-    };
-}
-/**
- * @internal
- */
-function serializeHeaders(request, operationArguments, operationSpec) {
-    if (operationSpec.headerParameters) {
-        for (const headerParameter of operationSpec.headerParameters) {
-            let headerValue = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, headerParameter);
-            if ((headerValue !== null && headerValue !== undefined) || headerParameter.mapper.required) {
-                headerValue = operationSpec.serializer.serialize(headerParameter.mapper, headerValue, (0, interfaceHelpers_js_1.getPathStringFromParameter)(headerParameter));
-                const headerCollectionPrefix = headerParameter.mapper
-                    .headerCollectionPrefix;
-                if (headerCollectionPrefix) {
-                    for (const key of Object.keys(headerValue)) {
-                        request.headers.set(headerCollectionPrefix + key, headerValue[key]);
-                    }
-                }
-                else {
-                    request.headers.set(headerParameter.mapper.serializedName || (0, interfaceHelpers_js_1.getPathStringFromParameter)(headerParameter), headerValue);
-                }
-            }
-        }
-    }
-    const customHeaders = operationArguments.options?.requestOptions?.customHeaders;
-    if (customHeaders) {
-        for (const customHeaderName of Object.keys(customHeaders)) {
-            request.headers.set(customHeaderName, customHeaders[customHeaderName]);
-        }
-    }
-}
-/**
- * @internal
- */
-function serializeRequestBody(request, operationArguments, operationSpec, stringifyXML = function () {
-    throw new Error("XML serialization unsupported!");
-}) {
-    const serializerOptions = operationArguments.options?.serializerOptions;
-    const updatedOptions = {
-        xml: {
-            rootName: serializerOptions?.xml.rootName ?? "",
-            includeRoot: serializerOptions?.xml.includeRoot ?? false,
-            xmlCharKey: serializerOptions?.xml.xmlCharKey ?? interfaces_js_1.XML_CHARKEY,
-        },
-    };
-    const xmlCharKey = updatedOptions.xml.xmlCharKey;
-    if (operationSpec.requestBody && operationSpec.requestBody.mapper) {
-        request.body = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, operationSpec.requestBody);
-        const bodyMapper = operationSpec.requestBody.mapper;
-        const { required, serializedName, xmlName, xmlElementName, xmlNamespace, xmlNamespacePrefix, nullable, } = bodyMapper;
-        const typeName = bodyMapper.type.name;
-        try {
-            if ((request.body !== undefined && request.body !== null) ||
-                (nullable && request.body === null) ||
-                required) {
-                const requestBodyParameterPathString = (0, interfaceHelpers_js_1.getPathStringFromParameter)(operationSpec.requestBody);
-                request.body = operationSpec.serializer.serialize(bodyMapper, request.body, requestBodyParameterPathString, updatedOptions);
-                const isStream = typeName === serializer_js_1.MapperTypeNames.Stream;
-                if (operationSpec.isXML) {
-                    const xmlnsKey = xmlNamespacePrefix ? `xmlns:${xmlNamespacePrefix}` : "xmlns";
-                    const value = getXmlValueWithNamespace(xmlNamespace, xmlnsKey, typeName, request.body, updatedOptions);
-                    if (typeName === serializer_js_1.MapperTypeNames.Sequence) {
-                        request.body = stringifyXML(prepareXMLRootList(value, xmlElementName || xmlName || serializedName, xmlnsKey, xmlNamespace), { rootName: xmlName || serializedName, xmlCharKey });
-                    }
-                    else if (!isStream) {
-                        request.body = stringifyXML(value, {
-                            rootName: xmlName || serializedName,
-                            xmlCharKey,
-                        });
-                    }
-                }
-                else if (typeName === serializer_js_1.MapperTypeNames.String &&
-                    (operationSpec.contentType?.match("text/plain") || operationSpec.mediaType === "text")) {
-                    // the String serializer has validated that request body is a string
-                    // so just send the string.
-                    return;
-                }
-                else if (!isStream) {
-                    request.body = JSON.stringify(request.body);
-                }
-            }
-        }
-        catch (error) {
-            throw new Error(`Error "${error.message}" occurred in serializing the payload - ${JSON.stringify(serializedName, undefined, "  ")}.`);
-        }
-    }
-    else if (operationSpec.formDataParameters && operationSpec.formDataParameters.length > 0) {
-        request.formData = {};
-        for (const formDataParameter of operationSpec.formDataParameters) {
-            const formDataParameterValue = (0, operationHelpers_js_1.getOperationArgumentValueFromParameter)(operationArguments, formDataParameter);
-            if (formDataParameterValue !== undefined && formDataParameterValue !== null) {
-                const formDataParameterPropertyName = formDataParameter.mapper.serializedName || (0, interfaceHelpers_js_1.getPathStringFromParameter)(formDataParameter);
-                request.formData[formDataParameterPropertyName] = operationSpec.serializer.serialize(formDataParameter.mapper, formDataParameterValue, (0, interfaceHelpers_js_1.getPathStringFromParameter)(formDataParameter), updatedOptions);
-            }
-        }
-    }
-}
-/**
- * Adds an xml namespace to the xml serialized object if needed, otherwise it just returns the value itself
- */
-function getXmlValueWithNamespace(xmlNamespace, xmlnsKey, typeName, serializedValue, options) {
-    // Composite and Sequence schemas already got their root namespace set during serialization
-    // We just need to add xmlns to the other schema types
-    if (xmlNamespace && !["Composite", "Sequence", "Dictionary"].includes(typeName)) {
-        const result = {};
-        result[options.xml.xmlCharKey] = serializedValue;
-        result[interfaces_js_1.XML_ATTRKEY] = { [xmlnsKey]: xmlNamespace };
-        return result;
-    }
-    return serializedValue;
-}
-function prepareXMLRootList(obj, elementName, xmlNamespaceKey, xmlNamespace) {
-    if (!Array.isArray(obj)) {
-        obj = [obj];
-    }
-    if (!xmlNamespaceKey || !xmlNamespace) {
-        return { [elementName]: obj };
-    }
-    const result = { [elementName]: obj };
-    result[interfaces_js_1.XML_ATTRKEY] = { [xmlNamespaceKey]: xmlNamespace };
-    return result;
-}
-//# sourceMappingURL=serializationPolicy.js.map
-
-/***/ }),
-
-/***/ 499:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-var net = __nccwpck_require__(516);
-var tls = __nccwpck_require__(513);
-var http = __nccwpck_require__(334);
-var https = __nccwpck_require__(72);
-var events = __nccwpck_require__(477);
-var assert = __nccwpck_require__(535);
-var util = __nccwpck_require__(129);
-
-
-exports.httpOverHttp = httpOverHttp;
-exports.httpsOverHttp = httpsOverHttp;
-exports.httpOverHttps = httpOverHttps;
-exports.httpsOverHttps = httpsOverHttps;
-
-
-function httpOverHttp(options) {
-  var agent = new TunnelingAgent(options);
-  agent.request = http.request;
-  return agent;
-}
-
-function httpsOverHttp(options) {
-  var agent = new TunnelingAgent(options);
-  agent.request = http.request;
-  agent.createSocket = createSecureSocket;
-  agent.defaultPort = 443;
-  return agent;
-}
-
-function httpOverHttps(options) {
-  var agent = new TunnelingAgent(options);
-  agent.request = https.request;
-  return agent;
-}
-
-function httpsOverHttps(options) {
-  var agent = new TunnelingAgent(options);
-  agent.request = https.request;
-  agent.createSocket = createSecureSocket;
-  agent.defaultPort = 443;
-  return agent;
-}
-
-
-function TunnelingAgent(options) {
-  var self = this;
-  self.options = options || {};
-  self.proxyOptions = self.options.proxy || {};
-  self.maxSockets = self.options.maxSockets || http.Agent.defaultMaxSockets;
-  self.requests = [];
-  self.sockets = [];
-
-  self.on('free', function onFree(socket, host, port, localAddress) {
-    var options = toOptions(host, port, localAddress);
-    for (var i = 0, len = self.requests.length; i < len; ++i) {
-      var pending = self.requests[i];
-      if (pending.host === options.host && pending.port === options.port) {
-        // Detect the request to connect same origin server,
-        // reuse the connection.
-        self.requests.splice(i, 1);
-        pending.request.onSocket(socket);
-        return;
-      }
-    }
-    socket.destroy();
-    self.removeSocket(socket);
-  });
-}
-util.inherits(TunnelingAgent, events.EventEmitter);
-
-TunnelingAgent.prototype.addRequest = function addRequest(req, host, port, localAddress) {
-  var self = this;
-  var options = mergeOptions({request: req}, self.options, toOptions(host, port, localAddress));
-
-  if (self.sockets.length >= this.maxSockets) {
-    // We are over limit so we'll add it to the queue.
-    self.requests.push(options);
-    return;
-  }
-
-  // If we are under maxSockets create a new one.
-  self.createSocket(options, function(socket) {
-    socket.on('free', onFree);
-    socket.on('close', onCloseOrRemove);
-    socket.on('agentRemove', onCloseOrRemove);
-    req.onSocket(socket);
-
-    function onFree() {
-      self.emit('free', socket, options);
-    }
-
-    function onCloseOrRemove(err) {
-      self.removeSocket(socket);
-      socket.removeListener('free', onFree);
-      socket.removeListener('close', onCloseOrRemove);
-      socket.removeListener('agentRemove', onCloseOrRemove);
-    }
-  });
-};
-
-TunnelingAgent.prototype.createSocket = function createSocket(options, cb) {
-  var self = this;
-  var placeholder = {};
-  self.sockets.push(placeholder);
-
-  var connectOptions = mergeOptions({}, self.proxyOptions, {
-    method: 'CONNECT',
-    path: options.host + ':' + options.port,
-    agent: false,
-    headers: {
-      host: options.host + ':' + options.port
-    }
-  });
-  if (options.localAddress) {
-    connectOptions.localAddress = options.localAddress;
-  }
-  if (connectOptions.proxyAuth) {
-    connectOptions.headers = connectOptions.headers || {};
-    connectOptions.headers['Proxy-Authorization'] = 'Basic ' +
-        new Buffer(connectOptions.proxyAuth).toString('base64');
-  }
-
-  debug('making CONNECT request');
-  var connectReq = self.request(connectOptions);
-  connectReq.useChunkedEncodingByDefault = false; // for v0.6
-  connectReq.once('response', onResponse); // for v0.6
-  connectReq.once('upgrade', onUpgrade);   // for v0.6
-  connectReq.once('connect', onConnect);   // for v0.7 or later
-  connectReq.once('error', onError);
-  connectReq.end();
-
-  function onResponse(res) {
-    // Very hacky. This is necessary to avoid http-parser leaks.
-    res.upgrade = true;
-  }
-
-  function onUpgrade(res, socket, head) {
-    // Hacky.
-    process.nextTick(function() {
-      onConnect(res, socket, head);
-    });
-  }
-
-  function onConnect(res, socket, head) {
-    connectReq.removeAllListeners();
-    socket.removeAllListeners();
-
-    if (res.statusCode !== 200) {
-      debug('tunneling socket could not be established, statusCode=%d',
-        res.statusCode);
-      socket.destroy();
-      var error = new Error('tunneling socket could not be established, ' +
-        'statusCode=' + res.statusCode);
-      error.code = 'ECONNRESET';
-      options.request.emit('error', error);
-      self.removeSocket(placeholder);
-      return;
-    }
-    if (head.length > 0) {
-      debug('got illegal response body from proxy');
-      socket.destroy();
-      var error = new Error('got illegal response body from proxy');
-      error.code = 'ECONNRESET';
-      options.request.emit('error', error);
-      self.removeSocket(placeholder);
-      return;
-    }
-    debug('tunneling connection has established');
-    self.sockets[self.sockets.indexOf(placeholder)] = socket;
-    return cb(socket);
-  }
-
-  function onError(cause) {
-    connectReq.removeAllListeners();
-
-    debug('tunneling socket could not be established, cause=%s\n',
-          cause.message, cause.stack);
-    var error = new Error('tunneling socket could not be established, ' +
-                          'cause=' + cause.message);
-    error.code = 'ECONNRESET';
-    options.request.emit('error', error);
-    self.removeSocket(placeholder);
-  }
-};
-
-TunnelingAgent.prototype.removeSocket = function removeSocket(socket) {
-  var pos = this.sockets.indexOf(socket)
-  if (pos === -1) {
-    return;
-  }
-  this.sockets.splice(pos, 1);
-
-  var pending = this.requests.shift();
-  if (pending) {
-    // If we have pending requests and a socket gets closed a new one
-    // needs to be created to take over in the pool for the one that closed.
-    this.createSocket(pending, function(socket) {
-      pending.request.onSocket(socket);
-    });
-  }
-};
-
-function createSecureSocket(options, cb) {
-  var self = this;
-  TunnelingAgent.prototype.createSocket.call(self, options, function(socket) {
-    var hostHeader = options.request.getHeader('host');
-    var tlsOptions = mergeOptions({}, self.options, {
-      socket: socket,
-      servername: hostHeader ? hostHeader.replace(/:.*$/, '') : options.host
-    });
-
-    // 0 is dummy port for v0.6
-    var secureSocket = tls.connect(0, tlsOptions);
-    self.sockets[self.sockets.indexOf(socket)] = secureSocket;
-    cb(secureSocket);
-  });
-}
-
-
-function toOptions(host, port, localAddress) {
-  if (typeof host === 'string') { // since v0.10
-    return {
-      host: host,
-      port: port,
-      localAddress: localAddress
-    };
-  }
-  return host; // for v0.11 or later
-}
-
-function mergeOptions(target) {
-  for (var i = 1, len = arguments.length; i < len; ++i) {
-    var overrides = arguments[i];
-    if (typeof overrides === 'object') {
-      var keys = Object.keys(overrides);
-      for (var j = 0, keyLen = keys.length; j < keyLen; ++j) {
-        var k = keys[j];
-        if (overrides[k] !== undefined) {
-          target[k] = overrides[k];
-        }
-      }
-    }
-  }
-  return target;
-}
-
-
-var debug;
-if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
-  debug = function() {
-    var args = Array.prototype.slice.call(arguments);
-    if (typeof args[0] === 'string') {
-      args[0] = 'TUNNEL: ' + args[0];
-    } else {
-      args.unshift('TUNNEL:');
-    }
-    console.error.apply(console, args);
-  }
-} else {
-  debug = function() {};
-}
-exports.debug = debug; // for test
 
 
 /***/ }),
@@ -92813,7 +92825,7 @@ const Readable = __nccwpck_require__(134)
 const {
   InvalidArgumentError,
   RequestAbortedError
-} = __nccwpck_require__(496)
+} = __nccwpck_require__(495)
 const util = __nccwpck_require__(71)
 const { getResolveErrorBodyCallback } = __nccwpck_require__(193)
 const { AsyncResource } = __nccwpck_require__(434)
@@ -95544,7 +95556,7 @@ module.exports = require("node:zlib");
 /***/ 529:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-module.exports = __nccwpck_require__(499);
+module.exports = __nccwpck_require__(498);
 
 
 /***/ }),
@@ -97626,7 +97638,7 @@ function makeBlobBeginCopyFromURLPollOperation(state) {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(495);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(499);
 /******/ 	module.exports = __webpack_exports__;
 /******/
 /******/ })()
