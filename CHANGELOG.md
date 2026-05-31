@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## v0.9.29 - 2026-05-31
+
+- Post-step save table now includes build-cache + cargo-registry
+  rows in ALL outcomes (#291). #287 patched 4 sites (solo-toolchain,
+  cook-cache layered/legacy, soldr-mini) but build-cache and
+  cargo-registry use a different code path that was missed — they
+  only recorded `saved` / `oversize-skip`, filtering out
+  `tiny-delta-skip` / `exact-hit-skip` / etc. Result: post-step
+  table showed only the cook layer on common runs where build-cache
+  was an exact hit. Now every layer renders regardless of outcome.
+
 ## v0.9.28 - 2026-05-31
 
 - One-line setup-phase summary at end of pre-build (#289, #283
