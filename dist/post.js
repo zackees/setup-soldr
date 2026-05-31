@@ -45211,6 +45211,27 @@ class StatsCollector {
         const footer = `${exactHits}/${restoreOps.length} exact-hit  ${anyHits}/${restoreOps.length} any-hit  total restore: ${fmtMs(totalMs)}`;
         return [header, rule, ...rows, rule, footer].join("\n");
     }
+    /**
+     * One-line aggregate of every recorded save op. Lets operators see at
+     * a glance: how many layers actually saved, total uploaded bytes,
+     * total wall-clock spent in the post step's save path. Complements
+     * the existing per-restore [[summaryText]]. (#269 minimal cut)
+     *
+     * Returns "" when no save ops were recorded (every layer disabled or
+     * exact-hit-skipped) so callers can `if (line) log(line)`.
+     *
+     * Example:
+     *   `cache save totals: layers_saved=2/4 uploaded=1.25 GiB total_ms=24500`
+     */
+    saveSummaryOneLine() {
+        const saveOps = this.ops.filter((o) => o.operation === "save");
+        if (saveOps.length === 0)
+            return "";
+        const saved = saveOps.filter((o) => o.status === "saved");
+        const totalBytes = saved.reduce((s, o) => s + (o.archiveBytes ?? 0), 0);
+        const totalMs = saveOps.reduce((s, o) => s + o.durationMs, 0);
+        return `cache save totals: layers_saved=${saved.length}/${saveOps.length} uploaded=${fmtBytes(totalBytes)} total_ms=${totalMs}`;
+    }
     detailedJson() {
         const restoreOps = this.ops.filter((o) => o.operation === "restore");
         const saveOps = this.ops.filter((o) => o.operation === "save");
@@ -47007,6 +47028,14 @@ async function run() {
         targetCache: targetCacheSave,
     }, passthrough);
     logFinalCacheSummary(finalSummary, log);
+    // #269 minimal cut: one-line save-aggregate so operators can see at a
+    // glance how many layers actually saved + total uploaded + total
+    // post-step wall-clock. Complements the existing "final cache
+    // summary:" line which is per-layer; this is the rolled-up budget
+    // view.
+    const saveTotals = postCollector.saveSummaryOneLine();
+    if (saveTotals)
+        log(saveTotals);
     if (compileCacheStats !== "none") {
         setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);
         // PR4 — surface the two job-wide scalar outputs alongside the
