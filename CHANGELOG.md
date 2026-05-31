@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.9.22 - 2026-05-31
+
+- Pre-compress race probe in the cook-cache save path (#268 Fix A,
+  #274). Before invoking the expensive `--zstd-level 19` compress,
+  probe the GitHub Actions cache for an existing entry at the exact
+  key via `cache.restoreCache(paths, key, [], { lookupOnly: true })`.
+  When a sibling job already won the race, bail out with
+  `status=skipped-race-precheck` — turning the 19-minute waste
+  pattern (zccache PR #480: 19m 5s compress lost the race + silently
+  discarded) into a ~100-1000ms probe. This is the dominant fix for
+  the wall-clock failure mode #272 made visible. Both
+  `saveCookCache` (legacy) and `saveLayeredCookCache` (`soldr save
+  --zstd-level 19`) paths patched. Probe failure is non-fatal —
+  falls through to legacy compress+save; #272's visibility warning
+  remains as the safety net.
+
 ## v0.9.21 - 2026-05-31
 
 - Implicit `cargo-registry-cache=true` pairing when `prebuild-deps: soldr-cook`
