@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.35 - 2026-05-31
+
+- FS-first rustup probe (closes #304, #308). `systemRustupSatisfiesRequest`
+  used to start with `rustup toolchain list` — a child-process spawn
+  observed at ~7s on every warm zccache CI run (real numbers from
+  #302 sub-phase data on v0.9.34). Replaced with a `readdirSync(
+  $RUSTUP_HOME/toolchains)`: same information source rustup itself
+  reads, sub-ms instead of seconds. Fast-paths the channel-absent
+  case to return BEFORE `which("rustup")` too. Components/targets/
+  rolling-release checks still spawn rustup when needed; those are
+  rare on consumer workloads (zccache passes no components or
+  targets). Expected win: ~7s shaved per warm zccache CI job.
+
 ## v0.9.34 - 2026-05-31
 
 - Sub-phase observability for `resolve` / `toolchain` (closes #302,
