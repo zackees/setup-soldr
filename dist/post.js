@@ -46755,7 +46755,17 @@ async function run() {
         if (!(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
             try {
                 const probeStart = Date.now();
-                const existing = await cache.restoreCache([], soloExactKey, [], { lookupOnly: true });
+                // @actions/cache.restoreCache requires a non-empty paths array
+                // even in lookupOnly mode (otherwise: "Path Validation Error:
+                // At least one directory or file path is required"). Pass a
+                // throwaway path; with lookupOnly the directory contents are
+                // never touched.
+                const probePath = path.join(runnerTemp, "setup-soldr-solo-lookup-probe");
+                try {
+                    fs.mkdirSync(probePath, { recursive: true });
+                }
+                catch { }
+                const existing = await cache.restoreCache([probePath], soloExactKey, [], { lookupOnly: true });
                 if (existing) {
                     raceSkipped = true;
                     log(`solo-toolchain-cache: pre-save lookupOnly probe found existing key=${existing} ` +
