@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.24 - 2026-05-31
+
+- Raise `cache-payload-max-bytes` default 2GiB → 6GiB (#279, #280).
+  The 2GiB cap was leaving the build-cache layer chronically inert on
+  medium-large Rust workspaces. zccache CI itself ran 4-5 GiB / skip
+  every run with the previous default — `build-cache: true` enabled the
+  layer, but the save side never fired, wasting the cold-restore lookup
+  + post-step census walk for zero value. 6GiB matches realistic zccache
+  footprint for medium-large workspaces AND sits comfortably below
+  GitHub Actions' ~10 GiB per-entry / per-repo budget. Runaway producers
+  (7+ GiB single save) still trip the guardrail. action.yml + README
+  only — no source/dist changes.
+
 ## v0.9.23 - 2026-05-31
 
 - Default to soldr `0.7.48`, which bundles zccache `1.11.8` carrying the
