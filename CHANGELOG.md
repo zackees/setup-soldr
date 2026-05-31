@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v0.9.34 - 2026-05-31
+
+- Sub-phase observability for `resolve` / `toolchain` (closes #302,
+  #303). Added `timeSubPhase(parent, name, body)` to
+  `src/lib/phase-timing.ts` — records aggregated ms into
+  `SETUP_SOLDR_PHASE_<parent>_SUB_<name>_MS` and propagates errors
+  while still recording the duration. Wired around the high-value
+  awaits inside `resolve` (toolchain-spec, rustup-probe,
+  soldr-version, ws-hash, lock-hash) and `toolchain` (snapshot-pre/
+  base/post, solo-restore, rustup-install). `setupPhaseSummaryOneLine`
+  now appends `{sub=Xs sub=Ys}` (slowest first) for any parent ≥ 1s,
+  so the post-run one-liner attributes time inside the two largest
+  pre-build phases. First real data on the demo workflow surfaced
+  two follow-up issues: #304 (rustup_probe=2.4s warm — cache the
+  answer) and #305 (rustup_install=9.2s warm even when solo_restore
+  was the cache pathway — short-circuit on exact-hit).
+
 ## v0.9.33 - 2026-05-31
 
 - Parallel zstd decompression (closes #295 Fix A, #300). Single-flag
