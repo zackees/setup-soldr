@@ -293,12 +293,17 @@ inputs:
   cache-payload-max-bytes:
     description: >
       Hard limit for tar-backed cache saves, measured before compression.
-      Default 2GiB prevents runaway multi-GiB zccache artifact uploads in
-      normal CI. Set to 0 to disable the limit. When exceeded,
-      cache-payload-oversize-action decides whether setup-soldr skips the
-      save or fails the post step.
+      Default 6GiB matches the realistic zccache footprint for a
+      medium-large Rust workspace (zccache CI itself was running at
+      4-5 GiB and chronically hitting the previous 2GiB cap →
+      build-cache became enabled-but-inert, see setup-soldr#279). Set
+      to 0 to disable the limit. When exceeded,
+      cache-payload-oversize-action decides whether setup-soldr skips
+      the save or fails the post step. The GitHub Actions Cache
+      service caps individual entries at ~10 GiB and per-repo total
+      at 10 GiB; 6GiB sits comfortably below both.
     required: false
-    default: "2GiB"
+    default: "6GiB"
   cache-payload-oversize-action:
     description: >
       Behavior when cache-payload-max-bytes is exceeded. "skip" logs a warning
