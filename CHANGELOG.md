@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.9.38 - 2026-05-31
+
+- Fix #313/#314 lookupOnly probe ALWAYS erroring in production
+  (closes #317). The probe in v0.9.37 was passing an empty paths
+  array to `cache.restoreCache(..., { lookupOnly: true })`, which
+  the @actions/cache library rejects with `Path Validation Error:
+  At least one directory or file path is required`. Result: the
+  race-precheck-skipped path NEVER fired in v0.9.37, so the
+  intended ~3-4 min/cold-cycle savings were not delivered. Fixed
+  by passing a throwaway runner-temp subdir; with lookupOnly the
+  directory contents are never touched.
+
 ## v0.9.37 - 2026-05-31
 
 - Pre-save lookupOnly probe for solo-toolchain-cache (closes #313,
