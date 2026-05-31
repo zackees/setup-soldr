@@ -239,6 +239,35 @@ async function rustupInstalledNames(
   return out;
 }
 
+/**
+ * #304: read `$RUSTUP_HOME/toolchains/` directly to discover installed
+ * toolchains. Skips the `rustup toolchain list` subprocess which on
+ * hosted runners costs ~6-7s per call (observed in zccache CI). The
+ * answer is the same — rustup itself reads this directory to build its
+ * own list. Returns an empty set when the directory doesn't exist
+ * (matches the "rustup not initialized" semantics).
+ *
+ * Naming: rustup stores toolchains as `<spec>-<target-triple>`
+ * (e.g. `1.94.1-x86_64-unknown-linux-gnu` or `stable-aarch64-apple-darwin`).
+ * Returns the directory names verbatim so `toolchainListContains` works
+ * unchanged against them.
+ */
+function fsInstalledToolchains(rustupHome: string): Set<string> {
+  const toolchainsDir = path.join(rustupHome, "toolchains");
+  try {
+    const entries = fs.readdirSync(toolchainsDir, { withFileTypes: true });
+    const out = new Set<string>();
+    for (const entry of entries) {
+      if (entry.isDirectory() || entry.isSymbolicLink()) {
+        out.add(entry.name);
+      }
+    }
+    return out;
+  } catch {
+    return new Set();
+  }
+}
+
 function toolchainListContains(installed: Set<string>, channel: string): boolean {
   for (const name of installed) {
     if (name === channel || name.startsWith(`${channel}-`)) return true;
@@ -295,6 +324,23 @@ export async function systemRustupSatisfiesRequest(opts: {
   const installedNamesFn = deps?.rustupInstalledNames ?? rustupInstalledNames;
   const installedReleaseFn = deps?.installedToolchainRelease ?? installedToolchainRelease;
 
+  const channel = toolchain.channel.trim() || "stable";
+
+  // #304: fast-path. Check $RUSTUP_HOME/toolchains/ directly before
+  // shelling out to `rustup`. On hosted runners the `rustup toolchain
+  // list` spawn alone has been observed at ~7s on zccache CI; the same
+  // information is in the filesystem and a `readdirSync` is sub-ms.
+  // When the FS check rules the runner OUT (channel not installed) we
+  // can return false immediately and avoid `which("rustup")` too,
+  // shaving the entire probe to ~0s.
+  const fsToolchains = fsInstalledToolchains(rustupHome);
+  if (fsToolchains.size > 0 && !toolchainListContains(fsToolchains, channel)) {
+    logger?.log(
+      `Runner rustup home ${rustupHome} does not already contain toolchain ${channel}; using managed RUSTUP_HOME under the setup cache root`,
+    );
+    return false;
+  }
+
   const rustup = await which("rustup");
   if (rustup === null) {
     logger?.log("rustup not found on PATH; using managed RUSTUP_HOME under the setup cache root");
@@ -302,14 +348,18 @@ export async function systemRustupSatisfiesRequest(opts: {
   }
 
   const probeEnv = makeProbeEnv(env, cargoHome, rustupHome);
-  const channel = toolchain.channel.trim() || "stable";
 
-  const installedToolchains = await installedNamesFn(rustup, ["toolchain", "list"], probeEnv);
-  if (!toolchainListContains(installedToolchains, channel)) {
-    logger?.log(
-      `Runner rustup home ${rustupHome} does not already contain toolchain ${channel}; using managed RUSTUP_HOME under the setup cache root`,
-    );
-    return false;
+  // When the FS readdir came back empty (uninitialized rustup home, or
+  // a host where the toolchains live somewhere atypical), fall through
+  // to the rustup spawn so we don't regress edge cases.
+  if (fsToolchains.size === 0) {
+    const installedToolchains = await installedNamesFn(rustup, ["toolchain", "list"], probeEnv);
+    if (!toolchainListContains(installedToolchains, channel)) {
+      logger?.log(
+        `Runner rustup home ${rustupHome} does not already contain toolchain ${channel}; using managed RUSTUP_HOME under the setup cache root`,
+      );
+      return false;
+    }
   }
 
   const expectedRelease = toolchain.cacheChannel.trim();
