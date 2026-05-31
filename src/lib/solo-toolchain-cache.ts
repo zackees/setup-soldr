@@ -28,6 +28,22 @@ import type { SnapshotDiff, SnapshotEntry } from "./toolchain-snapshot.js";
 const ROOT_TAGS = ["rustup-toolchains", "cargo-bin"] as const;
 export type RootTag = (typeof ROOT_TAGS)[number];
 
+/**
+ * Canonical archive path passed to `@actions/cache.saveCache` and
+ * `restoreCache`. **MUST be identical on both sides.**
+ *
+ * `@actions/cache` derives a cache "version" from a SHA of the paths
+ * array; if save and restore pass different paths, the version differs
+ * and restore returns MISS even when the key matches an existing
+ * entry. Pre-#316 bug: save used `${stagingDir}.tar.zst` and restore
+ * used `<stagingDir>/solo-toolchain.tar.zst` — two different paths
+ * → permanent MISS on every warm run. This helper guarantees both
+ * sides agree.
+ */
+export function soloCacheArchivePath(runnerTemp: string): string {
+  return path.join(runnerTemp, "setup-soldr-solo-cache.tar.zst");
+}
+
 export interface RootMap {
   /** Absolute path to $RUSTUP_HOME/toolchains/ on disk. */
   "rustup-toolchains": string;
@@ -254,8 +270,16 @@ export async function saveSoloCache(opts: {
   level: string;
   debug: boolean;
   log: (msg: string) => void;
+  /**
+   * Canonical archive path that BOTH save and restore must pass to
+   * @actions/cache (otherwise the cache "version" derived from the
+   * paths array differs and restore returns MISS — see #316).
+   * Defaults to soloCacheArchivePath(dirname(stagingDir)).
+   */
+  cacheArchivePath?: string;
 }): Promise<SoloSaveResult> {
   const { stagingDir, key, level, debug, log } = opts;
+  const cacheArchive = opts.cacheArchivePath ?? soloCacheArchivePath(path.dirname(stagingDir));
   if (!fs.existsSync(stagingDir)) {
     return { status: "failed", error: `staging dir missing: ${stagingDir}` };
   }
@@ -281,6 +305,23 @@ export async function saveSoloCache(opts: {
   if (!archivePath) {
     return { status: "failed", error: "compressCache returned null archive (zstd unavailable?)" };
   }
+  // #316: rename the compress output to the canonical archive path
+  // BEFORE passing to cache.saveCache. @actions/cache hashes the paths
+  // array into the cache "version" — save+restore must agree on the
+  // path or restore returns MISS even when the key matches.
+  if (path.resolve(archivePath) !== path.resolve(cacheArchive)) {
+    try {
+      await fsp.rm(cacheArchive, { force: true });
+      await fsp.rename(archivePath, cacheArchive);
+      archivePath = cacheArchive;
+    } catch (err) {
+      return {
+        status: "failed",
+        error: `failed to rename archive ${archivePath} -> ${cacheArchive}: ${err instanceof Error ? err.message : String(err)}`,
+        archivePath,
+      };
+    }
+  }
   // #313 followup: post-compress, pre-upload probe. When N parallel
   // jobs in a workflow all save the same key, the pre-compress probe
   // (post.ts) can't catch the race — all N see no cache. After
@@ -289,9 +330,12 @@ export async function saveSoloCache(opts: {
   // requires a non-empty paths array even in lookupOnly mode, hence
   // the throwaway directory.
   try {
-    const probeDir = path.join(path.dirname(archivePath), ".solo-lookup-probe");
-    await ensureDir(probeDir);
-    const existing = await cache.restoreCache([probeDir], key, [], { lookupOnly: true });
+    // #316: use the canonical archive path for the probe too. The
+    // probe MUST hash the same paths as save+restore so the
+    // @actions/cache cache "version" matches; otherwise the probe
+    // sees MISS for entries that the actual restore would also miss
+    // for the wrong reason (path-version mismatch, not key absence).
+    const existing = await cache.restoreCache([cacheArchive], key, [], { lookupOnly: true });
     if (existing) {
       log(`solo-toolchain-cache: post-compress lookupOnly probe found existing key=${existing} — skipping upload (#313)`);
       return {
@@ -338,9 +382,17 @@ export async function restoreSoloCache(opts: {
   rootMap: RootMap;
   stagingDir: string;
   log: (msg: string) => void;
+  /**
+   * Canonical archive path — must match the one saveSoloCache used,
+   * or @actions/cache returns MISS due to version-from-paths mismatch
+   * (see #316). Defaults to soloCacheArchivePath(dirname(stagingDir)).
+   */
+  cacheArchivePath?: string;
 }): Promise<SoloRestoreResult> {
   const { keys, rootMap, stagingDir, log } = opts;
-  const archivePath = path.join(stagingDir, "solo-toolchain.tar.zst");
+  // #316: use the canonical archive path that saveSoloCache also uses.
+  // Different paths → different cache version → permanent MISS.
+  const archivePath = opts.cacheArchivePath ?? soloCacheArchivePath(path.dirname(stagingDir));
   await ensureDir(path.dirname(archivePath));
   await fsp.rm(archivePath, { force: true });
 

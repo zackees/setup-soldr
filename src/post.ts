@@ -13,7 +13,12 @@ import { spawnSync } from "node:child_process";
 import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { compressCache, type CachePayloadProfile } from "./lib/cache-compress.js";
-import { saveSoloCache, stageDiffForSave, type RootMap as SoloRootMap } from "./lib/solo-toolchain-cache.js";
+import {
+  saveSoloCache,
+  soloCacheArchivePath,
+  stageDiffForSave,
+  type RootMap as SoloRootMap,
+} from "./lib/solo-toolchain-cache.js";
 import type { SnapshotDiff } from "./lib/toolchain-snapshot.js";
 import { saveCookCache, saveLayeredCookCache } from "./lib/cook-cache.js";
 import { saveMiniCache } from "./lib/soldr-mini-cache.js";
@@ -1588,15 +1593,14 @@ export async function run(): Promise<void> {
     if (!(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
       try {
         const probeStart = Date.now();
-        // @actions/cache.restoreCache requires a non-empty paths array
-        // even in lookupOnly mode (otherwise: "Path Validation Error:
-        // At least one directory or file path is required"). Pass a
-        // throwaway path; with lookupOnly the directory contents are
-        // never touched.
-        const probePath = path.join(runnerTemp, "setup-soldr-solo-lookup-probe");
-        try { fs.mkdirSync(probePath, { recursive: true }); } catch {}
+        // #316: probe MUST use the same paths array that the actual
+        // save/restore use — @actions/cache hashes paths into the
+        // cache version. The canonical archive path is provided by
+        // soloCacheArchivePath. The file does not need to exist for
+        // lookupOnly (the library only hashes the path string).
+        const probeArchivePath = soloCacheArchivePath(runnerTemp);
         const existing = await cache.restoreCache(
-          [probePath],
+          [probeArchivePath],
           soloExactKey,
           [],
           { lookupOnly: true },
