@@ -40910,19 +40910,27 @@ async function decompressCache(opts) {
     else if (magic === "zstd") {
         const zstdPath = await io.which("zstd", false);
         const longFlag = typeof longWindow === "number" ? [`--long=${longWindow}`] : [];
+        // #295 Fix A: pass `-T0` so zstd uses all available CPU cores for
+        // decompression. On a 4-vCPU hosted Linux runner this typically
+        // drops a multi-GiB build-cache restore from ~17s (single-threaded
+        // at ~60 MB/s) to ~5-7s (~200+ MB/s). `-T0` is supported by all
+        // zstd ≥ 1.3.2 (Aug 2017) and is a no-op on single-core hosts —
+        // safe to add unconditionally. Bench reference:
+        // https://facebook.github.io/zstd/#benchmarks
+        const threadsFlag = ["-T0"];
         if (!zstdPath) {
             if (debug)
-                log(`[debug] decompress cmd (fallback): tar --use-compress-program "zstd -d${longFlag.length ? ` --long=${longWindow}` : ""}" -xf ${archivePath} -C ${extractRoot}`);
+                log(`[debug] decompress cmd (fallback): tar --use-compress-program "zstd -d -T0${longFlag.length ? ` --long=${longWindow}` : ""}" -xf ${archivePath} -C ${extractRoot}`);
             // Fall back: route the decompression through tar's --use-compress-program
             // so we can pass through --long when the archive needs it. tar --zstd
             // doesn't accept extra zstd flags directly.
-            const program = longFlag.length ? `zstd -d --long=${longWindow}` : "zstd -d";
+            const program = longFlag.length ? `zstd -d -T0 --long=${longWindow}` : "zstd -d -T0";
             await exec.exec("tar", ["--use-compress-program", program, "-xf", archivePath, "-C", extractRoot]);
         }
         else {
             if (debug)
-                log(`[debug] decompress cmd: zstd -d ${longFlag.join(" ")} -c ${archivePath} | tar -xf - -C ${extractRoot}`);
-            await runPipe([zstdPath, ["-d", ...longFlag, "-c", archivePath]], ["tar", ["-xf", "-", "-C", extractRoot]]);
+                log(`[debug] decompress cmd: zstd -d -T0 ${longFlag.join(" ")} -c ${archivePath} | tar -xf - -C ${extractRoot}`);
+            await runPipe([zstdPath, ["-d", ...threadsFlag, ...longFlag, "-c", archivePath]], ["tar", ["-xf", "-", "-C", extractRoot]]);
         }
     }
     else {
@@ -42413,14 +42421,32 @@ async function restoreOneLayer(label, key, archivePath, restoreKeys, log) {
     return { hit, matchedKey: matched, archivePath, archiveBytes: bytes };
 }
 async function restoreLayeredCookCacheArchives(opts) {
-    const base = await restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log);
+    // #295: parallel-restore base + delta instead of the previous serial
+    // `await base; if (base.matchedKey) await delta` shape. The delta
+    // key is independently computed (includes everything the base key
+    // does + source/git fingerprint) so the two restores have no data
+    // dependency. Serializing them spent ~11s wall clock per warm run
+    // for zero correctness benefit — the delta restore on a base-MISS
+    // was always going to be skipped on the cook side anyway (cook
+    // never reads a delta archive when base wasn't restored). Cost when
+    // base misses: one extra HEAD round-trip, paid in parallel anyway
+    // and bounded by the larger restore. Saves up to ~11s in the
+    // typical warm-cache case (zackees/setup-soldr#295 measurement on
+    // Integration v0.9.30 rerun).
+    const [base, delta] = await Promise.all([
+        restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log),
+        restoreOneLayer("cook-cache-delta", opts.deltaKey, opts.deltaArchivePath, opts.deltaRestoreKeys ?? [], opts.log),
+    ]);
+    // Preserve the pre-#295 contract: when base missed, the delta is
+    // semantically invalid even if it happened to restore (no base to
+    // overlay onto). Discard the delta archive in that case so callers
+    // can rely on `base.matchedKey === "" ⇒ delta.hit === false`.
     if (!base.matchedKey) {
         return {
             base,
             delta: { hit: false, matchedKey: "", archivePath: opts.deltaArchivePath, archiveBytes: 0 },
         };
     }
-    const delta = await restoreOneLayer("cook-cache-delta", opts.deltaKey, opts.deltaArchivePath, opts.deltaRestoreKeys ?? [], opts.log);
     return { base, delta };
 }
 async function runSoldrJson(soldrBinary, args, cwd, log) {
