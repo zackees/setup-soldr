@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v0.9.26 - 2026-05-31
+
+- Per-layer cache-save table alongside the one-line aggregate
+  (closes #269, #285). Mirrors the restore-side `summaryText()`
+  shape: one row per save op with label, status, archive bytes,
+  file count, wall-clock. Footer rolls up the totals.
+
+  ```
+  cache                 save status              archive    files     time
+  ──────────────────────────────────────────────────────────────────────────
+  build-cache           saved                     1.19 GB   24284    15.6s
+  cargo-registry-cache  saved                    56.1 MB     3142     6.4s
+  cook-cache-base       skipped-race-precheck     0 B          -      0.1s
+  soldr-mini-cache      exact-hit-skip            0 B          -      0.0s
+  ──────────────────────────────────────────────────────────────────────────
+  2/4 saved  total upload: 1.25 GB  total wall: 22.1s
+  ```
+
+  Logged in sequence with the v0.9.25 one-liner — table first
+  (detail), one-liner second (skim-readable). Empty when zero save
+  ops recorded. Pure-formatting addition; no behavior change.
+
 ## v0.9.25 - 2026-05-31
 
 - One-line cache-save aggregate at end of post step (#269 minimal cut,
