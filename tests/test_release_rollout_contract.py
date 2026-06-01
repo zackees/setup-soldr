@@ -31,7 +31,13 @@ def test_rollout_contract_workflow_builds_and_tests_the_js_action() -> None:
     assert "npm run typecheck" in workflow
     assert "npm test" in workflow
     assert "npm run build" in workflow
-    assert "git diff --exit-code -- dist/" in workflow
+    # #306: verify now checks entry-point bundles only (not the whole
+    # dist/), because side chunks have non-deterministic webpack-internal
+    # module ordering across hosts. Sanity check ensures referenced
+    # chunk files exist on disk.
+    assert "git diff --exit-code -- " in workflow
+    assert "dist/main.js" in workflow
+    assert "dist/post.js" in workflow
 
 
 def test_rollout_contract_workflow_runs_remaining_python_contract_tests() -> None:
