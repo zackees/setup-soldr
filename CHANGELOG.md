@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## v0.9.46 - 2026-06-01
+
+- **BEHAVIOR CHANGE**: solo-toolchain-cache now defaults to `"true"`
+  (closes #343, #344). Feature is validated end-to-end across 6
+  consumer repos × 3 platforms × ~25 ticks of iteration. Consumers
+  that don't explicitly set the input now get the warm-CI win for
+  free: solo_restore ~3-5s + rustup_install SKIPPED = ~8-11s saved
+  per warm job. Consumers that need opt-out (e.g., workflows that
+  install components AFTER setup-soldr — see #334 for the rustfmt
+  example) should pass `solo-toolchain-cache: false` explicitly OR
+  declare components in their `rust-toolchain.toml`. Also includes
+  the dist-verify relaxation (#341/#342) which fixed the
+  ~10-tick-long "every PR fails verify" issue. action.yml-only
+  change; dist/ unchanged.
+
 ## v0.9.45 - 2026-06-01
 
 - Diagnostic counters for solo-cache hardlink fallbacks (closes
