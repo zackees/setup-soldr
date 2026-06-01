@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v0.9.47 - 2026-06-01
+
+- New `cache-eviction-policy` input (closes #347, #348). Bakes
+  repo-level Actions Cache hygiene into setup-soldr's post-step so
+  consumers don't need per-repo cleanup workflows. Foundation
+  prefixes (`solo-toolchain-v`, `soldr-mini-`, `setup-soldr-v`,
+  `setup-soldr-cargoregistry-v`) are NEVER evicted — they deliver
+  the warm-CI wins we need to protect. Per-commit/per-lockfile
+  entries (cook-delta, build-cache, test/bench artifacts) are
+  evictable oldest-first when usage exceeds threshold. Values:
+  `disabled` (default), `protect-foundations` (trigger 8 GB,
+  target 7 GB), `aggressive` (trigger 6 GB, target 5 GB). Needs
+  `actions: write` permission on `GITHUB_TOKEN`; gracefully
+  no-ops on 401/403/404. Best-effort throughout — never fails the
+  action. Replaces the per-consumer `cache-cleanup.yml` workflow
+  pattern.
+
 ## v0.9.46 - 2026-06-01
 
 - **BEHAVIOR CHANGE**: solo-toolchain-cache now defaults to `"true"`
