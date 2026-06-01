@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.9.43 - 2026-05-31
+
+- Use hardlinks instead of copyFile in solo-cache apply step
+  (closes #331, #332). After the solo-cache series finally
+  delivered HIT in v0.9.42, demo workflow data showed
+  `toolchain=9.4s {solo_restore=9.1s rustup_install=0.2s}` —
+  the install was correctly skipped, but solo_restore itself
+  was dominated by 153 sequential `fsp.copyFile` calls over
+  ~580 MB of toolchain content. Hardlinks via `fsp.link` are
+  constant-time on hosted runners where staging and live
+  RUSTUP_HOME share a filesystem. Expected drop: ~5s per warm
+  job. Combined with #324: ~13s/warm-job total ≈ ~65s/CI cycle
+  on 5-job workflows.
+
 ## v0.9.42 - 2026-05-31
 
 - Add solo-cache schema-version to cache key (closes #328, #329).
