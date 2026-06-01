@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   evictIfOverBudget,
   thresholdsForPolicy,
+  ageFloorForOvershoot,
   FOUNDATION_PREFIXES,
   type CacheEntry,
   type EvictDeps,
@@ -111,10 +112,9 @@ test("evicts oldest non-foundation entries until under target", async () => {
 });
 
 test("age floor protects fresh entries from self-eviction (#352)", async () => {
-  // All non-foundation entries fresh (< 6h). Even though usage is over
-  // trigger, NO eviction should happen because the age floor protects
-  // them. This is the fix for #352 — protect this run's just-saved
-  // cook/build caches from being deleted before the next CI cycle.
+  // All non-foundation entries fresh (< 6h). Usage at 10 GB is only
+  // ~0.5 GB over trigger (9.5 GB), so the graduated floor stays at 6h
+  // and NO eviction should happen — protecting this run's saves.
   const caches = [
     entry(201, "cook-base-v2-foo", 2000, 0.1), // age 6 minutes
     entry(202, "setup-soldr-buildcache-v2-bar", 300, 0.1),
@@ -131,6 +131,57 @@ test("age floor protects fresh entries from self-eviction (#352)", async () => {
   assert.ok(
     log.some((l) => l.includes("protected") && l.includes("younger than 6h")),
     `expected protected-by-age log line, got: ${log.join("\n")}`,
+  );
+});
+
+test("ageFloorForOvershoot tiers (#356)", () => {
+  const t = { triggerGb: 9.5, targetGb: 9, minAgeHoursBeforeDelete: 6 };
+  // small overshoot (<1 GB over) -> baseline 6h
+  assert.equal(ageFloorForOvershoot(9.5, t), 6);
+  assert.equal(ageFloorForOvershoot(10.4, t), 6);
+  // moderate (1–3 GB over) -> 2h
+  assert.equal(ageFloorForOvershoot(10.6, t), 2);
+  assert.equal(ageFloorForOvershoot(12.5, t), 2);
+  // danger (>3 GB over) -> 0.5h
+  assert.equal(ageFloorForOvershoot(12.6, t), 0.5);
+  assert.equal(ageFloorForOvershoot(13.6, t), 0.5);
+  // aggressive policy keeps baseline of 2h at small overshoot
+  const a = { triggerGb: 7, targetGb: 6, minAgeHoursBeforeDelete: 2 };
+  assert.equal(ageFloorForOvershoot(7.5, a), 2);
+  // moderate tier caps at min(2, baseline) — for aggressive baseline=2, tier stays 2h
+  assert.equal(ageFloorForOvershoot(9.5, a), 2);
+  // danger zone for aggressive triggers at 10 GB (>3 over 7 GB trigger)
+  assert.equal(ageFloorForOvershoot(10.5, a), 0.5);
+});
+
+test("graduated age floor evicts in danger zone (#356)", async () => {
+  // Reproduce zccache 13.63 GB observation: trigger 9.5 GB, usage
+  // 13.63 GB (overshoot 4.13 GB, danger zone). All entries are < 6h
+  // but > 0.5h. The graduated floor drops to 0.5h, so most should
+  // become evictable and we should free space toward the 9 GB target.
+  const caches = [
+    entry(301, "cook-delta-v2-foo", 2000, 5), // 5h old — beats 0.5h floor
+    entry(302, "setup-soldr-buildcache-v2-bar", 1500, 4),
+    entry(303, "cook-delta-v2-baz", 1500, 3),
+    entry(304, "solo-toolchain-v2-foo", 170, 1), // foundation, protected anyway
+    entry(305, "cook-delta-v2-fresh", 200, 0.1), // 6 min — still under 0.5h floor
+  ];
+  const { deps, deleted, log } = makeDeps({ caches, usageGb: 13.63 });
+  const result = await evictIfOverBudget("protect-foundations", deps);
+  assert.equal(result.fired, true);
+  // Should delete ≥ 1 entry (graduated floor active) — at usage 13.63
+  // GB target 9 GB, need to free 4.63 GB. Each large entry is 1.5-2 GB.
+  // Expect 301, 302, 303 evicted (5+4+3h, oldest first).
+  assert.ok(result.deletedCount! >= 2, `expected ≥ 2 deletes, got ${result.deletedCount}`);
+  assert.deepEqual(deleted.slice(0, 3).sort(), [301, 302, 303]);
+  // 305 is too fresh (6 min < 0.5h floor) — should NOT be deleted.
+  assert.ok(!deleted.includes(305), "entry 305 (6 min old) should be protected by 0.5h floor");
+  // 304 is foundation — should NOT be deleted.
+  assert.ok(!deleted.includes(304), "entry 304 (solo-toolchain) is foundation, protected");
+  // log mentions graduated floor activation.
+  assert.ok(
+    log.some((l) => l.includes("graduated age floor active")),
+    `expected graduated-floor log, got: ${log.join("\n")}`,
   );
 });
 

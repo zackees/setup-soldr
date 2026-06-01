@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v0.9.50 - 2026-06-01
+
+- Graduated age floor for `cache-eviction-policy` (closes #356).
+  v0.9.48's fixed 6h age floor became a no-op under heavy CI
+  load — observed on zccache MSRV at 13.63 GB usage where ALL
+  171 evictable entries were < 6h, leaving GitHub's own
+  non-deterministic LRU in charge (which can evict foundation
+  prefixes arbitrarily, defeating `protect-foundations`).
+  New tier table relaxes the floor as overshoot grows:
+  - small overshoot (<1 GB over trigger): baseline 6h —
+    unchanged (#352 fix preserved).
+  - moderate (1–3 GB over): 2h — protect only the current CI
+    wave's saves.
+  - danger (>3 GB over): 0.5h — only this run's just-saved
+    entries protected; controlled eviction wins the race
+    against GitHub's LRU.
+  Post-step log emits `graduated age floor active — overshoot=
+  X GB, floor=Y h` when relaxed. `aggressive` policy gets the
+  same tiering (baseline 2h, danger 0.5h).
+
 ## v0.9.49 - 2026-06-01
 
 - Raise `cache-eviction-policy` thresholds to better utilize
