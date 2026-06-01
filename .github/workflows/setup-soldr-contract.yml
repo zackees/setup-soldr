@@ -70,13 +70,44 @@ jobs:
       - name: Build dist bundles
         run: npm run build
 
-      - name: Verify dist/ is up to date
+      - name: Verify dist/ entrypoints are up to date
         run: |
           set -euo pipefail
-          if ! git diff --exit-code -- dist/; then
-            echo "::error::dist/ is out of date. Run 'npm run build' and commit the result." >&2
+          # #306: verify ONLY the entry-point bundles (dist/main.js,
+          # dist/post.js, cleanup/dist/index.js). Side chunks
+          # (dist/<id>.index.js) are intentionally not byte-verified
+          # — webpack module-discovery ordering inside a chunk is
+          # non-deterministic across host filesystems (Docker mounted
+          # volumes vs. CI runner ext4 vs. NTFS), making the chunk
+          # files byte-different even with identical inputs.
+          #
+          # The entry-point bundles ARE normalized deterministically
+          # by scripts/bundle-entrypoint.mjs (CRLF→LF, sortWebpackModules
+          # when no chunks), so verifying them catches the case
+          # "maintainer forgot to run npm run build."
+          #
+          # Maintainer guidance: when modifying src/, ALWAYS run
+          # `npm run build` and commit BOTH the entry-point bundles
+          # AND the side chunks together. The side chunks won't be
+          # verified by CI but MUST be present for the action to load.
+          PATHS_TO_VERIFY=(
+            "dist/main.js"
+            "dist/post.js"
+            "cleanup/dist/index.js"
+          )
+          if ! git diff --exit-code -- "${PATHS_TO_VERIFY[@]}"; then
+            echo "::error::Entry-point dist/ is out of date. Run 'npm run build' and commit dist/main.js, dist/post.js, cleanup/dist/index.js (and any side chunks dist/<id>.index.js)." >&2
             exit 1
           fi
+          # Sanity check: side chunks referenced by main bundles must exist on disk.
+          for f in dist/main.js dist/post.js; do
+            for chunk_id in $(grep -oE 'require\("\./([0-9]+)\.index\.js"' "$f" | grep -oE '[0-9]+' | sort -u); do
+              if [ ! -f "dist/${chunk_id}.index.js" ]; then
+                echo "::error::dist/main.js references chunk ${chunk_id}.index.js but the file is missing from dist/" >&2
+                exit 1
+              fi
+            done
+          done
 
   contract-tests:
     name: Contract Tests
