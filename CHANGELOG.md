@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.49 - 2026-06-01
+
+- Raise `cache-eviction-policy` thresholds to better utilize
+  GitHub's 10 GB repo cache cap. `protect-foundations` was firing
+  at 9 GB / target 8 GB, leaving ~2 GB unused. In practice GitHub
+  allows transient overshoot to ~13.6 GB before its own
+  non-deterministic LRU kicks in. New values: trigger 9.5 GB,
+  target 9.0 GB — ~0.5 GB headroom for one in-flight upload to
+  land safely, 0.5 GB hysteresis to prevent thrash. Our
+  controlled eviction still fires before GitHub's, protecting
+  foundation prefixes from arbitrary LRU. `aggressive` (7/6 GB)
+  and the 6h/2h age floor from v0.9.48 are unchanged.
+
 ## v0.9.48 - 2026-06-01
 
 - **CRITICAL fix** for cache-eviction-policy self-eviction

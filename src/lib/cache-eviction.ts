@@ -66,10 +66,14 @@ export function thresholdsForPolicy(policy: CacheEvictionPolicy): CacheEvictionT
       return null;
     case "protect-foundations":
       // GitHub's standard repo cache cap is 10 GB; brief overshoot
-      // is tolerated before LRU eviction kicks in. 9 GB trigger /
-      // 8 GB target gives 2 GB headroom + 1 GB hysteresis without
-      // firing prematurely on a healthy repo. Was 8/7 — too eager.
-      return { triggerGb: 9, targetGb: 8, minAgeHoursBeforeDelete: 6 };
+      // is tolerated before LRU eviction kicks in. 9.5 GB trigger /
+      // 9.0 GB target leaves ~0.5 GB headroom (enough for one
+      // in-flight upload to land) and 0.5 GB hysteresis. Was 9/8 —
+      // ~2 GB was being left unused on the table. Cap is observed
+      // at ~13.6 GB before GitHub's own LRU kicks in, so we still
+      // want our controlled eviction to fire first to protect
+      // foundation prefixes from GitHub's non-deterministic LRU.
+      return { triggerGb: 9.5, targetGb: 9, minAgeHoursBeforeDelete: 6 };
     case "aggressive":
       // Lower thresholds + shorter age floor (2h) for repos that
       // can't tolerate overshoot or want tighter management.
