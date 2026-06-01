@@ -46754,6 +46754,7 @@ const core = __importStar(__nccwpck_require__(37484));
 const exec = __importStar(__nccwpck_require__(95236));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
+const log_utils_js_1 = __nccwpck_require__(28129);
 const COOK_KEY_PREFIX = "cook";
 const COOK_BASE_KEY_PREFIX = "cook-base-v2";
 const COOK_DELTA_KEY_PREFIX = "cook-delta-v2";
@@ -46894,9 +46895,25 @@ async function runCook(opts) {
     const t0 = Date.now();
     let exitCode = 0;
     try {
+        // #359: prepend MM:SS timestamps to each line of cook output (cargo's
+        // Compiling/Downloading lines) so forensic analysis of slow cook
+        // phases can pinpoint the bottleneck crate from the log alone.
+        // ANSI color escape sequences in cargo's output pass through
+        // unchanged — we only modify the line prefix, not the line body.
+        // Color forcing (CARGO_TERM_COLOR/FORCE_COLOR/CLICOLOR_FORCE) is
+        // already injected by resolve-setup.ts when timestamps are enabled.
         exitCode = await exec.exec(soldrBinary, ["cook", ...flags], {
             cwd: projectRoot,
             ignoreReturnCode: true,
+            silent: true,
+            listeners: {
+                stdline: (line) => {
+                    process.stdout.write(`${(0, log_utils_js_1.formatLogLine)(process.env, line)}\n`);
+                },
+                errline: (line) => {
+                    process.stderr.write(`${(0, log_utils_js_1.formatLogLine)(process.env, line)}\n`);
+                },
+            },
         });
     }
     catch (err) {
@@ -47231,8 +47248,10 @@ async function saveCookCache(opts) {
         return { status: "failed", error: "compressCache returned null archive (zstd unavailable?)" };
     }
     const compressMs = Date.now() - compressStart;
+    const uploadStart = Date.now();
     try {
         const id = await cache.saveCache([archivePath], exactKey);
+        const uploadMs = Date.now() - uploadStart;
         if (id <= 0) {
             // @actions/cache returns -1 when reserveCache fails — typically
             // because the key already exists (parallel job got there first)
@@ -47264,6 +47283,8 @@ async function saveCookCache(opts) {
                 inflatedBytes,
                 fileCount,
                 archivePath,
+                compressMs,
+                uploadMs,
             };
         }
         log(`cook-cache: saved id=${id} key=${exactKey} archive=${archivePath}`);
@@ -47274,6 +47295,8 @@ async function saveCookCache(opts) {
             inflatedBytes,
             fileCount,
             archivePath,
+            compressMs,
+            uploadMs,
         };
     }
     catch (err) {
@@ -47361,8 +47384,10 @@ async function saveLayeredCookCache(opts) {
     const compressMs = Date.now() - compressStart;
     const report = saveReport(run.payload);
     const archiveBytes = report.archiveBytes ?? await archiveSize(archivePath);
+    const uploadStart = Date.now();
     try {
         const id = await cache.saveCache([archivePath], exactKey);
+        const uploadMs = Date.now() - uploadStart;
         if (id <= 0) {
             log(`cook-cache-${layer}: save did not reserve a new entry (id=${id}) ` +
                 `for key=${exactKey}`);
@@ -47389,6 +47414,8 @@ async function saveLayeredCookCache(opts) {
                 sourceFiles: report.sourceFiles ?? undefined,
                 deletedCacheFiles: report.deletedCacheFiles ?? undefined,
                 archivePath,
+                compressMs,
+                uploadMs,
             };
         }
         log(`cook-cache-${layer}: saved id=${id} key=${exactKey} archive=${archivePath}`);
@@ -47400,6 +47427,8 @@ async function saveLayeredCookCache(opts) {
             sourceFiles: report.sourceFiles ?? undefined,
             deletedCacheFiles: report.deletedCacheFiles ?? undefined,
             archivePath,
+            compressMs,
+            uploadMs,
         };
     }
     catch (err) {
@@ -49968,29 +49997,71 @@ class StatsCollector {
         const saveOps = this.ops.filter((o) => o.operation === "save");
         if (saveOps.length === 0)
             return "";
-        const CW = { cache: 20, status: 18, archive: 10, files: 8, time: 7 };
+        // #360: split timing — when ANY save op reports compress+upload
+        // separately, render the wider table with split columns so
+        // operators can see which side of the wall-clock is dominant
+        // (CPU-bound compress vs bandwidth-bound upload). Otherwise
+        // fall back to the legacy single-column layout to avoid empty
+        // padding for layers that don't split.
+        const hasSplitTiming = saveOps.some((o) => o.compressMs !== undefined || o.uploadMs !== undefined);
+        if (!hasSplitTiming) {
+            const CW = { cache: 20, status: 18, archive: 10, files: 8, time: 7 };
+            const header = [
+                "cache".padEnd(CW.cache),
+                "save status".padEnd(CW.status),
+                "archive".padStart(CW.archive),
+                "files".padStart(CW.files),
+                "time".padStart(CW.time),
+            ].join("  ");
+            const rule = "─".repeat(header.length);
+            const rows = saveOps.map((op) => {
+                const status = op.status ?? "?";
+                return [
+                    op.label.padEnd(CW.cache),
+                    status.padEnd(CW.status),
+                    fmtBytes(op.archiveBytes).padStart(CW.archive),
+                    (op.fileCount !== null ? String(op.fileCount) : "-").padStart(CW.files),
+                    fmtMs(op.durationMs).padStart(CW.time),
+                ].join("  ");
+            });
+            const saved = saveOps.filter((o) => o.status === "saved");
+            const totalBytes = saved.reduce((s, o) => s + (o.archiveBytes ?? 0), 0);
+            const totalMs = saveOps.reduce((s, o) => s + o.durationMs, 0);
+            const footer = `${saved.length}/${saveOps.length} saved  total upload: ${fmtBytes(totalBytes)}  total wall: ${fmtMs(totalMs)}`;
+            return [header, rule, ...rows, rule, footer].join("\n");
+        }
+        const CW = { cache: 20, status: 22, archive: 10, files: 8, compress: 9, upload: 8, time: 7 };
         const header = [
             "cache".padEnd(CW.cache),
             "save status".padEnd(CW.status),
             "archive".padStart(CW.archive),
             "files".padStart(CW.files),
+            "compress".padStart(CW.compress),
+            "upload".padStart(CW.upload),
             "time".padStart(CW.time),
         ].join("  ");
         const rule = "─".repeat(header.length);
         const rows = saveOps.map((op) => {
             const status = op.status ?? "?";
+            const compressCell = op.compressMs !== undefined ? fmtMs(op.compressMs) : "-";
+            const uploadCell = op.uploadMs !== undefined ? fmtMs(op.uploadMs) : "-";
             return [
                 op.label.padEnd(CW.cache),
                 status.padEnd(CW.status),
                 fmtBytes(op.archiveBytes).padStart(CW.archive),
                 (op.fileCount !== null ? String(op.fileCount) : "-").padStart(CW.files),
+                compressCell.padStart(CW.compress),
+                uploadCell.padStart(CW.upload),
                 fmtMs(op.durationMs).padStart(CW.time),
             ].join("  ");
         });
         const saved = saveOps.filter((o) => o.status === "saved");
         const totalBytes = saved.reduce((s, o) => s + (o.archiveBytes ?? 0), 0);
+        const totalCompressMs = saveOps.reduce((s, o) => s + (o.compressMs ?? 0), 0);
+        const totalUploadMs = saveOps.reduce((s, o) => s + (o.uploadMs ?? 0), 0);
         const totalMs = saveOps.reduce((s, o) => s + o.durationMs, 0);
-        const footer = `${saved.length}/${saveOps.length} saved  total upload: ${fmtBytes(totalBytes)}  total wall: ${fmtMs(totalMs)}`;
+        const footer = `${saved.length}/${saveOps.length} saved  total upload: ${fmtBytes(totalBytes)}  ` +
+            `compress: ${fmtMs(totalCompressMs)}  upload: ${fmtMs(totalUploadMs)}  total wall: ${fmtMs(totalMs)}`;
         return [header, rule, ...rows, rule, footer].join("\n");
     }
     detailedJson() {
@@ -51612,6 +51683,8 @@ async function run() {
                         inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
                         fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
                         durationMs: Date.now() - cookSaveStart,
+                        compressMs: saveResult.compressMs,
+                        uploadMs: saveResult.uploadMs,
                         timestamp: new Date().toISOString(),
                     });
                     if (saveResult.status !== "saved") {
@@ -51661,6 +51734,8 @@ async function run() {
                         inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
                         fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
                         durationMs: Date.now() - cookSaveStart,
+                        compressMs: saveResult.compressMs,
+                        uploadMs: saveResult.uploadMs,
                         timestamp: new Date().toISOString(),
                     });
                     if (saveResult.status !== "saved") {

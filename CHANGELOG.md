@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.52 - 2026-06-01
+
+- Per-layer cache metrics now split compress wall-clock from
+  upload wall-clock for cook-cache saves (closes #360). The
+  post-step's per-layer save table gains `compress` and `upload`
+  columns when any layer reports split timing, and the footer
+  totals both. Answers "is the post-step bottlenecked by CPU
+  (compress) or network (upload)?" at a glance. Other layers
+  (build-cache, cargo-registry, etc.) leave the new columns
+  empty and use the legacy single-column layout. Schema-only
+  for non-cook layers; cook-cache `CookSaveResult` gains
+  optional `compressMs` + `uploadMs` fields.
+
 ## v0.9.51 - 2026-06-01
 
 - Per-line timestamps on `soldr cook` output (closes #359). Cargo's

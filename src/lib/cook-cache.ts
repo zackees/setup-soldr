@@ -156,6 +156,16 @@ export interface CookSaveResult {
   sourceFiles?: number;
   deletedCacheFiles?: number;
   archivePath?: string;
+  /**
+   * #360: split timing — `compressMs` is the wall-clock spent in
+   * compressCache/`soldr save`; `uploadMs` is the wall-clock spent in
+   * the `@actions/cache` saveCache API call. Both present on a
+   * successful save; only `compressMs` is present on skipped-race
+   * (we burned compress wall-clock then lost the reservation race).
+   * Neither is present on probe-bailout paths.
+   */
+  compressMs?: number;
+  uploadMs?: number;
   error?: string;
 }
 
@@ -717,8 +727,10 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
     return { status: "failed", error: "compressCache returned null archive (zstd unavailable?)" };
   }
   const compressMs = Date.now() - compressStart;
+  const uploadStart = Date.now();
   try {
     const id = await cache.saveCache([archivePath], exactKey);
+    const uploadMs = Date.now() - uploadStart;
     if (id <= 0) {
       // @actions/cache returns -1 when reserveCache fails — typically
       // because the key already exists (parallel job got there first)
@@ -754,6 +766,8 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
         inflatedBytes,
         fileCount,
         archivePath,
+        compressMs,
+        uploadMs,
       };
     }
     log(`cook-cache: saved id=${id} key=${exactKey} archive=${archivePath}`);
@@ -764,6 +778,8 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
       inflatedBytes,
       fileCount,
       archivePath,
+      compressMs,
+      uploadMs,
     };
   } catch (err) {
     return {
@@ -869,8 +885,10 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
 
   const report = saveReport(run.payload);
   const archiveBytes = report.archiveBytes ?? await archiveSize(archivePath);
+  const uploadStart = Date.now();
   try {
     const id = await cache.saveCache([archivePath], exactKey);
+    const uploadMs = Date.now() - uploadStart;
     if (id <= 0) {
       log(
         `cook-cache-${layer}: save did not reserve a new entry (id=${id}) ` +
@@ -901,6 +919,8 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
         sourceFiles: report.sourceFiles ?? undefined,
         deletedCacheFiles: report.deletedCacheFiles ?? undefined,
         archivePath,
+        compressMs,
+        uploadMs,
       };
     }
     log(`cook-cache-${layer}: saved id=${id} key=${exactKey} archive=${archivePath}`);
@@ -912,6 +932,8 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
       sourceFiles: report.sourceFiles ?? undefined,
       deletedCacheFiles: report.deletedCacheFiles ?? undefined,
       archivePath,
+      compressMs,
+      uploadMs,
     };
   } catch (err) {
     return {
