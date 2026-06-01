@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.9.48 - 2026-06-01
+
+- **CRITICAL fix** for cache-eviction-policy self-eviction
+  regression (closes #352). v0.9.47's `protect-foundations` policy
+  was deleting freshly-saved `cook-base-v2-*` and
+  `setup-soldr-buildcache-v2-*` entries (age ~0.1h) because the
+  post-step ran eviction immediately after this run's saves
+  landed. Next CI cycle then cold-cooked (200s+ vs 5s baseline).
+  Two changes:
+  - **Age floor**: don't delete entries younger than 6h
+    (`protect-foundations`) or 2h (`aggressive`). Protects this
+    run's saves + the next CI cycle's restores.
+  - **Raised thresholds**: `protect-foundations` 8/7 GB → 9/8 GB,
+    `aggressive` 6/5 GB → 7/6 GB. Less eager, 1 GB headroom
+    under GitHub's 10 GB repo cache cap.
+
 ## v0.9.47 - 2026-06-01
 
 - New `cache-eviction-policy` input (closes #347, #348). Bakes
