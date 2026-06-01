@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.51 - 2026-06-01
+
+- Per-line timestamps on `soldr cook` output (closes #359). Cargo's
+  `Compiling`/`Downloading`/`Updating crates.io index` lines now
+  receive the same `MM:SS ` elapsed-time prefix as setup-soldr's
+  own log lines, so forensic analysis of a slow cook phase can
+  identify the bottleneck crate directly from the log timestamps.
+  Implementation: `listeners.stdline`/`errline` on the `exec.exec`
+  call for `soldr cook`, re-emitting each line through the existing
+  `formatLogLine` helper. ANSI color escape sequences in cargo's
+  output pass through unchanged. Honors `timestamps: false` (off
+  for both setup-soldr lines and cook lines).
+
 ## v0.9.50 - 2026-06-01
 
 - Graduated age floor for `cache-eviction-policy` (closes #356).

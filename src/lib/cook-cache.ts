@@ -21,6 +21,7 @@ import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as cache from "@actions/cache";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
+import { formatLogLine } from "./log-utils.js";
 
 export interface CookCacheKeyParts {
   runnerOs: string;
@@ -322,9 +323,25 @@ export async function runCook(opts: CookRunOpts): Promise<CookRunResult> {
   const t0 = Date.now();
   let exitCode = 0;
   try {
+    // #359: prepend MM:SS timestamps to each line of cook output (cargo's
+    // Compiling/Downloading lines) so forensic analysis of slow cook
+    // phases can pinpoint the bottleneck crate from the log alone.
+    // ANSI color escape sequences in cargo's output pass through
+    // unchanged — we only modify the line prefix, not the line body.
+    // Color forcing (CARGO_TERM_COLOR/FORCE_COLOR/CLICOLOR_FORCE) is
+    // already injected by resolve-setup.ts when timestamps are enabled.
     exitCode = await exec.exec(soldrBinary, ["cook", ...flags], {
       cwd: projectRoot,
       ignoreReturnCode: true,
+      silent: true,
+      listeners: {
+        stdline: (line: string): void => {
+          process.stdout.write(`${formatLogLine(process.env, line)}\n`);
+        },
+        errline: (line: string): void => {
+          process.stderr.write(`${formatLogLine(process.env, line)}\n`);
+        },
+      },
     });
   } catch (err) {
     log(`cook: exec threw: ${err instanceof Error ? err.message : String(err)}`);
