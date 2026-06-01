@@ -229,9 +229,18 @@ export async function stageDiffForSave(
 export async function applyStagedToLiveRoots(
   stagingDir: string,
   rootMap: RootMap,
-): Promise<{ appliedFiles: number; appliedSymlinks: number }> {
+): Promise<{
+  appliedFiles: number;
+  appliedSymlinks: number;
+  hardlinkSuccesses: number;
+  copyFallbacks: number;
+}> {
   let appliedFiles = 0;
   let appliedSymlinks = 0;
+  // #338: track hardlink vs copyFile fallback. On macOS the
+  // observed solo_restore is 2-3× slower than Linux; if hardlinks
+  // are falling back to copies on most files, that explains it.
+  const counters = { hardlink: 0, copy: 0 };
   for (const tag of ROOT_TAGS) {
     const tagRoot = path.join(stagingDir, tag);
     if (!fs.existsSync(tagRoot)) continue;
@@ -240,9 +249,14 @@ export async function applyStagedToLiveRoots(
     await walkAndApply(tagRoot, tagRoot, liveRoot, (kind) => {
       if (kind === "file") appliedFiles += 1;
       if (kind === "symlink") appliedSymlinks += 1;
-    });
+    }, counters);
   }
-  return { appliedFiles, appliedSymlinks };
+  return {
+    appliedFiles,
+    appliedSymlinks,
+    hardlinkSuccesses: counters.hardlink,
+    copyFallbacks: counters.copy,
+  };
 }
 
 async function walkAndApply(
@@ -250,6 +264,7 @@ async function walkAndApply(
   dir: string,
   liveBase: string,
   onApply: (kind: "file" | "symlink") => void,
+  counters?: { hardlink: number; copy: number },
 ): Promise<void> {
   const dirents = await fsp.readdir(dir, { withFileTypes: true });
   for (const d of dirents) {
@@ -258,7 +273,7 @@ async function walkAndApply(
     const liveAbs = path.join(liveBase, rel);
     if (d.isDirectory()) {
       await ensureDir(liveAbs);
-      await walkAndApply(base, abs, liveBase, onApply);
+      await walkAndApply(base, abs, liveBase, onApply, counters);
     } else if (d.isSymbolicLink()) {
       const target = await fsp.readlink(abs);
       try {
@@ -279,17 +294,21 @@ async function walkAndApply(
       // filesystems that don't allow hardlinks (EPERM).
       try {
         await fsp.link(abs, liveAbs);
+        if (counters) counters.hardlink += 1;
       } catch (err) {
         const code = (err as NodeJS.ErrnoException).code;
         if (code === "EEXIST") {
           await fsp.unlink(liveAbs).catch(() => undefined);
           try {
             await fsp.link(abs, liveAbs);
+            if (counters) counters.hardlink += 1;
           } catch {
             await fsp.copyFile(abs, liveAbs);
+            if (counters) counters.copy += 1;
           }
         } else {
           await fsp.copyFile(abs, liveAbs);
+          if (counters) counters.copy += 1;
         }
       }
       onApply("file");
@@ -475,7 +494,9 @@ export async function restoreSoloCache(opts: {
     const applied = await applyStagedToLiveRoots(stagingOut, rootMap);
     log(
       `solo-toolchain-cache: restored matched=${matched} archive=${archiveBytes}B ` +
-        `applied files=${applied.appliedFiles} symlinks=${applied.appliedSymlinks}`,
+        `applied files=${applied.appliedFiles} symlinks=${applied.appliedSymlinks} ` +
+        `hardlinks=${applied.hardlinkSuccesses} copy-fallbacks=${applied.copyFallbacks} ` +
+        `(#338 diagnostic)`,
     );
   } catch (err) {
     log(`solo-toolchain-cache: apply failed: ${err instanceof Error ? err.message : String(err)}`);
