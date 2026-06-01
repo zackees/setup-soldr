@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.9.44 - 2026-06-01
+
+- Hardlinks in seed-isolated-cache (closes #335, #336). Same fix
+  pattern as #331 applied to `src/lib/seed-isolated-cache.ts`:
+  `fs.copyFileSync` → `fs.linkSync` with EXDEV/EPERM fallback.
+  zccache Integration on v0.9.43 was copying 5.46 GB across 1290
+  build-cache artifact files (`seed-isolated-build-cache: seeded
+  1290 artifact file(s) (5460263998 bytes)`), dominating the
+  parallel-restore=35.1s phase. Hardlinks are constant-time on
+  the same filesystem; zccache cache entries are content-addressed
+  and immutable, so inode sharing is safe. Expected:
+  `parallel-restore` drops from 35s → ~8s on Integration, net
+  wall clock 41s → ~14s.
+
 ## v0.9.43 - 2026-05-31
 
 - Use hardlinks instead of copyFile in solo-cache apply step
