@@ -528,15 +528,21 @@ inputs:
     default: "false"
   solo-toolchain-cache:
     description: >
-      Experimental opt-in. When "true", maintain a long-lived,
-      small, per-platform cache that holds only what setup-soldr
-      added to `$RUSTUP_HOME/toolchains/` and `$CARGO_HOME/bin/`
-      on top of the runner image. Save layer short-circuits when
-      the install delta is empty (the common case on hosted
-      runners that already ship rustup + stable). Default "false"
-      while the feature is being validated.
+      Maintain a long-lived, small, per-platform cache that holds
+      only what setup-soldr added to `$RUSTUP_HOME/toolchains/` and
+      `$CARGO_HOME/bin/` on top of the runner image. On warm runs,
+      the toolchain is restored from cache (~3-5 s) instead of
+      installed via rustup (~7-11 s). Save layer short-circuits
+      when the install delta is empty (the common case on hosted
+      runners that already ship rustup + stable).
+      Default "true" (validated end-to-end on Linux/macOS/Windows;
+      see #305/#316/#321/#324/#326/#328/#331/#335/#343). Pass
+      "false" to opt out — useful when the workflow installs
+      components AFTER setup-soldr (the snapshot won't include
+      them) or when the warm-cycle win isn't worth the ~12 s
+      first cold-save.
     required: false
-    default: "false"
+    default: "true"
   solo-toolchain-cache-level:
     description: >
       zstd compression level for the solo-toolchain-cache archive.
