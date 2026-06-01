@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v0.9.45 - 2026-06-01
+
+- Diagnostic counters for solo-cache hardlink fallbacks (closes
+  #339). Adds `hardlinkSuccesses` + `copyFallbacks` counters to
+  `applyStagedToLiveRoots`; surfaces them in the restore log:
+  `applied files=N symlinks=M hardlinks=K copy-fallbacks=L
+  (#338 diagnostic)`. macOS solo_restore was observed at 5.5-7.5s
+  vs Linux 2.9s — this exposes whether fs.link is silently
+  falling back to copyFile on APFS. Zero behavior change; pure
+  observability. Next macOS warm run pinpoints the cause and
+  unblocks the actual fix.
+
 ## v0.9.44 - 2026-06-01
 
 - Hardlinks in seed-isolated-cache (closes #335, #336). Same fix
