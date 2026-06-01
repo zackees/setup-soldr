@@ -115,31 +115,79 @@ export class StatsCollector {
     const saveOps = this.ops.filter((o) => o.operation === "save");
     if (saveOps.length === 0) return "";
 
-    const CW = { cache: 20, status: 18, archive: 10, files: 8, time: 7 };
+    // #360: split timing — when ANY save op reports compress+upload
+    // separately, render the wider table with split columns so
+    // operators can see which side of the wall-clock is dominant
+    // (CPU-bound compress vs bandwidth-bound upload). Otherwise
+    // fall back to the legacy single-column layout to avoid empty
+    // padding for layers that don't split.
+    const hasSplitTiming = saveOps.some(
+      (o) => o.compressMs !== undefined || o.uploadMs !== undefined,
+    );
+
+    if (!hasSplitTiming) {
+      const CW = { cache: 20, status: 18, archive: 10, files: 8, time: 7 };
+      const header = [
+        "cache".padEnd(CW.cache),
+        "save status".padEnd(CW.status),
+        "archive".padStart(CW.archive),
+        "files".padStart(CW.files),
+        "time".padStart(CW.time),
+      ].join("  ");
+      const rule = "─".repeat(header.length);
+      const rows = saveOps.map((op) => {
+        const status = op.status ?? "?";
+        return [
+          op.label.padEnd(CW.cache),
+          status.padEnd(CW.status),
+          fmtBytes(op.archiveBytes).padStart(CW.archive),
+          (op.fileCount !== null ? String(op.fileCount) : "-").padStart(CW.files),
+          fmtMs(op.durationMs).padStart(CW.time),
+        ].join("  ");
+      });
+      const saved = saveOps.filter((o) => o.status === "saved");
+      const totalBytes = saved.reduce((s, o) => s + (o.archiveBytes ?? 0), 0);
+      const totalMs = saveOps.reduce((s, o) => s + o.durationMs, 0);
+      const footer = `${saved.length}/${saveOps.length} saved  total upload: ${fmtBytes(totalBytes)}  total wall: ${fmtMs(totalMs)}`;
+      return [header, rule, ...rows, rule, footer].join("\n");
+    }
+
+    const CW = { cache: 20, status: 22, archive: 10, files: 8, compress: 9, upload: 8, time: 7 };
     const header = [
       "cache".padEnd(CW.cache),
       "save status".padEnd(CW.status),
       "archive".padStart(CW.archive),
       "files".padStart(CW.files),
+      "compress".padStart(CW.compress),
+      "upload".padStart(CW.upload),
       "time".padStart(CW.time),
     ].join("  ");
     const rule = "─".repeat(header.length);
 
     const rows = saveOps.map((op) => {
       const status = op.status ?? "?";
+      const compressCell =
+        op.compressMs !== undefined ? fmtMs(op.compressMs) : "-";
+      const uploadCell = op.uploadMs !== undefined ? fmtMs(op.uploadMs) : "-";
       return [
         op.label.padEnd(CW.cache),
         status.padEnd(CW.status),
         fmtBytes(op.archiveBytes).padStart(CW.archive),
         (op.fileCount !== null ? String(op.fileCount) : "-").padStart(CW.files),
+        compressCell.padStart(CW.compress),
+        uploadCell.padStart(CW.upload),
         fmtMs(op.durationMs).padStart(CW.time),
       ].join("  ");
     });
 
     const saved = saveOps.filter((o) => o.status === "saved");
     const totalBytes = saved.reduce((s, o) => s + (o.archiveBytes ?? 0), 0);
+    const totalCompressMs = saveOps.reduce((s, o) => s + (o.compressMs ?? 0), 0);
+    const totalUploadMs = saveOps.reduce((s, o) => s + (o.uploadMs ?? 0), 0);
     const totalMs = saveOps.reduce((s, o) => s + o.durationMs, 0);
-    const footer = `${saved.length}/${saveOps.length} saved  total upload: ${fmtBytes(totalBytes)}  total wall: ${fmtMs(totalMs)}`;
+    const footer =
+      `${saved.length}/${saveOps.length} saved  total upload: ${fmtBytes(totalBytes)}  ` +
+      `compress: ${fmtMs(totalCompressMs)}  upload: ${fmtMs(totalUploadMs)}  total wall: ${fmtMs(totalMs)}`;
 
     return [header, rule, ...rows, rule, footer].join("\n");
   }

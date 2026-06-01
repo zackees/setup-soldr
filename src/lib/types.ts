@@ -56,6 +56,15 @@ export interface CacheOpStats {
   fileCount: number | null;
   payload?: CachePayloadCensus | null;
   durationMs: number;
+  /**
+   * #360: split timing — `compressMs` covers the codec (zstd) wall-clock,
+   * `uploadMs` covers the Actions Cache `saveCache` API call. When both
+   * are set, `compressMs + uploadMs` approximates `durationMs` (plus a
+   * small bookkeeping delta). Optional — only cook-cache surfaces these
+   * today; other layers leave them undefined.
+   */
+  compressMs?: number;
+  uploadMs?: number;
   timestamp: string;
 }
 

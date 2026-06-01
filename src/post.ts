@@ -1771,6 +1771,8 @@ export async function run(): Promise<void> {
             inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
             fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
             durationMs: Date.now() - cookSaveStart,
+            compressMs: saveResult.compressMs,
+            uploadMs: saveResult.uploadMs,
             timestamp: new Date().toISOString(),
           });
           if (saveResult.status !== "saved") {
@@ -1817,6 +1819,8 @@ export async function run(): Promise<void> {
             inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
             fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
             durationMs: Date.now() - cookSaveStart,
+            compressMs: saveResult.compressMs,
+            uploadMs: saveResult.uploadMs,
             timestamp: new Date().toISOString(),
           });
           if (saveResult.status !== "saved") {
