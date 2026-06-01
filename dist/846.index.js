@@ -2044,10 +2044,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.deleteArtifactInternal = exports.deleteArtifactPublic = void 0;
 const core_1 = __webpack_require__(37484);
-const github_1 = __webpack_require__(93228);
+const github_1 = __webpack_require__(29150);
 const user_agent_1 = __webpack_require__(89387);
 const retry_options_1 = __webpack_require__(38361);
-const utils_1 = __webpack_require__(38006);
+const utils_1 = __webpack_require__(97864);
 const plugin_request_log_1 = __webpack_require__(6966);
 const plugin_retry_1 = __webpack_require__(33450);
 const artifact_twirp_client_1 = __webpack_require__(87417);
@@ -2162,7 +2162,7 @@ exports.downloadArtifactInternal = exports.downloadArtifactPublic = exports.stre
 const promises_1 = __importDefault(__webpack_require__(91943));
 const crypto = __importStar(__webpack_require__(76982));
 const stream = __importStar(__webpack_require__(2203));
-const github = __importStar(__webpack_require__(93228));
+const github = __importStar(__webpack_require__(29150));
 const core = __importStar(__webpack_require__(37484));
 const httpClient = __importStar(__webpack_require__(54844));
 const unzip_stream_1 = __importDefault(__webpack_require__(33991));
@@ -2396,10 +2396,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getArtifactInternal = exports.getArtifactPublic = void 0;
-const github_1 = __webpack_require__(93228);
+const github_1 = __webpack_require__(29150);
 const plugin_retry_1 = __webpack_require__(33450);
 const core = __importStar(__webpack_require__(37484));
-const utils_1 = __webpack_require__(38006);
+const utils_1 = __webpack_require__(97864);
 const retry_options_1 = __webpack_require__(38361);
 const plugin_request_log_1 = __webpack_require__(6966);
 const util_1 = __webpack_require__(41631);
@@ -2508,10 +2508,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.listArtifactsInternal = exports.listArtifactsPublic = void 0;
 const core_1 = __webpack_require__(37484);
-const github_1 = __webpack_require__(93228);
+const github_1 = __webpack_require__(29150);
 const user_agent_1 = __webpack_require__(89387);
 const retry_options_1 = __webpack_require__(38361);
-const utils_1 = __webpack_require__(38006);
+const utils_1 = __webpack_require__(97864);
 const plugin_request_log_1 = __webpack_require__(6966);
 const plugin_retry_1 = __webpack_require__(33450);
 const artifact_twirp_client_1 = __webpack_require__(87417);
@@ -3832,7 +3832,7 @@ const zipEndCallback = () => {
 
 /***/ }),
 
-/***/ 51648:
+/***/ 27466:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
@@ -3893,7 +3893,7 @@ exports.Context = Context;
 
 /***/ }),
 
-/***/ 93228:
+/***/ 29150:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3919,8 +3919,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getOctokit = exports.context = void 0;
-const Context = __importStar(__webpack_require__(51648));
-const utils_1 = __webpack_require__(38006);
+const Context = __importStar(__webpack_require__(27466));
+const utils_1 = __webpack_require__(97864);
 exports.context = new Context.Context();
 /**
  * Returns a hydrated octokit ready to use for GitHub Actions
@@ -3937,7 +3937,7 @@ exports.getOctokit = getOctokit;
 
 /***/ }),
 
-/***/ 65156:
+/***/ 14970:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -3987,7 +3987,7 @@ exports.getApiBaseUrl = getApiBaseUrl;
 
 /***/ }),
 
-/***/ 38006:
+/***/ 97864:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -4013,8 +4013,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getOctokitOptions = exports.GitHub = exports.defaults = exports.context = void 0;
-const Context = __importStar(__webpack_require__(51648));
-const Utils = __importStar(__webpack_require__(65156));
+const Context = __importStar(__webpack_require__(27466));
+const Utils = __importStar(__webpack_require__(14970));
 // octokit + plugins
 const core_1 = __webpack_require__(61897);
 const plugin_rest_endpoint_methods_1 = __webpack_require__(84935);
@@ -14846,187 +14846,6 @@ module.exports = {
 
 /***/ }),
 
-/***/ 52732:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-var register = __webpack_require__(11063);
-var addHook = __webpack_require__(22027);
-var removeHook = __webpack_require__(59934);
-
-// bind with array of arguments: https://stackoverflow.com/a/21792913
-var bind = Function.bind;
-var bindable = bind.bind(bind);
-
-function bindApi(hook, state, name) {
-  var removeHookRef = bindable(removeHook, null).apply(
-    null,
-    name ? [state, name] : [state]
-  );
-  hook.api = { remove: removeHookRef };
-  hook.remove = removeHookRef;
-  ["before", "error", "after", "wrap"].forEach(function (kind) {
-    var args = name ? [state, kind, name] : [state, kind];
-    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args);
-  });
-}
-
-function HookSingular() {
-  var singularHookName = "h";
-  var singularHookState = {
-    registry: {},
-  };
-  var singularHook = register.bind(null, singularHookState, singularHookName);
-  bindApi(singularHook, singularHookState, singularHookName);
-  return singularHook;
-}
-
-function HookCollection() {
-  var state = {
-    registry: {},
-  };
-
-  var hook = register.bind(null, state);
-  bindApi(hook, state);
-
-  return hook;
-}
-
-var collectionHookDeprecationMessageDisplayed = false;
-function Hook() {
-  if (!collectionHookDeprecationMessageDisplayed) {
-    console.warn(
-      '[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4'
-    );
-    collectionHookDeprecationMessageDisplayed = true;
-  }
-  return HookCollection();
-}
-
-Hook.Singular = HookSingular.bind();
-Hook.Collection = HookCollection.bind();
-
-module.exports = Hook;
-// expose constructors as a named property for TypeScript
-module.exports.Hook = Hook;
-module.exports.Singular = Hook.Singular;
-module.exports.Collection = Hook.Collection;
-
-
-/***/ }),
-
-/***/ 22027:
-/***/ ((module) => {
-
-module.exports = addHook;
-
-function addHook(state, kind, name, hook) {
-  var orig = hook;
-  if (!state.registry[name]) {
-    state.registry[name] = [];
-  }
-
-  if (kind === "before") {
-    hook = function (method, options) {
-      return Promise.resolve()
-        .then(orig.bind(null, options))
-        .then(method.bind(null, options));
-    };
-  }
-
-  if (kind === "after") {
-    hook = function (method, options) {
-      var result;
-      return Promise.resolve()
-        .then(method.bind(null, options))
-        .then(function (result_) {
-          result = result_;
-          return orig(result, options);
-        })
-        .then(function () {
-          return result;
-        });
-    };
-  }
-
-  if (kind === "error") {
-    hook = function (method, options) {
-      return Promise.resolve()
-        .then(method.bind(null, options))
-        .catch(function (error) {
-          return orig(error, options);
-        });
-    };
-  }
-
-  state.registry[name].push({
-    hook: hook,
-    orig: orig,
-  });
-}
-
-
-/***/ }),
-
-/***/ 11063:
-/***/ ((module) => {
-
-module.exports = register;
-
-function register(state, name, method, options) {
-  if (typeof method !== "function") {
-    throw new Error("method for before hook must be a function");
-  }
-
-  if (!options) {
-    options = {};
-  }
-
-  if (Array.isArray(name)) {
-    return name.reverse().reduce(function (callback, name) {
-      return register.bind(null, state, name, callback, options);
-    }, method)();
-  }
-
-  return Promise.resolve().then(function () {
-    if (!state.registry[name]) {
-      return method(options);
-    }
-
-    return state.registry[name].reduce(function (method, registered) {
-      return registered.hook.bind(null, method, options);
-    }, method)();
-  });
-}
-
-
-/***/ }),
-
-/***/ 59934:
-/***/ ((module) => {
-
-module.exports = removeHook;
-
-function removeHook(state, name, method) {
-  if (!state.registry[name]) {
-    return;
-  }
-
-  var index = state.registry[name]
-    .map(function (registered) {
-      return registered.orig;
-    })
-    .indexOf(method);
-
-  if (index === -1) {
-    return;
-  }
-
-  state.registry[name].splice(index, 1);
-}
-
-
-/***/ }),
-
 /***/ 58769:
 /***/ ((module, exports, __webpack_require__) => {
 
@@ -19182,34 +19001,6 @@ module.exports = {
   CRC32Stream: __webpack_require__(3662),
   DeflateCRC32Stream: __webpack_require__(76252)
 }
-
-
-/***/ }),
-
-/***/ 14150:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-class Deprecation extends Error {
-  constructor(message) {
-    super(message); // Maintains proper stack trace (only available on V8)
-
-    /* istanbul ignore next */
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, this.constructor);
-    }
-
-    this.name = 'Deprecation';
-  }
-
-}
-
-exports.Deprecation = Deprecation;
 
 
 /***/ }),
@@ -29301,55 +29092,6 @@ module.exports = function(path, stripTrailing) {
   }
   return prefix + segs.join('/');
 };
-
-
-/***/ }),
-
-/***/ 55560:
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-var wrappy = __webpack_require__(58264)
-module.exports = wrappy(once)
-module.exports.strict = wrappy(onceStrict)
-
-once.proto = once(function () {
-  Object.defineProperty(Function.prototype, 'once', {
-    value: function () {
-      return once(this)
-    },
-    configurable: true
-  })
-
-  Object.defineProperty(Function.prototype, 'onceStrict', {
-    value: function () {
-      return onceStrict(this)
-    },
-    configurable: true
-  })
-})
-
-function once (fn) {
-  var f = function () {
-    if (f.called) return f.value
-    f.called = true
-    return f.value = fn.apply(this, arguments)
-  }
-  f.called = false
-  return f
-}
-
-function onceStrict (fn) {
-  var f = function () {
-    if (f.called)
-      throw new Error(f.onceError)
-    f.called = true
-    return f.value = fn.apply(this, arguments)
-  }
-  var name = fn.name || 'Function wrapped with `once`'
-  f.onceError = name + " shouldn't be called more than once"
-  f.called = false
-  return f
-}
 
 
 /***/ }),
@@ -41360,32 +41102,6 @@ function copy (src) {
 
 /***/ }),
 
-/***/ 33843:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-function getUserAgent() {
-  if (typeof navigator === "object" && "userAgent" in navigator) {
-    return navigator.userAgent;
-  }
-
-  if (typeof process === "object" && process.version !== undefined) {
-    return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
-  }
-
-  return "<environment undetectable>";
-}
-
-exports.getUserAgent = getUserAgent;
-//# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
 /***/ 45389:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -44407,46 +44123,6 @@ module.exports.implForWrapper = function (wrapper) {
   return wrapper[module.exports.implSymbol];
 };
 
-
-
-/***/ }),
-
-/***/ 58264:
-/***/ ((module) => {
-
-// Returns a wrapper function that returns a wrapped callback
-// The wrapper function should do some stuff, and return a
-// presumably different callback function.
-// This makes sure that own properties are retained, so that
-// decorations and such are not lost along the way.
-module.exports = wrappy
-function wrappy (fn, cb) {
-  if (fn && cb) return wrappy(fn)(cb)
-
-  if (typeof fn !== 'function')
-    throw new TypeError('need wrapper function')
-
-  Object.keys(fn).forEach(function (k) {
-    wrapper[k] = fn[k]
-  })
-
-  return wrapper
-
-  function wrapper() {
-    var args = new Array(arguments.length)
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i]
-    }
-    var ret = fn.apply(this, args)
-    var cb = args[args.length-1]
-    if (typeof ret === 'function' && ret !== cb) {
-      Object.keys(cb).forEach(function (k) {
-        ret[k] = cb[k]
-      })
-    }
-    return ret
-  }
-}
 
 
 /***/ }),

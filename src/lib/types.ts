@@ -108,6 +108,7 @@ export interface RawInputs {
   preserveSourceMtimes: string;
   soloToolchainCache: string;
   soloToolchainCacheLevel: string;
+  cacheEvictionPolicy: string;
   prebuildDeps: string;
   prebuildDepsFlags: string;
   prebuildDepsDeltaCache: string;
