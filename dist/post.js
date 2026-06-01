@@ -45485,6 +45485,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FOUNDATION_PREFIXES = void 0;
+exports.ageFloorForOvershoot = ageFloorForOvershoot;
 exports.thresholdsForPolicy = thresholdsForPolicy;
 exports.evictIfOverBudget = evictIfOverBudget;
 const github = __importStar(__nccwpck_require__(93228));
@@ -45499,6 +45500,35 @@ exports.FOUNDATION_PREFIXES = [
     "setup-soldr-v", // tiny setup-cache
     "setup-soldr-cargoregistry-v", // ~50 MB, skips crate-source download
 ];
+/**
+ * #356: graduated age-floor tier table.
+ *
+ * When ALL evictable entries are < 6h old (a burst of CI activity
+ * just landed) and usage is far over the trigger, the original
+ * fixed-6h age floor made eviction a no-op — letting GitHub's own
+ * non-deterministic LRU evict foundation entries arbitrarily.
+ *
+ * The tier table relaxes the floor as overshoot grows:
+ *   - small overshoot (<1 GB over trigger): keep baseline floor —
+ *     fresh entries protected, eviction can wait.
+ *   - moderate (1–3 GB over): drop to 2h — let entries from the
+ *     last ~2 hours be evicted, protecting only the current CI
+ *     wave's saves.
+ *   - danger (>3 GB over): drop to 0.5h — only this run's saves
+ *     are protected, everything older is fair game. GitHub's LRU
+ *     is imminent at this point and our controlled eviction must
+ *     win the race to protect foundation prefixes.
+ */
+function ageFloorForOvershoot(usageGb, thresholds) {
+    const overshoot = usageGb - thresholds.triggerGb;
+    if (overshoot <= 1)
+        return thresholds.minAgeHoursBeforeDelete;
+    // moderate: 1/3 of baseline, capped at 2h
+    if (overshoot <= 3)
+        return Math.min(2, thresholds.minAgeHoursBeforeDelete);
+    // danger: 0.5h — protect only this run's just-saved entries
+    return 0.5;
+}
 function thresholdsForPolicy(policy) {
     switch (policy) {
         case "disabled":
@@ -45609,8 +45639,17 @@ async function evictIfOverBudget(policy, deps) {
     // and consumer parallel jobs may still be saving theirs. Without
     // this guard, the eviction can delete the just-saved cook/build
     // caches that the NEXT CI cycle would have hit.
-    const ageFloorMs = thresholds.minAgeHoursBeforeDelete * 3600 * 1000;
+    //
+    // #356: graduated age floor — relax the protection when usage is
+    // significantly over trigger, so eviction can still free space
+    // under heavy CI load (where everything is fresh).
+    const effectiveFloorHours = ageFloorForOvershoot(usageBeforeGb, thresholds);
+    const ageFloorMs = effectiveFloorHours * 3600 * 1000;
     const ageCutoffEpochMs = Date.now() - ageFloorMs;
+    if (effectiveFloorHours < thresholds.minAgeHoursBeforeDelete) {
+        log(`cache-eviction: graduated age floor active — overshoot=${(usageBeforeGb - thresholds.triggerGb).toFixed(2)} GB, ` +
+            `floor=${effectiveFloorHours}h (down from ${thresholds.minAgeHoursBeforeDelete}h, #356)`);
+    }
     let protectedByAge = 0;
     const evictable = caches
         .filter((c) => {
@@ -45628,7 +45667,7 @@ async function evictIfOverBudget(policy, deps) {
         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
     if (protectedByAge > 0) {
         deps.log(`cache-eviction: protected ${protectedByAge} entries from self-eviction ` +
-            `(younger than ${thresholds.minAgeHoursBeforeDelete}h, #352)`);
+            `(younger than ${effectiveFloorHours}h, #352/#356)`);
     }
     const targetBytes = thresholds.targetGb * 1024 * 1024 * 1024;
     let bytes = usageBytes;
