@@ -63,6 +63,7 @@ function fixtureRawInputs(): RawInputs {
     preserveSourceMtimes: "false",
     soloToolchainCache: "",
     soloToolchainCacheLevel: "",
+    cacheEvictionPolicy: "",
     prebuildDeps: "soldr-cook",
     prebuildDepsFlags: "--release",
     prebuildDepsDeltaCache: "true",

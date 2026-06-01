@@ -60,6 +60,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     preserveSourceMtimes: get("preserve-source-mtimes"),
     soloToolchainCache: get("solo-toolchain-cache"),
     soloToolchainCacheLevel: get("solo-toolchain-cache-level"),
+    cacheEvictionPolicy: get("cache-eviction-policy"),
     prebuildDeps: get("prebuild-deps"),
     prebuildDepsFlags: get("prebuild-deps-flags"),
     prebuildDepsDeltaCache: get("prebuild-deps-delta-cache"),

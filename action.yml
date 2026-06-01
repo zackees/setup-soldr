@@ -556,6 +556,24 @@ inputs:
       truly long-lived workflows can override to "19" or "22".
     required: false
     default: "9"
+  cache-eviction-policy:
+    description: >
+      Repo-level Actions Cache eviction policy run in the post-step
+      (#347). When the repo's cache usage exceeds the trigger
+      threshold, evict the OLDEST per-commit / per-lockfile entries
+      (cook-delta, build-cache, etc.) until under the target,
+      while NEVER touching foundation prefixes (solo-toolchain,
+      cargo-registry, soldr-mini, setup-cache). Prevents LRU from
+      pushing out the small long-lived caches that deliver the big
+      warm-CI wins. Requires `actions: write` permission on the
+      workflow's GITHUB_TOKEN; falls back to a no-op with a warning
+      if permission is missing.
+      Values:
+        - "disabled" (default): no eviction. Current behavior.
+        - "protect-foundations": trigger at 8 GB, target 7 GB.
+        - "aggressive": trigger at 6 GB, target 5 GB.
+    required: false
+    default: "disabled"
   prebuild-deps:
     description: >
       Pre-build dependencies via `soldr cook` before the workflow's own

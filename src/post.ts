@@ -48,6 +48,7 @@ import {
 } from "./lib/compile-cache-stats.js";
 import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
+import { evictIfOverBudget, type CacheEvictionPolicy } from "./lib/cache-eviction.js";
 import {
   snapshotSourceMtimes,
   writeSnapshotFile,
@@ -2034,6 +2035,40 @@ export async function run(): Promise<void> {
   if (saveTable) log(saveTable);
   const saveTotals = postCollector.saveSummaryOneLine();
   if (saveTotals) log(saveTotals);
+
+  // #347: repo-level Actions Cache eviction. Runs AFTER all save
+  // activity so it doesn't evict what this run just wrote. No-op
+  // unless policy is set + usage > trigger threshold. Foundation
+  // prefixes (solo-toolchain, cargo-registry, soldr-mini,
+  // setup-cache) are never touched.
+  try {
+    const policyRaw = (rawInputs.cacheEvictionPolicy ?? "").trim().toLowerCase();
+    const policyMap: Record<string, CacheEvictionPolicy> = {
+      "": "disabled",
+      "disabled": "disabled",
+      "off": "disabled",
+      "false": "disabled",
+      "protect-foundations": "protect-foundations",
+      "aggressive": "aggressive",
+    };
+    const policy = policyMap[policyRaw] ?? "disabled";
+    if (policy !== "disabled") {
+      const githubRepository = (process.env["GITHUB_REPOSITORY"] ?? "").trim();
+      const [owner, repo] = githubRepository.split("/");
+      const token = (process.env["GITHUB_TOKEN"] ?? "").trim() ||
+        (process.env["INPUT_TOKEN"] ?? "").trim();
+      if (!owner || !repo) {
+        log("cache-eviction: GITHUB_REPOSITORY not set or malformed — skipping");
+      } else if (!token) {
+        log("cache-eviction: no GitHub token available — skipping");
+      } else {
+        await evictIfOverBudget(policy, { owner, repo, token, log });
+      }
+    }
+  } catch (err) {
+    log(`cache-eviction: best-effort run failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   if (compileCacheStats !== "none") {
     setCompileCacheOutputs(finalSummary.compile_cache_report, compileCacheStats);
     // PR4 — surface the two job-wide scalar outputs alongside the
