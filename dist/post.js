@@ -45504,9 +45504,15 @@ function thresholdsForPolicy(policy) {
         case "disabled":
             return null;
         case "protect-foundations":
-            return { triggerGb: 8, targetGb: 7 };
+            // GitHub's standard repo cache cap is 10 GB; brief overshoot
+            // is tolerated before LRU eviction kicks in. 9 GB trigger /
+            // 8 GB target gives 2 GB headroom + 1 GB hysteresis without
+            // firing prematurely on a healthy repo. Was 8/7 — too eager.
+            return { triggerGb: 9, targetGb: 8, minAgeHoursBeforeDelete: 6 };
         case "aggressive":
-            return { triggerGb: 6, targetGb: 5 };
+            // Lower thresholds + shorter age floor (2h) for repos that
+            // can't tolerate overshoot or want tighter management.
+            return { triggerGb: 7, targetGb: 6, minAgeHoursBeforeDelete: 2 };
     }
 }
 /**
@@ -45594,9 +45600,32 @@ async function evictIfOverBudget(policy, deps) {
             usageBeforeGb,
         };
     }
+    // #352: age floor protects fresh entries from self-eviction. The
+    // post-step runs BEFORE the API has fully indexed this run's saves,
+    // and consumer parallel jobs may still be saving theirs. Without
+    // this guard, the eviction can delete the just-saved cook/build
+    // caches that the NEXT CI cycle would have hit.
+    const ageFloorMs = thresholds.minAgeHoursBeforeDelete * 3600 * 1000;
+    const ageCutoffEpochMs = Date.now() - ageFloorMs;
+    let protectedByAge = 0;
     const evictable = caches
-        .filter((c) => !!c.key && !exports.FOUNDATION_PREFIXES.some((p) => c.key.startsWith(p)))
+        .filter((c) => {
+        if (!c.key)
+            return false;
+        if (exports.FOUNDATION_PREFIXES.some((p) => c.key.startsWith(p)))
+            return false;
+        const createdMs = new Date(c.created_at).getTime();
+        if (createdMs > ageCutoffEpochMs) {
+            protectedByAge += 1;
+            return false;
+        }
+        return true;
+    })
         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    if (protectedByAge > 0) {
+        deps.log(`cache-eviction: protected ${protectedByAge} entries from self-eviction ` +
+            `(younger than ${thresholds.minAgeHoursBeforeDelete}h, #352)`);
+    }
     const targetBytes = thresholds.targetGb * 1024 * 1024 * 1024;
     let bytes = usageBytes;
     let deleted = 0;
