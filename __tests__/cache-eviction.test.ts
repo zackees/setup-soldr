@@ -44,10 +44,10 @@ test("thresholdsForPolicy returns null for disabled", () => {
   assert.equal(thresholdsForPolicy("disabled"), null);
 });
 
-test("thresholdsForPolicy returns 9/8 + 6h age floor for protect-foundations (#352)", () => {
+test("thresholdsForPolicy returns 9.5/9.0 + 6h age floor for protect-foundations", () => {
   assert.deepEqual(thresholdsForPolicy("protect-foundations"), {
-    triggerGb: 9,
-    targetGb: 8,
+    triggerGb: 9.5,
+    targetGb: 9,
     minAgeHoursBeforeDelete: 6,
   });
 });
@@ -71,7 +71,7 @@ test("disabled policy never fires", async () => {
 test("under trigger threshold is no-op", async () => {
   const { deps, deleted } = makeDeps({
     caches: [entry(1, "cook-delta-v2-foo", 500, 24)],
-    usageGb: 8, // < 9 GB trigger
+    usageGb: 9, // < 9.5 GB trigger
   });
   const result = await evictIfOverBudget("protect-foundations", deps);
   assert.equal(result.fired, false);
@@ -90,16 +90,16 @@ test("evicts oldest non-foundation entries until under target", async () => {
     entry(107, "cook-delta-v2-baz", 1024, 12), // evictable (>6h)
   ];
   // total = 3*1024 + 170 + 11 + 50 + 1024 ≈ 4.25 GB
-  // But say usage is reported as 10 GB to force eviction.
+  // But say usage is reported as 11 GB to force eviction.
   const { deps, deleted, log } = makeDeps({
     caches,
-    usageGb: 10, // > 9 GB trigger
+    usageGb: 11, // > 9.5 GB trigger
   });
   const result = await evictIfOverBudget("protect-foundations", deps);
   assert.equal(result.fired, true);
   // Must evict oldest evictable first: 101 (48h), then 102 (36h)…
-  // bytes start at 10 GB; need to drop to 8 GB (delete 2 GB).
-  // Each entry is 1024 MB = 1 GB. So 2 deletes get us to 8 GB.
+  // bytes start at 11 GB; need to drop to 9 GB target (delete 2 GB).
+  // Each entry is 1024 MB = 1 GB. So 2 deletes get us to 9 GB.
   assert.deepEqual(deleted, [101, 102]);
   assert.equal(result.deletedCount, 2);
   // None of the foundation entries should be in the delete list.
@@ -107,7 +107,7 @@ test("evicts oldest non-foundation entries until under target", async () => {
     assert.ok(!deleted.includes(protectedId), `entry ${protectedId} was foundation, should not be deleted`);
   }
   // log mentions eviction.
-  assert.ok(log.some((l) => l.includes("evicting toward 8 GB")), `expected log line, got: ${log.join("\n")}`);
+  assert.ok(log.some((l) => l.includes("evicting toward 9 GB")), `expected log line, got: ${log.join("\n")}`);
 });
 
 test("age floor protects fresh entries from self-eviction (#352)", async () => {
