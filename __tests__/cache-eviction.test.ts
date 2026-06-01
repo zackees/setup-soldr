@@ -44,12 +44,20 @@ test("thresholdsForPolicy returns null for disabled", () => {
   assert.equal(thresholdsForPolicy("disabled"), null);
 });
 
-test("thresholdsForPolicy returns 8/7 for protect-foundations", () => {
-  assert.deepEqual(thresholdsForPolicy("protect-foundations"), { triggerGb: 8, targetGb: 7 });
+test("thresholdsForPolicy returns 9/8 + 6h age floor for protect-foundations (#352)", () => {
+  assert.deepEqual(thresholdsForPolicy("protect-foundations"), {
+    triggerGb: 9,
+    targetGb: 8,
+    minAgeHoursBeforeDelete: 6,
+  });
 });
 
-test("thresholdsForPolicy returns 6/5 for aggressive", () => {
-  assert.deepEqual(thresholdsForPolicy("aggressive"), { triggerGb: 6, targetGb: 5 });
+test("thresholdsForPolicy returns 7/6 + 2h age floor for aggressive (#352)", () => {
+  assert.deepEqual(thresholdsForPolicy("aggressive"), {
+    triggerGb: 7,
+    targetGb: 6,
+    minAgeHoursBeforeDelete: 2,
+  });
 });
 
 test("disabled policy never fires", async () => {
@@ -62,8 +70,8 @@ test("disabled policy never fires", async () => {
 
 test("under trigger threshold is no-op", async () => {
   const { deps, deleted } = makeDeps({
-    caches: [entry(1, "cook-delta-v2-foo", 500, 1)],
-    usageGb: 7,
+    caches: [entry(1, "cook-delta-v2-foo", 500, 24)],
+    usageGb: 8, // < 9 GB trigger
   });
   const result = await evictIfOverBudget("protect-foundations", deps);
   assert.equal(result.fired, false);
@@ -73,37 +81,61 @@ test("under trigger threshold is no-op", async () => {
 
 test("evicts oldest non-foundation entries until under target", async () => {
   const caches = [
-    entry(101, "cook-delta-v2-foo", 1024, 10), // oldest, evictable
-    entry(102, "zccache-Linux-X64-test-aaa", 1024, 8), // evictable
-    entry(103, "cook-delta-v2-bar", 1024, 5), // evictable
-    entry(104, "solo-toolchain-v2-xyz", 170, 4), // FOUNDATION — protected
-    entry(105, "soldr-mini-darwin", 11, 3), // FOUNDATION
-    entry(106, "setup-soldr-cargoregistry-v1-foo", 50, 2), // FOUNDATION
-    entry(107, "cook-delta-v2-baz", 1024, 1), // newest evictable
+    entry(101, "cook-delta-v2-foo", 1024, 48), // oldest, evictable (>6h)
+    entry(102, "zccache-Linux-X64-test-aaa", 1024, 36), // evictable
+    entry(103, "cook-delta-v2-bar", 1024, 24), // evictable
+    entry(104, "solo-toolchain-v2-xyz", 170, 12), // FOUNDATION — protected
+    entry(105, "soldr-mini-darwin", 11, 12), // FOUNDATION
+    entry(106, "setup-soldr-cargoregistry-v1-foo", 50, 12), // FOUNDATION
+    entry(107, "cook-delta-v2-baz", 1024, 12), // evictable (>6h)
   ];
-  // total = 3*1024 + 170 + 11 + 50 + 1024 ≈ 4MB foundations + 4096MB evictable ≈ 4.25 GB
+  // total = 3*1024 + 170 + 11 + 50 + 1024 ≈ 4.25 GB
   // But say usage is reported as 10 GB to force eviction.
   const { deps, deleted, log } = makeDeps({
     caches,
-    usageGb: 10, // > 8 GB trigger
+    usageGb: 10, // > 9 GB trigger
   });
   const result = await evictIfOverBudget("protect-foundations", deps);
   assert.equal(result.fired, true);
-  // Must evict oldest evictable first: 101 (10h), then 102 (8h), then 103 (5h)…
-  // bytes start at 10 GB; need to drop to 7 GB (delete 3 GB).
-  // Each entry is 1024 MB = 1 GB. So 3 deletes get us to 7 GB.
-  assert.deepEqual(deleted, [101, 102, 103]);
-  assert.equal(result.deletedCount, 3);
+  // Must evict oldest evictable first: 101 (48h), then 102 (36h)…
+  // bytes start at 10 GB; need to drop to 8 GB (delete 2 GB).
+  // Each entry is 1024 MB = 1 GB. So 2 deletes get us to 8 GB.
+  assert.deepEqual(deleted, [101, 102]);
+  assert.equal(result.deletedCount, 2);
   // None of the foundation entries should be in the delete list.
   for (const protectedId of [104, 105, 106]) {
     assert.ok(!deleted.includes(protectedId), `entry ${protectedId} was foundation, should not be deleted`);
   }
   // log mentions eviction.
-  assert.ok(log.some((l) => l.includes("evicting toward 7 GB")), `expected log line, got: ${log.join("\n")}`);
+  assert.ok(log.some((l) => l.includes("evicting toward 8 GB")), `expected log line, got: ${log.join("\n")}`);
+});
+
+test("age floor protects fresh entries from self-eviction (#352)", async () => {
+  // All non-foundation entries fresh (< 6h). Even though usage is over
+  // trigger, NO eviction should happen because the age floor protects
+  // them. This is the fix for #352 — protect this run's just-saved
+  // cook/build caches from being deleted before the next CI cycle.
+  const caches = [
+    entry(201, "cook-base-v2-foo", 2000, 0.1), // age 6 minutes
+    entry(202, "setup-soldr-buildcache-v2-bar", 300, 0.1),
+    entry(203, "cook-delta-v2-baz", 1500, 1.5), // age 1.5h still < 6h
+    entry(204, "solo-toolchain-v2-foo", 170, 1), // foundation, anyway
+  ];
+  const { deps, deleted, log } = makeDeps({ caches, usageGb: 10 });
+  const result = await evictIfOverBudget("protect-foundations", deps);
+  assert.equal(result.fired, true);
+  // Should attempt to evict (usage > trigger) but find ZERO eligible
+  // entries because all non-foundation entries are < 6h old.
+  assert.equal(result.deletedCount, 0, "no entries should be deleted — all fresh");
+  assert.equal(deleted.length, 0);
+  assert.ok(
+    log.some((l) => l.includes("protected") && l.includes("younger than 6h")),
+    `expected protected-by-age log line, got: ${log.join("\n")}`,
+  );
 });
 
 test("404 from delete is tolerated (concurrent race)", async () => {
-  const caches = [entry(1, "cook-delta-v2-foo", 1024, 5)];
+  const caches = [entry(1, "cook-delta-v2-foo", 1024, 24)];
   const log: string[] = [];
   const deps: EvictDeps = {
     owner: "x",
@@ -125,8 +157,8 @@ test("404 from delete is tolerated (concurrent race)", async () => {
 
 test("403 permission denied logs once and stops", async () => {
   const caches = [
-    entry(1, "cook-delta-v2-foo", 1024, 5),
-    entry(2, "cook-delta-v2-bar", 1024, 4),
+    entry(1, "cook-delta-v2-foo", 1024, 24),
+    entry(2, "cook-delta-v2-bar", 1024, 18),
   ];
   let attempts = 0;
   const log: string[] = [];
