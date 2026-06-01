@@ -92,7 +92,28 @@ function copyTreeFiltered(
       const destFile = path.join(destZccacheDir, rel);
       try {
         fs.mkdirSync(path.dirname(destFile), { recursive: true });
-        fs.copyFileSync(srcFile, destFile);
+        // #335: prefer hardlink over copy. zccache cache entries are
+        // content-addressed and immutable, so sharing an inode between
+        // the restored build-cache and the isolated test cache is
+        // safe. Constant-time vs ~27 s of sequential copy I/O for the
+        // ~5.46 GB observed on zccache Integration. Falls back to
+        // copyFile on EXDEV (cross-filesystem) or EPERM (filesystems
+        // that don't allow hardlinks).
+        try {
+          fs.linkSync(srcFile, destFile);
+        } catch (err) {
+          const code = (err as NodeJS.ErrnoException).code;
+          if (code === "EEXIST") {
+            try {
+              fs.unlinkSync(destFile);
+              fs.linkSync(srcFile, destFile);
+            } catch {
+              fs.copyFileSync(srcFile, destFile);
+            }
+          } else {
+            fs.copyFileSync(srcFile, destFile);
+          }
+        }
         files += 1;
         bytes += fs.statSync(destFile).size;
       } catch {
