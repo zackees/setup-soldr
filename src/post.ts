@@ -1378,7 +1378,15 @@ export async function run(): Promise<void> {
     inflatedBytes: buildSave.status === "saved" || buildSave.status === "oversize-skip" ? buildSave.inflatedBytes : null,
     fileCount: buildSave.status === "saved" || buildSave.status === "oversize-skip" ? buildSave.fileCount : null,
     payload: buildSave.status === "saved" || buildSave.status === "oversize-skip" ? buildSave.payload : null,
-    durationMs: Date.now() - buildSaveStart, timestamp: new Date().toISOString(),
+    durationMs: Date.now() - buildSaveStart,
+    // #360 extension: build-cache's saveCacheLayer (line 387-493)
+    // already captures compress/upload phase split via #214's
+    // CacheSavePhaseTimings. Surface them to the stats collector
+    // so the per-layer save table shows the split for build-cache
+    // too (was previously only populated for cook-cache).
+    compressMs: buildSave.phaseTimings?.compressMs,
+    uploadMs: buildSave.phaseTimings?.uploadMs,
+    timestamp: new Date().toISOString(),
   });
 
   // Target cache. Previously slotted as `notManagedSave()` in the
@@ -1563,7 +1571,10 @@ export async function run(): Promise<void> {
       inflatedBytes: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.inflatedBytes : null,
       fileCount: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.fileCount : null,
       payload: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.payload : null,
-      durationMs: Date.now() - regSaveStart, timestamp: new Date().toISOString(),
+      durationMs: Date.now() - regSaveStart,
+      compressMs: cargoRegistrySave.phaseTimings?.compressMs,
+      uploadMs: cargoRegistrySave.phaseTimings?.uploadMs,
+      timestamp: new Date().toISOString(),
     });
   }
 

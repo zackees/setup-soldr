@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.9.54 - 2026-06-02
+
+- Extend #360 per-layer split timing (compress vs upload) to
+  `build-cache` and `cargo-registry`. Their save paths already
+  captured `CacheSavePhaseTimings` internally (from #214) but the
+  postCollector record didn't surface them, so the table showed
+  `-` in the new compress/upload columns for everything except
+  cook-cache. With this change, build-cache and cargo-registry
+  rows show the split too — operators can finally see at a
+  glance whether build-cache's 5s save is dominated by compress
+  or upload. target-cache uses `cache.saveCache` directly (no
+  split available without internal API plumbing) and continues
+  to show `-` in the new columns.
+
 ## v0.9.53 - 2026-06-01
 
 - Lower cook-cache base compression level from zstd-19 → zstd-9.
