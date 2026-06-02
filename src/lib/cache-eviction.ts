@@ -271,10 +271,14 @@ export async function evictIfOverBudget(
     );
   }
   let protectedByAge = 0;
+  let protectedByFoundation = 0;
   const evictable = caches
     .filter((c) => {
       if (!c.key) return false;
-      if (FOUNDATION_PREFIXES.some((p) => c.key!.startsWith(p))) return false;
+      if (FOUNDATION_PREFIXES.some((p) => c.key!.startsWith(p))) {
+        protectedByFoundation += 1;
+        return false;
+      }
       const createdMs = new Date(c.created_at).getTime();
       if (createdMs > ageCutoffEpochMs) {
         protectedByAge += 1;
@@ -283,10 +287,15 @@ export async function evictIfOverBudget(
       return true;
     })
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  if (protectedByAge > 0) {
+  if (protectedByFoundation > 0 || protectedByAge > 0) {
+    // #368 + #352/#356: split the count so operators can tell why
+    // eviction is finding nothing to delete. Foundation entries are
+    // protected regardless of age; age-floor only applies to
+    // non-foundation entries that are too fresh.
     deps.log(
-      `cache-eviction: protected ${protectedByAge} entries from self-eviction ` +
-        `(younger than ${effectiveFloorHours}h, #352/#356)`,
+      `cache-eviction: protected ${protectedByFoundation} entries by foundation prefix ` +
+        `(#368), ${protectedByAge} entries by age floor (younger than ${effectiveFloorHours}h, #352/#356), ` +
+        `${evictable.length} entries evictable`,
     );
   }
 

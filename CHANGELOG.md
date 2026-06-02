@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.58 - 2026-06-02
+
+- Eviction log splits foundation-protected vs age-floor-protected
+  counts. After #368 added cook-base to FOUNDATION_PREFIXES, the
+  legacy single `protected N entries (younger than Xh)` line
+  conflated entries skipped for being foundation (any age) with
+  entries skipped for being too fresh. Operators couldn't tell
+  whether the eviction was finding nothing because the budget was
+  healthy or because foundation entries crowded everything else
+  out. New format: `protected F entries by foundation prefix
+  (#368), A entries by age floor (younger than Xh, #352/#356),
+  E entries evictable`.
+
 ## v0.9.57 - 2026-06-02
 
 - Add `cook-base-v2-` to `FOUNDATION_PREFIXES` so our controlled
