@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.62 - 2026-06-02
+
+- Drop per-job suffix from cargo-registry cache key (closes #375).
+  cargo-registry content is `$CARGO_HOME/registry/` + `.global-cache`
+  + `git/` — all keyed on Cargo.lock content, identical across
+  matrix jobs that share the same lockfile. Per-job suffix made
+  each matrix job save its own ~56 MB copy (~500 MB redundant
+  uploads per CI cycle on zccache's 9-job matrix). Now the first
+  matrix job to save wins; rest exact-HIT. build-cache (#237)
+  KEEPS its per-job suffix because target/ content genuinely
+  differs per job; this only applies to cargo-registry whose
+  content does not.
+
 ## v0.9.61 - 2026-06-02
 
 - Cache-eviction now sorts evictable entries by size descending
