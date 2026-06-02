@@ -80,7 +80,7 @@ test("under trigger threshold is no-op", async () => {
   assert.equal(deleted.length, 0);
 });
 
-test("evicts oldest non-foundation entries until under target", async () => {
+test("evicts biggest non-foundation entries until under target (age tiebreaker)", async () => {
   const caches = [
     entry(101, "cook-delta-v2-foo", 1024, 48), // oldest, evictable (>6h)
     entry(102, "zccache-Linux-X64-test-aaa", 1024, 36), // evictable
