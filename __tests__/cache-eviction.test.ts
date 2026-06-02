@@ -116,10 +116,13 @@ test("age floor protects fresh entries from self-eviction (#352)", async () => {
   // ~0.5 GB over trigger (9.5 GB), so the graduated floor stays at 6h
   // and NO eviction should happen — protecting this run's saves.
   const caches = [
-    entry(201, "cook-base-v2-foo", 2000, 0.1), // age 6 minutes
+    // #368: cook-base is now foundation, so we use cook-delta + buildcache
+    // here to exercise the age-floor path (these layers ARE evictable).
+    entry(201, "cook-delta-v2-foo", 2000, 0.1), // age 6 minutes
     entry(202, "setup-soldr-buildcache-v2-bar", 300, 0.1),
     entry(203, "cook-delta-v2-baz", 1500, 1.5), // age 1.5h still < 6h
-    entry(204, "solo-toolchain-v2-foo", 170, 1), // foundation, anyway
+    entry(204, "solo-toolchain-v2-foo", 170, 1), // foundation
+    entry(205, "cook-base-v2-baz", 300, 12), // foundation (#368) — old but protected
   ];
   const { deps, deleted, log } = makeDeps({ caches, usageGb: 10 });
   const result = await evictIfOverBudget("protect-foundations", deps);
@@ -242,6 +245,10 @@ test("entries matching ANY foundation prefix are protected", () => {
     "soldr-mini-linux-x64-glibc-v0.7.51",
     "setup-soldr-v4-linux-unknown-abc-def",
     "setup-soldr-cargoregistry-v1-linux-unknown-abc",
+    // #368: cook-cache-base is foundation. Lockfile-keyed →
+    // serves many CI cycles. Eviction observed within 20 min on
+    // zccache before this was added.
+    "cook-base-v2-linux-x64-glibc-rustc1.94.1-fnone-l92559307b22cc1be-soldrv0.7.51",
   ]) {
     assert.ok(
       FOUNDATION_PREFIXES.some((p) => key.startsWith(p)),
@@ -252,8 +259,8 @@ test("entries matching ANY foundation prefix are protected", () => {
 
 test("entries NOT matching foundation prefix are evictable", () => {
   for (const key of [
+    // cook-delta IS evictable — it's commit-keyed, ages off quickly.
     "cook-delta-v2-linux-x64-glibc-rustc1.94.1-fnone-l...",
-    "cook-base-v2-linux-x64-glibc-rustc1.94.1-...",
     "setup-soldr-buildcache-v2-linux-unknown-abc",
     "zccache-Linux-X64-test-foo",
     "cargo-target-Linux-X64-bench-abc",

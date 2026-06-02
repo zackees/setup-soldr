@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.9.57 - 2026-06-02
+
+- Add `cook-base-v2-` to `FOUNDATION_PREFIXES` so our controlled
+  eviction skips cook-cache-base entries (closes #368). Production
+  observation on zccache: a base entry that HIT at 08:17 was GONE
+  by 08:38 on a 20-minute child commit cycle — graduated age floor
+  (0.5h danger / 2h moderate / 6h baseline) doesn't protect entries
+  older than 6h, and cook-base saves typically live for many hours.
+  Cost of MISS = ~200s of cold cook; size = ~300 MB / platform
+  after v0.9.53's zstd-9. Ratio comparable to solo-toolchain.
+  GitHub's own LRU still evicts truly-stale cook-base entries that
+  no run accesses for ~7 days, so unbounded growth is bounded.
+
 ## v0.9.56 - 2026-06-02
 
 - Fix v0.9.55's parentSha derivation on shallow checkouts (the
