@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## v0.9.60 - 2026-06-02
+
+- Parallelize cache-eviction deletes with concurrency=10. Sequential
+  deletes were observed at ~190ms each on the GitHub Actions Cache
+  API; large eviction passes (300+ entries on a busy repo) took ~57s
+  of post-step wall-clock. Worker-pool pattern with N=10 drops that
+  to ~6s. Per-CI-cycle savings: ~50s × matrix-job-count of post-step
+  time on the over-budget path.
+- Pre-compute eviction list before firing deletes (was: decrement
+  byte counter mid-loop). Over-deletion bounded by CONCURRENCY ×
+  largest-entry which is negligible vs the budget target.
+- 401/403 still aborts via shared flag; up to CONCURRENCY failed
+  API calls before the abort propagates (was 1). Acceptable tradeoff
+  for the per-cycle wall-clock savings.
+
 ## v0.9.59 - 2026-06-02
 
 - Drop git SHA from cargo-registry cache key (closes #371). Same

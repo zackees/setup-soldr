@@ -300,38 +300,66 @@ export async function evictIfOverBudget(
   }
 
   const targetBytes = thresholds.targetGb * 1024 * 1024 * 1024;
-  let bytes = usageBytes;
+
+  // Pre-compute the slice of entries we need to delete so we can fire
+  // the delete API calls in parallel. Sequential deletes were observed
+  // at ~190ms each (~57s wall-clock for 300 entries on a busy repo);
+  // parallel deletes drop that to ~6s with concurrency=10. The over-
+  // delete amount is at most CONCURRENCY × largest-entry-size which is
+  // negligible compared to the budget target (we're already aiming
+  // BELOW the trigger, so a few extra GB beyond target is fine).
+  const toDelete: CacheEntry[] = [];
+  let predictedBytes = usageBytes;
+  for (const c of evictable) {
+    if (predictedBytes <= targetBytes) break;
+    toDelete.push(c);
+    predictedBytes -= c.size_in_bytes;
+  }
+
   let deleted = 0;
   let deletedBytes = 0;
   let permissionDeniedLogged = false;
-  for (const c of evictable) {
-    if (bytes <= targetBytes) break;
-    try {
-      await deleteCacheById(c.id);
-      bytes -= c.size_in_bytes;
-      deleted += 1;
-      deletedBytes += c.size_in_bytes;
-      log(
-        `cache-eviction: deleted ${c.key} (${(c.size_in_bytes / 1024 / 1024).toFixed(0)} MB, ` +
-          `age ${((Date.now() - new Date(c.created_at).getTime()) / 3600000).toFixed(1)}h)`,
-      );
-    } catch (err) {
-      const status = (err as { status?: number }).status;
-      if (status === 404) continue; // raced with another job's delete; fine
-      if (status === 403 || status === 401) {
-        if (!permissionDeniedLogged) {
-          log(
-            `cache-eviction: permission denied (status=${status}) — workflow needs 'permissions: actions: write'. Skipping further deletes.`,
-          );
-          permissionDeniedLogged = true;
+  let aborted = false;
+  const CONCURRENCY = 10;
+  // Worker-pool pattern: N concurrent workers each pull entries from
+  // the shared queue and delete them. Cleanly handles 401/403 (stop
+  // immediately) and 404 (treat as already-deleted).
+  let queueIndex = 0;
+  const worker = async (): Promise<void> => {
+    while (true) {
+      if (aborted) return;
+      const i = queueIndex++;
+      if (i >= toDelete.length) return;
+      const c = toDelete[i]!;
+      try {
+        await deleteCacheById(c.id);
+        deleted += 1;
+        deletedBytes += c.size_in_bytes;
+        log(
+          `cache-eviction: deleted ${c.key} (${(c.size_in_bytes / 1024 / 1024).toFixed(0)} MB, ` +
+            `age ${((Date.now() - new Date(c.created_at).getTime()) / 3600000).toFixed(1)}h)`,
+        );
+      } catch (err) {
+        const status = (err as { status?: number }).status;
+        if (status === 404) continue;
+        if (status === 403 || status === 401) {
+          if (!permissionDeniedLogged) {
+            log(
+              `cache-eviction: permission denied (status=${status}) — workflow needs 'permissions: actions: write'. Skipping further deletes.`,
+            );
+            permissionDeniedLogged = true;
+          }
+          aborted = true;
+          return;
         }
-        break; // no point trying more deletes
+        log(
+          `cache-eviction: delete failed for ${c.key} (status=${status ?? "?"}): ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
-      log(
-        `cache-eviction: delete failed for ${c.key} (status=${status ?? "?"}): ${err instanceof Error ? err.message : String(err)}`,
-      );
     }
-  }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, toDelete.length) }, () => worker()));
+  const bytes = usageBytes - deletedBytes;
   const usageAfterGb = bytes / 1024 / 1024 / 1024;
   log(
     `cache-eviction: complete — deleted ${deleted} entries (${(deletedBytes / 1024 / 1024 / 1024).toFixed(2)} GB), ` +
