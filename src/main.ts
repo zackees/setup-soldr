@@ -9,6 +9,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as core from "@actions/core";
 import * as cache from "@actions/cache";
+import * as exec from "@actions/exec";
 import { createLogger } from "./lib/log-utils.js";
 import { readRawInputs, resolveSetup, applyResolveResult } from "./lib/resolve-setup.js";
 import {
@@ -138,7 +139,56 @@ function dirHasContent(p: string): boolean {
   }
 }
 
-function buildActionContext(): ActionContext {
+async function deriveParentSha(
+  workspace: string,
+  githubSha: string,
+  logger: ReturnType<typeof createLogger>,
+): Promise<string> {
+  // Run `git log -1 --format=%P HEAD` in the workspace to get the
+  // first-parent SHA. Returns "" when:
+  //  - git is unavailable
+  //  - the workspace isn't a git repo (or actions/checkout used
+  //    fetch-depth=1 and the parent isn't in the local repo)
+  //  - git produced an unexpected format
+  let stdout = "";
+  let stderr = "";
+  let code = 1;
+  try {
+    code = await exec.exec(
+      "git",
+      ["-C", workspace, "log", "-1", "--format=%P", "HEAD"],
+      {
+        silent: true,
+        ignoreReturnCode: true,
+        listeners: {
+          stdout: (data: Buffer) => { stdout += data.toString("utf8"); },
+          stderr: (data: Buffer) => { stderr += data.toString("utf8"); },
+        },
+      },
+    );
+  } catch (err) {
+    logger.log(`parent-sha: git invocation failed (${err instanceof Error ? err.message : String(err)}); leaving empty`);
+    return "";
+  }
+  if (code !== 0) {
+    logger.log(`parent-sha: git log exit=${code} stderr=${stderr.trim().slice(0, 120)}; leaving empty`);
+    return "";
+  }
+  // %P emits parent SHAs space-separated. First parent is the
+  // mainline ancestor (for merges, the branch we merged into).
+  const first = stdout.trim().split(/\s+/)[0] ?? "";
+  if (!/^[0-9a-f]{7,40}$/i.test(first)) {
+    logger.log(`parent-sha: unexpected git output ${JSON.stringify(stdout.slice(0, 80))}; leaving empty`);
+    return "";
+  }
+  if (first === githubSha) {
+    return "";
+  }
+  logger.log(`parent-sha: derived ${first.slice(0, 12)} from git log (#365)`);
+  return first;
+}
+
+async function buildActionContext(): Promise<ActionContext> {
   const env = process.env;
   const logger = createLogger(env);
   const workspace = env["ACTION_WORKSPACE"]?.trim() || env["GITHUB_WORKSPACE"]?.trim() || process.cwd();
@@ -147,7 +197,17 @@ function buildActionContext(): ActionContext {
   const runnerArch = env["ACTION_ARCH"]?.trim() || env["RUNNER_ARCH"]?.trim() || process.arch;
   const githubSha = env["GITHUB_SHA"]?.trim() || "";
   const githubToken = env["GITHUB_TOKEN"]?.trim() || env["INPUT_TOKEN"]?.trim() || "";
-  const parentSha = env["ACTION_PARENT_SHA"]?.trim() || "";
+  // #365: parentSha enables cook-cache-delta + target-cache + cargo-
+  // registry to share entries across consecutive commits. The env
+  // override (ACTION_PARENT_SHA) lets a workflow set it explicitly;
+  // otherwise we derive it from `git log -1 --format=%P HEAD` so the
+  // fallback works out of the box for any repo with non-shallow
+  // checkout. Without this, every push-event run had the delta key
+  // mismatch the prior save (0% hit rate observed on zccache).
+  let parentSha = env["ACTION_PARENT_SHA"]?.trim() || "";
+  if (!parentSha && githubSha) {
+    parentSha = await deriveParentSha(workspace, githubSha, logger);
+  }
   return {
     env: { ...env },
     workspace,
@@ -187,7 +247,7 @@ async function restoreCacheSafe(
 }
 
 export async function run(): Promise<void> {
-  const ctx = buildActionContext();
+  const ctx = await buildActionContext();
   const logger = ctx.logger;
 
   await markPhase("action");
@@ -703,8 +763,9 @@ export async function run(): Promise<void> {
       cookDeltaArchive = `${cookTargetDir}.soldr-delta.tar.zst`;
       cookBaseManifest = `${cookTargetDir}.soldr-base-manifest.pb`;
       logger.log(
-        `cook: layered keys base=${cookBaseKey} delta=${cookDeltaKey} ` +
-          `starting archive restore concurrent with install`,
+        `cook: layered keys base=${cookBaseKey} delta=${cookDeltaKey}` +
+          (cookDeltaParentKey ? ` delta-fallback=${cookDeltaParentKey}` : ` (no parent-fallback — parentSha unavailable, #365)`) +
+          ` starting archive restore concurrent with install`,
       );
       cookLayeredRestorePromise = restoreLayeredCookCacheArchives({
         baseKey: cookBaseKey,
