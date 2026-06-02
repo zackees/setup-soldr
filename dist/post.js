@@ -45499,6 +45499,17 @@ exports.FOUNDATION_PREFIXES = [
     "soldr-mini-", // ~11 MB, skips soldr binary download
     "setup-soldr-v", // tiny setup-cache
     "setup-soldr-cargoregistry-v", // ~50 MB, skips crate-source download
+    // #368: cook-cache-base is lockfile-keyed (not commit-keyed) so a
+    // single save serves many CI cycles. Observed regression on
+    // zccache: base evicted within 20 minutes (run 26807424213 had
+    // base HIT, child commit run 26808445398 had MISS, same lockfile
+    // hash). Cost of MISS = ~200 s of cold cook per affected job;
+    // size on disk = ~300 MB after v0.9.53's zstd-9. Ratio is
+    // comparable to solo-toolchain (~170 MB / 11 s). Foundation
+    // protection lets our controlled eviction skip these, while
+    // GitHub's own LRU still evicts stale entries that no run
+    // accesses for ~7 days.
+    "cook-base-v2-", // ~300 MB per platform, skips ~200 s cold cook
 ];
 /**
  * #356: graduated age-floor tier table.
