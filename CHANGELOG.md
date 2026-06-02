@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.9.61 - 2026-06-02
+
+- Cache-eviction now sorts evictable entries by size descending
+  (biggest first) instead of age ascending (oldest first). Same
+  byte-target reached with ~10× fewer API calls in production.
+  Observation on zccache: a typical 1.33 GB eviction needs to
+  delete only ~10 big entries (>10 MB) when sorted biggest-first;
+  oldest-first sort burns API calls on ~300 tiny sccache shards
+  (<1 MB each, 70% of evictable population) to free the same
+  bytes. Age remains the tiebreaker when sizes match. The age-
+  floor (#352/#356) still gates fresh entries so we don't
+  delete just-saved entries from this run. GitHub's own LRU
+  evicts truly-stale tiny entries at 7-day inactivity.
+
 ## v0.9.60 - 2026-06-02
 
 - Parallelize cache-eviction deletes with concurrency=10. Sequential

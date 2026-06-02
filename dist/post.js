@@ -45678,7 +45678,22 @@ async function evictIfOverBudget(policy, deps) {
         }
         return true;
     })
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        // Sort by size descending (bytes-per-API-call efficiency), with
+        // age ascending as tiebreaker. Production observation: a typical
+        // over-budget eviction needs to delete ~300 entries but 70% are
+        // tiny sccache shards (<1 MB each). Sorting by age first would
+        // burn ~10× more API calls than necessary to free the same bytes.
+        // Big-first sort: ~9-10 big entries free ~1 GB; ~290 tiny entries
+        // skipped (they accumulate but stay below ~5% of budget and
+        // GitHub's own LRU evicts truly-stale ones at 7-day inactivity).
+        // Age-floor still gates fresh entries (#352/#356) so we don't
+        // delete just-saved entries from this run.
+        .sort((a, b) => {
+        const sizeDiff = b.size_in_bytes - a.size_in_bytes;
+        if (sizeDiff !== 0)
+            return sizeDiff;
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
     if (protectedByFoundation > 0 || protectedByAge > 0) {
         // #368 + #352/#356: split the count so operators can tell why
         // eviction is finding nothing to delete. Foundation entries are
