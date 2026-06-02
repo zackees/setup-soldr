@@ -702,10 +702,16 @@ export async function resolveSetup(
   // SHA lifts exact-key hit rate from ~0% toward ~100% per
   // (lockHash, digest) generation, eliminates redundant ~56 MB
   // saves per run, and reduces cache-budget churn.
-  let cargoRegistryCacheKey = `${cargoRegistryCacheRestorePrefix}${digest}`;
-  if (suffix) {
-    cargoRegistryCacheKey = `${cargoRegistryCacheKey}-${sanitizedSuffix}`;
-  }
+  //
+  // #375: also drop per-job suffix from cargo-registry. Unlike
+  // build-cache (#237 KEPT suffix because target/ content differs
+  // per job), cargo-registry content is just `$CARGO_HOME/registry/`
+  // — downloaded crate sources keyed on Cargo.lock, identical
+  // across (check, test, doc, msrv) matrix jobs. Per-job suffix
+  // means N redundant saves per CI cycle (~56 MB × N for zccache's
+  // 9-job matrix = ~500 MB wasted bandwidth). Sharing the key
+  // across jobs means: first job saves, rest exact-HIT.
+  const cargoRegistryCacheKey = `${cargoRegistryCacheRestorePrefix}${digest}`;
   const cargoRegistryCacheEnabled = cacheUmbrellaEnabled && cargoRegistryCacheRequested;
   if (cargoRegistryCacheEnabled) {
     makeDirs(cargoRegistryCachePath);

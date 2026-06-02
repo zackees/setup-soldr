@@ -438,12 +438,18 @@ test("build_cache_key is per-job + SHA-independent (setup-soldr#237)", async () 
   assert.match(key, /^setup-soldr-buildcache-v2-.*-myjob-/);
 });
 
-test("cargo_registry_cache_key includes cache-key-suffix", async () => {
+test("cargo_registry_cache_key drops cache-key-suffix (#375)", async () => {
+  // #375: cargo-registry content is per-(lockHash, digest), identical
+  // across jobs. Dropping the per-job suffix lets matrix jobs SHARE the
+  // cache entry — first save wins, rest exact-HIT instead of FALLBACK.
+  // Eliminates ~56 MB × (matrix_jobs - 1) of redundant uploads per CI
+  // cycle. Build-cache (#237) KEPT suffix because target/ content
+  // differs per job; cargo-registry contents do not.
   const { outputs } = await run({}, { INPUT_CACHE_KEY_SUFFIX: "myjob" });
   const key = outputs["cargo_registry_cache_key"] ?? "";
   assert.ok(
-    key.endsWith("-myjob"),
-    `expected cargo_registry_cache_key to end with -myjob, got ${key}`,
+    !key.endsWith("-myjob"),
+    `cargo_registry_cache_key must NOT include the per-job suffix (#375), got ${key}`,
   );
 });
 
