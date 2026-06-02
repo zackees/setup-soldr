@@ -1077,12 +1077,18 @@ test(
     // incorporate the new path names or warm caches on existing consumers
     // would invalidate.
     const { result } = await run({}, { INPUT_CARGO_REGISTRY_CACHE: "true" });
-    // 1) Key shape: prefix `setup-soldr-cargoregistry-v1-<os>-<arch>-<lock>-<digest>-<sha>`.
+    // 1) Key shape: prefix `setup-soldr-cargoregistry-v1-<os>-<arch>-<lock>-<digest>`.
+    // #371: SHA was dropped — same anti-pattern fix as #237 for build-cache.
     const key = result.cargoRegistryCache.key;
     assert.match(
       key,
-      /^setup-soldr-cargoregistry-v1-linux-x64-[0-9a-f]{16}-[0-9a-f]{16}-0123456789abcdef$/,
+      /^setup-soldr-cargoregistry-v1-linux-x64-[0-9a-f]{16}-[0-9a-f]{16}$/,
       `cache key shape regressed: ${key}`,
+    );
+    // The commit SHA must NOT appear (it was the #237/#371 anti-pattern).
+    assert.ok(
+      !key.includes("0123456789abcdef"),
+      `cargo-registry key must not include the commit SHA (#371), got ${key}`,
     );
     // 2) The .global-cache / git names must NOT appear in the key.
     assert.ok(!key.includes(".global-cache"), `key leaked extra name: ${key}`);

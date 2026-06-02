@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## v0.9.59 - 2026-06-02
+
+- Drop git SHA from cargo-registry cache key (closes #371). Same
+  anti-pattern fix as #237 did for build-cache. Production
+  observation: every commit's cargo-registry exact-key probe was
+  missing (only matched same-SHA retries), and the action would
+  burn ~56 MB upload bandwidth saving a new entry that no future
+  probe could hit. The restore-key prefix (without SHA) already
+  did the actual work via FALLBACK. After this fix, exact-key
+  hit rate per (lockHash, digest) generation should climb toward
+  ~100%, save-status flips to `skipped-race` for subsequent
+  matrix jobs, and per-CI-cycle redundant uploads drop by ~50 MB
+  × matrix-job-count.
+
 ## v0.9.58 - 2026-06-02
 
 - Eviction log splits foundation-protected vs age-floor-protected
