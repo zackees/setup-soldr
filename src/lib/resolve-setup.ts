@@ -694,7 +694,15 @@ export async function resolveSetup(
   const cargoRegistryCacheExtras = [".global-cache", "git"];
   const cargoRegistryCachePrefix = `setup-soldr-cargoregistry-v1-${runnerOs}-${runnerArch}`;
   const cargoRegistryCacheRestorePrefix = `${cargoRegistryCachePrefix}-${cargoLockHash}-`;
-  let cargoRegistryCacheKey = `${cargoRegistryCacheRestorePrefix}${digest}-${githubSha}`;
+  // #371: drop git SHA from the exact key, same anti-pattern fix as
+  // #237 did for build-cache. With SHA, every commit produced a new
+  // exact-key entry that no future probe could ever hit (only same-
+  // commit retries). The restore-key prefix (sans SHA) already does
+  // the actual work via FALLBACK — observed in production. Dropping
+  // SHA lifts exact-key hit rate from ~0% toward ~100% per
+  // (lockHash, digest) generation, eliminates redundant ~56 MB
+  // saves per run, and reduces cache-budget churn.
+  let cargoRegistryCacheKey = `${cargoRegistryCacheRestorePrefix}${digest}`;
   if (suffix) {
     cargoRegistryCacheKey = `${cargoRegistryCacheKey}-${sanitizedSuffix}`;
   }
