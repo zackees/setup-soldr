@@ -1743,7 +1743,7 @@ export async function run(): Promise<void> {
         const level =
           cookSaveLayer === "delta"
             ? core.getState("cookDeltaCompressLevel") || "3"
-            : core.getState("cookCompressLevel") || "19";
+            : core.getState("cookCompressLevel") || "9";
         const cookSaveStart = Date.now();
         try {
           const saveResult = await saveLayeredCookCache({
@@ -1785,7 +1785,7 @@ export async function run(): Promise<void> {
     } else {
       const cookExactKey = core.getState("cookExactKey");
       const cookLongWindow = parseInt(core.getState("cookLongWindow") || "27", 10);
-      const cookLevel = core.getState("cookCompressLevel") || "19";
+      const cookLevel = core.getState("cookCompressLevel") || "9";
       log(
         `cook-cache: post-step key=${cookExactKey} hit=${cookHit} ran=${cookRan} target=${cookTargetDir}`,
       );
