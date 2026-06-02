@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## v0.9.56 - 2026-06-02
+
+- Fix v0.9.55's parentSha derivation on shallow checkouts (the
+  default `actions/checkout` config with `fetch-depth: 1`). The
+  initial `git log -1 --format=%P HEAD` returns empty for the
+  grafted root commit — production observation on zccache MSRV
+  v0.9.55 showed `parent-sha: unexpected git output "\n"; leaving
+  empty` immediately followed by `cook-cache-delta MISS`.
+- New fallback: `git cat-file -p HEAD` reads the raw commit
+  object whose `parent` header line is preserved even when the
+  parent commit isn't fetched. This works for shallow checkouts
+  and is the path most CI workflows will exercise.
+- Pass 1 (`git log %P`) still runs first because it's slightly
+  cheaper and works on full-depth checkouts.
+
 ## v0.9.55 - 2026-06-02
 
 - Auto-derive `parentSha` from `git log -1 --format=%P HEAD` when
