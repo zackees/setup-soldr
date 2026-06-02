@@ -139,53 +139,95 @@ function dirHasContent(p: string): boolean {
   }
 }
 
+async function runGitCapture(
+  workspace: string,
+  args: string[],
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  let stdout = "";
+  let stderr = "";
+  const code = await exec.exec("git", ["-C", workspace, ...args], {
+    silent: true,
+    ignoreReturnCode: true,
+    listeners: {
+      stdout: (data: Buffer) => { stdout += data.toString("utf8"); },
+      stderr: (data: Buffer) => { stderr += data.toString("utf8"); },
+    },
+  });
+  return { code, stdout, stderr };
+}
+
 async function deriveParentSha(
   workspace: string,
   githubSha: string,
   logger: ReturnType<typeof createLogger>,
 ): Promise<string> {
-  // Run `git log -1 --format=%P HEAD` in the workspace to get the
-  // first-parent SHA. Returns "" when:
-  //  - git is unavailable
-  //  - the workspace isn't a git repo (or actions/checkout used
-  //    fetch-depth=1 and the parent isn't in the local repo)
-  //  - git produced an unexpected format
-  let stdout = "";
-  let stderr = "";
-  let code = 1;
+  // #365: derive parent SHA so cook-cache-delta + target-cache +
+  // cargo-registry can fall back to the prior commit's saved
+  // entry. Returns "" on any error (no regression from prior
+  // behavior — caller treats "" as "no fallback").
+  //
+  // Strategy: try `git log -1 --format=%P HEAD` first. On a
+  // shallow clone (actions/checkout default fetch-depth=1) this
+  // returns empty for grafted root commits — fall back to
+  // `git cat-file -p HEAD` and parse the `parent` header lines
+  // from the raw commit object, which are preserved even when
+  // the parent commit object isn't present in the local repo.
+
+  // Pass 1: git log %P (works on full-depth checkouts).
   try {
-    code = await exec.exec(
-      "git",
-      ["-C", workspace, "log", "-1", "--format=%P", "HEAD"],
-      {
-        silent: true,
-        ignoreReturnCode: true,
-        listeners: {
-          stdout: (data: Buffer) => { stdout += data.toString("utf8"); },
-          stderr: (data: Buffer) => { stderr += data.toString("utf8"); },
-        },
-      },
-    );
+    const { code, stdout, stderr } = await runGitCapture(workspace, [
+      "log", "-1", "--format=%P", "HEAD",
+    ]);
+    if (code === 0) {
+      const first = stdout.trim().split(/\s+/)[0] ?? "";
+      if (/^[0-9a-f]{7,40}$/i.test(first)) {
+        if (first === githubSha) return "";
+        logger.log(`parent-sha: derived ${first.slice(0, 12)} from git log (#365)`);
+        return first;
+      }
+      // empty / unparseable → fall through to cat-file
+    } else {
+      logger.log(`parent-sha: git log exit=${code} stderr=${stderr.trim().slice(0, 120)}; trying cat-file`);
+    }
   } catch (err) {
-    logger.log(`parent-sha: git invocation failed (${err instanceof Error ? err.message : String(err)}); leaving empty`);
+    logger.log(`parent-sha: git log threw (${err instanceof Error ? err.message : String(err)}); trying cat-file`);
+  }
+
+  // Pass 2: git cat-file -p HEAD (works on shallow clones — the
+  // commit object's `parent` header is preserved even when the
+  // parent commit isn't fetched).
+  try {
+    const { code, stdout, stderr } = await runGitCapture(workspace, [
+      "cat-file", "-p", "HEAD",
+    ]);
+    if (code !== 0) {
+      logger.log(`parent-sha: cat-file exit=${code} stderr=${stderr.trim().slice(0, 120)}; leaving empty`);
+      return "";
+    }
+    // Raw commit object format:
+    //   tree <sha>
+    //   parent <sha>      ← first parent (mainline)
+    //   parent <sha>      ← second parent (only for merges)
+    //   author ...
+    //   committer ...
+    //
+    //   <message>
+    for (const line of stdout.split("\n")) {
+      if (line.startsWith("parent ")) {
+        const sha = line.slice("parent ".length).trim();
+        if (/^[0-9a-f]{7,40}$/i.test(sha) && sha !== githubSha) {
+          logger.log(`parent-sha: derived ${sha.slice(0, 12)} from cat-file (#365, shallow-safe)`);
+          return sha;
+        }
+      }
+      if (line === "") break; // header section ended
+    }
+    logger.log(`parent-sha: cat-file produced no usable parent (root commit?); leaving empty`);
+    return "";
+  } catch (err) {
+    logger.log(`parent-sha: cat-file threw (${err instanceof Error ? err.message : String(err)}); leaving empty`);
     return "";
   }
-  if (code !== 0) {
-    logger.log(`parent-sha: git log exit=${code} stderr=${stderr.trim().slice(0, 120)}; leaving empty`);
-    return "";
-  }
-  // %P emits parent SHAs space-separated. First parent is the
-  // mainline ancestor (for merges, the branch we merged into).
-  const first = stdout.trim().split(/\s+/)[0] ?? "";
-  if (!/^[0-9a-f]{7,40}$/i.test(first)) {
-    logger.log(`parent-sha: unexpected git output ${JSON.stringify(stdout.slice(0, 80))}; leaving empty`);
-    return "";
-  }
-  if (first === githubSha) {
-    return "";
-  }
-  logger.log(`parent-sha: derived ${first.slice(0, 12)} from git log (#365)`);
-  return first;
 }
 
 async function buildActionContext(): Promise<ActionContext> {
