@@ -51655,7 +51655,7 @@ async function run() {
                 const archivePath = cookSaveLayer === "delta" ? cookDeltaArchive : cookBaseArchive;
                 const level = cookSaveLayer === "delta"
                     ? core.getState("cookDeltaCompressLevel") || "3"
-                    : core.getState("cookCompressLevel") || "19";
+                    : core.getState("cookCompressLevel") || "9";
                 const cookSaveStart = Date.now();
                 try {
                     const saveResult = await (0, cook_cache_js_1.saveLayeredCookCache)({
@@ -51699,7 +51699,7 @@ async function run() {
         else {
             const cookExactKey = core.getState("cookExactKey");
             const cookLongWindow = parseInt(core.getState("cookLongWindow") || "27", 10);
-            const cookLevel = core.getState("cookCompressLevel") || "19";
+            const cookLevel = core.getState("cookCompressLevel") || "9";
             log(`cook-cache: post-step key=${cookExactKey} hit=${cookHit} ran=${cookRan} target=${cookTargetDir}`);
             if (cookHit) {
                 log("cook-cache: exact hit - skipping save");

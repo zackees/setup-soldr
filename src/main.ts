@@ -1193,7 +1193,17 @@ export async function run(): Promise<void> {
     core.saveState("cookDeltaArchive", cookDeltaArchive);
     core.saveState("cookBaseManifest", cookBaseManifest);
     core.saveState("cookSoldrBinary", result.soldrPath);
-    core.saveState("cookCompressLevel", "19");
+    // #268/#358: cook-cache-base previously used zstd-level 19, but
+    // production observation showed 165s of compress wall-clock per
+    // matrix job for ~224 MB output. In a 5-way matrix where 1 job
+    // wins the cache reservation and 4 lose the race, that's 660s
+    // of post-step CPU wasted per CI cycle. Lowering to -9 cuts the
+    // compress wall-clock ~4× (target ~40s) at the cost of ~25%
+    // larger archive (~280 MB) and ~1s extra upload wall-clock per
+    // save. zstd decompression speed is level-independent, so warm
+    // restores are unaffected. Net: ~125s win per save-attempt, big
+    // multiplier on race-loss scenarios.
+    core.saveState("cookCompressLevel", "9");
     core.saveState("cookDeltaCompressLevel", "3");
   } else if (cookActive && cookRestorePromise) {
     const restore = await cookRestorePromise;
@@ -1230,7 +1240,10 @@ export async function run(): Promise<void> {
     core.saveState("cookRan", cookRan ? "true" : "false");
     core.saveState("cookTargetDir", cookTargetDir);
     core.saveState("cookLongWindow", "27");
-    core.saveState("cookCompressLevel", "19");
+    // #268/#358: see saveState("cookCompressLevel", "9") above for
+    // rationale on lowering from -19. Same logic applies to the
+    // non-layered path.
+    core.saveState("cookCompressLevel", "9");
   } else if (cookSkippedDueToTargetHit) {
     logger.log(
       `cook: skipped - target-cache matched at lockfile/shape level (matched=${targetCacheMatchedKey}); cook output would be redundant`,

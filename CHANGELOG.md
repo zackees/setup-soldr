@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.9.53 - 2026-06-01
+
+- Lower cook-cache base compression level from zstd-19 → zstd-9.
+  Cuts the post-step compress wall-clock ~4× (production
+  observation on zccache: 165s for ~224 MB output) at the cost of
+  ~25% larger archive (~280 MB) and ~1s extra upload wall-clock
+  per save. zstd decompression speed is level-independent, so
+  warm restores are unaffected. Net: ~125s win per save-attempt,
+  with a much bigger multiplier on race-loss scenarios (5-way
+  matrix where 1 job wins reservation and 4 lose: 660s → 160s of
+  compress CPU wasted per CI cycle). Cook-cache-delta stays at
+  level 3 (already cheap). Relates to #268/#358 (residual cook-
+  cache double-compress race waste); this is a palliative that
+  shrinks the worst-case race-loss window 4× without changing the
+  reservation timing.
+
 ## v0.9.52 - 2026-06-01
 
 - Per-layer cache metrics now split compress wall-clock from
