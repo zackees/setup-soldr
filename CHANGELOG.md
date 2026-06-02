@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v0.9.55 - 2026-06-02
+
+- Auto-derive `parentSha` from `git log -1 --format=%P HEAD` when
+  the `ACTION_PARENT_SHA` env var isn't provided (closes #365).
+  cook-cache-delta + target-cache + cargo-registry already had a
+  parent-SHA fallback restore key, but it was inert in practice
+  because consumers don't set `ACTION_PARENT_SHA`. Production
+  observation: cook-cache-delta hit rate was 0% across 6 jobs ×
+  3 zccache runs. With auto-derivation, the parent-SHA fallback
+  key is populated for any repo with a non-shallow checkout
+  (actions/checkout default is `fetch-depth: 1`, so consumers
+  may need to bump it to enable this; falls back to "" silently
+  otherwise — no regression from prior behavior).
+- Add the parent fallback key to the cook-layered-keys log line
+  for visibility into whether the fallback is wired up.
+
 ## v0.9.54 - 2026-06-02
 
 - Extend #360 per-layer split timing (compress vs upload) to
