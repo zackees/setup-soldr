@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.52`, which bundles zccache `1.11.14` carrying
+  the `meson configure --no-walk` flag (zackees/zccache#660, closes
+  zackees/zccache#659). The wrapper now skips its recursive
+  `--source-dir` walk entirely when callers declare every input via
+  `--input-file` — FastLED measured a ~9× cold-with-cache speedup on
+  the hit path (5.6s → 0.62s, see FastLED/FastLED#2761). Closes
+  zackees/setup-soldr#379; meta tracker zackees/zccache#662.
+
 ## v0.9.62 - 2026-06-02
 
 - Drop per-job suffix from cargo-registry cache key (closes #375).
