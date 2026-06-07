@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.53`, which bumps managed zccache
+  `1.11.14 → 1.11.18` (four upstream patches): NormalizedPath
+  Arc-interning (zackees/zccache#663); daemon `PendingCacheWrite`
+  registry + cold-miss persist wiring (zackees/zccache#664, #665);
+  cold/warm grouped bar charts on benchmark-stats
+  (zackees/zccache#668); **daemon pipe-pool depletion + compile-path
+  wedge recovery (zackees/zccache#669)**; adaptive daemon-spawn wait
+  keyed on lockfile PID (zackees/zccache#674); `ZCCACHE_PATH_REMAP`
+  surfaced in `zccache --help` (zackees/zccache#676); cleaner
+  lost-connection message (zackees/zccache#678).
 - Default to soldr `0.7.52`, which bundles zccache `1.11.14` carrying
   the `meson configure --no-walk` flag (zackees/zccache#660, closes
   zackees/zccache#659). The wrapper now skips its recursive
