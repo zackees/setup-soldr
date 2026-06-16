@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.56`, which bumps managed zccache
+  `1.11.18 → 1.12.8` (and carries the soldr 0.7.54 / 0.7.55 interim
+  changes that landed since the previous setup-soldr default). The
+  zccache 1.12.x line is the version-namespaced cache root (issue
+  zackees/zccache#761 / #762 / #763) plus the rustdoc and docs
+  improvements in zackees/zccache#773. Closes the soldr-version drift
+  introduced when soldr 0.7.54 and 0.7.55 shipped without a matching
+  setup-soldr default bump.
 - Default to soldr `0.7.53`, which bumps managed zccache
   `1.11.14 → 1.11.18` (four upstream patches): NormalizedPath
   Arc-interning (zackees/zccache#663); daemon `PendingCacheWrite`
