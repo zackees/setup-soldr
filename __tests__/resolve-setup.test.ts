@@ -7,6 +7,7 @@ import {
   buildOutputs,
   detectMuslCcEnv,
   detectUserLinkerEnv,
+  detectZccachePrivateOverlap,
   readRawInputs,
   resolveSetup,
 } from "../src/lib/resolve-setup.js";
@@ -1431,4 +1432,32 @@ test("build-cache-mode: explicit value beats the thin-default flip (#251)", asyn
     INPUT_BUILD_CACHE_MODE: "once",
   });
   assert.equal(result.buildCache.mode, "once");
+});
+
+// ============================================================================
+// SOLDR_ZCCACHE_PRIVATE overlap warning (soldr#807). The env var is a
+// silent no-op under setup-soldr because we pin ZCCACHE_CACHE_DIR
+// explicitly, so detectZccachePrivateOverlap returns a warning string
+// for the resolver to surface via core.warning.
+// ============================================================================
+
+test("detectZccachePrivateOverlap: returns warning when SOLDR_ZCCACHE_PRIVATE truthy", () => {
+  for (const v of ["1", "true", "yes", "on", "TRUE", "Yes", " on ", "ON"]) {
+    const msg = detectZccachePrivateOverlap({ SOLDR_ZCCACHE_PRIVATE: v });
+    assert.ok(msg, `expected ${JSON.stringify(v)} to produce a warning`);
+    assert.match(msg!, /SOLDR_ZCCACHE_PRIVATE/);
+    assert.match(msg!, /ZCCACHE_CACHE_DIR/);
+  }
+});
+
+test("detectZccachePrivateOverlap: returns null when SOLDR_ZCCACHE_PRIVATE falsy", () => {
+  for (const v of ["0", "false", "no", "off", "", "   ", "maybe", "2"]) {
+    const msg = detectZccachePrivateOverlap({ SOLDR_ZCCACHE_PRIVATE: v });
+    assert.equal(msg, null, `expected ${JSON.stringify(v)} to be a no-op`);
+  }
+});
+
+test("detectZccachePrivateOverlap: returns null when SOLDR_ZCCACHE_PRIVATE unset", () => {
+  assert.equal(detectZccachePrivateOverlap({}), null);
+  assert.equal(detectZccachePrivateOverlap({ SOLDR_ZCCACHE_PRIVATE: undefined }), null);
 });
