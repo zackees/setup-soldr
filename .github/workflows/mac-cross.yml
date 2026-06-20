@@ -132,7 +132,12 @@ jobs:
           else
             soldr cargo install cargo-zigbuild --locked
           fi
-          cargo zigbuild --version || soldr cargo zigbuild --version
+          # Don't run `soldr cargo zigbuild ...` to verify — that triggers
+          # soldr's own managed cargo-zigbuild fetcher (which currently ships
+          # a broken shim on linux x86_64; filed as a soldr-side gap). Just
+          # confirm the PATH-resident binary exists.
+          which cargo-zigbuild
+          cargo-zigbuild --help 2>&1 | head -1
 
       - name: Add apple-darwin rustup targets
         shell: bash
@@ -140,18 +145,23 @@ jobs:
           set -euo pipefail
           rustup target add x86_64-apple-darwin aarch64-apple-darwin
 
-      - name: Primary build — `soldr cargo zigbuild` for both apple targets
+      - name: Primary build — `cargo zigbuild` for both apple targets
         id: zigbuild
         continue-on-error: true
         shell: bash
         working-directory: benchmarks/sqlite-native
         run: |
           set -euxo pipefail
-          # Build each target on its own so failures attribute cleanly.
-          soldr cargo zigbuild --release --target x86_64-apple-darwin
-          soldr cargo zigbuild --release --target aarch64-apple-darwin
+          # Use plain `cargo zigbuild` (PATH-resident cargo-installed binary)
+          # rather than `soldr cargo zigbuild` to avoid triggering soldr's
+          # own managed-binary fetcher for cargo-zigbuild (currently broken
+          # on linux x86_64 — filed upstream). soldr is still installed and
+          # could wrap other cargo subcommands; the binary path soldr put
+          # at ~/.cargo/bin/cargo-zigbuild is what we run here.
+          cargo zigbuild --release --target x86_64-apple-darwin
+          cargo zigbuild --release --target aarch64-apple-darwin
           # Universal2 is cargo-zigbuild's synthetic target combining both.
-          soldr cargo zigbuild --release --target universal2-apple-darwin
+          cargo zigbuild --release --target universal2-apple-darwin
 
       - name: Inspect emitted Mach-O binaries (best-effort)
         if: steps.zigbuild.outcome == 'success'
@@ -196,7 +206,7 @@ jobs:
           # emitted all the .rlib / .o files we need. Capture them anyway.
           for t in x86_64-apple-darwin aarch64-apple-darwin; do
             echo "::group::cargo build (will fail at link) --target $t"
-            soldr cargo build --release --target "$t" || true
+            cargo build --release --target "$t" || true
             echo "::endgroup::"
           done
           # Bundle the unlinked target tree so the macOS job can relink it.
