@@ -145,6 +145,69 @@ jobs:
           set -euo pipefail
           rustup target add x86_64-apple-darwin aarch64-apple-darwin
 
+      # ------------------------------------------------------------------
+      # Diagnostic: investigate why `soldr cargo zigbuild` fails on linux
+      # x86_64 even when a working cargo-zigbuild is on PATH. Soldr's own
+      # managed-tool fetcher writes a file at
+      # ~/.soldr/bin/cargo-zigbuild-<version>/cargo-zigbuild whose execution
+      # dies in bash with `Syntax error: ")" unexpected` — this step proves
+      # whether that file is a binary, a shim script, or something else.
+      # Non-fatal: gathers data and continues; the real build below still
+      # uses plain `cargo zigbuild` for now.
+      # ------------------------------------------------------------------
+      - name: Diagnostic — pre-fetch state of ~/.soldr/bin
+        if: always()
+        shell: bash
+        run: |
+          set -eo pipefail
+          echo "=== before soldr cargo zigbuild invocation ==="
+          ls -laR "$HOME/.soldr/bin" || true
+
+      - name: Diagnostic — trigger soldr managed cargo-zigbuild fetch
+        id: diag-fetch
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -eo pipefail
+          echo "=== invoking soldr cargo zigbuild --help (this is expected to fail) ==="
+          soldr cargo zigbuild --help
+
+      - name: Diagnostic — post-fetch state and file contents
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          echo "=== after soldr cargo zigbuild invocation ==="
+          ls -laR "$HOME/.soldr/bin" 2>&1 || true
+          echo
+          echo "=== find any cargo-zigbuild* under ~/.soldr ==="
+          find "$HOME/.soldr" -name 'cargo-zigbuild*' 2>&1 | tee /tmp/cz-files
+          echo
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            echo "=================================================="
+            echo "PATH:  $f"
+            echo "STAT:  $(stat -c '%A %s %U:%G' "$f" 2>/dev/null || true)"
+            echo "FILE:  $(file "$f" 2>/dev/null || true)"
+            if [ -f "$f" ]; then
+              echo "--- first 500 bytes (hex+ascii) ---"
+              head -c 500 "$f" | od -c | head -20
+              echo "--- first 30 lines (as text, may be garbage if binary) ---"
+              head -30 "$f" 2>/dev/null
+            fi
+          done < /tmp/cz-files
+          echo
+          echo "=== also check ~/.cargo/bin/cargo-zigbuild for contrast ==="
+          which cargo-zigbuild
+          file "$(which cargo-zigbuild)"
+          head -c 16 "$(which cargo-zigbuild)" | od -c
+          echo
+          echo "=== shell + bash versions on runner ==="
+          /bin/sh --version 2>&1 | head -1 || /bin/sh -c 'echo $0' 2>&1 || true
+          bash --version | head -1
+          ls -la /bin/sh
+
       - name: Primary build — `cargo zigbuild` for both apple targets
         id: zigbuild
         continue-on-error: true
