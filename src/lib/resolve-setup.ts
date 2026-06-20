@@ -242,6 +242,33 @@ export function resolveRustupStrategy(opts: {
   return requested;
 }
 
+/**
+ * Detect the `SOLDR_ZCCACHE_PRIVATE` ↔ `ZCCACHE_CACHE_DIR` overlap.
+ *
+ * soldr#807 added `SOLDR_ZCCACHE_PRIVATE` as an opt-in that reroutes the
+ * managed zccache cache to `<cwd>/.zccache` — but only when
+ * `ZCCACHE_CACHE_DIR` is *not* explicitly set. setup-soldr always sets
+ * `ZCCACHE_CACHE_DIR` to `<soldr-root>/cache/zccache`, so when a workflow
+ * also sets `SOLDR_ZCCACHE_PRIVATE=1` (truthy: `1`/`true`/`yes`/`on`)
+ * the env var becomes a silent no-op. Return a warning string the caller
+ * should surface via `core.warning`; return `null` otherwise.
+ */
+export function detectZccachePrivateOverlap(
+  env: Record<string, string | undefined>,
+): string | null {
+  const raw = (env["SOLDR_ZCCACHE_PRIVATE"] ?? "").trim().toLowerCase();
+  if (!TRUTHY_VALUES.has(raw)) return null;
+  return (
+    "setup-soldr: SOLDR_ZCCACHE_PRIVATE is set but will be ignored — " +
+    "setup-soldr pins ZCCACHE_CACHE_DIR=<soldr-root>/cache/zccache " +
+    "explicitly, and soldr#807 makes explicit ZCCACHE_CACHE_DIR take " +
+    "precedence over the private-session opt-in. The zccache cache " +
+    "will stay in setup-soldr's managed location, not <cwd>/.zccache. " +
+    "Unset ZCCACHE_CACHE_DIR (or run outside setup-soldr) to use the " +
+    "private cache path."
+  );
+}
+
 // `fetchReleaseTagDefault` and `resolveSoldrReleaseVersion` live in
 // ./fetch-release.js — used directly from resolveSetup() below.
 
@@ -765,6 +792,11 @@ export async function resolveSetup(
   setEnv("CARGO_HOME", cargoHome);
   setEnv("RUSTUP_HOME", rustupHome);
   setEnv("ZCCACHE_CACHE_DIR", zccacheCacheDir);
+  // soldr#807: warn when SOLDR_ZCCACHE_PRIVATE is truthy because the
+  // explicit ZCCACHE_CACHE_DIR above will silently win and the opt-in
+  // private-session path under <cwd>/.zccache won't be used.
+  const zccachePrivateOverlap = detectZccachePrivateOverlap(env);
+  if (zccachePrivateOverlap) core.warning(zccachePrivateOverlap);
   setEnv("SETUP_SOLDR_BUILD_CACHE_MODE", cacheUmbrellaEnabled ? buildCacheMode : "off");
   setEnv("SOLDR_BUILD_CACHE_MODE", cacheUmbrellaEnabled ? buildCacheRuntimeMode : "off");
   setEnv(
