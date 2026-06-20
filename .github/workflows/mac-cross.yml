@@ -59,7 +59,7 @@ jobs:
       # `inputs.*` is empty when this workflow runs from the push trigger
       # (defaults only apply to workflow_dispatch). Apply explicit fallbacks
       # so the same defaults take effect on both event types.
-      SOLDR_VERSION: ${{ inputs.soldr-version || '0.7.56' }}
+      SOLDR_VERSION: ${{ inputs.soldr-version || '0.7.57' }}
       ZIGBUILD_VERSION: ${{ inputs.cargo-zigbuild-version || '' }}
       ZIGLANG_VERSION: ${{ inputs.ziglang-version || '' }}
     steps:
@@ -132,10 +132,6 @@ jobs:
           else
             soldr cargo install cargo-zigbuild --locked
           fi
-          # Don't run `soldr cargo zigbuild ...` to verify — that triggers
-          # soldr's own managed cargo-zigbuild fetcher (which currently ships
-          # a broken shim on linux x86_64; filed as a soldr-side gap). Just
-          # confirm the PATH-resident binary exists.
           which cargo-zigbuild
           cargo-zigbuild --help 2>&1 | head -1
 
@@ -145,86 +141,21 @@ jobs:
           set -euo pipefail
           rustup target add x86_64-apple-darwin aarch64-apple-darwin
 
-      # ------------------------------------------------------------------
-      # Diagnostic: investigate why `soldr cargo zigbuild` fails on linux
-      # x86_64 even when a working cargo-zigbuild is on PATH. Soldr's own
-      # managed-tool fetcher writes a file at
-      # ~/.soldr/bin/cargo-zigbuild-<version>/cargo-zigbuild whose execution
-      # dies in bash with `Syntax error: ")" unexpected` — this step proves
-      # whether that file is a binary, a shim script, or something else.
-      # Non-fatal: gathers data and continues; the real build below still
-      # uses plain `cargo zigbuild` for now.
-      # ------------------------------------------------------------------
-      - name: Diagnostic — pre-fetch state of ~/.soldr/bin
-        if: always()
-        shell: bash
-        run: |
-          set -eo pipefail
-          echo "=== before soldr cargo zigbuild invocation ==="
-          ls -laR "$HOME/.soldr/bin" || true
-
-      - name: Diagnostic — trigger soldr managed cargo-zigbuild fetch
-        id: diag-fetch
-        if: always()
-        continue-on-error: true
-        shell: bash
-        run: |
-          set -eo pipefail
-          echo "=== invoking soldr cargo zigbuild --help (this is expected to fail) ==="
-          soldr cargo zigbuild --help
-
-      - name: Diagnostic — post-fetch state and file contents
-        if: always()
-        shell: bash
-        run: |
-          set +e
-          echo "=== after soldr cargo zigbuild invocation ==="
-          ls -laR "$HOME/.soldr/bin" 2>&1 || true
-          echo
-          echo "=== find any cargo-zigbuild* under ~/.soldr ==="
-          find "$HOME/.soldr" -name 'cargo-zigbuild*' 2>&1 | tee /tmp/cz-files
-          echo
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-            echo "=================================================="
-            echo "PATH:  $f"
-            echo "STAT:  $(stat -c '%A %s %U:%G' "$f" 2>/dev/null || true)"
-            echo "FILE:  $(file "$f" 2>/dev/null || true)"
-            if [ -f "$f" ]; then
-              echo "--- first 500 bytes (hex+ascii) ---"
-              head -c 500 "$f" | od -c | head -20
-              echo "--- first 30 lines (as text, may be garbage if binary) ---"
-              head -30 "$f" 2>/dev/null
-            fi
-          done < /tmp/cz-files
-          echo
-          echo "=== also check ~/.cargo/bin/cargo-zigbuild for contrast ==="
-          which cargo-zigbuild
-          file "$(which cargo-zigbuild)"
-          head -c 16 "$(which cargo-zigbuild)" | od -c
-          echo
-          echo "=== shell + bash versions on runner ==="
-          /bin/sh --version 2>&1 | head -1 || /bin/sh -c 'echo $0' 2>&1 || true
-          bash --version | head -1
-          ls -la /bin/sh
-
-      - name: Primary build — `cargo zigbuild` for both apple targets
+      - name: Primary build — `soldr cargo zigbuild` for both apple targets
         id: zigbuild
         continue-on-error: true
         shell: bash
         working-directory: benchmarks/sqlite-native
         run: |
           set -euxo pipefail
-          # Use plain `cargo zigbuild` (PATH-resident cargo-installed binary)
-          # rather than `soldr cargo zigbuild` to avoid triggering soldr's
-          # own managed-binary fetcher for cargo-zigbuild (currently broken
-          # on linux x86_64 — filed upstream). soldr is still installed and
-          # could wrap other cargo subcommands; the binary path soldr put
-          # at ~/.cargo/bin/cargo-zigbuild is what we run here.
-          cargo zigbuild --release --target x86_64-apple-darwin
-          cargo zigbuild --release --target aarch64-apple-darwin
+          # Wrapping with `soldr` routes each rustc invocation through
+          # zccache, so repeat runs hit the compile cache. Requires soldr
+          # >= 0.7.57 (soldr#809 fixed the broken .tar.xz extraction that
+          # made the managed cargo-zigbuild unrunnable on linux x86_64).
+          soldr cargo zigbuild --release --target x86_64-apple-darwin
+          soldr cargo zigbuild --release --target aarch64-apple-darwin
           # Universal2 is cargo-zigbuild's synthetic target combining both.
-          cargo zigbuild --release --target universal2-apple-darwin
+          soldr cargo zigbuild --release --target universal2-apple-darwin
 
       - name: Inspect emitted Mach-O binaries (best-effort)
         if: steps.zigbuild.outcome == 'success'
@@ -268,8 +199,8 @@ jobs:
           # `cargo build` will fail at the link step but only after rustc has
           # emitted all the .rlib / .o files we need. Capture them anyway.
           for t in x86_64-apple-darwin aarch64-apple-darwin; do
-            echo "::group::cargo build (will fail at link) --target $t"
-            cargo build --release --target "$t" || true
+            echo "::group::soldr cargo build (will fail at link) --target $t"
+            soldr cargo build --release --target "$t" || true
             echo "::endgroup::"
           done
           # Bundle the unlinked target tree so the macOS job can relink it.
