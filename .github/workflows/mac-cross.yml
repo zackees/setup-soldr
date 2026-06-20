@@ -56,9 +56,12 @@ jobs:
     outputs:
       zigbuild-outcome: ${{ steps.zigbuild.outcome }}
     env:
-      SOLDR_VERSION: ${{ inputs.soldr-version }}
-      ZIGBUILD_VERSION: ${{ inputs.cargo-zigbuild-version }}
-      ZIGLANG_VERSION: ${{ inputs.ziglang-version }}
+      # `inputs.*` is empty when this workflow runs from the push trigger
+      # (defaults only apply to workflow_dispatch). Apply explicit fallbacks
+      # so the same defaults take effect on both event types.
+      SOLDR_VERSION: ${{ inputs.soldr-version || '0.7.56' }}
+      ZIGBUILD_VERSION: ${{ inputs.cargo-zigbuild-version || '' }}
+      ZIGLANG_VERSION: ${{ inputs.ziglang-version || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
