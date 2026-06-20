@@ -39,6 +39,12 @@ on:
         description: Python ziglang wheel version. Empty = latest.
         type: string
         default: ""
+  # Temporary: also auto-run on pushes to this feature branch so we can
+  # iterate before merging to main (workflow_dispatch only fires after the
+  # file lives on the default branch). Remove before merge.
+  push:
+    branches:
+      - feat/mac-cross-linux-build
 
 permissions:
   contents: read
