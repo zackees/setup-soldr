@@ -114,6 +114,25 @@ function isLinuxToLinuxMusl(host: string, target: string): boolean {
 }
 
 /**
+ * Linux host → any apple-darwin target. Covers
+ * `x86_64-apple-darwin`, `aarch64-apple-darwin`, and the
+ * `universal2-apple-darwin` synthetic target. The toolset is the same
+ * cargo-zigbuild + ziglang stack the windows-gnu and linux-musl lanes
+ * use — zig handles the apple-flavored linking with no Apple SDK
+ * required for trivial / sqlite-native style crates. Driven by
+ * zackees/soldr#815; prototype evidence is the `mac-cross.yml`
+ * workflow added in #384 (which proves x86_64 + aarch64 + universal2
+ * all link on ubuntu-24.04 in ~3 min cold).
+ *
+ * Crates that link against Apple frameworks (Security, CoreFoundation,
+ * AppKit, …) still need SDKROOT + a Mac SDK on the linux host; that
+ * helper is deliberately out of scope here.
+ */
+function isLinuxToAppleDarwin(host: string, target: string): boolean {
+  return host === "linux" && /-apple-darwin$/.test(target);
+}
+
+/**
  * Pure planner. Returns the install actions for the supported lanes and a
  * list of warning messages for unsupported (host, target) combos.
  */
@@ -134,12 +153,16 @@ export function planCrossBootstrap(input: PlanInput): CrossBootstrapPlan {
     if (seenTargets.has(target)) continue;
     seenTargets.add(target);
 
-    const supported = isLinuxToWindowsGnu(host, target) || isLinuxToLinuxMusl(host, target);
+    const supported =
+      isLinuxToWindowsGnu(host, target) ||
+      isLinuxToLinuxMusl(host, target) ||
+      isLinuxToAppleDarwin(host, target);
     if (!supported) {
       out.warnings.push(
         `setup-soldr cross-bootstrap: host=${host} target=${target} is not implemented yet ` +
-          `(MVP supports linux -> *-pc-windows-gnu and linux -> *-unknown-linux-musl); ` +
-          `install the cross toolchain manually for this lane. See zackees/setup-soldr#104.`,
+          `(supports linux -> *-pc-windows-gnu, linux -> *-unknown-linux-musl, ` +
+          `and linux -> *-apple-darwin); install the cross toolchain manually for this lane. ` +
+          `See zackees/setup-soldr#104 and zackees/soldr#815.`,
       );
       continue;
     }
@@ -212,7 +235,11 @@ export interface ToolsetSpec {
 export function toolsetFor(opts: { host: string; target: string }): ToolsetSpec {
   const host = normalizeHost(opts.host);
   const target = opts.target;
-  if (isLinuxToWindowsGnu(host, target) || isLinuxToLinuxMusl(host, target)) {
+  if (
+    isLinuxToWindowsGnu(host, target) ||
+    isLinuxToLinuxMusl(host, target) ||
+    isLinuxToAppleDarwin(host, target)
+  ) {
     return { tools: ["cargo-zigbuild", "ziglang"] };
   }
   return { tools: [] };

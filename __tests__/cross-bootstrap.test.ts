@@ -75,6 +75,100 @@ test("planCrossBootstrap: linux -> x86_64-unknown-linux-musl emits the same inst
   assert.equal(plan.actions[2]?.payload, "x86_64-unknown-linux-musl");
 });
 
+// --------------------- linux -> apple-darwin (zackees/soldr#815) ---------------------
+//
+// Same toolset as the windows-gnu and linux-musl lanes: cargo-zigbuild
+// + ziglang + per-triple `rustup target add`. zig handles the apple
+// linker; no Apple SDK shipped. Three target shapes are covered:
+// x86_64, aarch64, and the universal2 synthetic. Crates that link
+// Apple frameworks need SDKROOT and are out of scope.
+
+test("planCrossBootstrap: linux -> x86_64-apple-darwin emits the same install set as the windows-gnu lane", () => {
+  const plan = planCrossBootstrap({
+    host: "linux",
+    targets: ["x86_64-apple-darwin"],
+    tool: "auto",
+  });
+  assert.equal(plan.warnings.length, 0, `unexpected warnings: ${plan.warnings.join("; ")}`);
+  assert.deepEqual(
+    plan.actions.map((a) => ({ kind: a.kind, payload: a.payload })),
+    [
+      { kind: "cargo-install", payload: "cargo-zigbuild" },
+      { kind: "pip-install", payload: "ziglang" },
+      { kind: "rustup-target-add", payload: "x86_64-apple-darwin" },
+    ],
+  );
+});
+
+test("planCrossBootstrap: linux -> aarch64-apple-darwin is supported (same toolset)", () => {
+  const plan = planCrossBootstrap({
+    host: "linux",
+    targets: ["aarch64-apple-darwin"],
+    tool: "auto",
+  });
+  assert.equal(plan.warnings.length, 0);
+  assert.equal(plan.actions.length, 3);
+  assert.equal(plan.actions[2]?.payload, "aarch64-apple-darwin");
+});
+
+test("planCrossBootstrap: linux -> universal2-apple-darwin is supported via the synthetic target", () => {
+  const plan = planCrossBootstrap({
+    host: "linux",
+    targets: ["universal2-apple-darwin"],
+    tool: "auto",
+  });
+  assert.equal(plan.warnings.length, 0);
+  assert.equal(plan.actions.length, 3);
+  assert.equal(plan.actions[2]?.payload, "universal2-apple-darwin");
+});
+
+test("planCrossBootstrap: linux -> three apple-darwin triples dedupe shared installs", () => {
+  const plan = planCrossBootstrap({
+    host: "linux",
+    targets: [
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "universal2-apple-darwin",
+    ],
+    tool: "auto",
+  });
+  assert.equal(plan.warnings.length, 0);
+  // 1x cargo-install + 1x pip-install + 3x rustup-target-add = 5 actions.
+  assert.equal(plan.actions.length, 5);
+  const rustupAdds = plan.actions.filter((a) => a.kind === "rustup-target-add");
+  assert.deepEqual(
+    rustupAdds.map((a) => a.payload),
+    ["x86_64-apple-darwin", "aarch64-apple-darwin", "universal2-apple-darwin"],
+  );
+});
+
+test("planCrossBootstrap: linux mix of apple-darwin + windows-gnu still emits exactly one shared install pair", () => {
+  const plan = planCrossBootstrap({
+    host: "linux",
+    targets: ["x86_64-apple-darwin", "x86_64-pc-windows-gnu"],
+    tool: "auto",
+  });
+  assert.equal(plan.warnings.length, 0);
+  // 1x cargo-install + 1x pip-install + 2x rustup-target-add = 4 actions.
+  assert.equal(plan.actions.length, 4);
+  const cargoInstalls = plan.actions.filter((a) => a.kind === "cargo-install");
+  assert.equal(cargoInstalls.length, 1, "shared cargo-zigbuild install must dedupe across lanes");
+});
+
+test("planCrossBootstrap: windows host -> apple-darwin stays unsupported (windows cross is a separate lane)", () => {
+  // Sanity check that adding the linux->apple-darwin lane didn't widen
+  // the supported set on other hosts. windows->apple-darwin still needs
+  // a manual toolchain on the agent.
+  const plan = planCrossBootstrap({
+    host: "windows",
+    targets: ["x86_64-apple-darwin"],
+    tool: "auto",
+  });
+  assert.equal(plan.actions.length, 0);
+  assert.equal(plan.warnings.length, 1);
+  assert.match(plan.warnings[0] ?? "", /host=windows/);
+});
+
 test("planCrossBootstrap: unsupported lane (windows -> apple-darwin) returns empty plan + a warning", () => {
   const plan = planCrossBootstrap({
     host: "windows",
@@ -167,6 +261,21 @@ test("toolsetFor: linux -> *-pc-windows-gnu requires cargo-zigbuild + ziglang", 
 test("toolsetFor: linux -> *-unknown-linux-musl requires cargo-zigbuild + ziglang", () => {
   const ts = toolsetFor({ host: "linux", target: "aarch64-unknown-linux-musl" });
   assert.deepEqual(ts.tools.sort(), ["cargo-zigbuild", "ziglang"]);
+});
+
+test("toolsetFor: linux -> *-apple-darwin requires the same cargo-zigbuild + ziglang toolset (zackees/soldr#815)", () => {
+  for (const target of [
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+    "universal2-apple-darwin",
+  ]) {
+    const ts = toolsetFor({ host: "linux", target });
+    assert.deepEqual(
+      ts.tools.sort(),
+      ["cargo-zigbuild", "ziglang"],
+      `lane linux -> ${target} must declare the cargo-zigbuild + ziglang toolset`,
+    );
+  }
 });
 
 test("toolsetFor: unsupported lane returns an empty toolset (no installs)", () => {
