@@ -326,8 +326,9 @@ inputs:
       Optional 256-bit AES key used to encrypt every managed cache layer's
       `.tar.zst` archive with AES-256-GCM before upload, and to verify +
       decrypt the same archives on restore. Accepts the key as 64-char hex,
-      44-char base64, or 43-char base64url. Pass via a GitHub Actions
-      secret (e.g. `cache-encrypt-key: ${{ secrets.SETUP_SOLDR_CACHE_KEY }}`);
+      44-char base64, or 43-char base64url. Pass via a GitHub Actions secret
+      reference in your workflow (see the "Release-grade usage: encrypted
+      cache" section of the README for a copy-pasteable example).
       setup-soldr immediately marks the value as a secret so it cannot
       leak into log output.
 
