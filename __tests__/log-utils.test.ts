@@ -6,6 +6,7 @@ import {
   formatLogLine,
   getTimestampFormat,
   isTimestampsEnabled,
+  streamExec,
 } from "../src/lib/log-utils.js";
 
 test("timestampsEnabled returns true by default", () => {
@@ -185,4 +186,22 @@ test("formatLogLine preserves ANSI color codes in the line body", () => {
   };
   const sec = formatLogLine(envSeconds, colored);
   assert.ok(sec.endsWith(colored), `seconds should pass SGR through: ${JSON.stringify(sec)}`);
+});
+
+// --- #389: streamExec shape ---------------------------------------------
+
+test("streamExec is exported and async", () => {
+  // The helper composes two pure functions already exhaustively tested
+  // above (formatLogLine and colorForceEnvironment) with a thin
+  // @actions/exec call. End-to-end testing requires capturing this
+  // process's stdout, which interferes with node:test's reporter writes
+  // and is fragile across Node versions. We assert the public shape
+  // here; the migration callsites in cross-bootstrap / ensure-* exercise
+  // the helper in real workflows and the pure-function tests above
+  // cover the formatting and env-injection contracts directly.
+  assert.equal(typeof streamExec, "function");
+  // Async function: calling without args returns a Promise that rejects
+  // (missing command), not a sync throw.
+  const ret = streamExec("__definitely_not_a_real_binary_xyz__", []).catch(() => 0);
+  assert.ok(ret instanceof Promise);
 });

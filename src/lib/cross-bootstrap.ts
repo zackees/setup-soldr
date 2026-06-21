@@ -24,6 +24,7 @@ import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as io from "@actions/io";
+import { streamExec } from "./log-utils.js";
 
 /** Allowed values for the `cross-tool:` input. */
 export type CrossTool = "auto" | "none" | "zigbuild" | "xwin" | "mingw";
@@ -350,15 +351,20 @@ export async function executeCrossBootstrap(
       log(`cross-bootstrap: ${action.skipIfPresent} already on PATH, skipping ${action.kind}`);
       continue;
     }
+    // #389: streamExec wraps each install with timestamp-prefixing line
+    // listeners + color-preserving env. Cargo install of cross tooling
+    // (cargo-zigbuild, etc.) emits hundreds of `Compiling foo v1.2.3`
+    // lines on cold install; without prefixes the operator can't tell
+    // which crate caused a slow stretch from the log alone.
     if (action.kind === "cargo-install") {
       log(`cross-bootstrap: installing ${action.payload} via soldr cargo install --locked`);
-      await exec.exec(soldr, ["cargo", "install", action.payload, "--locked"]);
+      await streamExec(soldr, ["cargo", "install", action.payload, "--locked"]);
     } else if (action.kind === "pip-install") {
       log(`cross-bootstrap: installing ${action.payload} via pip install`);
-      await exec.exec(pip, ["install", action.payload]);
+      await streamExec(pip, ["install", action.payload]);
     } else if (action.kind === "rustup-target-add") {
       log(`cross-bootstrap: rustup target add ${action.payload}`);
-      await exec.exec(rustup, ["target", "add", action.payload]);
+      await streamExec(rustup, ["target", "add", action.payload]);
     }
   }
 }
