@@ -10,7 +10,7 @@ import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as tc from "@actions/tool-cache";
-import { createLogger } from "./log-utils.js";
+import { createLogger, streamExec } from "./log-utils.js";
 import type { ResolveResult } from "./types.js";
 
 type ArchiveExt = "tar.zst" | "tar.gz" | "zip";
@@ -342,7 +342,9 @@ async function buildFromSource(opts: {
     }
     buildEnv["CARGO_TERM_COLOR"] = buildEnv["CARGO_TERM_COLOR"] ?? "always";
     log(`Building soldr from source ref ${ref} (${commitSha})`);
-    await exec.exec(
+    // #389: streamExec prefixes each `Compiling foo` line so the
+    // forensic log shows where the soldr build wall-clock went.
+    await streamExec(
       "cargo",
       ["build", "--locked", "--bin", "soldr", "--target", target],
       { cwd: repoRoot, env: buildEnv },

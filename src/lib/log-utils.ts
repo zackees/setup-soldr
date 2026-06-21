@@ -162,3 +162,68 @@ export function isTimestampsEnabled(env: Record<string, string | undefined>): bo
 export function getTimestampFormat(env: Record<string, string | undefined>): TimestampFormat {
   return timestampFormat(env);
 }
+
+/**
+ * #389: helper that wraps @actions/exec's `exec.exec()` with the
+ * line-prefix + color-preserving pattern that #359 introduced for
+ * cargo-cook output. Routes the child's stdout / stderr through line
+ * listeners that prepend the active elapsed prefix (mm:ss or N.NN)
+ * before re-emitting, so every line of the child's output is dated and
+ * the operator can read the cost of a sub-step directly from adjacent
+ * timestamps.
+ *
+ * `silent: true` suppresses @actions/exec's default echo (otherwise we
+ * double-print). `colorForceEnvironment()` is injected into env so the
+ * child sees FORCE_COLOR / CARGO_TERM_COLOR / CLICOLOR_FORCE and emits
+ * SGR sequences; the line listener only manipulates the prefix, so SGR
+ * sequences in the line body pass through unmodified.
+ *
+ * NOT a replacement for `exec.exec()` calls that already collect
+ * stdout into a buffer for parsing — those need the raw byte stream
+ * and the existing `silent: true` guarantee that we don't echo. Use
+ * this helper only at callsites that pass child output straight through
+ * to the runner log today.
+ *
+ * Imported lazily inside the function to keep the log-utils dep graph
+ * tight (log-utils is a transitive import of cache-encrypt and other
+ * modules that don't need @actions/exec).
+ */
+export async function streamExec(
+  command: string,
+  args: ReadonlyArray<string>,
+  opts: import("@actions/exec/lib/interfaces.js").ExecOptions = {},
+): Promise<number> {
+  const exec = await import("@actions/exec");
+  const env = process.env as Record<string, string | undefined>;
+  const colorEnv = colorForceEnvironment(env);
+  const userEnv = (opts.env as Record<string, string | undefined> | undefined) ?? undefined;
+  const mergedEnv: Record<string, string> = {};
+  for (const [k, v] of Object.entries(env)) {
+    if (v !== undefined) mergedEnv[k] = v;
+  }
+  for (const [k, v] of Object.entries(colorEnv)) {
+    mergedEnv[k] = v;
+  }
+  if (userEnv) {
+    for (const [k, v] of Object.entries(userEnv)) {
+      if (v !== undefined) mergedEnv[k] = v;
+    }
+  }
+  const userListeners = opts.listeners ?? {};
+  return exec.exec(command, [...args], {
+    ...opts,
+    silent: true,
+    env: mergedEnv,
+    listeners: {
+      ...userListeners,
+      stdline: (line: string): void => {
+        process.stdout.write(`${formatLine(env, line)}\n`);
+        userListeners.stdline?.(line);
+      },
+      errline: (line: string): void => {
+        process.stderr.write(`${formatLine(env, line)}\n`);
+        userListeners.errline?.(line);
+      },
+    },
+  });
+}

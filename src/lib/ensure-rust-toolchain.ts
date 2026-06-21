@@ -11,7 +11,7 @@ import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as io from "@actions/io";
 import * as tc from "@actions/tool-cache";
-import { createLogger } from "./log-utils.js";
+import { createLogger, streamExec } from "./log-utils.js";
 import type { ResolveResult } from "./types.js";
 import {
   detectSoldrSupportsToolchainSubcommands,
@@ -67,7 +67,8 @@ async function ensureRustupAvailable(soldrRoot: string, log: (msg: string) => vo
   if (process.platform !== "win32") {
     fs.chmodSync(downloaded, 0o755);
   }
-  await exec.exec(downloaded, ["-y", "--no-modify-path", "--default-toolchain", "none"]);
+  // #389: streamExec prefixes the rustup-init download/install progress lines.
+  await streamExec(downloaded, ["-y", "--no-modify-path", "--default-toolchain", "none"]);
   const after = await whichOrNull("rustup");
   if (!after) {
     throw new Error("setup-soldr failed to bootstrap rustup on the runner");
@@ -215,11 +216,11 @@ async function addComponents(
     }
     log("Rust component install hit a rustup conflict; removing requested components and retrying");
     for (const c of missing) {
-      await exec.exec(rustup, ["component", "remove", "--toolchain", channel, c], {
+      await streamExec(rustup, ["component", "remove", "--toolchain", channel, c], {
         ignoreReturnCode: true,
       });
     }
-    await exec.exec(rustup, command);
+    await streamExec(rustup, command);
   }
   const stillMissing = await missingComponents(rustup, channel, components);
   if (stillMissing.length > 0) {
@@ -242,7 +243,7 @@ async function addTargets(
     return;
   }
   log(`Installing Rust targets for ${channel}: ${missing.join(", ")}`);
-  await exec.exec(rustup, ["target", "add", "--toolchain", channel, ...missing]);
+  await streamExec(rustup, ["target", "add", "--toolchain", channel, ...missing]);
   const stillMissing = await missingTargets(rustup, channel, targets);
   if (stillMissing.length > 0) {
     throw new Error(
@@ -379,7 +380,7 @@ export async function ensureRustToolchain(opts: {
       } else {
         log(`Refreshing rolling Rust toolchain ${channel} with profile ${profile}`);
       }
-      await exec.exec(rustup, ["toolchain", "install", channel, "--profile", profile]);
+      await streamExec(rustup, ["toolchain", "install", channel, "--profile", profile]);
     }
   } else if (!(await toolchainAvailable(rustup, channel))) {
     log(`Installing Rust toolchain ${channel} with profile ${profile}`);
