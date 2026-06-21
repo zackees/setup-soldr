@@ -34,6 +34,7 @@ function fixtureRawInputs(): RawInputs {
     linker: "",
     compilePriority: "high",
     timestamps: "true",
+    timestampFormat: "",
     lockfile: "Cargo.lock",
     buildCache: "true",
     buildCacheMode: "",

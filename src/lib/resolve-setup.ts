@@ -286,8 +286,18 @@ export async function resolveSetup(
   // ---- timing seed ----
   const logStart = String(Math.floor(Date.now() / 1000));
   const timestamps = (inputs.timestamps && inputs.timestamps.trim()) || "true";
+  const timestampFormatRaw = (inputs.timestampFormat || "").trim().toLowerCase();
+  const VALID_TIMESTAMP_FORMATS = ["mmss", "seconds"] as const;
+  if (timestampFormatRaw && !(VALID_TIMESTAMP_FORMATS as readonly string[]).includes(timestampFormatRaw)) {
+    throw new Error(
+      `invalid timestamp-format '${inputs.timestampFormat}'; expected one of ${VALID_TIMESTAMP_FORMATS.join(", ")}`,
+    );
+  }
+  const timestampFormat: "mmss" | "seconds" =
+    (timestampFormatRaw as "mmss" | "seconds") || "mmss";
   env["SETUP_SOLDR_LOG_START_EPOCH"] = logStart;
   env["SETUP_SOLDR_TIMESTAMPS"] = timestamps;
+  env["SETUP_SOLDR_TIMESTAMP_FORMAT"] = timestampFormat;
   const logger = ctx.logger ?? createLogger(env);
   const log = (msg: string): void => logger.log(msg);
 
@@ -853,6 +863,7 @@ export async function resolveSetup(
   setEnv("SETUP_SOLDR_TOOLCHAIN_TARGETS", JSON.stringify(toolchain.targets));
   setEnv("SETUP_SOLDR_LOG_START_EPOCH", logStart);
   setEnv("SETUP_SOLDR_TIMESTAMPS", timestamps);
+  setEnv("SETUP_SOLDR_TIMESTAMP_FORMAT", timestampFormat);
 
   if (!FALSY_VALUES.has(timestamps.toLowerCase()) && env["NO_COLOR"] === undefined) {
     if (!env["CARGO_TERM_COLOR"]) setEnv("CARGO_TERM_COLOR", "always");
@@ -1110,6 +1121,7 @@ export async function resolveSetup(
     pathAdditions,
     logStartEpoch: logStart,
     timestamps,
+    timestampFormat,
     shimsEnabled,
     shimsDir,
     compileCacheStats,

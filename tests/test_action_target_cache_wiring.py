@@ -42,6 +42,7 @@ EXPECTED_INPUTS = {
     "linker",
     "compile-priority",
     "timestamps",
+    "timestamp-format",
     "lockfile",
     "build-cache",
     "build-cache-mode",

@@ -1,8 +1,11 @@
 // Logger wiring. Owned by Agent 1 (called from every helper).
 //
 // Mirrors the Python log_utils.log() behavior: prefix each line with elapsed
-// mm:ss from SETUP_SOLDR_LOG_START_EPOCH when timestamps are enabled. Reads
-// SETUP_SOLDR_TIMESTAMPS to decide.
+// time from SETUP_SOLDR_LOG_START_EPOCH when timestamps are enabled. Reads
+// SETUP_SOLDR_TIMESTAMPS to decide whether to prefix at all, and
+// SETUP_SOLDR_TIMESTAMP_FORMAT to choose between `mmss` (default, e.g.
+// "00:08") and `seconds` (two-decimal seconds, e.g. "8.04"). See issue #387
+// Feature 2 for the decimal-seconds format rationale.
 
 import * as core from "@actions/core";
 import * as fs from "node:fs";
@@ -22,6 +25,9 @@ function makeFileLogger(env: Record<string, string | undefined>): ((line: string
 
 const FALSY_VALUES: ReadonlySet<string> = new Set(["0", "false", "no", "off"]);
 
+export type TimestampFormat = "mmss" | "seconds";
+const VALID_TIMESTAMP_FORMATS: ReadonlySet<TimestampFormat> = new Set(["mmss", "seconds"]);
+
 // Per-process fallback start epoch (seconds since epoch), mirrors the
 // _FALLBACK_START semantics in log_utils.py: captured once at module load.
 const FALLBACK_START_SECONDS = Date.now() / 1000;
@@ -30,6 +36,14 @@ function timestampsEnabled(env: Record<string, string | undefined>): boolean {
   const raw = env["SETUP_SOLDR_TIMESTAMPS"] ?? "true";
   const value = raw.trim().toLowerCase();
   return !FALSY_VALUES.has(value);
+}
+
+function timestampFormat(env: Record<string, string | undefined>): TimestampFormat {
+  const raw = (env["SETUP_SOLDR_TIMESTAMP_FORMAT"] ?? "").trim().toLowerCase();
+  if (VALID_TIMESTAMP_FORMATS.has(raw as TimestampFormat)) {
+    return raw as TimestampFormat;
+  }
+  return "mmss";
 }
 
 function startEpoch(env: Record<string, string | undefined>): number {
@@ -44,6 +58,15 @@ function startEpoch(env: Record<string, string | undefined>): number {
 }
 
 function elapsedPrefix(env: Record<string, string | undefined>): string {
+  const format = timestampFormat(env);
+  if (format === "seconds") {
+    // Two-decimal seconds since step start (e.g. "0.01", "12.87"). Monotonic
+    // within a step because startEpoch is fixed at process start.
+    const now = Date.now() / 1000;
+    const elapsed = Math.max(0, now - startEpoch(env));
+    return elapsed.toFixed(2);
+  }
+  // mmss (default, byte-identical to pre-#387 behavior).
   const now = Date.now() / 1000;
   const elapsed = Math.max(0, Math.floor(now - startEpoch(env)));
   const minutes = Math.floor(elapsed / 60);
@@ -130,4 +153,12 @@ export function formatLogLine(env: Record<string, string | undefined>, message: 
  */
 export function isTimestampsEnabled(env: Record<string, string | undefined>): boolean {
   return timestampsEnabled(env);
+}
+
+/**
+ * Test/library helper: report the active timestamp format. Resolves invalid
+ * or empty SETUP_SOLDR_TIMESTAMP_FORMAT to the default `mmss`.
+ */
+export function getTimestampFormat(env: Record<string, string | undefined>): TimestampFormat {
+  return timestampFormat(env);
 }

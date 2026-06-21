@@ -31,6 +31,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     linker: get("linker"),
     compilePriority: get("compile-priority"),
     timestamps: get("timestamps"),
+    timestampFormat: get("timestamp-format"),
     lockfile: get("lockfile"),
     buildCache: get("build-cache"),
     buildCacheMode: get("build-cache-mode"),

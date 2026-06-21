@@ -88,6 +88,7 @@ export interface RawInputs {
   linker: string;
   compilePriority: string;
   timestamps: string;
+  timestampFormat: string;
   lockfile: string;
   buildCache: string;
   buildCacheMode: string;
@@ -327,6 +328,7 @@ export interface ResolveResult {
   // Timing
   logStartEpoch: string;
   timestamps: string;
+  timestampFormat: "mmss" | "seconds";
 
   // Shims
   shimsEnabled: boolean;

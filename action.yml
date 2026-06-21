@@ -126,6 +126,16 @@ inputs:
     description: Prefix setup-soldr diagnostic and streamed command output with elapsed mm:ss timestamps.
     required: false
     default: "true"
+  timestamp-format:
+    description: >
+      Format used by the timestamp prefix when `timestamps: true`. Accepted
+      values: `mmss` (default - the historical `MM:SS` prefix, e.g. `00:08
+      message`) and `seconds` (two-decimal seconds since step start, e.g.
+      `8.04 message`). The `seconds` format is monotonic and lets you
+      subtract two adjacent prefixes to read the cost of an operation
+      directly. Has no effect when `timestamps: false`. (#387 Feature 2)
+    required: false
+    default: "mmss"
   lockfile:
     description: Optional Cargo.lock path used for Rust artifact cache keying. Empty infers Cargo.lock next to target-dir, then workspace Cargo.lock.
     required: false
