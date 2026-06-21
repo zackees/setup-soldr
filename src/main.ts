@@ -473,9 +473,16 @@ export async function run(): Promise<void> {
     let buildFileCount: number | null = null;
     if (fileExists(archivePath)) {
       const magic = await detectCompressMagic(archivePath);
-      if (magic === "zstd" || magic === "gzip") {
+      const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+      if (magic === "zstd" || magic === "gzip" || haveEncryptKey) {
         try {
-          const dr = await decompressCache({ archivePath, targetDir: buildCachePath, debug: debugMode, log: debugLog });
+          const dr = await decompressCache({
+            archivePath,
+            targetDir: buildCachePath,
+            debug: debugMode,
+            log: debugLog,
+            cacheKey: restore.matchedKey || result.buildCache.key,
+          });
           buildArchiveBytes = dr.archiveBytes;
           buildInflatedBytes = dr.inflatedBytes;
           buildFileCount = dr.fileCount;
@@ -597,12 +604,14 @@ export async function run(): Promise<void> {
         } catch { /* archive may have been removed mid-flight */ }
       } else {
         const magic = await detectCompressMagic(registryArchive);
-        if (magic === "zstd" || magic === "gzip") {
+        const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+        if (magic === "zstd" || magic === "gzip" || haveEncryptKey) {
           try {
             const dr = await decompressCache({
               archivePath: registryArchive,
               targetDir: result.cargoRegistryCache.path,
               debug: debugMode, log: debugLog,
+              cacheKey: restore.matchedKey || result.cargoRegistryCache.key,
             });
             regArchiveBytes = dr.archiveBytes;
             regInflatedBytes = dr.inflatedBytes;

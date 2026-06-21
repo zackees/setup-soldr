@@ -52,6 +52,8 @@ function fixtureRawInputs(): RawInputs {
     cachePayloadMaxBytes: "",
     cachePayloadOversizeAction: "skip",
     cachePayloadTopN: "10",
+    cacheEncryptKey: "",
+    cacheEncryptOnFailure: "",
     sourceMtimeNormalize: "",
     cargoRegistryCache: "true",
     compileCacheStats: "summarize",

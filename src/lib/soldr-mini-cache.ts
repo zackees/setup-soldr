@@ -113,8 +113,12 @@ export async function restoreMiniCache(opts: MiniCacheRestoreOpts): Promise<Mini
   } catch {
     return { hit: false, matchedKey: matched, archiveBytes: 0 };
   }
+  // Codec sniff stays for the legacy plaintext path. Encrypted archives
+  // produce magic="unknown" here, so we additionally let decompressCache
+  // try when an encrypt key is configured — it knows how to detect SOLDRENC.
   const magic = await detectCompressMagic(archivePath);
-  if (magic !== "zstd" && magic !== "gzip") {
+  const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+  if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
     log(`soldr-mini-cache: archive has unknown codec, treating as miss`);
     return { hit: false, matchedKey: matched, archiveBytes };
   }
@@ -125,6 +129,7 @@ export async function restoreMiniCache(opts: MiniCacheRestoreOpts): Promise<Mini
       longWindow,
       log,
       debug: opts.debug,
+      cacheKey: exactKey,
     });
   } catch (err) {
     log(`soldr-mini-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -168,6 +173,7 @@ export async function saveMiniCache(opts: MiniCacheSaveOpts): Promise<MiniCacheS
       longWindow,
       debug,
       log,
+      cacheKey: exactKey,
     });
     outputArchivePath = compress.archivePath;
     archiveBytes = compress.archiveBytes;

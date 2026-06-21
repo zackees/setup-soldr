@@ -37,6 +37,7 @@ import {
   toolVersionsFor,
 } from "./cross-bootstrap.js";
 import { createLogger } from "./log-utils.js";
+import { parseEncryptionKey } from "./cache-encrypt.js";
 import {
   detectMuslCcEnv,
   tripleToCcRsSuffix,
@@ -298,6 +299,36 @@ export async function resolveSetup(
   env["SETUP_SOLDR_LOG_START_EPOCH"] = logStart;
   env["SETUP_SOLDR_TIMESTAMPS"] = timestamps;
   env["SETUP_SOLDR_TIMESTAMP_FORMAT"] = timestampFormat;
+
+  // ---- #387 Feature 1: cache encryption ----
+  // Validate the key shape NOW (fail fast on a malformed key) and mark the
+  // raw value as a GitHub Actions secret so any incidental log line that
+  // captures it is auto-redacted. We do NOT keep the parsed Buffer in
+  // ResolveResult — downstream cache layers re-read SETUP_SOLDR_CACHE_ENCRYPT_KEY
+  // at the time of use and re-parse, so the key only exists in memory inside
+  // the closure that needs it.
+  const cacheEncryptKeyRaw = (inputs.cacheEncryptKey || "").trim();
+  if (cacheEncryptKeyRaw) {
+    core.setSecret(cacheEncryptKeyRaw);
+    // Throw early with a clean diagnostic when the key shape is wrong. The
+    // raw value is never echoed back in the error message.
+    parseEncryptionKey(cacheEncryptKeyRaw);
+  }
+  const cacheEncryptOnFailureRaw = (inputs.cacheEncryptOnFailure || "error")
+    .trim()
+    .toLowerCase();
+  if (cacheEncryptOnFailureRaw && !["error", "skip"].includes(cacheEncryptOnFailureRaw)) {
+    throw new Error(
+      `invalid cache-encrypt-on-failure '${inputs.cacheEncryptOnFailure}'; expected 'error' or 'skip'`,
+    );
+  }
+  const cacheEncryptOnFailure: "error" | "skip" =
+    cacheEncryptOnFailureRaw === "skip" ? "skip" : "error";
+
+  if (cacheEncryptKeyRaw) {
+    env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] = cacheEncryptKeyRaw;
+    env["SETUP_SOLDR_CACHE_ENCRYPT_ON_FAILURE"] = cacheEncryptOnFailure;
+  }
   const logger = ctx.logger ?? createLogger(env);
   const log = (msg: string): void => logger.log(msg);
 
@@ -864,6 +895,14 @@ export async function resolveSetup(
   setEnv("SETUP_SOLDR_LOG_START_EPOCH", logStart);
   setEnv("SETUP_SOLDR_TIMESTAMPS", timestamps);
   setEnv("SETUP_SOLDR_TIMESTAMP_FORMAT", timestampFormat);
+  if (cacheEncryptKeyRaw) {
+    // #387 Feature 1: propagate to GITHUB_ENV so the post-step (which loads
+    // a fresh process) and any subsequent setup-soldr-using steps see the
+    // same key. The key has already been core.setSecret-marked above so
+    // GitHub Actions auto-redacts it from logs.
+    setEnv("SETUP_SOLDR_CACHE_ENCRYPT_KEY", cacheEncryptKeyRaw);
+    setEnv("SETUP_SOLDR_CACHE_ENCRYPT_ON_FAILURE", cacheEncryptOnFailure);
+  }
 
   if (!FALSY_VALUES.has(timestamps.toLowerCase()) && env["NO_COLOR"] === undefined) {
     if (!env["CARGO_TERM_COLOR"]) setEnv("CARGO_TERM_COLOR", "always");

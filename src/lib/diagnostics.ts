@@ -41,7 +41,14 @@ const SECRET_KEY_PATTERN = /(token|secret|password|^.*_pass$|api[_-]?key|client[
 // Cache-key fields look secret-y but never are; never redact them.
 const NEVER_REDACT_PATTERN = /(_key$|cache[-_]key|cache[-_]keys$|key[-_]suffix$|public[-_]key)/i;
 
+// #387 Feature 1: cache-encrypt-key IS a secret even though its name
+// matches NEVER_REDACT_PATTERN's `_key$`. core.setSecret() in resolve-setup
+// already marks the value for runtime log redaction by the Actions runner,
+// but the diagnostics dump has its own writer — belt-and-suspenders here.
+const FORCE_REDACT_PATTERN = /(encrypt[-_]?key|cache[-_]encrypt[-_]key|cipher[-_]key|aes[-_]key)/i;
+
 export function redactValue(key: string, value: string): string {
+  if (FORCE_REDACT_PATTERN.test(key)) return value ? "<redacted>" : "";
   if (NEVER_REDACT_PATTERN.test(key)) return value;
   if (SECRET_KEY_PATTERN.test(key)) return value ? "<redacted>" : "";
   return value;
@@ -62,7 +69,10 @@ function rawInputsLines(inputs: RawInputs): string[] {
   const lines: string[] = [];
   const entries = Object.entries(inputs).sort((a, b) => (a[0] < b[0] ? -1 : 1));
   for (const [k, v] of entries) {
-    lines.push(`  ${k}=${JSON.stringify(v)}`);
+    // #387 Feature 1: parsed RawInputs needs the same redaction as raw env —
+    // otherwise `cacheEncryptKey` lands here verbatim.
+    const safe = typeof v === "string" ? redactValue(k, v) : v;
+    lines.push(`  ${k}=${JSON.stringify(safe)}`);
   }
   return lines;
 }

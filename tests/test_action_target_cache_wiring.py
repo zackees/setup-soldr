@@ -36,6 +36,8 @@ EXPECTED_INPUTS = {
     "cache-payload-max-bytes",
     "cache-payload-oversize-action",
     "cache-payload-top-n",
+    "cache-encrypt-key",
+    "cache-encrypt-on-failure",
     "toolchain",
     "toolchain-file",
     "trust-mode",
