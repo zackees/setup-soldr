@@ -109,6 +109,16 @@ test("dylint cache inputs round-trip through readRawInputs", () => {
   assert.equal(r.dylintCachePaths, "cache/dylint");
 });
 
+test("timestamp-format input round-trips through readRawInputs", () => {
+  const r = readRawInputs({ "INPUT_TIMESTAMP-FORMAT": "seconds" });
+  assert.equal(r.timestampFormat, "seconds");
+});
+
+test("timestamp-format defaults to empty when unset", () => {
+  const r = readRawInputs({});
+  assert.equal(r.timestampFormat, "");
+});
+
 test("cache payload audit inputs round-trip through readRawInputs", () => {
   const r = readRawInputs({
     "INPUT_CACHE-PAYLOAD-WARN-BYTES": "1GiB",
