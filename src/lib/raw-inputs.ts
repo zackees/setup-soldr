@@ -49,6 +49,8 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     cachePayloadMaxBytes: get("cache-payload-max-bytes"),
     cachePayloadOversizeAction: get("cache-payload-oversize-action"),
     cachePayloadTopN: get("cache-payload-top-n"),
+    cacheEncryptKey: get("cache-encrypt-key"),
+    cacheEncryptOnFailure: get("cache-encrypt-on-failure"),
     sourceMtimeNormalize: get("source-mtime-normalize"),
     cargoRegistryCache: get("cargo-registry-cache"),
     compileCacheStats: get("compile-cache-stats"),

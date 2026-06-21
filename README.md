@@ -487,6 +487,8 @@ preferred for new workflows.
 | `cache-payload-max-bytes` | Hard limit for tar-backed cache saves before compression. Default `6GiB`, matches realistic zccache footprint for a medium-large Rust workspace (was `2GiB` through v0.9.23, which caused chronic enabled-but-inert build-cache on workspaces that produced 4-5 GiB of state — setup-soldr#279); set `0` to disable. |
 | `cache-payload-oversize-action` | Behavior when `cache-payload-max-bytes` is exceeded. Default `skip` logs a warning and avoids the upload; `fail` treats the oversized payload as a post-step error. |
 | `cache-payload-top-n` | Number of largest files and directories retained in cache payload stats and summaries. Default `10`; set `0` to keep only aggregate counts. |
+| `cache-encrypt-key` | Optional 256-bit AES key (64-char hex, 44-char base64, or 43-char base64url). When set, every managed cache layer's `.tar.zst` archive is wrapped with AES-256-GCM before upload and verified+decrypted on restore. Pass via a GitHub Actions secret. See "Release-grade usage: encrypted cache" below. (#387) |
+| `cache-encrypt-on-failure` | Behavior when an encrypted entry fails GCM authentication (wrong key, tampered ciphertext, or AAD mismatch). Default `error` stops the run; `skip` logs the failure and treats the entry as a cold miss. Has no effect when `cache-encrypt-key` is empty. (#387) |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
 | `cargo-registry-cache` | When `true`, setup-soldr caches `~/.cargo/registry` directly as a fast-zstd `.tar.zst` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Requires zccache `>=1.4.4` (skip-flag support). Default `false` keeps the default cache footprint small; opt in when registry restore timing beats upload/retention cost. |
 | `dylint-cache` | Explicit opt-in cache for Dylint tooling. Default `false`. When `true`, restores/saves cargo-dylint, dylint-link, Cargo install metadata, and the compatible Dylint driver directory. Cold jobs still run the workflow's normal install/build steps; warm jobs can gate those steps on `dylint-cache-hit` or `SETUP_SOLDR_DYLINT_CACHE_HIT`. |
@@ -789,6 +791,89 @@ layer is actually paying off:
   skipped (`build-cache-save-min-compiles`, default `1`) to avoid re-uploading a
   duplicate multi-GiB payload; raise the threshold to also skip tiny deltas, or
   set `0` to always save.
+
+## Release-grade usage: encrypted cache
+
+For release pipelines, every cache layer setup-soldr manages can be wrapped
+with AES-256-GCM authenticated encryption so an attacker who gains
+write access to the GitHub Actions Cache cannot poison a release by
+planting a malicious archive under one of setup-soldr's cache keys
+(see #387).
+
+### Setup
+
+1. Generate a 256-bit key locally and store it as a repository secret:
+
+   ```bash
+   # Pick one — both shapes are accepted.
+   openssl rand -hex 32         # 64-char hex
+   openssl rand -base64 32      # 44-char base64
+   ```
+
+   Add it to the repo as `SETUP_SOLDR_CACHE_KEY` (Settings → Secrets and
+   variables → Actions → New repository secret).
+
+2. Pass the secret to setup-soldr in your release workflow:
+
+   ```yaml
+   - uses: zackees/setup-soldr@v0
+     with:
+       cache-encrypt-key: ${{ secrets.SETUP_SOLDR_CACHE_KEY }}
+       # cache-encrypt-on-failure: error    # default; set to `skip` to
+                                            # treat auth failures as a
+                                            # cold miss instead of stopping
+   ```
+
+3. Every setup-soldr-managed `.tar.zst` archive is now encrypted before
+   upload and verified+decrypted on restore. The on-disk filename does
+   not change — only the byte content does — so the cache-key shape and
+   downstream tooling are unchanged.
+
+### Threat model
+
+- **In scope.** An attacker with write access to the Actions Cache for
+  this repo (compromised PR from a fork running with cache-write scope,
+  leaked `GITHUB_TOKEN`, stolen runner) cannot plant a payload under
+  any setup-soldr cache key without the AES key — GCM authentication
+  rejects the tampered archive and (with `cache-encrypt-on-failure:
+  error`) the release run stops.
+- **Also in scope.** Cross-layer replay: a poisoned blob captured from
+  one cache key cannot be replayed under a different key, even with the
+  same encryption key, because the cache key is bound into the GCM
+  AAD.
+- **Out of scope.** An attacker who can read the repo secret can both
+  decrypt and forge archives. Rotate the key on suspected compromise
+  (see "Key rotation" below).
+
+### Key rotation
+
+Mixed-mode is supported so you can rotate keys without wiping the
+cache:
+
+- **Old plaintext entry + new key.** The legacy plaintext archive is
+  accepted with a warning the first time it's restored; the next save
+  writes encrypted.
+- **Old encrypted entry + new key.** The wrong-key decrypt fails GCM
+  authentication. With `cache-encrypt-on-failure: skip`, the entry is
+  treated as a cold miss and the next save writes under the new key;
+  with the default `error`, the run stops so you can intentionally
+  evict the stale entry and re-run.
+
+### Performance cost
+
+Encryption adds one streamed read+write disk pass per archive
+(roughly `archive_size / SSD_throughput` per layer — about 5 s per
+GiB on a typical hosted-runner SSD). Acceptable for an opt-in
+release-grade feature; non-release workflows should leave
+`cache-encrypt-key` unset and pay nothing.
+
+### Coverage
+
+Encrypted today: build-cache, cargo-registry, soldr-mini-cache,
+solo-toolchain-cache, cook-cache. Target-cache and dylint-cache
+currently use `@actions/cache`'s native compression (multi-path
+archives) and bypass setup-soldr's compress pipeline; encryption
+coverage for those layers is tracked separately.
 
 ## Known limitations
 

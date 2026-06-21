@@ -430,6 +430,7 @@ async function saveOne(opts: {
         payloadTopN: payloadPolicy.topN,
         payloadProfile,
         label,
+        cacheKey: key,
       });
       archivePath = result.archivePath;
       archiveBytes = result.archiveBytes || null;

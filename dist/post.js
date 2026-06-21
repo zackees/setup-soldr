@@ -44729,6 +44729,29 @@ const path = __importStar(__nccwpck_require__(76760));
 const core = __importStar(__nccwpck_require__(37484));
 const exec = __importStar(__nccwpck_require__(95236));
 const io = __importStar(__nccwpck_require__(94994));
+const cache_encrypt_js_1 = __nccwpck_require__(67173);
+/**
+ * Resolve the encryption config for a cache call. Callers pass `encryption`
+ * explicitly for tests; in production they pass `cacheKey` and let the
+ * helper read SETUP_SOLDR_CACHE_ENCRYPT_KEY off `env` itself. When the env
+ * key is set but no cacheKey is supplied, returns null + emits a warning —
+ * we refuse to encrypt with an empty AAD, which would defeat the cross-
+ * layer replay protection the AAD is there to provide.
+ */
+function resolveCacheEncryption(opts) {
+    if (opts.explicit !== undefined) {
+        return opts.explicit ?? null;
+    }
+    const env = opts.env ?? process.env;
+    const haveKey = (env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+    if (!haveKey)
+        return null;
+    if (!opts.cacheKey) {
+        (opts.warn ?? core.warning)("setup-soldr: cache-encrypt-key is configured but the cache layer did not supply a cacheKey for AAD; skipping encryption for this archive");
+        return null;
+    }
+    return (0, cache_encrypt_js_1.getEncryptionConfig)({ env, cacheKey: opts.cacheKey });
+}
 /**
  * Recursively walk a directory and sum file sizes.
  */
@@ -45166,7 +45189,11 @@ function publicPayload(plan) {
  * When debug=true, logs diagnostics via the supplied log fn.
  */
 async function decompressCache(opts) {
-    const { archivePath, targetDir, debug = false, log = () => undefined, longWindow } = opts;
+    const { archivePath, targetDir, debug = false, log = () => undefined, longWindow, } = opts;
+    const encryption = resolveCacheEncryption({
+        explicit: opts.encryption,
+        cacheKey: opts.cacheKey,
+    });
     // Ensure both <targetDir> exists (zccache may have already populated it)
     // and the extract root (which is the parent) is writable.
     await ensureDir(targetDir);
@@ -45177,6 +45204,67 @@ async function decompressCache(opts) {
         archiveBytes = (await fs.stat(archivePath)).size;
     }
     catch { /* archive may not exist */ }
+    // #387 Feature 1: detect encrypted archive BEFORE the zstd/gzip sniff. When
+    // an encrypted entry is restored without a configured key, the caller can't
+    // do anything safe with it — we surface the situation as an Error tagged
+    // with `cause.code === "EENCNOKEY"` so the caller decides whether to skip
+    // the layer (cold miss) or fail the step.
+    const archiveIsEncrypted = await (0, cache_encrypt_js_1.isEncryptedArchive)(archivePath);
+    let effectiveArchivePath = archivePath;
+    let decryptedTempPath = null;
+    try {
+        if (archiveIsEncrypted) {
+            if (!encryption) {
+                const err = new Error(`decompressCache: archive ${path.basename(archivePath)} is encrypted but no cache-encrypt-key is configured`);
+                err.code = "EENCNOKEY";
+                throw err;
+            }
+            decryptedTempPath = (0, cache_encrypt_js_1.decryptedTempPathFor)(archivePath);
+            if (debug) {
+                log(`[debug] decrypt ${path.basename(archivePath)} → ${path.basename(decryptedTempPath)} (AES-256-GCM, archive=${fmtBytesDebug(archiveBytes)})`);
+            }
+            try {
+                await (0, cache_encrypt_js_1.decryptFile)(archivePath, decryptedTempPath, encryption);
+            }
+            catch (err) {
+                const code = err.code;
+                if (code === "EAUTHFAIL") {
+                    // Re-throw with a clearer top-level message; the caller (cache layer)
+                    // is responsible for rendering this in red and respecting onFailure.
+                    const wrapped = new Error(`decompressCache: failed to authenticate encrypted archive ${path.basename(archivePath)} ` +
+                        `(wrong cache-encrypt-key, tampered ciphertext, or AAD mismatch)`);
+                    wrapped.code = "EAUTHFAIL";
+                    throw wrapped;
+                }
+                throw err;
+            }
+            effectiveArchivePath = decryptedTempPath;
+        }
+        else if (encryption) {
+            log(`setup-soldr: ${path.basename(archivePath)} is a legacy plaintext cache entry; accepting it this run, the next save will write encrypted`);
+        }
+        return await decompressInner({
+            archivePath: effectiveArchivePath,
+            targetDir,
+            extractRoot,
+            archiveBytes,
+            debug,
+            log,
+            longWindow,
+        });
+    }
+    finally {
+        if (decryptedTempPath) {
+            await fs.rm(decryptedTempPath, { force: true }).catch(() => undefined);
+        }
+    }
+}
+/**
+ * Internal: pre-#387 decompression body, extracted so the encryption
+ * wrapper above stays focused on auth / dispatch.
+ */
+async function decompressInner(opts) {
+    const { archivePath, targetDir, extractRoot, archiveBytes, debug, log, longWindow } = opts;
     const magic = await detectCompressMagic(archivePath);
     if (debug) {
         log(`[debug] decompress ${path.basename(archivePath)}: magic=${magic} archive=${fmtBytesDebug(archiveBytes)}`);
@@ -45231,6 +45319,10 @@ async function decompressCache(opts) {
  */
 async function compressCache(opts) {
     const { cacheDir, codec, level, debug = false, log = () => undefined, longWindow, ultra, extraBasenames = [], payloadWarnBytes = null, payloadMaxBytes = null, payloadOversizeAction = "skip", payloadTopN, payloadProfile = "generic", label, } = opts;
+    const encryption = resolveCacheEncryption({
+        explicit: opts.encryption,
+        cacheKey: opts.cacheKey,
+    });
     const nullResult = {
         archivePath: null,
         archiveBytes: 0,
@@ -45366,6 +45458,35 @@ async function compressCache(opts) {
     if (debug && inflatedBytes !== null && inflatedBytes > 0) {
         log(`[debug] compress result: archive=${fmtBytesDebug(archiveBytes)} ratio=${(archiveBytes / inflatedBytes).toFixed(2)}`);
     }
+    // #387 Feature 1: AES-256-GCM encrypt-in-place. The on-disk filename is
+    // preserved so callers don't need to know whether encryption was applied —
+    // the restore path detects the SOLDRENC magic byte and routes accordingly.
+    // The encrypt step is a separate stream-read+stream-write disk pass so it
+    // adds ~archive_size / SSD_throughput to the post step (e.g. ~5 s for a
+    // 1 GiB archive at 200 MB/s). Acceptable cost for an opt-in security
+    // feature; bypassed entirely when `encryption` is null.
+    if (encryption) {
+        const encryptTmp = `${archivePath}.enc-tmp-${process.pid}-${Date.now()}`;
+        try {
+            await (0, cache_encrypt_js_1.encryptFile)(archivePath, encryptTmp, encryption);
+            await fs.rm(archivePath, { force: true });
+            await fs.rename(encryptTmp, archivePath);
+        }
+        catch (err) {
+            await fs.rm(encryptTmp, { force: true }).catch(() => undefined);
+            throw err;
+        }
+        let encryptedBytes = archiveBytes;
+        try {
+            encryptedBytes = (await fs.stat(archivePath)).size;
+        }
+        catch { /* keep estimate */ }
+        if (debug) {
+            log(`[debug] encrypt ${displayLabel}: AES-256-GCM, ` +
+                `plaintext=${fmtBytesDebug(archiveBytes)} ciphertext=${fmtBytesDebug(encryptedBytes)}`);
+        }
+        archiveBytes = encryptedBytes;
+    }
     return { archivePath, archiveBytes, inflatedBytes, fileCount, payload: payloadCensus };
 }
 function parseLevel(value) {
@@ -45419,6 +45540,310 @@ async function runPipe(producer, consumer) {
         });
     });
 }
+
+
+/***/ }),
+
+/***/ 67173:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// AES-256-GCM cache-encryption wrapper. Issue #387 Feature 1.
+//
+// When the consumer sets `cache-encrypt-key`, every managed cache layer's
+// .tar.zst archive is wrapped with authenticated encryption before being
+// uploaded to the GitHub Actions Cache, and verified+decrypted before being
+// handed to the existing decompress path. The wrapping is opt-in: when the
+// key env var is absent, compressCache / decompressCache run today's
+// plaintext path with no extra cache-API roundtrip and no extra disk pass.
+//
+// On-disk frame (little-endian where noted):
+//   magic   : 8 bytes ASCII "SOLDRENC"
+//   version : 1 byte  (currently 0x01)
+//   iv      : 12 bytes random per archive
+//   body    : ciphertext stream produced by aes-256-gcm
+//   tag     : 16 bytes GCM authentication tag (appended last)
+//
+// AAD bound into the GCM tag includes the cache key and the runner platform,
+// so a poisoned blob from one (key, layer) tuple cannot be replayed at
+// another tuple even with the same encryption key.
+//
+// Failure modes:
+//   - wrong key, tampered ciphertext, or AAD mismatch -> tag verification
+//     fails -> caller surfaces a red error and refuses to unpack.
+//   - missing key with encrypted entry on disk -> treated as a cold miss,
+//     no error (lets users rotate keys without wiping caches).
+//   - legacy plaintext entry with key set -> accepted with a warning;
+//     the next save will write encrypted.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.tmpdir = exports.KEY_BYTES = exports.HEADER_BYTES = exports.TAG_BYTES = exports.IV_BYTES = exports.ENCRYPT_VERSION = exports.ENCRYPT_MAGIC = void 0;
+exports.parseEncryptionKey = parseEncryptionKey;
+exports.buildAad = buildAad;
+exports.encryptFile = encryptFile;
+exports.decryptFile = decryptFile;
+exports.isEncryptedArchive = isEncryptedArchive;
+exports.getEncryptionConfig = getEncryptionConfig;
+exports.decryptedTempPathFor = decryptedTempPathFor;
+exports._testInMemoryRoundTrip = _testInMemoryRoundTrip;
+const crypto = __importStar(__nccwpck_require__(77598));
+const fs = __importStar(__nccwpck_require__(73024));
+const fsp = __importStar(__nccwpck_require__(51455));
+const path = __importStar(__nccwpck_require__(76760));
+const os = __importStar(__nccwpck_require__(48161));
+const promises_1 = __nccwpck_require__(46466);
+exports.ENCRYPT_MAGIC = Buffer.from("SOLDRENC", "ascii");
+exports.ENCRYPT_VERSION = 0x01;
+exports.IV_BYTES = 12;
+exports.TAG_BYTES = 16;
+exports.HEADER_BYTES = exports.ENCRYPT_MAGIC.length + 1 + exports.IV_BYTES; // 21
+exports.KEY_BYTES = 32;
+/**
+ * Parse a user-supplied key string into a 32-byte buffer.
+ * Accepts:
+ *   - 64-char hex (case-insensitive)
+ *   - 44-char base64 (standard, with `=` padding)
+ *   - 43-char base64url (no padding)
+ * Rejects anything else with a precise diagnostic. The supplied raw value
+ * is NEVER echoed back in the error message, so we do not accidentally leak
+ * it into a log line.
+ */
+function parseEncryptionKey(raw) {
+    const trimmed = (raw ?? "").trim();
+    if (!trimmed) {
+        throw new Error("cache-encrypt-key: empty value");
+    }
+    if (/^[0-9a-fA-F]{64}$/.test(trimmed)) {
+        return Buffer.from(trimmed, "hex");
+    }
+    if (/^[A-Za-z0-9+/]{43}=$/.test(trimmed) || /^[A-Za-z0-9+/]{44}$/.test(trimmed)) {
+        const buf = Buffer.from(trimmed, "base64");
+        if (buf.length === exports.KEY_BYTES)
+            return buf;
+    }
+    if (/^[A-Za-z0-9_-]{43}$/.test(trimmed)) {
+        const buf = Buffer.from(trimmed, "base64url");
+        if (buf.length === exports.KEY_BYTES)
+            return buf;
+    }
+    throw new Error("cache-encrypt-key: expected a 256-bit key as 64-char hex, 44-char base64, or 43-char base64url");
+}
+/**
+ * Build the GCM additional-authenticated-data buffer for a cache layer.
+ * Format: `v1|<platform>|<cacheKey>` (UTF-8 bytes). The leading version
+ * lets us extend the AAD format later without invalidating old archives —
+ * the version is part of the file frame too, so a reader knows which AAD
+ * shape to construct.
+ */
+function buildAad(cacheKey, platform = process.platform) {
+    return Buffer.from(`v1|${platform}|${cacheKey}`, "utf8");
+}
+/**
+ * Stream-encrypt `srcPath` (plaintext) into `dstPath` (framed ciphertext).
+ *
+ * Uses a temp sibling file + atomic rename so an interrupted encrypt cannot
+ * leave a half-written archive at `dstPath` that the cache layer would
+ * then upload. The temp lives next to `dstPath` (not in os.tmpdir()) so
+ * the rename stays on the same filesystem.
+ */
+async function encryptFile(srcPath, dstPath, cfg) {
+    const iv = crypto.randomBytes(exports.IV_BYTES);
+    const cipher = crypto.createCipheriv("aes-256-gcm", cfg.key, iv);
+    cipher.setAAD(cfg.aad);
+    const tmpPath = `${dstPath}.tmp-${process.pid}-${Date.now()}`;
+    const reader = fs.createReadStream(srcPath);
+    const writer = fs.createWriteStream(tmpPath);
+    // Write the frame header up-front so a partial file is unambiguously broken.
+    writer.write(exports.ENCRYPT_MAGIC);
+    writer.write(Buffer.from([exports.ENCRYPT_VERSION]));
+    writer.write(iv);
+    let ciphertextBytes = 0;
+    try {
+        await (0, promises_1.pipeline)(reader, cipher, async function* (source) {
+            for await (const chunk of source) {
+                ciphertextBytes += chunk.length;
+                yield chunk;
+            }
+        }, writer);
+        // pipeline closes the writer; reopen for the tag append.
+        const tag = cipher.getAuthTag();
+        if (tag.length !== exports.TAG_BYTES) {
+            throw new Error(`cache-encrypt: unexpected GCM tag length ${tag.length}`);
+        }
+        await fsp.appendFile(tmpPath, tag);
+        await fsp.rename(tmpPath, dstPath);
+    }
+    catch (err) {
+        await fsp.rm(tmpPath, { force: true }).catch(() => undefined);
+        throw err;
+    }
+    return { ciphertextBytes };
+}
+/**
+ * Stream-decrypt `srcPath` (framed ciphertext) into `dstPath` (plaintext).
+ *
+ * Throws an Error tagged with `cause.code === "EAUTHFAIL"` when the GCM tag
+ * fails to verify (wrong key, tampered ciphertext, or AAD mismatch). The
+ * partial output file is removed before the error propagates so the caller
+ * never observes half-decrypted bytes that look like a valid archive.
+ */
+async function decryptFile(srcPath, dstPath, cfg) {
+    const stat = await fsp.stat(srcPath);
+    if (stat.size < exports.HEADER_BYTES + exports.TAG_BYTES) {
+        throw makeDecryptError("encrypted archive is shorter than header+tag");
+    }
+    const handle = await fsp.open(srcPath, "r");
+    let plaintextBytes = 0;
+    const tmpPath = `${dstPath}.tmp-${process.pid}-${Date.now()}`;
+    try {
+        const headerBuf = Buffer.alloc(exports.HEADER_BYTES);
+        await handle.read(headerBuf, 0, exports.HEADER_BYTES, 0);
+        if (!headerBuf.subarray(0, exports.ENCRYPT_MAGIC.length).equals(exports.ENCRYPT_MAGIC)) {
+            throw makeDecryptError("magic byte mismatch");
+        }
+        const version = headerBuf[exports.ENCRYPT_MAGIC.length];
+        if (version !== exports.ENCRYPT_VERSION) {
+            throw makeDecryptError(`unsupported frame version ${version}`);
+        }
+        const iv = headerBuf.subarray(exports.ENCRYPT_MAGIC.length + 1, exports.HEADER_BYTES);
+        const tagBuf = Buffer.alloc(exports.TAG_BYTES);
+        await handle.read(tagBuf, 0, exports.TAG_BYTES, stat.size - exports.TAG_BYTES);
+        const decipher = crypto.createDecipheriv("aes-256-gcm", cfg.key, iv);
+        decipher.setAAD(cfg.aad);
+        decipher.setAuthTag(tagBuf);
+        const bodyStart = exports.HEADER_BYTES;
+        const bodyEnd = stat.size - exports.TAG_BYTES; // exclusive
+        const reader = fs.createReadStream(srcPath, {
+            start: bodyStart,
+            end: bodyEnd - 1, // inclusive end for createReadStream
+        });
+        const writer = fs.createWriteStream(tmpPath);
+        try {
+            await (0, promises_1.pipeline)(reader, decipher, async function* (source) {
+                for await (const chunk of source) {
+                    plaintextBytes += chunk.length;
+                    yield chunk;
+                }
+            }, writer);
+        }
+        catch (err) {
+            // node:crypto raises "Unsupported state or unable to authenticate data"
+            // on tag mismatch — normalize so callers can `catch (e) { if (e.code === "EAUTHFAIL") ... }`.
+            throw makeDecryptError(err instanceof Error ? err.message : String(err));
+        }
+        await fsp.rename(tmpPath, dstPath);
+    }
+    finally {
+        await handle.close().catch(() => undefined);
+        await fsp.rm(tmpPath, { force: true }).catch(() => undefined);
+    }
+    return { plaintextBytes };
+}
+function makeDecryptError(detail) {
+    const err = new Error(`cache-encrypt: ${detail}`);
+    err.code = "EAUTHFAIL";
+    return err;
+}
+/**
+ * Inspect the first 8 bytes of `filePath`: is it a framed encrypted archive?
+ * Used by decompressCache to dispatch between the plaintext and encrypted
+ * decompression paths.
+ */
+async function isEncryptedArchive(filePath) {
+    let handle = null;
+    try {
+        handle = await fsp.open(filePath, "r");
+        const buf = Buffer.alloc(exports.ENCRYPT_MAGIC.length);
+        const { bytesRead } = await handle.read(buf, 0, exports.ENCRYPT_MAGIC.length, 0);
+        if (bytesRead < exports.ENCRYPT_MAGIC.length)
+            return false;
+        return buf.equals(exports.ENCRYPT_MAGIC);
+    }
+    catch {
+        return false;
+    }
+    finally {
+        if (handle)
+            await handle.close().catch(() => undefined);
+    }
+}
+/**
+ * Read the env-supplied cache-encryption configuration and build a
+ * per-call EncryptionConfig keyed on the supplied cache key. Returns
+ * `null` when no key is configured — the caller should then use the
+ * plaintext path with no extra work.
+ *
+ * The key MUST be `core.setSecret()`-marked by the caller before this
+ * runs so any incidental log line that captures it is auto-redacted.
+ */
+function getEncryptionConfig(opts) {
+    const raw = (opts.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim();
+    if (!raw)
+        return null;
+    const key = parseEncryptionKey(raw);
+    const onFailureRaw = (opts.env["SETUP_SOLDR_CACHE_ENCRYPT_ON_FAILURE"] ?? "error")
+        .trim()
+        .toLowerCase();
+    const onFailure = onFailureRaw === "skip" ? "skip" : "error";
+    return {
+        key,
+        aad: buildAad(opts.cacheKey),
+        onFailure,
+    };
+}
+/**
+ * Convenience: produce a temp file path adjacent to `archivePath` for the
+ * intermediate decrypted artifact. Used by decompressCache.
+ */
+function decryptedTempPathFor(archivePath) {
+    return path.join(path.dirname(archivePath), `.${path.basename(archivePath)}.plain-${process.pid}`);
+}
+/** Test helper: in-memory round trip without disk. Exported only for tests. */
+function _testInMemoryRoundTrip(plaintext, cfg) {
+    const iv = crypto.randomBytes(exports.IV_BYTES);
+    const cipher = crypto.createCipheriv("aes-256-gcm", cfg.key, iv);
+    cipher.setAAD(cfg.aad);
+    const body = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    return Buffer.concat([exports.ENCRYPT_MAGIC, Buffer.from([exports.ENCRYPT_VERSION]), iv, body, tag]);
+}
+// Re-export for callers that just want a "where can I write a scratch
+// tmp file that doesn't pollute the runner-temp"; keeps the helper close
+// to where it's consumed.
+exports.tmpdir = os.tmpdir;
 
 
 /***/ }),
@@ -47019,8 +47444,11 @@ async function restoreCookCache(opts) {
     catch {
         return { hit: false, matchedKey: matched, archiveBytes: 0 };
     }
+    // SOLDRENC-framed (encrypted) archives appear as magic="unknown" here;
+    // delegate the detection to decompressCache when a cache-encrypt-key is set.
     const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
-    if (magic !== "zstd" && magic !== "gzip") {
+    const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+    if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
         log(`cook-cache: restored archive has unknown codec, treating as miss`);
         return { hit: false, matchedKey: matched, archiveBytes };
     }
@@ -47032,6 +47460,7 @@ async function restoreCookCache(opts) {
             longWindow,
             log,
             debug: opts.debug,
+            cacheKey: exactKey,
         });
     }
     catch (err) {
@@ -47295,6 +47724,7 @@ async function saveCookCache(opts) {
             longWindow,
             debug,
             log,
+            cacheKey: exactKey,
         });
         archivePath = compress.archivePath;
         archiveBytes = compress.archiveBytes;
@@ -47620,7 +48050,14 @@ const ENV_KEY_PREFIXES = [
 const SECRET_KEY_PATTERN = /(token|secret|password|^.*_pass$|api[_-]?key|client[_-]?secret|webhook)/i;
 // Cache-key fields look secret-y but never are; never redact them.
 const NEVER_REDACT_PATTERN = /(_key$|cache[-_]key|cache[-_]keys$|key[-_]suffix$|public[-_]key)/i;
+// #387 Feature 1: cache-encrypt-key IS a secret even though its name
+// matches NEVER_REDACT_PATTERN's `_key$`. core.setSecret() in resolve-setup
+// already marks the value for runtime log redaction by the Actions runner,
+// but the diagnostics dump has its own writer — belt-and-suspenders here.
+const FORCE_REDACT_PATTERN = /(encrypt[-_]?key|cache[-_]encrypt[-_]key|cipher[-_]key|aes[-_]key)/i;
 function redactValue(key, value) {
+    if (FORCE_REDACT_PATTERN.test(key))
+        return value ? "<redacted>" : "";
     if (NEVER_REDACT_PATTERN.test(key))
         return value;
     if (SECRET_KEY_PATTERN.test(key))
@@ -47643,7 +48080,10 @@ function rawInputsLines(inputs) {
     const lines = [];
     const entries = Object.entries(inputs).sort((a, b) => (a[0] < b[0] ? -1 : 1));
     for (const [k, v] of entries) {
-        lines.push(`  ${k}=${JSON.stringify(v)}`);
+        // #387 Feature 1: parsed RawInputs needs the same redaction as raw env —
+        // otherwise `cacheEncryptKey` lands here verbatim.
+        const safe = typeof v === "string" ? redactValue(k, v) : v;
+        lines.push(`  ${k}=${JSON.stringify(safe)}`);
     }
     return lines;
 }
@@ -48466,6 +48906,8 @@ function readRawInputs(env) {
         cachePayloadMaxBytes: get("cache-payload-max-bytes"),
         cachePayloadOversizeAction: get("cache-payload-oversize-action"),
         cachePayloadTopN: get("cache-payload-top-n"),
+        cacheEncryptKey: get("cache-encrypt-key"),
+        cacheEncryptOnFailure: get("cache-encrypt-on-failure"),
         sourceMtimeNormalize: get("source-mtime-normalize"),
         cargoRegistryCache: get("cargo-registry-cache"),
         compileCacheStats: get("compile-cache-stats"),
@@ -49060,8 +49502,12 @@ async function restoreMiniCache(opts) {
     catch {
         return { hit: false, matchedKey: matched, archiveBytes: 0 };
     }
+    // Codec sniff stays for the legacy plaintext path. Encrypted archives
+    // produce magic="unknown" here, so we additionally let decompressCache
+    // try when an encrypt key is configured — it knows how to detect SOLDRENC.
     const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
-    if (magic !== "zstd" && magic !== "gzip") {
+    const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+    if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
         log(`soldr-mini-cache: archive has unknown codec, treating as miss`);
         return { hit: false, matchedKey: matched, archiveBytes };
     }
@@ -49072,6 +49518,7 @@ async function restoreMiniCache(opts) {
             longWindow,
             log,
             debug: opts.debug,
+            cacheKey: exactKey,
         });
     }
     catch (err) {
@@ -49116,6 +49563,7 @@ async function saveMiniCache(opts) {
             longWindow,
             debug,
             log,
+            cacheKey: exactKey,
         });
         outputArchivePath = compress.archivePath;
         archiveBytes = compress.archiveBytes;
@@ -49506,6 +49954,7 @@ async function saveSoloCache(opts) {
             level,
             debug,
             log,
+            cacheKey: key,
         });
         archivePath = compress.archivePath;
         archiveBytes = compress.archiveBytes;
@@ -49619,14 +50068,17 @@ async function restoreSoloCache(opts) {
         return { hit: false, matchedKey: matched, restoredBytes: 0, archivePath: null, verified: false };
     }
     const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
-    if (magic !== "zstd" && magic !== "gzip") {
+    const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+    if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
         log(`solo-toolchain-cache: restored archive has unknown codec, treating as miss`);
         return { hit: false, matchedKey: matched, restoredBytes: 0, archivePath, verified: false };
     }
     const stagingOut = path.join(stagingDir, "staged");
     try {
         await fsp.rm(stagingOut, { recursive: true, force: true });
-        await (0, cache_compress_js_1.decompressCache)({ archivePath, targetDir: stagingOut });
+        // matched is the actual key the restored entry was stored under, which
+        // is what the encryption AAD was bound to on save.
+        await (0, cache_compress_js_1.decompressCache)({ archivePath, targetDir: stagingOut, cacheKey: matched });
     }
     catch (err) {
         log(`solo-toolchain-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -50550,6 +51002,7 @@ async function saveOne(opts) {
                 payloadTopN: payloadPolicy.topN,
                 payloadProfile,
                 label,
+                cacheKey: key,
             });
             archivePath = result.archivePath;
             archiveBytes = result.archiveBytes || null;
@@ -52481,6 +52934,14 @@ module.exports = require("node:process");
 
 "use strict";
 module.exports = require("node:stream");
+
+/***/ }),
+
+/***/ 46466:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:stream/promises");
 
 /***/ }),
 
@@ -67341,6 +67802,24 @@ exports.StorageContextClient = StorageContextClient;
 
 /***/ }),
 
+/***/ 83627:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KnownEncryptionAlgorithmType = void 0;
+/** Known values of {@link EncryptionAlgorithmType} that the service accepts. */
+var KnownEncryptionAlgorithmType;
+(function (KnownEncryptionAlgorithmType) {
+    KnownEncryptionAlgorithmType["AES256"] = "AES256";
+})(KnownEncryptionAlgorithmType || (exports.KnownEncryptionAlgorithmType = KnownEncryptionAlgorithmType = {}));
+//# sourceMappingURL=generatedModels.js.map
+
+/***/ }),
+
 /***/ 30247:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -77667,6 +78146,132 @@ exports.listType = {
 
 /***/ }),
 
+/***/ 56635:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=appendBlob.js.map
+
+/***/ }),
+
+/***/ 68355:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blob.js.map
+
+/***/ }),
+
+/***/ 17188:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blockBlob.js.map
+
+/***/ }),
+
+/***/ 15337:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=container.js.map
+
+/***/ }),
+
+/***/ 82354:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const tslib_1 = __nccwpck_require__(61860);
+tslib_1.__exportStar(__nccwpck_require__(26865), exports);
+tslib_1.__exportStar(__nccwpck_require__(15337), exports);
+tslib_1.__exportStar(__nccwpck_require__(68355), exports);
+tslib_1.__exportStar(__nccwpck_require__(14400), exports);
+tslib_1.__exportStar(__nccwpck_require__(56635), exports);
+tslib_1.__exportStar(__nccwpck_require__(17188), exports);
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 14400:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=pageBlob.js.map
+
+/***/ }),
+
+/***/ 26865:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=service.js.map
+
+/***/ }),
+
 /***/ 40535:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -80882,132 +81487,6 @@ const filterBlobsOperationSpec = {
 
 /***/ }),
 
-/***/ 56635:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=appendBlob.js.map
-
-/***/ }),
-
-/***/ 68355:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blob.js.map
-
-/***/ }),
-
-/***/ 17188:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blockBlob.js.map
-
-/***/ }),
-
-/***/ 15337:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=container.js.map
-
-/***/ }),
-
-/***/ 82354:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tslib_1 = __nccwpck_require__(61860);
-tslib_1.__exportStar(__nccwpck_require__(26865), exports);
-tslib_1.__exportStar(__nccwpck_require__(15337), exports);
-tslib_1.__exportStar(__nccwpck_require__(68355), exports);
-tslib_1.__exportStar(__nccwpck_require__(14400), exports);
-tslib_1.__exportStar(__nccwpck_require__(56635), exports);
-tslib_1.__exportStar(__nccwpck_require__(17188), exports);
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 14400:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=pageBlob.js.map
-
-/***/ }),
-
-/***/ 26865:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=service.js.map
-
-/***/ }),
-
 /***/ 5313:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -81078,24 +81557,6 @@ class StorageClient extends coreHttpCompat.ExtendedServiceClient {
 }
 exports.StorageClient = StorageClient;
 //# sourceMappingURL=storageClient.js.map
-
-/***/ }),
-
-/***/ 83627:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.KnownEncryptionAlgorithmType = void 0;
-/** Known values of {@link EncryptionAlgorithmType} that the service accepts. */
-var KnownEncryptionAlgorithmType;
-(function (KnownEncryptionAlgorithmType) {
-    KnownEncryptionAlgorithmType["AES256"] = "AES256";
-})(KnownEncryptionAlgorithmType || (exports.KnownEncryptionAlgorithmType = KnownEncryptionAlgorithmType = {}));
-//# sourceMappingURL=generatedModels.js.map
 
 /***/ }),
 

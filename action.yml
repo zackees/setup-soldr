@@ -321,6 +321,41 @@ inputs:
       as a cache packaging error. Ignored when cache-payload-max-bytes is empty.
     required: false
     default: "skip"
+  cache-encrypt-key:
+    description: >
+      Optional 256-bit AES key used to encrypt every managed cache layer's
+      `.tar.zst` archive with AES-256-GCM before upload, and to verify +
+      decrypt the same archives on restore. Accepts the key as 64-char hex,
+      44-char base64, or 43-char base64url. Pass via a GitHub Actions
+      secret (e.g. `cache-encrypt-key: ${{ secrets.SETUP_SOLDR_CACHE_KEY }}`);
+      setup-soldr immediately marks the value as a secret so it cannot
+      leak into log output.
+
+      Use this on release pipelines to prevent cache poisoning: an attacker
+      who can write to the Actions Cache for this repo (forked PR with
+      cache-write scope, leaked GITHUB_TOKEN, etc.) cannot plant a
+      malicious tarball under one of setup-soldr's cache keys without
+      possessing the AES key — the GCM tag verification will fail and the
+      tampered archive is rejected.
+
+      Empty (default) keeps the historical plaintext path; encryption adds
+      a per-archive disk read+write pass (~5 s per GiB on a typical SSD)
+      so it should remain opt-in. Mixed-mode tolerant: a legacy plaintext
+      entry is accepted with a warning when the key is set, and an
+      encrypted entry restored without a key is treated as a cold miss
+      (lets you rotate keys without wiping the cache). See #387 Feature 1.
+    required: false
+    default: ""
+  cache-encrypt-on-failure:
+    description: >
+      What to do when an encrypted cache entry fails authentication
+      (wrong `cache-encrypt-key`, tampered ciphertext, or AAD mismatch).
+      `error` (default) raises a hard error in red so the release run
+      stops before consuming the bad cache. `skip` logs the failure and
+      treats the entry as a cold miss, letting the run continue with a
+      fresh build. Has no effect when `cache-encrypt-key` is empty.
+    required: false
+    default: "error"
   cache-payload-top-n:
     description: >
       Number of largest files and directories retained in cache payload stats,

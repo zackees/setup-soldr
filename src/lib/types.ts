@@ -106,6 +106,8 @@ export interface RawInputs {
   cachePayloadMaxBytes: string;
   cachePayloadOversizeAction: string;
   cachePayloadTopN: string;
+  cacheEncryptKey: string;
+  cacheEncryptOnFailure: string;
   sourceMtimeNormalize: string;
   cargoRegistryCache: string;
   compileCacheStats: string;

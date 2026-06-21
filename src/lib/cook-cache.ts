@@ -392,8 +392,11 @@ export async function restoreCookCache(opts: CookRestoreOpts): Promise<CookResto
   } catch {
     return { hit: false, matchedKey: matched, archiveBytes: 0 };
   }
+  // SOLDRENC-framed (encrypted) archives appear as magic="unknown" here;
+  // delegate the detection to decompressCache when a cache-encrypt-key is set.
   const magic = await detectCompressMagic(archivePath);
-  if (magic !== "zstd" && magic !== "gzip") {
+  const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+  if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
     log(`cook-cache: restored archive has unknown codec, treating as miss`);
     return { hit: false, matchedKey: matched, archiveBytes };
   }
@@ -405,6 +408,7 @@ export async function restoreCookCache(opts: CookRestoreOpts): Promise<CookResto
       longWindow,
       log,
       debug: opts.debug,
+      cacheKey: exactKey,
     });
   } catch (err) {
     log(`cook-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -715,6 +719,7 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
       longWindow,
       debug,
       log,
+      cacheKey: exactKey,
     });
     archivePath = compress.archivePath;
     archiveBytes = compress.archiveBytes;

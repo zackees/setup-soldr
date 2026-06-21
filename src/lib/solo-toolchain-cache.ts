@@ -350,6 +350,7 @@ export async function saveSoloCache(opts: {
       level,
       debug,
       log,
+      cacheKey: key,
     });
     archivePath = compress.archivePath;
     archiveBytes = compress.archiveBytes;
@@ -471,14 +472,17 @@ export async function restoreSoloCache(opts: {
     return { hit: false, matchedKey: matched, restoredBytes: 0, archivePath: null, verified: false };
   }
   const magic = await detectCompressMagic(archivePath);
-  if (magic !== "zstd" && magic !== "gzip") {
+  const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+  if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
     log(`solo-toolchain-cache: restored archive has unknown codec, treating as miss`);
     return { hit: false, matchedKey: matched, restoredBytes: 0, archivePath, verified: false };
   }
   const stagingOut = path.join(stagingDir, "staged");
   try {
     await fsp.rm(stagingOut, { recursive: true, force: true });
-    await decompressCache({ archivePath, targetDir: stagingOut });
+    // matched is the actual key the restored entry was stored under, which
+    // is what the encryption AAD was bound to on save.
+    await decompressCache({ archivePath, targetDir: stagingOut, cacheKey: matched });
   } catch (err) {
     log(`solo-toolchain-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
     return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false };

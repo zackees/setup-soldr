@@ -20,6 +20,43 @@ import type {
   CachePayloadSkipSummary,
   CachePayloadSubtree,
 } from "./types.js";
+import {
+  decryptedTempPathFor,
+  decryptFile,
+  encryptFile,
+  getEncryptionConfig,
+  isEncryptedArchive,
+  type EncryptionConfig,
+} from "./cache-encrypt.js";
+
+/**
+ * Resolve the encryption config for a cache call. Callers pass `encryption`
+ * explicitly for tests; in production they pass `cacheKey` and let the
+ * helper read SETUP_SOLDR_CACHE_ENCRYPT_KEY off `env` itself. When the env
+ * key is set but no cacheKey is supplied, returns null + emits a warning —
+ * we refuse to encrypt with an empty AAD, which would defeat the cross-
+ * layer replay protection the AAD is there to provide.
+ */
+function resolveCacheEncryption(opts: {
+  explicit: EncryptionConfig | null | undefined;
+  cacheKey: string | undefined;
+  env?: Record<string, string | undefined>;
+  warn?: (msg: string) => void;
+}): EncryptionConfig | null {
+  if (opts.explicit !== undefined) {
+    return opts.explicit ?? null;
+  }
+  const env = opts.env ?? process.env;
+  const haveKey = (env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+  if (!haveKey) return null;
+  if (!opts.cacheKey) {
+    (opts.warn ?? core.warning)(
+      "setup-soldr: cache-encrypt-key is configured but the cache layer did not supply a cacheKey for AAD; skipping encryption for this archive",
+    );
+    return null;
+  }
+  return getEncryptionConfig({ env, cacheKey: opts.cacheKey });
+}
 
 /**
  * Recursively walk a directory and sum file sizes.
@@ -520,8 +557,40 @@ export async function decompressCache(opts: {
    * `--memory` to match `1 << longWindow` for symmetry.
    */
   longWindow?: number;
+  /**
+   * #387 Feature 1. Optional AES-256-GCM decryption config. When the
+   * restored archive starts with the SOLDRENC magic, it is decrypted to a
+   * sibling temp file before the existing zstd/gzip decompression runs;
+   * the temp file is removed in `finally`. When the config is null/absent
+   * and the archive IS encrypted, decompressCache throws (the caller
+   * should then drop the cache entry and treat it as a miss). When the
+   * archive is plaintext and the config is present, we accept it for
+   * mixed-mode tolerance — log a one-line warning so future saves are
+   * known to encrypt.
+   *
+   * Explicit `null` means "do not auto-load from env"; leaving it
+   * `undefined` lets cacheKey + SETUP_SOLDR_CACHE_ENCRYPT_KEY produce
+   * one automatically.
+   */
+  encryption?: EncryptionConfig | null;
+  /**
+   * Cache key for AAD derivation. Used only when `encryption` is left
+   * undefined and the env-supplied key is present. Pass the same string
+   * the caller will hand to actions/cache for restore/save.
+   */
+  cacheKey?: string;
 }): Promise<DecompressResult> {
-  const { archivePath, targetDir, debug = false, log = (): void => undefined, longWindow } = opts;
+  const {
+    archivePath,
+    targetDir,
+    debug = false,
+    log = (): void => undefined,
+    longWindow,
+  } = opts;
+  const encryption = resolveCacheEncryption({
+    explicit: opts.encryption,
+    cacheKey: opts.cacheKey,
+  });
   // Ensure both <targetDir> exists (zccache may have already populated it)
   // and the extract root (which is the parent) is writable.
   await ensureDir(targetDir);
@@ -531,6 +600,79 @@ export async function decompressCache(opts: {
   let archiveBytes = 0;
   try { archiveBytes = (await fs.stat(archivePath)).size; } catch { /* archive may not exist */ }
 
+  // #387 Feature 1: detect encrypted archive BEFORE the zstd/gzip sniff. When
+  // an encrypted entry is restored without a configured key, the caller can't
+  // do anything safe with it — we surface the situation as an Error tagged
+  // with `cause.code === "EENCNOKEY"` so the caller decides whether to skip
+  // the layer (cold miss) or fail the step.
+  const archiveIsEncrypted = await isEncryptedArchive(archivePath);
+  let effectiveArchivePath = archivePath;
+  let decryptedTempPath: string | null = null;
+  try {
+    if (archiveIsEncrypted) {
+      if (!encryption) {
+        const err = new Error(
+          `decompressCache: archive ${path.basename(archivePath)} is encrypted but no cache-encrypt-key is configured`,
+        );
+        (err as NodeJS.ErrnoException).code = "EENCNOKEY";
+        throw err;
+      }
+      decryptedTempPath = decryptedTempPathFor(archivePath);
+      if (debug) {
+        log(`[debug] decrypt ${path.basename(archivePath)} → ${path.basename(decryptedTempPath)} (AES-256-GCM, archive=${fmtBytesDebug(archiveBytes)})`);
+      }
+      try {
+        await decryptFile(archivePath, decryptedTempPath, encryption);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === "EAUTHFAIL") {
+          // Re-throw with a clearer top-level message; the caller (cache layer)
+          // is responsible for rendering this in red and respecting onFailure.
+          const wrapped = new Error(
+            `decompressCache: failed to authenticate encrypted archive ${path.basename(archivePath)} ` +
+              `(wrong cache-encrypt-key, tampered ciphertext, or AAD mismatch)`,
+          );
+          (wrapped as NodeJS.ErrnoException).code = "EAUTHFAIL";
+          throw wrapped;
+        }
+        throw err;
+      }
+      effectiveArchivePath = decryptedTempPath;
+    } else if (encryption) {
+      log(
+        `setup-soldr: ${path.basename(archivePath)} is a legacy plaintext cache entry; accepting it this run, the next save will write encrypted`,
+      );
+    }
+    return await decompressInner({
+      archivePath: effectiveArchivePath,
+      targetDir,
+      extractRoot,
+      archiveBytes,
+      debug,
+      log,
+      longWindow,
+    });
+  } finally {
+    if (decryptedTempPath) {
+      await fs.rm(decryptedTempPath, { force: true }).catch(() => undefined);
+    }
+  }
+}
+
+/**
+ * Internal: pre-#387 decompression body, extracted so the encryption
+ * wrapper above stays focused on auth / dispatch.
+ */
+async function decompressInner(opts: {
+  archivePath: string;
+  targetDir: string;
+  extractRoot: string;
+  archiveBytes: number;
+  debug: boolean;
+  log: (msg: string) => void;
+  longWindow?: number;
+}): Promise<DecompressResult> {
+  const { archivePath, targetDir, extractRoot, archiveBytes, debug, log, longWindow } = opts;
   const magic = await detectCompressMagic(archivePath);
   if (debug) {
     log(`[debug] decompress ${path.basename(archivePath)}: magic=${magic} archive=${fmtBytesDebug(archiveBytes)}`);
@@ -634,6 +776,25 @@ export async function compressCache(opts: {
   payloadProfile?: CachePayloadProfile;
   /** Human-readable cache label used in warning/debug output. */
   label?: string;
+  /**
+   * #387 Feature 1. Optional AES-256-GCM encryption config. When set, the
+   * .tar.zst archive is encrypted in-place after compression (streamed
+   * read → cipher → write of a sibling .tmp, then atomic rename over the
+   * .tar.zst path). The on-disk filename does NOT change — callers pass
+   * the same path to saveCache as before. Restore-side magic-byte sniff
+   * detects the SOLDRENC frame and routes through decryptFile.
+   *
+   * Explicit `null` means "do not auto-load from env"; leaving it
+   * `undefined` lets cacheKey + SETUP_SOLDR_CACHE_ENCRYPT_KEY produce
+   * one automatically.
+   */
+  encryption?: EncryptionConfig | null;
+  /**
+   * Cache key for AAD derivation. Used only when `encryption` is left
+   * undefined and the env-supplied key is present. Pass the same string
+   * the caller will hand to actions/cache.
+   */
+  cacheKey?: string;
 }): Promise<CompressResult> {
   const {
     cacheDir,
@@ -651,6 +812,10 @@ export async function compressCache(opts: {
     payloadProfile = "generic",
     label,
   } = opts;
+  const encryption = resolveCacheEncryption({
+    explicit: opts.encryption,
+    cacheKey: opts.cacheKey,
+  });
   const nullResult: CompressResult = {
     archivePath: null,
     archiveBytes: 0,
@@ -811,6 +976,34 @@ export async function compressCache(opts: {
 
   if (debug && inflatedBytes !== null && inflatedBytes > 0) {
     log(`[debug] compress result: archive=${fmtBytesDebug(archiveBytes)} ratio=${(archiveBytes / inflatedBytes).toFixed(2)}`);
+  }
+
+  // #387 Feature 1: AES-256-GCM encrypt-in-place. The on-disk filename is
+  // preserved so callers don't need to know whether encryption was applied —
+  // the restore path detects the SOLDRENC magic byte and routes accordingly.
+  // The encrypt step is a separate stream-read+stream-write disk pass so it
+  // adds ~archive_size / SSD_throughput to the post step (e.g. ~5 s for a
+  // 1 GiB archive at 200 MB/s). Acceptable cost for an opt-in security
+  // feature; bypassed entirely when `encryption` is null.
+  if (encryption) {
+    const encryptTmp = `${archivePath}.enc-tmp-${process.pid}-${Date.now()}`;
+    try {
+      await encryptFile(archivePath, encryptTmp, encryption);
+      await fs.rm(archivePath, { force: true });
+      await fs.rename(encryptTmp, archivePath);
+    } catch (err) {
+      await fs.rm(encryptTmp, { force: true }).catch(() => undefined);
+      throw err;
+    }
+    let encryptedBytes = archiveBytes;
+    try { encryptedBytes = (await fs.stat(archivePath)).size; } catch { /* keep estimate */ }
+    if (debug) {
+      log(
+        `[debug] encrypt ${displayLabel}: AES-256-GCM, ` +
+          `plaintext=${fmtBytesDebug(archiveBytes)} ciphertext=${fmtBytesDebug(encryptedBytes)}`,
+      );
+    }
+    archiveBytes = encryptedBytes;
   }
 
   return { archivePath, archiveBytes, inflatedBytes, fileCount, payload: payloadCensus };
