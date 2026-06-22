@@ -135,21 +135,43 @@ jobs:
       - name: Cross-build zccache binaries
         shell: bash
         working-directory: zccache-src
+        env:
+          TGT: ${{ matrix.target }}
         # zccache and zccache-daemon are [[bin]] entries inside the
         # `zccache` package (crates/zccache/Cargo.toml). The `zccache-cli`
-        # package is a PyO3 cdylib that doesn't ship binaries — building
-        # just `zccache` and `zccache-daemon` from the `zccache` package
-        # avoids the wasted compile time on the cdylib + the dozen other
-        # workspace bins (echo_shim, exec_test_tool, crash-trigger, …)
-        # the benchmark doesn't need.
+        # package is a PyO3 cdylib that doesn't ship binaries.
+        #
+        # Subcommand selection per target:
+        #   *-pc-windows-msvc -> `cargo xwin build` (clang-cl + xwin's
+        #     MSVC CRT). Plain `cargo build --target` here fails at
+        #     `failed to find tool "lib.exe"`.
+        #   anything else  -> `cargo zigbuild` (zig cc as the C compiler,
+        #     understands -arch / -mmacosx-version-min for darwin and
+        #     produces aarch64-linux objects from x86_64 hosts).
+        #
+        # `soldr cargo zigbuild` and `soldr cargo xwin build`
+        # auto-bootstrap zig + cargo-zigbuild and cargo-xwin respectively
+        # on first invocation (soldr#841, soldr#834), so no extra
+        # install step is needed.
         run: |
-          soldr cargo build \
-            --release \
-            --locked \
-            --target "${{ matrix.target }}" \
-            --package zccache \
-            --bin zccache \
-            --bin zccache-daemon
+          set -euo pipefail
+          if [[ "$TGT" == *-pc-windows-msvc ]]; then
+            soldr cargo xwin build \
+              --release \
+              --locked \
+              --target "$TGT" \
+              --package zccache \
+              --bin zccache \
+              --bin zccache-daemon
+          else
+            soldr cargo zigbuild \
+              --release \
+              --locked \
+              --target "$TGT" \
+              --package zccache \
+              --bin zccache \
+              --bin zccache-daemon
+          fi
 
       - name: Stage zccache binaries
         shell: bash
