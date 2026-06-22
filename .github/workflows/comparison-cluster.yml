@@ -77,8 +77,94 @@ jobs:
   # the hard gate lives in .github/workflows/perf-matrix.yml's
   # `sqlite-link/cold-tar-untar-warm` cell. See
   # docs/NATIVE_SQLITE_BENCHMARK.md for how to read the results.
-  native-sqlite:
+  #
+  # The benchmark runs in two stages so the work doubles up correctly
+  # against the runner pool (2N instead of N):
+  #
+  #   `native-sqlite-build` (N=8 cells on linux x86): cross-compile
+  #     zccache for each target using setup-soldr's `cross-targets`
+  #     input (v0.9.63) + soldr 0.7.59's `prepare --target` composite.
+  #     Dogfoods both features and gets the expensive build work onto
+  #     fast ubuntu runners instead of slow ARM/macOS/Windows ones.
+  #
+  #   `native-sqlite-test` (N=8 cells on target-native runners): pull
+  #     the cross-compiled zccache via artifact, then run the actual
+  #     cold-vs-warm compile-time perf measurement on the target's
+  #     native CPU.
+  native-sqlite-build:
+    name: Cross-build zccache for ${{ matrix.target }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+    steps:
+      - name: Checkout setup-soldr (action under test)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Checkout zackees/zccache (source to cross-compile)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: zackees/zccache
+          path: zccache-src
+          persist-credentials: false
+
+      - id: setup
+        name: Setup Soldr with cross-target ${{ matrix.target }}
+        uses: ./
+        with:
+          cross-targets: ${{ matrix.target }}
+
+      - name: Provision cross-toolchain via soldr prepare
+        # setup-soldr's `cross-targets` cross-bootstrap covers
+        # linux-musl, apple-darwin, and windows-gnu lanes natively.
+        # For the other lanes (linux-gnu cross to aarch64, windows-msvc),
+        # soldr 0.7.59's `prepare --target` fills in cargo-xwin /
+        # clang-cl / cross-cc. Idempotent on supported lanes.
+        shell: bash
+        run: soldr prepare --target "${{ matrix.target }}"
+
+      - name: Cross-build zccache-cli
+        shell: bash
+        working-directory: zccache-src
+        run: |
+          soldr cargo build --release --locked --target "${{ matrix.target }}" --package zccache-cli
+
+      - name: Stage zccache binaries
+        shell: bash
+        env:
+          TGT: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          mkdir -p staging
+          if [[ "$TGT" == *-pc-windows-* ]]; then
+            cp "zccache-src/target/${TGT}/release/zccache.exe" staging/
+            cp "zccache-src/target/${TGT}/release/zccache-daemon.exe" staging/
+          else
+            cp "zccache-src/target/${TGT}/release/zccache" staging/
+            cp "zccache-src/target/${TGT}/release/zccache-daemon" staging/
+          fi
+          ls -la staging/
+
+      - name: Upload cross-compiled zccache binary
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: zccache-cross-${{ matrix.target }}
+          path: staging/
+          if-no-files-found: error
+          retention-days: 7
+
+  native-sqlite-test:
     name: Native SQLite (${{ matrix.target }})
+    needs: native-sqlite-build
     runs-on: ${{ matrix.runner }}
     env:
       # Bypass rust-toolchain.toml's `components = ["rustfmt", "clippy"]` so
@@ -156,14 +242,25 @@ jobs:
           done
           dpkg-query -W -f='musl-tools installed version: ${Version}\n' musl-tools
 
-      - name: Prepare zccache tool
-        uses: ./.github/actions/comparison-zccache
+      - name: Download cross-compiled zccache
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          cache-cargo-registry: "false"
-          cache-compilation: "false"
-          cache-target: "false"
-          save-cache: "false"
-          zccache-source-ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.zccache_source_ref || '' }}
+          name: zccache-cross-${{ matrix.target }}
+          path: ${{ runner.temp }}/zccache-bin
+
+      - name: Add cross-compiled zccache to PATH
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_DIR="$RUNNER_TEMP/zccache-bin"
+          if [[ "${{ runner.os }}" != "Windows" ]]; then
+            chmod +x "$BIN_DIR/zccache" "$BIN_DIR/zccache-daemon" 2>/dev/null || true
+          fi
+          echo "$BIN_DIR" >> "$GITHUB_PATH"
+          ls -la "$BIN_DIR"
+          # Sanity check that the cross-built binary runs natively here.
+          # Failure here means the cross-compile target/host mismatch is wrong.
+          (export PATH="$BIN_DIR:$PATH" && zccache --version)
 
       - name: Run native SQLite benchmark
         shell: bash
@@ -436,7 +533,7 @@ jobs:
   benchmark:
     name: Config-driven benchmark
     needs:
-      - native-sqlite
+      - native-sqlite-test
     runs-on: ubuntu-24.04
     permissions:
       contents: write
