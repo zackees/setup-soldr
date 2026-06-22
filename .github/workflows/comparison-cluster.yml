@@ -124,13 +124,18 @@ jobs:
           cross-targets: ${{ matrix.target }}
 
       - name: Provision cross-toolchain via soldr prepare
-        # setup-soldr's `cross-targets` cross-bootstrap covers
-        # linux-musl, apple-darwin, and windows-gnu lanes natively.
-        # For the other lanes (linux-gnu cross to aarch64, windows-msvc),
-        # soldr 0.7.59's `prepare --target` fills in cargo-xwin /
-        # clang-cl / cross-cc. Idempotent on supported lanes.
+        # `--github-env $GITHUB_ENV` is critical: it tells soldr to
+        # persist the env mutations (SDKROOT for darwin lanes, linker
+        # config for aarch64 cross, xwin cache path for msvc, etc.)
+        # into GITHUB_ENV so the subsequent `Cross-build` step inherits
+        # them. Without it, soldr writes the vars only to its own
+        # subprocess env and the next step sees nothing — the symptom
+        # is `ld.lld: incompatible with elf_x86_64` (host linker
+        # invoked) on aarch64 lanes and `dsymutil: No such file or
+        # directory` on darwin lanes. This mirrors soldr's own
+        # `.github/actions/prepare-cross-toolchain/action.yml`.
         shell: bash
-        run: soldr prepare --target "${{ matrix.target }}"
+        run: soldr prepare --target "${{ matrix.target }}" --github-env "$GITHUB_ENV"
 
       - name: Cross-build zccache binaries
         shell: bash
