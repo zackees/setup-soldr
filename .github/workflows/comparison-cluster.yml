@@ -1,31 +1,25 @@
-name: Comparison cluster (DISABLED — pending soldr#674 Phase 2 rewire)
+name: Comparison cluster
 
-# This workflow is a verbatim move of soldr's `cache-benchmark.yml`,
-# `_cache-benchmark-build.yml`, and `_cache-benchmark-scenario.yml` plus the
-# `comparison_report.py` renderer, the `benchmark.toml` config, and the
-# `benchmarks/workspace-scale/` + `benchmarks/sqlite-native/` fixtures.
+# Third-party comparison (soldr vs Swatinem/rust-cache vs ...) benchmark
+# suite. Origin is soldr's `cache-benchmark.yml` family plus the
+# `comparison_report.py` renderer; per soldr#674 Phase 1 the comparison
+# surface moved to setup-soldr because it belongs with the action, not
+# the binary. The output renders at https://zackees.github.io/setup-soldr/.
 #
-# Per soldr#674 Part 1, these files live in setup-soldr now because the
-# third-party comparison (soldr vs Swatinem/rust-cache vs ...) belongs with
-# the action, not with the binary. The page at https://zackees.github.io/soldr/
-# is being repurposed; the replacement comparison page goes live at
-# https://zackees.github.io/setup-soldr/ once this is rewired.
+# Layout post soldr#674 Phase 2 rewire:
+#   - setup-soldr root: config (`comparison.toml`), fixture
+#     (`benchmarks/sqlite-native/`), composite action
+#     (`.github/actions/comparison-zccache/`), renderer
+#     (`.github/scripts/comparison_report.py`)
+#   - `soldr/` subdir: `zackees/soldr` checked out by `actions/checkout`
+#     so the `cargo build --package soldr-cli` step and the
+#     `crates/soldr-cli/*` mutation paths from `comparison.toml`
+#     resolve correctly.
 #
-# Why triggers are workflow_dispatch-only:
-# The original workflow runs inside soldr's repo root and assumes:
-#   - `crates/soldr-cli/...` paths exist (mutation targets)
-#   - `cargo build` runs against the soldr workspace
-#   - the local `./.github/actions/comparison-zccache/` composite
-# Now living in setup-soldr, the workflow needs an `actions/checkout` of
-# `zackees/soldr` at a known directory, mutation paths reinterpreted relative
-# to that checkout, and the composite action paths renamed
-# (`comparison-zccache` → `comparison-zccache`). That rewire is tracked
-# in a follow-up issue (see PR body for link).
-#
-# Until the rewire ships:
-#   - push + schedule triggers are disabled so accidental runs cannot fail
-#   - workflow_dispatch is allowed so a maintainer can manually exercise
-#     a partially-wired run during the rewire PR's development
+# workflow_dispatch-only by design — the matrix is expensive
+# (8-target native-sqlite + cross-PR / restore-phase opt-ins) and
+# results are published to GitHub Pages, so accidental runs are
+# undesirable.
 on:
   workflow_dispatch:
     inputs:
@@ -79,7 +73,7 @@ jobs:
   # sources via cc-rs — the same workload that drives the sqlite-link
   # perf regression in #491. Each cell measures cold vs warm wall-time
   # with the zccache CC/CXX wrapper enabled and a disabled control row.
-  # `mode = "report-only"` in benchmark.toml: no enforced speedup gate;
+  # `mode = "report-only"` in comparison.toml: no enforced speedup gate;
   # the hard gate lives in .github/workflows/perf-matrix.yml's
   # `sqlite-link/cold-tar-untar-warm` cell. See
   # docs/NATIVE_SQLITE_BENCHMARK.md for how to read the results.
@@ -204,7 +198,7 @@ jobs:
           cache_dir = Path(os.environ["ZCCACHE_CACHE_DIR"])
           target_dir = Path(os.environ["RUNNER_TEMP"]) / f"sqlite-native-target-{target}"
 
-          config = tomllib.loads(Path("benchmark.toml").read_text(encoding="utf-8"))
+          config = tomllib.loads(Path("comparison.toml").read_text(encoding="utf-8"))
           native_config = config["native_sqlite"]
           policies = native_config["policies"]
           manifest = Path(native_config["fixture_manifest"])
@@ -452,13 +446,21 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Checkout setup-soldr (config + scripts + composite action)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Checkout zackees/soldr (workspace for cargo build + mutations)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: zackees/soldr
+          path: soldr
+          persist-credentials: false
 
       - name: Resolve benchmark config
         id: config
         shell: bash
         env:
-          BENCHMARK_CONFIG_PATH: benchmark.toml
+          BENCHMARK_CONFIG_PATH: comparison.toml
           INPUT_THRESHOLD_RATIO: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.threshold_ratio || '' }}
         run: |
           set -euo pipefail
@@ -488,14 +490,16 @@ jobs:
         uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           shared-key: cache-benchmark-${{ steps.config.outputs.target }}
+          workspaces: soldr -> target
 
       - name: Build soldr
         shell: bash
+        working-directory: soldr
         run: cargo build --package soldr-cli --release --locked --target "${{ steps.config.outputs.target }}"
 
       - name: Add built soldr to PATH
         shell: bash
-        run: echo "$GITHUB_WORKSPACE/target/${{ steps.config.outputs.target }}/release" >> "$GITHUB_PATH"
+        run: echo "$GITHUB_WORKSPACE/soldr/target/${{ steps.config.outputs.target }}/release" >> "$GITHUB_PATH"
 
       - name: Prepare zccache tool
         uses: ./.github/actions/comparison-zccache
@@ -511,7 +515,7 @@ jobs:
         shell: bash
         env:
           BENCHMARK_COMMAND_TARGET: ${{ steps.config.outputs.target }}
-          BENCHMARK_CONFIG_PATH: benchmark.toml
+          BENCHMARK_CONFIG_PATH: comparison.toml
           BENCHMARK_RESULTS_JSON: benchmark-summary/cache-benchmark-results.json
           SCENARIO: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.scenario || 'all' }}
           THRESHOLD_RATIO: ${{ steps.config.outputs.threshold_ratio }}
@@ -553,7 +557,11 @@ jobs:
                   return "{" + key + "}"
 
 
-          repo_root = Path.cwd()
+          # setup-soldr/ contains config + scripts; soldr/ is the cargo workspace
+          # the benchmark mutates (`crates/soldr-cli/*` paths in comparison.toml
+          # resolve under repo_root). See workflow header for the soldr#674
+          # Phase 2 layout.
+          repo_root = Path.cwd() / "soldr"
           config = tomllib.loads(Path(os.environ["BENCHMARK_CONFIG_PATH"]).read_text(encoding="utf-8"))
           target = os.environ["BENCHMARK_COMMAND_TARGET"]
           threshold = float(os.environ["THRESHOLD_RATIO"])
@@ -980,7 +988,7 @@ jobs:
         shell: bash
         env:
           BENCHMARK_COMMAND_TARGET: ${{ steps.config.outputs.target }}
-          BENCHMARK_CONFIG_PATH: benchmark.toml
+          BENCHMARK_CONFIG_PATH: comparison.toml
           BENCHMARK_INPUT_JSON: benchmark-summary/cache-benchmark-results.json
           BENCHMARK_SUMMARY_JSON: benchmark-summary/cache-benchmark-summary.json
           BENCHMARK_SUMMARY_WWW_DIR: benchmark-summary/site
