@@ -184,20 +184,24 @@ jobs:
         #
         # Subcommand selection per target:
         #   *-pc-windows-msvc -> `cargo xwin build` (clang-cl + xwin's
-        #     MSVC CRT). Plain `cargo build --target` here fails at
-        #     `failed to find tool "lib.exe"`.
-        #   anything else  -> `cargo zigbuild` (zig cc as the C compiler,
-        #     understands -arch / -mmacosx-version-min for darwin and
-        #     produces aarch64-linux objects from x86_64 hosts).
+        #     MSVC CRT).
+        #   anything else     -> `cargo zigbuild` (zig cc as C compiler
+        #     + linker; understands -arch / -mmacosx-version-min for
+        #     darwin, links aarch64 objects from an x86_64 host).
         #
-        # `soldr cargo zigbuild` and `soldr cargo xwin build`
-        # auto-bootstrap zig + cargo-zigbuild and cargo-xwin respectively
-        # on first invocation (soldr#841, soldr#834), so no extra
-        # install step is needed.
+        # Invoked directly (not via `soldr cargo`) because run 27956361315
+        # showed `soldr cargo zigbuild` doesn't reliably propagate
+        # cargo-zigbuild's per-target LINKER override to the inner
+        # cargo/rustc invocation for cross-arch targets — symptom is
+        # `ld.lld: incompatible with elf_x86_64` (host linker invoked
+        # despite cargo-zigbuild being on PATH). Plain `cargo zigbuild`
+        # works because cargo-zigbuild then owns the entire invocation
+        # chain and its env mutations stay intact.
         run: |
           set -euo pipefail
+          which cargo-zigbuild cargo-xwin 2>/dev/null || true
           if [[ "$TGT" == *-pc-windows-msvc ]]; then
-            soldr cargo xwin build \
+            cargo xwin build \
               --release \
               --locked \
               --target "$TGT" \
@@ -205,7 +209,7 @@ jobs:
               --bin zccache \
               --bin zccache-daemon
           else
-            soldr cargo zigbuild \
+            cargo zigbuild \
               --release \
               --locked \
               --target "$TGT" \
