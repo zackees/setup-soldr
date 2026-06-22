@@ -78,10 +78,12 @@ test("planCrossBootstrap: linux -> x86_64-unknown-linux-musl emits the same inst
 // --------------------- linux -> apple-darwin (zackees/soldr#815) ---------------------
 //
 // Same toolset as the windows-gnu and linux-musl lanes: cargo-zigbuild
-// + ziglang + per-triple `rustup target add`. zig handles the apple
-// linker; no Apple SDK shipped. Three target shapes are covered:
-// x86_64, aarch64, and the universal2 synthetic. Crates that link
-// Apple frameworks need SDKROOT and are out of scope.
+// + ziglang + per-triple `rustup target add`. zig handles the macOS
+// linker; no extra per-target toolchain prep shipped here. Three
+// target shapes are covered: x86_64, aarch64, and the universal2
+// synthetic. Crates that link macOS system frameworks need additional
+// per-target toolchain prep (use `soldr prepare --target`) and are
+// out of scope.
 
 test("planCrossBootstrap: linux -> x86_64-apple-darwin emits the same install set as the windows-gnu lane", () => {
   const plan = planCrossBootstrap({

@@ -119,17 +119,19 @@ function isLinuxToLinuxMusl(host: string, target: string): boolean {
  * `x86_64-apple-darwin`, `aarch64-apple-darwin`, and the
  * `universal2-apple-darwin` synthetic target. The toolset is the same
  * cargo-zigbuild + ziglang stack the windows-gnu and linux-musl lanes
- * use — zig handles the apple-flavored linking with no Apple SDK
- * required for trivial / sqlite-native style crates. Driven by
- * zackees/soldr#815; prototype evidence is the `mac-cross.yml`
- * workflow added in #384 (which proves x86_64 + aarch64 + universal2
- * all link on ubuntu-24.04 in ~3 min cold).
+ * use — zig handles the macOS-flavored linking with no extra
+ * per-target toolchain prep required for trivial / sqlite-native
+ * style crates. Driven by zackees/soldr#815; prototype evidence is
+ * the `mac-cross.yml` workflow added in #384 (which proves x86_64 +
+ * aarch64 + universal2 all link on ubuntu-24.04 in ~3 min cold).
  *
- * Crates that link against Apple frameworks (Security, CoreFoundation,
- * AppKit, …) still need SDKROOT + a Mac SDK on the linux host; that
- * helper is deliberately out of scope here.
+ * Crates that link against macOS system frameworks (Security,
+ * CoreFoundation, AppKit, …) still need additional per-target
+ * toolchain prep on the linux host — `soldr prepare --target
+ * <triple>` is the recommended path. That helper is deliberately
+ * out of scope of this planner.
  */
-function isLinuxToAppleDarwin(host: string, target: string): boolean {
+function isLinuxToMacOSTarget(host: string, target: string): boolean {
   return host === "linux" && /-apple-darwin$/.test(target);
 }
 
@@ -157,7 +159,7 @@ export function planCrossBootstrap(input: PlanInput): CrossBootstrapPlan {
     const supported =
       isLinuxToWindowsGnu(host, target) ||
       isLinuxToLinuxMusl(host, target) ||
-      isLinuxToAppleDarwin(host, target);
+      isLinuxToMacOSTarget(host, target);
     if (!supported) {
       out.warnings.push(
         `setup-soldr cross-bootstrap: host=${host} target=${target} is not implemented yet ` +
@@ -239,7 +241,7 @@ export function toolsetFor(opts: { host: string; target: string }): ToolsetSpec 
   if (
     isLinuxToWindowsGnu(host, target) ||
     isLinuxToLinuxMusl(host, target) ||
-    isLinuxToAppleDarwin(host, target)
+    isLinuxToMacOSTarget(host, target)
   ) {
     return { tools: ["cargo-zigbuild", "ziglang"] };
   }
