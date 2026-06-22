@@ -1,38 +1,43 @@
 name: Cache Benchmark Child Branch
 
-# Parent-to-child cache probe for issue #168.
+# Parent-to-child cache probe for soldr#168.
 #
-# Runs the minimal consumer workflow (see examples/ci-minimal.yml) against a
-# selected branch, captures the setup-soldr action outputs and build timings,
-# and emits a markdown report matching the suggested shape in issue #168.
+# Captures setup-soldr's action outputs and build timings against a selected
+# soldr branch, then emits a markdown report matching the shape in soldr#168.
 #
-# This is a workflow-dispatch probe. Re-run it against the same child branch
-# twice back-to-back to distinguish:
+# Layout post soldr#674 Phase 2: this workflow lives in setup-soldr but
+# probes a `zackees/soldr` branch. setup-soldr is checked out at the
+# repo root (so the local `./` composite action is the one under test);
+# `zackees/soldr` is checked out into `./soldr/` at the requested child
+# branch, and cargo invocations run against that workspace.
+#
+# This is a workflow-dispatch probe. Re-run it against the same child
+# branch twice back-to-back to distinguish:
 #   - run 1: parent (main) restore-key fallback
 #   - run 2: same-branch warm restore
 #
-# Acceptance criteria checks this probe supports (issue #168):
+# Acceptance criteria checks this probe supports (soldr#168):
 #   - demonstrates parent-seeded restore of the zccache build cache
 #   - demonstrates same-branch warm restore
 #   - reports cold vs warm wall-clock, speedup ratio, and seconds saved
 #   - reports whether the stretch "sub-second no-op build" target is met
-#   - posts an issue comment with the merged findings and run URLs
+#   - posts an issue comment on `zackees/soldr` with the merged findings
 
 on:
   workflow_dispatch:
     inputs:
       child_branch:
-        description: Child branch to probe. Defaults to the ref this workflow was dispatched on.
+        description: zackees/soldr branch to probe. Defaults to soldr's `main`.
         required: false
         default: ""
         type: string
       post_comment:
-        description: Post the generated report as a comment on the tracking issue.
+        description: Post the generated report as a comment on the tracking issue in zackees/soldr.
         required: false
         default: "true"
         type: string
       issue_number:
-        description: Tracking issue to comment on.
+        description: Tracking issue number in zackees/soldr to comment on.
         required: false
         default: "168"
         type: string
@@ -49,9 +54,12 @@ jobs:
       seconds: ${{ steps.measure.outputs.seconds }}
       result: ${{ steps.measure.outputs.result }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Checkout zackees/soldr at child branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          ref: ${{ inputs.child_branch != '' && inputs.child_branch || github.ref }}
+          repository: zackees/soldr
+          ref: ${{ inputs.child_branch != '' && inputs.child_branch || 'main' }}
+          persist-credentials: false
 
       - uses: dtolnay/rust-toolchain@aad518f59d88bae90133242f9ddac7f8bbc5dddf # 1.94.1
 
@@ -123,9 +131,16 @@ jobs:
       soldr_version: ${{ steps.setup.outputs.soldr-version }}
       toolchain: ${{ steps.setup.outputs.toolchain }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Checkout setup-soldr (composite action under test)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Checkout zackees/soldr at child branch (workspace to build)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          ref: ${{ inputs.child_branch != '' && inputs.child_branch || github.ref }}
+          repository: zackees/soldr
+          ref: ${{ inputs.child_branch != '' && inputs.child_branch || 'main' }}
+          path: soldr
+          persist-credentials: false
 
       # Use the repo-local composite action so the probe validates the
       # action.yml under test, not a pinned release. External consumers would
@@ -172,8 +187,13 @@ jobs:
               "--timings",
           ]
           start = time.perf_counter()
+          # cwd=soldr because zackees/soldr is checked out into ./soldr/ —
+          # cargo needs to find its Cargo.toml there. Probe output (the
+          # `probe-results/` dir we write below) stays at the runner root
+          # because pathlib.Path uses Python's own cwd.
           proc = subprocess.run(
               command,
+              cwd="soldr",
               stdout=subprocess.PIPE,
               stderr=subprocess.STDOUT,
               text=True,
@@ -210,7 +230,7 @@ jobs:
         with:
           name: child-branch-probe-warm
           path: |
-            target/cargo-timings
+            soldr/target/cargo-timings
             probe-results
             probe-setup-outputs.txt
           if-no-files-found: warn
@@ -252,11 +272,21 @@ jobs:
           if-no-files-found: error
 
       - name: Comment on tracking issue
-        if: ${{ inputs.post_comment == 'true' && github.repository == 'zackees/soldr' }}
+        # Only fire from canonical setup-soldr (avoid spamming from forks).
+        # Comment posts cross-repo into zackees/soldr; that requires a PAT
+        # with `repo:public_repo` (or `issues: write`) on zackees/soldr,
+        # stored as the SOLDR_CROSS_REPO_TOKEN secret. If the secret is
+        # missing or the post fails, the step warns and uploads the report
+        # as an artifact instead.
+        if: ${{ inputs.post_comment == 'true' && github.repository == 'zackees/setup-soldr' }}
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.SOLDR_CROSS_REPO_TOKEN || github.token }}
           ISSUE_NUMBER: ${{ inputs.issue_number }}
         run: |
           set -euo pipefail
-          gh issue comment "$ISSUE_NUMBER" --body-file parent-child-zccache-report.md
+          if gh -R zackees/soldr issue comment "$ISSUE_NUMBER" --body-file parent-child-zccache-report.md; then
+            echo "Posted report to zackees/soldr#$ISSUE_NUMBER"
+          else
+            echo "::warning::Could not post comment to zackees/soldr#$ISSUE_NUMBER — cross-repo write requires SOLDR_CROSS_REPO_TOKEN secret with issues:write on zackees/soldr. Report is uploaded as the child-branch-probe-report artifact."
+          fi
