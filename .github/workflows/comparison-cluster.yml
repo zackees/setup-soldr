@@ -182,26 +182,27 @@ jobs:
         # `zccache` package (crates/zccache/Cargo.toml). The `zccache-cli`
         # package is a PyO3 cdylib that doesn't ship binaries.
         #
-        # Subcommand selection per target:
-        #   *-pc-windows-msvc -> `cargo xwin build` (clang-cl + xwin's
-        #     MSVC CRT).
-        #   anything else     -> `cargo zigbuild` (zig cc as C compiler
-        #     + linker; understands -arch / -mmacosx-version-min for
-        #     darwin, links aarch64 objects from an x86_64 host).
-        #
-        # Invoked directly (not via `soldr cargo`) because run 27956361315
-        # showed `soldr cargo zigbuild` doesn't reliably propagate
-        # cargo-zigbuild's per-target LINKER override to the inner
-        # cargo/rustc invocation for cross-arch targets — symptom is
-        # `ld.lld: incompatible with elf_x86_64` (host linker invoked
-        # despite cargo-zigbuild being on PATH). Plain `cargo zigbuild`
-        # works because cargo-zigbuild then owns the entire invocation
-        # chain and its env mutations stay intact.
+        # Subcommand selection per target (filed as soldr#928):
+        #   *-pc-windows-msvc -> `soldr cargo xwin build` (soldr's
+        #     wrapper injects LLVM toolchain + xwin env via
+        #     prepare_xwin_env / compute_subcommand_env_overrides;
+        #     dropping to plain `cargo xwin build` loses the LLVM
+        #     bootstrap → `failed to find tool llvm-lib`).
+        #   *-apple-darwin -> `cargo zigbuild` direct, with
+        #     CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO=off so rustc
+        #     doesn't invoke dsymutil (a darwin-only tool absent on
+        #     linux hosts; cross-compiling debug split is brittle
+        #     either way).
+        #   other (linux-gnu / linux-musl) -> `cargo zigbuild` direct.
+        #     Going through `soldr cargo zigbuild` drops
+        #     cargo-zigbuild's per-target LINKER override for
+        #     cross-arch targets (host clang ends up as linker —
+        #     soldr#928).
         run: |
           set -euo pipefail
           which cargo-zigbuild cargo-xwin 2>/dev/null || true
           if [[ "$TGT" == *-pc-windows-msvc ]]; then
-            cargo xwin build \
+            soldr cargo xwin build \
               --release \
               --locked \
               --target "$TGT" \
@@ -209,6 +210,9 @@ jobs:
               --bin zccache \
               --bin zccache-daemon
           else
+            if [[ "$TGT" == *-apple-darwin ]]; then
+              export CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO=off
+            fi
             cargo zigbuild \
               --release \
               --locked \
