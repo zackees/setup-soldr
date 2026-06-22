@@ -1,0 +1,25 @@
+name: Vendor-prose lint
+
+# Fails any PR whose markdown pairs a vendor word (apple/mac,
+# case-insensitive) with "sdk" on the same line. Vendor-toolchain
+# prose like "Apple SDK" / "macOS SDK" / "SDKROOT" must be reframed
+# as per-target toolchain prep or `soldr prepare --target <triple>`.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "**/*.md"
+      - scripts/lint-vendor-prose.mjs
+      - .github/workflows/lint-vendor-prose.yml
+
+permissions:
+  contents: read
+
+jobs:
+  vendor-prose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - run: node scripts/lint-vendor-prose.mjs
