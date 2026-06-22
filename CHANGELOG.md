@@ -7,10 +7,11 @@
   - `soldr prepare --target <triple>` composite-action surface that
     collapses cross-toolchain setup into one command (soldr#893,
     fixed by #905 / #907).
-  - Auto-bootstrap of zig, Apple SDK, and LLVM/clang for cross-compile
-    lanes — `soldr cargo zigbuild` and `soldr cargo xwin` now Just
-    Work without external prefetch (soldr#841, #862, #864). MSVC CRT
-    cache pre-fetched from manifest (soldr#891).
+  - Auto-bootstrap of zig, LLVM/clang, and per-target toolchain prep
+    for cross-compile lanes — `soldr cargo zigbuild` (linux → macOS)
+    and `soldr cargo xwin` (linux → windows) now Just Work without
+    external prefetch (soldr#841, #862, #864). MSVC CRT cache
+    pre-fetched from manifest (soldr#891).
   - Manifest-first asset resolver with sha256 pinning (soldr#866,
     #871, #877, #878) plus `soldr archive --target` and
     `soldr build-from-source` CLI surfaces (soldr#865, #869).

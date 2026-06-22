@@ -230,7 +230,7 @@ export interface CargoRegistryCachePlan {
  *
  * One slot per declared `cross-targets` entry. The slot caches the
  * lane-specific tool binaries (cargo-zigbuild + ziglang for the MVP
- * lanes; cargo-xwin / MSVC SDK in follow-ups). Existing layers are
+ * lanes; cargo-xwin / windows toolchain prep in follow-ups). Existing layers are
  * unchanged; this is additive and only fires when `cross-targets` is
  * non-empty.
  *
