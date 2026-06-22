@@ -132,11 +132,24 @@ jobs:
         shell: bash
         run: soldr prepare --target "${{ matrix.target }}"
 
-      - name: Cross-build zccache-cli
+      - name: Cross-build zccache binaries
         shell: bash
         working-directory: zccache-src
+        # zccache and zccache-daemon are [[bin]] entries inside the
+        # `zccache` package (crates/zccache/Cargo.toml). The `zccache-cli`
+        # package is a PyO3 cdylib that doesn't ship binaries — building
+        # just `zccache` and `zccache-daemon` from the `zccache` package
+        # avoids the wasted compile time on the cdylib + the dozen other
+        # workspace bins (echo_shim, exec_test_tool, crash-trigger, …)
+        # the benchmark doesn't need.
         run: |
-          soldr cargo build --release --locked --target "${{ matrix.target }}" --package zccache-cli
+          soldr cargo build \
+            --release \
+            --locked \
+            --target "${{ matrix.target }}" \
+            --package zccache \
+            --bin zccache \
+            --bin zccache-daemon
 
       - name: Stage zccache binaries
         shell: bash
@@ -145,12 +158,21 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p staging
+          REL_DIR="zccache-src/target/${TGT}/release"
+          if [ ! -d "$REL_DIR" ]; then
+            echo "::error::Expected release dir not found: $REL_DIR" >&2
+            echo "Showing zccache-src/target/ contents for diagnosis:" >&2
+            ls -la zccache-src/target/ 2>&1 | head -20 >&2 || true
+            exit 1
+          fi
+          echo "Contents of $REL_DIR (top of listing):"
+          ls -la "$REL_DIR" | head -30
           if [[ "$TGT" == *-pc-windows-* ]]; then
-            cp "zccache-src/target/${TGT}/release/zccache.exe" staging/
-            cp "zccache-src/target/${TGT}/release/zccache-daemon.exe" staging/
+            cp "$REL_DIR/zccache.exe" staging/
+            cp "$REL_DIR/zccache-daemon.exe" staging/
           else
-            cp "zccache-src/target/${TGT}/release/zccache" staging/
-            cp "zccache-src/target/${TGT}/release/zccache-daemon" staging/
+            cp "$REL_DIR/zccache" staging/
+            cp "$REL_DIR/zccache-daemon" staging/
           fi
           ls -la staging/
 
