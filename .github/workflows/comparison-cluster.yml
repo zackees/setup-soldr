@@ -123,17 +123,48 @@ jobs:
         with:
           cross-targets: ${{ matrix.target }}
 
+      - name: Pre-install cargo-zigbuild or cargo-xwin onto PATH
+        # Matches soldr's own cross-compile-all-targets.yml pattern:
+        # cargo-zigbuild / cargo-xwin must be on PATH **before** the
+        # `cargo … --target X` invocation so they can set per-target
+        # CC / CXX / LINKER env vars. Run 27955618767 proved that
+        # `soldr cargo zigbuild`'s auto-bootstrap downloads the binary
+        # into an internal soldr cache dir that doesn't get exported
+        # to PATH — symptom: the build "succeeds" partially but the
+        # final link uses host clang (`ld.lld: incompatible with
+        # elf_x86_64` for aarch64, `dsymutil: No such file` for
+        # darwin). Pre-installing via `cargo install --locked` is the
+        # simplest portable shape; soldr's own CI uses a manifest
+        # pre-fetch but that needs soldr-internal tool_query.py.
+        shell: bash
+        env:
+          TGT: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          if [[ "$TGT" == *-pc-windows-msvc ]]; then
+            cargo install --locked cargo-xwin
+          else
+            cargo install --locked cargo-zigbuild
+            python3 -m pip install --user ziglang
+            # ziglang ships zig as `python -m ziglang`; expose it as a
+            # `zig` command on PATH so cargo-zigbuild's binary lookup
+            # finds it.
+            mkdir -p "$HOME/.zig-bin"
+            cat > "$HOME/.zig-bin/zig" <<'SHIM'
+          #!/bin/bash
+          exec python3 -m ziglang "$@"
+          SHIM
+            chmod +x "$HOME/.zig-bin/zig"
+            echo "$HOME/.zig-bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.zig-bin:$PATH"
+            zig version
+          fi
+
       - name: Provision cross-toolchain via soldr prepare
-        # `--github-env $GITHUB_ENV` is critical: it tells soldr to
-        # persist the env mutations (SDKROOT for darwin lanes, linker
-        # config for aarch64 cross, xwin cache path for msvc, etc.)
-        # into GITHUB_ENV so the subsequent `Cross-build` step inherits
-        # them. Without it, soldr writes the vars only to its own
-        # subprocess env and the next step sees nothing — the symptom
-        # is `ld.lld: incompatible with elf_x86_64` (host linker
-        # invoked) on aarch64 lanes and `dsymutil: No such file or
-        # directory` on darwin lanes. This mirrors soldr's own
-        # `.github/actions/prepare-cross-toolchain/action.yml`.
+        # `--github-env $GITHUB_ENV` persists soldr's env mutations
+        # (SDKROOT for darwin, xwin cache path for msvc, etc.) into
+        # GITHUB_ENV so subsequent steps inherit them. Mirrors
+        # soldr's own prepare-cross-toolchain composite.
         shell: bash
         run: soldr prepare --target "${{ matrix.target }}" --github-env "$GITHUB_ENV"
 
@@ -142,6 +173,11 @@ jobs:
         working-directory: zccache-src
         env:
           TGT: ${{ matrix.target }}
+          # Override soldr's SOLDR_TARGET_CACHE_DIR redirection so the
+          # build product lands at the documented path
+          # zccache-src/target/<triple>/release/. Without this, soldr's
+          # target-cache integration writes to its own managed dir.
+          CARGO_TARGET_DIR: target
         # zccache and zccache-daemon are [[bin]] entries inside the
         # `zccache` package (crates/zccache/Cargo.toml). The `zccache-cli`
         # package is a PyO3 cdylib that doesn't ship binaries.
