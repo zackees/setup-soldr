@@ -2,6 +2,47 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.87` (was `0.7.59`). Headline upstream changes
+  carried by this bump span the 0.7.60 → 0.7.87 series and are
+  dominated by the darwin cross-compile lane landing end-to-end:
+  - Darwin cross-build overhaul: migrate `*-apple-darwin` release
+    builds from native runners to `ubuntu-24.04` + `cargo zigbuild`
+    (soldr#917 / #1054), then swap to a blessed-env darwin path
+    that no longer routes through `cargo zigbuild` (soldr#1085),
+    add `-fuse-ld=lld` to the darwin CFLAGS wire (soldr#1098),
+    and inline the per-target toolchain-prep fetch with a fixed
+    upstream URL (soldr#1096 / #1097). `aarch64-apple-darwin`
+    release rows moved to a native `macos-15` runner (soldr#1076
+    / #1077).
+  - `soldr build --target <triple>` auto-dispatch to
+    `zigbuild` / `xwin` (soldr#882 / #1056), plus a
+    `zccache-soldr` `RUSTC_WRAPPER` shim binary with a shared
+    compile-dispatch path (soldr#1082, refs #1081).
+  - Native MSVC cflags + link-args injection into the blessed
+    build (soldr#1036 / #1037), pre-staged xwin SDK splat in the
+    docker-msvc harness (soldr#1055), and `*-sys` catalogue
+    overrides scaffold (soldr#1064 phase B / #1065).
+  - Cook hydration wired into cross-build lanes and the
+    release-auto build job (soldr#1061 phase A: #1062 / #1063).
+  - Daemon UX: cancel inflight compiles instantly when the
+    wrapper disconnects (soldr#1078), and auto-discover the
+    Windows Visual Studio install so MSVC hosts don't need
+    explicit config (soldr#1080, closes soldr#1079).
+  - Fetch smoke-tests: extracted binaries are exercised with
+    `--version` before install (soldr#936 / #1058), plus a
+    manifest-first fetch path with sha256 pinning (already
+    threaded through in 0.7.59, extended here).
+  - Test infra: `tests/common::soldr_bin()` helper for
+    `SOLDR_BIN` override (soldr#1039 / #1045) and
+    `SOLDR_TEST_SKIP_SOURCE_TREE` marker + `fixtures_dir`
+    helper (soldr#1040 / #1046).
+  - CI plumbing: consolidated `_ci-cross-build-linux.yml`
+    (soldr#1041 / #1047) and `_ci-target-run.yml` (soldr#1042 /
+    #1048), wired into `ci.yml` (soldr#1051 / #1052), with the
+    superseded per-platform build workflows deleted
+    (soldr#1044 / #1050). Darwin nextest archive blocker
+    resolved (soldr#1043 / #1049). `soldr-clang-shim`
+    documentation for ring + aarch64-msvc (soldr#886 / #1057).
 - Default to soldr `0.7.59` (was `0.7.56`). Headline upstream changes
   carried by this bump:
   - `soldr prepare --target <triple>` composite-action surface that
