@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { versionTuple } from "../src/lib/verify-soldr.js";
+import { parseVersionJsonOutput, versionTuple } from "../src/lib/verify-soldr.js";
 
 test("versionTuple parses canonical semver", () => {
   assert.deepEqual(versionTuple("0.7.10"), { major: 0, minor: 7, patch: 10 });
@@ -23,4 +23,61 @@ test("versionTuple returns null for malformed", () => {
 test("versionTuple ignores extra version parts beyond major/minor/patch", () => {
   // "0.7.10.4" is still valid; we only look at the first three.
   assert.deepEqual(versionTuple("0.7.10.4"), { major: 0, minor: 7, patch: 10 });
+});
+
+// --- parseVersionJsonOutput ---
+
+test("parseVersionJsonOutput parses the pre-0.7.60 and current shapes", () => {
+  // Byte-shape emitted by every release from at least v0.7.59 through
+  // v0.7.96 (verified against the published release binaries).
+  const current = `{
+  "schema_version": 1,
+  "command": "version",
+  "soldr_version": "0.7.96"
+}`;
+  assert.equal(parseVersionJsonOutput(current)["soldr_version"], "0.7.96");
+});
+
+test("parseVersionJsonOutput tolerates extra and missing fields", () => {
+  // Extra fields a future soldr may add must not break parsing...
+  const extra = '{"schema_version": 2, "soldr_version": "0.8.0", "managed_zccache_version": "1.13.0", "new_field": [1, 2]}';
+  assert.equal(parseVersionJsonOutput(extra)["soldr_version"], "0.8.0");
+  // ...and missing fields are the caller's concern, not a parse error.
+  const minimal = '{"soldr_version": "0.7.59"}';
+  assert.equal(parseVersionJsonOutput(minimal)["soldr_version"], "0.7.59");
+  assert.deepEqual(parseVersionJsonOutput("{}"), {});
+});
+
+test("parseVersionJsonOutput tolerates non-JSON noise around the payload", () => {
+  const noisy =
+    "soldr: note: a newer release is available\n" +
+    '{"schema_version": 1, "command": "version", "soldr_version": "0.7.96"}\n' +
+    "trust: verified\n";
+  assert.equal(parseVersionJsonOutput(noisy)["soldr_version"], "0.7.96");
+});
+
+test("parseVersionJsonOutput reports the silent-binary regression actionably", () => {
+  // soldr v0.7.85 / v0.7.87 release binaries exit 0 printing nothing at all
+  // (fbuild misread the resulting "Unexpected end of JSON input" as a
+  // version-JSON schema incompatibility). The error must name the broken
+  // releases and the fixed floor.
+  for (const stdout of ["", "   \n"]) {
+    assert.throws(() => parseVersionJsonOutput(stdout), (err: Error) => {
+      assert.match(err.message, /produced no output/);
+      assert.match(err.message, /0\.7\.85/);
+      assert.match(err.message, /0\.7\.87/);
+      assert.match(err.message, /0\.7\.89/);
+      return true;
+    });
+  }
+});
+
+test("parseVersionJsonOutput rejects garbage with a raw-output snippet", () => {
+  assert.throws(() => parseVersionJsonOutput("not json at all"), (err: Error) => {
+    assert.match(err.message, /non-JSON output/);
+    assert.match(err.message, /raw output: not json at all/);
+    return true;
+  });
+  // A JSON scalar is not an acceptable payload either.
+  assert.throws(() => parseVersionJsonOutput('"0.7.96"'), /non-JSON output/);
 });
