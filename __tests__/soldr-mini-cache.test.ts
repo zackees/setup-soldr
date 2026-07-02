@@ -14,7 +14,7 @@ test("buildMiniCacheKey shape includes only the coarse dimensions", () => {
     libc: "glibc",
     soldrVersion: "0.7.28",
   });
-  assert.equal(key, "soldr-mini-linux-x64-glibc-v0.7.28");
+  assert.equal(key, "soldr-mini-v2-linux-x64-glibc-v0.7.28");
 });
 
 test("buildMiniCacheKey strips a leading v from the version", () => {
@@ -33,7 +33,7 @@ test("buildMiniCacheKey strips a leading v from the version", () => {
     soldrVersion: "0.7.28",
   });
   assert.equal(withV, withoutV);
-  assert.equal(withV, "soldr-mini-linux-x64-glibc-v0.7.28");
+  assert.equal(withV, "soldr-mini-v2-linux-x64-glibc-v0.7.28");
 });
 
 test("buildMiniCacheKey is content-addressable — same inputs always produce same key", () => {

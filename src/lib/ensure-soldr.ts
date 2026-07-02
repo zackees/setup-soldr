@@ -266,6 +266,7 @@ function bundledReleasePayloadNames(binaryName: string): string[] {
     `zccache-fp${suffix}`,
     `crgx${suffix}`,
     `cargo-chef${suffix}`,
+    `soldr-clang-shim${suffix}`,
     "manifest.json",
   ];
 }
@@ -284,6 +285,16 @@ function hasBundledZccachePayload(installDir: string, binaryName: string): boole
 function hasBundledCargoChefPayload(installDir: string, binaryName: string): boolean {
   const suffix = platformBinarySuffix(binaryName);
   return fs.existsSync(path.join(installDir, `cargo-chef${suffix}`));
+}
+
+// soldr >= 0.7.66 ships `soldr-clang-shim` in its release archive and the
+// blessed `soldr build` surface hard-requires it next to the running soldr
+// exe ("soldr-clang-shim binary not found ..." otherwise). Treat a cached
+// install that is missing the shim as an incomplete payload so it gets
+// refreshed from the release archive.
+function hasBundledClangShimPayload(installDir: string, binaryName: string): boolean {
+  const suffix = platformBinarySuffix(binaryName);
+  return fs.existsSync(path.join(installDir, `soldr-clang-shim${suffix}`));
 }
 
 function clearBundledReleasePayload(installDir: string, binaryName: string): void {
@@ -447,9 +458,11 @@ export async function ensureSoldr(opts: {
   if (current !== null && resolvedVersion) {
     if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
       const needsCargoChef = versionAtLeast(resolvedVersion, "0.7.43");
+      const needsClangShim = versionAtLeast(resolvedVersion, "0.7.66");
       const hasRequiredPayload =
         hasBundledZccachePayload(installDir, binaryName) &&
-        (!needsCargoChef || hasBundledCargoChefPayload(installDir, binaryName));
+        (!needsCargoChef || hasBundledCargoChefPayload(installDir, binaryName)) &&
+        (!needsClangShim || hasBundledClangShimPayload(installDir, binaryName));
       if (hasRequiredPayload) {
         log(`Using cached soldr ${current} at ${binaryPath}`);
         core.setOutput("installed_version", current);
@@ -502,6 +515,7 @@ export const _internal = {
   clearBundledReleasePayload,
   copyBundledReleasePayload,
   hasBundledCargoChefPayload,
+  hasBundledClangShimPayload,
   hasBundledZccachePayload,
   versionAtLeast,
 };
