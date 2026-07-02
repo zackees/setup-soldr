@@ -13,7 +13,6 @@ def test_rollout_contract_workflow_covers_main_pr_and_manual_runs() -> None:
     assert "workflow_dispatch:" in workflow
     assert "push:" in workflow
     assert "pull_request:" in workflow
-    assert "- .github/workflows/zccache-build-demo.yml" in workflow
     assert "- .github/workflows/setup-soldr-action.yml" in workflow
     assert "- .github/workflows/setup-soldr-contract.yml" in workflow
 
@@ -48,4 +47,3 @@ def test_rollout_contract_workflow_runs_remaining_python_contract_tests() -> Non
     assert "python -m pytest" in workflow
     assert "tests/test_action_target_cache_wiring.py" in workflow
     assert "tests/test_release_rollout_contract.py" in workflow
-    assert "tests/test_zccache_build_demo_workflow.py" in workflow

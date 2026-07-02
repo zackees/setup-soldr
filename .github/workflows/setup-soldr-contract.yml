@@ -129,5 +129,4 @@ jobs:
           python -m pytest \
             tests/test_action_target_cache_wiring.py \
             tests/test_bench_cache_modes_workflow.py \
-            tests/test_release_rollout_contract.py \
-            tests/test_zccache_build_demo_workflow.py
+            tests/test_release_rollout_contract.py
