@@ -14,6 +14,7 @@
 // still work when pinned to a soldr release older than 0.7.35).
 
 import * as exec from "@actions/exec";
+import { parseVersionJsonOutput } from "./verify-soldr.js";
 
 /**
  * Minimum soldr version that exposes the `toolchain ensure/link/doctor`
@@ -131,7 +132,10 @@ export async function detectSoldrSupportsToolchainSubcommands(
   }
   let payload: Record<string, unknown>;
   try {
-    payload = JSON.parse(res.stdout) as Record<string, unknown>;
+    // Tolerant parse (extra fields, surrounding noise); silent-binary
+    // regressions (empty stdout, soldr v0.7.85/v0.7.87) land in the catch
+    // and degrade to the legacy in-TS toolchain implementation.
+    payload = parseVersionJsonOutput(res.stdout);
   } catch {
     return { supported: false, soldrVersion: "", passthrough: false };
   }

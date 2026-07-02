@@ -42,6 +42,63 @@ function isTransientZccacheStatusFailure(combined: string): boolean {
   return lower.includes("zccache status failed") && lower.includes("daemon not running");
 }
 
+/**
+ * Parse the stdout of `soldr version --json` into a JSON object,
+ * defensively against both failure shapes seen in the wild:
+ *
+ * - soldr v0.7.85 and v0.7.87 shipped release binaries that exit 0 while
+ *   printing nothing at all, for every subcommand (upstream silent-binary
+ *   regression; fixed in v0.7.89). Bare `JSON.parse("")` surfaced that as
+ *   the cryptic "Unexpected end of JSON input", which downstream consumers
+ *   (e.g. FastLED/fbuild) misread as a version-JSON schema incompatibility.
+ *   Empty output now gets a targeted, actionable error instead.
+ * - Extra human-readable lines before/after the JSON body (progress notes,
+ *   update hints a future soldr may print) are tolerated by falling back to
+ *   the outermost `{...}` span when the raw output does not parse directly.
+ *
+ * Extra or missing fields inside the object remain the caller's concern —
+ * only JSON syntax is enforced here.
+ */
+export function parseVersionJsonOutput(stdout: string): Record<string, unknown> {
+  const trimmed = stdout.trim();
+  if (!trimmed) {
+    throw new Error(
+      "soldr version --json produced no output (binary exited 0 silently). " +
+        "soldr v0.7.85 and v0.7.87 shipped broken release binaries that print " +
+        "nothing for every command — pin soldr 0.7.89 or newer " +
+        "(the version --json shape itself is unchanged since 0.7.35).",
+    );
+  }
+  let firstError: Error;
+  try {
+    return asJsonObject(JSON.parse(trimmed));
+  } catch (err) {
+    firstError = err as Error;
+  }
+  // Tolerate surrounding non-JSON noise: retry on the outermost {...} span.
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    try {
+      return asJsonObject(JSON.parse(trimmed.slice(start, end + 1)));
+    } catch {
+      // fall through to the descriptive error below
+    }
+  }
+  const snippet = trimmed.length > 300 ? `${trimmed.slice(0, 300)}...` : trimmed;
+  throw new Error(
+    `soldr version --json returned non-JSON output: ${firstError.message}\n` +
+      `raw output: ${snippet}`,
+  );
+}
+
+function asJsonObject(value: unknown): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("payload is not a JSON object");
+  }
+  return value as Record<string, unknown>;
+}
+
 async function captureAll(
   command: string,
   args: string[],
@@ -79,12 +136,7 @@ export async function verifySoldr(opts: {
   if (code !== 0) {
     throw new Error(`soldr version --json failed (exit ${code}):\n${combined}`);
   }
-  let payload: Record<string, unknown>;
-  try {
-    payload = JSON.parse(stdout) as Record<string, unknown>;
-  } catch (err) {
-    throw new Error(`soldr version --json returned non-JSON output: ${(err as Error).message}`);
-  }
+  const payload = parseVersionJsonOutput(stdout);
   const soldrVersion = String(payload["soldr_version"] ?? "");
   if (!soldrVersion) {
     throw new Error("soldr version --json missing soldr_version field");

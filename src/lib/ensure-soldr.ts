@@ -12,6 +12,7 @@ import * as exec from "@actions/exec";
 import * as tc from "@actions/tool-cache";
 import { createLogger, streamExec } from "./log-utils.js";
 import type { ResolveResult } from "./types.js";
+import { parseVersionJsonOutput } from "./verify-soldr.js";
 
 type ArchiveExt = "tar.zst" | "tar.gz" | "zip";
 
@@ -119,7 +120,10 @@ async function installedVersion(binaryPath: string): Promise<string | null> {
   });
   if (code !== 0) return null;
   try {
-    const payload = JSON.parse(stdout) as Record<string, unknown>;
+    // Tolerant parse: extra fields, surrounding noise, and the silent-binary
+    // regression (empty stdout, e.g. soldr v0.7.85/v0.7.87) all resolve to
+    // null here, which makes the caller refresh the cached install.
+    const payload = parseVersionJsonOutput(stdout);
     const v = payload["soldr_version"];
     return typeof v === "string" ? v : null;
   } catch {
