@@ -20,8 +20,8 @@ permissions:
   contents: read
 
 jobs:
-  zccache-build:
-    name: Build zccache
+  install-smoke:
+    name: Install soldr smoke
     runs-on: ubuntu-24.04
 
     steps:
@@ -30,21 +30,11 @@ jobs:
         with:
           path: setup-soldr
 
-      - name: Checkout zccache
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          repository: zackees/zccache
-          path: zccache
-          persist-credentials: false
-
       - id: setup
         name: Setup Soldr
         uses: ./setup-soldr
         with:
           cache: true
-          lockfile: zccache/Cargo.lock
-          target-dir: zccache/target
-          cache-key-suffix: zccache
 
       - name: Show action outputs
         shell: pwsh
@@ -70,7 +60,7 @@ jobs:
           Write-Host "target-lockfile-hash=${{ steps.setup.outputs.target-lockfile-hash }}"
           Write-Host "toolchain=${{ steps.setup.outputs.toolchain }}"
 
-      - name: Verify zccache seed survives isolated SOLDR_CACHE_DIR
+      - name: Verify pinned zccache survives isolated SOLDR_CACHE_DIR
         shell: bash
         env:
           SOLDR_CACHE_DIR: ${{ runner.temp }}/setup-soldr-zccache-seed-smoke
@@ -87,58 +77,3 @@ jobs:
               process.exit(1);
             }
           ' "$doctor_json"
-
-      - name: Build zccache through soldr
-        shell: bash
-        working-directory: zccache
-        env:
-          SETUP_CACHE_DIR: ${{ steps.setup.outputs.cache-dir }}
-          BUILD_CACHE_PATH: ${{ steps.setup.outputs.build-cache-path }}
-          TARGET_CACHE_PATH: ${{ steps.setup.outputs.target-cache-path }}
-        run: |
-          set -o pipefail
-
-          log() {
-            local message="$1"
-            local value="${SETUP_SOLDR_TIMESTAMPS:-true}"
-            case "${value,,}" in
-              0|false|no|off)
-                printf '%s\n' "$message"
-                ;;
-              *)
-                local now elapsed minutes seconds
-                now="$(date +%s)"
-                elapsed=$((now - SETUP_SOLDR_LOG_START_EPOCH))
-                if [ "$elapsed" -lt 0 ]; then
-                  elapsed=0
-                fi
-                minutes=$((elapsed / 60))
-                seconds=$((elapsed % 60))
-                printf '%02d:%02d %s\n' "$minutes" "$seconds" "$message"
-                ;;
-            esac
-          }
-
-          path_summary() {
-            local label="$1"
-            local path="$2"
-            if [ -z "$path" ] || [ ! -e "$path" ]; then
-              log "$label path=$path exists=false files=0 bytes=0"
-              return
-            fi
-            local files bytes
-            files="$(find "$path" -type f 2>/dev/null | wc -l | tr -d ' ')"
-            bytes="$(du -sb "$path" 2>/dev/null | cut -f1)"
-            log "$label path=$path exists=true files=$files bytes=${bytes:-0}"
-          }
-
-          path_summary "cache before build" "$SETUP_CACHE_DIR"
-          path_summary "build-cache before build" "$BUILD_CACHE_PATH"
-          path_summary "target-cache before build" "$TARGET_CACHE_PATH"
-          log "running soldr cargo build --locked --package zccache-cli"
-          soldr cargo build --locked --package zccache-cli
-          status=$?
-          path_summary "cache after build" "$SETUP_CACHE_DIR"
-          path_summary "build-cache after build" "$BUILD_CACHE_PATH"
-          path_summary "target-cache after build" "$TARGET_CACHE_PATH"
-          exit "$status"

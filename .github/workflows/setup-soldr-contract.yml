@@ -19,7 +19,6 @@ on:
       - .github/workflows/setup-soldr-action.yml
       - .github/workflows/bench-cache-modes.yml
       - .github/workflows/setup-soldr-contract.yml
-      - .github/workflows/zccache-build-demo.yml
   pull_request:
     paths:
       - README.md
@@ -36,7 +35,6 @@ on:
       - .github/workflows/setup-soldr-action.yml
       - .github/workflows/bench-cache-modes.yml
       - .github/workflows/setup-soldr-contract.yml
-      - .github/workflows/zccache-build-demo.yml
   workflow_dispatch:
 
 permissions:
