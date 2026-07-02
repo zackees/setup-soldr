@@ -2,6 +2,47 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.92` (was `0.7.59`). This is the re-attempted
+  bump after the 0.7.87 default was rolled back for the
+  `soldr version --json` empty-stdout regression (see prior entry).
+  Fix and follow-up guards from the upstream:
+  - **soldr#1206** `fix(release): smoke-test soldr version --json
+    across all release lanes` — closes zackees/soldr#1202, the
+    regression report filed from setup-soldr. Every release lane
+    now runs `soldr version --json | jq .soldr_version` on the
+    built binary before the release asset is published, so the
+    empty-stdout mode cannot slip through again.
+  - **soldr#1209** `fix(release): cross-arch size-floor guard for
+    archive soldr bin` — follow-up to soldr#1206 that rejects a
+    release archive whose `soldr` binary falls below a
+    per-triple size floor (catches the "wrong binary got
+    packaged" flavour of the same class of bug).
+  Other upstream changes carried by the 0.7.88 → 0.7.92 span:
+  - `soldr doctor` gains a rustlib-integrity probe for corrupt
+    rustup `rust-std` trees (soldr#884 / #1188).
+  - `soldr logs paths` — discoverable runtime-log API
+    (soldr#820 / #1124).
+  - `soldr exec` + Chocolatey-cargo shadow detection on Windows
+    hosts (soldr#1059 / #1114); auto-inject MSVC env when
+    projects pin `rust-lld` (soldr#1105 / #1109).
+  - `*-sys` catalogue fetcher end-to-end: real download +
+    extract for the syslib catalogue (soldr#1064 / #1111) plus
+    wiring for python / nodelib / openssl / llvm-tools
+    (soldr#1010 / #1127).
+  - Migrate all internal tool queries to the `soldr-toolchain`
+    catalogue (soldr#1125), retire manifest-LFS migration
+    tooling (soldr#993 / #1122).
+  - Release-side robustness: reject stub-wheel releases
+    (soldr#1140 / #1141); `--cargo-profile release` for nextest
+    archive share (soldr#1182 / #1183), then reverted after it
+    regressed archive speed (soldr#1197 / #1198 / #1199).
+  - `*-apple-darwin` cross-compile tail (post 0.7.89): fix
+    per-target toolchain-prep `--github-env FILE` arg
+    (soldr#1220), fix `crgx` / `cargo-chef` darwin-x64 cross
+    (soldr#1223), inject the per-target lib path for zig-cc
+    libiconv (soldr#1226).
+  - `mimalloc` everywhere; drop `jemalloc` (soldr#1112, via
+    zccache#948).
 - Roll back default soldr version from `0.7.87` to `0.7.59` after
   post-merge smoke tests on `main` failed: the bundled
   `soldr version --json` on the linux-x64-glibc release exited 0
