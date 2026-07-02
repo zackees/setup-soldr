@@ -22,13 +22,13 @@ test("copyBundledReleasePayload keeps bundled tools from combined soldr archives
     const install = path.join(root, "install");
     fs.mkdirSync(extract, { recursive: true });
     fs.mkdirSync(install, { recursive: true });
-    for (const name of ["zccache", "zccache-daemon", "zccache-fp", "crgx", "cargo-chef", "manifest.json"]) {
+    for (const name of ["zccache", "zccache-daemon", "zccache-fp", "crgx", "cargo-chef", "soldr-clang-shim", "manifest.json"]) {
       fs.writeFileSync(path.join(extract, name), name);
     }
 
     const copied = _internal.copyBundledReleasePayload(extract, install, "soldr");
 
-    assert.deepEqual(copied.sort(), ["cargo-chef", "crgx", "manifest.json", "zccache", "zccache-daemon", "zccache-fp"].sort());
+    assert.deepEqual(copied.sort(), ["cargo-chef", "crgx", "manifest.json", "soldr-clang-shim", "zccache", "zccache-daemon", "zccache-fp"].sort());
     for (const name of copied) {
       assert.equal(fs.readFileSync(path.join(install, name), "utf8"), name);
     }
@@ -40,13 +40,13 @@ test("copyBundledReleasePayload keeps bundled tools from combined soldr archives
 test("clearBundledReleasePayload removes stale sibling bundled tools", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-clear-"));
   try {
-    for (const name of ["zccache.exe", "zccache-daemon.exe", "zccache-fp.exe", "crgx.exe", "cargo-chef.exe", "manifest.json"]) {
+    for (const name of ["zccache.exe", "zccache-daemon.exe", "zccache-fp.exe", "crgx.exe", "cargo-chef.exe", "soldr-clang-shim.exe", "manifest.json"]) {
       fs.writeFileSync(path.join(root, name), "stale");
     }
 
     _internal.clearBundledReleasePayload(root, "soldr.exe");
 
-    for (const name of ["zccache.exe", "zccache-daemon.exe", "zccache-fp.exe", "crgx.exe", "cargo-chef.exe", "manifest.json"]) {
+    for (const name of ["zccache.exe", "zccache-daemon.exe", "zccache-fp.exe", "crgx.exe", "cargo-chef.exe", "soldr-clang-shim.exe", "manifest.json"]) {
       assert.equal(fs.existsSync(path.join(root, name)), false);
     }
   } finally {
@@ -77,6 +77,23 @@ test("hasBundledCargoChefPayload checks the platform cargo-chef binary", () => {
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("hasBundledClangShimPayload checks the platform soldr-clang-shim binary", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-has-shim-"));
+  try {
+    assert.equal(_internal.hasBundledClangShimPayload(root, "soldr.exe"), false);
+    fs.writeFileSync(path.join(root, "soldr-clang-shim.exe"), "soldr-clang-shim");
+    assert.equal(_internal.hasBundledClangShimPayload(root, "soldr.exe"), true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("versionAtLeast gates clang-shim requirement at soldr 0.7.66", () => {
+  assert.equal(_internal.versionAtLeast("0.7.65", "0.7.66"), false);
+  assert.equal(_internal.versionAtLeast("v0.7.66", "0.7.66"), true);
+  assert.equal(_internal.versionAtLeast("0.7.98", "0.7.66"), true);
 });
 
 test("versionAtLeast gates cargo-chef requirement at soldr 0.7.43", () => {
