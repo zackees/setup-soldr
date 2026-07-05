@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.99` (was `0.7.92`). Fast follow-up to the
+  0.7.92 bump — three actually-tagged soldr releases shipped in the
+  36 hours after 0.7.92 (0.7.93/0.7.94/0.7.95/0.7.97 were autonomous-
+  release attempts that never got tag assets; 0.7.96/0.7.98/0.7.99
+  landed with the accumulated changes each time). Headline changes:
+  - **Managed zccache pin bumped `1.12.11` → `1.12.12`** with a
+    protocol-v8 test repair, embedded-zccache state checkpoint before
+    archive, and auto-GC at build end (soldr#1286 / #1295 / #1299,
+    released in 0.7.99). First zccache pin bump for setup-soldr
+    after retiring the vendored zccache subproject in #401.
+  - **`x86_64-apple-darwin` dropped from the soldr release matrix**
+    (soldr#1250, released in 0.7.95) — soldr picked the
+    "always-native-runner" branch of the two-way decision in
+    zackees/soldr#1243, and darwin-x64 builds are no longer produced
+    at all. Consumers who pinned `cross-targets: x86_64-apple-darwin`
+    against setup-soldr should switch to `aarch64-apple-darwin` (still
+    published via native `macos-15` runner) or drop the target.
+  - **Cross-lane repairs (soldr#1285 / #1289, released in 0.7.98):**
+    windows-x64 + windows-arm64 `xwin` bundle case aliases and
+    zlib-ng clang-cl ARM toggles; `*-apple-darwin` lanes now find
+    `libobjc` (SDKROOT was being dropped by the wrapper env filter,
+    and `cargo-zigbuild --sysroot -L` was doubling on zig 0.14).
+  - **linux-arm-musl lane fix** (soldr#1284) — wrapper env allowlist
+    was dropping `crgx`'s `cargo:rustc-env` `CRGX_TARGET`.
+  - Release-side: manylinux_2_17 wheels + stable PEP 517 target dir
+    for fbuild ingestion (soldr#1277); degrade tag/release 403s
+    instead of stranding PyPI+npm (soldr#1281); uv-provisioned
+    ninja fallback + concurrent-safe installs (soldr#1273); sweep
+    stale cmake build dirs on generator switch (soldr#1278); use
+    `ci-bootstrap` profile (no LTO, cu=16) for host build
+    (soldr#1282).
+  - CI perf (all in 0.7.96): `Swatinem/rust-cache` added to
+    `_bootstrap-e2e`, `baseline-zero-deps`, Lint, `_build-and-test`
+    (soldr#1232 / #1235 / #1239 / #1241); zig + `cargo-zigbuild`
+    cached in `baseline-zero-deps` (soldr#1244); per-target
+    toolchain-prep cache for the `*-apple-darwin` cross-build lanes
+    (soldr#1246).
 - Default to soldr `0.7.92` (was `0.7.59`). This is the re-attempted
   bump after the 0.7.87 default was rolled back for the
   `soldr version --json` empty-stdout regression (see prior entry).
