@@ -35,6 +35,12 @@ interface InstallStatus {
   driftFromManaged: boolean;
 }
 
+interface RuntimeStatus {
+  managedVersion: string;
+  zccacheSource: string;
+  embedded: boolean;
+}
+
 interface CapturedExec {
   code: number;
   stdout: string;
@@ -216,6 +222,37 @@ async function readInstallStatus(
   return parseInstallStatus(result.stdout);
 }
 
+function parseRuntimeStatus(stdout: string): RuntimeStatus | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  const payload = parsed as Record<string, unknown>;
+  const zccache = payload["zccache"];
+  const zccachePayload =
+    zccache && typeof zccache === "object" && !Array.isArray(zccache)
+      ? (zccache as Record<string, unknown>)
+      : {};
+  const source = String(zccachePayload["binary_source"] ?? "").trim();
+  return {
+    managedVersion: String(payload["managed_zccache_version"] ?? "").trim(),
+    zccacheSource: source,
+    embedded: source === "embedded",
+  };
+}
+
+async function readRuntimeStatus(
+  soldrPath: string,
+  execFn: typeof exec.exec,
+): Promise<RuntimeStatus | null> {
+  const result = await runCaptured(execFn, soldrPath, ["status", "--json"]);
+  if (result.code !== 0) return null;
+  return parseRuntimeStatus(result.stdout);
+}
+
 function errorDetail(err: unknown): string {
   return err instanceof Error ? (err.message || String(err)) : String(err);
 }
@@ -246,6 +283,16 @@ export async function seedZccache(opts: SeedZccacheOptions): Promise<void> {
     target = detectHostZccacheTarget();
   } catch (err) {
     failOrWarn(`setup-soldr: zccache seed skipped: ${err instanceof Error ? err.message : String(err)}`);
+    return;
+  }
+
+  const runtimeStatus = await readRuntimeStatus(opts.soldrPath, execFn);
+  if (runtimeStatus?.embedded) {
+    opts.log(
+      `zccache-seed: skipped - soldr uses embedded zccache ${runtimeStatus.managedVersion || "(unknown version)"}`,
+    );
+    core.exportVariable(SEED_ENV, "true");
+    core.exportVariable(SEED_SOURCE_ENV, "embedded");
     return;
   }
 
@@ -329,3 +376,7 @@ export async function seedZccache(opts: SeedZccacheOptions): Promise<void> {
   core.exportVariable(SEED_SOURCE_ENV, sourceKind);
   opts.log(`zccache-seed: pinned zccache installed from ${sourceKind}`);
 }
+
+export const _internal = {
+  parseRuntimeStatus,
+};

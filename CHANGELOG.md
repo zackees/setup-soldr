@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+- Default to soldr `0.7.102` (was `0.7.99`). This ingests the
+  compiled-in zccache migration and CI perf span while staying on the
+  newest upstream release that still publishes the GitHub tarball assets
+  setup-soldr installs by default. Headline changes:
+  - **Managed zccache download eliminated** (soldr#1374, released in
+    0.7.102): soldr now routes zccache through the compiled-in vendored
+    backend instead of fetching/spawning a managed external binary. This
+    carries embedded zccache `1.12.13`.
+  - **setup-soldr compatibility:** the zccache seed phase now probes
+    `soldr status --json` first and skips the legacy `install-zccache`
+    path when soldr reports `zccache.binary_source = "embedded"`. Older
+    soldr pins still use the previous vendored/bundled/managed seed path.
+  - **Upstream perf work in the 0.7.100-0.7.102 span:** Linux x64 CI keeps
+    the wrapper path stable between build and test to avoid a full
+    fingerprint invalidation (~90s saved on the tail lane, soldr#1373);
+    `SOLDR_GITHUB_TOKEN` was wired through soldr-invoking workflows to
+    avoid unauthenticated zccache release fetch fallback; the 1.94.1 Rust
+    toolchain is pre-cached across the main CI lanes; and workspace deps
+    were feature-trimmed/unified (soldr#1363/#1365).
+  - soldr `0.7.103` is newer and carries zccache `1.12.14`, but its
+    GitHub release currently has no binary tarball assets. The PyPI wheel
+    exists, but it does not carry the same cook/cross helper payload as the
+    GitHub release archives, so setup-soldr does not make it the default
+    install source in this release.
+
 - Default to soldr `0.7.99` (was `0.7.92`). Fast follow-up to the
   0.7.92 bump — three actually-tagged soldr releases shipped in the
   36 hours after 0.7.92 (0.7.93/0.7.94/0.7.95/0.7.97 were autonomous-

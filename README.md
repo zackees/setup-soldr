@@ -2,7 +2,7 @@
 
 [![Setup Soldr Action](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml/badge.svg)](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml)
 
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.99`.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.7.102`.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -54,14 +54,14 @@ and fails by default if the scoped shutdown cannot be confirmed. The normal
 setup-soldr post step still runs later so final cache saves see a quiescent
 cache directory.
 
-During setup, the action also seeds soldr's pinned zccache install from a
-vendored `vendor/zccache/<host-triple>/` directory when present, otherwise from
-the zccache trio bundled in the installed soldr release archive. Older soldr
-release archives that do not carry the trio fall back to the managed zccache
-release asset. Because soldr keeps pinned zccache binaries
-in a home-anchored location, later test steps can override `SOLDR_CACHE_DIR`
-for daemon isolation without forcing a second zccache release lookup or a
-`cargo install` fallback.
+During setup, the action also checks the installed soldr zccache backend.
+For soldr releases with embedded zccache, no seed is needed. Older soldr
+releases still seed soldr's pinned zccache install from a vendored
+`vendor/zccache/<host-triple>/` directory when present, otherwise from the
+zccache trio bundled in the installed soldr release archive. Release archives
+that do not carry the trio fall back to the managed zccache release asset.
+This keeps isolated `SOLDR_CACHE_DIR` jobs from forcing a second zccache
+release lookup or a `cargo install` fallback.
 
 ### macOS
 
@@ -456,7 +456,7 @@ preferred for new workflows.
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.7.99`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.7.102`. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
@@ -474,7 +474,7 @@ preferred for new workflows.
 | `build-cache-save-min-compiles` | Delta-aware build-cache save gate. Default `1`: when a cache was restored and the session compiled nothing new (zccache misses below this count), skip re-saving the build-cache so a fallback-key hit doesn't re-upload a duplicate multi-GiB payload. Raise to also skip tiny deltas; set `0` to always save. Never gates a cold seed. |
 | `seed-isolated-build-cache` | Optional newline/comma-separated isolated `SOLDR_CACHE_DIR` roots to pre-seed from the restored build-cache (issue #240). Copies only the content-addressed zccache artifact store (no logs/sockets/live daemon state) into `<root>/cache/zccache`, so a daemon-isolated coverage/integration phase starts warm instead of cold. Default empty (no seeding). |
 | `verify-compile-cache` | Guard against silently-bypassed compile caching. `off` (default) no check; `warn` emits a warning when a job expected to use zccache reports `hits + misses == 0`; `error`/`true` fails the post step. Names the likely bypass (RUSTC_WRAPPER, SOLDR_CACHE_DIR, ZCCACHE_CACHE_DIR, shims) and sets the `compile-cache-verification` output. Legitimate no-compile / passthrough / build-cache-off jobs are skipped, never failed. |
-| `zccache-seed-strict` | When `true`, setup fails if setup-soldr cannot seed soldr's pinned zccache install from a vendored or managed release source. Default `false` keeps the seed best-effort and allows soldr's normal managed fallback path. Enable this in repos where a later `cargo install zccache` fallback is unacceptable. |
+| `zccache-seed-strict` | When `true`, setup fails if setup-soldr cannot seed older soldr releases' pinned zccache install from a vendored or managed release source. Default `false` keeps the seed best-effort and allows soldr's normal managed fallback path. Embedded-zccache soldr releases skip this seed because no external zccache install is needed. Enable this in repos where a later `cargo install zccache` fallback is unacceptable on older soldr pins. |
 | `prebuild-deps` | Dependency prebuild mode. Default `soldr-cook` runs `soldr cook` and restores/saves a long-enduring dependency cache; set to `none` to skip. `cargo-chef` is accepted as a legacy alias. |
 | `prebuild-deps-flags` | Flags forwarded to `soldr cook`; default `--release`. Material flags are hashed into the cook cache key. |
 | `prebuild-deps-delta-cache` | Default `true`. With soldr `>=0.7.38`, restore/save the cook cache as a protobuf-backed base layer plus a smaller commit/build-shape delta layer. Set to `false` to use the legacy single cook archive. |
@@ -554,7 +554,7 @@ preferred for new workflows.
 
 ## Notes
 
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.99`.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.7.102`.
 - For soldr `0.7.43+`, the action copies the bundled `cargo-chef` binary from
   the soldr release archive and exports `SOLDR_CARGO_CHEF_LOCAL_DIR` so
   `soldr cook` does not need a live upstream cargo-chef release lookup.

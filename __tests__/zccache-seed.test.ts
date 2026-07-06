@@ -10,6 +10,7 @@ import {
   findVendoredZccacheDir,
   managedReleaseUrl,
   seedZccache,
+  _internal,
 } from "../src/lib/zccache-seed.js";
 
 function mkTmp(prefix: string): string {
@@ -27,9 +28,15 @@ function makeExec(
   calls: Array<{ cmd: string; args: string[] }>,
   statusPayload: Record<string, unknown>,
   installCode = 0,
+  runtimeStatusPayload: Record<string, unknown> | null = null,
 ): typeof exec.exec {
   return (async (cmd: string, args: string[] = [], options?: exec.ExecOptions): Promise<number> => {
     calls.push({ cmd, args });
+    if (args[0] === "status" && args.includes("--json")) {
+      if (runtimeStatusPayload === null) return 1;
+      options?.listeners?.stdout?.(Buffer.from(JSON.stringify(runtimeStatusPayload)));
+      return 0;
+    }
     if (args[0] === "install-zccache" && args.includes("--status")) {
       options?.listeners?.stdout?.(Buffer.from(JSON.stringify(statusPayload)));
       return 0;
@@ -106,6 +113,45 @@ test("findBundledZccacheDir accepts zccache next to installed soldr", () => {
   }
 });
 
+test("parseRuntimeStatus recognizes embedded zccache from soldr status", () => {
+  const parsed = _internal.parseRuntimeStatus(JSON.stringify({
+    managed_zccache_version: "1.12.13",
+    zccache: {
+      binary_source: "embedded",
+    },
+  }));
+
+  assert.equal(parsed?.embedded, true);
+  assert.equal(parsed?.managedVersion, "1.12.13");
+  assert.equal(parsed?.zccacheSource, "embedded");
+});
+
+test("seedZccache skips legacy install-zccache when soldr reports embedded zccache", async () => {
+  const root = mkTmp("zccache-seed-embedded-");
+  const calls: Array<{ cmd: string; args: string[] }> = [];
+  try {
+    await seedZccache({
+      soldrPath: "soldr",
+      actionRoot: root,
+      enabled: true,
+      strict: true,
+      log: () => undefined,
+      warn: (msg) => assert.fail(msg),
+      execFn: makeExec(calls, {}, 0, {
+        schema_version: 1,
+        command: "status",
+        managed_zccache_version: "1.12.13",
+        zccache: { binary_source: "embedded" },
+      }),
+      env: {},
+    });
+
+    assert.deepEqual(calls.map((call) => call.args), [["status", "--json"]]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("seedZccache installs vendored zccache when present", async () => {
   const root = mkTmp("zccache-seed-vendor-");
   const calls: Array<{ cmd: string; args: string[] }> = [];
@@ -129,6 +175,7 @@ test("seedZccache installs vendored zccache when present", async () => {
     });
 
     assert.deepEqual(calls.map((call) => call.args), [
+      ["status", "--json"],
       ["install-zccache", "--status", "--json"],
       ["install-zccache", vendorDir, "--json"],
     ]);
@@ -168,6 +215,7 @@ test("seedZccache installs zccache from the bundled soldr release before downloa
     });
 
     assert.deepEqual(calls.map((call) => call.args), [
+      ["status", "--json"],
       ["install-zccache", "--status", "--json"],
       ["install-zccache", binDir, "--json"],
     ]);
@@ -203,13 +251,14 @@ test("seedZccache falls back to managed release URL when no vendor exists", asyn
       env: {},
     });
 
-    assert.equal(calls.length, 2);
-    assert.deepEqual(calls[0]?.args, ["install-zccache", "--status", "--json"]);
+    assert.equal(calls.length, 3);
+    assert.deepEqual(calls[0]?.args, ["status", "--json"]);
+    assert.deepEqual(calls[1]?.args, ["install-zccache", "--status", "--json"]);
     assert.equal(downloads.length, 1);
     assert.match(downloads[0] ?? "", /^https:\/\/github\.com\/zackees\/zccache\/releases\/download\/1\.11\.2\/zccache-v1\.11\.2-/);
-    assert.equal(calls[1]?.args[0], "install-zccache");
-    assert.equal(calls[1]?.args[1], archivePath);
-    assert.equal(calls[1]?.args[2], "--json");
+    assert.equal(calls[2]?.args[0], "install-zccache");
+    assert.equal(calls[2]?.args[1], archivePath);
+    assert.equal(calls[2]?.args[2], "--json");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -232,7 +281,10 @@ test("seedZccache fails when managed zccache version cannot be resolved", async 
       }),
       /zccache seed failed: could not determine managed zccache version/,
     );
-    assert.deepEqual(calls.map((call) => call.args), [["install-zccache", "--status", "--json"]]);
+    assert.deepEqual(calls.map((call) => call.args), [
+      ["status", "--json"],
+      ["install-zccache", "--status", "--json"],
+    ]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -385,7 +437,10 @@ test("seedZccache skips when an up-to-date pin already exists", async () => {
       env: {},
     });
 
-    assert.deepEqual(calls.map((call) => call.args), [["install-zccache", "--status", "--json"]]);
+    assert.deepEqual(calls.map((call) => call.args), [
+      ["status", "--json"],
+      ["install-zccache", "--status", "--json"],
+    ]);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

@@ -22,13 +22,13 @@ test("copyBundledReleasePayload keeps bundled tools from combined soldr archives
     const install = path.join(root, "install");
     fs.mkdirSync(extract, { recursive: true });
     fs.mkdirSync(install, { recursive: true });
-    for (const name of ["zccache", "zccache-daemon", "zccache-fp", "crgx", "cargo-chef", "soldr-clang-shim", "manifest.json"]) {
+    for (const name of ["zccache", "zccache-soldr", "zccache-daemon", "zccache-fp", "soldr-daemon", "soldr-shim", "crgx", "cargo-chef", "soldr-clang-shim", "manifest.json"]) {
       fs.writeFileSync(path.join(extract, name), name);
     }
 
     const copied = _internal.copyBundledReleasePayload(extract, install, "soldr");
 
-    assert.deepEqual(copied.sort(), ["cargo-chef", "crgx", "manifest.json", "soldr-clang-shim", "zccache", "zccache-daemon", "zccache-fp"].sort());
+    assert.deepEqual(copied.sort(), ["cargo-chef", "crgx", "manifest.json", "soldr-clang-shim", "soldr-daemon", "soldr-shim", "zccache", "zccache-daemon", "zccache-fp", "zccache-soldr"].sort());
     for (const name of copied) {
       assert.equal(fs.readFileSync(path.join(install, name), "utf8"), name);
     }
@@ -40,13 +40,13 @@ test("copyBundledReleasePayload keeps bundled tools from combined soldr archives
 test("clearBundledReleasePayload removes stale sibling bundled tools", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-clear-"));
   try {
-    for (const name of ["zccache.exe", "zccache-daemon.exe", "zccache-fp.exe", "crgx.exe", "cargo-chef.exe", "soldr-clang-shim.exe", "manifest.json"]) {
+    for (const name of ["zccache.exe", "zccache-soldr.exe", "zccache-daemon.exe", "zccache-fp.exe", "soldr-daemon.exe", "soldr-shim.exe", "crgx.exe", "cargo-chef.exe", "soldr-clang-shim.exe", "manifest.json"]) {
       fs.writeFileSync(path.join(root, name), "stale");
     }
 
     _internal.clearBundledReleasePayload(root, "soldr.exe");
 
-    for (const name of ["zccache.exe", "zccache-daemon.exe", "zccache-fp.exe", "crgx.exe", "cargo-chef.exe", "soldr-clang-shim.exe", "manifest.json"]) {
+    for (const name of ["zccache.exe", "zccache-soldr.exe", "zccache-daemon.exe", "zccache-fp.exe", "soldr-daemon.exe", "soldr-shim.exe", "crgx.exe", "cargo-chef.exe", "soldr-clang-shim.exe", "manifest.json"]) {
       assert.equal(fs.existsSync(path.join(root, name)), false);
     }
   } finally {
@@ -63,6 +63,21 @@ test("hasBundledZccachePayload requires the full zccache trio", () => {
 
     fs.writeFileSync(path.join(root, "zccache-fp.exe"), "zccache-fp");
     assert.equal(_internal.hasBundledZccachePayload(root, "soldr.exe"), true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("hasEmbeddedZccachePayload requires the embedded shim payload", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-has-embedded-"));
+  try {
+    for (const name of ["zccache.exe", "zccache-soldr.exe", "soldr-daemon.exe"]) {
+      fs.writeFileSync(path.join(root, name), name);
+    }
+    assert.equal(_internal.hasEmbeddedZccachePayload(root, "soldr.exe"), false);
+
+    fs.writeFileSync(path.join(root, "soldr-shim.exe"), "soldr-shim");
+    assert.equal(_internal.hasEmbeddedZccachePayload(root, "soldr.exe"), true);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

@@ -262,8 +262,11 @@ function bundledReleasePayloadNames(binaryName: string): string[] {
   const suffix = platformBinarySuffix(binaryName);
   return [
     `zccache${suffix}`,
+    `zccache-soldr${suffix}`,
     `zccache-daemon${suffix}`,
     `zccache-fp${suffix}`,
+    `soldr-daemon${suffix}`,
+    `soldr-shim${suffix}`,
     `crgx${suffix}`,
     `cargo-chef${suffix}`,
     `soldr-clang-shim${suffix}`,
@@ -278,6 +281,17 @@ function bundledZccacheBinaryNames(binaryName: string): string[] {
 
 function hasBundledZccachePayload(installDir: string, binaryName: string): boolean {
   return bundledZccacheBinaryNames(binaryName).every((name) =>
+    fs.existsSync(path.join(installDir, name)),
+  );
+}
+
+function embeddedZccacheBinaryNames(binaryName: string): string[] {
+  const suffix = platformBinarySuffix(binaryName);
+  return [`zccache${suffix}`, `zccache-soldr${suffix}`, `soldr-daemon${suffix}`, `soldr-shim${suffix}`];
+}
+
+function hasEmbeddedZccachePayload(installDir: string, binaryName: string): boolean {
+  return embeddedZccacheBinaryNames(binaryName).every((name) =>
     fs.existsSync(path.join(installDir, name)),
   );
 }
@@ -459,8 +473,11 @@ export async function ensureSoldr(opts: {
     if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
       const needsCargoChef = versionAtLeast(resolvedVersion, "0.7.43");
       const needsClangShim = versionAtLeast(resolvedVersion, "0.7.66");
+      const needsEmbeddedZccachePayload = versionAtLeast(resolvedVersion, "0.7.103");
       const hasRequiredPayload =
-        hasBundledZccachePayload(installDir, binaryName) &&
+        (needsEmbeddedZccachePayload
+          ? hasEmbeddedZccachePayload(installDir, binaryName)
+          : hasBundledZccachePayload(installDir, binaryName)) &&
         (!needsCargoChef || hasBundledCargoChefPayload(installDir, binaryName)) &&
         (!needsClangShim || hasBundledClangShimPayload(installDir, binaryName));
       if (hasRequiredPayload) {
@@ -514,8 +531,10 @@ export const _internal = {
   bundledZccacheBinaryNames,
   clearBundledReleasePayload,
   copyBundledReleasePayload,
+  embeddedZccacheBinaryNames,
   hasBundledCargoChefPayload,
   hasBundledClangShimPayload,
   hasBundledZccachePayload,
+  hasEmbeddedZccachePayload,
   versionAtLeast,
 };
