@@ -144,9 +144,24 @@ warm-then-fan-out pattern: a single `warm` job runs `setup-soldr` plus
 `soldr cargo build --workspace --all-targets` to populate the caches,
 then each per-tool job re-runs `setup-soldr` (same SHA = same cache
 key, so it hits the freshly-saved cache) and runs its own `soldr
-cargo …` invocation. Per-tool jobs are independently toggleable.
+cargo ...` invocation. Per-tool jobs are independently toggleable.
 
-Publishing / artifact / release work is intentionally out of scope —
+The reusable workflow is cross-compilation-first. By default it runs in
+`compile-mode: cross` and builds the non-host
+`x86_64-unknown-linux-musl` target on `ubuntu-latest`. That target keeps
+the default CI lane genuinely cross-compiled while still letting the
+workflow run `soldr cargo test --target x86_64-unknown-linux-musl` on
+Linux. Select `compile-mode: native` when you want the previous
+host-target behavior with no `--target` flag.
+
+The workflow can be called from another workflow with `workflow_call`, and
+maintainers can also run it directly from the Actions tab with
+`workflow_dispatch` to compare cross and native modes on demand. Reusable
+callers default to `working-directory: .`; manual runs in this repository
+default to `scripts/bench-workloads/demo-small` so the dispatched workflow
+has a small Rust fixture to compile.
+
+Publishing / artifact / release work is intentionally out of scope --
 release flows vary too much across repos to template.
 
 #### Inputs
@@ -154,18 +169,20 @@ release flows vary too much across repos to template.
 | Name | Type | Default | Purpose |
 | --- | --- | --- | --- |
 | `os` | string | `ubuntu-latest` | Runner label. |
-| `target` | string | `""` (host) | Rust target triple. Non-empty triggers `rustup target add` + `--target` on every cargo invocation. |
+| `compile-mode` | string | `cross` | Compilation mode. `cross` uses setup-soldr's cross-target provisioning and passes `--target`; `native` builds the runner host target with no `--target`. |
+| `target` | string | `x86_64-unknown-linux-musl` | Rust target triple used only when `compile-mode: cross`. Ignored in native mode. |
+| `working-directory` | string | `.` (`workflow_call`), `scripts/bench-workloads/demo-small` (`workflow_dispatch`) | Directory containing the Rust workspace or package to check. |
 | `toolchain` | string | `""` | Forwarded to `setup-soldr`. Empty = `rust-toolchain.toml` or `stable`. |
 | `features` | string | `""` | Forwarded as `--features` to the warm build. |
 | `cargo-args` | string | `""` | Free-form extra args appended to the warm build. |
 | `cache` | boolean | `true` | Forwarded to `setup-soldr`'s umbrella cache switch. |
-| `lint` | boolean | `true` | `cargo check --workspace --all-targets`. |
-| `fmt` | boolean | `true` | `cargo fmt --all -- --check`. |
-| `clippy` | boolean | `true` | `cargo clippy --workspace --all-targets -- -D warnings`. |
-| `test` | boolean | `true` | `cargo test --workspace`. |
-| `dylint` | boolean | `false` | `cargo dylint --all --workspace` (installs `cargo-dylint` + `dylint-link` first). Opt-in: needs a consumer-provided `dylint.toml`. |
+| `lint` | boolean | `true` | `soldr cargo check --workspace --all-targets`. |
+| `fmt` | boolean | `true` | `soldr cargo fmt --all -- --check`. |
+| `clippy` | boolean | `true` | `soldr cargo clippy --workspace --all-targets -- -D warnings`. |
+| `test` | boolean | `true` | `soldr cargo test --workspace`. |
+| `dylint` | boolean | `false` | `soldr cargo dylint --all --workspace` (installs `cargo-dylint` + `dylint-link` first). Opt-in: needs a consumer-provided `dylint.toml`. |
 
-#### Simple consumer
+#### Default cross-compile consumer
 
 ```yaml
 jobs:
@@ -174,6 +191,23 @@ jobs:
     with:
       os: ubuntu-latest
       dylint: false
+```
+
+That default invocation builds, checks, clippies, and tests
+`x86_64-unknown-linux-musl`. The workflow passes the effective target to
+setup-soldr's `cross-targets` input so target provisioning stays in the
+setup-soldr/soldr-owned path rather than direct workflow-level
+`cargo-zigbuild` or `cargo-xwin` installer steps.
+
+#### Native opt-in consumer
+
+```yaml
+jobs:
+  ci:
+    uses: zackees/setup-soldr/.github/workflows/rust-ci.yml@v0
+    with:
+      os: ubuntu-latest
+      compile-mode: native
 ```
 
 #### Cross-compile matrix
@@ -185,20 +219,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest,  target: x86_64-unknown-linux-gnu }
-          - { os: ubuntu-latest,  target: aarch64-unknown-linux-musl }
-          - { os: macos-latest,   target: aarch64-apple-darwin }
-          - { os: windows-latest, target: x86_64-pc-windows-msvc }
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, test: true }
+          - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, test: false }
+          - { os: ubuntu-latest, target: x86_64-pc-windows-gnu, test: false }
     uses: zackees/setup-soldr/.github/workflows/rust-ci.yml@v0
     with:
-      os:     ${{ matrix.os }}
-      target: ${{ matrix.target }}
-      test:   ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+      os:           ${{ matrix.os }}
+      compile-mode: cross
+      target:       ${{ matrix.target }}
+      test:         ${{ matrix.test }}
 ```
 
-Cross-compiled binaries usually can't run on the host, so the matrix
-example gates `test:` on the native cell. The template never tries to
-auto-detect runnability — the consumer chooses.
+Cross-compiled binaries usually cannot run on the host, so the matrix
+example gates `test:` on the runnable musl cell. The template never tries
+to auto-detect runnability; the consumer chooses.
 
 ## Multi-platform builds (cross-target tutorial)
 
