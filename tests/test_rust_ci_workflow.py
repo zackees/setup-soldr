@@ -49,7 +49,6 @@ def test_warm_job_resolves_cross_and_native_modes_once() -> None:
     warm = workflow["jobs"]["warm"]
 
     assert warm["outputs"]["target"] == "${{ steps.mode.outputs.target }}"
-    assert warm["outputs"]["cross_targets"] == "${{ steps.mode.outputs.cross_targets }}"
 
     resolve = _step_named(warm, "Resolve compilation mode")
     script = resolve["run"]
@@ -57,17 +56,24 @@ def test_warm_job_resolves_cross_and_native_modes_once() -> None:
     assert 'target="${{ inputs.target }}"' in script
     assert "mode=\"cross\"" in script
     assert f'target="{DEFAULT_CROSS_TARGET}"' in script
-    assert "cross_targets=$target" in script
     assert "native)" in script
     assert "compile-mode must be 'cross' or 'native'" in script
 
 
-def test_targeted_jobs_use_setup_soldr_cross_targets_output() -> None:
+def test_jobs_pass_generated_toolchain_file_to_setup_soldr() -> None:
     workflow = _load_workflow()
 
-    warm_setup = _step_named(workflow["jobs"]["warm"], "Setup soldr")
-    assert warm_setup["id"] == "setup"
-    assert warm_setup["with"]["cross-targets"] == "${{ steps.mode.outputs.cross_targets }}"
+    for job_name in ("warm", "fmt", "lint", "clippy", "test"):
+        job = workflow["jobs"][job_name]
+        write = _step_named(job, "Write rust-ci toolchain spec")
+        assert write["id"] == "toolchain"
+        assert 'path="rust-toolchain.rust-ci.toml"' in write["run"]
+
+        setup = _step_named(job, "Setup soldr")
+        assert setup["with"]["toolchain-file"] == "${{ steps.toolchain.outputs.path }}"
+        assert "toolchain" not in setup["with"]
+        assert "cross-targets" not in setup["with"]
+        assert "cross-tool" not in setup["with"]
 
     for job_name, step_name in (
         ("warm", "Warm build (workspace, all-targets)"),
@@ -78,8 +84,7 @@ def test_targeted_jobs_use_setup_soldr_cross_targets_output() -> None:
         job = workflow["jobs"][job_name]
         if job_name != "warm":
             setup = _step_named(job, "Setup soldr")
-            assert setup["id"] == "setup"
-            assert setup["with"]["cross-targets"] == "${{ needs.warm.outputs.cross_targets }}"
+            assert setup["with"]["toolchain-file"] == "${{ steps.toolchain.outputs.path }}"
 
         run_step = _step_named(job, step_name)
         assert run_step["working-directory"] == "${{ inputs.working-directory }}"
@@ -88,35 +93,30 @@ def test_targeted_jobs_use_setup_soldr_cross_targets_output() -> None:
         assert 'args+=(--target "$target")' in run_step["run"]
 
 
-def test_rust_ci_ensures_targets_through_soldr_toolchain() -> None:
+def test_rust_ci_toolchain_specs_request_targets_and_components() -> None:
     workflow = _load_workflow()
 
     expected_targets = {
         "warm": "steps.mode.outputs.target",
+        "fmt": "needs.warm.outputs.target",
         "lint": "needs.warm.outputs.target",
         "clippy": "needs.warm.outputs.target",
         "test": "needs.warm.outputs.target",
     }
     for job_name, target_expr in expected_targets.items():
-        ensure = _step_named(workflow["jobs"][job_name], "Ensure rust-ci toolchain extras")
-        script = ensure["run"]
-        assert "args=(toolchain ensure --json" in script
-        assert 'channel="${{ steps.setup.outputs.toolchain }}"' in script
+        write = _step_named(workflow["jobs"][job_name], "Write rust-ci toolchain spec")
+        script = write["run"]
+        assert 'channel="${{ inputs.toolchain }}"' in script
+        assert "channel=\"stable\"" in script
+        assert 'sed -n -E' in script
+        assert 'echo "[toolchain]"' in script
+        assert "profile = \"minimal\"" in script
         assert f'target="${{{{ {target_expr} }}}}"' in script
-        assert 'args+=(--target "$target")' in script
-        assert 'soldr "${args[@]}"' in script
-
-    warm_script = _step_named(workflow["jobs"]["warm"], "Ensure rust-ci toolchain extras")["run"]
-    assert "args+=(--component rustfmt)" in warm_script
-    assert "args+=(--component clippy)" in warm_script
-    assert '${{ inputs.fmt }}' in warm_script
-    assert '${{ inputs.clippy }}' in warm_script
-
-    fmt_script = _step_named(workflow["jobs"]["fmt"], "Ensure rust-ci toolchain extras")["run"]
-    assert "args+=(--component rustfmt)" in fmt_script
-
-    clippy_script = _step_named(workflow["jobs"]["clippy"], "Ensure rust-ci toolchain extras")["run"]
-    assert "toolchain ensure --json --component clippy" in clippy_script
+        assert 'targets = ["%s"]' in script
+        assert "components+=(rustfmt)" in script
+        assert "components+=(clippy)" in script
+        assert '${{ inputs.fmt }}' in script
+        assert '${{ inputs.clippy }}' in script
 
 
 def test_native_mode_preserves_host_target_behavior() -> None:
@@ -125,7 +125,6 @@ def test_native_mode_preserves_host_target_behavior() -> None:
 
     native_branch = resolve_script.split("native)", 1)[1].split(";;", 1)[0]
     assert 'echo "target=" >> "$GITHUB_OUTPUT"' in native_branch
-    assert 'echo "cross_targets=" >> "$GITHUB_OUTPUT"' in native_branch
 
 
 def test_rust_ci_workflow_does_not_directly_install_cross_tooling() -> None:
@@ -133,6 +132,8 @@ def test_rust_ci_workflow_does_not_directly_install_cross_tooling() -> None:
     tool = "car" + "go"
 
     assert "rustup target add" not in text
+    assert "toolchain ensure" not in text
+    assert "cross-targets:" not in text
     assert f"{tool} zigbuild" not in text
     assert f"{tool}-xwin" not in text
 
@@ -144,5 +145,6 @@ def test_readme_documents_cross_default_native_opt_in_and_manual_trigger() -> No
     assert "`compile-mode: cross`" in readme
     assert "`compile-mode: native`" in readme
     assert "`workflow_dispatch`" in readme
-    assert "`soldr toolchain ensure --json --target <target>`" in readme
+    assert "`rust-toolchain.rust-ci.toml`" in readme
+    assert "`toolchain-file`" in readme
     assert DEFAULT_CROSS_TARGET in readme

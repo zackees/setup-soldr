@@ -161,6 +161,12 @@ callers default to `working-directory: .`; manual runs in this repository
 default to `scripts/bench-workloads/demo-small` so the dispatched workflow
 has a small Rust fixture to compile.
 
+For each Rust job, the workflow writes `rust-toolchain.rust-ci.toml` with
+the effective channel, required components, and the cross target when
+`compile-mode: cross` is selected. That file is passed to `setup-soldr`
+through `toolchain-file`, so target/component provisioning stays inside
+setup-soldr's supported toolchain-file path.
+
 Publishing / artifact / release work is intentionally out of scope --
 release flows vary too much across repos to template.
 
@@ -169,10 +175,10 @@ release flows vary too much across repos to template.
 | Name | Type | Default | Purpose |
 | --- | --- | --- | --- |
 | `os` | string | `ubuntu-latest` | Runner label. |
-| `compile-mode` | string | `cross` | Compilation mode. `cross` uses setup-soldr's cross-target provisioning and passes `--target`; `native` builds the runner host target with no `--target`. |
+| `compile-mode` | string | `cross` | Compilation mode. `cross` writes the target into the generated setup-soldr toolchain file and passes `--target`; `native` builds the runner host target with no `--target`. |
 | `target` | string | `x86_64-unknown-linux-musl` | Rust target triple used only when `compile-mode: cross`. Ignored in native mode. |
 | `working-directory` | string | `.` (`workflow_call`), `scripts/bench-workloads/demo-small` (`workflow_dispatch`) | Directory containing the Rust workspace or package to check. |
-| `toolchain` | string | `""` | Forwarded to `setup-soldr`. Empty = `rust-toolchain.toml` or `stable`. |
+| `toolchain` | string | `""` | Channel written into `rust-toolchain.rust-ci.toml`. Empty = channel parsed from `rust-toolchain.toml` when present, otherwise `stable`. |
 | `features` | string | `""` | Forwarded as `--features` to the warm build. |
 | `cargo-args` | string | `""` | Free-form extra args appended to the warm build. |
 | `cache` | boolean | `true` | Forwarded to `setup-soldr`'s umbrella cache switch. |
@@ -194,12 +200,13 @@ jobs:
 ```
 
 That default invocation builds, checks, clippies, and tests
-`x86_64-unknown-linux-musl`. The workflow passes the effective target to
-setup-soldr's `cross-targets` input and then runs
-`soldr toolchain ensure --json --target <target>` before each targeted
-Rust command. Target provisioning stays in the setup-soldr/soldr-owned
-path rather than direct workflow-level `rustup target add`,
-`cargo-zigbuild`, or `cargo-xwin` installer steps.
+`x86_64-unknown-linux-musl`. The workflow writes
+`rust-toolchain.rust-ci.toml` with `targets =
+["x86_64-unknown-linux-musl"]` and passes it to `setup-soldr` through
+`toolchain-file` before each targeted Rust command. Target provisioning
+stays in the setup-soldr/soldr-owned path rather than direct
+workflow-level `rustup target add`, `cargo-zigbuild`, or `cargo-xwin`
+installer steps.
 
 #### Native opt-in consumer
 

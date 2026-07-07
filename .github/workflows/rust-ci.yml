@@ -5,8 +5,10 @@
 # build/target/registry caches. Per-tool jobs (`fmt`, `lint`, `clippy`,
 # `test`, `dylint`) then each re-run setup-soldr (same SHA -> same
 # cache key, so the restore is a hot hit) and execute their respective
-# `soldr cargo ...` invocation. Per-tool jobs are individually toggleable
-# via boolean inputs.
+# `soldr cargo ...` invocation. Each Rust job writes a CI-owned
+# rust-toolchain file and passes it to setup-soldr so targets/components are
+# provisioned through setup-soldr's supported toolchain-file path. Per-tool
+# jobs are individually toggleable via boolean inputs.
 #
 # The default compile mode is cross-compilation. On ubuntu-latest this
 # builds and tests x86_64-unknown-linux-musl unless the caller selects
@@ -53,8 +55,8 @@ on:
         default: "."
       toolchain:
         description: >
-          Forwarded to setup-soldr's `toolchain` input. Empty (default) means
-          setup-soldr resolves the toolchain from `rust-toolchain.toml` and
+          Channel written into rust-toolchain.rust-ci.toml. Empty (default)
+          uses the channel from rust-toolchain.toml when present and otherwise
           falls back to stable.
         type: string
         required: false
@@ -128,7 +130,7 @@ on:
         required: false
         default: scripts/bench-workloads/demo-small
       toolchain:
-        description: Toolchain forwarded to setup-soldr.
+        description: Rust channel written into rust-toolchain.rust-ci.toml.
         type: string
         required: false
         default: ""
@@ -179,7 +181,6 @@ jobs:
     runs-on: ${{ inputs.os }}
     outputs:
       target: ${{ steps.mode.outputs.target }}
-      cross_targets: ${{ steps.mode.outputs.cross_targets }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -200,11 +201,9 @@ jobs:
                 target="x86_64-unknown-linux-musl"
               fi
               echo "target=$target" >> "$GITHUB_OUTPUT"
-              echo "cross_targets=$target" >> "$GITHUB_OUTPUT"
               ;;
             native)
               echo "target=" >> "$GITHUB_OUTPUT"
-              echo "cross_targets=" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "::error title=Invalid compile-mode::compile-mode must be 'cross' or 'native' (got '$mode')"
@@ -212,34 +211,55 @@ jobs:
               ;;
           esac
 
-      - name: Setup soldr
-        id: setup
-        uses: zackees/setup-soldr@v0
-        with:
-          toolchain: ${{ inputs.toolchain }}
-          cache: ${{ inputs.cache }}
-          cross-targets: ${{ steps.mode.outputs.cross_targets }}
-
-      - name: Ensure rust-ci toolchain extras
+      - name: Write rust-ci toolchain spec
+        id: toolchain
         shell: bash
         run: |
           set -euo pipefail
-          args=(toolchain ensure --json)
-          channel="${{ steps.setup.outputs.toolchain }}"
-          if [ -n "$channel" ]; then
-            args+=(--channel "$channel")
-          fi
-          if [ "${{ inputs.fmt }}" = "true" ]; then
-            args+=(--component rustfmt)
-          fi
-          if [ "${{ inputs.clippy }}" = "true" ]; then
-            args+=(--component clippy)
+          path="rust-toolchain.rust-ci.toml"
+          channel="${{ inputs.toolchain }}"
+          if [ -z "$channel" ]; then
+            channel="stable"
+            if [ -f rust-toolchain.toml ]; then
+              parsed="$(sed -n -E 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*$/\1/p' rust-toolchain.toml | head -n 1)"
+              if [ -n "$parsed" ]; then
+                channel="$parsed"
+              fi
+            fi
           fi
           target="${{ steps.mode.outputs.target }}"
-          if [ -n "$target" ]; then
-            args+=(--target "$target")
+          components=()
+          if [ "${{ inputs.fmt }}" = "true" ]; then
+            components+=(rustfmt)
           fi
-          soldr "${args[@]}"
+          if [ "${{ inputs.clippy }}" = "true" ]; then
+            components+=(clippy)
+          fi
+          {
+            echo "[toolchain]"
+            printf 'channel = "%s"\n' "$channel"
+            echo 'profile = "minimal"'
+            if [ "${#components[@]}" -gt 0 ]; then
+              printf 'components = ['
+              sep=""
+              for component in "${components[@]}"; do
+                printf '%s"%s"' "$sep" "$component"
+                sep=", "
+              done
+              printf ']\n'
+            fi
+            if [ -n "$target" ]; then
+              printf 'targets = ["%s"]\n' "$target"
+            fi
+          } > "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          sed 's/^/  /' "$path"
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cache: ${{ inputs.cache }}
 
       - name: Warm build (workspace, all-targets)
         shell: bash
@@ -267,24 +287,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup soldr
-        id: setup
-        uses: zackees/setup-soldr@v0
-        with:
-          toolchain: ${{ inputs.toolchain }}
-          cache: ${{ inputs.cache }}
-
-      - name: Ensure rust-ci toolchain extras
+      - name: Write rust-ci toolchain spec
+        id: toolchain
         shell: bash
         run: |
           set -euo pipefail
-          args=(toolchain ensure --json)
-          channel="${{ steps.setup.outputs.toolchain }}"
-          if [ -n "$channel" ]; then
-            args+=(--channel "$channel")
+          path="rust-toolchain.rust-ci.toml"
+          channel="${{ inputs.toolchain }}"
+          if [ -z "$channel" ]; then
+            channel="stable"
+            if [ -f rust-toolchain.toml ]; then
+              parsed="$(sed -n -E 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*$/\1/p' rust-toolchain.toml | head -n 1)"
+              if [ -n "$parsed" ]; then
+                channel="$parsed"
+              fi
+            fi
           fi
-          args+=(--component rustfmt)
-          soldr "${args[@]}"
+          target="${{ needs.warm.outputs.target }}"
+          components=()
+          if [ "${{ inputs.fmt }}" = "true" ]; then
+            components+=(rustfmt)
+          fi
+          if [ "${{ inputs.clippy }}" = "true" ]; then
+            components+=(clippy)
+          fi
+          {
+            echo "[toolchain]"
+            printf 'channel = "%s"\n' "$channel"
+            echo 'profile = "minimal"'
+            if [ "${#components[@]}" -gt 0 ]; then
+              printf 'components = ['
+              sep=""
+              for component in "${components[@]}"; do
+                printf '%s"%s"' "$sep" "$component"
+                sep=", "
+              done
+              printf ']\n'
+            fi
+            if [ -n "$target" ]; then
+              printf 'targets = ["%s"]\n' "$target"
+            fi
+          } > "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          sed 's/^/  /' "$path"
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cache: ${{ inputs.cache }}
 
       - name: cargo fmt --check
         shell: bash
@@ -300,28 +351,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup soldr
-        id: setup
-        uses: zackees/setup-soldr@v0
-        with:
-          toolchain: ${{ inputs.toolchain }}
-          cache: ${{ inputs.cache }}
-          cross-targets: ${{ needs.warm.outputs.cross_targets }}
-
-      - name: Ensure rust-ci toolchain extras
+      - name: Write rust-ci toolchain spec
+        id: toolchain
         shell: bash
         run: |
           set -euo pipefail
-          args=(toolchain ensure --json)
-          channel="${{ steps.setup.outputs.toolchain }}"
-          if [ -n "$channel" ]; then
-            args+=(--channel "$channel")
+          path="rust-toolchain.rust-ci.toml"
+          channel="${{ inputs.toolchain }}"
+          if [ -z "$channel" ]; then
+            channel="stable"
+            if [ -f rust-toolchain.toml ]; then
+              parsed="$(sed -n -E 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*$/\1/p' rust-toolchain.toml | head -n 1)"
+              if [ -n "$parsed" ]; then
+                channel="$parsed"
+              fi
+            fi
           fi
           target="${{ needs.warm.outputs.target }}"
-          if [ -n "$target" ]; then
-            args+=(--target "$target")
+          components=()
+          if [ "${{ inputs.fmt }}" = "true" ]; then
+            components+=(rustfmt)
           fi
-          soldr "${args[@]}"
+          if [ "${{ inputs.clippy }}" = "true" ]; then
+            components+=(clippy)
+          fi
+          {
+            echo "[toolchain]"
+            printf 'channel = "%s"\n' "$channel"
+            echo 'profile = "minimal"'
+            if [ "${#components[@]}" -gt 0 ]; then
+              printf 'components = ['
+              sep=""
+              for component in "${components[@]}"; do
+                printf '%s"%s"' "$sep" "$component"
+                sep=", "
+              done
+              printf ']\n'
+            fi
+            if [ -n "$target" ]; then
+              printf 'targets = ["%s"]\n' "$target"
+            fi
+          } > "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          sed 's/^/  /' "$path"
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cache: ${{ inputs.cache }}
 
       - name: cargo check
         shell: bash
@@ -344,28 +422,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup soldr
-        id: setup
-        uses: zackees/setup-soldr@v0
-        with:
-          toolchain: ${{ inputs.toolchain }}
-          cache: ${{ inputs.cache }}
-          cross-targets: ${{ needs.warm.outputs.cross_targets }}
-
-      - name: Ensure rust-ci toolchain extras
+      - name: Write rust-ci toolchain spec
+        id: toolchain
         shell: bash
         run: |
           set -euo pipefail
-          args=(toolchain ensure --json --component clippy)
-          channel="${{ steps.setup.outputs.toolchain }}"
-          if [ -n "$channel" ]; then
-            args+=(--channel "$channel")
+          path="rust-toolchain.rust-ci.toml"
+          channel="${{ inputs.toolchain }}"
+          if [ -z "$channel" ]; then
+            channel="stable"
+            if [ -f rust-toolchain.toml ]; then
+              parsed="$(sed -n -E 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*$/\1/p' rust-toolchain.toml | head -n 1)"
+              if [ -n "$parsed" ]; then
+                channel="$parsed"
+              fi
+            fi
           fi
           target="${{ needs.warm.outputs.target }}"
-          if [ -n "$target" ]; then
-            args+=(--target "$target")
+          components=()
+          if [ "${{ inputs.fmt }}" = "true" ]; then
+            components+=(rustfmt)
           fi
-          soldr "${args[@]}"
+          if [ "${{ inputs.clippy }}" = "true" ]; then
+            components+=(clippy)
+          fi
+          {
+            echo "[toolchain]"
+            printf 'channel = "%s"\n' "$channel"
+            echo 'profile = "minimal"'
+            if [ "${#components[@]}" -gt 0 ]; then
+              printf 'components = ['
+              sep=""
+              for component in "${components[@]}"; do
+                printf '%s"%s"' "$sep" "$component"
+                sep=", "
+              done
+              printf ']\n'
+            fi
+            if [ -n "$target" ]; then
+              printf 'targets = ["%s"]\n' "$target"
+            fi
+          } > "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          sed 's/^/  /' "$path"
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cache: ${{ inputs.cache }}
 
       - name: cargo clippy
         shell: bash
@@ -388,28 +493,55 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup soldr
-        id: setup
-        uses: zackees/setup-soldr@v0
-        with:
-          toolchain: ${{ inputs.toolchain }}
-          cache: ${{ inputs.cache }}
-          cross-targets: ${{ needs.warm.outputs.cross_targets }}
-
-      - name: Ensure rust-ci toolchain extras
+      - name: Write rust-ci toolchain spec
+        id: toolchain
         shell: bash
         run: |
           set -euo pipefail
-          args=(toolchain ensure --json)
-          channel="${{ steps.setup.outputs.toolchain }}"
-          if [ -n "$channel" ]; then
-            args+=(--channel "$channel")
+          path="rust-toolchain.rust-ci.toml"
+          channel="${{ inputs.toolchain }}"
+          if [ -z "$channel" ]; then
+            channel="stable"
+            if [ -f rust-toolchain.toml ]; then
+              parsed="$(sed -n -E 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)".*$/\1/p' rust-toolchain.toml | head -n 1)"
+              if [ -n "$parsed" ]; then
+                channel="$parsed"
+              fi
+            fi
           fi
           target="${{ needs.warm.outputs.target }}"
-          if [ -n "$target" ]; then
-            args+=(--target "$target")
+          components=()
+          if [ "${{ inputs.fmt }}" = "true" ]; then
+            components+=(rustfmt)
           fi
-          soldr "${args[@]}"
+          if [ "${{ inputs.clippy }}" = "true" ]; then
+            components+=(clippy)
+          fi
+          {
+            echo "[toolchain]"
+            printf 'channel = "%s"\n' "$channel"
+            echo 'profile = "minimal"'
+            if [ "${#components[@]}" -gt 0 ]; then
+              printf 'components = ['
+              sep=""
+              for component in "${components[@]}"; do
+                printf '%s"%s"' "$sep" "$component"
+                sep=", "
+              done
+              printf ']\n'
+            fi
+            if [ -n "$target" ]; then
+              printf 'targets = ["%s"]\n' "$target"
+            fi
+          } > "$path"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          sed 's/^/  /' "$path"
+
+      - name: Setup soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cache: ${{ inputs.cache }}
 
       - name: cargo test
         shell: bash
