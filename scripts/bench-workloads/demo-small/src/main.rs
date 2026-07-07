@@ -21,7 +21,10 @@ struct Greeting {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    let g = Greeting { message: args.message, count: 1 };
+    let g = Greeting {
+        message: args.message,
+        count: 1,
+    };
     println!("{}", serde_json::to_string(&g)?);
     Ok(())
 }
