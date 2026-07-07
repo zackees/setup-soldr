@@ -10,6 +10,7 @@ import * as path from "node:path";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as tc from "@actions/tool-cache";
+import * as fzstd from "fzstd";
 import { createLogger, streamExec } from "./log-utils.js";
 import type { ResolveResult } from "./types.js";
 import { parseVersionJsonOutput } from "./verify-soldr.js";
@@ -220,19 +221,122 @@ async function extractBinary(
   } else if (archiveExt === "tar.gz") {
     await tc.extractTar(archivePath, outDir, "xz");
   } else {
-    // tar.zst — use tar's --zstd flag. Modern tar on hosted runners (GNU
-    // tar 1.34+ on Linux, gnutar on macOS, bsdtar 3.6+ on Windows) all
-    // accept --zstd; for older systems we fall back to
-    // --use-compress-program=zstd.
-    try {
-      await tc.extractTar(archivePath, outDir, ["--zstd", "-x"]);
-    } catch {
-      await tc.extractTar(archivePath, outDir, ["--use-compress-program", "zstd -d", "-x"]);
-    }
+    // Extract tar.zst in-process so setup does not depend on zstd being installed
+    // before soldr itself is available.
+    await extractTarZst(archivePath, outDir);
   }
   const found = findFile(outDir, binaryName);
   if (!found) throw new Error(`downloaded archive did not contain ${binaryName}`);
   return found;
+}
+
+async function extractTarZst(archivePath: string, outDir: string): Promise<void> {
+  const compressed = fs.readFileSync(archivePath);
+  let decompressed: Uint8Array;
+  try {
+    decompressed = fzstd.decompress(compressed);
+  } catch (err) {
+    throw new Error(
+      `failed to decompress ${path.basename(archivePath)} with embedded zstd: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+  extractTarBuffer(decompressed, outDir);
+}
+
+const TAR_BLOCK_SIZE = 512;
+
+function tarString(block: Uint8Array, start: number, length: number): string {
+  const slice = block.subarray(start, start + length);
+  let end = slice.indexOf(0);
+  if (end < 0) end = slice.length;
+  return Buffer.from(slice.subarray(0, end)).toString("utf8");
+}
+
+function tarOctal(block: Uint8Array, start: number, length: number): number {
+  const raw = tarString(block, start, length).trim();
+  if (!raw) return 0;
+  const parsed = Number.parseInt(raw, 8);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`invalid tar octal field: ${JSON.stringify(raw)}`);
+  }
+  return parsed;
+}
+
+function isZeroBlock(block: Uint8Array): boolean {
+  for (const byte of block) {
+    if (byte !== 0) return false;
+  }
+  return true;
+}
+
+function tarEntryName(block: Uint8Array): string {
+  const name = tarString(block, 0, 100);
+  const prefix = tarString(block, 345, 155);
+  return prefix ? `${prefix}/${name}` : name;
+}
+
+function safeTarDestination(outDir: string, entryName: string): string {
+  const normalizedName = entryName.replace(/\\/g, "/");
+  if (!normalizedName || path.isAbsolute(normalizedName)) {
+    throw new Error(`unsafe tar entry path: ${JSON.stringify(entryName)}`);
+  }
+  const destination = path.resolve(outDir, normalizedName);
+  const root = path.resolve(outDir);
+  if (destination !== root && !destination.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`unsafe tar entry path: ${JSON.stringify(entryName)}`);
+  }
+  return destination;
+}
+
+function extractTarBuffer(tarData: Uint8Array, outDir: string): void {
+  fs.mkdirSync(outDir, { recursive: true });
+  let offset = 0;
+  let pendingLongName: string | null = null;
+  while (offset + TAR_BLOCK_SIZE <= tarData.length) {
+    const header = tarData.subarray(offset, offset + TAR_BLOCK_SIZE);
+    offset += TAR_BLOCK_SIZE;
+    if (isZeroBlock(header)) break;
+
+    const typeflag = String.fromCharCode(header[156] ?? 0);
+    const size = tarOctal(header, 124, 12);
+    const dataStart = offset;
+    const dataEnd = dataStart + size;
+    if (dataEnd > tarData.length) {
+      throw new Error("truncated tar archive");
+    }
+    const data = tarData.subarray(dataStart, dataEnd);
+    offset += Math.ceil(size / TAR_BLOCK_SIZE) * TAR_BLOCK_SIZE;
+
+    if (typeflag === "L") {
+      pendingLongName = Buffer.from(data).toString("utf8").replace(/\0.*$/s, "");
+      continue;
+    }
+    if (typeflag === "x" || typeflag === "g") {
+      continue;
+    }
+
+    const entryName = pendingLongName ?? tarEntryName(header);
+    pendingLongName = null;
+    if (!entryName) continue;
+
+    const destination = safeTarDestination(outDir, entryName);
+    if (typeflag === "5") {
+      fs.mkdirSync(destination, { recursive: true });
+      continue;
+    }
+    if (typeflag !== "0" && typeflag !== "\0") {
+      continue;
+    }
+
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.writeFileSync(destination, Buffer.from(data));
+    if (process.platform !== "win32") {
+      const mode = tarOctal(header, 100, 8);
+      if (mode > 0) fs.chmodSync(destination, mode);
+    }
+  }
 }
 
 function findFile(root: string, name: string): string | null {
@@ -287,7 +391,7 @@ function hasBundledZccachePayload(installDir: string, binaryName: string): boole
 
 function embeddedZccacheBinaryNames(binaryName: string): string[] {
   const suffix = platformBinarySuffix(binaryName);
-  return [`zccache${suffix}`, `zccache-soldr${suffix}`, `soldr-daemon${suffix}`, `soldr-shim${suffix}`];
+  return [`soldr-daemon${suffix}`, `soldr-shim${suffix}`];
 }
 
 function hasEmbeddedZccachePayload(installDir: string, binaryName: string): boolean {
@@ -532,6 +636,7 @@ export const _internal = {
   clearBundledReleasePayload,
   copyBundledReleasePayload,
   embeddedZccacheBinaryNames,
+  extractTarBuffer,
   hasBundledCargoChefPayload,
   hasBundledClangShimPayload,
   hasBundledZccachePayload,
