@@ -213,11 +213,33 @@ jobs:
           esac
 
       - name: Setup soldr
+        id: setup
         uses: zackees/setup-soldr@v0
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
           cross-targets: ${{ steps.mode.outputs.cross_targets }}
+
+      - name: Ensure rust-ci toolchain extras
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(toolchain ensure --json)
+          channel="${{ steps.setup.outputs.toolchain }}"
+          if [ -n "$channel" ]; then
+            args+=(--channel "$channel")
+          fi
+          if [ "${{ inputs.fmt }}" = "true" ]; then
+            args+=(--component rustfmt)
+          fi
+          if [ "${{ inputs.clippy }}" = "true" ]; then
+            args+=(--component clippy)
+          fi
+          target="${{ steps.mode.outputs.target }}"
+          if [ -n "$target" ]; then
+            args+=(--target "$target")
+          fi
+          soldr "${args[@]}"
 
       - name: Warm build (workspace, all-targets)
         shell: bash
@@ -246,10 +268,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup soldr
+        id: setup
         uses: zackees/setup-soldr@v0
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
+
+      - name: Ensure rust-ci toolchain extras
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(toolchain ensure --json)
+          channel="${{ steps.setup.outputs.toolchain }}"
+          if [ -n "$channel" ]; then
+            args+=(--channel "$channel")
+          fi
+          args+=(--component rustfmt)
+          soldr "${args[@]}"
 
       - name: cargo fmt --check
         shell: bash
@@ -266,11 +301,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup soldr
+        id: setup
         uses: zackees/setup-soldr@v0
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
           cross-targets: ${{ needs.warm.outputs.cross_targets }}
+
+      - name: Ensure rust-ci toolchain extras
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(toolchain ensure --json)
+          channel="${{ steps.setup.outputs.toolchain }}"
+          if [ -n "$channel" ]; then
+            args+=(--channel "$channel")
+          fi
+          target="${{ needs.warm.outputs.target }}"
+          if [ -n "$target" ]; then
+            args+=(--target "$target")
+          fi
+          soldr "${args[@]}"
 
       - name: cargo check
         shell: bash
@@ -294,11 +345,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup soldr
+        id: setup
         uses: zackees/setup-soldr@v0
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
           cross-targets: ${{ needs.warm.outputs.cross_targets }}
+
+      - name: Ensure rust-ci toolchain extras
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(toolchain ensure --json --component clippy)
+          channel="${{ steps.setup.outputs.toolchain }}"
+          if [ -n "$channel" ]; then
+            args+=(--channel "$channel")
+          fi
+          target="${{ needs.warm.outputs.target }}"
+          if [ -n "$target" ]; then
+            args+=(--target "$target")
+          fi
+          soldr "${args[@]}"
 
       - name: cargo clippy
         shell: bash
@@ -322,11 +389,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup soldr
+        id: setup
         uses: zackees/setup-soldr@v0
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
           cross-targets: ${{ needs.warm.outputs.cross_targets }}
+
+      - name: Ensure rust-ci toolchain extras
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(toolchain ensure --json)
+          channel="${{ steps.setup.outputs.toolchain }}"
+          if [ -n "$channel" ]; then
+            args+=(--channel "$channel")
+          fi
+          target="${{ needs.warm.outputs.target }}"
+          if [ -n "$target" ]; then
+            args+=(--target "$target")
+          fi
+          soldr "${args[@]}"
 
       - name: cargo test
         shell: bash
@@ -350,6 +433,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup soldr
+        id: setup
         uses: zackees/setup-soldr@v0
         with:
           toolchain: ${{ inputs.toolchain }}
