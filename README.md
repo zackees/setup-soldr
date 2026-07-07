@@ -195,9 +195,11 @@ jobs:
 
 That default invocation builds, checks, clippies, and tests
 `x86_64-unknown-linux-musl`. The workflow passes the effective target to
-setup-soldr's `cross-targets` input so target provisioning stays in the
-setup-soldr/soldr-owned path rather than direct workflow-level
-`cargo-zigbuild` or `cargo-xwin` installer steps.
+setup-soldr's `cross-targets` input and then runs
+`soldr toolchain ensure --json --target <target>` before each targeted
+Rust command. Target provisioning stays in the setup-soldr/soldr-owned
+path rather than direct workflow-level `rustup target add`,
+`cargo-zigbuild`, or `cargo-xwin` installer steps.
 
 #### Native opt-in consumer
 
