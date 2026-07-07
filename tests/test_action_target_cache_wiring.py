@@ -146,6 +146,8 @@ EXPECTED_OUTPUTS = {
     "compile-cache-verification",
 }
 
+EXPECTED_SOLDR_DEFAULT_VERSION = "0.8.0"
+
 
 def _load_action() -> dict:
     return yaml.safe_load(ACTION_PATH.read_text(encoding="utf-8"))
@@ -163,6 +165,13 @@ def test_action_runs_as_node24_with_main_and_post_entrypoints() -> None:
 def test_action_preserves_all_original_inputs() -> None:
     manifest = _load_action()
     assert set(manifest["inputs"]) == EXPECTED_INPUTS
+
+
+def test_action_default_soldr_version_is_current_release() -> None:
+    manifest = _load_action()
+    version_input = manifest["inputs"]["version"]
+    assert version_input["default"] == EXPECTED_SOLDR_DEFAULT_VERSION
+    assert EXPECTED_SOLDR_DEFAULT_VERSION in version_input["description"]
 
 
 def test_action_preserves_all_original_outputs() -> None:

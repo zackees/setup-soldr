@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- Default to soldr `0.8.0` (was `0.7.102`). This ingests the repaired
+  upstream release process after the 0.7.103/0.7.104 rollout issues and
+  makes the complete GitHub binary archive matrix the default install source
+  again. Headline changes:
+  - **Release order repaired:** soldr now builds and verifies GitHub binary
+    archives before the secondary package publishes, so crates.io/PyPI/npm do
+    not advance past a broken binary release (soldr#1395-#1399).
+  - **Cross-release lanes repaired:** native Windows MSVC release builds skip
+    Linux-only xwin prep, use a longer watchdog and a faster MSVC release
+    profile, and bypass the embedded zccache wrapper only for the release
+    cargo build while keeping soldr-owned toolchain/syslib prep
+    (soldr#1401/#1402/#1405/#1407).
+  - **soldr-toolchain catalogue validation:** support manifests for
+    cargo-zigbuild, cargo-xwin, xwin-cache, zig, cargo-chef, crgx, and zccache
+    are served from the Pages manifest and descriptor hashes are now linted so
+    root/catalog drift fails before release.
+  - The default still uses soldr's embedded zccache runtime. setup-soldr does
+    not fetch or install a standalone zccache for this release.
+
 - Default to soldr `0.7.102` (was `0.7.99`). This ingests the
   compiled-in zccache migration and CI perf span while staying on the
   newest upstream release that still publishes the GitHub tarball assets
