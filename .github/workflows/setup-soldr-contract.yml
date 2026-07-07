@@ -18,6 +18,7 @@ on:
       - tsconfig.json
       - .github/workflows/setup-soldr-action.yml
       - .github/workflows/bench-cache-modes.yml
+      - .github/workflows/rust-ci.yml
       - .github/workflows/setup-soldr-contract.yml
   pull_request:
     paths:
@@ -34,6 +35,7 @@ on:
       - tsconfig.json
       - .github/workflows/setup-soldr-action.yml
       - .github/workflows/bench-cache-modes.yml
+      - .github/workflows/rust-ci.yml
       - .github/workflows/setup-soldr-contract.yml
   workflow_dispatch:
 
@@ -129,4 +131,5 @@ jobs:
           python -m pytest \
             tests/test_action_target_cache_wiring.py \
             tests/test_bench_cache_modes_workflow.py \
+            tests/test_rust_ci_workflow.py \
             tests/test_release_rollout_contract.py

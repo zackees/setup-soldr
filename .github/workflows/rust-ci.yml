@@ -8,6 +8,10 @@
 # `soldr cargo ...` invocation. Per-tool jobs are individually toggleable
 # via boolean inputs.
 #
+# The default compile mode is cross-compilation. On ubuntu-latest this
+# builds and tests x86_64-unknown-linux-musl unless the caller selects
+# `compile-mode: native` or overrides `target`.
+#
 # Usage:
 #
 #   jobs:
@@ -16,8 +20,8 @@
 #       with:
 #         os: ubuntu-latest
 #
-# See README.md "Reusable Rust CI workflow" for the full input table
-# and cross-compile matrix example.
+# See README.md "Reusable Rust CI workflow" for the full input table,
+# native opt-in example, and cross-compile matrix example.
 
 name: rust-ci (reusable)
 
@@ -29,14 +33,24 @@ on:
         type: string
         required: false
         default: ubuntu-latest
-      target:
-        description: >
-          Rust target triple. Empty (default) builds for the host. A non-empty
-          value triggers `rustup target add <target>` plus `--target <target>`
-          on every cargo invocation.
+      compile-mode:
+        description: Compilation mode. Accepted values are "cross" (default) and "native".
         type: string
         required: false
-        default: ""
+        default: cross
+      target:
+        description: >
+          Rust target triple used when compile-mode is "cross". The default
+          x86_64-unknown-linux-musl gives ubuntu-latest a real non-host target
+          that can still run tests. Ignored when compile-mode is "native".
+        type: string
+        required: false
+        default: x86_64-unknown-linux-musl
+      working-directory:
+        description: Directory containing the Rust workspace or package to check.
+        type: string
+        required: false
+        default: "."
       toolchain:
         description: >
           Forwarded to setup-soldr's `toolchain` input. Empty (default) means
@@ -88,33 +102,132 @@ on:
         type: boolean
         required: false
         default: false
+  workflow_dispatch:
+    inputs:
+      os:
+        description: Runner label.
+        type: string
+        required: false
+        default: ubuntu-latest
+      compile-mode:
+        description: Compilation mode.
+        type: choice
+        required: false
+        default: cross
+        options:
+          - cross
+          - native
+      target:
+        description: Rust target triple used when compile-mode is cross.
+        type: string
+        required: false
+        default: x86_64-unknown-linux-musl
+      working-directory:
+        description: Directory containing the Rust workspace or package to check.
+        type: string
+        required: false
+        default: scripts/bench-workloads/demo-small
+      toolchain:
+        description: Toolchain forwarded to setup-soldr.
+        type: string
+        required: false
+        default: ""
+      features:
+        description: Features forwarded to the warm build.
+        type: string
+        required: false
+        default: ""
+      cargo-args:
+        description: Extra args appended to the warm build.
+        type: string
+        required: false
+        default: ""
+      cache:
+        description: Forward setup-soldr cache switch.
+        type: boolean
+        required: false
+        default: true
+      lint:
+        description: Run cargo check.
+        type: boolean
+        required: false
+        default: true
+      fmt:
+        description: Run cargo fmt --check.
+        type: boolean
+        required: false
+        default: true
+      clippy:
+        description: Run cargo clippy.
+        type: boolean
+        required: false
+        default: true
+      test:
+        description: Run cargo test.
+        type: boolean
+        required: false
+        default: true
+      dylint:
+        description: Run cargo dylint.
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   warm:
     name: warm (build)
     runs-on: ${{ inputs.os }}
+    outputs:
+      target: ${{ steps.mode.outputs.target }}
+      cross_targets: ${{ steps.mode.outputs.cross_targets }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Resolve compilation mode
+        id: mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          mode="${{ inputs.compile-mode }}"
+          target="${{ inputs.target }}"
+          if [ -z "$mode" ]; then
+            mode="cross"
+          fi
+          case "$mode" in
+            cross)
+              if [ -z "$target" ]; then
+                target="x86_64-unknown-linux-musl"
+              fi
+              echo "target=$target" >> "$GITHUB_OUTPUT"
+              echo "cross_targets=$target" >> "$GITHUB_OUTPUT"
+              ;;
+            native)
+              echo "target=" >> "$GITHUB_OUTPUT"
+              echo "cross_targets=" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error title=Invalid compile-mode::compile-mode must be 'cross' or 'native' (got '$mode')"
+              exit 1
+              ;;
+          esac
 
       - name: Setup soldr
         uses: zackees/setup-soldr@v0
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
-
-      - name: Add cross-compile target
-        if: inputs.target != ''
-        shell: bash
-        run: rustup target add "${{ inputs.target }}"
+          cross-targets: ${{ steps.mode.outputs.cross_targets }}
 
       - name: Warm build (workspace, all-targets)
         shell: bash
+        working-directory: ${{ inputs.working-directory }}
         run: |
           set -euo pipefail
           args=(--workspace --all-targets)
-          if [ -n "${{ inputs.target }}" ]; then
-            args+=(--target "${{ inputs.target }}")
+          target="${{ steps.mode.outputs.target }}"
+          if [ -n "$target" ]; then
+            args+=(--target "$target")
           fi
           if [ -n "${{ inputs.features }}" ]; then
             args+=(--features "${{ inputs.features }}")
@@ -140,6 +253,7 @@ jobs:
 
       - name: cargo fmt --check
         shell: bash
+        working-directory: ${{ inputs.working-directory }}
         run: soldr cargo fmt --all -- --check
 
   lint:
@@ -156,19 +270,17 @@ jobs:
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
-
-      - name: Add cross-compile target
-        if: inputs.target != ''
-        shell: bash
-        run: rustup target add "${{ inputs.target }}"
+          cross-targets: ${{ needs.warm.outputs.cross_targets }}
 
       - name: cargo check
         shell: bash
+        working-directory: ${{ inputs.working-directory }}
         run: |
           set -euo pipefail
           args=(--workspace --all-targets)
-          if [ -n "${{ inputs.target }}" ]; then
-            args+=(--target "${{ inputs.target }}")
+          target="${{ needs.warm.outputs.target }}"
+          if [ -n "$target" ]; then
+            args+=(--target "$target")
           fi
           soldr cargo check "${args[@]}"
 
@@ -186,19 +298,17 @@ jobs:
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
-
-      - name: Add cross-compile target
-        if: inputs.target != ''
-        shell: bash
-        run: rustup target add "${{ inputs.target }}"
+          cross-targets: ${{ needs.warm.outputs.cross_targets }}
 
       - name: cargo clippy
         shell: bash
+        working-directory: ${{ inputs.working-directory }}
         run: |
           set -euo pipefail
           args=(--workspace --all-targets)
-          if [ -n "${{ inputs.target }}" ]; then
-            args+=(--target "${{ inputs.target }}")
+          target="${{ needs.warm.outputs.target }}"
+          if [ -n "$target" ]; then
+            args+=(--target "$target")
           fi
           soldr cargo clippy "${args[@]}" -- -D warnings
 
@@ -216,19 +326,17 @@ jobs:
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
-
-      - name: Add cross-compile target
-        if: inputs.target != ''
-        shell: bash
-        run: rustup target add "${{ inputs.target }}"
+          cross-targets: ${{ needs.warm.outputs.cross_targets }}
 
       - name: cargo test
         shell: bash
+        working-directory: ${{ inputs.working-directory }}
         run: |
           set -euo pipefail
           args=(--workspace)
-          if [ -n "${{ inputs.target }}" ]; then
-            args+=(--target "${{ inputs.target }}")
+          target="${{ needs.warm.outputs.target }}"
+          if [ -n "$target" ]; then
+            args+=(--target "$target")
           fi
           soldr cargo test "${args[@]}"
 
@@ -255,4 +363,5 @@ jobs:
 
       - name: cargo dylint
         shell: bash
+        working-directory: ${{ inputs.working-directory }}
         run: soldr cargo dylint --all --workspace
