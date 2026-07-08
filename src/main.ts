@@ -49,11 +49,14 @@ import {
   buildCookBaseCacheKey,
   buildCookCacheKey,
   buildCookDeltaCacheKey,
+  buildCookDeltaCacheRestorePrefix,
   decideCookGate,
   hashCookBuildShape,
   hashCookFlags,
   canonicalizeCookFlags,
   loadLayeredCookCache,
+  layeredCookBaseReady,
+  layeredCookDeltaReady,
   parseCookFlags,
   restoreCookCache,
   restoreLayeredCookCacheArchives,
@@ -746,6 +749,7 @@ export async function run(): Promise<void> {
   let cookBaseKey = "";
   let cookDeltaKey = "";
   let cookDeltaParentKey = "";
+  let cookDeltaRestoreKeys: string[] = [];
   let cookProjectRoot = "";
   let cookTargetDir = "";
   let cookArchive = "";
@@ -810,18 +814,26 @@ export async function run(): Promise<void> {
           githubSha: ctx.parentSha,
         });
       }
+      cookDeltaRestoreKeys = cookDeltaParentKey ? [cookDeltaParentKey] : [];
+      cookDeltaRestoreKeys.push(
+        buildCookDeltaCacheRestorePrefix({
+          ...cookKeyParts,
+          buildShapeHash: shapeHash,
+        }),
+      );
       cookBaseArchive = `${cookTargetDir}.soldr-base.tar.zst`;
       cookDeltaArchive = `${cookTargetDir}.soldr-delta.tar.zst`;
       cookBaseManifest = `${cookTargetDir}.soldr-base-manifest.pb`;
       logger.log(
         `cook: layered keys base=${cookBaseKey} delta=${cookDeltaKey}` +
           (cookDeltaParentKey ? ` delta-fallback=${cookDeltaParentKey}` : ` (no parent-fallback — parentSha unavailable, #365)`) +
+          ` delta-prefix=${cookDeltaRestoreKeys.at(-1)}` +
           ` starting archive restore concurrent with install`,
       );
       cookLayeredRestorePromise = restoreLayeredCookCacheArchives({
         baseKey: cookBaseKey,
         deltaKey: cookDeltaKey,
-        deltaRestoreKeys: cookDeltaParentKey ? [cookDeltaParentKey] : [],
+        deltaRestoreKeys: cookDeltaRestoreKeys,
         baseArchivePath: cookBaseArchive,
         deltaArchivePath: cookDeltaArchive,
         log: (msg) => logger.log(msg),
@@ -1247,8 +1259,8 @@ export async function run(): Promise<void> {
       restore,
       log: (msg) => logger.log(msg),
     });
-    const baseReady = restore.base.hit && loaded.baseLoaded;
-    const deltaReady = baseReady && restore.delta.hit && loaded.deltaLoaded;
+    const baseReady = layeredCookBaseReady(restore, loaded);
+    const deltaReady = layeredCookDeltaReady(restore, loaded);
     statsCollector.record({
       label: "cook-cache-base",
       operation: "restore",
@@ -1268,7 +1280,7 @@ export async function run(): Promise<void> {
       hit: deltaReady,
       key: cookDeltaKey,
       matchedKey: restore.delta.matchedKey,
-      restoreKeys: cookDeltaParentKey ? [cookDeltaParentKey] : [],
+      restoreKeys: cookDeltaRestoreKeys,
       archiveBytes: restore.delta.archiveBytes || null,
       inflatedBytes: null,
       fileCount: loaded.deltaReport?.cacheFilesRestored ?? null,

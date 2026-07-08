@@ -47217,11 +47217,14 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LAYERED_COOK_MIN_SOLDR_VERSION = void 0;
+exports.layeredCookBaseReady = layeredCookBaseReady;
+exports.layeredCookDeltaReady = layeredCookDeltaReady;
 exports.hashCookFlags = hashCookFlags;
 exports.buildCookCacheKey = buildCookCacheKey;
 exports.buildCookBaseCacheKey = buildCookBaseCacheKey;
 exports.hashCookBuildShape = hashCookBuildShape;
 exports.buildCookDeltaCacheKey = buildCookDeltaCacheKey;
+exports.buildCookDeltaCacheRestorePrefix = buildCookDeltaCacheRestorePrefix;
 exports.supportsLayeredCookCache = supportsLayeredCookCache;
 exports.isCookMode = isCookMode;
 exports.decideCookGate = decideCookGate;
@@ -47242,6 +47245,14 @@ const exec = __importStar(__nccwpck_require__(95236));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
 const log_utils_js_1 = __nccwpck_require__(28129);
+function layeredCookBaseReady(restore, loaded) {
+    return restore.base.hit && loaded.baseLoaded;
+}
+function layeredCookDeltaReady(restore, loaded) {
+    return layeredCookBaseReady(restore, loaded) &&
+        Boolean(restore.delta.matchedKey) &&
+        loaded.deltaLoaded;
+}
 const COOK_KEY_PREFIX = "cook";
 const COOK_BASE_KEY_PREFIX = "cook-base-v2";
 const COOK_DELTA_KEY_PREFIX = "cook-delta-v2";
@@ -47315,6 +47326,14 @@ function buildCookDeltaCacheKey(parts) {
         `s${shape}`,
         `g${sha}`,
     ].join("-");
+}
+function buildCookDeltaCacheRestorePrefix(parts) {
+    const shape = keyFragment(parts.buildShapeHash, "no-shape");
+    return [
+        COOK_DELTA_KEY_PREFIX,
+        ...cookKeyParts(parts),
+        `s${shape}`,
+    ].join("-") + "-";
 }
 function parseVersion(value) {
     const cleaned = value.trim().replace(/^v/i, "");

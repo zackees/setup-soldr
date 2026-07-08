@@ -5,6 +5,8 @@ import * as os from "node:os";
 import * as path from "node:path";
 import {
   loadLayeredCookCache,
+  layeredCookBaseReady,
+  layeredCookDeltaReady,
   restoreCookCache,
   restoreLayeredCookCacheArchives,
   runCook,
@@ -150,8 +152,8 @@ async function main(): Promise<void> {
       restore,
       log: (msg) => core.info(msg),
     });
-    const baseReady = restore.base.hit && loaded.baseLoaded;
-    const deltaReady = baseReady && restore.delta.hit && loaded.deltaLoaded;
+    const baseReady = layeredCookBaseReady(restore, loaded);
+    const deltaReady = layeredCookDeltaReady(restore, loaded);
     cacheHit = deltaReady;
     if (!deltaReady) {
       const runRes = await runCook({
