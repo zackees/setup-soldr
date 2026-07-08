@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add `zackees/setup-soldr/cook`, a deferred cook-cache sub-action for
+  workflows that must run target-specific setup before `soldr cook`. It reuses
+  the main action's layered base/delta cook cache helpers, accepts explicit
+  target/profile-shaped cook flags, and saves the selected layer from its own
+  post step. This lets cross-compile workflows disable early
+  `prebuild-deps` in the main action and run cook after `soldr prepare
+  --target ... --github-env`.
+
 - Default to soldr `0.8.0` (was `0.7.102`). This ingests the repaired
   upstream release process after the 0.7.103/0.7.104 rollout issues and
   makes the complete GitHub binary archive matrix the default install source

@@ -1,0 +1,89 @@
+name: setup-soldr cook
+author: zackees
+description: Restore, run, and save setup-soldr's soldr cook dependency cache after workflow-specific target setup.
+inputs:
+  soldr-path:
+    description: >
+      Optional soldr binary path. Defaults to SOLDR_BINARY when set, otherwise
+      PATH-resolved `soldr`.
+    required: false
+    default: ""
+  workspace:
+    description: >
+      Project workspace. Defaults to ACTION_WORKSPACE, GITHUB_WORKSPACE, then
+      the current working directory.
+    required: false
+    default: ""
+  target-dir:
+    description: >
+      Cargo target directory to warm. Defaults to CARGO_TARGET_DIR when set,
+      otherwise `target` under the workspace.
+    required: false
+    default: ""
+  lockfile:
+    description: >
+      Cargo.lock path. Defaults to the existing Cargo.lock next to target-dir
+      or under the workspace, matching setup-soldr's main action.
+    required: false
+    default: ""
+  flags:
+    description: >
+      Flags passed to `soldr cook`, for example
+      `--profile ci-nextest --target x86_64-pc-windows-msvc --package soldr-cli`.
+    required: false
+    default: "--release"
+  cache:
+    description: "Set false to skip cook restore/run/save."
+    required: false
+    default: "true"
+  delta-cache:
+    description: "Enable layered base+delta cook archives when the soldr version supports them."
+    required: false
+    default: "true"
+  rustc-release:
+    description: "Optional rustc release key fragment. Defaults to probing `rustc --version`."
+    required: false
+    default: ""
+  soldr-version:
+    description: "Optional soldr version key fragment. Defaults to probing `soldr version --json`."
+    required: false
+    default: ""
+  build-shape:
+    description: >
+      Optional build-shape string for the delta key. Defaults to a hashable
+      shape derived from Cargo manifests, cargo config, target env, target-dir,
+      and canonical cook flags.
+    required: false
+    default: ""
+  parent-sha:
+    description: "Optional parent commit SHA for delta-cache fallback. Defaults to ACTION_PARENT_SHA."
+    required: false
+    default: ""
+  zstd-level:
+    description: "Base/legacy archive zstd compression level."
+    required: false
+    default: "9"
+  delta-zstd-level:
+    description: "Delta archive zstd compression level."
+    required: false
+    default: "3"
+  fail-on-error:
+    description: "Fail the action when cook or cook-cache save fails."
+    required: false
+    default: "false"
+  debug:
+    description: "Enable verbose legacy cook-cache restore/save logging."
+    required: false
+    default: "false"
+outputs:
+  cache-hit:
+    description: "true when the requested cook cache restored without running soldr cook."
+  ran:
+    description: "true when this step ran soldr cook."
+  save-layer:
+    description: "For layered caches, the layer selected for post-step save: base, delta, or none."
+runs:
+  using: node24
+  main: dist/main.js
+  post: dist/post.js
+  post-if: always()

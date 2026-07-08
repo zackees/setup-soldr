@@ -18,6 +18,8 @@
 // Usage: node scripts/bundle-entrypoint.mjs main
 //        node scripts/bundle-entrypoint.mjs post
 //        node scripts/bundle-entrypoint.mjs cleanup
+//        node scripts/bundle-entrypoint.mjs cook
+//        node scripts/bundle-entrypoint.mjs cook-post
 
 import { copyFileSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
 import { join as pathJoin } from "node:path";
@@ -25,15 +27,22 @@ import { createHash } from "node:crypto";
 
 const name = process.argv[2];
 if (!name) {
-  console.error("usage: node scripts/bundle-entrypoint.mjs <main|post|cleanup>");
+  console.error("usage: node scripts/bundle-entrypoint.mjs <main|post|cleanup|cook|cook-post>");
   process.exit(1);
 }
 
+const actionEntrypoints = new Map([
+  ["cleanup", { path: "cleanup/dist/index.js", dir: "cleanup/dist" }],
+  ["cook", { path: "cook/dist/main.js", dir: "cook/dist" }],
+  ["cook-post", { path: "cook/dist/post.js", dir: "cook/dist" }],
+]);
+
 const sourcePath = `dist-${name}/index.js`;
-const targetPath = name === "cleanup" ? "cleanup/dist/index.js" : `dist/${name}.js`;
+const actionEntrypoint = actionEntrypoints.get(name);
+const targetPath = actionEntrypoint?.path ?? `dist/${name}.js`;
 mkdirSync("dist", { recursive: true });
-if (name === "cleanup") {
-  mkdirSync("cleanup/dist", { recursive: true });
+if (actionEntrypoint) {
+  mkdirSync(actionEntrypoint.dir, { recursive: true });
 }
 
 // ncc produces side-chunk files (`<id>.index.js`) for any dynamic
@@ -49,7 +58,7 @@ if (name === "cleanup") {
 // rewriting them would desync the bundle from the on-disk chunk
 // filenames. (Determinism for chunkless bundles is preserved.)
 const sourceDir = `dist-${name}`;
-const targetDir = name === "cleanup" ? "cleanup/dist" : "dist";
+const targetDir = actionEntrypoint?.dir ?? "dist";
 const chunkFiles = readdirSync(sourceDir).filter(
   (f) => /^\d+\.index\.js$/.test(f),
 );
