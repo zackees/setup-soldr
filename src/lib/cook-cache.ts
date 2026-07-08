@@ -44,6 +44,8 @@ export interface CookDeltaCacheKeyParts extends CookCacheKeyParts {
   githubSha: string;
 }
 
+export type CookDeltaCacheRestorePrefixParts = Omit<CookDeltaCacheKeyParts, "githubSha">;
+
 /** Cook gating decision. */
 export interface CookGate {
   enabled: boolean;
@@ -123,6 +125,22 @@ export interface CookLayeredLoadOpts {
   baseManifestPath: string;
   restore: CookLayeredRestoreResult;
   log: (msg: string) => void;
+}
+
+export function layeredCookBaseReady(
+  restore: CookLayeredRestoreResult,
+  loaded: CookLayeredLoadResult,
+): boolean {
+  return restore.base.hit && loaded.baseLoaded;
+}
+
+export function layeredCookDeltaReady(
+  restore: CookLayeredRestoreResult,
+  loaded: CookLayeredLoadResult,
+): boolean {
+  return layeredCookBaseReady(restore, loaded) &&
+    Boolean(restore.delta.matchedKey) &&
+    loaded.deltaLoaded;
 }
 
 export interface CookSaveOpts {
@@ -260,6 +278,15 @@ export function buildCookDeltaCacheKey(parts: CookDeltaCacheKeyParts): string {
     `s${shape}`,
     `g${sha}`,
   ].join("-");
+}
+
+export function buildCookDeltaCacheRestorePrefix(parts: CookDeltaCacheRestorePrefixParts): string {
+  const shape = keyFragment(parts.buildShapeHash, "no-shape");
+  return [
+    COOK_DELTA_KEY_PREFIX,
+    ...cookKeyParts(parts),
+    `s${shape}`,
+  ].join("-") + "-";
 }
 
 function parseVersion(value: string): { major: number; minor: number; patch: number } | null {

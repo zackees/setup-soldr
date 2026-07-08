@@ -60,8 +60,10 @@ test("deferred cook plan preserves target/profile-shaped flags for msvc cook", a
     assert.match(plan.baseKey, /rustc1\.94\.1-/);
     assert.match(plan.baseKey, /soldr0\.8\.1$/);
     assert.match(plan.deltaKey, /-g0123456789abcdef$/);
-    assert.equal(plan.deltaRestoreKeys.length, 1);
+    assert.equal(plan.deltaRestoreKeys.length, 2);
     assert.match(plan.deltaRestoreKeys[0] ?? "", /-gfedcba9876543210$/);
+    assert.match(plan.deltaRestoreKeys[1] ?? "", /^cook-delta-v2-linux-x64-.*-s[0-9a-f]{12}-$/);
+    assert.ok(plan.deltaKey.startsWith(plan.deltaRestoreKeys[1] ?? "missing-prefix"));
     assert.equal(plan.projectRoot, workspace);
     assert.equal(plan.targetDir, path.join(workspace, "target"));
     assert.equal(plan.baseArchivePath, `${path.join(workspace, "target")}.soldr-base.tar.zst`);

@@ -13,11 +13,13 @@ import {
   buildCookBaseCacheKey,
   buildCookCacheKey,
   buildCookDeltaCacheKey,
+  buildCookDeltaCacheRestorePrefix,
   decideCookGate,
   hashCookBuildShape,
   hashCookFlags,
   isCookMode,
   canonicalizeCookFlags,
+  layeredCookDeltaReady,
   parseCookFlags,
   supportsLayeredCookCache,
 } from "../src/lib/cook-cache.js";
@@ -131,6 +133,58 @@ test("buildCookDeltaCacheKey includes build shape and commit SHA", () => {
   assert.notEqual(
     key,
     buildCookDeltaCacheKey({ ...parts, githubSha: "fedcba9876543210" }),
+  );
+});
+
+test("buildCookDeltaCacheRestorePrefix keeps same target shape and drops SHA", () => {
+  const parts = {
+    runnerOs: "linux",
+    runnerArch: "x64",
+    libc: "glibc",
+    rustcRelease: "1.84.1",
+    flagsHash: "abc12345",
+    lockHash: "deadbeef",
+    soldrVersion: "0.7.38",
+    buildShapeHash: hashCookBuildShape("target-shape"),
+  };
+  const prefix = buildCookDeltaCacheRestorePrefix(parts);
+  assert.match(
+    prefix,
+    /^cook-delta-v2-linux-x64-glibc-rustc1\.84\.1-fabc12345-ldeadbeef-soldr0\.7\.38-s[0-9a-f]{12}-$/,
+  );
+  assert.ok(
+    buildCookDeltaCacheKey({ ...parts, githubSha: "0123456789abcdef9999" }).startsWith(prefix),
+  );
+  assert.ok(
+    buildCookDeltaCacheKey({ ...parts, githubSha: "fedcba9876543210" }).startsWith(prefix),
+  );
+});
+
+test("layeredCookDeltaReady accepts loaded restore-key delta matches", () => {
+  assert.equal(
+    layeredCookDeltaReady(
+      {
+        base: {
+          hit: true,
+          matchedKey: "cook-base-v2-linux-x64",
+          archivePath: "base.tar.zst",
+          archiveBytes: 1,
+        },
+        delta: {
+          hit: false,
+          matchedKey: "cook-delta-v2-linux-x64-sabc-gparent",
+          archivePath: "delta.tar.zst",
+          archiveBytes: 1,
+        },
+      },
+      {
+        baseLoaded: true,
+        deltaLoaded: true,
+        baseReport: null,
+        deltaReport: null,
+      },
+    ),
+    true,
   );
 });
 

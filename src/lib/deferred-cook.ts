@@ -4,6 +4,7 @@ import {
   buildCookBaseCacheKey,
   buildCookCacheKey,
   buildCookDeltaCacheKey,
+  buildCookDeltaCacheRestorePrefix,
   canonicalizeCookFlags,
   decideCookGate,
   hashCookBuildShape,
@@ -138,21 +139,29 @@ export async function buildDeferredCookPlan(
     env: inputs.env,
   });
   const baseKey = buildCookBaseCacheKey(keyParts);
+  const buildShapeHash = hashCookBuildShape(buildShape);
   const deltaKey = buildCookDeltaCacheKey({
     ...keyParts,
-    buildShapeHash: hashCookBuildShape(buildShape),
+    buildShapeHash,
     githubSha: inputs.githubSha || "nosha",
   });
   const parentSha = inputs.parentSha.trim();
-  const deltaRestoreKeys = parentSha && parentSha !== inputs.githubSha
-    ? [
-        buildCookDeltaCacheKey({
-          ...keyParts,
-          buildShapeHash: hashCookBuildShape(buildShape),
-          githubSha: parentSha,
-        }),
-      ]
-    : [];
+  const deltaRestoreKeys = [];
+  if (parentSha && parentSha !== inputs.githubSha) {
+    deltaRestoreKeys.push(
+      buildCookDeltaCacheKey({
+        ...keyParts,
+        buildShapeHash,
+        githubSha: parentSha,
+      }),
+    );
+  }
+  deltaRestoreKeys.push(
+    buildCookDeltaCacheRestorePrefix({
+      ...keyParts,
+      buildShapeHash,
+    }),
+  );
 
   return {
     enabled: true,
