@@ -54,6 +54,31 @@ and fails by default if the scoped shutdown cannot be confirmed. The normal
 setup-soldr post step still runs later so final cache saves see a quiescent
 cache directory.
 
+### Deferred dependency prebuilds
+
+Use the cook sub-action when a workflow must run target-specific setup before
+`soldr cook`. This keeps the main setup-soldr step focused on installing soldr
+and the toolchain, then restores/runs/saves the cook cache after your workflow
+has exported the target environment:
+
+```yaml
+- uses: zackees/setup-soldr@v0
+  with:
+    cache: true
+    prebuild-deps: none
+- run: soldr prepare --target x86_64-pc-windows-msvc --github-env
+- uses: zackees/setup-soldr/cook@v0
+  with:
+    flags: --profile ci-nextest --target x86_64-pc-windows-msvc --package soldr-cli
+- run: soldr build --target x86_64-pc-windows-msvc --profile ci-nextest --package soldr-cli
+```
+
+The cook sub-action uses the same base/delta cache helpers as the main action.
+Its key includes runner OS, arch, libc, rustc release, soldr version,
+`Cargo.lock`, and material cook flags. The delta layer also includes a build
+shape derived after this step starts, so target/profile-shaped cooks do not
+depend on setup-soldr's earlier main-action timing.
+
 During setup, the action also checks the installed soldr zccache backend.
 For soldr releases with embedded zccache, no seed is needed. Older soldr
 releases still seed soldr's pinned zccache install from a vendored
@@ -627,6 +652,11 @@ SHA, so the same dependency/toolchain shape can hit across branches and
 commits. The delta key adds the target/build shape and commit SHA, so normal
 code-only changes save a small secondary archive instead of re-uploading the
 whole cook cache.
+
+When target setup must happen after the main setup-soldr step, use
+`zackees/setup-soldr/cook@v0` instead of the main action's early
+`prebuild-deps: soldr-cook`. The sub-action runs later in the workflow and
+accepts the same `soldr cook` flags through its `flags` input.
 
 Base key shape:
 `cook-base-v2-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.
