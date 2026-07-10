@@ -10,22 +10,29 @@
   `prebuild-deps` in the main action and run cook after `soldr prepare
   --target ... --github-env`.
 
-- Default to soldr `0.8.0` (was `0.7.102`). This ingests the repaired
-  upstream release process after the 0.7.103/0.7.104 rollout issues and
-  makes the complete GitHub binary archive matrix the default install source
-  again. Headline changes:
-  - **Release order repaired:** soldr now builds and verifies GitHub binary
-    archives before the secondary package publishes, so crates.io/PyPI/npm do
-    not advance past a broken binary release (soldr#1395-#1399).
-  - **Cross-release lanes repaired:** native Windows MSVC release builds skip
-    Linux-only xwin prep, use a longer watchdog and a faster MSVC release
-    profile, and bypass the embedded zccache wrapper only for the release
-    cargo build while keeping soldr-owned toolchain/syslib prep
+- Default to soldr `0.8.5` (was `0.7.102`). This ingests the repaired 0.8.0
+  release process together with the 0.8.1–0.8.5 embedded-zccache and daemon
+  hardening series. Headline changes:
+  - **Release order repaired (0.8.0):** soldr builds and verifies GitHub
+    binary archives before the secondary package publishes, so
+    crates.io/PyPI/npm do not advance past a broken binary release
+    (soldr#1395-#1399). Native Windows MSVC release builds skip Linux-only
+    xwin prep and use a faster MSVC release profile
     (soldr#1401/#1402/#1405/#1407).
-  - **soldr-toolchain catalogue validation:** support manifests for
-    cargo-zigbuild, cargo-xwin, xwin-cache, zig, cargo-chef, crgx, and zccache
-    are served from the Pages manifest and descriptor hashes are now linted so
-    root/catalog drift fails before release.
+  - **Embedded zccache coverage widened (0.8.1–0.8.3):** clippy-driver,
+    rustfmt, rustdoc, `cargo miri`, direct `maturin` builds, and
+    rust-analyzer child processes now route through the embedded zccache, and
+    residual bypass gaps are closed (soldr#1411/#1421/#1424/#1426-#1431,
+    #1460). Vendored zccache bumped to `1.12.15` (soldr#1466).
+  - **Standalone-zccache carriers removed (0.8.4):** legacy standalone-zccache
+    shell-out paths are deleted, the trampoline is gated to daemon-free
+    subcommands + `ZCCACHE_NO_SPAWN`, and `soldr doctor` gains a
+    standalone-zccache probe with a no-spawn regression lint
+    (soldr#1467/#1469-#1472). Embedded zccache bumped to `1.12.15`.
+  - **Daemon hardening (0.8.2/0.8.5):** Windows restart hangs are prevented
+    (soldr#1450), and `running-process` is bumped to `4.5.10` so the Windows
+    broker DACL no longer strips child/hardlinked ACLs (soldr#1513/#1518).
+  - **musllinux wheels** are now shipped (soldr#1439).
   - The default still uses soldr's embedded zccache runtime. setup-soldr does
     not fetch or install a standalone zccache for this release.
 
