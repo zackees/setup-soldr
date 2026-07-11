@@ -454,6 +454,32 @@ test("cargo_registry_cache_key drops cache-key-suffix (#375)", async () => {
   );
 });
 
+test("cargo registry cache evolves with lockfile and excludes auth-bearing roots (#1532)", async () => {
+  const lockA = await run(
+    { lockfileContents: "# lock A\nname = \\\"alpha\\\"\n" },
+    { INPUT_CARGO_REGISTRY_CACHE: "true" },
+  );
+  const lockB = await run(
+    { lockfileContents: "# lock B\nname = \\\"beta\\\"\n" },
+    { INPUT_CARGO_REGISTRY_CACHE: "true" },
+  );
+
+  assert.notEqual(
+    lockA.result.cargoRegistryCache.key,
+    lockB.result.cargoRegistryCache.key,
+    "different lockfiles must not share one registry snapshot key",
+  );
+  assert.deepEqual(
+    lockA.result.cargoRegistryCache.extraBasenames.sort(),
+    [".global-cache", "git"],
+    "registry snapshots may include Cargo's dependency data only",
+  );
+  assert.equal(
+    lockA.result.cargoRegistryCache.path,
+    path.join(lockA.result.cargoHome, "registry"),
+  );
+});
+
 test("cache-key-suffix works via kebab-case env (production form)", async () => {
   // Simulate exactly what the GitHub Actions runner does: set
   // INPUT_CACHE-KEY-SUFFIX (dashes), not INPUT_CACHE_KEY_SUFFIX.
