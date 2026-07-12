@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Default to soldr `0.8.6` (was `0.8.5`). This release restores the managed
+  Windows MSVC cross-build lanes, including ARM64 target provisioning and
+  clang-cl argument-mode handling (soldr#1559), and carries the multicall
+  runtime, embedded-cache, daemon isolation, rust-plan, archive, and wrapper
+  correctness work merged since `0.8.5`.
+
 - Add `zackees/setup-soldr/cook`, a deferred cook-cache sub-action for
   workflows that must run target-specific setup before `soldr cook`. It reuses
   the main action's layered base/delta cook cache helpers, accepts explicit
