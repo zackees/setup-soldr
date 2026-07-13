@@ -15,6 +15,7 @@ import {
   hashStringArray,
   stageDiffForSave,
   applyStagedToLiveRoots,
+  verifyRestoredToolchain,
   type RootMap,
 } from "../src/lib/solo-toolchain-cache.js";
 import type { SnapshotDiff, SnapshotEntry } from "../src/lib/toolchain-snapshot.js";
@@ -44,6 +45,30 @@ test("hashStringArray is stable across input order", () => {
 test("hashStringArray returns 'none' for empty inputs", () => {
   assert.equal(hashStringArray([]), "none");
   assert.equal(hashStringArray(["", "  "]), "none");
+});
+
+test("verifyRestoredToolchain rejects a restored toolchain with unusable target std", async () => {
+  const logs: string[] = [];
+  const result = await verifyRestoredToolchain({
+    expectedRelease: "",
+    expectedTargets: ["aarch64-unknown-linux-gnu"],
+    rustcCommand: "rustc",
+    log: (message) => logs.push(message),
+    runTargetProbe: async () => ({ code: 1, stderr: "can't find crate for `std`" }),
+  });
+  assert.equal(result.match, false);
+  assert.ok(logs.some((line) => line.includes("target std probe failed")));
+});
+
+test("verifyRestoredToolchain accepts a valid target std probe", async () => {
+  const result = await verifyRestoredToolchain({
+    expectedRelease: "",
+    expectedTargets: ["aarch64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"],
+    rustcCommand: "rustc",
+    log: () => {},
+    runTargetProbe: async () => ({ code: 0, stderr: "" }),
+  });
+  assert.equal(result.match, true);
 });
 
 test("hashStringArray is case-insensitive and trims", () => {

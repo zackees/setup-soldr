@@ -49787,6 +49787,7 @@ exports.verifyRestoredToolchain = verifyRestoredToolchain;
 const node_crypto_1 = __nccwpck_require__(77598);
 const fs = __importStar(__nccwpck_require__(73024));
 const fsp = __importStar(__nccwpck_require__(51455));
+const os = __importStar(__nccwpck_require__(48161));
 const path = __importStar(__nccwpck_require__(76760));
 const cache = __importStar(__nccwpck_require__(5116));
 const exec = __importStar(__nccwpck_require__(95236));
@@ -50208,35 +50209,76 @@ async function restoreSoloCache(opts) {
  * `expectedRelease` empty disables the check (returns `match: true`).
  */
 async function verifyRestoredToolchain(opts) {
-    const { expectedRelease, rustcCommand, log } = opts;
-    if (!expectedRelease.trim())
-        return { match: true, observedRelease: null };
+    const { expectedRelease, expectedTargets = [], rustcCommand, log } = opts;
+    let releaseMatch = true;
+    let observedRelease = null;
     let stdout = "";
     let code = -1;
-    try {
-        code = await exec.exec(rustcCommand, ["--version"], {
-            silent: true,
-            ignoreReturnCode: true,
-            listeners: { stdout: (data) => { stdout += data.toString("utf8"); } },
-        });
+    if (expectedRelease.trim()) {
+        try {
+            code = await exec.exec(rustcCommand, ["--version"], {
+                silent: true,
+                ignoreReturnCode: true,
+                listeners: { stdout: (data) => { stdout += data.toString("utf8"); } },
+            });
+        }
+        catch (err) {
+            log(`solo-toolchain-cache: rustc --version threw: ${err instanceof Error ? err.message : String(err)}`);
+            return { match: false, observedRelease: null };
+        }
+        if (code !== 0) {
+            log(`solo-toolchain-cache: rustc --version exited ${code}; cannot verify restore`);
+            return { match: false, observedRelease: null };
+        }
+        const match = stdout.trim().match(/^rustc\s+(\S+)/);
+        observedRelease = match ? (match[1] ?? null) : null;
+        if (observedRelease === null) {
+            log(`solo-toolchain-cache: rustc --version output not parseable: ${stdout.trim()}`);
+            return { match: false, observedRelease: null };
+        }
+        releaseMatch = observedRelease === expectedRelease;
+        log(`solo-toolchain-cache: verify rustc release expected=${expectedRelease} observed=${observedRelease} match=${releaseMatch}`);
     }
-    catch (err) {
-        log(`solo-toolchain-cache: rustc --version threw: ${err instanceof Error ? err.message : String(err)}`);
-        return { match: false, observedRelease: null };
+    const targets = [...new Set(expectedTargets.map((target) => target.trim()).filter(Boolean))];
+    const runTargetProbe = opts.runTargetProbe ?? (async (target) => {
+        const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "setup-soldr-target-probe-"));
+        const source = path.join(tempDir, "probe.rs");
+        const output = path.join(tempDir, "probe.rmeta");
+        await fsp.writeFile(source, "pub fn setup_soldr_target_probe() {}\n", "utf8");
+        let stderr = "";
+        try {
+            const probeCode = await exec.exec(rustcCommand, ["--target", target, "--crate-type", "lib", "--emit", "metadata", source, "-o", output], {
+                silent: true,
+                ignoreReturnCode: true,
+                listeners: { stderr: (data) => { stderr += data.toString("utf8"); } },
+            });
+            return { code: probeCode, stderr };
+        }
+        finally {
+            await fsp.rm(tempDir, { recursive: true, force: true });
+        }
+    });
+    let targetsMatch = true;
+    for (const target of targets) {
+        let probe;
+        try {
+            probe = await runTargetProbe(target);
+        }
+        catch (err) {
+            probe = {
+                code: -1,
+                stderr: err instanceof Error ? err.message : String(err),
+            };
+        }
+        if (probe.code !== 0) {
+            targetsMatch = false;
+            log(`solo-toolchain-cache: target std probe failed target=${target} exit=${probe.code}: ${probe.stderr.trim()}`);
+        }
+        else {
+            log(`solo-toolchain-cache: target std probe passed target=${target}`);
+        }
     }
-    if (code !== 0) {
-        log(`solo-toolchain-cache: rustc --version exited ${code}; cannot verify restore`);
-        return { match: false, observedRelease: null };
-    }
-    const match = stdout.trim().match(/^rustc\s+(\S+)/);
-    const observed = match ? (match[1] ?? null) : null;
-    if (observed === null) {
-        log(`solo-toolchain-cache: rustc --version output not parseable: ${stdout.trim()}`);
-        return { match: false, observedRelease: null };
-    }
-    const ok = observed === expectedRelease;
-    log(`solo-toolchain-cache: verify rustc release expected=${expectedRelease} observed=${observed} match=${ok}`);
-    return { match: ok, observedRelease: observed };
+    return { match: releaseMatch && targetsMatch, observedRelease };
 }
 
 

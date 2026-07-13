@@ -293,11 +293,13 @@ export async function tryDelegateToSoldrToolchainEnsure(opts: {
 export async function ensureRustToolchain(opts: {
   resolveResult: ResolveResult;
   setupCacheExactHit: boolean;
+  /** Reinstall after a restored cache entry fails a post-restore probe. */
+  forceRepair?: boolean;
 }): Promise<void> {
   const logger = createLogger(process.env);
   const log = (msg: string): void => logger.log(msg);
 
-  const { resolveResult, setupCacheExactHit } = opts;
+  const { resolveResult, setupCacheExactHit, forceRepair = false } = opts;
   const cargoHome = resolveResult.cargoHome;
   const rustupHome = resolveResult.rustupHome;
   const soldrRoot = resolveResult.soldrRoot;
@@ -328,7 +330,7 @@ export async function ensureRustToolchain(opts: {
   // or the subcommand exits non-zero — every such case falls through to the
   // legacy in-TS rustup driver below. The delegation is *optional*: the action
   // continues to work end-to-end when pinned to an older soldr release.
-  const delegated = await tryDelegateToSoldrToolchainEnsure({
+  const delegated = forceRepair ? null : await tryDelegateToSoldrToolchainEnsure({
     soldrPath: resolveResult.soldrPath,
     channel,
     profile,
@@ -362,7 +364,16 @@ export async function ensureRustToolchain(opts: {
 
   await exec.exec(rustup, ["set", "profile", profile]);
 
-  if (shouldRefreshToolchain(channel)) {
+  if (forceRepair) {
+    log(`Cached Rust toolchain failed validation; reinstalling ${channel} before adding components/targets`);
+    await exec.exec(rustup, ["toolchain", "uninstall", channel], {
+      ignoreReturnCode: true,
+      silent: true,
+    });
+    await streamExec(rustup, ["toolchain", "install", channel, "--profile", profile]);
+  }
+
+  if (!forceRepair && shouldRefreshToolchain(channel)) {
     const installedRelease = (await toolchainAvailable(rustup, channel))
       ? await installedToolchainRelease(rustup, channel)
       : null;

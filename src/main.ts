@@ -886,6 +886,7 @@ export async function run(): Promise<void> {
   let soloKeys: ReturnType<typeof buildSoloCacheKeys> | null = null;
   let soloMatchedKey = "";
   let soloExactHit = false;
+  let forceToolchainRepair = false;
   // Pre-restore snapshot — only needed when solo cache is enabled, so
   // we can compute the full save-diff (post-install vs runner-image,
   // not vs post-restore baseline). (#302: timed as sub-phase.)
@@ -926,10 +927,12 @@ export async function run(): Promise<void> {
       const rustcCmd = process.platform === "win32" ? "rustc.exe" : "rustc";
       const verify = await verifyRestoredToolchain({
         expectedRelease: expected,
+        expectedTargets: result.toolchain.targets,
         rustcCommand: rustcCmd,
         log: (msg) => logger.log(msg),
       });
       verifiedMatch = verify.match;
+      forceToolchainRepair = restored.verified && !verify.match;
     }
     soloExactHit = restored.hit && verifiedMatch;
     core.saveState("soloToolchainEnabled", "true");
@@ -969,7 +972,11 @@ export async function run(): Promise<void> {
     );
   } else {
     await timeSubPhase("toolchain", "rustup-install", () =>
-      ensureRustToolchain({ resolveResult: result, setupCacheExactHit }),
+      ensureRustToolchain({
+        resolveResult: result,
+        setupCacheExactHit,
+        forceRepair: forceToolchainRepair,
+      }),
     );
   }
   const postInstallSnapshot = await timeSubPhase("toolchain", "snapshot-post", () =>
