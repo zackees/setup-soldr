@@ -978,6 +978,12 @@ export async function run(): Promise<void> {
     logger.log(
       "toolchain: solo-cache exact-hit + verified — skipping rustup install (#323)",
     );
+    // The restored tree is already valid, but the skipped installer is also
+    // where ensureRustToolchain normally exports the selected channel. Keep
+    // cache-hit jobs explicit so rustup proxies used by later probes never
+    // depend on a runner-global default toolchain.
+    core.exportVariable("RUSTUP_TOOLCHAIN", result.toolchain.channel);
+    process.env["RUSTUP_TOOLCHAIN"] = result.toolchain.channel;
   } else {
     await timeSubPhase("toolchain", "rustup-install", () =>
       ensureRustToolchain({
