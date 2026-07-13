@@ -886,6 +886,7 @@ export async function run(): Promise<void> {
   let soloKeys: ReturnType<typeof buildSoloCacheKeys> | null = null;
   let soloMatchedKey = "";
   let soloExactHit = false;
+  let forceToolchainRepair = false;
   // Pre-restore snapshot — only needed when solo cache is enabled, so
   // we can compute the full save-diff (post-install vs runner-image,
   // not vs post-restore baseline). (#302: timed as sub-phase.)
@@ -931,6 +932,7 @@ export async function run(): Promise<void> {
         log: (msg) => logger.log(msg),
       });
       verifiedMatch = verify.match;
+      forceToolchainRepair = restored.verified && !verify.match;
     }
     soloExactHit = restored.hit && verifiedMatch;
     core.saveState("soloToolchainEnabled", "true");
@@ -973,7 +975,7 @@ export async function run(): Promise<void> {
       ensureRustToolchain({
         resolveResult: result,
         setupCacheExactHit,
-        forceRepair: !verifiedMatch && restored.verified,
+        forceRepair: forceToolchainRepair,
       }),
     );
   }
