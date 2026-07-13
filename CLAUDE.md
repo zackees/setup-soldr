@@ -6,6 +6,16 @@ All changes land via a feature branch and PR — never commit directly to `main`
 
 Floating major tags (e.g. `v0`) are moved to point at the new `main` commit only after the PR is merged, then pushed.
 
+### Default-release rollout gate
+
+The `v0` tag is moved only by `.github/workflows/update-v0-tag.yml` after the
+exact `main` SHA has passed `Setup Soldr Contract`. That contract checks the
+`action.yml` default against the published GitHub release and every supported
+runner asset. Promotion repeats both that readiness check and a real local-action
+install smoke before force-updating `v0`. For manual recovery, dispatch the
+workflow with the exact validated main SHA; never move `v0` to an unvalidated
+commit. Explicit `version` inputs remain exact and fail closed.
+
 ## Test infrastructure
 
 `npm test` runs Node's built-in `node --test` runner with `--test-timeout=120000`, so every test is aborted with a stack trace if it exceeds two minutes. The cap exists to prevent the kind of hung-test scenario seen during the 2026-05-25 cargo-link-error debug session, where a stuck shell tied up CI minutes until manual intervention. Two minutes is generous for the existing fast unit suite while still catching deadlocks fast.

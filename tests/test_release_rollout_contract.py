@@ -49,3 +49,27 @@ def test_rollout_contract_workflow_runs_remaining_python_contract_tests() -> Non
     assert "tests/test_action_target_cache_wiring.py" in workflow
     assert "tests/test_rust_ci_workflow.py" in workflow
     assert "tests/test_release_rollout_contract.py" in workflow
+
+
+def test_default_release_readiness_is_part_of_the_contract() -> None:
+    workflow = (REPO_ROOT / ".github/workflows/setup-soldr-contract.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Default Release Readiness" in workflow
+    assert "node scripts/check-default-release-readiness.mjs" in workflow
+
+
+def test_v0_promotion_requires_a_successful_contract_and_repeats_the_gates() -> None:
+    workflow = (REPO_ROOT / ".github/workflows/update-v0-tag.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "workflow_run:" in workflow
+    assert 'workflows: ["Setup Soldr Contract"]' in workflow
+    assert "github.event.workflow_run.conclusion == 'success'" in workflow
+    assert "github.event.workflow_run.head_branch == 'main'" in workflow
+    assert "github.event.workflow_run.head_sha" in workflow
+    assert "node scripts/check-default-release-readiness.mjs" in workflow
+    assert "uses: ./" in workflow
+    assert 'git tag -f v0 "${TARGET_SHA}"' in workflow

@@ -12,6 +12,7 @@ on:
       - __tests__/**
       - scripts/*bench*.mjs
       - scripts/bench-workloads/**
+      - scripts/check-default-release-readiness.mjs
       - tests/**
       - package.json
       - package-lock.json
@@ -29,6 +30,7 @@ on:
       - __tests__/**
       - scripts/*bench*.mjs
       - scripts/bench-workloads/**
+      - scripts/check-default-release-readiness.mjs
       - tests/**
       - package.json
       - package-lock.json
@@ -133,3 +135,17 @@ jobs:
             tests/test_bench_cache_modes_workflow.py \
             tests/test_rust_ci_workflow.py \
             tests/test_release_rollout_contract.py
+
+  release-readiness:
+    name: Default Release Readiness
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Verify the action default is published and complete
+        run: node scripts/check-default-release-readiness.mjs

@@ -12,6 +12,7 @@ import * as exec from "@actions/exec";
 import * as tc from "@actions/tool-cache";
 import * as fzstd from "fzstd";
 import { createLogger, streamExec } from "./log-utils.js";
+import { retryReleaseRequest } from "./release-readiness.js";
 import type { ResolveResult } from "./types.js";
 import { parseVersionJsonOutput } from "./verify-soldr.js";
 
@@ -94,7 +95,18 @@ function releaseUrl(repo: string, version: string): string {
 }
 
 async function fetchRelease(repo: string, version: string, githubToken: string): Promise<Record<string, unknown>> {
-  return await fetchJson(releaseUrl(repo, version), githubToken);
+  const url = releaseUrl(repo, version);
+  try {
+    return await retryReleaseRequest(() => fetchJson(url, githubToken), {
+      onRetry: (attempt, error) => {
+        const detail = error instanceof Error ? error.message : String(error);
+        core.info(`Release ${version || "latest"} was not ready (attempt ${attempt}/3): ${detail}; retrying exact tag`);
+      },
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`failed to fetch exact soldr release ${version || "latest"} from ${repo}: ${detail}`);
+  }
 }
 
 async function resolveRefCommitSha(repo: string, ref: string, githubToken: string): Promise<string> {
