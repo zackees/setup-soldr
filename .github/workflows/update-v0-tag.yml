@@ -1,16 +1,19 @@
 name: Update v0 tag
 
-# Keep the floating `v0` major-version tag pointing at the latest `main`.
-# Users who pin to `zackees/setup-soldr@v0` then automatically pick up the
-# newest commit on `main` without each merge requiring a manual tag move.
-#
-# Trigger: every push to `main` (including merge commits from PRs) plus a
-# manual workflow_dispatch escape hatch for one-off catch-up bumps.
+# v0 is a public floating action tag. Move it only after the exact main SHA
+# passed the full Setup Soldr Contract, including a network check that the
+# action.yml default release exists with every supported platform asset.
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["Setup Soldr Contract"]
+    types: [completed]
   workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Exact validated main SHA to promote after repeating the readiness and install gates.
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -21,17 +24,39 @@ concurrency:
 
 jobs:
   bump:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Resolve the validated commit
+        id: target
+        env:
+          TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.target_sha }}
+        run: |
+          set -euo pipefail
+          test -n "${TARGET_SHA}"
+          echo "sha=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout the validated commit
         uses: actions/checkout@v4
         with:
+          ref: ${{ steps.target.outputs.sha }}
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Force-update v0 tag to current commit
+      - name: Verify the default release is ready
+        run: node scripts/check-default-release-readiness.mjs
+
+      - name: Smoke-install the default release from this checkout
+        uses: ./
+        with:
+          cache: false
+          prebuild-deps: none
+
+      - name: Force-update v0 tag to the validated commit
         env:
-          TARGET_SHA: ${{ github.sha }}
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
