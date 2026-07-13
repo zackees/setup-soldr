@@ -970,7 +970,11 @@ export async function run(): Promise<void> {
     );
   } else {
     await timeSubPhase("toolchain", "rustup-install", () =>
-      ensureRustToolchain({ resolveResult: result, setupCacheExactHit }),
+      ensureRustToolchain({
+        resolveResult: result,
+        setupCacheExactHit,
+        forceRepair: !verifiedMatch && restored.verified,
+      }),
     );
   }
   const postInstallSnapshot = await timeSubPhase("toolchain", "snapshot-post", () =>
