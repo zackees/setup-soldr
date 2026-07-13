@@ -585,7 +585,15 @@ export async function verifyRestoredToolchain(opts: {
   });
   let targetsMatch = true;
   for (const target of targets) {
-    const probe = await runTargetProbe(target);
+    let probe: { code: number; stderr: string };
+    try {
+      probe = await runTargetProbe(target);
+    } catch (err) {
+      probe = {
+        code: -1,
+        stderr: err instanceof Error ? err.message : String(err),
+      };
+    }
     if (probe.code !== 0) {
       targetsMatch = false;
       log(`solo-toolchain-cache: target std probe failed target=${target} exit=${probe.code}: ${probe.stderr.trim()}`);
