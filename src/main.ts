@@ -301,6 +301,14 @@ export async function run(): Promise<void> {
   await markPhase("resolve");
   const inputs = readRawInputs(process.env);
   const result = await resolveSetup(ctx, inputs);
+  // Cross targets are provisioned by the cross-bootstrap phase, but they
+  // must participate in the earlier solo-cache key and post-restore probe.
+  // Otherwise a target added after setup can remain invisible to validation
+  // and a corrupt rust-std component is accepted as a cache hit.
+  const declaredCrossTargets = parseCrossTargets(inputs.crossTargets);
+  if (declaredCrossTargets.length > 0) {
+    result.toolchain.targets = [...new Set([...result.toolchain.targets, ...declaredCrossTargets])];
+  }
   await applyResolveResult(result);
   await finishPhase("resolve");
 
