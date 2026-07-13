@@ -126,6 +126,18 @@ test("parseRuntimeStatus recognizes embedded zccache from soldr status", () => {
   assert.equal(parsed?.zccacheSource, "embedded");
 });
 
+test("parseRuntimeStatus recognizes in-process zccache from soldr 0.8.7", () => {
+  const parsed = _internal.parseRuntimeStatus(JSON.stringify({
+    managed_zccache_version: "1.12.13",
+    zccache: {
+      binary_source: "in-process",
+    },
+  }));
+
+  assert.equal(parsed?.embedded, true);
+  assert.equal(parsed?.zccacheSource, "in-process");
+});
+
 test("seedZccache skips legacy install-zccache when soldr reports embedded zccache", async () => {
   const root = mkTmp("zccache-seed-embedded-");
   const calls: Array<{ cmd: string; args: string[] }> = [];

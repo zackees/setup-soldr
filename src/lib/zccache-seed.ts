@@ -240,7 +240,10 @@ function parseRuntimeStatus(stdout: string): RuntimeStatus | null {
   return {
     managedVersion: String(payload["managed_zccache_version"] ?? "").trim(),
     zccacheSource: source,
-    embedded: source === "embedded",
+    // soldr 0.8.7+ reports the compiled-in backend as "in-process";
+    // older releases used "embedded". Both mean setup-soldr must not
+    // attempt the legacy managed-zccache download/seed path.
+    embedded: source === "embedded" || source === "in-process",
   };
 }
 
