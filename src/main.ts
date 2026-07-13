@@ -926,6 +926,7 @@ export async function run(): Promise<void> {
       const rustcCmd = process.platform === "win32" ? "rustc.exe" : "rustc";
       const verify = await verifyRestoredToolchain({
         expectedRelease: expected,
+        expectedTargets: result.toolchain.targets,
         rustcCommand: rustcCmd,
         log: (msg) => logger.log(msg),
       });
