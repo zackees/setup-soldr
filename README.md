@@ -524,7 +524,7 @@ preferred for new workflows.
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.8.9`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.8.13`. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
@@ -622,7 +622,7 @@ preferred for new workflows.
 
 ## Notes
 
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.8.9`.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.8.13`.
 - For soldr `0.7.43+`, the action copies the bundled `cargo-chef` binary from
   the soldr release archive and exports `SOLDR_CARGO_CHEF_LOCAL_DIR` so
   `soldr cook` does not need a live upstream cargo-chef release lookup.
