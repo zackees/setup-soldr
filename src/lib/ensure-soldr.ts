@@ -412,19 +412,48 @@ function hasEmbeddedZccachePayload(installDir: string, binaryName: string): bool
   );
 }
 
+function hasMulticallRuntimePayload(installDir: string, binaryName: string): boolean {
+  const suffix = platformBinarySuffix(binaryName);
+  return fs.existsSync(path.join(installDir, `soldr-daemon${suffix}`));
+}
+
 function hasBundledCargoChefPayload(installDir: string, binaryName: string): boolean {
   const suffix = platformBinarySuffix(binaryName);
   return fs.existsSync(path.join(installDir, `cargo-chef${suffix}`));
 }
 
-// soldr >= 0.7.66 ships `soldr-clang-shim` in its release archive and the
-// blessed `soldr build` surface hard-requires it next to the running soldr
-// exe ("soldr-clang-shim binary not found ..." otherwise). Treat a cached
-// install that is missing the shim as an incomplete payload so it gets
-// refreshed from the release archive.
+// Sidecar-based soldr releases from 0.7.66 through 0.8.0 ship
+// `soldr-clang-shim`, and their blessed `soldr build` surface requires it
+// next to the running executable. Soldr 0.8.1+ folds clang/toolchain/zccache
+// shims into the main multicall binary, so those releases deliberately omit
+// this sidecar.
 function hasBundledClangShimPayload(installDir: string, binaryName: string): boolean {
   const suffix = platformBinarySuffix(binaryName);
   return fs.existsSync(path.join(installDir, `soldr-clang-shim${suffix}`));
+}
+
+function hasRequiredReleasePayload(
+  installDir: string,
+  binaryName: string,
+  resolvedVersion: string,
+): boolean {
+  const usesMulticallRuntime = versionAtLeast(resolvedVersion, "0.8.1");
+  const needsEmbeddedZccachePayload = versionAtLeast(resolvedVersion, "0.7.103");
+  const needsCargoChef = versionAtLeast(resolvedVersion, "0.7.43");
+  const needsLegacyClangShim =
+    versionAtLeast(resolvedVersion, "0.7.66") && !usesMulticallRuntime;
+
+  const hasRuntimePayload = usesMulticallRuntime
+    ? hasMulticallRuntimePayload(installDir, binaryName)
+    : needsEmbeddedZccachePayload
+      ? hasEmbeddedZccachePayload(installDir, binaryName)
+      : hasBundledZccachePayload(installDir, binaryName);
+
+  return (
+    hasRuntimePayload &&
+    (!needsCargoChef || hasBundledCargoChefPayload(installDir, binaryName)) &&
+    (!needsLegacyClangShim || hasBundledClangShimPayload(installDir, binaryName))
+  );
 }
 
 function clearBundledReleasePayload(installDir: string, binaryName: string): void {
@@ -587,15 +616,11 @@ export async function ensureSoldr(opts: {
   const current = await installedVersion(binaryPath);
   if (current !== null && resolvedVersion) {
     if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
-      const needsCargoChef = versionAtLeast(resolvedVersion, "0.7.43");
-      const needsClangShim = versionAtLeast(resolvedVersion, "0.7.66");
-      const needsEmbeddedZccachePayload = versionAtLeast(resolvedVersion, "0.7.103");
-      const hasRequiredPayload =
-        (needsEmbeddedZccachePayload
-          ? hasEmbeddedZccachePayload(installDir, binaryName)
-          : hasBundledZccachePayload(installDir, binaryName)) &&
-        (!needsCargoChef || hasBundledCargoChefPayload(installDir, binaryName)) &&
-        (!needsClangShim || hasBundledClangShimPayload(installDir, binaryName));
+      const hasRequiredPayload = hasRequiredReleasePayload(
+        installDir,
+        binaryName,
+        resolvedVersion,
+      );
       if (hasRequiredPayload) {
         log(`Using cached soldr ${current} at ${binaryPath}`);
         core.setOutput("installed_version", current);
@@ -653,5 +678,7 @@ export const _internal = {
   hasBundledClangShimPayload,
   hasBundledZccachePayload,
   hasEmbeddedZccachePayload,
+  hasMulticallRuntimePayload,
+  hasRequiredReleasePayload,
   versionAtLeast,
 };

@@ -141,6 +141,36 @@ test("hasEmbeddedZccachePayload requires soldr embedded runtime payload only", (
   }
 });
 
+test("multicall soldr releases require the daemon alias but no legacy shim sidecars", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-multicall-payload-"));
+  try {
+    fs.writeFileSync(path.join(root, "soldr-daemon.exe"), "soldr-daemon");
+    fs.writeFileSync(path.join(root, "cargo-chef.exe"), "cargo-chef");
+
+    assert.equal(_internal.hasMulticallRuntimePayload(root, "soldr.exe"), true);
+    assert.equal(_internal.hasRequiredReleasePayload(root, "soldr.exe", "0.8.18"), true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("pre-multicall embedded releases still require their legacy sidecars", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-legacy-payload-"));
+  try {
+    for (const name of ["soldr-daemon.exe", "cargo-chef.exe"]) {
+      fs.writeFileSync(path.join(root, name), name);
+    }
+    assert.equal(_internal.hasRequiredReleasePayload(root, "soldr.exe", "0.8.0"), false);
+
+    for (const name of ["soldr-shim.exe", "soldr-clang-shim.exe"]) {
+      fs.writeFileSync(path.join(root, name), name);
+    }
+    assert.equal(_internal.hasRequiredReleasePayload(root, "soldr.exe", "0.8.0"), true);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("hasBundledCargoChefPayload checks the platform cargo-chef binary", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-has-chef-"));
   try {
