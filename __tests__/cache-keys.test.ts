@@ -90,6 +90,10 @@ test("normalizeTargetCacheProfile accepts thin-v2", () => {
   assert.equal(normalizeTargetCacheProfile(" THIN-V2 "), "thin-v2");
 });
 
+test("normalizeTargetCacheProfile accepts thin-v3", () => {
+  assert.equal(normalizeTargetCacheProfile(" THIN-V3 "), "thin-v3");
+});
+
 test("normalizeTargetCacheProfile rejects unknown", () => {
   assert.throws(() => normalizeTargetCacheProfile("fat"));
 });

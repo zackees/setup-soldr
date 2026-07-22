@@ -619,6 +619,15 @@ export async function resolveSetup(
   const legacyTargetCacheModeInput = inputs.targetCacheMode;
   const legacyTargetCacheMode = normalizeLegacyTargetCacheMode(legacyTargetCacheModeInput, log);
   const targetCacheProfile = normalizeTargetCacheProfile(inputs.targetCacheProfile);
+  // #418: thin-v3 may select a cook-partitioned durable slice only once Soldr
+  // can prove every Cargo fingerprint/build-script path's package owner. That
+  // closure is not available yet, so the action and Soldr deliberately agree
+  // on the safe zccache-all fallback. The policy+mode are part of the cache
+  // namespace; do not let a v1/v2 bundle restore into this contract.
+  const targetCachePolicyKey =
+    targetCacheProfile === "thin-v3"
+      ? "thin-v3-lifetime-partition-v1-zccache-all-v1"
+      : targetCacheProfile;
 
   // `cache: "false"` is the umbrella switch. It originally only gated the
   // action-managed setup-cache (soldr binary + rustup state), but consumers
@@ -696,7 +705,7 @@ export async function resolveSetup(
   } else if (targetTreeCacheEnabled) {
     targetCachePaths = [targetCachePath, targetCacheBundlePath].join("\n");
     targetCacheEffectiveMode = buildCacheMode;
-    targetCachePrefix = `setup-soldr-targetcache-${buildCacheMode}-v1-${runnerOs}-${runnerArch}`;
+    targetCachePrefix = `setup-soldr-targetcache-${buildCacheMode}-v2-${runnerOs}-${runnerArch}-${targetCachePolicyKey}`;
     const sf = sanitizedSuffix ? `${sanitizedSuffix}-` : "";
     targetCacheLockPrefix = `${targetCachePrefix}-${digest}-${cargoLockHash}-${targetShapeHash}-${sf}`;
     targetCacheLockfilePrefix = `${targetCachePrefix}-${lockfileOnlyHash}-${sf}`;
@@ -705,7 +714,7 @@ export async function resolveSetup(
   } else {
     targetCachePaths = targetCacheBundlePath;
     targetCacheEffectiveMode = buildCacheMode;
-    targetCachePrefix = `setup-soldr-targetcache-${buildCacheMode}-v1-${runnerOs}-${runnerArch}`;
+    targetCachePrefix = `setup-soldr-targetcache-${buildCacheMode}-v2-${runnerOs}-${runnerArch}-${targetCachePolicyKey}`;
     const sf = sanitizedSuffix ? `${sanitizedSuffix}-` : "";
     targetCacheLockPrefix = `${targetCachePrefix}-${targetInputsHash}-${sf}`;
     targetCacheLockfilePrefix = `${targetCachePrefix}-${lockfileOnlyHash}-${sf}`;

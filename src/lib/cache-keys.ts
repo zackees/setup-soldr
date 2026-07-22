@@ -24,7 +24,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { TargetCacheProfile } from "./types.js";
 
-const TARGET_CACHE_PROFILES: readonly TargetCacheProfile[] = ["thin-v1", "thin-v2"];
+const TARGET_CACHE_PROFILES: readonly TargetCacheProfile[] = ["thin-v1", "thin-v2", "thin-v3"];
 const TARGET_CACHE_BOOL_TRUE: ReadonlySet<string> = new Set(["true", "1", "yes", "on"]);
 const TARGET_CACHE_BOOL_FALSE: ReadonlySet<string> = new Set(["false", "0", "no", "off"]);
 const TARGET_CACHE_COMPRESS_CODECS = ["auto", "zstd", "none"] as const;
@@ -146,7 +146,7 @@ export function normalizeTargetCacheProfile(value: string): TargetCacheProfile {
   }
   if (!TARGET_CACHE_PROFILES.includes(profile as TargetCacheProfile)) {
     throw new Error(
-      `invalid target-cache-profile '${value}'; expected thin-v1 or thin-v2`,
+      `invalid target-cache-profile '${value}'; expected thin-v1, thin-v2, or thin-v3`,
     );
   }
   return profile as TargetCacheProfile;
