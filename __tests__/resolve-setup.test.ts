@@ -259,6 +259,18 @@ test("explicit target-cache-profile passes through", async () => {
   assert.equal(outputs["target_cache_profile"], "thin-v2");
 });
 
+test("thin-v3 gets its safe ownership fallback cache namespace", async () => {
+  const cacheInputs = { INPUT_TARGET_CACHE: "true", INPUT_BUILD_CACHE_MODE: "thin" };
+  const v1 = await run({}, { ...cacheInputs, INPUT_TARGET_CACHE_PROFILE: "thin-v1" });
+  const v3 = await run({}, { ...cacheInputs, INPUT_TARGET_CACHE_PROFILE: "thin-v3" });
+  assert.equal(v3.outputs["target_cache_profile"], "thin-v3");
+  assert.notEqual(v3.outputs["target_cache_key"], v1.outputs["target_cache_key"]);
+  assert.match(
+    v3.outputs["target_cache_key"] ?? "",
+    /thin-v3-lifetime-partition-v1-zccache-all-v1/,
+  );
+});
+
 test("invalid target-cache-profile rejected", async () => {
   await assert.rejects(
     () => run({}, { INPUT_TARGET_CACHE_PROFILE: "fat" }),
@@ -360,14 +372,14 @@ test("source ref changes setup cache key", async () => {
 test("lockfile prefix emitted for once mode", async () => {
   const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "once", INPUT_TARGET_CACHE: "true" });
   const prefix = outputs["target_cache_restore_key_lockfile"] ?? "";
-  assert.match(prefix, /^setup-soldr-targetcache-once-v1-linux-x64-/);
+  assert.match(prefix, /^setup-soldr-targetcache-once-v2-linux-x64-thin-v1-/);
   assert.ok(prefix.endsWith("-"));
 });
 
 test("lockfile prefix emitted for full mode", async () => {
   const { outputs } = await run({}, { INPUT_BUILD_CACHE_MODE: "full", INPUT_TARGET_CACHE: "true" });
   const prefix = outputs["target_cache_restore_key_lockfile"] ?? "";
-  assert.match(prefix, /^setup-soldr-targetcache-full-v1-linux-x64-/);
+  assert.match(prefix, /^setup-soldr-targetcache-full-v2-linux-x64-thin-v1-/);
 });
 
 test("lockfile prefix stable across manifest changes", async () => {

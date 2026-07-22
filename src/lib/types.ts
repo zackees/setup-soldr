@@ -10,7 +10,7 @@ export type Bool = "true" | "false";
 export type CompressCodec = "auto" | "zstd" | "none";
 export type BuildCacheMode = "" | "once" | "thin" | "full";
 export type TargetCacheMode = "" | "thin" | "full" | "off" | "hot";
-export type TargetCacheProfile = "thin-v1" | "thin-v2";
+export type TargetCacheProfile = "thin-v1" | "thin-v2" | "thin-v3";
 export type StatsMode = "none" | "summarize" | "detailed";
 export type CompileCacheStatsMode = "none" | "summarize" | "detailed" | "insights";
 

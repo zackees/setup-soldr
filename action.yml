@@ -244,12 +244,13 @@ inputs:
         - thin-v1 (default): legacy slice, keeps .rlib/.rmeta/proc-macro outputs
         - thin-v2: aggressive prune (fingerprints + dep-info + final outputs only),
                    relies on zccache compilation cache to repopulate library bytes
-      Stay on thin-v1. soldr#237 shipped in soldr 0.7.15 so the CLI now emits
-      the thin-v2 manifest, but zccache has not yet been updated to honor the
-      new manifest.v2 wire format and silently downgrades to thin-v1 with a
-      one-line soldr warning. Opt into thin-v2 only after a zccache release
-      lands with manifest.v2 support and the thin-v2-verify gate has been
-      green on soldr main for at least one week.
+        - thin-v3: ownership-aware cache contract. Currently uses the safe
+                   `zccache-all-v1` fallback until Soldr can prove a complete
+                   cook package/artifact closure; its cache keys are separate
+                   from thin-v1 and thin-v2.
+      thin-v1 remains the default. Use thin-v2 or thin-v3 only with a Soldr
+      release that advertises the matching plan schema. thin-v3 deliberately
+      falls back to zccache-all until complete cook ownership is available.
     required: false
     default: thin-v1
   target-cache-strip-debuginfo:
@@ -778,7 +779,7 @@ outputs:
   target-cache-mode:
     description: Effective setup-soldr Rust target artifact cache mode.
   target-cache-profile:
-    description: Effective setup-soldr thin-slice pruning policy (thin-v1 or thin-v2).
+    description: Effective setup-soldr thin-slice pruning policy (thin-v1, thin-v2, or thin-v3).
   target-cache-compress:
     description: Effective target-cache compression codec (auto, zstd, or none).
   target-cache-compress-level:
