@@ -1,0 +1,279 @@
+# Linux-hosted cross build of a Rust+SQLite app for x86_64-apple-darwin and
+# aarch64-apple-darwin, using soldr (installed directly — NOT setup-soldr) to
+# wrap cargo + cargo-zigbuild.
+#
+# Primary path:
+#   ubuntu runner -> install soldr binary from zackees/soldr release ->
+#   install cargo-zigbuild + ziglang -> rustup target add both apple targets
+#   -> `soldr cargo zigbuild --release --target ...` for each target.
+#   Zig is the linker; the run produces real Mach-O binaries on Linux.
+#
+# Fallback path (only fires if the Linux link step fails):
+#   The linux-build job tarballs the unlinked `target/<triple>/release` tree
+#   (cargo will still emit .rlib + .o + native cc-rs static libs even when
+#   the link step is missing or fails) and uploads it as an artifact.
+#   The macos-link job downloads, untars, and reruns `cargo build` — cargo's
+#   fingerprint system reuses the compiled crates and only does the link,
+#   so the Mac runner pays link cost only.
+#
+# Test app: benchmarks/sqlite-native — minimal Rust crate that links bundled
+# libsqlite3-sys. It exercises cc-rs (sqlite is compiled as C) which is the
+# real cross-compile stress test, but does NOT touch any Apple framework, so
+# zig-as-linker is sufficient and we should be able to link entirely on
+# Linux.
+
+name: mac-cross (linux-built apple binaries)
+
+on:
+  workflow_dispatch:
+    inputs:
+      soldr-version:
+        description: soldr release tag to install (without leading v).
+        type: string
+        default: "0.7.56"
+      cargo-zigbuild-version:
+        description: cargo-zigbuild version to install. Empty = latest.
+        type: string
+        default: ""
+      ziglang-version:
+        description: Python ziglang wheel version. Empty = latest.
+        type: string
+        default: ""
+  # Temporary: also auto-run on pushes to this feature branch so we can
+  # iterate before merging to main (workflow_dispatch only fires after the
+  # file lives on the default branch). Remove before merge.
+  push:
+    branches:
+      - feat/mac-cross-linux-build
+
+permissions:
+  contents: read
+
+jobs:
+  linux-build:
+    name: linux build (zigbuild for both apple targets)
+    runs-on: ubuntu-24.04
+    outputs:
+      zigbuild-outcome: ${{ steps.zigbuild.outcome }}
+    env:
+      # `inputs.*` is empty when this workflow runs from the push trigger
+      # (defaults only apply to workflow_dispatch). Apply explicit fallbacks
+      # so the same defaults take effect on both event types.
+      SOLDR_VERSION: ${{ inputs.soldr-version || '0.7.57' }}
+      ZIGBUILD_VERSION: ${{ inputs.cargo-zigbuild-version || '' }}
+      ZIGLANG_VERSION: ${{ inputs.ziglang-version || '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install soldr (direct release download, no setup-soldr)
+        shell: bash
+        run: |
+          set -euo pipefail
+          install_dir="$HOME/.soldr/bin"
+          mkdir -p "$install_dir"
+          asset="soldr-v${SOLDR_VERSION}-x86_64-unknown-linux-gnu.tar.zst"
+          url="https://github.com/zackees/soldr/releases/download/v${SOLDR_VERSION}/${asset}"
+          echo "Downloading $url"
+          curl -fL --retry 3 --retry-delay 2 -o "/tmp/${asset}" "$url"
+          tar --use-compress-program=unzstd -xf "/tmp/${asset}" -C "$install_dir" --strip-components=0
+          # The release tarball lays out files at the root: soldr, zccache,
+          # zccache-daemon, zccache-fp, crgx, cargo-chef, manifest.json. After
+          # extraction, ensure the binaries are executable and on PATH.
+          chmod +x "$install_dir"/* || true
+          echo "$install_dir" >> "$GITHUB_PATH"
+          ls -la "$install_dir"
+
+      - name: Verify soldr binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          soldr version --json
+          which soldr
+          which zccache || echo "(zccache not on PATH yet — soldr-managed shims will appear after first soldr cargo invocation)"
+
+      - name: Set up Python (for ziglang wheel)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ziglang (Python wheel — vendors the zig compiler)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${ZIGLANG_VERSION}" ]; then
+            python -m pip install --upgrade "ziglang==${ZIGLANG_VERSION}"
+          else
+            python -m pip install --upgrade ziglang
+          fi
+          python -m ziglang version
+
+      - name: Expose `zig` shim on PATH
+        shell: bash
+        run: |
+          # cargo-zigbuild looks for `zig` on PATH; the ziglang wheel only
+          # provides `python -m ziglang`. Drop a tiny shim that forwards.
+          shim_dir="$HOME/.local/bin"
+          mkdir -p "$shim_dir"
+          cat > "$shim_dir/zig" <<'EOF'
+          #!/usr/bin/env bash
+          exec python -m ziglang "$@"
+          EOF
+          chmod +x "$shim_dir/zig"
+          echo "$shim_dir" >> "$GITHUB_PATH"
+          "$shim_dir/zig" version
+
+      - name: Install cargo-zigbuild via `soldr cargo install`
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${ZIGBUILD_VERSION}" ]; then
+            soldr cargo install cargo-zigbuild --locked --version "${ZIGBUILD_VERSION}"
+          else
+            soldr cargo install cargo-zigbuild --locked
+          fi
+          which cargo-zigbuild
+          cargo-zigbuild --help 2>&1 | head -1
+
+      - name: Add apple-darwin rustup targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustup target add x86_64-apple-darwin aarch64-apple-darwin
+
+      - name: Primary build — `soldr cargo zigbuild` for both apple targets
+        id: zigbuild
+        continue-on-error: true
+        shell: bash
+        working-directory: benchmarks/sqlite-native
+        run: |
+          set -euxo pipefail
+          # Wrapping with `soldr` routes each rustc invocation through
+          # zccache, so repeat runs hit the compile cache. Requires soldr
+          # >= 0.7.57 (soldr#809 fixed the broken .tar.xz extraction that
+          # made the managed cargo-zigbuild unrunnable on linux x86_64).
+          soldr cargo zigbuild --release --target x86_64-apple-darwin
+          soldr cargo zigbuild --release --target aarch64-apple-darwin
+          # Universal2 is cargo-zigbuild's synthetic target combining both.
+          soldr cargo zigbuild --release --target universal2-apple-darwin
+
+      - name: Inspect emitted Mach-O binaries (best-effort)
+        if: steps.zigbuild.outcome == 'success'
+        shell: bash
+        working-directory: benchmarks/sqlite-native
+        run: |
+          set -euxo pipefail
+          ls -la target/x86_64-apple-darwin/release/ || true
+          ls -la target/aarch64-apple-darwin/release/ || true
+          ls -la target/universal2-apple-darwin/release/ || true
+          for bin in \
+            target/x86_64-apple-darwin/release/sqlite-native-benchmark \
+            target/aarch64-apple-darwin/release/sqlite-native-benchmark \
+            target/universal2-apple-darwin/release/sqlite-native-benchmark
+          do
+            if [ -f "$bin" ]; then
+              echo "=== $bin ==="
+              file "$bin" || true
+            fi
+          done
+
+      - name: Upload Mach-O binaries (primary path)
+        if: steps.zigbuild.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macho-binaries-linux-zigbuild
+          path: |
+            benchmarks/sqlite-native/target/x86_64-apple-darwin/release/sqlite-native-benchmark
+            benchmarks/sqlite-native/target/aarch64-apple-darwin/release/sqlite-native-benchmark
+            benchmarks/sqlite-native/target/universal2-apple-darwin/release/sqlite-native-benchmark
+          if-no-files-found: warn
+
+      - name: Fallback compile (no zigbuild) — emit objects for macOS to link
+        id: fallback-compile
+        if: steps.zigbuild.outcome == 'failure'
+        shell: bash
+        working-directory: benchmarks/sqlite-native
+        run: |
+          set -uxo pipefail
+          # Without zigbuild there's no Linux cross-linker for apple targets.
+          # `cargo build` will fail at the link step but only after rustc has
+          # emitted all the .rlib / .o files we need. Capture them anyway.
+          for t in x86_64-apple-darwin aarch64-apple-darwin; do
+            echo "::group::soldr cargo build (will fail at link) --target $t"
+            soldr cargo build --release --target "$t" || true
+            echo "::endgroup::"
+          done
+          # Bundle the unlinked target tree so the macOS job can relink it.
+          mkdir -p "$RUNNER_TEMP/handoff"
+          tar --use-compress-program='zstd -3 -T0' \
+              -cf "$RUNNER_TEMP/handoff/target.tar.zst" target Cargo.toml Cargo.lock src
+
+      - name: Upload handoff bundle (fallback path)
+        if: steps.zigbuild.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-compile-handoff
+          path: ${{ runner.temp }}/handoff/target.tar.zst
+          if-no-files-found: error
+
+  macos-link:
+    name: macos final link (fallback)
+    needs: linux-build
+    if: needs.linux-build.outputs.zigbuild-outcome == 'failure'
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Linux handoff bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-compile-handoff
+          path: ${{ runner.temp }}/handoff
+
+      - name: Unpack into benchmarks/sqlite-native
+        shell: bash
+        run: |
+          set -euxo pipefail
+          # zstd is preinstalled on macos-latest hosted runners.
+          tar --use-compress-program=unzstd \
+              -xf "$RUNNER_TEMP/handoff/target.tar.zst" \
+              -C benchmarks/sqlite-native
+
+      - name: Add apple targets (native + cross)
+        shell: bash
+        run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
+
+      - name: Relink via plain cargo (warm fingerprints — link only)
+        shell: bash
+        working-directory: benchmarks/sqlite-native
+        run: |
+          set -euxo pipefail
+          # Cargo will see the .rlib / .o tree as up-to-date and only redo
+          # the link step using the host's apple linker (ld64).
+          cargo build --release --target x86_64-apple-darwin
+          cargo build --release --target aarch64-apple-darwin
+
+      - name: Inspect linked binaries
+        shell: bash
+        working-directory: benchmarks/sqlite-native
+        run: |
+          set -euxo pipefail
+          for bin in \
+            target/x86_64-apple-darwin/release/sqlite-native-benchmark \
+            target/aarch64-apple-darwin/release/sqlite-native-benchmark
+          do
+            if [ -f "$bin" ]; then
+              echo "=== $bin ==="
+              file "$bin" || true
+            fi
+          done
+
+      - name: Upload Mach-O binaries (fallback path)
+        uses: actions/upload-artifact@v4
+        with:
+          name: macho-binaries-mac-relink
+          path: |
+            benchmarks/sqlite-native/target/x86_64-apple-darwin/release/sqlite-native-benchmark
+            benchmarks/sqlite-native/target/aarch64-apple-darwin/release/sqlite-native-benchmark
+          if-no-files-found: error
