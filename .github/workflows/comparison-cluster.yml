@@ -77,8 +77,187 @@ jobs:
   # the hard gate lives in .github/workflows/perf-matrix.yml's
   # `sqlite-link/cold-tar-untar-warm` cell. See
   # docs/NATIVE_SQLITE_BENCHMARK.md for how to read the results.
-  native-sqlite:
+  #
+  # The benchmark runs in two stages so the work doubles up correctly
+  # against the runner pool (2N instead of N):
+  #
+  #   `native-sqlite-build` (N=8 cells on linux x86): cross-compile
+  #     zccache for each target using setup-soldr's `cross-targets`
+  #     input (v0.9.63) + soldr 0.7.59's `prepare --target` composite.
+  #     Dogfoods both features and gets the expensive build work onto
+  #     fast ubuntu runners instead of slow ARM/macOS/Windows ones.
+  #
+  #   `native-sqlite-test` (N=8 cells on target-native runners): pull
+  #     the cross-compiled zccache via artifact, then run the actual
+  #     cold-vs-warm compile-time perf measurement on the target's
+  #     native CPU.
+  native-sqlite-build:
+    name: Cross-build zccache for ${{ matrix.target }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+    steps:
+      - name: Checkout setup-soldr (action under test)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Checkout zackees/zccache (source to cross-compile)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          repository: zackees/zccache
+          path: zccache-src
+          persist-credentials: false
+
+      - id: setup
+        name: Setup Soldr with cross-target ${{ matrix.target }}
+        uses: ./
+        with:
+          cross-targets: ${{ matrix.target }}
+
+      - name: Pre-install cargo-zigbuild or cargo-xwin onto PATH
+        # Matches soldr's own cross-compile-all-targets.yml pattern:
+        # cargo-zigbuild / cargo-xwin must be on PATH **before** the
+        # `cargo … --target X` invocation so they can set per-target
+        # CC / CXX / LINKER env vars. Run 27955618767 proved that
+        # `soldr cargo zigbuild`'s auto-bootstrap downloads the binary
+        # into an internal soldr cache dir that doesn't get exported
+        # to PATH — symptom: the build "succeeds" partially but the
+        # final link uses host clang (`ld.lld: incompatible with
+        # elf_x86_64` for aarch64, `dsymutil: No such file` for
+        # darwin). Pre-installing via `cargo install --locked` is the
+        # simplest portable shape; soldr's own CI uses a manifest
+        # pre-fetch but that needs soldr-internal tool_query.py.
+        shell: bash
+        env:
+          TGT: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          if [[ "$TGT" == *-pc-windows-msvc ]]; then
+            cargo install --locked cargo-xwin
+          else
+            cargo install --locked cargo-zigbuild
+            python3 -m pip install --user ziglang
+            # ziglang ships zig as `python -m ziglang`; expose it as a
+            # `zig` command on PATH so cargo-zigbuild's binary lookup
+            # finds it.
+            mkdir -p "$HOME/.zig-bin"
+            cat > "$HOME/.zig-bin/zig" <<'SHIM'
+          #!/bin/bash
+          exec python3 -m ziglang "$@"
+          SHIM
+            chmod +x "$HOME/.zig-bin/zig"
+            echo "$HOME/.zig-bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.zig-bin:$PATH"
+            zig version
+          fi
+
+      - name: Provision cross-toolchain via soldr prepare
+        # `--github-env $GITHUB_ENV` persists soldr's env mutations
+        # (SDKROOT for darwin, xwin cache path for msvc, etc.) into
+        # GITHUB_ENV so subsequent steps inherit them. Mirrors
+        # soldr's own prepare-cross-toolchain composite.
+        shell: bash
+        run: soldr prepare --target "${{ matrix.target }}" --github-env "$GITHUB_ENV"
+
+      - name: Cross-build zccache binaries
+        shell: bash
+        working-directory: zccache-src
+        env:
+          TGT: ${{ matrix.target }}
+          # Override soldr's SOLDR_TARGET_CACHE_DIR redirection so the
+          # build product lands at the documented path
+          # zccache-src/target/<triple>/release/. Without this, soldr's
+          # target-cache integration writes to its own managed dir.
+          CARGO_TARGET_DIR: target
+        # zccache and zccache-daemon are [[bin]] entries inside the
+        # `zccache` package (crates/zccache/Cargo.toml). The `zccache-cli`
+        # package is a PyO3 cdylib that doesn't ship binaries.
+        #
+        # Subcommand selection per target (filed as soldr#928):
+        #   *-pc-windows-msvc -> `soldr cargo xwin build` (soldr's
+        #     wrapper injects LLVM toolchain + xwin env via
+        #     prepare_xwin_env / compute_subcommand_env_overrides;
+        #     dropping to plain `cargo xwin build` loses the LLVM
+        #     bootstrap → `failed to find tool llvm-lib`).
+        #   *-apple-darwin -> `cargo zigbuild` direct, with
+        #     CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO=off so rustc
+        #     doesn't invoke dsymutil (a darwin-only tool absent on
+        #     linux hosts; cross-compiling debug split is brittle
+        #     either way).
+        #   other (linux-gnu / linux-musl) -> `cargo zigbuild` direct.
+        #     Going through `soldr cargo zigbuild` drops
+        #     cargo-zigbuild's per-target LINKER override for
+        #     cross-arch targets (host clang ends up as linker —
+        #     soldr#928).
+        run: |
+          set -euo pipefail
+          which cargo-zigbuild cargo-xwin 2>/dev/null || true
+          if [[ "$TGT" == *-pc-windows-msvc ]]; then
+            soldr cargo xwin build \
+              --release \
+              --locked \
+              --target "$TGT" \
+              --package zccache \
+              --bin zccache \
+              --bin zccache-daemon
+          else
+            if [[ "$TGT" == *-apple-darwin ]]; then
+              export CARGO_PROFILE_RELEASE_SPLIT_DEBUGINFO=off
+            fi
+            cargo zigbuild \
+              --release \
+              --locked \
+              --target "$TGT" \
+              --package zccache \
+              --bin zccache \
+              --bin zccache-daemon
+          fi
+
+      - name: Stage zccache binaries
+        shell: bash
+        env:
+          TGT: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          mkdir -p staging
+          REL_DIR="zccache-src/target/${TGT}/release"
+          if [ ! -d "$REL_DIR" ]; then
+            echo "::error::Expected release dir not found: $REL_DIR" >&2
+            echo "Showing zccache-src/target/ contents for diagnosis:" >&2
+            ls -la zccache-src/target/ 2>&1 | head -20 >&2 || true
+            exit 1
+          fi
+          echo "Contents of $REL_DIR (top of listing):"
+          ls -la "$REL_DIR" | head -30
+          if [[ "$TGT" == *-pc-windows-* ]]; then
+            cp "$REL_DIR/zccache.exe" staging/
+            cp "$REL_DIR/zccache-daemon.exe" staging/
+          else
+            cp "$REL_DIR/zccache" staging/
+            cp "$REL_DIR/zccache-daemon" staging/
+          fi
+          ls -la staging/
+
+      - name: Upload cross-compiled zccache binary
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: zccache-cross-${{ matrix.target }}
+          path: staging/
+          if-no-files-found: error
+          retention-days: 7
+
+  native-sqlite-test:
     name: Native SQLite (${{ matrix.target }})
+    needs: native-sqlite-build
     runs-on: ${{ matrix.runner }}
     env:
       # Bypass rust-toolchain.toml's `components = ["rustfmt", "clippy"]` so
@@ -156,14 +335,25 @@ jobs:
           done
           dpkg-query -W -f='musl-tools installed version: ${Version}\n' musl-tools
 
-      - name: Prepare zccache tool
-        uses: ./.github/actions/comparison-zccache
+      - name: Download cross-compiled zccache
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          cache-cargo-registry: "false"
-          cache-compilation: "false"
-          cache-target: "false"
-          save-cache: "false"
-          zccache-source-ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.zccache_source_ref || '' }}
+          name: zccache-cross-${{ matrix.target }}
+          path: ${{ runner.temp }}/zccache-bin
+
+      - name: Add cross-compiled zccache to PATH
+        shell: bash
+        run: |
+          set -euo pipefail
+          BIN_DIR="$RUNNER_TEMP/zccache-bin"
+          if [[ "${{ runner.os }}" != "Windows" ]]; then
+            chmod +x "$BIN_DIR/zccache" "$BIN_DIR/zccache-daemon" 2>/dev/null || true
+          fi
+          echo "$BIN_DIR" >> "$GITHUB_PATH"
+          ls -la "$BIN_DIR"
+          # Sanity check that the cross-built binary runs natively here.
+          # Failure here means the cross-compile target/host mismatch is wrong.
+          (export PATH="$BIN_DIR:$PATH" && zccache --version)
 
       - name: Run native SQLite benchmark
         shell: bash
@@ -436,7 +626,7 @@ jobs:
   benchmark:
     name: Config-driven benchmark
     needs:
-      - native-sqlite
+      - native-sqlite-test
     runs-on: ubuntu-24.04
     permissions:
       contents: write
