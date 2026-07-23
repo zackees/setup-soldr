@@ -79,7 +79,13 @@ async function run(
   rootOpts: Parameters<typeof makeWorkspace>[0] = {},
   extraEnv: Record<string, string> = {},
   override?: () => Promise<boolean>,
-): Promise<{ result: ResolveResult; outputs: Record<string, string> }> {
+  resolveNightly?: (requested: string) => Promise<{
+    channel: string;
+    rustVersion: string;
+    rustcRelease: string;
+    rustcCommitHash: string;
+  }>,
+): Promise<{ result: ResolveResult; outputs: Record<string, string>; inputs: RawInputs }> {
   const { root, workspace, runnerTemp } = makeWorkspace(rootOpts);
   const ctx = makeContext(root, workspace, runnerTemp);
   ctx.env = withInputs(ctx.env, extraEnv);
@@ -87,8 +93,9 @@ async function run(
   const result = await resolveSetup(ctx, inputs, {
     fetchReleaseTag: async () => "v0.7.11",
     systemRustupOverride: override ?? (async () => false),
+    ...(resolveNightly ? { resolveDylintNightly: resolveNightly } : {}),
   });
-  return { result, outputs: buildOutputs(result) };
+  return { result, outputs: buildOutputs(result), inputs };
 }
 
 // --- pruning inputs ---
@@ -206,6 +213,67 @@ test("dylint cache key changes when driver revision changes", async () => {
     "INPUT_DYLINT-DRIVER-REV": "rev-b",
   });
   assert.notEqual(first.result.dylintCache.key, second.result.dylintCache.key);
+});
+
+test("dylint mode is false by default and performs no nightly lookup", async () => {
+  let called = false;
+  const { result } = await run({}, {}, undefined, async () => {
+    called = true;
+    throw new Error("must not resolve");
+  });
+  assert.equal(called, false);
+  assert.equal(result.dylintCache.outputCacheEnabled, false);
+  assert.equal(result.envExports["SOLDR_DYLINT_TOOLCHAIN"], undefined);
+  assert.equal(result.envExports["SOLDR_DYLINT_CONFIGURED_TOOLCHAIN"], undefined);
+});
+
+test("dylint mode resolves newest nightly identity and keys the foundation cache", async () => {
+  let requested = "";
+  const { result, outputs, inputs } = await run(
+    {},
+    { INPUT_DYLINT: "true", INPUT_TOOLCHAIN: "1.94.1" },
+    undefined,
+    async (value) => {
+      requested = value;
+      return {
+        channel: "nightly-2026-01-18",
+        rustVersion: "1.94",
+        rustcRelease: "1.94.0-nightly",
+        rustcCommitHash: "1111111111111111111111111111111111111111",
+      };
+    },
+  );
+  assert.equal(requested, "1.94.1");
+  assert.equal(result.dylintCache.enabled, true);
+  assert.equal(result.dylintCache.outputCacheEnabled, true);
+  assert.match(result.dylintCache.outputKey, /^setup-soldr-dylint-output-v1-/);
+  assert.equal(result.dylintCache.outputPaths.length, 2);
+  assert.equal(result.dylintCache.toolchain, "nightly-2026-01-18");
+  assert.equal(result.dylintCache.rustcRelease, "1.94.0-nightly");
+  assert.equal(result.dylintCache.rustcCommitHash.length, 40);
+  assert.match(result.dylintCache.key, /^setup-soldr-dylint-v2-/);
+  assert.ok(result.dylintCache.paths.some((p) => p.includes("nightly-2026-01-18")));
+  assert.equal(
+    result.envExports["SOLDR_DYLINT_CONFIGURED_TOOLCHAIN"],
+    "nightly-2026-01-18",
+  );
+  assert.equal(result.envExports["SOLDR_DYLINT_TOOLCHAIN"], undefined);
+  assert.equal(
+    result.envExports["SOLDR_DYLINT_CONFIGURED_RUSTC_COMMIT_HASH"],
+    "1111111111111111111111111111111111111111",
+  );
+  assert.equal(outputs["dylint-rustc-commit-hash"], result.dylintCache.rustcCommitHash);
+  assert.equal(outputs["dylint-output-cache-key"], result.dylintCache.outputKey);
+  assert.equal(result.cargoRegistryCache.enabled, true);
+  assert.equal(inputs.prebuildDeps, "none");
+  assert.equal(
+    result.setupCache.paths.some(
+      (candidate) =>
+        candidate === path.join(result.rustupHome, "toolchains") ||
+        candidate === path.join(result.rustupHome, "update-hashes"),
+    ),
+    false,
+  );
 });
 
 test("soldr 0.7.43+ exports bundled cargo-chef local dir", async () => {

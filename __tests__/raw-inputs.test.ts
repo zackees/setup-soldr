@@ -109,6 +109,19 @@ test("dylint cache inputs round-trip through readRawInputs", () => {
   assert.equal(r.dylintCachePaths, "cache/dylint");
 });
 
+test("dylint mode inputs round-trip and remain empty when omitted", () => {
+  const enabled = readRawInputs({
+    INPUT_DYLINT: "true",
+    "INPUT_DYLINT-FOUNDATION-CACHE": "true",
+    "INPUT_DYLINT-OUTPUT-CACHE": "true",
+  });
+  assert.equal(enabled.dylint, "true");
+  assert.equal(enabled.dylintFoundationCache, "true");
+  assert.equal(enabled.dylintOutputCache, "true");
+  const omitted = readRawInputs({});
+  assert.equal(omitted.dylint, "");
+});
+
 test("timestamp-format input round-trips through readRawInputs", () => {
   const r = readRawInputs({ "INPUT_TIMESTAMP-FORMAT": "seconds" });
   assert.equal(r.timestampFormat, "seconds");

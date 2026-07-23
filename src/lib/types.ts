@@ -125,6 +125,9 @@ export interface RawInputs {
   prebuildDepsFlags: string;
   prebuildDepsDeltaCache: string;
   soldrMiniCache: string;
+  dylint: string;
+  dylintFoundationCache: string;
+  dylintOutputCache: string;
   dylintCache: string;
   dylintToolchain: string;
   dylintDriverRev: string;
@@ -264,11 +267,18 @@ export interface CrossToolCachePlan {
  */
 export interface DylintCachePlan {
   enabled: boolean;
+  outputCacheEnabled: boolean;
+  outputKey: string;
+  outputPaths: string[];
   key: string;
   paths: string[];
   driverPath: string;
   hostTriple: string;
   toolchain: string;
+  rustcRelease: string;
+  rustcCommitHash: string;
+  cacheIdentity: string;
+  successMarker: string;
   driverRev: string;
   cargoDylintVersion: string;
   dylintLinkVersion: string;

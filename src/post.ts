@@ -1988,9 +1988,25 @@ export async function run(): Promise<void> {
       if (exactHit) {
         log("dylint-cache: exact hit - skipping save");
       } else {
-        const existing = result.dylintCache.paths.some((p) => cachePathExists(p));
-        if (!existing) {
-          log("dylint-cache: no configured paths exist on disk - skipping save");
+        const markerValid =
+          !result.dylintCache.successMarker ||
+          (() => {
+            try {
+              return (
+                fs.readFileSync(result.dylintCache.successMarker, "utf8").trim() ===
+                result.dylintCache.cacheIdentity
+              );
+            } catch {
+              return false;
+            }
+          })();
+        const existing = result.dylintCache.paths.some(
+          (p) => p !== result.dylintCache.successMarker && cachePathExists(p),
+        );
+        if (!markerValid) {
+          log("dylint-cache: no matching successful Dylint marker - skipping save");
+        } else if (!existing) {
+          log("dylint-cache: no foundation payload exists on disk - skipping save");
         } else {
           const t0 = Date.now();
           try {
@@ -2021,6 +2037,75 @@ export async function run(): Promise<void> {
     }
   } catch (err) {
     log(`dylint-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  // Project outputs are deliberately separate from the long-lived nightly
+  // foundation. Save only after Soldr records a successful outer Dylint run;
+  // a restored foundation marker is never sufficient because this marker is
+  // not part of either cache payload.
+  try {
+    if (
+      result.dylintCache.outputCacheEnabled &&
+      result.dylintCache.outputPaths.length > 0
+    ) {
+      const exactHit = core.getState("dylintOutputCacheExactHit") === "true";
+      if (exactHit) {
+        log("dylint-output-cache: exact hit - skipping save");
+      } else {
+        let markerValid = false;
+        try {
+          markerValid =
+            fs.readFileSync(result.dylintCache.successMarker, "utf8").trim() ===
+            result.dylintCache.cacheIdentity;
+        } catch {
+          markerValid = false;
+        }
+        const existing = result.dylintCache.outputPaths.some((p) => cachePathExists(p));
+        if (!markerValid) {
+          log("dylint-output-cache: Dylint did not complete successfully - skipping save");
+        } else if (!existing) {
+          log("dylint-output-cache: no Dylint output paths exist - skipping save");
+        } else {
+          const t0 = Date.now();
+          try {
+            const id = await cache.saveCache(
+              result.dylintCache.outputPaths,
+              result.dylintCache.outputKey,
+            );
+            if (id > 0) {
+              log(
+                `dylint-output-cache: saved id=${id} key=${result.dylintCache.outputKey}`,
+              );
+              postCollector.record({
+                label: "dylint-output-cache",
+                operation: "save",
+                hit: false,
+                key: result.dylintCache.outputKey,
+                matchedKey: "",
+                restoreKeys: [],
+                archiveBytes: null,
+                inflatedBytes: null,
+                fileCount: null,
+                durationMs: Date.now() - t0,
+                timestamp: new Date().toISOString(),
+              });
+            } else {
+              log(
+                `dylint-output-cache: save skipped (id=${id}) - likely concurrent save`,
+              );
+            }
+          } catch (err) {
+            log(
+              `dylint-output-cache: save failed: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
+        }
+      }
+    }
+  } catch (err) {
+    log(
+      `dylint-output-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   const finalSummary = buildFinalCacheSummary(
