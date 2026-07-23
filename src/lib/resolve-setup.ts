@@ -38,6 +38,7 @@ import {
 } from "./cross-bootstrap.js";
 import { createLogger } from "./log-utils.js";
 import { parseEncryptionKey } from "./cache-encrypt.js";
+import { resolveDylintNightly } from "./dylint-nightly.js";
 import {
   detectMuslCcEnv,
   tripleToCcRsSuffix,
@@ -339,6 +340,8 @@ export async function resolveSetup(
   const runnerTemp = ctx.runnerTemp
     ? path.resolve(ctx.runnerTemp)
     : path.resolve(path.join(workspace, ".tmp"));
+  const dylintModeEnabled = parseOptInBool("dylint", inputs.dylint, false);
+  const explicitCargoRegistryCache = inputs.cargoRegistryCache.trim();
 
   // ---- cache-preset resolution (#251) ----
   // The umbrella `cache-preset` fills any cache-affecting input the consumer
@@ -411,6 +414,12 @@ export async function resolveSetup(
     );
     inputs.prebuildDeps = fillFromPreset(inputs.prebuildDeps, cachePresetCfg.prebuildDeps);
     inputs.buildCacheMode = fillFromPreset(inputs.buildCacheMode, cachePresetCfg.buildCacheMode);
+  }
+  if (dylintModeEnabled) {
+    if (!explicitCargoRegistryCache) inputs.cargoRegistryCache = "true";
+    // Ordinary cook is stable/build-shaped and cannot warm Dylint's isolated
+    // nightly/check-shaped tree. Dylint mode therefore always disables it.
+    inputs.prebuildDeps = "none";
   }
 
   // ---- cache roots ----
@@ -515,8 +524,28 @@ export async function resolveSetup(
     }
   }
 
-  const setupCachePathsList = setupCachePaths(setupCachePath, binDir, soldrBinCachePath, rustupHome);
-  const setupCacheLayoutValue = setupCacheLayout(setupCachePath, rustupHome);
+  let setupCachePathsList = setupCachePaths(
+    setupCachePath,
+    binDir,
+    soldrBinCachePath,
+    rustupHome,
+  );
+  let setupCacheLayoutValue = setupCacheLayout(setupCachePath, rustupHome);
+  if (dylintModeEnabled) {
+    // The Dylint foundation owns exact nightly toolchain paths. Do not let
+    // setup-cache's broad rustup directories overlap that layer or carry a
+    // Dylint nightly into a later non-Dylint job.
+    const rustupOwnedPaths = new Set([
+      path.normalize(path.join(rustupHome, "update-hashes")),
+      path.normalize(path.join(rustupHome, "settings.toml")),
+      path.normalize(path.join(rustupHome, "toolchains")),
+    ]);
+    setupCachePathsList = setupCachePathsList
+      .split(/\r?\n/)
+      .filter((candidate) => !rustupOwnedPaths.has(path.normalize(candidate)))
+      .join("\n");
+    setupCacheLayoutValue = "bin+soldr-bin";
+  }
 
   for (const dir of [
     cacheRoot,
@@ -795,36 +824,123 @@ export async function resolveSetup(
   }
 
   // ---- Dylint tool/driver cache (explicit opt-in, setup-soldr#221) ----
-  const dylintCacheEnabled =
-    cacheUmbrellaEnabled && parseOptInBool("dylint-cache", inputs.dylintCache, false);
+  const dylintFoundationRequested = dylintModeEnabled
+    ? parseOptInBool("dylint-foundation-cache", inputs.dylintFoundationCache, true)
+    : parseOptInBool("dylint-cache", inputs.dylintCache, false);
+  const dylintOutputCacheEnabled =
+    dylintModeEnabled &&
+    cacheUmbrellaEnabled &&
+    parseOptInBool("dylint-output-cache", inputs.dylintOutputCache, true);
+  if (dylintOutputCacheEnabled && targetTreeCacheEnabled) {
+    throw new Error(
+      "dylint-output-cache cannot overlap build-cache-mode=full target caching; " +
+        "disable target-cache/full mode for Dylint jobs",
+    );
+  }
+  const dylintCacheEnabled = cacheUmbrellaEnabled && dylintFoundationRequested;
   const dylintDriverPath = path.join(runnerTemp, "dylint-drivers");
   const dylintHostTriple = rustHostTriple(ctx.runnerOs || env["ACTION_OS"] || process.platform, ctx.runnerArch || env["ACTION_ARCH"] || process.arch);
-  const dylintToolchain = inputs.dylintToolchain.trim() || toolchain.channel;
+  const nightlyIdentity = dylintModeEnabled
+    ? await timeSubPhase("resolve", "dylint-nightly-map", () =>
+        (deps?.resolveDylintNightly ?? resolveDylintNightly)(
+          inputs.dylintToolchain.trim() || toolchain.channel,
+          env,
+        ),
+      )
+    : null;
+  const dylintToolchain =
+    nightlyIdentity?.channel || inputs.dylintToolchain.trim() || toolchain.channel;
+  const dylintRustcRelease = nightlyIdentity?.rustcRelease || "unmapped";
+  const dylintRustcCommitHash = nightlyIdentity?.rustcCommitHash || "unmapped";
+  const dylintCacheIdentity = `${dylintToolchain}|${dylintRustcRelease}|${dylintRustcCommitHash}`;
+  const dylintRequiredComponents = ["rustc-dev", "rust-src", "llvm-tools-preview"];
+  const dylintFoundationRevision = "foundation-v2";
+  const dylintRunScope =
+    [
+      env["GITHUB_RUN_ID"],
+      env["GITHUB_RUN_ATTEMPT"],
+      env["GITHUB_JOB"],
+      env["GITHUB_ACTION"],
+    ]
+      .filter(Boolean)
+      .join("|") || `local-${process.pid}`;
+  const dylintSuccessMarker = path.join(
+    runnerTemp,
+    "dylint-foundation-success",
+    shortJsonHash({
+      identity: dylintCacheIdentity,
+      components: dylintRequiredComponents,
+      revision: dylintFoundationRevision,
+      runScope: dylintRunScope,
+    }),
+    "success.txt",
+  );
   const dylintDriverRev = inputs.dylintDriverRev.trim() || "none";
-  const cargoDylintVersion = inputs.cargoDylintVersion.trim() || "5.0.0";
-  const dylintLinkVersion = inputs.dylintLinkVersion.trim() || "5.0.0";
+  const cargoDylintVersion = inputs.cargoDylintVersion.trim() || "6.0.1";
+  const dylintLinkVersion = inputs.dylintLinkVersion.trim() || "6.0.1";
   const customDylintPaths = splitPathInput(inputs.dylintCachePaths).map((p) =>
     path.isAbsolute(expanduser(p, env)) ? resolveAbsolute(p, env) : path.resolve(workspace, p),
+  );
+  const dylintToolchainPath = path.join(
+    rustupHome,
+    "toolchains",
+    `${dylintToolchain}-${dylintHostTriple}`,
+  );
+  const dylintUpdateHashPath = path.join(
+    rustupHome,
+    "update-hashes",
+    `${dylintToolchain}-${dylintHostTriple}`,
   );
   const dylintCachePaths =
     customDylintPaths.length > 0
       ? customDylintPaths
-      : defaultDylintCachePaths(cargoHome, dylintDriverPath);
-  const dylintCacheHash = shortJsonHash({
-    host_triple: dylintHostTriple,
-    cargo_dylint_version: cargoDylintVersion,
-    dylint_link_version: dylintLinkVersion,
-    dylint_toolchain: dylintToolchain,
-    dylint_driver_rev: dylintDriverRev,
-    cargo_config: cargoConfigHashValue,
-    cargo_lock: cargoLockHash,
-    manifest: wsManifestHash,
-    setup_toolchain: digest,
-  });
-  let dylintCacheKey = `setup-soldr-dylint-v1-${runnerOs}-${runnerArch}-${sanitizeFragment(dylintHostTriple)}-${dylintCacheHash}`;
+      : [
+          ...defaultDylintCachePaths(cargoHome, dylintDriverPath),
+          ...(dylintModeEnabled ? [dylintToolchainPath, dylintUpdateHashPath] : []),
+        ];
+  const dylintCacheHash = dylintModeEnabled
+    ? shortJsonHash({
+        host_triple: dylintHostTriple,
+        cargo_dylint_version: cargoDylintVersion,
+        dylint_link_version: dylintLinkVersion,
+        dylint_toolchain: dylintToolchain,
+        dylint_rustc_release: dylintRustcRelease,
+        dylint_rustc_commit_hash: dylintRustcCommitHash,
+        dylint_driver_rev: dylintDriverRev,
+        required_components: dylintRequiredComponents,
+        foundation_revision: dylintFoundationRevision,
+      })
+    : shortJsonHash({
+        host_triple: dylintHostTriple,
+        cargo_dylint_version: cargoDylintVersion,
+        dylint_link_version: dylintLinkVersion,
+        dylint_toolchain: dylintToolchain,
+        dylint_driver_rev: dylintDriverRev,
+        cargo_config: cargoConfigHashValue,
+        cargo_lock: cargoLockHash,
+        manifest: wsManifestHash,
+        setup_toolchain: digest,
+      });
+  const dylintCacheSchema = dylintModeEnabled ? "v2" : "v1";
+  let dylintCacheKey = `setup-soldr-dylint-${dylintCacheSchema}-${runnerOs}-${runnerArch}-${sanitizeFragment(dylintHostTriple)}-${dylintCacheHash}`;
   if (suffix) {
     dylintCacheKey = `${dylintCacheKey}-${sanitizedSuffix}`;
   }
+  const dylintOutputPaths = [
+    path.join(targetCachePath, "dylint", "libraries", dylintToolchain, "release"),
+    path.join(targetCachePath, "dylint", "target", dylintToolchain),
+  ];
+  const dylintOutputHash = shortJsonHash({
+    compiler_identity: dylintCacheIdentity,
+    driver_revision: dylintDriverRev,
+    cargo_config: cargoConfigHashValue,
+    cargo_lock: cargoLockHash,
+    manifests: wsManifestHash,
+    target_shape: targetShapeHash,
+    source_revision: githubSha,
+    cache_suffix: sanitizedSuffix,
+  });
+  const dylintOutputKey = `setup-soldr-dylint-output-v1-${runnerOs}-${runnerArch}-${dylintOutputHash}`;
   if (dylintCacheEnabled) {
     makeDirs(dylintDriverPath);
   }
@@ -894,6 +1010,15 @@ export async function resolveSetup(
     setEnv("DYLINT_DRIVER_PATH", dylintDriverPath);
     setEnv("SETUP_SOLDR_DYLINT_CACHE_KEY", dylintCacheKey);
     setEnv("SETUP_SOLDR_DYLINT_CACHE_PATHS", dylintCachePaths.join(path.delimiter));
+  }
+  if (dylintModeEnabled && nightlyIdentity) {
+    // These are configuration hints, not the active nested-Dylint scope.
+    // Soldr copies them to SOLDR_DYLINT_* only while launching cargo-dylint,
+    // so an ordinary stable `soldr cargo build` later in the job is unchanged.
+    setEnv("SOLDR_DYLINT_CONFIGURED_TOOLCHAIN", nightlyIdentity.channel);
+    setEnv("SOLDR_DYLINT_CONFIGURED_RUSTC_RELEASE", nightlyIdentity.rustcRelease);
+    setEnv("SOLDR_DYLINT_CONFIGURED_RUSTC_COMMIT_HASH", nightlyIdentity.rustcCommitHash);
+    setEnv("SOLDR_DYLINT_SUCCESS_MARKER", dylintSuccessMarker);
   }
   setEnv("SOLDR_TARGET_CACHE_BACKEND", "local");
   setEnv("SETUP_SOLDR_TOOLCHAIN_CHANNEL", toolchain.channel);
@@ -1079,11 +1204,18 @@ export async function resolveSetup(
   };
   const dylintCachePlan = {
     enabled: dylintCacheEnabled,
+    outputCacheEnabled: dylintOutputCacheEnabled,
+    outputKey: dylintOutputCacheEnabled ? dylintOutputKey : "",
+    outputPaths: dylintOutputCacheEnabled ? dylintOutputPaths : [],
     key: dylintCacheEnabled ? dylintCacheKey : "",
     paths: dylintCacheEnabled ? dylintCachePaths : [],
     driverPath: dylintCacheEnabled ? dylintDriverPath : "",
     hostTriple: dylintCacheEnabled ? dylintHostTriple : "",
-    toolchain: dylintCacheEnabled ? dylintToolchain : "",
+    toolchain: dylintModeEnabled || dylintCacheEnabled ? dylintToolchain : "",
+    rustcRelease: dylintModeEnabled ? dylintRustcRelease : "",
+    rustcCommitHash: dylintModeEnabled ? dylintRustcCommitHash : "",
+    cacheIdentity: dylintModeEnabled ? dylintCacheIdentity : "",
+    successMarker: dylintModeEnabled ? dylintSuccessMarker : "",
     driverRev: dylintCacheEnabled ? dylintDriverRev : "",
     cargoDylintVersion: dylintCacheEnabled ? cargoDylintVersion : "",
     dylintLinkVersion: dylintCacheEnabled ? dylintLinkVersion : "",

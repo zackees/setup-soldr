@@ -404,6 +404,27 @@ inputs:
       overrides it. (#251 cache-preset)
     required: false
     default: ""
+  dylint:
+    description: >
+      Enable Dylint mode. Default "false": setup-soldr performs no nightly
+      map request, toolchain restore/install, environment substitution, or
+      Dylint-specific cache preparation. When "true", the action maps the
+      resolved Rust major.minor version to the newest compatible dated
+      nightly and scopes that identity to Soldr's Dylint child processes.
+    required: false
+    default: "false"
+  dylint-foundation-cache:
+    description: >
+      Cache the exact Dylint nightly, required components, tools, and driver.
+      Defaults to "true" inside Dylint mode and is inert when dylint is false.
+    required: false
+    default: "true"
+  dylint-output-cache:
+    description: >
+      Reserve Dylint's isolated plugin/workspace output cache policy.
+      Defaults to "true" inside Dylint mode and is inert when dylint is false.
+    required: false
+    default: "true"
   dylint-cache:
     description: >
       Explicit opt-in cache for Dylint tooling. When "true", setup-soldr
@@ -432,11 +453,11 @@ inputs:
   cargo-dylint-version:
     description: cargo-dylint version installed by the workflow. Included in the Dylint cache key.
     required: false
-    default: "5.0.0"
+    default: "6.0.1"
   dylint-link-version:
     description: dylint-link version installed by the workflow. Included in the Dylint cache key.
     required: false
-    default: "5.0.0"
+    default: "6.0.1"
   dylint-cache-paths:
     description: >
       Optional newline- or comma-separated paths to restore/save for
@@ -808,6 +829,22 @@ outputs:
     description: Diagnostic restore status for the opt-in Dylint tool/driver cache.
   dylint-driver-path:
     description: Dylint driver directory exported as DYLINT_DRIVER_PATH when dylint-cache is enabled.
+  dylint-toolchain:
+    description: Selected dated nightly scoped to Dylint mode.
+  dylint-rustc-release:
+    description: Mapped compiler release for the selected Dylint nightly.
+  dylint-rustc-commit-hash:
+    description: Full mapped compiler commit for the selected Dylint nightly.
+  dylint-cache-identity:
+    description: Nightly channel, compiler release, and full commit cache identity.
+  dylint-output-cache-hit:
+    description: Whether the isolated Dylint project-output cache restored an exact key.
+  dylint-output-cache-key:
+    description: Exact isolated Dylint project-output cache key.
+  dylint-output-cache-paths:
+    description: Newline-delimited Dylint plugin and workspace output paths.
+  dylint-output-cache-restore-status:
+    description: Diagnostic restore status for the isolated Dylint project-output cache.
   toolchain:
     description: Exact Rust toolchain channel configured by rustup for the action.
   stats-json:

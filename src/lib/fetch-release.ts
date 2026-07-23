@@ -5,6 +5,7 @@
 
 import type { SystemRustupProbeDeps } from "./toolchain.js";
 import type { ToolchainSpec } from "./types.js";
+import type { DylintNightlyIdentity } from "./dylint-nightly.js";
 
 /**
  * Optional injectable dependencies for tests. Production code uses defaults.
@@ -17,6 +18,10 @@ export interface ResolveSetupDeps {
     rustupHome: string,
     toolchain: ToolchainSpec,
   ) => Promise<boolean> | boolean;
+  resolveDylintNightly?: (
+    requested: string,
+    env: Record<string, string | undefined>,
+  ) => Promise<DylintNightlyIdentity>;
 }
 
 export async function fetchReleaseTagDefault(

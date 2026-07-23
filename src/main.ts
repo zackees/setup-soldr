@@ -370,6 +370,9 @@ export async function run(): Promise<void> {
   core.saveState("dylintCacheEnabled", result.dylintCache.enabled ? "true" : "false");
   core.saveState("dylintCacheExactHit", "false");
   core.saveState("dylintCacheMatchedKey", "");
+  core.saveState("dylintOutputCacheEnabled", result.dylintCache.outputCacheEnabled ? "true" : "false");
+  core.saveState("dylintOutputCacheExactHit", "false");
+  core.saveState("dylintOutputCacheMatchedKey", "");
 
   // ---- parallel restores ----
   // setup-cache, target-cache, build-cache, and cargo-registry write to
@@ -679,6 +682,42 @@ export async function run(): Promise<void> {
     );
   })();
 
+  const dylintOutputRestorePromise = (async (): Promise<void> => {
+    if (!result.dylintCache.outputCacheEnabled || result.dylintCache.outputPaths.length === 0) {
+      return;
+    }
+    const t0 = Date.now();
+    const restore = await restoreCacheSafe(
+      result.dylintCache.outputPaths,
+      result.dylintCache.outputKey,
+      [],
+      logger,
+    );
+    core.setOutput("dylint-output-cache-hit", restore.hit ? "true" : "false");
+    core.setOutput(
+      "dylint-output-cache-restore-status",
+      deriveRestoreStatus(restore.hit, restore.matchedKey),
+    );
+    core.saveState("dylintOutputCacheExactHit", restore.hit ? "true" : "false");
+    core.saveState("dylintOutputCacheMatchedKey", restore.matchedKey);
+    statsCollector.record({
+      label: "dylint-output-cache",
+      operation: "restore",
+      hit: restore.hit,
+      key: result.dylintCache.outputKey,
+      matchedKey: restore.matchedKey,
+      restoreKeys: [],
+      archiveBytes: null,
+      inflatedBytes: null,
+      fileCount: null,
+      durationMs: Date.now() - t0,
+      timestamp: new Date().toISOString(),
+    });
+    logger.log(
+      `dylint-output-cache: key=${result.dylintCache.outputKey} hit=${restore.hit} matched=${restore.matchedKey || "(none)"}`,
+    );
+  })();
+
   // Promise.all — each IIFE wraps its own errors via restoreCacheSafe and
   // try/catches, so this should only see rejections for genuine programming
   // bugs.
@@ -688,6 +727,7 @@ export async function run(): Promise<void> {
     buildRestorePromise,
     cargoRegistryRestorePromise,
     dylintRestorePromise,
+    dylintOutputRestorePromise,
   ]);
   await finishPhase("parallel-restore");
 
