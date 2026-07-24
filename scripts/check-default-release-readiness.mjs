@@ -13,9 +13,10 @@ const version = action.match(/^  version:\r?\n[\s\S]*?^    default:\s*["']?([^"'
 if (!version) throw new Error("could not read inputs.version default from action.yml");
 
 const tag = version.startsWith("v") ? version : `v${version}`;
-const response = await fetch(`https://api.github.com/repos/zackees/soldr/releases/tags/${tag}`, {
-  headers: { Accept: "application/vnd.github+json", "User-Agent": "setup-soldr-release-readiness" },
-});
+const headers = { Accept: "application/vnd.github+json", "User-Agent": "setup-soldr-release-readiness" };
+const token = process.env.GITHUB_TOKEN?.trim();
+if (token) headers.Authorization = `Bearer ${token}`;
+const response = await fetch(`https://api.github.com/repos/zackees/soldr/releases/tags/${tag}`, { headers });
 if (!response.ok) throw new Error(`default release ${tag} returned HTTP ${response.status}`);
 const release = await response.json();
 if (release.draft) throw new Error(`default release ${tag} is a draft`);
