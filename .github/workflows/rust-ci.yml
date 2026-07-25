@@ -104,6 +104,16 @@ on:
         type: boolean
         required: false
         default: false
+      cargo-dylint-version:
+        description: Exact cargo-dylint version installed by the Dylint job.
+        type: string
+        required: false
+        default: "6.0.1"
+      dylint-link-version:
+        description: Exact dylint-link version installed by the Dylint job.
+        type: string
+        required: false
+        default: "6.0.1"
   workflow_dispatch:
     inputs:
       os:
@@ -174,6 +184,17 @@ on:
         type: boolean
         required: false
         default: false
+
+      cargo-dylint-version:
+        description: Exact cargo-dylint version installed by the Dylint job.
+        type: string
+        required: false
+        default: "6.0.1"
+      dylint-link-version:
+        description: Exact dylint-link version installed by the Dylint job.
+        type: string
+        required: false
+        default: "6.0.1"
 
 jobs:
   warm:
@@ -570,12 +591,20 @@ jobs:
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
+          cargo-dylint-version: ${{ inputs.cargo-dylint-version }}
+          dylint-link-version: ${{ inputs.dylint-link-version }}
 
       - name: Install cargo-dylint and dylint-link
         shell: bash
+        env:
+          CARGO_DYLINT_VERSION: ${{ inputs.cargo-dylint-version }}
+          DYLINT_LINK_VERSION: ${{ inputs.dylint-link-version }}
         run: |
           set -euo pipefail
-          soldr cargo install cargo-dylint dylint-link --locked
+          soldr cargo install \
+            "cargo-dylint@${CARGO_DYLINT_VERSION}" \
+            "dylint-link@${DYLINT_LINK_VERSION}" \
+            --locked
 
       - name: cargo dylint
         shell: bash
