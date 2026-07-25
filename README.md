@@ -212,6 +212,8 @@ release flows vary too much across repos to template.
 | `clippy` | boolean | `true` | `soldr cargo clippy --workspace --all-targets -- -D warnings`. |
 | `test` | boolean | `true` | `soldr cargo test --workspace`. |
 | `dylint` | boolean | `false` | `soldr cargo dylint --all --workspace` (installs `cargo-dylint` + `dylint-link` first). Opt-in: needs a consumer-provided `dylint.toml`. |
+| `cargo-dylint-version` | string | `6.0.1` | Exact `cargo-dylint` version installed by the Dylint job. |
+| `dylint-link-version` | string | `6.0.1` | Exact `dylint-link` version installed by the Dylint job. |
 
 #### Default cross-compile consumer
 
@@ -726,6 +728,10 @@ from pinned source. This deliberately does not vendor Dylint binaries into
 setup-soldr or soldr release archives: Dylint drivers are tightly coupled to
 the nightly toolchain, host triple, and driver source revision, so a cache-only
 mode keeps the default action small and makes the trust boundary explicit.
+The 6.0.1 defaults work for the standard Dylint driver flow. Set
+`dylint-driver-rev` only when a consumer builds a custom driver whose source
+revision is not already identified by the selected Dylint release/toolchain;
+that revision becomes part of the cache key.
 
 The key includes host triple, `cargo-dylint-version`, `dylint-link-version`,
 `dylint-toolchain`, `dylint-driver-rev`, the action toolchain signature,
