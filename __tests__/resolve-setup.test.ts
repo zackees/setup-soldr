@@ -181,18 +181,21 @@ test("invalid compress level rejected", async () => {
 });
 
 test("dylint cache is opt-in and exports driver path plus exact-key material", async () => {
+  // Deliberately synthetic overrides: this covers cache-key compatibility,
+  // not active Dylint pins or a real dylint-driver revision.
+  const fixtureDriverRev = "0123456789abcdef0123456789abcdef01234567";
   const { result, outputs } = await run({}, {
     "INPUT_DYLINT-CACHE": "true",
     "INPUT_DYLINT-TOOLCHAIN": "nightly-2026-03-26",
-    "INPUT_DYLINT-DRIVER-REV": "4bd91ce7729b74c7ee5664bbb588f7baf30b4a09",
-    "INPUT_CARGO-DYLINT-VERSION": "5.0.0",
-    "INPUT_DYLINT-LINK-VERSION": "5.0.0",
+    "INPUT_DYLINT-DRIVER-REV": fixtureDriverRev,
+    "INPUT_CARGO-DYLINT-VERSION": "99.98.97",
+    "INPUT_DYLINT-LINK-VERSION": "97.98.99",
   });
 
   assert.equal(result.dylintCache.enabled, true);
   assert.equal(result.dylintCache.hostTriple, "x86_64-unknown-linux-gnu");
   assert.equal(result.dylintCache.toolchain, "nightly-2026-03-26");
-  assert.equal(result.dylintCache.driverRev, "4bd91ce7729b74c7ee5664bbb588f7baf30b4a09");
+  assert.equal(result.dylintCache.driverRev, fixtureDriverRev);
   assert.match(result.dylintCache.key, /^setup-soldr-dylint-v1-linux-x64-x86_64-unknown-linux-gnu-/);
   assert.ok(result.dylintCache.paths.some((p) => p.includes("cargo-dylint*")));
   assert.ok(result.dylintCache.paths.some((p) => p.includes("dylint-drivers")));
