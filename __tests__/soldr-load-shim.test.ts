@@ -5,6 +5,8 @@ import * as os from "node:os";
 import * as fs from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 
+import "./cargo-registry-archive.test.ts";
+
 import {
   detectSoldrManifest,
   semverGte,
@@ -15,6 +17,78 @@ import {
   MIN_SOLDR_VERSION_FOR_LOAD,
   MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
 } from "../src/lib/soldr-load-shim.js";
+import {
+  cargoRegistryArchiveFormat,
+  planCargoRegistryArchive,
+  cargoRegistryPayloadPaths,
+} from "../src/lib/cargo-registry-archive.js";
+
+test("v2 cargo-registry plan owns registry and optional extras without CARGO_HOME", () => {
+  const cargoHome = path.join("runner", "cargo-home");
+  const plan = planCargoRegistryArchive({
+    format: "soldr-v2",
+    cargoHome,
+    runnerTemp: path.join("runner", "temp"),
+  });
+  assert.equal(plan.format, "soldr-v2");
+  assert.equal(plan.registryArchivePath, path.join("runner", "temp", "setup-soldr-cargo-registry", "v2", "registry.soldr.tar.zst"));
+  assert.equal(plan.extrasArchivePath, path.join("runner", "temp", "setup-soldr-cargo-registry", "v2", "extras.tar.zst"));
+  assert.deepEqual(plan.restorePaths, [plan.registryArchivePath, plan.extrasArchivePath]);
+  assert.ok(!plan.restorePaths.includes(cargoHome));
+});
+
+test("legacy cargo-registry plan preserves the v1 combined archive", () => {
+  const cargoHome = path.join("runner", "cargo-home");
+  const plan = planCargoRegistryArchive({
+    format: "legacy-v1",
+    cargoHome,
+    runnerTemp: path.join("runner", "temp"),
+  });
+  assert.equal(plan.format, "legacy-v1");
+  assert.equal(plan.registryArchivePath, `${path.join(cargoHome, "registry")}.tar.zst`);
+  assert.equal(plan.extrasArchivePath, "");
+  assert.deepEqual(plan.restorePaths, [plan.registryArchivePath]);
+});
+
+test("cargo-registry format keeps encryption and explicit rollback on legacy v1", () => {
+  assert.equal(cargoRegistryArchiveFormat({ encrypted: true, viaSoldr: true, sourceRef: false }), "legacy-v1");
+  assert.equal(cargoRegistryArchiveFormat({ encrypted: false, viaSoldr: false, sourceRef: false }), "legacy-v1");
+  assert.equal(cargoRegistryArchiveFormat({ encrypted: false, viaSoldr: true, sourceRef: false }), "soldr-v2");
+  assert.equal(cargoRegistryArchiveFormat({ encrypted: false, viaSoldr: true, sourceRef: true }), "legacy-v1");
+});
+
+test("cargo-registry payload allowlist excludes credentials, bin, and unrelated state", async () => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "cargo-registry-plan-"));
+  try {
+    await fs.mkdir(path.join(tmp, "registry"));
+    await fs.mkdir(path.join(tmp, "git"));
+    await fs.mkdir(path.join(tmp, "bin"));
+    await fs.writeFile(path.join(tmp, ".global-cache"), "gc");
+    await fs.writeFile(path.join(tmp, "credentials.toml"), "secret");
+    const payload = await cargoRegistryPayloadPaths(tmp);
+    assert.deepEqual(payload, {
+      registry: path.join(tmp, "registry"),
+      extras: [path.join(tmp, ".global-cache"), path.join(tmp, "git")],
+    });
+    assert.ok(!JSON.stringify(payload).includes("credentials.toml"));
+    assert.ok(!JSON.stringify(payload).includes(`${path.sep}bin`));
+  } finally {
+    await fs.rm(tmp, { recursive: true, force: true });
+  }
+});
+
+test("missing optional cargo-registry extras are valid", async () => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "cargo-registry-plan-"));
+  try {
+    await fs.mkdir(path.join(tmp, "registry"));
+    assert.deepEqual(await cargoRegistryPayloadPaths(tmp), {
+      registry: path.join(tmp, "registry"),
+      extras: [],
+    });
+  } finally {
+    await fs.rm(tmp, { recursive: true, force: true });
+  }
+});
 
 test("semverGte: handles MAJOR.MINOR.PATCH ordering", () => {
   assert.equal(semverGte("0.7.46", MIN_SOLDR_VERSION_FOR_LOAD), true);
@@ -189,30 +263,6 @@ test("trySaveViaSoldr: gated off when soldr version is too old (even with env on
         archivePath: path.join(tmp, "out.tar.zst"),
         soldrPath: "/fake/path/soldr",
         soldrVersion: "0.7.46", // one below the 0.7.47 minimum
-      });
-      assert.equal(r.used, false);
-    } finally {
-      await fs.rm(tmp, { recursive: true, force: true });
-    }
-  } finally {
-    if (orig === undefined) delete process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
-    else process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = orig;
-  }
-});
-
-test("trySaveViaSoldr: gated off when extraBasenames is non-empty (#263 limitation)", async () => {
-  const orig = process.env[CARGO_REGISTRY_VIA_SOLDR_ENV];
-  process.env[CARGO_REGISTRY_VIA_SOLDR_ENV] = "1";
-  try {
-    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "soldr-save-shim-"));
-    try {
-      await fs.mkdir(path.join(tmp, "cache"));
-      const r = await trySaveViaSoldr({
-        cacheDir: path.join(tmp, "cache"),
-        archivePath: path.join(tmp, "out.tar.zst"),
-        soldrPath: "/fake/path/soldr",
-        soldrVersion: MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
-        extraBasenames: [".global-cache", "git"],
       });
       assert.equal(r.used, false);
     } finally {

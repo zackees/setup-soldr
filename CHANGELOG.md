@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Make the cargo-registry Soldr path reachable behind
+  `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` (#266). The v2 cache owns a Soldr archive
+  for `registry/` plus a separate tar+zstd archive containing only
+  `.global-cache` and `git/`; credentials, binaries, and unrelated Cargo home
+  state remain excluded. Cache download still overlaps the other layers, while
+  extraction now waits for the installed Soldr runtime to be verified. Add a
+  Windows 2025 benchmark workflow with alternating legacy/Soldr restores, raw
+  CSV, content validation, and fixed 25-second/3x decision gates. Legacy-v1
+  remains the default until that evidence passes; encrypted entries and Soldr
+  versions older than 0.7.47 also remain on v1. Windows v2 restores bootstrap
+  pinned, SHA-256-verified zstd 1.5.7 when no zstd executable is on PATH.
+
 - Default to soldr `0.8.6` (was `0.8.5`). This release restores the managed
   Windows MSVC cross-build lanes, including ARM64 target provisioning and
   clang-cl argument-mode handling (soldr#1559), and carries the multicall

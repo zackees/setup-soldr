@@ -53,6 +53,11 @@ import {
   resolveSoldrReleaseVersion,
   type ResolveSetupDeps,
 } from "./fetch-release.js";
+import { cargoRegistryArchiveFormat, planCargoRegistryArchive } from "./cargo-registry-archive.js";
+import {
+  cargoRegistryViaSoldrEnvOn,
+  MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
+} from "./soldr-load-shim.js";
 import { pythonDefaultJson } from "./python-json.js";
 import {
   loadToolchainSpec,
@@ -792,7 +797,33 @@ export async function resolveSetup(
   // Siblings that don't exist on disk at save time (e.g. workspaces with no
   // git-source deps) are silently skipped by compressCache — see #102.
   const cargoRegistryCacheExtras = [".global-cache", "git"];
-  const cargoRegistryCachePrefix = `setup-soldr-cargoregistry-v1-${runnerOs}-${runnerArch}`;
+  const cargoRegistryEncrypted = inputs.cacheEncryptKey.trim().length > 0;
+  const cargoRegistryViaSoldr = cargoRegistryViaSoldrEnvOn();
+  const cargoRegistryRuntimeCompatible = semverAtLeast(
+    soldrVersionResolved || soldrVersionRequested,
+    MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
+  );
+  const cargoRegistryFormat = cargoRegistryArchiveFormat({
+    encrypted: cargoRegistryEncrypted,
+    viaSoldr: cargoRegistryViaSoldr,
+    sourceRef: soldrRef.trim().length > 0,
+    runtimeCompatible: cargoRegistryRuntimeCompatible,
+  });
+  if (cargoRegistryEncrypted && cargoRegistryViaSoldr) {
+    core.notice(
+      "setup-soldr: cargo-registry Soldr v2 is disabled for encrypted cache entries; using encrypted legacy-v1 until encrypted Soldr restore is available.",
+    );
+  } else if (cargoRegistryViaSoldr && !soldrRef && !cargoRegistryRuntimeCompatible) {
+    core.notice(
+      `setup-soldr: cargo-registry Soldr v2 requires soldr >= ${MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP}; using legacy-v1 for ${soldrVersionResolved || soldrVersionRequested || "unknown"}.`,
+    );
+  }
+  const cargoRegistryArchive = planCargoRegistryArchive({
+    format: cargoRegistryFormat,
+    cargoHome,
+    runnerTemp,
+  });
+  const cargoRegistryCachePrefix = `setup-soldr-cargoregistry-${cargoRegistryFormat === "soldr-v2" ? "v2" : "v1"}-${runnerOs}-${runnerArch}`;
   const cargoRegistryCacheRestorePrefix = `${cargoRegistryCachePrefix}-${cargoLockHash}-`;
   // #371: drop git SHA from the exact key, same anti-pattern fix as
   // #237 did for build-cache. With SHA, every commit produced a new
@@ -815,6 +846,7 @@ export async function resolveSetup(
   const cargoRegistryCacheEnabled = cacheUmbrellaEnabled && cargoRegistryCacheRequested;
   if (cargoRegistryCacheEnabled) {
     makeDirs(cargoRegistryCachePath);
+    for (const archivePath of cargoRegistryArchive.restorePaths) makeDirs(path.dirname(archivePath));
   }
 
   // ---- Dylint tool/driver cache (explicit opt-in, setup-soldr#221) ----
@@ -1195,6 +1227,7 @@ export async function resolveSetup(
     restorePrefix: cargoRegistryCacheRestorePrefix,
     path: cargoRegistryCachePath,
     extraBasenames: cargoRegistryCacheExtras,
+    archive: cargoRegistryArchive,
   };
   const dylintCachePlan = {
     enabled: dylintCacheEnabled,

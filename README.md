@@ -470,7 +470,7 @@ preferred for new workflows.
 | `cache-encrypt-key` | Optional 256-bit AES key (64-char hex, 44-char base64, or 43-char base64url). When set, every managed cache layer's `.tar.zst` archive is wrapped with AES-256-GCM before upload and verified+decrypted on restore. Pass via a GitHub Actions secret. See "Release-grade usage: encrypted cache" below. (#387) |
 | `cache-encrypt-on-failure` | Behavior when an encrypted entry fails GCM authentication (wrong key, tampered ciphertext, or AAD mismatch). Default `error` stops the run; `skip` logs the failure and treats the entry as a cold miss. Has no effect when `cache-encrypt-key` is empty. (#387) |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
-| `cargo-registry-cache` | When `true`, setup-soldr caches `~/.cargo/registry` directly as a fast-zstd `.tar.zst` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Requires zccache `>=1.4.4` (skip-flag support). Default `false` keeps the default cache footprint small; opt in when registry restore timing beats upload/retention cost. |
+| `cargo-registry-cache` | When `true`, setup-soldr caches `~/.cargo/registry`, `.global-cache`, and `git/` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. The codec defaults to legacy tar+zstd while the Soldr-v2 Windows benchmark is collected; `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` opts into the split parallel-extract format. Requires zccache `>=1.4.4` (skip-flag support). Default `false` keeps the layer itself off. |
 | `dylint` | Enable Dylint mode. Default `false`, so normal jobs do not fetch the nightly map, restore or install a nightly, substitute toolchains, or prepare Dylint caches. When `true`, setup-soldr maps the configured exact Rust release to the newest compatible dated nightly and scopes that identity to Soldr's Dylint subprocesses. |
 | `dylint-foundation-cache` | Cache the exact Dylint nightly/components plus cargo-dylint, dylint-link, and compatible driver. Default `true` in Dylint mode and inert otherwise. The key includes the dated nightly, compiler release, and full compiler commit. |
 | `dylint-output-cache` | Restore and save the isolated custom-library and workspace-check trees separately from the long-lived foundation. Default `true` in Dylint mode and inert otherwise; a save requires a successful Dylint run. |
@@ -686,15 +686,25 @@ larger-cache behavior re-enables it explicitly:
 - `target-cache: true` (or `build-cache-mode: full`) restores the full `target/`
   artifact tree across runs again, rather than the default `once` rust-plan
   bundle.
-- `cargo-registry-cache: true` caches `~/.cargo/registry` directly as a
-  fast-zstd archive again.
+- `cargo-registry-cache: true` caches `~/.cargo/registry` plus Cargo's
+  `.global-cache` and `git/` companion state. The legacy-v1 codec is the
+  default until the checked-in Windows 2025 benchmark passes both fixed gates.
+  Set `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` to opt into the v2 split layout now;
+  set it to `0`, `false`, `no`, or `off` for an explicit legacy rollback.
+  Encrypted entries and Soldr versions older than `0.7.47` always use v1.
+  On Windows, v2 bootstraps a pinned, SHA-256-verified zstd 1.5.7 executable
+  under `RUNNER_TEMP` when the runner does not already provide one.
 
 These are opt-in because they pay a real save/restore cost that only some
 workloads earn back. The `cargo-registry-cache` restore is especially expensive
 on Windows: the registry is tens of thousands of small files, and restore has
 been observed at roughly 47–50 s — a key reason it is default-off and should be
 opted into only where the workload measures a net win over upload/retention
-cost.
+cost. Run the manual `cargo-registry-soldr-benchmark.yml` workflow to compare
+three or more alternating restores from one deterministic fixture. It emits raw
+CSV and a Markdown median summary; the default-on gate is Soldr under 25 seconds,
+at least 3x faster than legacy, with every file-count and SHA-256 validation
+passing.
 
 ### Cache policy presets
 

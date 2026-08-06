@@ -378,13 +378,20 @@ inputs:
   cargo-registry-cache:
     description: >
       When "true", setup-soldr manages a separate actions/cache step
-      for ~/.cargo/registry that pre-compresses the directory into a single
-      .tar.zst via the embedded setup-soldr-cache-compress sub-action. The
-      same archive also bundles ~/.cargo/.global-cache (cargo's RFC-3413 GC
-      database — without it every job's cargo-gc sees fresh access times and
-      conservatively keeps everything) and ~/.cargo/git/ (bare mirrors and
-      checkouts for git-source crate deps; missing on cold checkouts and
-      silently skipped in that case). See setup-soldr#102. Also exports
+      for ~/.cargo/registry. The legacy-v1 codec stores registry plus the
+      companion ~/.cargo/.global-cache and ~/.cargo/git payloads in one
+      tar+zstd archive. The opt-in Soldr-v2 codec stores registry in a Soldr
+      archive for parallel extraction and keeps only those two companions in
+      a second tar+zstd archive; set SOLDR_CARGO_REGISTRY_VIA_SOLDR=1 to use
+      it while Windows benchmark evidence is collected. Encryption, an
+      explicit false-like env value, a source-ref build, or Soldr older than
+      0.7.47 retains legacy-v1. When zstd is absent on Windows, v2 fetches the
+      pinned, SHA-256-verified upstream zstd 1.5.7 executable into RUNNER_TEMP.
+      The Cargo GC database prevents each job from
+      seeing fresh access times and conservatively retaining everything;
+      ~/.cargo/git contains bare mirrors and checkouts for git-source crate
+      dependencies. Missing companions are silently skipped. See
+      setup-soldr#102. Also exports
       SOLDR_SKIP_CARGO_REGISTRY_SAVE=1 so the zccache CLI's built-in
       cargo-registry save (honored in zccache >=1.4.4) no-ops and the
       payload is not double-saved. Default "false" keeps setup-soldr's

@@ -218,12 +218,22 @@ export interface TargetCachePlan {
  * Missing siblings are silently skipped on save so a cold checkout (no
  * `git/` deps cloned yet) still produces a valid archive.
  */
+export type CargoRegistryArchiveFormat = "legacy-v1" | "soldr-v2";
+
+export interface CargoRegistryArchivePlan {
+  format: CargoRegistryArchiveFormat;
+  registryArchivePath: string;
+  extrasArchivePath: string;
+  restorePaths: string[];
+}
+
 export interface CargoRegistryCachePlan {
   enabled: boolean;
   key: string;
   restorePrefix: string;
   path: string;
   extraBasenames: string[];
+  archive: CargoRegistryArchivePlan;
 }
 
 /**

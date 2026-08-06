@@ -29,7 +29,10 @@ import { saveMiniCache } from "./lib/soldr-mini-cache.js";
 // chunk files (e.g. @actions/artifact → @azure/identity inner chunks)
 // into `dist/` so they resolve at runtime — but converting our own
 // dynamic import to static is the cleaner shape regardless.
-import { trySaveViaSoldr } from "./lib/soldr-load-shim.js";
+import {
+  cargoRegistryPayloadCensus,
+  saveCargoRegistryArchive,
+} from "./lib/cargo-registry-archive.js";
 import { createLogger } from "./lib/log-utils.js";
 import { shutdownCacheDaemons } from "./lib/shutdown-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
@@ -69,6 +72,7 @@ type SaveStatus =
   | "exact-hit-skip"
   | "missing-dir-skip"
   | "oversize-skip"
+  | "race-skip"
   | "tiny-delta-skip"
   | "saved"
   | "failed";
@@ -331,6 +335,31 @@ function resolveCachePayloadPolicy(inputs: RawInputs, log: (msg: string) => void
   };
 }
 
+export function applyCachePayloadOversizeAction(
+  action: "skip" | "fail",
+  message: string,
+  setFailed: (message: string) => void = core.setFailed,
+): "oversize-skip" | "failed" {
+  if (action === "fail") {
+    setFailed(message);
+    return "failed";
+  }
+  return "oversize-skip";
+}
+
+export async function classifyCacheSaveReservation(
+  id: number,
+  key: string,
+  probeExactKey: () => Promise<string | undefined>,
+): Promise<"saved" | "race-skip" | "failed"> {
+  if (id > 0) return "saved";
+  try {
+    return (await probeExactKey()) === key ? "race-skip" : "failed";
+  } catch {
+    return "failed";
+  }
+}
+
 type CacheSaveResultWithStats = CacheSaveResult & {
   archiveBytes: number | null;
   inflatedBytes: number | null;
@@ -355,15 +384,8 @@ async function saveOne(opts: {
   extraBasenames?: string[];
   payloadProfile?: CachePayloadProfile;
   payloadPolicy: CachePayloadPolicy;
-  /**
-   * When set, attempt to bundle the cache via `soldr save` so the matching
-   * `soldr load` on restore can use parallel-extract. Only meaningful for
-   * the cargo-registry layer today; gated on env + version inside
-   * `trySaveViaSoldr`. Falls through to legacy compression otherwise. (#263)
-   */
-  soldrSave?: { soldrPath: string; soldrVersion: string };
 }): Promise<CacheSaveResultWithStats> {
-  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadProfile, payloadPolicy, soldrSave } = opts;
+  const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadProfile, payloadPolicy } = opts;
   const withStats = (r: CacheSaveResult): CacheSaveResultWithStats =>
     Object.assign(r, {
       archiveBytes: null,
@@ -391,31 +413,6 @@ async function saveOne(opts: {
   const compressStart = Date.now();
   let skippedReason: "payload-too-large" | undefined;
   try {
-    // #263: try `soldr save` first when the caller opted in (env-gated
-    // inside trySaveViaSoldr). Produces a soldr-format archive that the
-    // matching `soldr load` on restore picks up for parallel extract.
-    // Falls through to legacy compressCache on any miss (no env, no
-    // binary, too-old version, extras present, throw).
-    if (soldrSave) {
-      const candidateArchive = `${cacheDir}.tar.zst`;
-      const sr = await trySaveViaSoldr({
-        cacheDir,
-        archivePath: candidateArchive,
-        soldrPath: soldrSave.soldrPath,
-        soldrVersion: soldrSave.soldrVersion,
-        extraBasenames,
-        debug,
-        log,
-      });
-      if (sr.used) {
-        archivePath = sr.archivePath;
-        archiveBytes = sr.archiveBytes;
-        // inflatedBytes/fileCount/payload not collected on the soldr path —
-        // keep them null; postCollector accepts that shape.
-        compressMs = Date.now() - compressStart;
-        if (debug) log(`${label}: soldr save produced ${candidateArchive} (${archiveBytes} bytes, ${compressMs} ms)`);
-      }
-    }
     if (archivePath === null) {
       const result = await compressCache({
         cacheDir,
@@ -454,6 +451,12 @@ async function saveOne(opts: {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    if (
+      payloadPolicy.oversizeAction === "fail" &&
+      message.includes("exceeding cache-payload-max-bytes")
+    ) {
+      applyCachePayloadOversizeAction("fail", message);
+    }
     log(`${label}: compression failed: ${message}`);
     return withStats({ status: "failed", cache_dir: cacheDir, error: message });
   }
@@ -783,6 +786,8 @@ function saveText(save: CacheSaveResult): string {
       return "skipped missing dir";
     case "oversize-skip":
       return "skipped oversize payload";
+    case "race-skip":
+      return "skipped cache reservation race";
     case "tiny-delta-skip":
       return save.skip_reason ? `skipped tiny delta (${save.skip_reason})` : "skipped tiny delta";
     case "failed":
@@ -1530,11 +1535,9 @@ export async function run(): Promise<void> {
     }
   }
 
-  // Cargo registry cache (only when enabled).
-  // setup-soldr#102: bundle `.global-cache` (cargo's RFC-3413 GC db) and the
-  // `git/` directory (bare mirrors + checkouts for git-source crate deps)
-  // into the same archive alongside `registry/`. Cache key + archive path
-  // are unchanged — the extras simply ride inside the existing tarball.
+  // Cargo registry cache (only when enabled). Legacy-v1 bundles registry plus
+  // optional siblings into one tarball. Soldr-v2 owns registry in a Soldr
+  // archive and keeps only `.global-cache`/`git` in the companion tarball.
   let cargoRegistrySave: CacheSaveResultWithStats = Object.assign(disabledSave(), {
     archiveBytes: null as number | null,
     inflatedBytes: null as number | null,
@@ -1543,35 +1546,172 @@ export async function run(): Promise<void> {
   });
   if (result.cargoRegistryCache.enabled) {
     const regSaveStart = Date.now();
-    cargoRegistrySave = await saveOne({
-      cacheDir: result.cargoRegistryCache.path,
-      codec: result.targetCacheCompress,
-      level: result.targetCacheCompressLevel,
-      key: result.cargoRegistryCache.key,
-      matchedKey: registryMatched,
-      label: "cargo-registry-cache",
-      debug: debugMode,
-      log: debugLog,
-      extraBasenames: result.cargoRegistryCache.extraBasenames,
-      payloadPolicy,
-      // #263: opt the cargo-registry layer into `soldr save`/`soldr load`
-      // round-trip (env-gated inside trySaveViaSoldr — default off until
-      // the Windows wall-clock measurement validates the win).
-      soldrSave: {
-        soldrPath: result.soldrPath || process.env["SOLDR_BINARY"]?.trim() || "",
-        soldrVersion: result.soldrVersionResolved || "",
-      },
-    });
+    if (registryMatched === result.cargoRegistryCache.key) {
+      cargoRegistrySave = Object.assign(
+        { status: "exact-hit-skip" as const, cache_dir: result.cargoRegistryCache.path },
+        { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null },
+      );
+    } else if (result.cargoRegistryCache.archive.format === "soldr-v2") {
+      const compressStart = Date.now();
+      const payload = await cargoRegistryPayloadCensus(result.cargoHome, payloadPolicy.topN);
+      if (payloadPolicy.warnBytes !== null && payload.bytes > payloadPolicy.warnBytes) {
+        const largest = payload.topFiles
+          .slice(0, 5)
+          .map((entry) => `${entry.path} (${fmtBytes(entry.bytes)})`)
+          .join(", ");
+        core.notice(
+          `setup-soldr: cargo-registry-cache payload is ${fmtBytes(payload.bytes)} before compression ` +
+            `(>${fmtBytes(payloadPolicy.warnBytes)}). Largest files: ${largest || "none"}`,
+        );
+      }
+      if (payloadPolicy.maxBytes !== null && payload.bytes > payloadPolicy.maxBytes) {
+        const message =
+          `setup-soldr: cargo-registry-cache payload is ${fmtBytes(payload.bytes)} before compression, ` +
+          `exceeding cache-payload-max-bytes=${fmtBytes(payloadPolicy.maxBytes)}`;
+        const status: SaveStatus = applyCachePayloadOversizeAction(
+          payloadPolicy.oversizeAction,
+          message,
+        );
+        log(`${message}; ${status === "failed" ? "failing" : "skipping"} v2 save`);
+        cargoRegistrySave = Object.assign(
+          {
+            status,
+            cache_dir: result.cargoRegistryCache.path,
+            ...(status === "failed" ? { error: message } : {}),
+          },
+          {
+            archiveBytes: null,
+            inflatedBytes: payload.bytes,
+            fileCount: payload.files,
+            payload,
+            phaseTimings: { compressMs: Date.now() - compressStart },
+          },
+        );
+      } else {
+        try {
+          const archiveResult = await saveCargoRegistryArchive({
+            plan: result.cargoRegistryCache.archive,
+            cargoHome: result.cargoHome,
+            soldrPath: result.soldrPath || process.env["SOLDR_BINARY"]?.trim() || "",
+            soldrVersion: core.getState("soldrRuntimeVersion") || result.soldrVersionResolved,
+            debug: debugMode,
+            log: debugLog,
+          });
+          if (!archiveResult.used) {
+            throw new Error(`cargo-registry soldr-v2 save unavailable: ${archiveResult.codecPath}`);
+          }
+          const compressMs = Date.now() - compressStart;
+          const uploadStart = Date.now();
+          try {
+            const id = await cache.saveCache(
+              result.cargoRegistryCache.archive.restorePaths,
+              result.cargoRegistryCache.key,
+            );
+            const uploadMs = Date.now() - uploadStart;
+            const status = await classifyCacheSaveReservation(
+              id,
+              result.cargoRegistryCache.key,
+              () =>
+                cache.restoreCache(
+                  result.cargoRegistryCache.archive.restorePaths,
+                  result.cargoRegistryCache.key,
+                  [],
+                  { lookupOnly: true },
+                ),
+            );
+            if (status === "race-skip") {
+              log(
+                `cargo-registry-cache: save returned id=${id}, and an exact-key probe confirmed ` +
+                  `a parallel job saved key=${result.cargoRegistryCache.key}`,
+              );
+            } else if (status === "failed") {
+              log(
+                `cargo-registry-cache: save returned id=${id}, but no exact-key entry exists; ` +
+                  "reporting the save as failed",
+              );
+            }
+            cargoRegistrySave = Object.assign(
+              {
+                status,
+                cache_dir: result.cargoRegistryCache.path,
+                cache_id: id,
+                saved_paths: result.cargoRegistryCache.archive.restorePaths,
+                ...(status === "failed"
+                  ? { error: `saveCache returned id=${id} and exact-key verification missed` }
+                  : {}),
+              },
+              {
+                archiveBytes: archiveResult.archiveBytes,
+                inflatedBytes: archiveResult.restoredBytes,
+                fileCount: archiveResult.restoredFiles,
+                payload,
+                phaseTimings: { compressMs, uploadMs },
+              },
+            );
+          } catch (err) {
+            const uploadMs = Date.now() - uploadStart;
+            const message = err instanceof Error ? err.message : String(err);
+            log(`cargo-registry-cache: v2 save failed: ${message}`);
+            cargoRegistrySave = Object.assign(
+              {
+                status: "failed" as const,
+                cache_dir: result.cargoRegistryCache.path,
+                saved_paths: result.cargoRegistryCache.archive.restorePaths,
+                error: message,
+              },
+              {
+                archiveBytes: archiveResult.archiveBytes,
+                inflatedBytes: archiveResult.restoredBytes,
+                fileCount: archiveResult.restoredFiles,
+                payload,
+                phaseTimings: { compressMs, uploadMs },
+              },
+            );
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          const compressMs = Date.now() - compressStart;
+          log(`cargo-registry-cache: v2 archive creation failed: ${message}`);
+          cargoRegistrySave = Object.assign(
+            {
+              status: "failed" as const,
+              cache_dir: result.cargoRegistryCache.path,
+              error: message,
+            },
+            {
+              archiveBytes: null,
+              inflatedBytes: payload.bytes,
+              fileCount: payload.files,
+              payload,
+              phaseTimings: { compressMs },
+            },
+          );
+        }
+      }
+    } else {
+      cargoRegistrySave = await saveOne({
+        cacheDir: result.cargoRegistryCache.path,
+        codec: result.targetCacheCompress,
+        level: result.targetCacheCompressLevel,
+        key: result.cargoRegistryCache.key,
+        matchedKey: registryMatched,
+        label: "cargo-registry-cache",
+        debug: debugMode,
+        log: debugLog,
+        extraBasenames: result.cargoRegistryCache.extraBasenames,
+        payloadPolicy,
+      });
+    }
     // #287 follow-up: record EVERY outcome so the post-step save
     // table shows the layer no matter what its disposition.
     postCollector.record({
       label: "cargo-registry", operation: "save", hit: false,
       key: result.cargoRegistryCache.key, matchedKey: registryMatched, restoreKeys: [],
       status: cargoRegistrySave.status,
-      archiveBytes: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.archiveBytes : null,
-      inflatedBytes: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.inflatedBytes : null,
-      fileCount: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.fileCount : null,
-      payload: cargoRegistrySave.status === "saved" || cargoRegistrySave.status === "oversize-skip" ? cargoRegistrySave.payload : null,
+      archiveBytes: ["saved", "oversize-skip", "race-skip"].includes(cargoRegistrySave.status) ? cargoRegistrySave.archiveBytes : null,
+      inflatedBytes: ["saved", "oversize-skip", "race-skip"].includes(cargoRegistrySave.status) ? cargoRegistrySave.inflatedBytes : null,
+      fileCount: ["saved", "oversize-skip", "race-skip"].includes(cargoRegistrySave.status) ? cargoRegistrySave.fileCount : null,
+      payload: ["saved", "oversize-skip", "race-skip"].includes(cargoRegistrySave.status) ? cargoRegistrySave.payload : null,
       durationMs: Date.now() - regSaveStart,
       compressMs: cargoRegistrySave.phaseTimings?.compressMs,
       uploadMs: cargoRegistrySave.phaseTimings?.uploadMs,

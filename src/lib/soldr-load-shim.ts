@@ -173,35 +173,19 @@ export interface SoldrSaveOpts {
   archivePath: string;
   soldrPath: string;
   soldrVersion: string;
-  /**
-   * If non-empty, fall back to legacy compression. soldr save bundles
-   * one directory; extras (cargo's `.global-cache`, `git/`) require
-   * pre-staging that this helper doesn't do today. (#263)
-   */
-  extraBasenames?: string[];
   debug?: boolean;
   log?: (msg: string) => void;
 }
 
 /**
- * Attempt to bundle the cache directory via `soldr save` so the matching
- * `soldr load` (in main.ts) can pick up the parallel-extract path. Returns
- * `{ used: false }` when gated off (env var, missing binary, too-old
- * version, extras present, or any throw). Produces a soldr-format archive
- * with `SOLDR_MANIFEST.pb` at the root + `cache/...` entries. (#263)
+ * Bundle a cache directory via `soldr save` after the caller has selected a
+ * Soldr-format plan. This deliberately does not re-read the rollout env var:
+ * the persisted plan is authoritative across the main/post process boundary.
  */
-export async function trySaveViaSoldr(opts: SoldrSaveOpts): Promise<SoldrSaveResult> {
+export async function saveViaSoldr(opts: SoldrSaveOpts): Promise<SoldrSaveResult> {
   const t0 = Date.now();
   const noOp: SoldrSaveResult = { used: false, archivePath: null, archiveBytes: 0, durationMs: 0 };
   const log = opts.log ?? ((): void => undefined);
-  if (!cargoRegistryViaSoldrEnvOn()) {
-    if (opts.debug) {
-      log(
-        `[debug] soldr-save-shim: ${CARGO_REGISTRY_VIA_SOLDR_ENV} not set; deferring to legacy tar+zstd save`,
-      );
-    }
-    return noOp;
-  }
   if (!opts.soldrPath) {
     if (opts.debug) log(`[debug] soldr-save-shim: no soldr binary path supplied`);
     return noOp;
@@ -210,14 +194,6 @@ export async function trySaveViaSoldr(opts: SoldrSaveOpts): Promise<SoldrSaveRes
     if (opts.debug) {
       log(
         `[debug] soldr-save-shim: soldr ${opts.soldrVersion} < ${MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP}; falling back to legacy save`,
-      );
-    }
-    return noOp;
-  }
-  if (opts.extraBasenames && opts.extraBasenames.length > 0) {
-    if (opts.debug) {
-      log(
-        `[debug] soldr-save-shim: extraBasenames=[${opts.extraBasenames.join(",")}] not yet supported by soldr save; falling back to legacy`,
       );
     }
     return noOp;
@@ -254,4 +230,21 @@ export async function trySaveViaSoldr(opts: SoldrSaveOpts): Promise<SoldrSaveRes
     return noOp;
   }
   return { used: true, archivePath: opts.archivePath, archiveBytes, durationMs: Date.now() - t0 };
+}
+
+/**
+ * Compatibility wrapper for callers that have not resolved an archive plan.
+ * The rollout env gate is checked once here; planned v2 callers use
+ * [[saveViaSoldr]] directly so post-job environment drift cannot change format.
+ */
+export async function trySaveViaSoldr(opts: SoldrSaveOpts): Promise<SoldrSaveResult> {
+  if (!cargoRegistryViaSoldrEnvOn()) {
+    if (opts.debug) {
+      (opts.log ?? ((): void => undefined))(
+        `[debug] soldr-save-shim: ${CARGO_REGISTRY_VIA_SOLDR_ENV} not set; deferring to legacy tar+zstd save`,
+      );
+    }
+    return { used: false, archivePath: null, archiveBytes: 0, durationMs: 0 };
+  }
+  return saveViaSoldr(opts);
 }
