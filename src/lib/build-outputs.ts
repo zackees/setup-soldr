@@ -5,6 +5,7 @@
 // assert byte-for-byte.
 
 import type { ResolveResult } from "./types.js";
+import { buildTargetHooks, targetArtifactDirectory } from "./target-lifecycle.js";
 
 /**
  * Build the $GITHUB_OUTPUT key/value map. Exposed for tests so they
@@ -60,6 +61,27 @@ export function buildOutputs(result: ResolveResult): Record<string, string> {
     "cache-preset-effective": result.cachePresetEffective,
     "prepared-target": result.blessedPrepareCache.target,
     "blessed-prepare-cache-key": result.blessedPrepareCache.key,
+    "target-plan-json": result.targetContract ? JSON.stringify(result.targetContract) : "",
+    "target-capabilities-json": result.targetContract
+      ? JSON.stringify({
+        schemaVersion: result.targetContract.schemaVersion,
+        canonicalTarget: result.targetContract.canonicalTarget,
+        cacheIdentity: result.targetContract.cacheIdentity,
+        supportedOperations: result.targetContract.supportedOperations,
+        toolchain: result.targetContract.toolchain,
+        platform: result.targetContract.platform,
+      })
+      : "",
+    "target-env-json": result.targetContract ? JSON.stringify(result.targetContract.environment) : "",
+    "target-cache-identity": result.targetContract?.cacheIdentity ?? "",
+    "target-artifact-dir": result.targetContract
+      ? targetArtifactDirectory(result.workspace, result.targetContract.canonicalTarget)
+      : "",
+    "target-build-hook": result.targetContract ? buildTargetHooks(result.targetContract.canonicalTarget).build : "",
+    "target-clippy-hook": result.targetContract ? buildTargetHooks(result.targetContract.canonicalTarget).clippy : "",
+    "target-test-hook": result.targetContract ? buildTargetHooks(result.targetContract.canonicalTarget).testNoRun : "",
+    "target-wheel-hook": result.targetContract ? buildTargetHooks(result.targetContract.canonicalTarget).pep517Wheel : "",
+    "target-sdist-hook": result.targetContract ? buildTargetHooks(result.targetContract.canonicalTarget).pep517Sdist : "",
   };
 
   // Legacy underscored aliases retained for backwards compatibility with

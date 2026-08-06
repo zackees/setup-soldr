@@ -72,6 +72,12 @@ import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { diagnoseShimBypass } from "./lib/shim-bypass-check.js";
 import { assertMinimumSoldrVersion, executeBlessedPrepare } from "./lib/blessed-cross-prepare.js";
 import {
+  mergeTargetEnvironment,
+  normalizeTargetPlan,
+  buildTargetHooks,
+  targetArtifactDirectory,
+} from "./lib/target-lifecycle.js";
+import {
   replaySourceMtimes,
   readSnapshotFile,
   SNAPSHOT_FILENAME,
@@ -127,6 +133,67 @@ function fileExists(p: string): boolean {
   } catch {
     return false;
   }
+}
+
+async function queryTargetPlan(
+  soldrPath: string,
+  target: string,
+  log: (message: string) => void,
+): Promise<unknown | null> {
+  const output = await exec.getExecOutput(soldrPath, ["env", "--target", target, "--json"], {
+    silent: true,
+    ignoreReturnCode: true,
+  });
+  if (output.exitCode !== 0) {
+    log(`target-plan: soldr env failed with exit ${output.exitCode}`);
+    return null;
+  }
+  const line = output.stdout.split(/\r?\n/).map((value) => value.trim()).filter(Boolean).at(-1);
+  if (!line) return null;
+  try {
+    return JSON.parse(line) as unknown;
+  } catch {
+    log("target-plan: soldr env returned non-JSON output");
+    return null;
+  }
+}
+
+function publishTargetContract(
+  result: ResolveResult,
+  raw: unknown,
+  logger: { log: (message: string) => void },
+): void {
+  const target = result.blessedPrepareCache.target;
+  if (!target || !raw) return;
+  const contract = normalizeTargetPlan(target, raw);
+  if (!contract.cacheIdentity || !contract.supportedOperations.includes("build")) {
+    throw new Error(`Soldr target plan for ${target} does not advertise the blessed build capability`);
+  }
+  result.targetContract = contract;
+  const mergedEnvironment = mergeTargetEnvironment(process.env, contract.environment);
+  for (const key of Object.keys(contract.environment)) {
+    core.exportVariable(key, mergedEnvironment[key] ?? contract.environment[key]);
+  }
+  const hooks = buildTargetHooks(contract.canonicalTarget);
+  core.setOutput("target-plan-json", JSON.stringify(contract));
+  core.setOutput("target-capabilities-json", JSON.stringify({
+    schemaVersion: contract.schemaVersion,
+    canonicalTarget: contract.canonicalTarget,
+    cacheIdentity: contract.cacheIdentity,
+    supportedOperations: contract.supportedOperations,
+    toolchain: contract.toolchain,
+    platform: contract.platform,
+  }));
+  core.setOutput("target-env-json", JSON.stringify(contract.environment));
+  core.setOutput("target-cache-identity", contract.cacheIdentity);
+  core.setOutput("target-artifact-dir", targetArtifactDirectory(result.workspace, contract.canonicalTarget));
+  core.setOutput("target-build-hook", hooks.build);
+  core.setOutput("target-clippy-hook", hooks.clippy);
+  core.setOutput("target-test-hook", hooks.testNoRun);
+  core.setOutput("target-wheel-hook", hooks.pep517Wheel);
+  core.setOutput("target-sdist-hook", hooks.pep517Sdist);
+  core.saveState("targetPlanJson", JSON.stringify(contract));
+  logger.log(`target-plan: canonical=${contract.canonicalTarget} cache=${contract.cacheIdentity} operations=${contract.supportedOperations.join(",")}`);
 }
 
 function dirHasContent(p: string): boolean {
@@ -1330,6 +1397,11 @@ export async function run(): Promise<void> {
       restore: preparePlan.enabled && exactHit && archiveExists,
       save: preparePlan.enabled && !exactHit,
     });
+    const targetPlan = await queryTargetPlan(result.soldrPath, preparePlan.target, (message) => logger.log(message));
+    if (!targetPlan) {
+      throw new Error(`Soldr did not report a machine-readable target plan for ${preparePlan.target}; target capability is unavailable`);
+    }
+    publishTargetContract(result, targetPlan, logger);
     core.saveState("blessedPrepareComplete", "true");
   }
   await finishPhase("cross-prepare");

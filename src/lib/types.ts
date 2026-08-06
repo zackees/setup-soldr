@@ -292,6 +292,7 @@ export interface ResolveResult {
   cargoRegistryCache: CargoRegistryCachePlan;
   dylintCache: DylintCachePlan;
   blessedPrepareCache: import("./blessed-cross-prepare.js").BlessedPrepareCachePlan;
+  targetContract?: import("./target-lifecycle.js").TargetLifecycleContract;
 
   // Compression
   targetCacheCompress: CompressCodec;
