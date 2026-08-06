@@ -130,7 +130,28 @@ jobs:
       - run: soldr cargo test --locked
 ```
 
-### Cross-compile auto-bootstrap
+### Blessed cross-target preparation
+
+For a non-host target, set one canonical triple per job. setup-soldr delegates
+compiler, linker, SDK, and target lifecycle provisioning to Soldr's blessed
+`prepare` command. Use a matrix for multiple targets; `cache: false` disables
+only the prepared-state archive cache, not preparation.
+
+```yaml
+- uses: zackees/setup-soldr@v0
+  with:
+    cross-targets: aarch64-apple-darwin
+- run: soldr build --locked --release --target aarch64-apple-darwin
+```
+
+The prepared archive is keyed by runner OS/architecture, target, Soldr
+repository, and resolved Soldr version. Cargo registry, compilation, and cook
+caches remain independent. `universal2-apple-darwin` is accepted as a
+packaging target and expands to the real `aarch64-apple-darwin` and
+`x86_64-apple-darwin` Rust targets for toolchain provisioning. The latter is
+not present in current Soldr release assets; prefer arm64 or a native runner.
+
+### Legacy cross-compile auto-bootstrap (removed; see blessed preparation above)
 
 When a job needs to cross-compile to a non-host triple, set the
 `cross-targets` input. For supported (host, target) lanes, setup-soldr
@@ -526,7 +547,8 @@ preferred for new workflows.
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.8.30`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.8.39`. |
+| `cross-targets` | One canonical target per job for Soldr blessed preparation; use a matrix for multiple targets. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
@@ -627,7 +649,7 @@ preferred for new workflows.
 
 ## Notes
 
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.8.30`.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.8.39`.
 - For soldr `0.7.43+`, the action copies the bundled `cargo-chef` binary from
   the soldr release archive and exports `SOLDR_CARGO_CHEF_LOCAL_DIR` so
   `soldr cook` does not need a live upstream cargo-chef release lookup.

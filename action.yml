@@ -693,11 +693,11 @@ inputs:
   cross-targets:
     description: >
       Optional one canonical Rust target triple for Soldr's blessed
-      triples this job needs to cross-compile to (e.g.
-      `x86_64-pc-windows-gnu`). When set, setup-soldr auto-installs the
-      `prepare` lifecycle. Exactly one target is accepted per job; use a
-      matrix for multiple targets. Soldr chooses the compiler, linker, SDK,
-      and sysroot implementation. `cache: false` disables only archive caching.
+      `prepare` lifecycle (e.g. `aarch64-apple-darwin`). Exactly one target is
+      accepted per job; use a matrix for multiple targets. Soldr chooses the
+      compiler, linker, SDK, and sysroot implementation. `cache: false`
+      disables only prepared-state archive caching. `universal2-apple-darwin`
+      expands to the two real Apple Rust targets for toolchain provisioning.
 
       MVP (issue #104, this release) supports:
         - Linux host -> `*-pc-windows-gnu` (any arch): installs

@@ -14,6 +14,10 @@ test("one canonical target is normalized and merged before cache planning", () =
   assert.deepEqual(mergeToolchainTargets(["stable", "aarch64-unknown-linux-musl"], target), ["aarch64-unknown-linux-musl", "stable", "x86_64-pc-windows-gnu"]);
 });
 
+test("universal2 expands to real Rust targets for toolchain provisioning", () => {
+  assert.deepEqual(mergeToolchainTargets([], "universal2-apple-darwin"), ["aarch64-apple-darwin", "x86_64-apple-darwin"]);
+});
+
 test("multiple targets require a matrix", () => {
   assert.throws(() => parseSingleCrossTarget("x86_64-pc-windows-gnu,aarch64-unknown-linux-musl"), /use a matrix/);
 });
