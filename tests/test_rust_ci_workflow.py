@@ -72,7 +72,8 @@ def test_jobs_pass_generated_toolchain_file_to_setup_soldr() -> None:
         setup = _step_named(job, "Setup soldr")
         assert setup["with"]["toolchain-file"] == "${{ steps.toolchain.outputs.path }}"
         assert "toolchain" not in setup["with"]
-        assert "cross-targets" not in setup["with"]
+        target_expr = "steps.mode.outputs.target" if job_name == "warm" else "needs.warm.outputs.target"
+        assert setup["with"]["cross-targets"] == f"${{{{ {target_expr} }}}}"
         assert "cross-tool" not in setup["with"]
 
     for job_name, step_name in (
@@ -127,13 +128,14 @@ def test_native_mode_preserves_host_target_behavior() -> None:
     assert 'echo "target=" >> "$GITHUB_OUTPUT"' in native_branch
 
 
-def test_rust_ci_workflow_does_not_directly_install_cross_tooling() -> None:
+def test_rust_ci_workflow_uses_soldr_target_lifecycle() -> None:
     text = WORKFLOW_PATH.read_text(encoding="utf-8")
     tool = "car" + "go"
 
     assert "rustup target add" not in text
     assert "toolchain ensure" not in text
-    assert "cross-targets:" not in text
+    assert "cross-targets:" in text
+    assert "soldr build" in text
     assert f"{tool} zigbuild" not in text
     assert f"{tool}-xwin" not in text
 
