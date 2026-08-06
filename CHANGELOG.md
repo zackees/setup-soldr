@@ -9,10 +9,14 @@
   state remain excluded. Cache download still overlaps the other layers, while
   extraction now waits for the installed Soldr runtime to be verified. Add a
   Windows 2025 benchmark workflow with alternating legacy/Soldr restores, raw
-  CSV, content validation, and fixed 25-second/3x decision gates. Legacy-v1
-  remains the default until that evidence passes; encrypted entries and Soldr
-  versions older than 0.7.47 also remain on v1. Windows v2 restores bootstrap
-  pinned, SHA-256-verified zstd 1.5.7 when no zstd executable is on PATH.
+  CSV, content validation, and fixed 25-second/3x decision gates. In benchmark
+  run 31089551078, all six 50,002-file restores passed count and SHA-256
+  validation, but Soldr-v2's 25,881.275 ms median was slower than legacy-v1's
+  9,669.428 ms median (0.37x), so it failed both performance gates. Legacy-v1
+  therefore remains the default and `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` remains
+  the explicit v2 opt-in; encrypted entries and Soldr versions older than
+  0.7.47 also remain on v1. Windows v2 restores bootstrap pinned,
+  SHA-256-verified zstd 1.5.7 when no zstd executable is on PATH.
 
 - Default to soldr `0.8.6` (was `0.8.5`). This release restores the managed
   Windows MSVC cross-build lanes, including ARM64 target provisioning and
