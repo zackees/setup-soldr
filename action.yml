@@ -692,31 +692,15 @@ inputs:
     default: "true"
   cross-targets:
     description: >
-      Optional one canonical Rust target triple for Soldr's blessed
-      `prepare` lifecycle (e.g. `aarch64-apple-darwin`). Exactly one target is
-      accepted per job; use a matrix for multiple targets. Soldr chooses the
-      compiler, linker, SDK, and sysroot implementation. `cache: false`
-      disables only prepared-state archive caching. `universal2-apple-darwin`
-      expands to the two real Apple Rust targets for toolchain provisioning.
-
-      The target lifecycle is Soldr-owned and exposes its machine-readable
-      plan plus build, lint, test-harness, wheel, and sdist hooks as outputs.
-        - Linux host -> `*-pc-windows-gnu` (any arch): installs
-          `cargo-zigbuild` + `ziglang` and runs `rustup target add`.
-        - Linux host -> `*-unknown-linux-musl` (any arch): same install
-          set.
-
-      Unsupported lanes (Windows host, macOS host, msvc / mingw / xwin
-      strategies) emit a one-line `core.warning` describing what would be
-      installed and continue without failing the action — install the
-      cross toolchain manually for those lanes for now. Default empty
-
-      Caching: when this input is non-empty, setup-soldr activates a
-      per-(host × target) tool cache layer (setup-soldr#106). One
-      independent cache slot per declared target lane holds the
-      Slots are keyed on the lane's resolved tool versions so bumping
-      one tool only invalidates the affected lanes. Non-cross-compiling
-      consumers (empty input) pay zero extra cache-API roundtrips.
+      Optional one canonical Rust target triple for the `soldr prepare`
+      lifecycle (for example, aarch64-apple-darwin). Exactly one target is
+      accepted per job; use a matrix for multiple targets. Soldr owns compiler,
+      linker, SDK, sysroot, environment, and capability selection. The action
+      exports Soldr's target plan, capabilities, environment, cache identity,
+      artifact directory, and operation hooks. Builds use soldr build --target.
+      cache: false disables only prepared-state archive caching. The packaging
+      target universal2-apple-darwin provisions both real Apple Rust targets;
+      it is never requested as a Rust standard-library target. Default empty.
     required: false
     default: ""
   soldr-mini-cache:
@@ -759,17 +743,17 @@ outputs:
   target-cache-identity:
     description: Soldr-reported cache identity for the canonical target lane.
   target-artifact-dir:
-    description: Target directory where target-specific build artifacts are emitted.
+    description: Target directory where target-specific build artifacts are emitted, or empty when build is not advertised.
   target-build-hook:
-    description: Blessed target build command; invokes soldr build --target.
+    description: Blessed target build command when advertised; otherwise empty.
   target-clippy-hook:
-    description: Target clippy command using Soldr's Rust front door.
+    description: Target clippy command when advertised; otherwise empty.
   target-test-hook:
-    description: Target test-harness compilation command using Soldr's Rust front door.
+    description: Target test-harness compilation command when advertised; otherwise empty.
   target-wheel-hook:
-    description: PEP 517 frontend command for wheel production.
+    description: PEP 517 frontend command for wheel production when advertised; otherwise empty.
   target-sdist-hook:
-    description: PEP 517 frontend command for source distribution production.
+    description: PEP 517 frontend command for source distribution production when advertised; otherwise empty.
   cache-dir:
     description: Runner-local cache/state root used by the action.
   setup-duration-seconds:

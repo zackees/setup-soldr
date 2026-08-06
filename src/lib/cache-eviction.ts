@@ -45,6 +45,7 @@ export const FOUNDATION_PREFIXES: readonly string[] = [
   // accesses for ~7 days.
   "cook-base-v2-", // ~300 MB per platform, skips ~200 s cold cook
   "setup-soldr-prepare-v1-",
+  "setup-soldr-prepare-v2-",
 ];
 
 export type CacheEvictionPolicy = "disabled" | "protect-foundations" | "aggressive";

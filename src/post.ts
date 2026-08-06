@@ -1987,10 +1987,12 @@ export async function run(): Promise<void> {
     const exactHit = core.getState("blessedPrepareCacheExactHit") === "true";
     const complete = core.getState("blessedPrepareComplete") === "true";
     const plan = result.blessedPrepareCache;
-    if (planRaw === "true" && !exactHit && complete && plan.archivePath && fs.existsSync(plan.archivePath) && fs.statSync(plan.archivePath).size > 0) {
+    const archivesReady = plan.archivePaths.length > 0
+      && plan.archivePaths.every((archivePath) => fs.existsSync(archivePath) && fs.statSync(archivePath).size > 0);
+    if (planRaw === "true" && !exactHit && complete && archivesReady) {
       const t0 = Date.now();
       try {
-        const id = await cache.saveCache([plan.archivePath], plan.key);
+        const id = await cache.saveCache(plan.archivePaths, plan.key);
         log(`blessed-prepare-cache: ${id > 0 ? "saved" : "save skipped"} key=${plan.key}`);
         postCollector.record({ label: "blessed-prepare-cache", operation: "save", hit: false, key: plan.key, matchedKey: "", restoreKeys: [], archiveBytes: null, inflatedBytes: null, fileCount: null, durationMs: Date.now() - t0, timestamp: new Date().toISOString() });
       } catch (err) {

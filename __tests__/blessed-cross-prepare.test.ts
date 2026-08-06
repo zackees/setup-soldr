@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import {
   parseSingleCrossTarget,
   mergeToolchainTargets,
+  planBlessedPrepareCache,
+  prepareTargetsFor,
   blessedPrepareCacheKey,
   buildPrepareArgs,
   assertMinimumSoldrVersion,
@@ -16,10 +18,31 @@ test("one canonical target is normalized and merged before cache planning", () =
 
 test("universal2 expands to real Rust targets for toolchain provisioning", () => {
   assert.deepEqual(mergeToolchainTargets([], "universal2-apple-darwin"), ["aarch64-apple-darwin", "x86_64-apple-darwin"]);
+  assert.deepEqual(prepareTargetsFor("universal2-apple-darwin").sort(), ["aarch64-apple-darwin", "x86_64-apple-darwin"]);
+  const cache = planBlessedPrepareCache({
+    enabled: true,
+    cacheEnabled: true,
+    ref: "",
+    runnerTemp: "temp",
+    runnerOs: "Linux",
+    runnerArch: "X64",
+    target: "universal2-apple-darwin",
+    soldrRepo: "zackees/soldr",
+    soldrVersion: "0.8.39",
+  });
+  assert.equal(cache.archivePaths.length, 2);
+  assert.match(cache.archivePaths[0]!, /x86_64-apple-darwin/);
+  assert.match(cache.archivePaths[1]!, /aarch64-apple-darwin/);
 });
 
 test("multiple targets require a matrix", () => {
   assert.throws(() => parseSingleCrossTarget("x86_64-pc-windows-gnu,aarch64-unknown-linux-musl"), /use a matrix/);
+});
+
+test("friendly aliases and malformed targets are rejected", () => {
+  assert.throws(() => parseSingleCrossTarget("macos-arm"), /canonical Rust target triple.*aliases.*not accepted/);
+  assert.throws(() => parseSingleCrossTarget("not-a-target!"), /canonical Rust target triple.*aliases.*not accepted/);
+  assert.throws(() => parseSingleCrossTarget("all"), /canonical Rust target triple.*aliases.*not accepted/);
 });
 
 test("prepared cache keys are immutable and target/identity keyed", () => {

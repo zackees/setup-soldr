@@ -5,10 +5,11 @@ import { shortJsonHash, sanitizeFragment } from "./cache-keys.js";
 
 export interface BlessedPrepareCachePlan {
   enabled: boolean;
-  schemaVersion: 1;
+  schemaVersion: 2;
   target: string;
   key: string;
   archivePath: string;
+  archivePaths: string[];
 }
 
 const TRIPLE = /^[a-z0-9]+(?:_[a-z0-9]+)*-[a-z0-9]+(?:-[a-z0-9]+)+$/;
@@ -30,10 +31,14 @@ export function parseSingleCrossTarget(raw: string): string | null {
   return target;
 }
 
-export function mergeToolchainTargets(existing: string[], crossTarget: string | null): string[] {
-  const expanded = crossTarget === "universal2-apple-darwin"
+export function prepareTargetsFor(crossTarget: string | null): string[] {
+  return crossTarget === "universal2-apple-darwin"
     ? ["x86_64-apple-darwin", "aarch64-apple-darwin"]
     : crossTarget ? [crossTarget] : [];
+}
+
+export function mergeToolchainTargets(existing: string[], crossTarget: string | null): string[] {
+  const expanded = prepareTargetsFor(crossTarget);
   return [...new Set([...existing, ...expanded].map((v) => v.trim().toLowerCase()).filter(Boolean))].sort();
 }
 
@@ -45,7 +50,7 @@ export function blessedPrepareCacheKey(input: {
   soldrVersion: string;
 }): string {
   const identityHash = shortJsonHash({ repo: input.soldrRepo.trim(), soldr_version: input.soldrVersion.trim() });
-  return `setup-soldr-prepare-v1-${sanitizeFragment(input.runnerOs)}-${sanitizeFragment(input.runnerArch)}-${sanitizeFragment(input.target)}-${identityHash}`;
+  return `setup-soldr-prepare-v2-${sanitizeFragment(input.runnerOs)}-${sanitizeFragment(input.runnerArch)}-${sanitizeFragment(input.target)}-${identityHash}`;
 }
 
 export function planBlessedPrepareCache(input: {
@@ -61,14 +66,19 @@ export function planBlessedPrepareCache(input: {
 }): BlessedPrepareCachePlan {
   const target = input.target ?? "";
   const enabled = input.enabled && input.cacheEnabled && !input.ref.trim() && Boolean(target);
+  const archiveRoot = target
+    ? path.join(input.runnerTemp, "setup-soldr-prepare", "v2", sanitizeFragment(target))
+    : "";
+  const archivePaths = target === "universal2-apple-darwin"
+    ? prepareTargetsFor(target).map((realTarget) => path.join(archiveRoot, `${sanitizeFragment(realTarget)}.tar.zst`))
+    : target ? [path.join(archiveRoot, "prepared.tar.zst")] : [];
   return {
     enabled,
-    schemaVersion: 1,
+    schemaVersion: 2,
     target,
     key: enabled ? blessedPrepareCacheKey({ ...input, target }) : "",
-    archivePath: target
-      ? path.join(input.runnerTemp, "setup-soldr-prepare", "v1", sanitizeFragment(target), "prepared.tar.zst")
-      : "",
+    archivePath: archivePaths[0] ?? "",
+    archivePaths,
   };
 }
 
