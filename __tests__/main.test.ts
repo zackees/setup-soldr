@@ -25,3 +25,27 @@ test("main.run is callable and returns a Promise", async () => {
   // Detach so unhandled rejection doesn't taint the test process.
   p.catch(() => undefined);
 });
+
+test("cargo-registry encryption failures honor skip only for legacy-v1", async () => {
+  const mod = (await import("../src/main.js")) as {
+    shouldSkipCargoRegistryExtractionError: (
+      err: unknown,
+      format: "legacy-v1" | "soldr-v2",
+      onFailure: string,
+    ) => boolean;
+  };
+  for (const code of ["EAUTHFAIL", "EENCNOKEY"]) {
+    const err = Object.assign(new Error(code), { code });
+    assert.equal(mod.shouldSkipCargoRegistryExtractionError(err, "legacy-v1", "skip"), true);
+    assert.equal(mod.shouldSkipCargoRegistryExtractionError(err, "legacy-v1", "error"), false);
+    assert.equal(mod.shouldSkipCargoRegistryExtractionError(err, "soldr-v2", "skip"), false);
+  }
+  assert.equal(
+    mod.shouldSkipCargoRegistryExtractionError(
+      Object.assign(new Error("corrupt"), { code: "EBADARCHIVE" }),
+      "legacy-v1",
+      "skip",
+    ),
+    false,
+  );
+});

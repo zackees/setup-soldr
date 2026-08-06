@@ -1141,6 +1141,42 @@ test("cache=true (default) leaves per-layer flags in charge", async () => {
   assert.notEqual(result.envExports["SOLDR_BUILD_CACHE_MODE"], "off");
 });
 
+test("cargo-registry explicit Soldr opt-in selects v2 only for a compatible unencrypted release", async () => {
+  const original = process.env["SOLDR_CARGO_REGISTRY_VIA_SOLDR"];
+  process.env["SOLDR_CARGO_REGISTRY_VIA_SOLDR"] = "1";
+  try {
+    const { result } = await run({}, {
+      INPUT_VERSION: "0.8.39",
+      INPUT_CARGO_REGISTRY_CACHE: "true",
+    });
+    assert.equal(result.cargoRegistryCache.archive.format, "soldr-v2");
+    assert.match(result.cargoRegistryCache.key, /^setup-soldr-cargoregistry-v2-/);
+    assert.equal(result.cargoRegistryCache.archive.restorePaths.length, 2);
+    assert.ok(
+      result.cargoRegistryCache.archive.restorePaths.every((entry) =>
+        entry.includes(`${path.sep}setup-soldr-cargo-registry${path.sep}v2${path.sep}`),
+      ),
+    );
+
+    const encrypted = await run({}, {
+      INPUT_VERSION: "0.8.39",
+      INPUT_CARGO_REGISTRY_CACHE: "true",
+      INPUT_CACHE_ENCRYPT_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    });
+    assert.equal(encrypted.result.cargoRegistryCache.archive.format, "legacy-v1");
+    assert.match(encrypted.result.cargoRegistryCache.key, /^setup-soldr-cargoregistry-v1-/);
+
+    const old = await run({}, {
+      INPUT_VERSION: "0.7.11",
+      INPUT_CARGO_REGISTRY_CACHE: "true",
+    });
+    assert.equal(old.result.cargoRegistryCache.archive.format, "legacy-v1");
+  } finally {
+    if (original === undefined) delete process.env["SOLDR_CARGO_REGISTRY_VIA_SOLDR"];
+    else process.env["SOLDR_CARGO_REGISTRY_VIA_SOLDR"] = original;
+  }
+});
+
 test("cache-shutdown-on-idle rejects malformed values", async () => {
   await assert.rejects(
     () => run({}, { INPUT_CACHE_SHUTDOWN_ON_IDLE: "thirty" }),

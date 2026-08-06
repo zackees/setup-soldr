@@ -6,6 +6,41 @@ import * as path from "node:path";
 
 process.env["SETUP_SOLDR_TEST_IMPORT"] = "1";
 
+test("post payload fail policy marks failure and cache reservation races require proof", async () => {
+  const mod = (await import("../src/post.js")) as {
+    applyCachePayloadOversizeAction: (
+      action: "skip" | "fail",
+      message: string,
+      setFailed: (message: string) => void,
+    ) => "oversize-skip" | "failed";
+    classifyCacheSaveReservation: (
+      id: number,
+      key: string,
+      probe: () => Promise<string | undefined>,
+    ) => Promise<"saved" | "race-skip" | "failed">;
+  };
+  const failures: string[] = [];
+  assert.equal(
+    mod.applyCachePayloadOversizeAction("fail", "payload too large", (message) => failures.push(message)),
+    "failed",
+  );
+  assert.deepEqual(failures, ["payload too large"]);
+  assert.equal(
+    mod.applyCachePayloadOversizeAction("skip", "payload too large", (message) => failures.push(message)),
+    "oversize-skip",
+  );
+  assert.deepEqual(failures, ["payload too large"]);
+  assert.equal(await mod.classifyCacheSaveReservation(42, "key", async () => undefined), "saved");
+  assert.equal(await mod.classifyCacheSaveReservation(-1, "key", async () => "key"), "race-skip");
+  assert.equal(await mod.classifyCacheSaveReservation(-1, "key", async () => undefined), "failed");
+  assert.equal(
+    await mod.classifyCacheSaveReservation(-1, "key", async () => {
+      throw new Error("probe failed");
+    }),
+    "failed",
+  );
+});
+
 function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }

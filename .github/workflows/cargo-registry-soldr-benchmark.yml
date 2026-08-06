@@ -1,0 +1,109 @@
+name: Cargo registry Soldr benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      reps:
+        description: "Restore repetitions per codec (minimum 3)"
+        required: true
+        default: "3"
+        type: string
+      runner:
+        description: "Windows runner label"
+        required: true
+        default: "windows-2025"
+        type: string
+      file-count:
+        description: "Deterministic registry fixture file count"
+        required: true
+        default: "50000"
+        type: string
+      assert-thresholds:
+        description: "Fail unless Soldr is under 25 s and at least 3x faster"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    name: Windows cargo-registry restore benchmark
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 45
+    steps:
+      - name: Check out benchmark revision
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install Soldr without reusable caches
+        id: setup
+        uses: ./
+        with:
+          cache: false
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: false
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: none
+
+      - name: Ensure the legacy zstd codec is available
+        shell: pwsh
+        run: |
+          if (-not (Get-Command zstd -ErrorAction SilentlyContinue)) {
+            $toolRoot = Join-Path $env:RUNNER_TEMP "cargo-registry-zstd-1.5.7"
+            $zipPath = Join-Path $toolRoot "zstd.zip"
+            New-Item -ItemType Directory -Path $toolRoot -Force | Out-Null
+            Invoke-WebRequest `
+              -Uri "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-v1.5.7-win64.zip" `
+              -OutFile $zipPath
+            $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath).Hash.ToLowerInvariant()
+            if ($digest -ne "acb4e8111511749dc7a3ebedca9b04190e37a17afeb73f55d4425dbf0b90fad9") {
+              throw "zstd archive SHA-256 mismatch: $digest"
+            }
+            Expand-Archive -LiteralPath $zipPath -DestinationPath $toolRoot -Force
+            $zstd = Get-ChildItem -Path $toolRoot -Recurse -Filter zstd.exe | Select-Object -First 1
+            if (-not $zstd) { throw "downloaded zstd archive did not contain zstd.exe" }
+            $zstd.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+
+      - name: Verify benchmark codec
+        shell: pwsh
+        run: zstd --version
+
+      - name: Validate benchmark inputs
+        shell: pwsh
+        run: |
+          $reps = [int]"${{ inputs.reps }}"
+          $files = [int]"${{ inputs.file-count }}"
+          if ($reps -lt 3) { throw "reps must be at least 3" }
+          if ($files -lt 1) { throw "file-count must be positive" }
+
+      - name: Benchmark legacy and Soldr restores
+        shell: pwsh
+        env:
+          SOLDR_BIN: ${{ steps.setup.outputs.soldr-path }}
+          BENCH_RUNNER: ${{ inputs.runner }}
+          BENCH_ASSERT_THRESHOLDS: ${{ inputs.assert-thresholds }}
+        run: >-
+          node scripts/bench-cargo-registry-archives.mjs
+          --reps "${{ inputs.reps }}"
+          --file-count "${{ inputs.file-count }}"
+          --output-dir benchmark-output
+
+      - name: Upload raw benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-registry-soldr-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            benchmark-output/cargo-registry-archive-benchmark.csv
+            benchmark-output/cargo-registry-archive-benchmark.md
+          if-no-files-found: error
+          retention-days: 30

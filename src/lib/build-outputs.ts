@@ -120,6 +120,8 @@ export function buildOutputs(result: ResolveResult): Record<string, string> {
     cargo_registry_cache_path: result.cargoRegistryCache.path,
     cargo_registry_cache_key: result.cargoRegistryCache.key,
     cargo_registry_cache_restore_prefix: result.cargoRegistryCache.restorePrefix,
+    cargo_registry_cache_archive_format: result.cargoRegistryCache.archive.format,
+    cargo_registry_cache_archive_paths: result.cargoRegistryCache.archive.restorePaths.join("\n"),
     dylint_cache_enabled: result.dylintCache.enabled ? "true" : "false",
     dylint_cache_key: result.dylintCache.key,
     dylint_driver_path: result.dylintCache.driverPath,

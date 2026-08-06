@@ -27,7 +27,7 @@ import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js
 import { ensureShims } from "./lib/ensure-shims.js";
 import { seedZccache } from "./lib/zccache-seed.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
-import { tryLoadViaSoldr } from "./lib/soldr-load-shim.js";
+import { restoreCargoRegistryArchive } from "./lib/cargo-registry-archive.js";
 import { parseIsolatedSeedTargets, seedIsolatedBuildCache } from "./lib/seed-isolated-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import {
@@ -84,7 +84,11 @@ import {
   readSnapshotFile,
   SNAPSHOT_FILENAME,
 } from "./lib/source-mtime-snapshot.js";
-import type { ActionContext, ResolveResult } from "./lib/types.js";
+import type {
+  ActionContext,
+  CargoRegistryArchiveFormat,
+  ResolveResult,
+} from "./lib/types.js";
 
 /**
  * Map (hit, matchedKey) → workflow-visible restore-status string.
@@ -95,6 +99,16 @@ function deriveRestoreStatus(hit: boolean, matchedKey: string): "exact-hit" | "r
   if (hit) return "exact-hit";
   if (matchedKey.trim()) return "restore-key-hit";
   return "miss";
+}
+
+export function shouldSkipCargoRegistryExtractionError(
+  err: unknown,
+  format: CargoRegistryArchiveFormat,
+  onFailure: string | undefined,
+): boolean {
+  if (format !== "legacy-v1" || onFailure?.trim().toLowerCase() !== "skip") return false;
+  const code = (err as NodeJS.ErrnoException | undefined)?.code;
+  return code === "EAUTHFAIL" || code === "EENCNOKEY";
 }
 
 function writeCacheKeysManifest(
@@ -627,16 +641,19 @@ export async function run(): Promise<void> {
     }
   })();
 
-  // Cargo-registry restore moved here from after-cook. It writes only
-  // $CARGO_HOME/registry/ and has no dependency on soldr being installed;
-  // running it in parallel with target+build trims its ~5s off the critical
-  // path.
+  let cargoRegistryDownload: {
+    hit: boolean;
+    matchedKey: string;
+    startedMs: number;
+  } | null = null;
+  // Download only. Archive extraction is deliberately deferred until after
+  // ensureSoldr() + runtime verification because soldr-v2 needs the installed
+  // binary and must never race its setup-cache/mini-cache restore.
   const cargoRegistryRestorePromise = (async (): Promise<void> => {
     if (!result.cargoRegistryCache.enabled) return;
-    const registryArchive = `${result.cargoRegistryCache.path}.tar.zst`;
     const t0 = Date.now();
     const restore = await restoreCacheSafe(
-      [registryArchive],
+      result.cargoRegistryCache.archive.restorePaths,
       result.cargoRegistryCache.key,
       [result.cargoRegistryCache.restorePrefix],
       logger,
@@ -645,64 +662,7 @@ export async function run(): Promise<void> {
     core.setOutput("cargo_registry_cache_hit", restore.hit ? "true" : "false");
     core.saveState("cargoRegistryCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("cargoRegistryCacheMatchedKey", restore.matchedKey);
-    let regArchiveBytes: number | null = null;
-    let regInflatedBytes: number | null = null;
-    let regFileCount: number | null = null;
-    if (fileExists(registryArchive)) {
-      // #260: try `soldr load` first for parallel extraction on Windows
-      // (Defender + NTFS bottleneck). Falls through to the legacy
-      // tar+zstd path when the archive isn't soldr-format or the
-      // installed soldr is too old.
-      let soldrLoadUsed = false;
-      try {
-        const sr = await tryLoadViaSoldr({
-          archivePath: registryArchive,
-          targetDir: result.cargoRegistryCache.path,
-          soldrPath: result.soldrPath,
-          soldrVersion: result.soldrVersionResolved,
-          debug: debugMode,
-          log: debugLog,
-          autoDefenderExclude: process.platform === "win32",
-        });
-        soldrLoadUsed = sr.used;
-      } catch (err) {
-        logger.log(
-          `cargo-registry soldr load failed (will fall back to tar+zstd): ${err instanceof Error ? err.message : String(err)}`,
-        );
-      }
-      if (soldrLoadUsed) {
-        try {
-          regArchiveBytes = (await fs.promises.stat(registryArchive)).size;
-        } catch { /* archive may have been removed mid-flight */ }
-      } else {
-        const magic = await detectCompressMagic(registryArchive);
-        const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
-        if (magic === "zstd" || magic === "gzip" || haveEncryptKey) {
-          try {
-            const dr = await decompressCache({
-              archivePath: registryArchive,
-              targetDir: result.cargoRegistryCache.path,
-              debug: debugMode, log: debugLog,
-              cacheKey: restore.matchedKey || result.cargoRegistryCache.key,
-            });
-            regArchiveBytes = dr.archiveBytes;
-            regInflatedBytes = dr.inflatedBytes;
-            regFileCount = dr.fileCount;
-          } catch (err) {
-            logger.log(
-              `cargo-registry decompress failed: ${err instanceof Error ? err.message : String(err)}`,
-            );
-          }
-        }
-      }
-    }
-    statsCollector.record({
-      label: "cargo-registry", operation: "restore", hit: restore.hit,
-      key: result.cargoRegistryCache.key, matchedKey: restore.matchedKey,
-      restoreKeys: [result.cargoRegistryCache.restorePrefix],
-      archiveBytes: regArchiveBytes, inflatedBytes: regInflatedBytes, fileCount: regFileCount,
-      durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
-    });
+    cargoRegistryDownload = { hit: restore.hit, matchedKey: restore.matchedKey, startedMs: t0 };
   })();
 
   const blessedPrepareRestorePromise = (async (): Promise<void> => {
@@ -1255,6 +1215,7 @@ export async function run(): Promise<void> {
 
   // ---- verify ----
   await markPhase("verify");
+  let soldrRuntimeVersion = "passthrough";
   if (result.enabled) {
     const verify = await verifySoldr({
       soldrPath: result.soldrPath,
@@ -1264,11 +1225,96 @@ export async function run(): Promise<void> {
     });
     core.setOutput("soldr-version", verify.soldrVersion);
     core.setOutput("soldr_version", verify.soldrVersion);
+    soldrRuntimeVersion = verify.soldrVersion;
+    core.saveState("soldrRuntimeVersion", verify.soldrVersion);
   } else {
     core.setOutput("soldr-version", "passthrough");
     core.setOutput("soldr_version", "passthrough");
   }
   await finishPhase("verify");
+
+  // ---- cargo-registry extraction ----
+  // Network download overlapped other layers in parallel-restore. Extraction
+  // starts only after the Soldr binary has been installed and runtime-verified.
+  await markPhase("cargo-registry-extract");
+  const registryDownload = cargoRegistryDownload as {
+    hit: boolean;
+    matchedKey: string;
+    startedMs: number;
+  } | null;
+  if (registryDownload) {
+    let archiveBytes: number | null = null;
+    let restoredBytes: number | null = null;
+    let restoredFiles: number | null = null;
+    let restoredHit = registryDownload.hit;
+    let matched = registryDownload.matchedKey;
+    const markRegistryMiss = (): void => {
+      restoredHit = false;
+      matched = "";
+      core.setOutput("cargo-registry-cache-hit", "false");
+      core.setOutput("cargo_registry_cache_hit", "false");
+      core.saveState("cargoRegistryCacheExactHit", "false");
+      core.saveState("cargoRegistryCacheMatchedKey", "");
+    };
+    if (matched) {
+      try {
+        const archiveResult = await restoreCargoRegistryArchive({
+          plan: result.cargoRegistryCache.archive,
+          cargoHome: result.cargoHome,
+          soldrPath: result.soldrPath,
+          soldrVersion: soldrRuntimeVersion,
+          cacheKey: matched,
+          autoDefenderExclude: process.platform === "win32",
+          debug: debugMode,
+          log: debugLog,
+        });
+        if (!archiveResult.used) {
+          logger.log(
+            `cargo-registry: ${archiveResult.codecPath} unavailable for runtime Soldr ${soldrRuntimeVersion}; treating restored entry as a miss`,
+          );
+          markRegistryMiss();
+        } else {
+          archiveBytes = archiveResult.archiveBytes;
+          restoredBytes = archiveResult.restoredBytes;
+          restoredFiles = archiveResult.restoredFiles;
+          logger.log(
+            `cargo-registry: extracted format=${archiveResult.codecPath} archive_bytes=${archiveBytes} restored_bytes=${restoredBytes} files=${restoredFiles} duration_ms=${archiveResult.durationMs}`,
+          );
+        }
+      } catch (err) {
+        if (
+          shouldSkipCargoRegistryExtractionError(
+            err,
+            result.cargoRegistryCache.archive.format,
+            process.env["SETUP_SOLDR_CACHE_ENCRYPT_ON_FAILURE"],
+          )
+        ) {
+          core.warning(
+            `cargo-registry encrypted archive could not be restored; cache-encrypt-on-failure=skip treats it as a cold miss: ${err instanceof Error ? err.message : String(err)}`,
+          );
+          markRegistryMiss();
+        } else {
+          throw new Error(
+            `cargo-registry archive extraction failed for ${registryDownload.hit ? "exact-hit" : "fallback-hit"} ${matched}: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+    }
+    statsCollector.record({
+      label: `cargo-registry-${result.cargoRegistryCache.archive.format}`,
+      operation: "restore",
+      hit: restoredHit,
+      key: result.cargoRegistryCache.key,
+      matchedKey: matched,
+      restoreKeys: [result.cargoRegistryCache.restorePrefix],
+      archiveBytes,
+      inflatedBytes: restoredBytes,
+      fileCount: restoredFiles,
+      durationMs: Date.now() - registryDownload.startedMs,
+      timestamp: new Date().toISOString(),
+    });
+  }
+  await finishPhase("cargo-registry-extract");
 
   // ---- cross-prepare ----
   await markPhase("cross-prepare");
@@ -1530,6 +1576,7 @@ export async function run(): Promise<void> {
     "install",
     "zccache-seed",
     "verify",
+    "cargo-registry-extract",
     "cross-prepare",
     "cook",
   ]);
