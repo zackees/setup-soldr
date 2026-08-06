@@ -2207,7 +2207,7 @@ export async function run(): Promise<void> {
 
   // Job-wide compile-cache hit/miss counts, read post-hoc from the
   // multi-session rollup (preferred) or the last-session report. Shared by
-  // the cook reuse-mismatch warning (#235) and the zero-count guard (#227).
+  // the cook reuse-mismatch notice (#235) and the zero-count guard (#227).
   let jobHits: number | null = null;
   let jobMisses: number | null = null;
   {
@@ -2229,7 +2229,7 @@ export async function run(): Promise<void> {
     }
   }
 
-  // Cook reuse-mismatch warning (issue #235). Post-hoc only: setup-soldr
+  // Cook reuse-mismatch notice (issue #235). Post-hoc only: setup-soldr
   // can't know the consumer's downstream cargo profile/toolchain at cook
   // time, so the "cook ran but nothing reused it" fingerprint is only
   // observable here, after the job's compiles have been recorded.
@@ -2242,7 +2242,7 @@ export async function run(): Promise<void> {
       misses: jobMisses,
       cookFlags: rawInputs.prebuildDepsFlags,
     });
-    if (cookSignal.mismatch) core.warning(cookSignal.message);
+    if (cookSignal.mismatch) core.notice(cookSignal.message);
   }
 
   // Compile-cache activity verification (issue #227). Opt-in via

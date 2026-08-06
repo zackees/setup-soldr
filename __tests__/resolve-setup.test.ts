@@ -631,14 +631,16 @@ test("layout switch alters cache key", async () => {
 
 async function runCapturingWarnings(
   extraEnv: Record<string, string> = {},
-): Promise<{ result: ResolveResult; warnings: string[]; infos: string[] }> {
+): Promise<{ result: ResolveResult; warnings: string[]; notices: string[]; infos: string[] }> {
   const { root, workspace, runnerTemp } = makeWorkspace();
   const ctx = makeContext(root, workspace, runnerTemp);
   ctx.env = withInputs(ctx.env, extraEnv);
   const warnings: string[] = [];
+  const notices: string[] = [];
   const infos: string[] = [];
   ctx.logger = {
     info: (msg) => infos.push(msg),
+    notice: (msg) => notices.push(msg),
     warning: (msg) => warnings.push(msg),
     error: () => {},
     debug: () => {},
@@ -649,16 +651,21 @@ async function runCapturingWarnings(
     fetchReleaseTag: async () => "v0.7.11",
     systemRustupOverride: async () => false,
   });
-  return { result, warnings, infos };
+  return { result, warnings, notices, infos };
 }
 
-test("linker default exports SOLDR_LINKER=fast and warns", async () => {
-  const { result, warnings } = await runCapturingWarnings();
+test("linker default exports SOLDR_LINKER=fast as a notice", async () => {
+  const { result, warnings, notices } = await runCapturingWarnings();
   assert.equal(result.envExports["SOLDR_LINKER"], "fast");
   assert.equal(
-    warnings.some((m) => m.includes("SOLDR_LINKER=fast") && m.includes("platform-default")),
+    warnings.some((m) => m.includes("SOLDR_LINKER=fast")),
+    false,
+    `expected no linker warning, got: ${JSON.stringify(warnings)}`,
+  );
+  assert.equal(
+    notices.some((m) => m.includes("SOLDR_LINKER=fast") && m.includes("platform-default")),
     true,
-    `expected linker warning, got: ${JSON.stringify(warnings)}`,
+    `expected linker notice, got: ${JSON.stringify(notices)}`,
   );
 });
 
@@ -794,11 +801,12 @@ test("linker explicit 'fast' still injects even when CARGO_TARGET_<TRIPLE>_LINKE
 });
 
 test("linker default with empty CARGO_TARGET_<TRIPLE>_LINKER does not defer", async () => {
-  const { result, warnings } = await runCapturingWarnings({
+  const { result, warnings, notices } = await runCapturingWarnings({
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: "",
   });
   assert.equal(result.envExports["SOLDR_LINKER"], "fast");
-  assert.ok(warnings.some((m) => m.includes("SOLDR_LINKER=fast")));
+  assert.equal(warnings.some((m) => m.includes("SOLDR_LINKER=fast")), false);
+  assert.ok(notices.some((m) => m.includes("SOLDR_LINKER=fast")));
 });
 
 // --- detectMuslCcEnv (cc-rs cross-compile env autodetect) ---
@@ -938,6 +946,7 @@ test("resolveSetup exports cc-rs musl env and emits a yellow warning when binari
   const warnings: string[] = [];
   ctx.logger = {
     info: () => {},
+    notice: () => {},
     warning: (msg) => warnings.push(msg),
     error: () => {},
     debug: () => {},

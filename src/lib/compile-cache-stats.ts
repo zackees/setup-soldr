@@ -489,8 +489,10 @@ export interface CookReuseMismatchInput {
 export interface CookReuseMismatch {
   /** True when cook supplied deps but the session reused none of them. */
   mismatch: boolean;
-  /** Actionable one-paragraph warning; empty string when !mismatch. */
+  /** Actionable one-paragraph diagnostic; empty string when !mismatch. */
   message: string;
+  /** Successful default-path diagnostics are notices, not warnings. */
+  annotationLevel?: "notice";
 }
 
 /** True when the cook flag string requests a non-dev (release-ish) profile. */
@@ -542,7 +544,7 @@ export function detectCookReuseMismatch(input: CookReuseMismatchInput): CookReus
       `different-toolchain compile; rely on the build-cache layer there, or set ` +
       `prebuild-deps: none to skip the unused cook.`;
   }
-  return { mismatch: true, message: lead + cause };
+  return { mismatch: true, message: lead + cause, annotationLevel: "notice" };
 }
 
 // ---------------------------------------------------------------------------

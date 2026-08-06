@@ -295,9 +295,9 @@ inputs:
     default: "3"
   cache-payload-warn-bytes:
     description: >
-      Soft warning threshold for tar-backed cache saves, measured before
+      Soft notice threshold for tar-backed cache saves, measured before
       compression. Accepts bytes or KiB/MiB/GiB/TiB suffixes. When exceeded,
-      setup-soldr emits a warning with the largest files so oversized payloads
+      setup-soldr emits a notice with the largest files so oversized payloads
       such as multi-GiB zccache archives are visible in CI. Default 512MiB.
     required: false
     default: "512MiB"

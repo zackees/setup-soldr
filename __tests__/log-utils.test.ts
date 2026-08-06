@@ -88,6 +88,7 @@ test("colorForceEnvironment omits already-set keys", () => {
 test("createLogger returns object with expected method shape", () => {
   const logger = createLogger({});
   assert.equal(typeof logger.info, "function");
+  assert.equal(typeof logger.notice, "function");
   assert.equal(typeof logger.warning, "function");
   assert.equal(typeof logger.error, "function");
   assert.equal(typeof logger.debug, "function");
