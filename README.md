@@ -222,8 +222,8 @@ the effective channel, required components, and the cross target when
 through `toolchain-file`, so target/component provisioning stays inside
 setup-soldr's supported toolchain-file path.
 
-Publishing / artifact / release work is intentionally out of scope --
-release flows vary too much across repos to template.
+Artifact publication stays out of the general CI workflow. Use the dedicated
+release lane below when a job needs a strict build-and-upload contract.
 
 #### Inputs
 
@@ -297,6 +297,53 @@ jobs:
 Cross-compiled binaries usually cannot run on the host, so the matrix
 example gates `test:` on the runnable musl cell. The template never tries
 to auto-detect runnability; the consumer chooses.
+
+### Reusable release lane
+
+`.github/workflows/release-lane.yml` builds one canonical target through
+Soldr and uploads only caller-declared deliverables plus provenance metadata.
+The cache is disabled by default for release isolation, locked dependency
+resolution is enabled by default, and a missing artifact or missing `build`
+capability fails the job. `artifact-paths` is required; paths and globs are
+relative to `working-directory`, and directories are not accepted as broad
+uploads.
+
+```yaml
+jobs:
+  build-release:
+    permissions:
+      contents: read
+    uses: zackees/setup-soldr/.github/workflows/release-lane.yml@v0
+    with:
+      target: x86_64-unknown-linux-musl
+      working-directory: .
+      artifact-name: my-cli
+      artifact-paths: target/x86_64-unknown-linux-musl/release/my-cli
+```
+
+The uploaded name is `my-cli-x86_64-unknown-linux-musl`. The artifact also
+contains `release-metadata/release-metadata.json`, recording the source
+repository, commit, ref, canonical target, Soldr version, target cache
+identity, advertised operations, exact build arguments, cache mode, and
+resolved artifact files. Set `cache: true` only when a release policy
+explicitly permits managed cache restore and save.
+
+Build once in the release lane. Then run the artifact on a compatible native runner
+in a dependent job. Use the exact `artifact-name` workflow output so
+download and execution cannot drift from the producer:
+
+```yaml
+  run-native:
+    needs: build-release
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-release.outputs.artifact-name }}
+      - run: |
+          chmod +x target/x86_64-unknown-linux-musl/release/my-cli
+          target/x86_64-unknown-linux-musl/release/my-cli --version
+```
 
 ## Multi-platform builds (target-driven contract)
 

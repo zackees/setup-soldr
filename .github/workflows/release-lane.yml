@@ -1,0 +1,270 @@
+name: Soldr release lane
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: Canonical Rust target triple.
+        required: true
+        type: string
+      working-directory:
+        description: Directory containing the Cargo package or workspace.
+        required: false
+        default: "."
+        type: string
+      package:
+        description: Optional Cargo package selector.
+        required: false
+        default: ""
+        type: string
+      bin:
+        description: Optional Cargo binary selector.
+        required: false
+        default: ""
+        type: string
+      features:
+        description: Optional Cargo feature list passed as one argument.
+        required: false
+        default: ""
+        type: string
+      no-default-features:
+        description: Disable Cargo default features.
+        required: false
+        default: false
+        type: boolean
+      locked:
+        description: Require Cargo.lock to remain unchanged.
+        required: false
+        default: true
+        type: boolean
+      cache:
+        description: Opt in to setup-soldr managed caches for this release build.
+        required: false
+        default: false
+        type: boolean
+      artifact-paths:
+        description: Required newline-delimited files or globs, relative to working-directory.
+        required: true
+        type: string
+      artifact-name:
+        description: Artifact name prefix; the prepared target is appended.
+        required: false
+        default: soldr-release
+        type: string
+      retention-days:
+        description: Number of days GitHub retains the uploaded artifact.
+        required: false
+        default: 14
+        type: number
+    outputs:
+      artifact-name:
+        description: Exact uploaded artifact name, including the prepared target.
+        value: ${{ jobs.release.outputs.artifact-name }}
+      prepared-target:
+        description: Canonical target prepared by Soldr.
+        value: ${{ jobs.release.outputs.prepared-target }}
+      soldr-version:
+        description: Runtime-verified Soldr version.
+        value: ${{ jobs.release.outputs.soldr-version }}
+      target-cache-identity:
+        description: Soldr target-plan cache identity.
+        value: ${{ jobs.release.outputs.target-cache-identity }}
+      target-plan-json:
+        description: Complete Soldr target plan JSON.
+        value: ${{ jobs.release.outputs.target-plan-json }}
+      release-metadata-path:
+        description: Path used for release-metadata.json in the release job.
+        value: ${{ jobs.release.outputs.release-metadata-path }}
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      artifact-name: ${{ steps.artifacts.outputs.artifact-name }}
+      prepared-target: ${{ steps.setup-soldr.outputs.prepared-target }}
+      soldr-version: ${{ steps.setup-soldr.outputs.soldr-version }}
+      target-cache-identity: ${{ steps.setup-soldr.outputs.target-cache-identity }}
+      target-plan-json: ${{ steps.setup-soldr.outputs.target-plan-json }}
+      release-metadata-path: ${{ steps.metadata.outputs.path }}
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Resolve reusable workflow source
+        id: workflow-source
+        shell: bash
+        env:
+          JOB_CONTEXT_JSON: ${{ toJSON(job) }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+
+          job = json.loads(os.environ["JOB_CONTEXT_JSON"])
+          repository = job.get("workflow_repository", "")
+          sha = job.get("workflow_sha", "")
+          if not repository or not sha:
+              raise SystemExit("GitHub did not expose the reusable workflow repository and SHA")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"repository={repository}\n")
+              output.write(f"sha={sha}\n")
+          PY
+
+      - name: Checkout release workflow helpers
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.workflow-source.outputs.repository }}
+          ref: ${{ steps.workflow-source.outputs.sha }}
+          path: .setup-soldr-release-workflow
+
+      - name: Setup Soldr release target
+        id: setup-soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          cross-targets: ${{ inputs.target }}
+          cache: ${{ inputs.cache }}
+          build-cache: ${{ inputs.cache }}
+          target-cache: false
+          cargo-registry-cache: false
+          solo-toolchain-cache: ${{ inputs.cache }}
+          soldr-mini-cache: ${{ inputs.cache }}
+          prebuild-deps: none
+
+      - name: Assert build capability
+        shell: bash
+        env:
+          CAPABILITIES_JSON: ${{ steps.setup-soldr.outputs.target-capabilities-json }}
+          TARGET: ${{ steps.setup-soldr.outputs.prepared-target }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+
+          capabilities = json.loads(os.environ["CAPABILITIES_JSON"])
+          operations = capabilities.get("supportedOperations", [])
+          if "build" not in operations:
+              reported = ", ".join(operations) or "none"
+              raise SystemExit(
+                  f"Soldr target {os.environ['TARGET']} does not support build; reported operations: {reported}"
+              )
+          PY
+
+      - name: Record effective cache contract
+        id: cache-contract
+        shell: bash
+        env:
+          CACHE_ENABLED: ${{ inputs.cache }}
+          SETUP_RESTORE_STATUS: ${{ steps.setup-soldr.outputs.cache-restore-status }}
+          BUILD_RESTORE_STATUS: ${{ steps.setup-soldr.outputs.build-cache-restore-status }}
+          TARGET_RESTORE_STATUS: ${{ steps.setup-soldr.outputs.target-cache-restore-status }}
+          PREPARE_CACHE_KEY: ${{ steps.setup-soldr.outputs.blessed-prepare-cache-key }}
+          PREPARE_CACHE_HIT: ${{ steps.setup-soldr.outputs.blessed-prepare-cache-hit }}
+          TARGET_CACHE_MODE: ${{ steps.setup-soldr.outputs.target-cache-mode }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+
+          enabled = os.environ["CACHE_ENABLED"] == "true"
+          contract = {
+              "managed_restore_enabled": enabled,
+              "managed_save_enabled": enabled,
+              "explicit_disabled_layers": [] if enabled else [
+                  "setup",
+                  "build",
+                  "target",
+                  "cargo-registry",
+                  "solo-toolchain",
+                  "soldr-mini",
+                  "prebuild",
+              ],
+              "setup_restore_status": os.environ["SETUP_RESTORE_STATUS"],
+              "build_restore_status": os.environ["BUILD_RESTORE_STATUS"],
+              "target_restore_status": os.environ["TARGET_RESTORE_STATUS"],
+              "prepared_cache_key": os.environ["PREPARE_CACHE_KEY"],
+              "prepared_cache_hit": os.environ["PREPARE_CACHE_HIT"],
+              "build_runtime_mode": os.environ.get("SOLDR_BUILD_CACHE_MODE", ""),
+              "target_cache_mode": os.environ["TARGET_CACHE_MODE"],
+          }
+          if not enabled:
+              assert contract["build_runtime_mode"] == "off", contract
+              assert contract["target_cache_mode"] == "off", contract
+              assert contract["prepared_cache_key"] == "", contract
+              assert contract["prepared_cache_hit"] in ("", "false"), contract
+              for field in ("setup_restore_status", "build_restore_status", "target_restore_status"):
+                  assert contract[field] in ("", "disabled"), contract
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"json={json.dumps(contract, separators=(',', ':'))}\n")
+          PY
+
+      - name: Build release through Soldr
+        id: build
+        working-directory: ${{ inputs.working-directory }}
+        shell: bash
+        env:
+          TARGET: ${{ steps.setup-soldr.outputs.prepared-target }}
+          PACKAGE: ${{ inputs.package }}
+          BIN: ${{ inputs.bin }}
+          FEATURES: ${{ inputs.features }}
+          LOCKED: ${{ inputs.locked }}
+          NO_DEFAULT_FEATURES: ${{ inputs.no-default-features }}
+        run: |
+          set -euo pipefail
+          args=(build --target "$TARGET" --release)
+          if [[ "$LOCKED" == "true" ]]; then args+=(--locked); fi
+          if [[ -n "$PACKAGE" ]]; then args+=(--package "$PACKAGE"); fi
+          if [[ -n "$BIN" ]]; then args+=(--bin "$BIN"); fi
+          if [[ -n "$FEATURES" ]]; then args+=(--features "$FEATURES"); fi
+          if [[ "$NO_DEFAULT_FEATURES" == "true" ]]; then args+=(--no-default-features); fi
+          arguments_json="$(node -e 'process.stdout.write(JSON.stringify(process.argv.slice(1)))' "${args[@]}")"
+          echo "arguments-json=$arguments_json" >> "$GITHUB_OUTPUT"
+          soldr "${args[@]}"
+
+      - name: Resolve required release artifacts
+        id: artifacts
+        shell: bash
+        env:
+          ARTIFACT_PATHS: ${{ inputs.artifact-paths }}
+          ARTIFACT_PREFIX: ${{ inputs.artifact-name }}
+          PREPARED_TARGET: ${{ steps.setup-soldr.outputs.prepared-target }}
+          WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        run: |
+          set -euo pipefail
+          python "$GITHUB_WORKSPACE/.setup-soldr-release-workflow/scripts/resolve-release-artifacts.py"
+
+      - name: Write release metadata
+        id: metadata
+        shell: bash
+        env:
+          METADATA_PATH: ${{ github.workspace }}/release-metadata/release-metadata.json
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_SHA: ${{ github.sha }}
+          GIT_REF: ${{ github.ref }}
+          TARGET: ${{ steps.setup-soldr.outputs.prepared-target }}
+          SOLDR_VERSION: ${{ steps.setup-soldr.outputs.soldr-version }}
+          TARGET_CACHE_IDENTITY: ${{ steps.setup-soldr.outputs.target-cache-identity }}
+          CAPABILITIES_JSON: ${{ steps.setup-soldr.outputs.target-capabilities-json }}
+          ARGUMENTS_JSON: ${{ steps.build.outputs.arguments-json }}
+          CACHE_ENABLED: ${{ inputs.cache }}
+          CACHE_CONTRACT_JSON: ${{ steps.cache-contract.outputs.json }}
+          ARTIFACT_PATHS_JSON: ${{ steps.artifacts.outputs.resolved-json }}
+        run: |
+          set -euo pipefail
+          node "$GITHUB_WORKSPACE/.setup-soldr-release-workflow/scripts/write-release-metadata.mjs"
+          test -s "$METADATA_PATH"
+          echo "path=$METADATA_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifacts.outputs.artifact-name }}
+          retention-days: ${{ inputs.retention-days }}
+          if-no-files-found: error
+          path: |
+            ${{ steps.artifacts.outputs.resolved-paths }}
+            ${{ steps.metadata.outputs.path }}
