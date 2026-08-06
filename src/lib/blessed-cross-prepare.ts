@@ -31,7 +31,10 @@ export function parseSingleCrossTarget(raw: string): string | null {
 }
 
 export function mergeToolchainTargets(existing: string[], crossTarget: string | null): string[] {
-  return [...new Set([...existing, ...(crossTarget ? [crossTarget] : [])].map((v) => v.trim().toLowerCase()).filter(Boolean))].sort();
+  const expanded = crossTarget === "universal2-apple-darwin"
+    ? ["x86_64-apple-darwin", "aarch64-apple-darwin"]
+    : crossTarget ? [crossTarget] : [];
+  return [...new Set([...existing, ...expanded].map((v) => v.trim().toLowerCase()).filter(Boolean))].sort();
 }
 
 export function blessedPrepareCacheKey(input: {

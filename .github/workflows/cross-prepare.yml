@@ -1,0 +1,68 @@
+name: Blessed cross-prepare integration
+
+on:
+  pull_request:
+    paths:
+      - action.yml
+      - src/**
+      - dist/**
+      - __tests__/**
+      - .github/workflows/cross-prepare.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cold-warm:
+    name: ${{ matrix.target }} cold and warm prepare
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-musl
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+    steps:
+      - name: Checkout action
+        uses: actions/checkout@v4
+
+      - name: Setup Soldr and prepare target (cold action path)
+        uses: ./
+        with:
+          cross-targets: ${{ matrix.target }}
+          cache: false
+
+      - name: Prepare a dedicated cold archive
+        id: cold
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/setup-soldr-integration/${TARGET}/prepared.tar.zst"
+          mkdir -p "$(dirname "$archive")"
+          soldr prepare --target "$TARGET" --github-env "$GITHUB_ENV" --save "$archive"
+          test -s "$archive"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+      - name: Restore and prepare with network denied (warm path)
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          ARCHIVE: ${{ steps.cold.outputs.archive }}
+          HTTP_PROXY: http://127.0.0.1:9
+          HTTPS_PROXY: http://127.0.0.1:9
+          ALL_PROXY: http://127.0.0.1:9
+          NO_PROXY: ""
+        run: |
+          set -euo pipefail
+          soldr prepare --target "$TARGET" --github-env "$GITHUB_ENV" --restore "$ARCHIVE"
+          test -s "$ARCHIVE"
+
+      - name: Assert exported target lifecycle
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: test "${SETUP_SOLDR_TOOLCHAIN_TARGETS}" = "[\"${TARGET}\"]" || test "${SETUP_SOLDR_TOOLCHAIN_TARGETS}" = "[\"aarch64-apple-darwin\",\"x86_64-apple-darwin\"]"
