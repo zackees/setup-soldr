@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  assertTargetOperationSupported,
   buildTargetHooks,
   mergeTargetEnvironment,
   normalizeTargetPlan,
@@ -55,8 +56,40 @@ test("buildTargetHooks use the Soldr front door for every target operation", () 
   assert.equal(hooks.pep517Sdist, "python -m build --sdist");
 });
 
+test("requested target operations must be reported by Soldr", () => {
+  const plan = normalizeTargetPlan("x86_64-pc-windows-msvc", soldrPlan);
+  assert.doesNotThrow(() => assertTargetOperationSupported(plan, "build"));
+  assert.throws(
+    () => assertTargetOperationSupported({ ...plan, supportedOperations: ["prepare"] }, "build"),
+    /does not support requested operation 'build'.*reported: prepare/,
+  );
+});
+
+test("mergeTargetEnvironment preserves every target-scoped project flag", () => {
+  const existing = {
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS: "-C debuginfo=1",
+    CFLAGS_aarch64_unknown_linux_gnu: "-DPROJECT_C",
+    CXXFLAGS_aarch64_unknown_linux_gnu: "-DPROJECT_CXX",
+    LDFLAGS_aarch64_unknown_linux_gnu: "-Wl,--project",
+  };
+  const planned = {
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS: "-C link-arg=--sysroot=/sdk",
+    CFLAGS_aarch64_unknown_linux_gnu: "--sysroot=/sdk",
+    CXXFLAGS_aarch64_unknown_linux_gnu: "--sysroot=/sdk",
+    LDFLAGS_aarch64_unknown_linux_gnu: "-Wl,--sysroot=/sdk",
+  };
+
+  const merged = mergeTargetEnvironment(existing, planned);
+  for (const [key, value] of Object.entries(existing)) {
+    assert.match(merged[key]!, new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(merged[key]!, /sysroot/);
+  }
+});
+
 test("reusable target workflow has no legacy implementation selector", () => {
   const workflow = readFileSync(".github/workflows/target-lifecycle.yml", "utf8");
+  assert.match(workflow, /target-capabilities-json/);
+  assert.match(workflow, /does not support requested operation/);
   assert.match(workflow, /soldr build --target/);
   assert.match(workflow, /soldr cargo clippy --target/);
   assert.match(workflow, /soldr cargo test --no-run --target/);

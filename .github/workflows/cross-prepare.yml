@@ -7,6 +7,7 @@ on:
       - src/**
       - dist/**
       - __tests__/**
+      - tests/fixtures/target-smoke/**
       - .github/workflows/cross-prepare.yml
   workflow_dispatch:
 
@@ -14,6 +15,257 @@ permissions:
   contents: read
 
 jobs:
+  target-contract:
+    name: ${{ matrix.target }} target contract
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu, artifact: elf, build: required, execute: true, compiler_probe: false }
+          - { target: x86_64-unknown-linux-musl, artifact: elf, build: required, execute: true, compiler_probe: false }
+          - { target: aarch64-unknown-linux-gnu, artifact: elf, build: required, execute: false, compiler_probe: false }
+          - { target: aarch64-unknown-linux-musl, artifact: elf, build: capability, execute: false, compiler_probe: true }
+          - { target: x86_64-apple-darwin, artifact: macho, build: required, execute: false, compiler_probe: false }
+          - { target: aarch64-apple-darwin, artifact: macho, build: required, execute: false, compiler_probe: false }
+          - { target: x86_64-pc-windows-msvc, artifact: pe, build: required, execute: false, compiler_probe: false }
+          - { target: aarch64-pc-windows-msvc, artifact: pe, build: capability, execute: false, compiler_probe: false }
+          - { target: universal2-apple-darwin, artifact: packaging, build: none, execute: false, compiler_probe: false }
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
+    steps:
+      - name: Checkout action
+        uses: actions/checkout@v4
+
+      - name: Seed project target flags
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          upper="${TARGET^^}"
+          upper="${upper//-/_}"
+          lower="${TARGET//-/_}"
+          {
+            echo "CARGO_TARGET_${upper}_RUSTFLAGS=-C debuginfo=1"
+            echo "CFLAGS_${lower}=-DSETUP_SOLDR_PROJECT_C=1"
+            echo "CXXFLAGS_${lower}=-DSETUP_SOLDR_PROJECT_CXX=1"
+            echo "LDFLAGS_${lower}=-Wl,--setup-soldr-project-marker"
+          } >> "$GITHUB_ENV"
+
+      - name: Setup Soldr and prepare target
+        id: setup
+        uses: ./
+        with:
+          cross-targets: ${{ matrix.target }}
+          cache: false
+          prebuild-deps: none
+
+      - name: Assert and record target contract
+        id: contract
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          PLAN_JSON: ${{ steps.setup.outputs.target-plan-json }}
+          CAPABILITIES_JSON: ${{ steps.setup.outputs.target-capabilities-json }}
+          TARGET_ENV_JSON: ${{ steps.setup.outputs.target-env-json }}
+          SOLDR_VERSION: ${{ steps.setup.outputs.soldr-version }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          target = os.environ["TARGET"]
+          plan = json.loads(os.environ["PLAN_JSON"])
+          capabilities = json.loads(os.environ["CAPABILITIES_JSON"])
+          target_env = json.loads(os.environ["TARGET_ENV_JSON"])
+          assert plan["schemaVersion"] >= 1
+          assert capabilities["schemaVersion"] >= 1
+          assert plan["canonicalTarget"] == target
+          assert capabilities["canonicalTarget"] == target
+          assert plan["cacheIdentity"]
+          assert capabilities["cacheIdentity"] == plan["cacheIdentity"]
+          operations = capabilities["supportedOperations"]
+          assert isinstance(operations, list) and "prepare" in operations
+
+          upper = target.upper().replace("-", "_")
+          lower = target.replace("-", "_")
+          expected = {
+              f"CARGO_TARGET_{upper}_RUSTFLAGS": "debuginfo=1",
+              f"CFLAGS_{lower}": "SETUP_SOLDR_PROJECT_C=1",
+              f"CXXFLAGS_{lower}": "SETUP_SOLDR_PROJECT_CXX=1",
+              f"LDFLAGS_{lower}": "setup-soldr-project-marker",
+          }
+          for name, marker in expected.items():
+              assert marker in os.environ.get(name, ""), (name, os.environ.get(name))
+
+          if target == "universal2-apple-darwin":
+              provisioned = json.loads(os.environ["SETUP_SOLDR_TOOLCHAIN_TARGETS"])
+              assert sorted(provisioned) == ["aarch64-apple-darwin", "x86_64-apple-darwin"]
+
+          evidence = {
+              "target": target,
+              "soldr_version": os.environ["SOLDR_VERSION"],
+              "schema_version": capabilities["schemaVersion"],
+              "cache_identity": capabilities["cacheIdentity"],
+              "operations": operations,
+              "command": None,
+              "artifact_path": None,
+              "artifact_type": None,
+              "status": "capability-recorded",
+              "target_environment": target_env,
+          }
+          path = Path("target-contract-evidence") / f"{target}.json"
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+          if python -c 'import json,os; raise SystemExit("build" not in json.loads(os.environ["CAPABILITIES_JSON"])["supportedOperations"])'; then
+            echo "has-build=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-build=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          upper="${TARGET^^}"
+          upper="${upper//-/_}"
+          lower="${TARGET//-/_}"
+          compiler_name="CC_${lower}"
+          compiler="${!compiler_name:-}"
+          if [[ -z "$compiler" ]]; then
+            linker_name="CARGO_TARGET_${upper}_LINKER"
+            compiler="${!linker_name:-}"
+          fi
+          compiler_command="${compiler%% *}"
+          if [[ -n "$compiler_command" ]] && command -v "$compiler_command" >/dev/null 2>&1; then
+            echo "compiler-executable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "compiler-executable=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refuse missing required build capability
+        if: matrix.build == 'required' && steps.contract.outputs.has-build != 'true'
+        shell: bash
+        run: |
+          echo "Soldr did not advertise the required build operation for ${{ matrix.target }}" >&2
+          exit 1
+
+      - name: Build target smoke fixture through Soldr
+        if: matrix.build != 'none' && steps.contract.outputs.has-build == 'true' && (!matrix.compiler_probe || steps.contract.outputs.compiler-executable == 'true')
+        id: build
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          soldr build --locked --release --manifest-path tests/fixtures/target-smoke/Cargo.toml --target "$TARGET"
+          suffix=""
+          case "$TARGET" in *-windows-msvc) suffix=".exe" ;; esac
+          artifact="$CARGO_TARGET_DIR/$TARGET/release/target-smoke$suffix"
+          test -s "$artifact"
+          echo "artifact=$artifact" >> "$GITHUB_OUTPUT"
+
+      - name: Validate target artifact format
+        if: matrix.build != 'none' && steps.contract.outputs.has-build == 'true' && (!matrix.compiler_probe || steps.contract.outputs.compiler-executable == 'true')
+        id: format
+        shell: bash
+        env:
+          ARTIFACT: ${{ steps.build.outputs.artifact }}
+          ARTIFACT_TYPE: ${{ matrix.artifact }}
+        run: |
+          set -euo pipefail
+          description="$(file -b "$ARTIFACT")"
+          case "$ARTIFACT_TYPE" in
+            elf) grep -q "ELF" <<<"$description" ;;
+            macho) grep -q "Mach-O" <<<"$description" ;;
+            pe) grep -Eiq "PE32|MS Windows|COFF" <<<"$description" ;;
+            *) echo "No binary format expected for $ARTIFACT_TYPE" >&2; exit 2 ;;
+          esac
+          echo "$description"
+          echo "validated=true" >> "$GITHUB_OUTPUT"
+
+      - name: Execute host-runnable smoke binary
+        if: matrix.execute && steps.contract.outputs.has-build == 'true'
+        id: execute
+        shell: bash
+        env:
+          ARTIFACT: ${{ steps.build.outputs.artifact }}
+        run: |
+          test "$("$ARTIFACT")" = "setup-soldr target smoke"
+          echo "validated=true" >> "$GITHUB_OUTPUT"
+
+      - name: Finalize target evidence
+        if: always()
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          ARTIFACT: ${{ steps.build.outputs.artifact }}
+          ARTIFACT_TYPE: ${{ matrix.artifact }}
+          HAS_BUILD: ${{ steps.contract.outputs.has-build }}
+          COMPILER_EXECUTABLE: ${{ steps.contract.outputs.compiler-executable }}
+          FORMAT_VALIDATED: ${{ steps.format.outputs.validated }}
+          EXECUTE_REQUIRED: ${{ matrix.execute }}
+          EXECUTE_VALIDATED: ${{ steps.execute.outputs.validated }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("target-contract-evidence") / f"{os.environ['TARGET']}.json"
+          if not path.exists():
+              path.parent.mkdir(parents=True, exist_ok=True)
+              evidence = {"target": os.environ["TARGET"], "status": "setup-failed"}
+          else:
+              evidence = json.loads(path.read_text(encoding="utf-8"))
+          artifact = os.environ.get("ARTIFACT", "")
+          format_validated = os.environ.get("FORMAT_VALIDATED") == "true"
+          execute_required = os.environ.get("EXECUTE_REQUIRED") == "true"
+          execute_validated = os.environ.get("EXECUTE_VALIDATED") == "true"
+          if artifact and format_validated and (not execute_required or execute_validated):
+              evidence.update({
+                  "command": f"soldr build --target {os.environ['TARGET']}",
+                  "artifact_path": artifact,
+                  "artifact_type": os.environ["ARTIFACT_TYPE"],
+                  "status": "built-and-validated",
+              })
+          elif artifact and not format_validated:
+              evidence.update({
+                  "command": f"soldr build --target {os.environ['TARGET']}",
+                  "artifact_path": artifact,
+                  "artifact_type": os.environ["ARTIFACT_TYPE"],
+                  "status": "format-validation-failed",
+              })
+          elif artifact and execute_required and not execute_validated:
+              evidence.update({
+                  "command": f"soldr build --target {os.environ['TARGET']}",
+                  "artifact_path": artifact,
+                  "artifact_type": os.environ["ARTIFACT_TYPE"],
+                  "status": "execution-failed",
+              })
+          elif evidence.get("status") != "setup-failed":
+              has_build = os.environ.get("HAS_BUILD") == "true"
+              compiler_executable = os.environ.get("COMPILER_EXECUTABLE") == "true"
+              evidence["compiler_host_executable"] = compiler_executable
+              if os.environ["ARTIFACT_TYPE"] == "packaging":
+                  evidence["status"] = "capability-recorded"
+              elif not has_build:
+                  evidence["status"] = "capability-unavailable"
+              elif not compiler_executable:
+                  evidence["status"] = "compiler-unavailable"
+              else:
+                  evidence["status"] = "capability-recorded"
+          path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload target evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-contract-${{ matrix.target }}
+          if-no-files-found: error
+          path: target-contract-evidence/${{ matrix.target }}.json
+
   cold-warm:
     name: ${{ matrix.target }} cold and warm prepare
     runs-on: ubuntu-24.04
@@ -29,10 +281,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Soldr and prepare target (cold action path)
+        id: setup
         uses: ./
         with:
           cross-targets: ${{ matrix.target }}
           cache: false
+          prebuild-deps: none
 
       - name: Prepare a dedicated cold archive
         id: cold
@@ -65,4 +319,4 @@ jobs:
         shell: bash
         env:
           TARGET: ${{ matrix.target }}
-        run: test "${SETUP_SOLDR_TOOLCHAIN_TARGETS}" = "[\"${TARGET}\"]" || test "${SETUP_SOLDR_TOOLCHAIN_TARGETS}" = "[\"aarch64-apple-darwin\",\"x86_64-apple-darwin\"]"
+        run: test "${SETUP_SOLDR_TOOLCHAIN_TARGETS}" = "[\"${TARGET}\"]"

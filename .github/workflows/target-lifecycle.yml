@@ -53,6 +53,29 @@ jobs:
           cross-targets: ${{ inputs.target }}
           cache: ${{ inputs.cache }}
 
+      - name: Assert requested target capability
+        shell: bash
+        env:
+          CAPABILITIES_JSON: ${{ steps.setup-soldr.outputs.target-capabilities-json }}
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          requested = {
+              "wheel": "pep517-wheel",
+              "sdist": "pep517-sdist",
+          }.get(os.environ["OPERATION"], os.environ["OPERATION"])
+          capabilities = json.loads(os.environ["CAPABILITIES_JSON"])
+          operations = capabilities.get("supportedOperations", [])
+          if requested not in operations:
+              reported = ", ".join(operations) or "none"
+              raise SystemExit(
+                  f"Soldr target plan does not support requested operation '{requested}'; reported: {reported}"
+              )
+          PY
+
       - name: Run Soldr target operation
         env:
           TARGET: ${{ inputs.target }}

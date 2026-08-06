@@ -18,6 +18,21 @@ export interface TargetHooks {
   pep517Sdist: string;
 }
 
+/** Fail before invoking an operation that Soldr did not advertise. */
+export function assertTargetOperationSupported(
+  contract: TargetLifecycleContract,
+  operation: string,
+): void {
+  const requested = operation.trim();
+  if (!requested || contract.supportedOperations.includes(requested)) return;
+  const reported = contract.supportedOperations.length > 0
+    ? contract.supportedOperations.join(", ")
+    : "none";
+  throw new Error(
+    `Soldr target plan for ${contract.canonicalTarget} does not support requested operation '${requested}'; reported: ${reported}`,
+  );
+}
+
 function stringRecord(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return Object.fromEntries(
@@ -50,7 +65,16 @@ export function normalizeTargetPlan(fallbackTarget: string, raw: unknown): Targe
   };
 }
 
-const FLAG_SUFFIXES = ["_RUSTFLAGS", "_CFLAGS", "_CXXFLAGS", "_LDFLAGS"];
+function isMergeableFlag(key: string): boolean {
+  return key === "RUSTFLAGS"
+    || key.endsWith("_RUSTFLAGS")
+    || key.startsWith("CFLAGS_")
+    || key.startsWith("CXXFLAGS_")
+    || key.startsWith("LDFLAGS_")
+    || key.endsWith("_CFLAGS")
+    || key.endsWith("_CXXFLAGS")
+    || key.endsWith("_LDFLAGS");
+}
 
 /** Merge target-scoped flags without discarding project-provided flags. */
 export function mergeTargetEnvironment(
@@ -63,7 +87,7 @@ export function mergeTargetEnvironment(
   for (const [key, value] of Object.entries(planned)) {
     const prior = existing[key]?.trim() ?? "";
     const next = value.trim();
-    if (FLAG_SUFFIXES.some((suffix) => key.endsWith(suffix)) && prior && next) {
+    if (isMergeableFlag(key) && prior && next) {
       merged[key] = `${prior} ${next}`;
     } else {
       merged[key] = next || prior;

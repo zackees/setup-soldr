@@ -22,6 +22,12 @@ test("multiple targets require a matrix", () => {
   assert.throws(() => parseSingleCrossTarget("x86_64-pc-windows-gnu,aarch64-unknown-linux-musl"), /use a matrix/);
 });
 
+test("friendly aliases and malformed targets are rejected", () => {
+  assert.throws(() => parseSingleCrossTarget("macos-arm"), /canonical Rust target triple.*aliases.*not accepted/);
+  assert.throws(() => parseSingleCrossTarget("not-a-target!"), /canonical Rust target triple.*aliases.*not accepted/);
+  assert.throws(() => parseSingleCrossTarget("all"), /canonical Rust target triple.*aliases.*not accepted/);
+});
+
 test("prepared cache keys are immutable and target/identity keyed", () => {
   const base = { runnerOs: "Linux", runnerArch: "X64", target: "x86_64-pc-windows-gnu", soldrRepo: "zackees/soldr", soldrVersion: "0.8.39" };
   assert.equal(blessedPrepareCacheKey(base), blessedPrepareCacheKey(base));

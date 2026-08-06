@@ -2,7 +2,7 @@
 
 [![Setup Soldr Action](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml/badge.svg)](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml)
 
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.8.30`.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.8.39`.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -132,37 +132,49 @@ jobs:
 
 ### Blessed cross-target preparation
 
-For a non-host target, set one canonical triple per job. setup-soldr delegates
-compiler, linker, SDK, and target lifecycle provisioning to Soldr's blessed
-`prepare` command. Use a matrix for multiple targets; `cache: false` disables
-only the prepared-state archive cache, not preparation.
+For a non-host target, pass one canonical Rust target triple to `cross-targets`
+in each job. Use a matrix for multiple targets. Aliases such as `macos-arm` are not accepted,
+because the canonical triple is part of Soldr's target plan and cache identity.
 
 ```yaml
-- uses: zackees/setup-soldr@v0
-  with:
-    cross-targets: aarch64-apple-darwin
-- run: soldr build --locked --release --target aarch64-apple-darwin
+strategy:
+  matrix:
+    target:
+      - x86_64-unknown-linux-musl
+      - aarch64-apple-darwin
+steps:
+  - uses: actions/checkout@v4
+  - uses: zackees/setup-soldr@v0
+    id: setup
+    with:
+      cross-targets: ${{ matrix.target }}
+      cache: false
+  - run: soldr build --locked --release --target ${{ matrix.target }}
 ```
 
-The prepared archive is keyed by runner OS/architecture, target, Soldr
-repository, and resolved Soldr version. Cargo registry, compilation, and cook
-caches remain independent. `universal2-apple-darwin` is accepted as a
-packaging target and expands to the real `aarch64-apple-darwin` and
-`x86_64-apple-darwin` Rust targets for toolchain provisioning. The latter is
-not present in current Soldr release assets; prefer arm64 or a native runner.
+The action invokes `soldr prepare --target`; Soldr owns the compiler, linker,
+SDK/sysroot, environment, and supported-operation selection. `cache: false`
+disables only the prepared-state archive cache, not preparation. The archive
+identity includes runner OS/architecture, canonical target, Soldr repository,
+and resolved Soldr version. Cargo registry, compilation, and cook caches remain
+independent.
+
+`universal2-apple-darwin` is a packaging target, not a Rust standard-library
+target. setup-soldr provisions both `aarch64-apple-darwin` and
+`x86_64-apple-darwin`; Soldr reports whether build or packaging operations are
+available. Both real Darwin targets are supported by the blessed lifecycle.
+setup-soldr does not implement binary merging.
 
 ### Target-driven lifecycle hooks
 
-`cross-targets` is the only cross-compilation choice. After `soldr prepare`
-completes, the action exposes `target-plan-json`, `target-capabilities-json`,
-`target-env-json`, `target-cache-identity`, and `target-artifact-dir` outputs.
-The plan is reported by Soldr, so setup-soldr does not maintain a
-triple-to-toolchain or SDK map. Target-scoped flags are merged with existing
-project flags instead of being replaced.
+After preparation, the action exposes `target-plan-json`,
+`target-capabilities-json`, `target-env-json`, `target-cache-identity`, and
+`target-artifact-dir`. It also exports build, lint, test-harness, wheel, and
+sdist hooks. Target-scoped project flags are preserved when Soldr's planned
+environment is merged.
 
-The action also exposes operation hooks for the blessed build, lint, test, and
-PEP 517 frontend surfaces. Consumers can use the reusable workflow for a
-complete operation:
+A consumer that wants one complete operation can call the reusable lifecycle
+workflow:
 
 ```yaml
 jobs:
@@ -174,40 +186,9 @@ jobs:
       profile: release
 ```
 
-Set `operation` to `build`, `clippy`, `test-no-run`, `wheel`, or `sdist`.
-For six-target matrices, put the target list in the caller's matrix and pass
-`${{ matrix.target }}` to this workflow. Legacy wrapper commands are retained
-only for diagnostics and migration; they are not used by the target lifecycle.
-
-### Legacy cross-compile auto-bootstrap (removed; see blessed preparation above)
-
-When a job needs to cross-compile to a non-host triple, set the
-`cross-targets` input. For supported (host, target) lanes, setup-soldr
-installs the cross toolchain automatically — no extra `pip install
-ziglang` / `cargo install cargo-zigbuild` step in the workflow.
-
-```yaml
-- uses: zackees/setup-soldr@v0
-  with:
-    cross-targets: x86_64-pc-windows-gnu
-- run: soldr cargo zigbuild --release --target x86_64-pc-windows-gnu
-```
-
-MVP coverage (issue #104, this release):
-
-| Host | Target | Installed |
-|---|---|---|
-| Linux | `*-pc-windows-gnu` | `cargo-zigbuild` + `ziglang` + `rustup target add` |
-| Linux | `*-unknown-linux-musl` | `cargo-zigbuild` + `ziglang` + `rustup target add` |
-
-Other (host, target) lanes — Windows-host and macOS-host runners, and
-the `xwin` / `mingw` strategies for Linux→MSVC — emit a one-line
-warning and continue without failing the action; you'll need to install
-the cross toolchain manually for those lanes for now. The `cross-tool:`
-input selects the strategy (`auto` (default), `none`, `zigbuild`,
-`xwin`, `mingw`); only `auto` and `none` change behavior in this
-release. Set `cross-tool: none` to skip cross-bootstrap entirely.
-
+Set `operation` to `build`, `clippy`, `test-no-run`, `wheel`, or `sdist`. The
+requested capability must appear in `target-capabilities-json`; an absent
+capability is an error rather than a partial setup.
 ### Reusable Rust CI workflow
 
 For repos that just want the standard Rust quality gates
@@ -279,10 +260,8 @@ That default invocation builds, checks, clippies, and tests
 `x86_64-unknown-linux-musl`. The workflow writes
 `rust-toolchain.rust-ci.toml` with `targets =
 ["x86_64-unknown-linux-musl"]` and passes it to `setup-soldr` through
-`toolchain-file` before each targeted Rust command. Target provisioning
-stays in the setup-soldr/soldr-owned path rather than direct
-workflow-level `rustup target add`, `cargo-zigbuild`, or `cargo-xwin`
-installer steps.
+`toolchain-file` before each targeted Rust command. Target provisioning stays in the setup-soldr/Soldr-owned path; consumers do
+not install or select the underlying implementation.
 
 #### Native opt-in consumer
 
@@ -319,229 +298,63 @@ Cross-compiled binaries usually cannot run on the host, so the matrix
 example gates `test:` on the runnable musl cell. The template never tries
 to auto-detect runnability; the consumer chooses.
 
-## Multi-platform builds (cross-target tutorial)
+## Multi-platform builds (target-driven contract)
 
-The single-platform examples above all build for the runner's own host
-target. The moment you ask one runner to build for a different triple — for
-example, a Windows x86 runner producing a `aarch64-pc-windows-msvc`
-binary — you have left the native-host world and entered cross-compilation.
-The Rust standard library for the cross target must be provisioned on the
-runner *before* `soldr cargo build --target <triple>` runs, or the
-compilation fails with `error[E0463]: can't find crate for core` /
-`std`. This tutorial walks through both modes end-to-end against the
-public `setup-soldr@v0` action.
-
-### Native host targets vs cross-compilation targets
-
-| Mode | Example | What needs to be installed |
-|---|---|---|
-| Native host build | `ubuntu-latest` builds `x86_64-unknown-linux-gnu`, `macos-latest` builds `aarch64-apple-darwin`, `windows-latest` builds `x86_64-pc-windows-msvc` | Nothing extra — `rustup` installs the host `rust-std` by default. `soldr cargo build` (no `--target`) just works. |
-| Cross-target build | `windows-latest` (x86 host) builds `aarch64-pc-windows-msvc`; `ubuntu-latest` builds `aarch64-unknown-linux-gnu`; any host builds `wasm32-unknown-unknown` | The matching `rust-std` for the cross target must be added with `rustup target add <triple>` before `cargo` runs. Native linkers / sysroots may also be required depending on the triple. |
-
-`setup-soldr` reads both `[toolchain].components` and `[toolchain].targets`
-from the toolchain file (the `toolchain-file` input, default
-`rust-toolchain.toml`) and runs `rustup target add` for every requested
-target during setup. The exact log line to look for is:
-
-```
-Requested Rust targets: aarch64-pc-windows-msvc
-```
-
-A reading of `Requested Rust targets: none` means the action did not see
-any targets in the toolchain spec — even if your workflow believed it
-generated one. Grep your setup-soldr step logs for that line to confirm
-what the action actually saw.
-
-### `rust-toolchain.toml` with static cross targets
-
-When the same set of cross targets is needed by *every* job that builds the
-crate (local dev, CI, releases), pin them in the committed
-`rust-toolchain.toml`:
-
-```toml
-[toolchain]
-channel = "1.94.1"
-profile = "minimal"
-components = ["rustfmt", "clippy"]
-targets = [
-  "x86_64-unknown-linux-gnu",
-  "aarch64-unknown-linux-gnu",
-  "aarch64-apple-darwin",
-  "x86_64-apple-darwin",
-  "x86_64-pc-windows-msvc",
-  "aarch64-pc-windows-msvc",
-]
-```
-
-`setup-soldr@v0` picks this file up automatically because the
-`toolchain-file` input defaults to `rust-toolchain.toml`. Every job that
-runs the action provisions all listed targets up front, regardless of
-which target that particular job actually builds. This is the simplest
-shape and the right default for small matrices.
-
-### Per-job `rust-toolchain.ci.toml` (reusable pattern)
-
-Provisioning every target in every job wastes time when the matrix is
-large or when only one job ever needs an exotic target. The reusable
-pattern is to generate a per-job toolchain file at runtime and point
-`setup-soldr` at it with the `toolchain-file` input:
+Each matrix cell supplies exactly one canonical target and builds through
+`soldr build --target`. The reusable lifecycle workflow is the shortest form:
 
 ```yaml
-      - name: Write per-job toolchain spec
-        shell: bash
-        run: |
-          cat > rust-toolchain.ci.toml <<'EOF'
-          [toolchain]
-          channel = "1.94.1"
-          profile = "minimal"
-          components = ["rustfmt", "clippy"]
-          targets = ["${{ matrix.target }}"]
-          EOF
-          cat rust-toolchain.ci.toml
-
-      - uses: zackees/setup-soldr@v0
-        with:
-          cache: true
-          toolchain-file: rust-toolchain.ci.toml
-```
-
-Two things to keep in mind:
-
-- The `toolchain-file` path is resolved relative to `${{ github.workspace }}`,
-  so generate the file at the repo root (or pass a workspace-relative path).
-- The `toolchain` input takes precedence over `toolchain-file`. Leave
-  `toolchain` empty (the default) when you want the file to win.
-
-### Full matrix: Linux/macOS/Windows native plus Windows ARM cross
-
-The example below is copy-pasteable. The four native jobs each build for
-their own host triple; the fifth job runs on a Windows x86 runner and
-cross-compiles to `aarch64-pc-windows-msvc`.
-
-```yaml
-name: ci
-
-on:
-  push:
-  pull_request:
-
 jobs:
-  build:
-    name: build (${{ matrix.name }})
-    runs-on: ${{ matrix.runner }}
+  target-build:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: linux-x86_64
-            runner: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - name: macos-aarch64
-            runner: macos-latest
-            target: aarch64-apple-darwin
-          - name: windows-x86_64
-            runner: windows-latest
-            target: x86_64-pc-windows-msvc
-          - name: windows-aarch64-cross
-            runner: windows-latest
-            target: aarch64-pc-windows-msvc
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Write per-job toolchain spec
-        shell: bash
-        run: |
-          cat > rust-toolchain.ci.toml <<'EOF'
-          [toolchain]
-          channel = "1.94.1"
-          profile = "minimal"
-          components = ["rustfmt", "clippy"]
-          targets = ["${{ matrix.target }}"]
-          EOF
-          cat rust-toolchain.ci.toml
-
-      - uses: zackees/setup-soldr@v0
-        with:
-          cache: true
-          toolchain-file: rust-toolchain.ci.toml
-          cache-key-suffix: ${{ matrix.target }}
-
-      - name: Build
-        run: soldr cargo build --locked --release --target ${{ matrix.target }}
-
-      - name: Test (host targets only)
-        if: matrix.target != 'aarch64-pc-windows-msvc'
-        run: soldr cargo test --locked --target ${{ matrix.target }}
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-gnu
+          - aarch64-unknown-linux-musl
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+    uses: zackees/setup-soldr/.github/workflows/target-lifecycle.yml@v0
+    with:
+      target: ${{ matrix.target }}
+      operation: build
 ```
 
-Notes on the matrix:
+Do not execute a cross-built binary unless its target is runnable on the host.
+For release packaging, use a separate `universal2-apple-darwin` cell and inspect
+its reported packaging capabilities; it expands to the two real Apple targets
+for provisioning.
 
-- `cache-key-suffix: ${{ matrix.target }}` keeps the per-target caches
-  separate so a Windows ARM artifact set never collides with the Windows
-  x86 one.
-- The `aarch64-pc-windows-msvc` job builds but does not run tests, because
-  the runner is x86 and cannot execute ARM64 Windows binaries natively.
-  Run those tests on an ARM runner or under emulation in a separate job.
-- For Linux ARM cross-compiles (`aarch64-unknown-linux-gnu`), you typically
-  also need to install `gcc-aarch64-linux-gnu` and set
-  `CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc`
-  before `soldr cargo build` runs. See the troubleshooting section below
-  if your cross-link fails with a missing-linker error.
+### Capability and environment diagnostics
 
-### Troubleshooting cross-target builds
+Give the action step an ID and inspect its machine-readable outputs before
+invoking an optional operation:
 
-#### `error[E0463]: can't find crate for core` (or `std`)
-
-```
-error[E0463]: can't find crate for `core`
-  |
-  = note: the `aarch64-pc-windows-msvc` target may not be installed
-  = help: consider downloading the target with `rustup target add aarch64-pc-windows-msvc`
-```
-
-The `rust-std` component for the cross target was never installed on the
-runner. Confirm the failure mode in the setup-soldr step logs:
-
-1. Grep for `Requested Rust targets:` in the setup-soldr step output.
-2. If the line reads `Requested Rust targets: none`, the action did not
-   see your target. Fix the toolchain file (see next subsection).
-3. If the line lists the expected target but the build still fails, the
-   `rustup target add` itself failed earlier in the same step — scroll up
-   for a `rustup` error.
-
-#### Setup logs show `Requested Rust targets: none`
-
-This means `setup-soldr` parsed an empty `[toolchain].targets` array.
-Common causes:
-
-- The `toolchain-file` input points at a path the action cannot find.
-  Paths are resolved relative to `${{ github.workspace }}`. If you wrote
-  the file from a sub-directory or to an absolute path, move it (or pass
-  the workspace-relative path).
-- The generated file has a typo. The action expects exactly
-  `[toolchain]` and `targets = [ ... ]`. A misspelled section header
-  (`[tool-chain]`, `[Toolchain]`) silently produces an empty spec.
-- The `toolchain` input is set to a non-empty string. When `toolchain` is
-  set, it overrides the channel but `setup-soldr` still reads
-  `components` and `targets` from the file — but only if the file exists
-  and parses. Print the file with `cat` (or `Get-Content`) before the
-  `setup-soldr` step to confirm what the action will see.
-
-#### Always grep the action's log line
-
-Before opening a bug, search the `setup-soldr` step log for these two
-lines:
-
-```
-Requested Rust components: <list-or-none>
-Requested Rust targets: <list-or-none>
+```yaml
+- uses: zackees/setup-soldr@v0
+  id: setup
+  with:
+    cross-targets: ${{ matrix.target }}
+    cache: false
+- name: Record target contract
+  env:
+    PLAN: ${{ steps.setup.outputs.target-plan-json }}
+    CAPABILITIES: ${{ steps.setup.outputs.target-capabilities-json }}
+    TARGET_ENV: ${{ steps.setup.outputs.target-env-json }}
+  run: |
+    jq -e '.schemaVersion >= 1 and .canonicalTarget != "" and .cacheIdentity != ""' <<<"$CAPABILITIES"
+    jq . <<<"$PLAN"
+    jq . <<<"$TARGET_ENV"
 ```
 
-They are emitted unconditionally on every run from
-`ensure-rust-toolchain.ts`. If those lines do not show the targets you
-expect, the bug is in your toolchain file or `toolchain-file` input, not
-in `rustup` or `cargo` — fix the spec first.
-
+If preparation or a build fails, retain these outputs and the preceding Soldr
+diagnostics. They identify the canonical target, selected platform/toolchain,
+environment, cache identity, and supported operations without duplicating a
+target-to-toolchain table in setup-soldr.
 ## GitHub API Authentication
 
 `setup-soldr` calls the GitHub Releases API to resolve the requested
