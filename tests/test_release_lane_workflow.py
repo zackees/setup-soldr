@@ -77,6 +77,12 @@ def test_release_lane_uses_soldr_capabilities_and_safe_release_arguments() -> No
     assert setup["uses"] == "zackees/setup-soldr@v0"
     assert setup["with"]["cross-targets"] == "${{ inputs.target }}"
     assert setup["with"]["cache"] == "${{ inputs.cache }}"
+    assert setup["with"]["build-cache"] == "${{ inputs.cache }}"
+    assert setup["with"]["target-cache"] is False
+    assert setup["with"]["cargo-registry-cache"] is False
+    assert setup["with"]["solo-toolchain-cache"] == "${{ inputs.cache }}"
+    assert setup["with"]["soldr-mini-cache"] == "${{ inputs.cache }}"
+    assert setup["with"]["prebuild-deps"] == "none"
     assert "cross-tool" not in setup["with"]
 
     source = _step(job, "Resolve reusable workflow source")

@@ -56,6 +56,15 @@ jobs:
           assert metadata["cache_contract"]["managed_save_enabled"] is False
           assert metadata["cache_contract"]["build_runtime_mode"] == "off"
           assert metadata["cache_contract"]["target_cache_mode"] == "off"
+          assert metadata["cache_contract"]["explicit_disabled_layers"] == [
+              "setup",
+              "build",
+              "target",
+              "cargo-registry",
+              "solo-toolchain",
+              "soldr-mini",
+              "prebuild",
+          ]
           assert metadata["arguments"] == [
               "build",
               "--target",

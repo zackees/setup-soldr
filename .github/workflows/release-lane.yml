@@ -126,6 +126,12 @@ jobs:
         with:
           cross-targets: ${{ inputs.target }}
           cache: ${{ inputs.cache }}
+          build-cache: ${{ inputs.cache }}
+          target-cache: false
+          cargo-registry-cache: false
+          solo-toolchain-cache: ${{ inputs.cache }}
+          soldr-mini-cache: ${{ inputs.cache }}
+          prebuild-deps: none
 
       - name: Assert build capability
         shell: bash
@@ -168,6 +174,15 @@ jobs:
           contract = {
               "managed_restore_enabled": enabled,
               "managed_save_enabled": enabled,
+              "explicit_disabled_layers": [] if enabled else [
+                  "setup",
+                  "build",
+                  "target",
+                  "cargo-registry",
+                  "solo-toolchain",
+                  "soldr-mini",
+                  "prebuild",
+              ],
               "setup_restore_status": os.environ["SETUP_RESTORE_STATUS"],
               "build_restore_status": os.environ["BUILD_RESTORE_STATUS"],
               "target_restore_status": os.environ["TARGET_RESTORE_STATUS"],
