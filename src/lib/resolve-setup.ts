@@ -1049,8 +1049,8 @@ export async function resolveSetup(
       );
     } else {
       setEnv("SOLDR_LINKER", "fast");
-      logger.warning(
-        "setup-soldr: defaulting SOLDR_LINKER=fast (mold-if-on-PATH-else-rust-lld on Linux, rust-lld on macOS/Windows) for faster CI links. Soldr's native default is no injection, which produces a smaller build-cache and a slower link. Set `linker: platform-default` to opt out and keep cargo/rust-toolchain.toml in charge, or set `linker: <value>` to silence this warning.",
+      logger.notice(
+        "setup-soldr: defaulting SOLDR_LINKER=fast (mold-if-on-PATH-else-rust-lld on Linux, rust-lld on macOS/Windows) for faster CI links. Soldr's native default is no injection, which produces a smaller build-cache and a slower link. Set `linker: platform-default` to opt out and keep cargo/rust-toolchain.toml in charge, or set `linker: <value>` to silence this notice.",
       );
     }
   } else if (!(ALLOWED_LINKER_VALUES as readonly string[]).includes(linkerRaw)) {

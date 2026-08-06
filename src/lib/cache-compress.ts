@@ -764,8 +764,10 @@ export async function compressCache(opts: {
    * them with no decompressCache changes required.
    */
   extraBasenames?: string[];
-  /** Cache payload warning threshold in uncompressed bytes. null/undefined disables warnings. */
+  /** Cache payload notice threshold in uncompressed bytes. null/undefined disables notices. */
   payloadWarnBytes?: number | null;
+  /** Emitter for soft payload diagnostics; defaults to a GitHub notice. */
+  notice?: (message: string) => void;
   /** Cache payload hard limit in uncompressed bytes. null/undefined disables the hard limit. */
   payloadMaxBytes?: number | null;
   /** Behavior when payloadMaxBytes is exceeded. Defaults to "skip". */
@@ -806,6 +808,7 @@ export async function compressCache(opts: {
     ultra,
     extraBasenames = [],
     payloadWarnBytes = null,
+    notice = (message: string): void => core.notice(message),
     payloadMaxBytes = null,
     payloadOversizeAction = "skip",
     payloadTopN,
@@ -889,7 +892,7 @@ export async function compressCache(opts: {
       .slice(0, 5)
       .map((entry) => `${entry.path} (${fmtBytesDebug(entry.bytes)})`)
       .join(", ");
-    core.warning(
+    notice(
       `setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression ` +
         `(>${fmtBytesDebug(payloadWarnBytes)}). Largest files: ${largest || "none"}`,
     );

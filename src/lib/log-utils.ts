@@ -97,6 +97,9 @@ export function createLogger(env: Record<string, string | undefined> = process.e
       process.stdout.write(`${msg}\n`);
       if (fileLog) fileLog(msg);
     },
+    notice(msg: string): void {
+      core.notice(msg);
+    },
     warning(msg: string): void {
       core.warning(msg);
     },

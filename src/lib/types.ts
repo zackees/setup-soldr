@@ -360,6 +360,7 @@ export interface PhaseDuration {
  */
 export interface Logger {
   info(msg: string): void;
+  notice(msg: string): void;
   warning(msg: string): void;
   error(msg: string): void;
   debug(msg: string): void;

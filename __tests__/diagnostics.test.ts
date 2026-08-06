@@ -10,6 +10,7 @@ function captureLogger(): { logger: Logger; lines: string[] } {
   const noop = (): void => undefined;
   const logger: Logger = {
     info: (msg) => lines.push(msg),
+    notice: noop,
     warning: noop,
     error: noop,
     debug: noop,

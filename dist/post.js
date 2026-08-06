@@ -45318,7 +45318,7 @@ async function decompressInner(opts) {
  * When debug=true, walks the source dir for byte/file counts and logs ratios.
  */
 async function compressCache(opts) {
-    const { cacheDir, codec, level, debug = false, log = () => undefined, longWindow, ultra, extraBasenames = [], payloadWarnBytes = null, payloadMaxBytes = null, payloadOversizeAction = "skip", payloadTopN, payloadProfile = "generic", label, } = opts;
+    const { cacheDir, codec, level, debug = false, log = () => undefined, longWindow, ultra, extraBasenames = [], payloadWarnBytes = null, notice = (message) => core.notice(message), payloadMaxBytes = null, payloadOversizeAction = "skip", payloadTopN, payloadProfile = "generic", label, } = opts;
     const encryption = resolveCacheEncryption({
         explicit: opts.encryption,
         cacheKey: opts.cacheKey,
@@ -45386,7 +45386,7 @@ async function compressCache(opts) {
             .slice(0, 5)
             .map((entry) => `${entry.path} (${fmtBytesDebug(entry.bytes)})`)
             .join(", ");
-        core.warning(`setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression ` +
+        notice(`setup-soldr: ${displayLabel} cache payload is ${fmtBytesDebug(payload.bytes)} before compression ` +
             `(>${fmtBytesDebug(payloadWarnBytes)}). Largest files: ${largest || "none"}`);
     }
     if (payloadMaxBytes !== null && payloadMaxBytes > 0 && payload.bytes > payloadMaxBytes) {
@@ -46681,7 +46681,7 @@ function detectCookReuseMismatch(input) {
                 `different-toolchain compile; rely on the build-cache layer there, or set ` +
                 `prebuild-deps: none to skip the unused cook.`;
     }
-    return { mismatch: true, message: lead + cause };
+    return { mismatch: true, message: lead + cause, annotationLevel: "notice" };
 }
 /** Parse the `verify-compile-cache` input into a mode. */
 function parseVerifyCompileCacheMode(value) {
@@ -47246,6 +47246,7 @@ const exec = __importStar(__nccwpck_require__(95236));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
 const log_utils_js_1 = __nccwpck_require__(28129);
+const two_phase_actions_cache_js_1 = __nccwpck_require__(27190);
 function layeredCookBaseReady(restore, loaded) {
     return restore.base.hit && loaded.baseLoaded;
 }
@@ -47682,6 +47683,62 @@ async function loadLayeredCookCache(opts) {
  */
 async function saveCookCache(opts) {
     const { targetDir, exactKey, level, longWindow, debug, log } = opts;
+    if (!fs.existsSync(targetDir))
+        return { status: "skipped-missing-target" };
+    try {
+        if ((await fsp.readdir(targetDir)).length === 0)
+            return { status: "skipped-empty" };
+    }
+    catch {
+        return { status: "skipped-missing-target" };
+    }
+    const archivePath = `${targetDir}.tar.zst`;
+    const reserveStart = Date.now();
+    const result = await (0, two_phase_actions_cache_js_1.saveReservedCache)({
+        paths: [archivePath],
+        key: exactKey,
+        log,
+        produce: async () => {
+            const compressStart = Date.now();
+            const compressed = await (0, cache_compress_js_1.compressCache)({
+                cacheDir: targetDir,
+                codec: "zstd",
+                level,
+                longWindow,
+                debug,
+                log,
+                cacheKey: exactKey,
+            });
+            if (!compressed.archivePath)
+                throw new Error("compressCache returned null archive (zstd unavailable?)");
+            return {
+                archivePath: compressed.archivePath,
+                archiveBytes: compressed.archiveBytes,
+                inflatedBytes: compressed.inflatedBytes ?? undefined,
+                fileCount: compressed.fileCount ?? undefined,
+                compressMs: Date.now() - compressStart,
+            };
+        },
+    });
+    const reserveMs = Date.now() - reserveStart;
+    if ((0, two_phase_actions_cache_js_1.isReservationConflict)(result))
+        return { status: "skipped-race-precheck", reserveMs };
+    if (result.status === "failed")
+        return { status: "failed", error: result.error, reserveMs };
+    const archive = result.archive;
+    return {
+        status: "saved",
+        cacheId: result.cacheId,
+        archiveBytes: archive.archiveBytes,
+        inflatedBytes: archive.inflatedBytes,
+        fileCount: archive.fileCount,
+        archivePath: archive.archivePath,
+        compressMs: archive.compressMs,
+        reserveMs,
+    };
+}
+async function saveCookCacheLegacy(opts) {
+    const { targetDir, exactKey, level, longWindow, debug, log } = opts;
     if (!fs.existsSync(targetDir)) {
         return { status: "skipped-missing-target" };
     }
@@ -47828,6 +47885,64 @@ function saveReport(payload) {
     };
 }
 async function saveLayeredCookCache(opts) {
+    const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
+    if (!fs.existsSync(targetDir))
+        return { status: "skipped-missing-target" };
+    try {
+        if ((await fsp.readdir(targetDir)).length === 0)
+            return { status: "skipped-empty" };
+    }
+    catch {
+        return { status: "skipped-missing-target" };
+    }
+    if (layer === "delta" && (!opts.baseManifestPath || !fs.existsSync(opts.baseManifestPath))) {
+        return { status: "skipped-missing-manifest" };
+    }
+    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
+    await fsp.rm(archivePath, { force: true });
+    const args = ["save", "--cache-dir", targetDir, "--workspace", projectRoot, "--out", archivePath, "--zstd-level", zstdLevel, "--json"];
+    if (layer === "delta")
+        args.push("--delta-from-manifest", opts.baseManifestPath);
+    const reserveStart = Date.now();
+    const result = await (0, two_phase_actions_cache_js_1.saveReservedCache)({
+        paths: [archivePath],
+        key: exactKey,
+        log,
+        produce: async () => {
+            const compressStart = Date.now();
+            const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
+            if (run.code !== 0)
+                throw new Error(`soldr save ${layer} exited ${run.code}`);
+            const report = saveReport(run.payload);
+            return {
+                archivePath,
+                archiveBytes: report.archiveBytes ?? await archiveSize(archivePath),
+                fileCount: report.cacheFiles ?? undefined,
+                sourceFiles: report.sourceFiles ?? undefined,
+                deletedCacheFiles: report.deletedCacheFiles ?? undefined,
+                compressMs: Date.now() - compressStart,
+            };
+        },
+    });
+    const reserveMs = Date.now() - reserveStart;
+    if ((0, two_phase_actions_cache_js_1.isReservationConflict)(result))
+        return { status: "skipped-race-precheck", archivePath, reserveMs };
+    if (result.status === "failed")
+        return { status: "failed", archivePath, error: result.error, reserveMs };
+    const archive = result.archive;
+    return {
+        status: "saved",
+        cacheId: result.cacheId,
+        archiveBytes: archive.archiveBytes,
+        fileCount: archive.fileCount,
+        sourceFiles: archive.sourceFiles,
+        deletedCacheFiles: archive.deletedCacheFiles,
+        archivePath,
+        compressMs: archive.compressMs,
+        reserveMs,
+    };
+}
+async function saveLayeredCookCacheLegacy(opts) {
     const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
     if (!fs.existsSync(targetDir)) {
         return { status: "skipped-missing-target" };
@@ -48519,6 +48634,9 @@ function createLogger(env = process.env) {
             process.stdout.write(`${msg}\n`);
             if (fileLog)
                 fileLog(msg);
+        },
+        notice(msg) {
+            core.notice(msg);
         },
         warning(msg) {
             core.warning(msg);
@@ -50832,6 +50950,148 @@ exports.StatsCollector = StatsCollector;
 
 /***/ }),
 
+/***/ 27190:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.saveReservedCache = saveReservedCache;
+exports.isReservationConflict = isReservationConflict;
+const fsp = __importStar(__nccwpck_require__(51455));
+const config_js_1 = __nccwpck_require__(17606);
+const cacheHttpClient = __importStar(__nccwpck_require__(73171));
+const cacheUtils = __importStar(__nccwpck_require__(98299));
+const twirp = __importStar(__nccwpck_require__(96819));
+function log(options, message) {
+    options.log?.(`two-phase-cache: ${message}`);
+}
+async function reserve(options) {
+    const compressionMethod = await cacheUtils.getCompressionMethod();
+    const enableCrossOsArchive = options.enableCrossOsArchive ?? false;
+    if ((0, config_js_1.getCacheServiceVersion)() === "v2") {
+        const version = cacheUtils.getCacheVersion(options.paths, compressionMethod, enableCrossOsArchive);
+        const response = await twirp.internalCacheTwirpClient().CreateCacheEntry({
+            key: options.key,
+            version,
+        });
+        if (!response.ok || !response.signedUploadUrl)
+            return null;
+        return {
+            service: "v2",
+            compressionMethod,
+            version,
+            signedUploadUrl: response.signedUploadUrl,
+        };
+    }
+    const response = await cacheHttpClient.reserveCache(options.key, options.paths, {
+        compressionMethod,
+        enableCrossOsArchive,
+    });
+    const cacheId = response.result?.cacheId;
+    if (typeof cacheId !== "number")
+        return null;
+    return { service: "v1", compressionMethod, cacheId };
+}
+/**
+ * Reserve an exact Actions cache key before producing the archive. The
+ * producer is never called after a reservation conflict, which is the key
+ * property missing from the public saveCache convenience API.
+ */
+async function saveReservedCache(options) {
+    let reservation;
+    try {
+        reservation = options.reserve ? await options.reserve() : await reserve(options);
+    }
+    catch (error) {
+        log(options, `reservation failed: ${error instanceof Error ? error.message : String(error)}`);
+        return { status: "skipped-reservation" };
+    }
+    if (!reservation) {
+        log(options, `reservation conflict for key=${options.key}`);
+        return { status: "skipped-reservation" };
+    }
+    let archive;
+    try {
+        archive = await options.produce();
+    }
+    catch (error) {
+        log(options, `archive production failed: ${error instanceof Error ? error.message : String(error)}`);
+        return { status: "failed", error: error instanceof Error ? error.message : String(error) };
+    }
+    try {
+        if (options.upload) {
+            const cacheId = await options.upload(reservation, archive);
+            return { status: "saved", cacheId, archive };
+        }
+        if (reservation.service === "v1") {
+            await cacheHttpClient.saveCache(reservation.cacheId, archive.archivePath, "", {
+                archiveSizeBytes: archive.archiveBytes,
+            });
+            return { status: "saved", cacheId: reservation.cacheId, archive };
+        }
+        await cacheHttpClient.saveCache(-1, archive.archivePath, reservation.signedUploadUrl, {
+            archiveSizeBytes: archive.archiveBytes,
+            uploadChunkSize: 64 * 1024 * 1024,
+            uploadConcurrency: 8,
+            useAzureSdk: true,
+        });
+        const finalized = await twirp.internalCacheTwirpClient().FinalizeCacheEntryUpload({
+            key: options.key,
+            version: reservation.version,
+            sizeBytes: `${archive.archiveBytes}`,
+        });
+        if (!finalized.ok)
+            throw new Error(finalized.message || "cache finalization failed");
+        return { status: "saved", cacheId: Number.parseInt(finalized.entryId, 10), archive };
+    }
+    catch (error) {
+        return { status: "failed", error: error instanceof Error ? error.message : String(error), archive };
+    }
+    finally {
+        await fsp.rm(archive.archivePath, { force: true }).catch(() => undefined);
+    }
+}
+function isReservationConflict(result) {
+    return result.status === "skipped-reservation";
+}
+
+
+/***/ }),
+
 /***/ 86661:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -52790,7 +53050,7 @@ async function run() {
     writeStepSummary(formatFinalCacheSummaryMarkdown(finalSummary, compileCacheStats), log);
     // Job-wide compile-cache hit/miss counts, read post-hoc from the
     // multi-session rollup (preferred) or the last-session report. Shared by
-    // the cook reuse-mismatch warning (#235) and the zero-count guard (#227).
+    // the cook reuse-mismatch notice (#235) and the zero-count guard (#227).
     let jobHits = null;
     let jobMisses = null;
     {
@@ -52808,7 +53068,7 @@ async function run() {
             }
         }
     }
-    // Cook reuse-mismatch warning (issue #235). Post-hoc only: setup-soldr
+    // Cook reuse-mismatch notice (issue #235). Post-hoc only: setup-soldr
     // can't know the consumer's downstream cargo profile/toolchain at cook
     // time, so the "cook ran but nothing reused it" fingerprint is only
     // observable here, after the job's compiles have been recorded.
@@ -52821,7 +53081,7 @@ async function run() {
             cookFlags: rawInputs.prebuildDepsFlags,
         });
         if (cookSignal.mismatch)
-            core.warning(cookSignal.message);
+            core.notice(cookSignal.message);
     }
     // Compile-cache activity verification (issue #227). Opt-in via
     // verify-compile-cache. When a job that is expected to exercise zccache

@@ -1081,7 +1081,7 @@ interface CookMismatchModule {
     hits: number | null;
     misses: number | null;
     cookFlags: string;
-  }) => { mismatch: boolean; message: string };
+  }) => { mismatch: boolean; message: string; annotationLevel?: "notice" };
   cookFlagsRequestRelease: (flags: string) => boolean;
 }
 
@@ -1111,6 +1111,7 @@ test("#235 detectCookReuseMismatch: release cook + zero reuse fires with debug-p
     cookFlags: "--release",
   });
   assert.equal(r.mismatch, true);
+  assert.equal(r.annotationLevel, "notice");
   assert.match(r.message, /35 miss/);
   assert.match(r.message, /prebuild-deps-flags: ""/);
   assert.match(r.message, /release profile/);

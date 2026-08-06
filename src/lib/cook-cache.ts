@@ -22,6 +22,7 @@ import * as exec from "@actions/exec";
 import * as cache from "@actions/cache";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
 import { formatLogLine } from "./log-utils.js";
+import { isReservationConflict, saveReservedCache } from "./two-phase-actions-cache.js";
 
 export interface CookCacheKeyParts {
   runnerOs: string;
@@ -184,6 +185,7 @@ export interface CookSaveResult {
    */
   compressMs?: number;
   uploadMs?: number;
+  reserveMs?: number;
   error?: string;
 }
 
@@ -677,6 +679,57 @@ export async function loadLayeredCookCache(
  */
 export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult> {
   const { targetDir, exactKey, level, longWindow, debug, log } = opts;
+  if (!fs.existsSync(targetDir)) return { status: "skipped-missing-target" };
+  try {
+    if ((await fsp.readdir(targetDir)).length === 0) return { status: "skipped-empty" };
+  } catch {
+    return { status: "skipped-missing-target" };
+  }
+  const archivePath = `${targetDir}.tar.zst`;
+  const reserveStart = Date.now();
+  const result = await saveReservedCache({
+    paths: [archivePath],
+    key: exactKey,
+    log,
+    produce: async () => {
+      const compressStart = Date.now();
+      const compressed = await compressCache({
+        cacheDir: targetDir,
+        codec: "zstd",
+        level,
+        longWindow,
+        debug,
+        log,
+        cacheKey: exactKey,
+      });
+      if (!compressed.archivePath) throw new Error("compressCache returned null archive (zstd unavailable?)");
+      return {
+        archivePath: compressed.archivePath,
+        archiveBytes: compressed.archiveBytes,
+        inflatedBytes: compressed.inflatedBytes ?? undefined,
+        fileCount: compressed.fileCount ?? undefined,
+        compressMs: Date.now() - compressStart,
+      };
+    },
+  });
+  const reserveMs = Date.now() - reserveStart;
+  if (isReservationConflict(result)) return { status: "skipped-race-precheck", reserveMs };
+  if (result.status === "failed") return { status: "failed", error: result.error, reserveMs };
+  const archive = result.archive!;
+  return {
+    status: "saved",
+    cacheId: result.cacheId,
+    archiveBytes: archive.archiveBytes,
+    inflatedBytes: archive.inflatedBytes,
+    fileCount: archive.fileCount,
+    archivePath: archive.archivePath,
+    compressMs: archive.compressMs,
+    reserveMs,
+  };
+}
+
+async function saveCookCacheLegacy(opts: CookSaveOpts): Promise<CookSaveResult> {
+  const { targetDir, exactKey, level, longWindow, debug, log } = opts;
   if (!fs.existsSync(targetDir)) {
     return { status: "skipped-missing-target" };
   }
@@ -837,6 +890,58 @@ function saveReport(payload: Record<string, unknown> | null): {
 }
 
 export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<CookSaveResult> {
+  const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
+  if (!fs.existsSync(targetDir)) return { status: "skipped-missing-target" };
+  try {
+    if ((await fsp.readdir(targetDir)).length === 0) return { status: "skipped-empty" };
+  } catch {
+    return { status: "skipped-missing-target" };
+  }
+  if (layer === "delta" && (!opts.baseManifestPath || !fs.existsSync(opts.baseManifestPath))) {
+    return { status: "skipped-missing-manifest" };
+  }
+  await fsp.mkdir(path.dirname(archivePath), { recursive: true });
+  await fsp.rm(archivePath, { force: true });
+  const args = ["save", "--cache-dir", targetDir, "--workspace", projectRoot, "--out", archivePath, "--zstd-level", zstdLevel, "--json"];
+  if (layer === "delta") args.push("--delta-from-manifest", opts.baseManifestPath as string);
+  const reserveStart = Date.now();
+  const result = await saveReservedCache({
+    paths: [archivePath],
+    key: exactKey,
+    log,
+    produce: async () => {
+      const compressStart = Date.now();
+      const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
+      if (run.code !== 0) throw new Error(`soldr save ${layer} exited ${run.code}`);
+      const report = saveReport(run.payload);
+      return {
+        archivePath,
+        archiveBytes: report.archiveBytes ?? await archiveSize(archivePath),
+        fileCount: report.cacheFiles ?? undefined,
+        sourceFiles: report.sourceFiles ?? undefined,
+        deletedCacheFiles: report.deletedCacheFiles ?? undefined,
+        compressMs: Date.now() - compressStart,
+      };
+    },
+  });
+  const reserveMs = Date.now() - reserveStart;
+  if (isReservationConflict(result)) return { status: "skipped-race-precheck", archivePath, reserveMs };
+  if (result.status === "failed") return { status: "failed", archivePath, error: result.error, reserveMs };
+  const archive = result.archive!;
+  return {
+    status: "saved",
+    cacheId: result.cacheId,
+    archiveBytes: archive.archiveBytes,
+    fileCount: archive.fileCount,
+    sourceFiles: archive.sourceFiles,
+    deletedCacheFiles: archive.deletedCacheFiles,
+    archivePath,
+    compressMs: archive.compressMs,
+    reserveMs,
+  };
+}
+
+async function saveLayeredCookCacheLegacy(opts: CookLayeredSaveOpts): Promise<CookSaveResult> {
   const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
   if (!fs.existsSync(targetDir)) {
     return { status: "skipped-missing-target" };
