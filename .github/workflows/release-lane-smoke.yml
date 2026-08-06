@@ -1,0 +1,108 @@
+name: Soldr release lane smoke
+
+on:
+  pull_request:
+    paths:
+      - action.yml
+      - src/**
+      - dist/**
+      - scripts/write-release-metadata.mjs
+      - scripts/resolve-release-artifacts.py
+      - tests/test_release_lane_workflow.py
+      - tests/fixtures/release-lane/**
+      - .github/workflows/release-lane.yml
+      - .github/workflows/release-lane-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-musl:
+    uses: ./.github/workflows/release-lane.yml
+    with:
+      target: x86_64-unknown-linux-musl
+      working-directory: tests/fixtures/release-lane
+      cache: false
+      artifact-name: release-lane-smoke
+      artifact-paths: target/x86_64-unknown-linux-musl/release/release-lane-smoke
+
+  verify-musl:
+    needs: build-musl
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download exact release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-musl.outputs.artifact-name }}
+
+      - name: Validate metadata and execute release
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_TARGET: x86_64-unknown-linux-musl
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          metadata = json.loads(Path("release-metadata/release-metadata.json").read_text(encoding="utf-8"))
+          assert metadata["commit_sha"] == os.environ["EXPECTED_SHA"]
+          assert metadata["target"] == os.environ["EXPECTED_TARGET"]
+          assert metadata["cache_enabled"] is False
+          assert metadata["cache_contract"]["managed_restore_enabled"] is False
+          assert metadata["cache_contract"]["managed_save_enabled"] is False
+          assert metadata["cache_contract"]["build_runtime_mode"] == "off"
+          assert metadata["cache_contract"]["target_cache_mode"] == "off"
+          assert metadata["arguments"] == [
+              "build",
+              "--target",
+              os.environ["EXPECTED_TARGET"],
+              "--release",
+              "--locked",
+          ]
+          PY
+          artifact="tests/fixtures/release-lane/target/$EXPECTED_TARGET/release/release-lane-smoke"
+          chmod +x "$artifact"
+          test "$("$artifact")" = "release lane smoke"
+
+  windows-msvc-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Windows artifact contract fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tests/fixtures/release-lane/target/x86_64-pc-windows-msvc/release
+          : > tests/fixtures/release-lane/target/x86_64-pc-windows-msvc/release/release-lane-smoke.exe
+
+      - name: Resolve Windows artifact contract
+        id: resolve
+        shell: bash
+        env:
+          WORKING_DIRECTORY: tests/fixtures/release-lane
+          ARTIFACT_PREFIX: soldr-release
+          PREPARED_TARGET: x86_64-pc-windows-msvc
+          ARTIFACT_PATHS: target/x86_64-pc-windows-msvc/release/release-lane-smoke.exe
+        run: python scripts/resolve-release-artifacts.py
+
+      - name: Assert Windows artifact contract
+        shell: bash
+        env:
+          ARTIFACT_NAME: ${{ steps.resolve.outputs.artifact-name }}
+          RESOLVED_JSON: ${{ steps.resolve.outputs.resolved-json }}
+        run: |
+          set -euo pipefail
+          test "$ARTIFACT_NAME" = "soldr-release-x86_64-pc-windows-msvc"
+          python - <<'PY'
+          import json
+          import os
+
+          assert json.loads(os.environ["RESOLVED_JSON"]) == [
+              "tests/fixtures/release-lane/target/x86_64-pc-windows-msvc/release/release-lane-smoke.exe"
+          ]
+          PY

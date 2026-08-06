@@ -188,6 +188,8 @@ def test_action_runs_as_node24_with_main_and_post_entrypoints() -> None:
 def test_action_preserves_all_original_inputs() -> None:
     manifest = _load_action()
     assert set(manifest["inputs"]) == EXPECTED_INPUTS
+    assert "release" not in manifest["inputs"]
+    assert "release-cache" not in manifest["inputs"]
 
 
 def test_action_default_soldr_version_is_current_release() -> None:
