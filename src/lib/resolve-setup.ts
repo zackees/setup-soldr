@@ -1226,7 +1226,7 @@ export async function resolveSetup(
     soldrRepo,
     soldrVersion: soldrVersionResolved || soldrVersionRequested,
   });
-  if (blessedPrepareCache.archivePath) makeDirs(path.dirname(blessedPrepareCache.archivePath));
+  for (const archivePath of blessedPrepareCache.archivePaths) makeDirs(path.dirname(archivePath));
 
   // Avoid unused warnings on alias helper.
   void rollingToolchainAlias;

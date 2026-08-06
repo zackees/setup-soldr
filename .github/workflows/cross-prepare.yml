@@ -104,6 +104,11 @@ jobs:
           if target == "universal2-apple-darwin":
               provisioned = json.loads(os.environ["SETUP_SOLDR_TOOLCHAIN_TARGETS"])
               assert sorted(provisioned) == ["aarch64-apple-darwin", "x86_64-apple-darwin"]
+              real_targets = capabilities["toolchain"]["realTargets"]
+              assert sorted(item["canonicalTarget"] for item in real_targets) == provisioned
+              assert all("build" in item["supportedOperations"] for item in real_targets)
+              assert "build" not in operations
+              assert "pep517-wheel" in operations and "pep517-sdist" in operations
 
           evidence = {
               "target": target,
@@ -111,6 +116,7 @@ jobs:
               "schema_version": capabilities["schemaVersion"],
               "cache_identity": capabilities["cacheIdentity"],
               "operations": operations,
+              "capabilities": capabilities,
               "command": None,
               "artifact_path": None,
               "artifact_type": None,

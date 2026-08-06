@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   assertTargetOperationSupported,
+  buildUniversal2TargetContract,
   buildTargetHooks,
+  buildTargetOperationOutputs,
   mergeTargetEnvironment,
   normalizeTargetPlan,
 } from "../src/lib/target-lifecycle.js";
@@ -63,6 +65,39 @@ test("requested target operations must be reported by Soldr", () => {
     () => assertTargetOperationSupported({ ...plan, supportedOperations: ["prepare"] }, "build"),
     /does not support requested operation 'build'.*reported: prepare/,
   );
+});
+
+test("universal2 publishes packaging capabilities while recording both real build plans", () => {
+  const arm = normalizeTargetPlan("aarch64-apple-darwin", {
+    rust_triple: "aarch64-apple-darwin",
+    target_plan: {
+      canonical_target: "aarch64-apple-darwin",
+      cache_identity: "apple/aarch64",
+      supported_operations: ["prepare", "build", "pep517-wheel", "pep517-sdist"],
+    },
+  });
+  const x64 = normalizeTargetPlan("x86_64-apple-darwin", {
+    rust_triple: "x86_64-apple-darwin",
+    target_plan: {
+      canonical_target: "x86_64-apple-darwin",
+      cache_identity: "apple/x86_64",
+      supported_operations: ["prepare", "build", "pep517-wheel", "pep517-sdist"],
+    },
+  });
+  const universal = buildUniversal2TargetContract([x64, arm]);
+  assert.equal(universal.canonicalTarget, "universal2-apple-darwin");
+  assert.deepEqual(universal.supportedOperations, ["prepare", "pep517-wheel", "pep517-sdist"]);
+  assert.equal(universal.supportedOperations.includes("build"), false);
+  const realTargets = universal.toolchain.realTargets as Array<{ supportedOperations: string[] }>;
+  assert.equal(realTargets.length, 2);
+  assert.ok(realTargets.every((target) => target.supportedOperations.includes("build")));
+  const outputs = buildTargetOperationOutputs("workspace", universal);
+  assert.equal(outputs.artifactDirectory, "");
+  assert.equal(outputs.build, "");
+  assert.equal(outputs.clippy, "");
+  assert.equal(outputs.testNoRun, "");
+  assert.equal(outputs.pep517Wheel, "python -m build --wheel");
+  assert.equal(outputs.pep517Sdist, "python -m build --sdist");
 });
 
 test("mergeTargetEnvironment preserves every target-scoped project flag", () => {

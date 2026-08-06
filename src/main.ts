@@ -70,13 +70,14 @@ import {
 } from "./lib/soldr-mini-cache.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { diagnoseShimBypass } from "./lib/shim-bypass-check.js";
-import { assertMinimumSoldrVersion, executeBlessedPrepare } from "./lib/blessed-cross-prepare.js";
+import { assertMinimumSoldrVersion, executeBlessedPrepare, prepareTargetsFor } from "./lib/blessed-cross-prepare.js";
 import {
+  type TargetLifecycleContract,
   assertTargetOperationSupported,
+  buildTargetOperationOutputs,
+  buildUniversal2TargetContract,
   mergeTargetEnvironment,
   normalizeTargetPlan,
-  buildTargetHooks,
-  targetArtifactDirectory,
 } from "./lib/target-lifecycle.js";
 import {
   replaySourceMtimes,
@@ -161,12 +162,11 @@ async function queryTargetPlan(
 
 function publishTargetContract(
   result: ResolveResult,
-  raw: unknown,
+  contract: TargetLifecycleContract,
   logger: { log: (message: string) => void },
 ): void {
   const target = result.blessedPrepareCache.target;
-  if (!target || !raw) return;
-  const contract = normalizeTargetPlan(target, raw);
+  if (!target) return;
   if (!contract.cacheIdentity) throw new Error(`Soldr target plan for ${target} has no cache identity`);
   assertTargetOperationSupported(contract, "prepare");
   result.targetContract = contract;
@@ -174,7 +174,7 @@ function publishTargetContract(
   for (const key of Object.keys(contract.environment)) {
     core.exportVariable(key, mergedEnvironment[key] ?? contract.environment[key]);
   }
-  const hooks = buildTargetHooks(contract.canonicalTarget);
+  const outputs = buildTargetOperationOutputs(result.workspace, contract);
   core.setOutput("target-plan-json", JSON.stringify(contract));
   core.setOutput("target-capabilities-json", JSON.stringify({
     schemaVersion: contract.schemaVersion,
@@ -186,12 +186,12 @@ function publishTargetContract(
   }));
   core.setOutput("target-env-json", JSON.stringify(contract.environment));
   core.setOutput("target-cache-identity", contract.cacheIdentity);
-  core.setOutput("target-artifact-dir", targetArtifactDirectory(result.workspace, contract.canonicalTarget));
-  core.setOutput("target-build-hook", hooks.build);
-  core.setOutput("target-clippy-hook", hooks.clippy);
-  core.setOutput("target-test-hook", hooks.testNoRun);
-  core.setOutput("target-wheel-hook", hooks.pep517Wheel);
-  core.setOutput("target-sdist-hook", hooks.pep517Sdist);
+  core.setOutput("target-artifact-dir", outputs.artifactDirectory);
+  core.setOutput("target-build-hook", outputs.build);
+  core.setOutput("target-clippy-hook", outputs.clippy);
+  core.setOutput("target-test-hook", outputs.testNoRun);
+  core.setOutput("target-wheel-hook", outputs.pep517Wheel);
+  core.setOutput("target-sdist-hook", outputs.pep517Sdist);
   core.saveState("targetPlanJson", JSON.stringify(contract));
   logger.log(`target-plan: canonical=${contract.canonicalTarget} cache=${contract.cacheIdentity} operations=${contract.supportedOperations.join(",")}`);
 }
@@ -709,7 +709,7 @@ export async function run(): Promise<void> {
     const plan = result.blessedPrepareCache;
     if (!plan.enabled) return;
     const t0 = Date.now();
-    const restore = await restoreCacheSafe([plan.archivePath], plan.key, [], logger);
+    const restore = await restoreCacheSafe(plan.archivePaths, plan.key, [], logger);
     core.saveState("blessedPrepareCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("blessedPrepareCacheMatchedKey", restore.matchedKey);
     core.setOutput("blessed-prepare-cache-hit", restore.hit ? "true" : "false");
@@ -1278,21 +1278,36 @@ export async function run(): Promise<void> {
     const installedVersion = result.soldrVersionResolved || result.soldrVersionRequested;
     assertMinimumSoldrVersion(installedVersion);
     const exactHit = core.getState("blessedPrepareCacheExactHit") === "true";
-    const archiveExists = Boolean(preparePlan.archivePath && fs.existsSync(preparePlan.archivePath));
-    logger.log(`cross-prepare: target=${preparePlan.target} cache=${preparePlan.enabled ? (exactHit ? "hit" : "miss") : "disabled"}`);
-    await executeBlessedPrepare({
-      soldrPath: result.soldrPath,
-      target: preparePlan.target,
-      githubEnv: process.env["GITHUB_ENV"],
-      archivePath: preparePlan.archivePath,
-      restore: preparePlan.enabled && exactHit && archiveExists,
-      save: preparePlan.enabled && !exactHit,
-    });
-    const targetPlan = await queryTargetPlan(result.soldrPath, preparePlan.target, (message) => logger.log(message));
-    if (!targetPlan) {
-      throw new Error(`Soldr did not report a machine-readable target plan for ${preparePlan.target}; target capability is unavailable`);
+    const prepareTargets = prepareTargetsFor(preparePlan.target);
+    const archivesExist = preparePlan.archivePaths.length === prepareTargets.length
+      && preparePlan.archivePaths.every((archivePath) => fs.existsSync(archivePath));
+    const effectiveExactHit = exactHit && archivesExist;
+    if (exactHit && !archivesExist) {
+      logger.log("cross-prepare: exact cache key restored without every prepared archive; reseeding");
+      core.saveState("blessedPrepareCacheExactHit", "false");
+      core.setOutput("blessed-prepare-cache-hit", "false");
     }
-    publishTargetContract(result, targetPlan, logger);
+    logger.log(`cross-prepare: target=${preparePlan.target} cache=${preparePlan.enabled ? (effectiveExactHit ? "hit" : "miss") : "disabled"}`);
+    const contracts: TargetLifecycleContract[] = [];
+    for (const [index, target] of prepareTargets.entries()) {
+      await executeBlessedPrepare({
+        soldrPath: result.soldrPath,
+        target,
+        githubEnv: process.env["GITHUB_ENV"],
+        archivePath: preparePlan.archivePaths[index],
+        restore: preparePlan.enabled && effectiveExactHit,
+        save: preparePlan.enabled && !effectiveExactHit,
+      });
+      const targetPlan = await queryTargetPlan(result.soldrPath, target, (message) => logger.log(message));
+      if (!targetPlan) {
+        throw new Error(`Soldr did not report a machine-readable target plan for ${target}; target capability is unavailable`);
+      }
+      contracts.push(normalizeTargetPlan(target, targetPlan));
+    }
+    const contract = preparePlan.target === "universal2-apple-darwin"
+      ? buildUniversal2TargetContract(contracts)
+      : contracts[0]!;
+    publishTargetContract(result, contract, logger);
     core.saveState("blessedPrepareComplete", "true");
   }
   await finishPhase("cross-prepare");

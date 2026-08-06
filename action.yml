@@ -743,17 +743,17 @@ outputs:
   target-cache-identity:
     description: Soldr-reported cache identity for the canonical target lane.
   target-artifact-dir:
-    description: Target directory where target-specific build artifacts are emitted.
+    description: Target directory where target-specific build artifacts are emitted, or empty when build is not advertised.
   target-build-hook:
-    description: Blessed target build command; invokes soldr build --target.
+    description: Blessed target build command when advertised; otherwise empty.
   target-clippy-hook:
-    description: Target clippy command using Soldr's Rust front door.
+    description: Target clippy command when advertised; otherwise empty.
   target-test-hook:
-    description: Target test-harness compilation command using Soldr's Rust front door.
+    description: Target test-harness compilation command when advertised; otherwise empty.
   target-wheel-hook:
-    description: PEP 517 frontend command for wheel production.
+    description: PEP 517 frontend command for wheel production when advertised; otherwise empty.
   target-sdist-hook:
-    description: PEP 517 frontend command for source distribution production.
+    description: PEP 517 frontend command for source distribution production when advertised; otherwise empty.
   cache-dir:
     description: Runner-local cache/state root used by the action.
   setup-duration-seconds:
