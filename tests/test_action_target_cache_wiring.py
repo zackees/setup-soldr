@@ -86,7 +86,6 @@ EXPECTED_INPUTS = {
     "dylint-cache-paths",
     "journal-print-raw",
     "cross-targets",
-    "cross-tool",
     "verify-compile-cache",
     "seed-isolated-build-cache",
     "build-cache-save-min-compiles",
@@ -99,6 +98,9 @@ EXPECTED_OUTPUTS = {
     "enabled",
     "soldr-path",
     "soldr-version",
+    "prepared-target",
+    "blessed-prepare-cache-key",
+    "blessed-prepare-cache-hit",
     "cache-dir",
     "setup-duration-seconds",
     "setup-phase-summary",
@@ -157,7 +159,7 @@ EXPECTED_OUTPUTS = {
     "compile-cache-verification",
 }
 
-EXPECTED_SOLDR_DEFAULT_VERSION = "0.8.30"
+EXPECTED_SOLDR_DEFAULT_VERSION = "0.8.39"
 
 
 def _load_action() -> dict:

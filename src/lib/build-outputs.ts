@@ -58,6 +58,8 @@ export function buildOutputs(result: ResolveResult): Record<string, string> {
     "shims-dir": result.shimsDir,
     "toolchain": result.toolchain.channel,
     "cache-preset-effective": result.cachePresetEffective,
+    "prepared-target": result.blessedPrepareCache.target,
+    "blessed-prepare-cache-key": result.blessedPrepareCache.key,
   };
 
   // Legacy underscored aliases retained for backwards compatibility with

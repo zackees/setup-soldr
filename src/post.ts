@@ -1901,14 +1901,16 @@ export async function run(): Promise<void> {
     }
   }
 
-  // ---- per-(host × target) cross-tool cache save (setup-soldr#106) ----
+  /* retired per-lane cache save removed; Soldr owns this state */
+  /*
+  // ---- retired per-lane cache save ----
   // Wave 2.1 of zackees/soldr#514. Save each lane whose restore missed and
   // whose `paths` actually exist on disk after executeCrossBootstrap ran.
   // Skipping exact hits avoids re-uploading identical content; skipping
   // missing paths avoids cache-API failures on unsupported lanes.
   try {
-    const lanePlansRaw = core.getState("crossToolCachePlans");
-    const restoresRaw = core.getState("crossToolCacheRestores");
+    const lanePlansRaw = core.getState("retiredLaneCachePlans");
+    const restoresRaw = core.getState("retiredLaneCacheRestores");
     if (lanePlansRaw) {
       const lanePlans = JSON.parse(lanePlansRaw) as Array<{
         host: string;
@@ -1976,6 +1978,29 @@ export async function run(): Promise<void> {
     }
   } catch (err) {
     log(`cross-tool-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  */
+  // ---- blessed Soldr prepare archive save ----
+  try {
+    const planRaw = core.getState("blessedPrepareCacheEnabled");
+    const exactHit = core.getState("blessedPrepareCacheExactHit") === "true";
+    const complete = core.getState("blessedPrepareComplete") === "true";
+    const plan = result.blessedPrepareCache;
+    if (planRaw === "true" && !exactHit && complete && plan.archivePath && fs.existsSync(plan.archivePath) && fs.statSync(plan.archivePath).size > 0) {
+      const t0 = Date.now();
+      try {
+        const id = await cache.saveCache([plan.archivePath], plan.key);
+        log(`blessed-prepare-cache: ${id > 0 ? "saved" : "save skipped"} key=${plan.key}`);
+        postCollector.record({ label: "blessed-prepare-cache", operation: "save", hit: false, key: plan.key, matchedKey: "", restoreKeys: [], archiveBytes: null, inflatedBytes: null, fileCount: null, durationMs: Date.now() - t0, timestamp: new Date().toISOString() });
+      } catch (err) {
+        log(`blessed-prepare-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    } else if (planRaw === "true") {
+      log("blessed-prepare-cache: save skipped (exact hit, incomplete, missing, or empty archive)");
+    }
+  } catch (err) {
+    log(`blessed-prepare-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   // ---- Dylint tool/driver cache save (setup-soldr#221) ----

@@ -126,6 +126,7 @@ export async function verifySoldr(opts: {
   soldrPath: string;
   buildCacheMode: string;
   requireRustPlan: boolean;
+  minimumVersion?: string;
 }): Promise<VerifyResult> {
   const logger = createLogger(process.env);
   const log = (msg: string): void => logger.log(msg);
@@ -140,6 +141,13 @@ export async function verifySoldr(opts: {
   const soldrVersion = String(payload["soldr_version"] ?? "");
   if (!soldrVersion) {
     throw new Error("soldr version --json missing soldr_version field");
+  }
+  if (opts.minimumVersion) {
+    const parsed = versionTuple(soldrVersion);
+    const required = versionTuple(opts.minimumVersion);
+    if (!parsed || !required || parsed.major < required.major || (parsed.major === required.major && (parsed.minor < required.minor || (parsed.minor === required.minor && parsed.patch < required.patch)))) {
+      throw new Error(`cross-targets requires soldr ${opts.minimumVersion} or newer; installed ${soldrVersion}`);
+    }
   }
 
   if (requireRustPlan) {

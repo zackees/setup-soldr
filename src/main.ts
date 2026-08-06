@@ -70,12 +70,7 @@ import {
 } from "./lib/soldr-mini-cache.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { diagnoseShimBypass } from "./lib/shim-bypass-check.js";
-import {
-  executeCrossBootstrap,
-  parseCrossTargets,
-  parseCrossTool,
-  planCrossBootstrap,
-} from "./lib/cross-bootstrap.js";
+import { assertMinimumSoldrVersion, executeBlessedPrepare } from "./lib/blessed-cross-prepare.js";
 import {
   replaySourceMtimes,
   readSnapshotFile,
@@ -301,14 +296,6 @@ export async function run(): Promise<void> {
   await markPhase("resolve");
   const inputs = readRawInputs(process.env);
   const result = await resolveSetup(ctx, inputs);
-  // Cross targets are provisioned by the cross-bootstrap phase, but they
-  // must participate in the earlier solo-cache key and post-restore probe.
-  // Otherwise a target added after setup can remain invisible to validation
-  // and a corrupt rust-std component is accepted as a cache hit.
-  const declaredCrossTargets = parseCrossTargets(inputs.crossTargets);
-  if (declaredCrossTargets.length > 0) {
-    result.toolchain.targets = [...new Set([...result.toolchain.targets, ...declaredCrossTargets])];
-  }
   await applyResolveResult(result);
   await finishPhase("resolve");
 
@@ -373,6 +360,10 @@ export async function run(): Promise<void> {
   core.saveState("dylintOutputCacheEnabled", result.dylintCache.outputCacheEnabled ? "true" : "false");
   core.saveState("dylintOutputCacheExactHit", "false");
   core.saveState("dylintOutputCacheMatchedKey", "");
+  core.saveState("blessedPrepareCacheEnabled", result.blessedPrepareCache.enabled ? "true" : "false");
+  core.saveState("blessedPrepareCacheExactHit", "false");
+  core.saveState("blessedPrepareCacheMatchedKey", "");
+  core.saveState("blessedPrepareComplete", "false");
 
   // ---- parallel restores ----
   // setup-cache, target-cache, build-cache, and cargo-registry write to
@@ -647,6 +638,23 @@ export async function run(): Promise<void> {
     });
   })();
 
+  const blessedPrepareRestorePromise = (async (): Promise<void> => {
+    const plan = result.blessedPrepareCache;
+    if (!plan.enabled) return;
+    const t0 = Date.now();
+    const restore = await restoreCacheSafe([plan.archivePath], plan.key, [], logger);
+    core.saveState("blessedPrepareCacheExactHit", restore.hit ? "true" : "false");
+    core.saveState("blessedPrepareCacheMatchedKey", restore.matchedKey);
+    core.setOutput("blessed-prepare-cache-hit", restore.hit ? "true" : "false");
+    core.setOutput("blessed-prepare-cache-key", plan.key);
+    statsCollector.record({
+      label: "blessed-prepare-cache", operation: "restore", hit: restore.hit,
+      key: plan.key, matchedKey: restore.matchedKey, restoreKeys: [],
+      archiveBytes: null, inflatedBytes: null, fileCount: null,
+      durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
+    });
+  })();
+
   const dylintRestorePromise = (async (): Promise<void> => {
     if (!result.dylintCache.enabled) return;
     const t0 = Date.now();
@@ -726,6 +734,7 @@ export async function run(): Promise<void> {
     targetRestorePromise,
     buildRestorePromise,
     cargoRegistryRestorePromise,
+    blessedPrepareRestorePromise,
     dylintRestorePromise,
     dylintOutputRestorePromise,
   ]);
@@ -1184,6 +1193,7 @@ export async function run(): Promise<void> {
       soldrPath: result.soldrPath,
       buildCacheMode: result.buildCache.mode,
       requireRustPlan: result.targetCache.enabled,
+      minimumVersion: result.blessedPrepareCache.target ? "0.8.39" : undefined,
     });
     core.setOutput("soldr-version", verify.soldrVersion);
     core.setOutput("soldr_version", verify.soldrVersion);
@@ -1193,6 +1203,8 @@ export async function run(): Promise<void> {
   }
   await finishPhase("verify");
 
+  /* retired legacy block removed by blessed prepare */
+  /*
   // ---- cross-bootstrap (issue #104 MVP) ----
   // After the Rust toolchain and the soldr binary are both available, but
   // before the user's own steps run, auto-install cross-compile tooling
@@ -1202,13 +1214,13 @@ export async function run(): Promise<void> {
   // explicitly asked for these targets, so a silent skip would be more
   // surprising than a hard failure.
   await markPhase("cross-bootstrap");
-  const crossTargets = parseCrossTargets(inputs.crossTargets);
+  const crossTargets = [];
   // Track per-lane cache restore outcomes so post.ts knows which lanes to
   // save (only the ones that missed; saving on an exact hit is wasted I/O).
   // setup-soldr#106 / Wave 2.1 of zackees/soldr#514.
   const crossToolCacheRestores: Record<string, { hit: boolean; matchedKey: string }> = {};
   if (crossTargets.length > 0) {
-    const tool = parseCrossTool(inputs.crossTool);
+    const tool = "retired";
     const host = ctx.runnerOs.toLowerCase() || process.platform;
     logger.log(
       `cross-bootstrap: host=${host} tool=${tool} targets=${crossTargets.join(",")}`,
@@ -1218,7 +1230,7 @@ export async function run(): Promise<void> {
     // crossToolCacheKeyFor in cache-keys.ts). Restore is best-effort: a
     // miss just means we'll run the normal install path below. Restores
     // run in parallel — there are no inter-lane dependencies.
-    if (result.crossToolCaches.length > 0) {
+    if (false) {
       await Promise.all(
         result.crossToolCaches.map(async (lane) => {
           if (lane.paths.length === 0) {
@@ -1259,7 +1271,7 @@ export async function run(): Promise<void> {
         }),
       );
     }
-    const plan = planCrossBootstrap({ host, targets: crossTargets, tool });
+    const plan = { warnings: [], actions: [] };
     for (const w of plan.warnings) core.warning(w);
     if (plan.actions.length > 0) {
       // When every lane hit the per-lane tool cache, the install plan is
@@ -1278,7 +1290,7 @@ export async function run(): Promise<void> {
           "cross-bootstrap: all per-lane tool caches hit — skipping install plan",
         );
       } else {
-        await executeCrossBootstrap(plan, {
+        await Promise.resolve({
           log: (msg) => logger.log(msg),
           soldrBinary: result.soldrPath,
         });
@@ -1299,6 +1311,28 @@ export async function run(): Promise<void> {
     JSON.stringify(crossToolCacheRestores),
   );
   await finishPhase("cross-bootstrap");
+  */
+  // ---- cross-prepare ----
+  await markPhase("cross-prepare");
+  const preparePlan = result.blessedPrepareCache;
+  if (preparePlan.target) {
+    if (!result.enabled) throw new Error("cross-targets requires enable: true");
+    const installedVersion = result.soldrVersionResolved || result.soldrVersionRequested;
+    assertMinimumSoldrVersion(installedVersion);
+    const exactHit = core.getState("blessedPrepareCacheExactHit") === "true";
+    const archiveExists = Boolean(preparePlan.archivePath && fs.existsSync(preparePlan.archivePath));
+    logger.log(`cross-prepare: target=${preparePlan.target} cache=${preparePlan.enabled ? (exactHit ? "hit" : "miss") : "disabled"}`);
+    await executeBlessedPrepare({
+      soldrPath: result.soldrPath,
+      target: preparePlan.target,
+      githubEnv: process.env["GITHUB_ENV"],
+      archivePath: preparePlan.archivePath,
+      restore: preparePlan.enabled && exactHit && archiveExists,
+      save: preparePlan.enabled && !exactHit,
+    });
+    core.saveState("blessedPrepareComplete", "true");
+  }
+  await finishPhase("cross-prepare");
 
   // ---- cook (prebuild-deps via soldr-cook) ----
   // The RESTORE was kicked off as a background promise right after the
@@ -1518,7 +1552,7 @@ export async function run(): Promise<void> {
     "install",
     "zccache-seed",
     "verify",
-    "cross-bootstrap",
+    "cross-prepare",
     "cook",
   ]);
   if (setupPhaseSummary) core.info(setupPhaseSummary);

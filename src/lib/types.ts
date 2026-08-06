@@ -136,7 +136,6 @@ export interface RawInputs {
   dylintCachePaths: string;
   journalPrintRaw: string;
   crossTargets: string;
-  crossTool: string;
   verifyCompileCache: string;
   seedIsolatedBuildCache: string;
   buildCacheSaveMinCompiles: string;
@@ -228,36 +227,6 @@ export interface CargoRegistryCachePlan {
 }
 
 /**
- * Per-(host × target) cross-compile tool cache plan. Wave 2.1 of
- * zackees/soldr#514, setup-soldr#106.
- *
- * One slot per declared `cross-targets` entry. The slot caches the
- * lane-specific tool binaries (cargo-zigbuild + ziglang for the MVP
- * lanes; cargo-xwin / windows toolchain prep in follow-ups). Existing layers are
- * unchanged; this is additive and only fires when `cross-targets` is
- * non-empty.
- *
- * Key shape: `tool-<host>-<target>-<toolsHash>-soldr<soldrVer>` —
- * deliberately distinct from every other cache namespace (`setup-soldr-*`,
- * `soldr-mini-*`) so we don't risk collisions.
- */
-export interface CrossToolCachePlan {
-  /** e.g. `linux-x64`. */
-  host: string;
-  /** Rust triple. */
-  target: string;
-  /** Sparse map of tool-name -> resolved version. Empty for unsupported lanes. */
-  toolVersions: Record<string, string>;
-  /** Cache key (with `tool-` prefix). */
-  key: string;
-  /**
-   * On-disk paths to archive on save / restore. Empty for unsupported
-   * lanes — the orchestrator should skip restore and save for those.
-   */
-  paths: string[];
-}
-
-/**
  * Explicit opt-in Dylint tool/driver cache (setup-soldr#221).
  *
  * This is intentionally cache-only rather than vendoring Dylint binaries into
@@ -322,10 +291,7 @@ export interface ResolveResult {
   targetCache: TargetCachePlan;
   cargoRegistryCache: CargoRegistryCachePlan;
   dylintCache: DylintCachePlan;
-  // Per-lane cross-compile tool caches (setup-soldr#106). One entry per
-  // declared `cross-targets` triple; empty when `cross-targets` unset or
-  // `cross-tool=none`.
-  crossToolCaches: CrossToolCachePlan[];
+  blessedPrepareCache: import("./blessed-cross-prepare.js").BlessedPrepareCachePlan;
 
   // Compression
   targetCacheCompress: CompressCodec;

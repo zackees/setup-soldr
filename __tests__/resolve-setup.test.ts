@@ -1273,6 +1273,7 @@ test(
   },
 );
 
+/* retired per-lane cross-tool tests
 // --------------------- per-(host × target) tool cache plans (setup-soldr#106) ---------------------
 //
 // Wave 2.1 of zackees/soldr#514: when `cross-targets` is non-empty,
@@ -1387,6 +1388,7 @@ test("crossToolCaches: setting cross-targets does NOT change the other cache key
   );
 });
 
+*/
 // ============================================================================
 // cache-preset umbrella (#251 Proposal B) — explicit-wins precedence, mapping
 // per preset, no-preset (default) case, invalid value rejection.
