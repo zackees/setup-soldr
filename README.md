@@ -151,6 +151,34 @@ packaging target and expands to the real `aarch64-apple-darwin` and
 `x86_64-apple-darwin` Rust targets for toolchain provisioning. The latter is
 not present in current Soldr release assets; prefer arm64 or a native runner.
 
+### Target-driven lifecycle hooks
+
+`cross-targets` is the only cross-compilation choice. After `soldr prepare`
+completes, the action exposes `target-plan-json`, `target-capabilities-json`,
+`target-env-json`, `target-cache-identity`, and `target-artifact-dir` outputs.
+The plan is reported by Soldr, so setup-soldr does not maintain a
+triple-to-toolchain or SDK map. Target-scoped flags are merged with existing
+project flags instead of being replaced.
+
+The action also exposes operation hooks for the blessed build, lint, test, and
+PEP 517 frontend surfaces. Consumers can use the reusable workflow for a
+complete operation:
+
+```yaml
+jobs:
+  build:
+    uses: zackees/setup-soldr/.github/workflows/target-lifecycle.yml@v0
+    with:
+      target: aarch64-apple-darwin
+      operation: build
+      profile: release
+```
+
+Set `operation` to `build`, `clippy`, `test-no-run`, `wheel`, or `sdist`.
+For six-target matrices, put the target list in the caller's matrix and pass
+`${{ matrix.target }}` to this workflow. Legacy wrapper commands are retained
+only for diagnostics and migration; they are not used by the target lifecycle.
+
 ### Legacy cross-compile auto-bootstrap (removed; see blessed preparation above)
 
 When a job needs to cross-compile to a non-host triple, set the

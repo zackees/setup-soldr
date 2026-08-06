@@ -1,0 +1,99 @@
+name: Soldr target lifecycle
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        description: Canonical Rust target triple.
+        required: true
+        type: string
+      operation:
+        description: build, clippy, test-no-run, wheel, or sdist.
+        required: false
+        default: build
+        type: string
+      profile:
+        description: Cargo profile passed to the build operation.
+        required: false
+        default: release
+        type: string
+      package:
+        description: Optional Cargo package selector.
+        required: false
+        default: ""
+        type: string
+      cache:
+        description: Keep setup-soldr caches enabled for this operation.
+        required: false
+        default: true
+        type: boolean
+      upload-artifact:
+        description: Upload target and packaging artifacts at the end of the job.
+        required: false
+        default: true
+        type: boolean
+      artifact-name:
+        description: Name for the uploaded artifact.
+        required: false
+        default: soldr-target-artifacts
+        type: string
+
+jobs:
+  target-operation:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Soldr target lifecycle
+        id: setup-soldr
+        uses: zackees/setup-soldr@v0
+        with:
+          cross-targets: ${{ inputs.target }}
+          cache: ${{ inputs.cache }}
+
+      - name: Run Soldr target operation
+        env:
+          TARGET: ${{ inputs.target }}
+          OPERATION: ${{ inputs.operation }}
+          PROFILE: ${{ inputs.profile }}
+          PACKAGE: ${{ inputs.package }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo_args=()
+          if [[ -n "$PACKAGE" ]]; then cargo_args+=(--package "$PACKAGE"); fi
+          case "$OPERATION" in
+            build)
+              soldr build --target "$TARGET" --profile "$PROFILE" "${cargo_args[@]}"
+              ;;
+            clippy)
+              soldr cargo clippy --target "$TARGET" "${cargo_args[@]}"
+              ;;
+            test-no-run)
+              soldr cargo test --no-run --target "$TARGET" "${cargo_args[@]}"
+              ;;
+            wheel)
+              python -m pip install build
+              python -m build --wheel
+              ;;
+            sdist)
+              python -m pip install build
+              python -m build --sdist
+              ;;
+            *)
+              echo "Unsupported Soldr target operation: $OPERATION" >&2
+              exit 2
+              ;;
+          esac
+
+      - name: Upload target artifacts
+        if: ${{ inputs.upload-artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}-${{ inputs.target }}
+          if-no-files-found: warn
+          path: |
+            ${{ steps.setup-soldr.outputs.target-artifact-dir }}
+            dist/

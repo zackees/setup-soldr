@@ -280,6 +280,7 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cross-targets: ${{ steps.mode.outputs.target }}
           cache: ${{ inputs.cache }}
 
       - name: Warm build (workspace, all-targets)
@@ -297,7 +298,7 @@ jobs:
           fi
           # shellcheck disable=SC2206 # intentional word-split on cargo-args
           extra=(${{ inputs.cargo-args }})
-          soldr cargo build "${args[@]}" "${extra[@]}"
+          soldr build "${args[@]}" "${extra[@]}"
 
   fmt:
     name: fmt
@@ -356,6 +357,7 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cross-targets: ${{ needs.warm.outputs.target }}
           cache: ${{ inputs.cache }}
 
       - name: cargo fmt --check
@@ -420,6 +422,7 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cross-targets: ${{ needs.warm.outputs.target }}
           cache: ${{ inputs.cache }}
 
       - name: cargo check
@@ -491,6 +494,7 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cross-targets: ${{ needs.warm.outputs.target }}
           cache: ${{ inputs.cache }}
 
       - name: cargo clippy
@@ -562,6 +566,7 @@ jobs:
         uses: zackees/setup-soldr@v0
         with:
           toolchain-file: ${{ steps.toolchain.outputs.path }}
+          cross-targets: ${{ needs.warm.outputs.target }}
           cache: ${{ inputs.cache }}
 
       - name: cargo test

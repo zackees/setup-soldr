@@ -699,7 +699,8 @@ inputs:
       disables only prepared-state archive caching. `universal2-apple-darwin`
       expands to the two real Apple Rust targets for toolchain provisioning.
 
-      MVP (issue #104, this release) supports:
+      The target lifecycle is Soldr-owned and exposes its machine-readable
+      plan plus build, lint, test-harness, wheel, and sdist hooks as outputs.
         - Linux host -> `*-pc-windows-gnu` (any arch): installs
           `cargo-zigbuild` + `ziglang` and runs `rustup target add`.
         - Linux host -> `*-unknown-linux-musl` (any arch): same install
@@ -749,6 +750,26 @@ outputs:
     description: Exact immutable cache key for the Soldr prepared-state archive, or empty.
   blessed-prepare-cache-hit:
     description: Whether the exact prepared-state archive was restored.
+  target-plan-json:
+    description: Stable JSON target lifecycle plan reported by Soldr after preparation.
+  target-capabilities-json:
+    description: Stable JSON canonical target, cache identity, toolchain, platform, and supported operations.
+  target-env-json:
+    description: JSON target-scoped environment exported by Soldr's target plan.
+  target-cache-identity:
+    description: Soldr-reported cache identity for the canonical target lane.
+  target-artifact-dir:
+    description: Target directory where target-specific build artifacts are emitted.
+  target-build-hook:
+    description: Blessed target build command; invokes soldr build --target.
+  target-clippy-hook:
+    description: Target clippy command using Soldr's Rust front door.
+  target-test-hook:
+    description: Target test-harness compilation command using Soldr's Rust front door.
+  target-wheel-hook:
+    description: PEP 517 frontend command for wheel production.
+  target-sdist-hook:
+    description: PEP 517 frontend command for source distribution production.
   cache-dir:
     description: Runner-local cache/state root used by the action.
   setup-duration-seconds:
