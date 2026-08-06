@@ -11,7 +11,6 @@ import * as core from "@actions/core";
 import {
   cargoConfigHash,
   canonicalJsonStringify,
-  crossToolCacheKeyFor,
   normalizeBuildCacheMode,
   normalizeLegacyTargetCacheMode,
   normalizeTargetCacheBool,
@@ -29,13 +28,7 @@ import {
   targetEnvHash,
   workspaceManifestHash,
 } from "./cache-keys.js";
-import {
-  crossToolCachePathsFor,
-  parseCrossTargets,
-  parseCrossTool,
-  toolsetFor,
-  toolVersionsFor,
-} from "./cross-bootstrap.js";
+import { parseSingleCrossTarget, mergeToolchainTargets, planBlessedPrepareCache } from "./blessed-cross-prepare.js";
 import { createLogger } from "./log-utils.js";
 import { parseEncryptionKey } from "./cache-encrypt.js";
 import { resolveDylintNightly } from "./dylint-nightly.js";
@@ -70,7 +63,6 @@ import type {
   ActionContext,
   BuildCachePlan,
   CargoRegistryCachePlan,
-  CrossToolCachePlan,
   RawInputs,
   ResolveResult,
   SetupCachePlan,
@@ -474,6 +466,8 @@ export async function resolveSetup(
       log,
     }),
   );
+  const crossTarget = parseSingleCrossTarget(inputs.crossTargets);
+  toolchain.targets = mergeToolchainTargets(toolchain.targets, crossTarget);
 
   // ---- rustup home selection ----
   const explicitRustupHome = (env["RUSTUP_HOME"] ?? "").trim();
@@ -1221,44 +1215,18 @@ export async function resolveSetup(
     dylintLinkVersion: dylintCacheEnabled ? dylintLinkVersion : "",
   };
 
-  // ---- per-(host × target) tool caches (setup-soldr#106) ----
-  // Activation gate: only when `cross-targets` is non-empty AND
-  // `cross-tool` isn't `none`. The cost (one extra actions/cache restore
-  // per declared target on every run) is taken-by-choice — non-cross-
-  // compiling consumers see zero behavior change.
-  const crossToolCachePlans: CrossToolCachePlan[] = [];
-  const crossTargetsList = parseCrossTargets(inputs.crossTargets);
-  const crossToolMode = parseCrossTool(inputs.crossTool);
-  if (cacheUmbrellaEnabled && crossToolMode !== "none" && crossTargetsList.length > 0) {
-    const hostFragment = `${runnerOs}-${runnerArch}`;
-    const soldrVerForKey =
-      soldrVersionResolved.trim() || soldrVersionRequested.trim() || "unresolved";
-    for (const target of crossTargetsList) {
-      const toolVersions = toolVersionsFor({ host: hostFragment, target });
-      const lanePaths = crossToolCachePathsFor({
-        host: hostFragment,
-        target,
-        cargoHome,
-        cacheRoot,
-      });
-      const laneKey = crossToolCacheKeyFor({
-        host: hostFragment,
-        target,
-        toolVersions,
-        soldrVer: soldrVerForKey,
-      });
-      crossToolCachePlans.push({
-        host: hostFragment,
-        target,
-        toolVersions,
-        key: laneKey,
-        paths: lanePaths,
-      });
-    }
-  }
-  // Reference imports so the value-side helpers don't get tree-shaken
-  // by the compiler when the plan list is empty.
-  void toolsetFor;
+  const blessedPrepareCache = planBlessedPrepareCache({
+    enabled,
+    cacheEnabled: cacheUmbrellaEnabled,
+    ref: soldrRef,
+    runnerTemp,
+    runnerOs,
+    runnerArch,
+    target: crossTarget,
+    soldrRepo,
+    soldrVersion: soldrVersionResolved || soldrVersionRequested,
+  });
+  if (blessedPrepareCache.archivePath) makeDirs(path.dirname(blessedPrepareCache.archivePath));
 
   // Avoid unused warnings on alias helper.
   void rollingToolchainAlias;
@@ -1294,7 +1262,7 @@ export async function resolveSetup(
     targetCache,
     cargoRegistryCache: cargoRegistryCachePlan,
     dylintCache: dylintCachePlan,
-    crossToolCaches: crossToolCachePlans,
+    blessedPrepareCache,
     targetCacheCompress,
     targetCacheCompressLevel,
     envExports,

@@ -82,7 +82,6 @@ function fixtureRawInputs(): RawInputs {
     dylintCachePaths: "",
     journalPrintRaw: "",
     crossTargets: "",
-    crossTool: "auto",
     verifyCompileCache: "off",
     seedIsolatedBuildCache: "",
     buildCacheSaveMinCompiles: "1",

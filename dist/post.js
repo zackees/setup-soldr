@@ -45935,6 +45935,7 @@ exports.FOUNDATION_PREFIXES = [
     // GitHub's own LRU still evicts stale entries that no run
     // accesses for ~7 days.
     "cook-base-v2-", // ~300 MB per platform, skips ~200 s cold cook
+    "setup-soldr-prepare-v1-",
 ];
 /**
  * #356: graduated age-floor tier table.
@@ -49018,7 +49019,6 @@ function readRawInputs(env) {
         dylintCachePaths: get("dylint-cache-paths"),
         journalPrintRaw: get("journal-print-raw"),
         crossTargets: get("cross-targets"),
-        crossTool: get("cross-tool"),
         verifyCompileCache: get("verify-compile-cache"),
         seedIsolatedBuildCache: get("seed-isolated-build-cache"),
         buildCacheSaveMinCompiles: get("build-cache-save-min-compiles"),
@@ -52491,74 +52491,109 @@ async function run() {
             }
         }
     }
-    // ---- per-(host × target) cross-tool cache save (setup-soldr#106) ----
+    /* retired per-lane cache save removed; Soldr owns this state */
+    /*
+    // ---- retired per-lane cache save ----
     // Wave 2.1 of zackees/soldr#514. Save each lane whose restore missed and
     // whose `paths` actually exist on disk after executeCrossBootstrap ran.
     // Skipping exact hits avoids re-uploading identical content; skipping
     // missing paths avoids cache-API failures on unsupported lanes.
     try {
-        const lanePlansRaw = core.getState("crossToolCachePlans");
-        const restoresRaw = core.getState("crossToolCacheRestores");
-        if (lanePlansRaw) {
-            const lanePlans = JSON.parse(lanePlansRaw);
-            const restores = restoresRaw
-                ? JSON.parse(restoresRaw)
-                : {};
-            for (const lane of lanePlans) {
-                if (!lane.paths || lane.paths.length === 0) {
-                    continue; // unsupported lane, nothing to save
-                }
-                const restore = restores[lane.target];
-                if (restore?.hit) {
-                    log(`cross-tool-cache: lane=${lane.target} exact hit — skipping save`);
-                    continue;
-                }
-                // Only save when at least one of the lane's paths exists. The cache
-                // API will error on a fully-missing path list, and there's no
-                // point uploading nothing.
-                const existing = lane.paths.filter((p) => {
-                    try {
-                        return fs.existsSync(p);
-                    }
-                    catch {
-                        return false;
-                    }
-                });
-                if (existing.length === 0) {
-                    log(`cross-tool-cache: lane=${lane.target} no paths exist on disk — skipping save`);
-                    continue;
-                }
-                const t0 = Date.now();
-                try {
-                    const id = await cache.saveCache(existing, lane.key);
-                    if (id > 0) {
-                        log(`cross-tool-cache: lane=${lane.target} saved id=${id} key=${lane.key}`);
-                        postCollector.record({
-                            label: `cross-tool-cache:${lane.target}`,
-                            operation: "save",
-                            hit: false,
-                            key: lane.key,
-                            matchedKey: "",
-                            restoreKeys: [],
-                            archiveBytes: null,
-                            inflatedBytes: null,
-                            fileCount: null,
-                            durationMs: Date.now() - t0,
-                            timestamp: new Date().toISOString(),
-                        });
-                    }
-                    else {
-                        log(`cross-tool-cache: lane=${lane.target} save skipped (id=${id}) — likely concurrent save by another job`);
-                    }
-                }
-                catch (err) {
-                    log(`cross-tool-cache: lane=${lane.target} save failed: ${err instanceof Error ? err.message : String(err)}`);
-                }
+      const lanePlansRaw = core.getState("retiredLaneCachePlans");
+      const restoresRaw = core.getState("retiredLaneCacheRestores");
+      if (lanePlansRaw) {
+        const lanePlans = JSON.parse(lanePlansRaw) as Array<{
+          host: string;
+          target: string;
+          key: string;
+          paths: string[];
+        }>;
+        const restores = restoresRaw
+          ? (JSON.parse(restoresRaw) as Record<string, { hit: boolean; matchedKey: string }>)
+          : {};
+        for (const lane of lanePlans) {
+          if (!lane.paths || lane.paths.length === 0) {
+            continue; // unsupported lane, nothing to save
+          }
+          const restore = restores[lane.target];
+          if (restore?.hit) {
+            log(`cross-tool-cache: lane=${lane.target} exact hit — skipping save`);
+            continue;
+          }
+          // Only save when at least one of the lane's paths exists. The cache
+          // API will error on a fully-missing path list, and there's no
+          // point uploading nothing.
+          const existing = lane.paths.filter((p) => {
+            try {
+              return fs.existsSync(p);
+            } catch {
+              return false;
             }
+          });
+          if (existing.length === 0) {
+            log(`cross-tool-cache: lane=${lane.target} no paths exist on disk — skipping save`);
+            continue;
+          }
+          const t0 = Date.now();
+          try {
+            const id = await cache.saveCache(existing, lane.key);
+            if (id > 0) {
+              log(`cross-tool-cache: lane=${lane.target} saved id=${id} key=${lane.key}`);
+              postCollector.record({
+                label: `cross-tool-cache:${lane.target}`,
+                operation: "save",
+                hit: false,
+                key: lane.key,
+                matchedKey: "",
+                restoreKeys: [],
+                archiveBytes: null,
+                inflatedBytes: null,
+                fileCount: null,
+                durationMs: Date.now() - t0,
+                timestamp: new Date().toISOString(),
+              });
+            } else {
+              log(
+                `cross-tool-cache: lane=${lane.target} save skipped (id=${id}) — likely concurrent save by another job`,
+              );
+            }
+          } catch (err) {
+            log(
+              `cross-tool-cache: lane=${lane.target} save failed: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+            );
+          }
+        }
+      }
+    } catch (err) {
+      log(`cross-tool-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    */
+    // ---- blessed Soldr prepare archive save ----
+    try {
+        const planRaw = core.getState("blessedPrepareCacheEnabled");
+        const exactHit = core.getState("blessedPrepareCacheExactHit") === "true";
+        const complete = core.getState("blessedPrepareComplete") === "true";
+        const plan = result.blessedPrepareCache;
+        if (planRaw === "true" && !exactHit && complete && plan.archivePath && fs.existsSync(plan.archivePath) && fs.statSync(plan.archivePath).size > 0) {
+            const t0 = Date.now();
+            try {
+                const id = await cache.saveCache([plan.archivePath], plan.key);
+                log(`blessed-prepare-cache: ${id > 0 ? "saved" : "save skipped"} key=${plan.key}`);
+                postCollector.record({ label: "blessed-prepare-cache", operation: "save", hit: false, key: plan.key, matchedKey: "", restoreKeys: [], archiveBytes: null, inflatedBytes: null, fileCount: null, durationMs: Date.now() - t0, timestamp: new Date().toISOString() });
+            }
+            catch (err) {
+                log(`blessed-prepare-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
+            }
+        }
+        else if (planRaw === "true") {
+            log("blessed-prepare-cache: save skipped (exact hit, incomplete, missing, or empty archive)");
         }
     }
     catch (err) {
-        log(`cross-tool-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
+        log(`blessed-prepare-cache: post-step failed: ${err instanceof Error ? err.message : String(err)}`);
     }
     // ---- Dylint tool/driver cache save (setup-soldr#221) ----
     // Exact-key only and opt-in. Cold jobs keep their existing install/build
@@ -68010,6 +68045,24 @@ exports.StorageContextClient = StorageContextClient;
 
 /***/ }),
 
+/***/ 83627:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KnownEncryptionAlgorithmType = void 0;
+/** Known values of {@link EncryptionAlgorithmType} that the service accepts. */
+var KnownEncryptionAlgorithmType;
+(function (KnownEncryptionAlgorithmType) {
+    KnownEncryptionAlgorithmType["AES256"] = "AES256";
+})(KnownEncryptionAlgorithmType || (exports.KnownEncryptionAlgorithmType = KnownEncryptionAlgorithmType = {}));
+//# sourceMappingURL=generatedModels.js.map
+
+/***/ }),
+
 /***/ 30247:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -78336,6 +78389,132 @@ exports.listType = {
 
 /***/ }),
 
+/***/ 56635:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=appendBlob.js.map
+
+/***/ }),
+
+/***/ 68355:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blob.js.map
+
+/***/ }),
+
+/***/ 17188:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blockBlob.js.map
+
+/***/ }),
+
+/***/ 15337:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=container.js.map
+
+/***/ }),
+
+/***/ 82354:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const tslib_1 = __nccwpck_require__(61860);
+tslib_1.__exportStar(__nccwpck_require__(26865), exports);
+tslib_1.__exportStar(__nccwpck_require__(15337), exports);
+tslib_1.__exportStar(__nccwpck_require__(68355), exports);
+tslib_1.__exportStar(__nccwpck_require__(14400), exports);
+tslib_1.__exportStar(__nccwpck_require__(56635), exports);
+tslib_1.__exportStar(__nccwpck_require__(17188), exports);
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 14400:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=pageBlob.js.map
+
+/***/ }),
+
+/***/ 26865:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=service.js.map
+
+/***/ }),
+
 /***/ 40535:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -81551,132 +81730,6 @@ const filterBlobsOperationSpec = {
 
 /***/ }),
 
-/***/ 56635:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=appendBlob.js.map
-
-/***/ }),
-
-/***/ 68355:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blob.js.map
-
-/***/ }),
-
-/***/ 17188:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blockBlob.js.map
-
-/***/ }),
-
-/***/ 15337:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=container.js.map
-
-/***/ }),
-
-/***/ 82354:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tslib_1 = __nccwpck_require__(61860);
-tslib_1.__exportStar(__nccwpck_require__(26865), exports);
-tslib_1.__exportStar(__nccwpck_require__(15337), exports);
-tslib_1.__exportStar(__nccwpck_require__(68355), exports);
-tslib_1.__exportStar(__nccwpck_require__(14400), exports);
-tslib_1.__exportStar(__nccwpck_require__(56635), exports);
-tslib_1.__exportStar(__nccwpck_require__(17188), exports);
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 14400:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=pageBlob.js.map
-
-/***/ }),
-
-/***/ 26865:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=service.js.map
-
-/***/ }),
-
 /***/ 5313:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -81747,24 +81800,6 @@ class StorageClient extends coreHttpCompat.ExtendedServiceClient {
 }
 exports.StorageClient = StorageClient;
 //# sourceMappingURL=storageClient.js.map
-
-/***/ }),
-
-/***/ 83627:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.KnownEncryptionAlgorithmType = void 0;
-/** Known values of {@link EncryptionAlgorithmType} that the service accepts. */
-var KnownEncryptionAlgorithmType;
-(function (KnownEncryptionAlgorithmType) {
-    KnownEncryptionAlgorithmType["AES256"] = "AES256";
-})(KnownEncryptionAlgorithmType || (exports.KnownEncryptionAlgorithmType = KnownEncryptionAlgorithmType = {}));
-//# sourceMappingURL=generatedModels.js.map
 
 /***/ }),
 

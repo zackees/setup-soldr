@@ -20,9 +20,9 @@ inputs:
     required: false
     default: "true"
   version:
-    description: Soldr version or tag to install. Defaults to 0.8.30.
+    description: Soldr version or tag to install. Defaults to 0.8.39.
     required: false
-    default: "0.8.30"
+    default: "0.8.39"
   repo:
     description: Internal override for the Soldr source repository used by integration branches.
     required: false
@@ -692,11 +692,12 @@ inputs:
     default: "true"
   cross-targets:
     description: >
-      Optional newline- or comma-separated list of non-host Rust target
+      Optional one canonical Rust target triple for Soldr's blessed
       triples this job needs to cross-compile to (e.g.
       `x86_64-pc-windows-gnu`). When set, setup-soldr auto-installs the
-      cross toolchain for each supported (host, target) lane after the
-      Rust toolchain is provisioned and before the user's own steps run.
+      `prepare` lifecycle. Exactly one target is accepted per job; use a
+      matrix for multiple targets. Soldr chooses the compiler, linker, SDK,
+      and sysroot implementation. `cache: false` disables only archive caching.
 
       MVP (issue #104, this release) supports:
         - Linux host -> `*-pc-windows-gnu` (any arch): installs
@@ -708,28 +709,15 @@ inputs:
       strategies) emit a one-line `core.warning` describing what would be
       installed and continue without failing the action — install the
       cross toolchain manually for those lanes for now. Default empty
-      (cross-bootstrap is opt-in by populating this input).
 
       Caching: when this input is non-empty, setup-soldr activates a
       per-(host × target) tool cache layer (setup-soldr#106). One
       independent cache slot per declared target lane holds the
-      lane-specific tool binaries (cargo-zigbuild, ziglang, etc.).
       Slots are keyed on the lane's resolved tool versions so bumping
       one tool only invalidates the affected lanes. Non-cross-compiling
       consumers (empty input) pay zero extra cache-API roundtrips.
     required: false
     default: ""
-  cross-tool:
-    description: >
-      Cross-compile strategy selector used when `cross-targets` is
-      non-empty. Accepted values: `auto` (default), `none`, `zigbuild`,
-      `xwin`, `mingw`. In this release only `auto` and `none` change
-      behavior — `zigbuild` / `xwin` / `mingw` are accepted for
-      forward-compatibility and currently route through the same `auto`
-      logic for the supported lanes. Set to `none` to skip cross-bootstrap
-      entirely even when `cross-targets` is set.
-    required: false
-    default: "auto"
   soldr-mini-cache:
     description: >
       Cache the soldr binary in its own tiny long-lived layer,
@@ -755,6 +743,12 @@ outputs:
     description: >
       Installed Soldr version reported by `soldr version --json`. The
       literal string "passthrough" when `enable: false`.
+  prepared-target:
+    description: Canonical target prepared by Soldr, or empty.
+  blessed-prepare-cache-key:
+    description: Exact immutable cache key for the Soldr prepared-state archive, or empty.
+  blessed-prepare-cache-hit:
+    description: Whether the exact prepared-state archive was restored.
   cache-dir:
     description: Runner-local cache/state root used by the action.
   setup-duration-seconds:

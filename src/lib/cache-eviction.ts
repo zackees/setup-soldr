@@ -44,6 +44,7 @@ export const FOUNDATION_PREFIXES: readonly string[] = [
   // GitHub's own LRU still evicts stale entries that no run
   // accesses for ~7 days.
   "cook-base-v2-", // ~300 MB per platform, skips ~200 s cold cook
+  "setup-soldr-prepare-v1-",
 ];
 
 export type CacheEvictionPolicy = "disabled" | "protect-foundations" | "aggressive";
