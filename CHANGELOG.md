@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Default to soldr `0.8.44` (was `0.8.39`), picking up five releases of fixes.
+  Notable for setup-soldr consumers: `fix(fetch)` streams large release assets
+  with progress-aware, stall-aware retries and finishes the segmented
+  downloader (soldr#2274, soldr#2281, soldr#2331) — steadier installs on cold
+  runners for the `.tar.zst` assets this action fetches; `fix(fetch)`
+  materializes tar symlinks with the correct NTFS flavor on Windows
+  (soldr#2308); `fix(cache)` keeps Windows compiler staging paths short
+  (soldr#2284); `fix(target-lifecycle)` pins the C++ stdlib for blessed
+  linux-gnu (soldr#2311) and `feat(win-gnu)` enables Linux-hosted win-gnu
+  cross builds (soldr#2341) — both widen the blessed cross-compile surface;
+  `fix(toolchain)` fails `rust-objcopy` strip errors instead of shipping an
+  unstripped binary (soldr#2277). Release asset shapes are unchanged from
+  `0.8.39`, so no install-path changes were required.
+
 - Make the cargo-registry Soldr path reachable behind
   `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` (#266). The v2 cache owns a Soldr archive
   for `registry/` plus a separate tar+zstd archive containing only
