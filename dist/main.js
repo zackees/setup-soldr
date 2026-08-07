@@ -18038,7 +18038,7 @@ module.exports = {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageRetryPolicy = void 0;
 exports.NewRetryPolicyFactory = NewRetryPolicyFactory;
-const abort_controller_1 = __nccwpck_require__(512);
+const abort_controller_1 = __nccwpck_require__(511);
 const RequestPolicy_js_1 = __nccwpck_require__(48);
 const constants_js_1 = __nccwpck_require__(38);
 const utils_common_js_1 = __nccwpck_require__(490);
@@ -32178,7 +32178,7 @@ tslib_1.__exportStar(__nccwpck_require__(277), exports);
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.storageRetryPolicyName = void 0;
 exports.storageRetryPolicy = storageRetryPolicy;
-const abort_controller_1 = __nccwpck_require__(512);
+const abort_controller_1 = __nccwpck_require__(511);
 const core_rest_pipeline_1 = __nccwpck_require__(105);
 const core_util_1 = __nccwpck_require__(15);
 const StorageRetryPolicyFactory_js_1 = __nccwpck_require__(333);
@@ -56136,7 +56136,7 @@ exports.BinaryWriter = BinaryWriter;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AvroReadableFromStream = void 0;
 const AvroReadable_js_1 = __nccwpck_require__(397);
-const abort_controller_1 = __nccwpck_require__(510);
+const abort_controller_1 = __nccwpck_require__(512);
 const buffer_1 = __nccwpck_require__(122);
 const ABORT_ERROR = new abort_controller_1.AbortError("Reading from the avro stream was aborted.");
 class AvroReadableFromStream extends AvroReadable_js_1.AvroReadable {
@@ -56458,7 +56458,7 @@ function wrapAbortSignalLikePolicy() {
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createAbortablePromise = createAbortablePromise;
-const abort_controller_1 = __nccwpck_require__(511);
+const abort_controller_1 = __nccwpck_require__(510);
 /**
  * Creates an abortable promise.
  * @param buildPromise - A function that takes the resolve and reject functions as parameters.
@@ -94737,7 +94737,7 @@ function getCachedDefaultHttpsClient() {
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.RetriableReadableStream = void 0;
-const abort_controller_1 = __nccwpck_require__(510);
+const abort_controller_1 = __nccwpck_require__(512);
 const node_stream_1 = __nccwpck_require__(442);
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -94875,7 +94875,7 @@ exports.RetriableReadableStream = RetriableReadableStream;
 // Licensed under the MIT license.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AbortError = void 0;
-var AbortError_js_1 = __nccwpck_require__(515);
+var AbortError_js_1 = __nccwpck_require__(516);
 Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function () { return AbortError_js_1.AbortError; } }));
 //# sourceMappingURL=index.js.map
 
@@ -94890,7 +94890,7 @@ Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function 
 // Licensed under the MIT license.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AbortError = void 0;
-var AbortError_js_1 = __nccwpck_require__(516);
+var AbortError_js_1 = __nccwpck_require__(514);
 Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function () { return AbortError_js_1.AbortError; } }));
 //# sourceMappingURL=index.js.map
 
@@ -94905,7 +94905,7 @@ Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function 
 // Licensed under the MIT license.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AbortError = void 0;
-var AbortError_js_1 = __nccwpck_require__(514);
+var AbortError_js_1 = __nccwpck_require__(515);
 Object.defineProperty(exports, "AbortError", ({ enumerable: true, get: function () { return AbortError_js_1.AbortError; } }));
 //# sourceMappingURL=index.js.map
 
