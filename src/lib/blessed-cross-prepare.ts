@@ -90,7 +90,7 @@ export function buildPrepareArgs(input: { target: string; githubEnv?: string; ar
   return args;
 }
 
-export function assertMinimumSoldrVersion(version: string, minimum = "0.8.39"): void {
+export function assertMinimumSoldrVersion(version: string, minimum = "0.8.43"): void {
   const parse = (v: string) => v.trim().replace(/^v/, "").split(".").slice(0, 3).map((n) => Number.parseInt(n.split("-")[0]!, 10));
   const actual = parse(version);
   const required = parse(minimum);
