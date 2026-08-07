@@ -1221,7 +1221,7 @@ export async function run(): Promise<void> {
       soldrPath: result.soldrPath,
       buildCacheMode: result.buildCache.mode,
       requireRustPlan: result.targetCache.enabled,
-      minimumVersion: result.blessedPrepareCache.target ? "0.8.39" : undefined,
+      minimumVersion: result.blessedPrepareCache.target ? "0.8.43" : undefined,
     });
     core.setOutput("soldr-version", verify.soldrVersion);
     core.setOutput("soldr_version", verify.soldrVersion);

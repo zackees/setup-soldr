@@ -53,6 +53,6 @@ test("prepared cache keys are immutable and target/identity keyed", () => {
 
 test("prepare args use the installed binary and immutable archive mode", () => {
   assert.deepEqual(buildPrepareArgs({ target: "x86_64-pc-windows-gnu", githubEnv: "env", archivePath: "archive", save: true }), ["prepare", "--target", "x86_64-pc-windows-gnu", "--github-env", "env", "--save", "archive"]);
-  assert.throws(() => assertMinimumSoldrVersion("0.8.38"), /0.8.39/);
-  assert.doesNotThrow(() => assertMinimumSoldrVersion("0.8.40"));
+  assert.throws(() => assertMinimumSoldrVersion("0.8.42"), /0.8.43/);
+  assert.doesNotThrow(() => assertMinimumSoldrVersion("0.8.43"));
 });
