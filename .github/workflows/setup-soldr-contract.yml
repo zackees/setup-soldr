@@ -158,3 +158,49 @@ jobs:
 
       - name: Verify the action default is published and complete
         run: node scripts/check-default-release-readiness.mjs
+
+  wheel-fallback-smoke:
+    name: Wheel fallback smoke (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - macos-15-intel
+          - windows-11-arm
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - id: setup
+        name: Install the default Soldr release
+        uses: ./
+        with:
+          cache: false
+          prebuild-deps: none
+
+      - name: Verify the wheel runtime and pinned helper
+        shell: pwsh
+        run: |
+          $versionJson = (soldr version --json | Out-String) | ConvertFrom-Json
+          $actionVersion = "${{ steps.setup.outputs.soldr-version }}"
+          if ($versionJson.soldr_version -ne $actionVersion) {
+            throw "soldr version mismatch: binary=$($versionJson.soldr_version), action=$actionVersion"
+          }
+
+          $cargoChefVersion = (cargo-chef --version | Out-String).Trim()
+          if ($cargoChefVersion -ne "cargo-chef 0.1.73") {
+            throw "unexpected cargo-chef version: $cargoChefVersion"
+          }
+
+          $daemonHelp = soldr-daemon --help | Out-String
+          if ($LASTEXITCODE -ne 0 -or $daemonHelp -notmatch "Long-lived companion to soldr") {
+            throw "soldr-daemon multicall alias did not execute"
+          }
+
+          $doctorJson = (soldr doctor --json | Out-String) | ConvertFrom-Json
+          if ($doctorJson.zccache.backend -ne "embedded") {
+            throw "expected embedded zccache; got $($doctorJson.zccache | ConvertTo-Json -Compress)"
+          }

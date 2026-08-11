@@ -2,7 +2,7 @@
 
 [![Setup Soldr Action](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml/badge.svg)](https://github.com/zackees/setup-soldr/actions/workflows/setup-soldr-action.yml)
 
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.8.43`.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.9.0`.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -435,7 +435,7 @@ preferred for new workflows.
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.8.43`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.9.0`. |
 | `cross-targets` | One canonical target per job for Soldr blessed preparation; use a matrix for multiple targets. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
@@ -537,10 +537,12 @@ preferred for new workflows.
 
 ## Notes
 
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.8.43`.
-- For soldr `0.7.43+`, the action copies the bundled `cargo-chef` binary from
-  the soldr release archive and exports `SOLDR_CARGO_CHEF_LOCAL_DIR` so
-  `soldr cook` does not need a live upstream cargo-chef release lookup.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.9.0`. Combined GitHub release archives remain preferred; for explicitly supported wheel-compatible releases (currently `0.9.0`), a missing exact target archive falls back to the matching hash-verified wheel from the same version on PyPI.
+- For soldr `0.7.43+`, the action installs the release-pinned `cargo-chef`
+  binary and exports `SOLDR_CARGO_CHEF_LOCAL_DIR`, so `soldr cook` does not
+  need a live upstream GitHub lookup. Combined archives bundle the helper;
+  PyPI-wheel fallbacks hydrate its hash-verified asset from the public
+  soldr-toolchain catalogue.
 - The normal path provisions Rust with `rustup`, bootstrapping `rustup` when it is absent.
 - Toolchain-file `components` and `targets` are installed during setup so later `cargo`/`soldr cargo` steps do not trigger rustup lazy installs.
 - The action keeps using the runner's existing `CARGO_HOME` unless `CARGO_HOME` is already set by the workflow. When `RUSTUP_HOME` is not explicitly set, setup-soldr prefers the runner's existing rustup home if it already satisfies the requested toolchain/components/targets; otherwise it falls back to a managed `RUSTUP_HOME` under the action cache root and rehydrates that state on later warm runs.

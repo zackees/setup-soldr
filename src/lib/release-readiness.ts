@@ -5,10 +5,20 @@
 export const REQUIRED_RELEASE_TARGETS = [
   "x86_64-unknown-linux-gnu",
   "aarch64-unknown-linux-gnu",
+  "x86_64-apple-darwin",
   "aarch64-apple-darwin",
   "x86_64-pc-windows-msvc",
   "aarch64-pc-windows-msvc",
 ] as const;
+
+export const PYPI_WHEEL_PLATFORM_TAGS: Readonly<Record<string, string>> = {
+  "x86_64-unknown-linux-gnu": "manylinux_2_17_x86_64.manylinux2014_x86_64",
+  "aarch64-unknown-linux-gnu": "manylinux_2_17_aarch64.manylinux2014_aarch64",
+  "x86_64-apple-darwin": "macosx_10_12_x86_64",
+  "aarch64-apple-darwin": "macosx_11_0_arm64",
+  "x86_64-pc-windows-msvc": "win_amd64",
+  "aarch64-pc-windows-msvc": "win_arm64",
+};
 
 export type ReleasePayload = Record<string, unknown>;
 
@@ -24,10 +34,34 @@ function assetHasTarget(asset: unknown, target: string): boolean {
   );
 }
 
+export function pypiWheelHasTarget(file: unknown, target: string): boolean {
+  if (typeof file !== "object" || file === null) return false;
+  const platformTag = PYPI_WHEEL_PLATFORM_TAGS[target];
+  if (!platformTag) return false;
+  const record = file as Record<string, unknown>;
+  const filename = typeof record["filename"] === "string" ? record["filename"] : "";
+  const url = typeof record["url"] === "string" ? record["url"].trim() : "";
+  const digests = record["digests"];
+  const sha256 =
+    typeof digests === "object" &&
+    digests !== null &&
+    typeof (digests as Record<string, unknown>)["sha256"] === "string"
+      ? ((digests as Record<string, unknown>)["sha256"] as string).toLowerCase()
+      : "";
+  return (
+    filename.startsWith("soldr-") &&
+    filename.endsWith(`-${platformTag}.whl`) &&
+    record["yanked"] !== true &&
+    url.length > 0 &&
+    /^[0-9a-f]{64}$/.test(sha256)
+  );
+}
+
 /** Throws when a release cannot safely become setup-soldr's default. */
 export function assertReleaseReady(
   release: ReleasePayload,
   requiredTargets: readonly string[] = REQUIRED_RELEASE_TARGETS,
+  pypiRelease?: ReleasePayload,
 ): void {
   const tag = typeof release["tag_name"] === "string" ? release["tag_name"].trim() : "";
   if (!tag) throw new Error("release payload has no tag_name");
@@ -35,7 +69,12 @@ export function assertReleaseReady(
 
   const assets = release["assets"];
   if (!Array.isArray(assets)) throw new Error(`release ${tag} has no assets array`);
-  const missing = requiredTargets.filter((target) => !assets.some((asset) => assetHasTarget(asset, target)));
+  const pypiFiles = pypiRelease?.["urls"];
+  const missing = requiredTargets.filter(
+    (target) =>
+      !assets.some((asset) => assetHasTarget(asset, target)) &&
+      !(Array.isArray(pypiFiles) && pypiFiles.some((file) => pypiWheelHasTarget(file, target))),
+  );
   if (missing.length > 0) {
     throw new Error(`release ${tag} is missing usable assets for: ${missing.join(", ")}`);
   }
