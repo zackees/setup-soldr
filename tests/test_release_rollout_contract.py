@@ -59,6 +59,32 @@ def test_default_release_readiness_is_part_of_the_contract() -> None:
     assert "Default Release Readiness" in workflow
     assert "node scripts/check-default-release-readiness.mjs" in workflow
 
+    readiness = (REPO_ROOT / "scripts/check-default-release-readiness.mjs").read_text(
+        encoding="utf-8"
+    )
+    assert "https://pypi.org/pypi/soldr/" in readiness
+    assert "https://zackees.github.io/soldr-toolchain/cargo-chef/manifest.json" in readiness
+    assert "digests?.sha256" in readiness
+    assert "missingSupport" in readiness
+    assert "PyPI wheel fallbacks" in readiness
+
+
+def test_install_smoke_runs_every_platform_that_uses_the_default_wheel_fallback() -> None:
+    workflow = (REPO_ROOT / ".github/workflows/setup-soldr-contract.yml").read_text(
+        encoding="utf-8"
+    )
+
+    for runner in (
+        "ubuntu-24.04",
+        "ubuntu-24.04-arm",
+        "macos-15-intel",
+        "windows-11-arm",
+    ):
+        assert f"- {runner}" in workflow
+    assert "runs-on: ${{ matrix.runner }}" in workflow
+    assert "cargo-chef 0.1.73" in workflow
+    assert "soldr-daemon --help" in workflow
+
 
 def test_v0_promotion_requires_a_successful_contract_and_repeats_the_gates() -> None:
     workflow = (REPO_ROOT / ".github/workflows/update-v0-tag.yml").read_text(

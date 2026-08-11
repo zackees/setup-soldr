@@ -5,6 +5,7 @@
 // git ref when INPUT_REF is set) and places it under $SOLDR_INSTALL_DIR.
 
 import * as fs from "node:fs";
+import { createHash } from "node:crypto";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as core from "@actions/core";
@@ -12,11 +13,30 @@ import * as exec from "@actions/exec";
 import * as tc from "@actions/tool-cache";
 import * as fzstd from "fzstd";
 import { createLogger, streamExec } from "./log-utils.js";
-import { retryReleaseRequest } from "./release-readiness.js";
+import { pypiWheelHasTarget, retryReleaseRequest } from "./release-readiness.js";
 import type { ResolveResult } from "./types.js";
 import { parseVersionJsonOutput } from "./verify-soldr.js";
 
-type ArchiveExt = "tar.zst" | "tar.gz" | "zip";
+type ArchiveExt = "tar.zst" | "tar.gz" | "zip" | "whl";
+
+interface InstallAsset {
+  name: string;
+  url: string;
+  archiveExt: ArchiveExt;
+  source: "github-release" | "pypi-wheel";
+  expectedSha256?: string;
+}
+
+interface SupportAsset {
+  filename: string;
+  urls: string[];
+  sha256: string;
+  archiveExt: Exclude<ArchiveExt, "whl">;
+}
+
+const CARGO_CHEF_VERSION_BY_SOLDR: Readonly<Record<string, string>> = {
+  "0.9.0": "0.1.73",
+};
 
 interface TargetInfo {
   target: string;
@@ -109,6 +129,29 @@ async function fetchRelease(repo: string, version: string, githubToken: string):
   }
 }
 
+async function fetchPypiRelease(version: string): Promise<Record<string, unknown>> {
+  const normalized = normalizeVersion(version);
+  if (!normalized) throw new Error("cannot resolve a PyPI wheel without an exact soldr version");
+  const url = `https://pypi.org/pypi/soldr/${encodeURIComponent(normalized)}/json`;
+  try {
+    return await retryReleaseRequest(() => fetchJson(url, ""));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`failed to fetch soldr ${normalized} wheel metadata from PyPI: ${detail}`);
+  }
+}
+
+function canUseOfficialPypiFallback(repo: string, version: string): boolean {
+  return (
+    repo.trim().toLowerCase() === "zackees/soldr" &&
+    bundledCargoChefVersionForSoldr(version) !== null
+  );
+}
+
+function bundledCargoChefVersionForSoldr(version: string): string | null {
+  return CARGO_CHEF_VERSION_BY_SOLDR[normalizeVersion(version)] ?? null;
+}
+
 async function resolveRefCommitSha(repo: string, ref: string, githubToken: string): Promise<string> {
   const url = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`;
   const payload = await fetchJson(url, githubToken);
@@ -156,6 +199,37 @@ interface SourceMetadata {
   binary_name: string;
 }
 
+interface ReleaseInstallMetadata {
+  source: "github-release" | "pypi-wheel";
+  version: string;
+  target: string;
+  asset_name: string;
+}
+
+function releaseInstallMetadataPath(installDir: string): string {
+  return path.join(installDir, ".setup-soldr-install.json");
+}
+
+function loadReleaseInstallMetadata(installDir: string): Partial<ReleaseInstallMetadata> | null {
+  const metadataPath = releaseInstallMetadataPath(installDir);
+  if (!fs.existsSync(metadataPath)) return null;
+  try {
+    const data = JSON.parse(fs.readFileSync(metadataPath, "utf8")) as unknown;
+    if (typeof data !== "object" || data === null) return null;
+    return data as Partial<ReleaseInstallMetadata>;
+  } catch {
+    return null;
+  }
+}
+
+function writeReleaseInstallMetadata(installDir: string, metadata: ReleaseInstallMetadata): void {
+  fs.writeFileSync(
+    releaseInstallMetadataPath(installDir),
+    JSON.stringify(metadata, Object.keys(metadata).sort(), 2),
+    "utf8",
+  );
+}
+
 function loadSourceMetadata(p: string): Partial<SourceMetadata> | null {
   if (!fs.existsSync(p)) return null;
   try {
@@ -195,10 +269,10 @@ function sourceInstallMatches(
   );
 }
 
-function selectAsset(
+function selectReleaseAsset(
   release: Record<string, unknown>,
   target: string,
-): { name: string; url: string; archiveExt: ArchiveExt } {
+): InstallAsset | null {
   const assets = release["assets"];
   if (!Array.isArray(assets)) throw new Error("release payload has no assets array");
   // Preference order: tar.zst (newer releases — soldr 0.7.30+ ships these
@@ -214,11 +288,111 @@ function selectAsset(
       if (name.includes(target) && name.endsWith(suffix)) {
         const url = a["browser_download_url"];
         if (typeof url !== "string") continue;
-        return { name, url, archiveExt: ext };
+        return { name, url, archiveExt: ext, source: "github-release" };
       }
     }
   }
-  throw new Error(`no release asset found for target ${target}`);
+  return null;
+}
+
+function selectPypiWheel(pypiRelease: Record<string, unknown>, target: string): InstallAsset | null {
+  const files = pypiRelease["urls"];
+  if (!Array.isArray(files)) throw new Error("PyPI release payload has no urls array");
+  for (const file of files) {
+    if (!pypiWheelHasTarget(file, target) || typeof file !== "object" || file === null) continue;
+    const record = file as Record<string, unknown>;
+    const name = record["filename"] as string;
+    const url = record["url"] as string;
+    const digests = record["digests"];
+    const expectedSha256 =
+      typeof digests === "object" &&
+      digests !== null &&
+      typeof (digests as Record<string, unknown>)["sha256"] === "string"
+        ? ((digests as Record<string, unknown>)["sha256"] as string).toLowerCase()
+        : undefined;
+    if (!expectedSha256 || !/^[0-9a-f]{64}$/.test(expectedSha256)) {
+      throw new Error(`PyPI wheel ${name} has no valid SHA-256 digest`);
+    }
+    return {
+      name,
+      url,
+      archiveExt: "whl",
+      source: "pypi-wheel",
+      expectedSha256,
+    };
+  }
+  return null;
+}
+
+function archiveExtForFilename(filename: string): Exclude<ArchiveExt, "whl"> | null {
+  if (filename.endsWith(".tar.zst")) return "tar.zst";
+  if (filename.endsWith(".tar.gz") || filename.endsWith(".tgz")) return "tar.gz";
+  if (filename.endsWith(".zip")) return "zip";
+  return null;
+}
+
+function toolchainPlatformForTarget(target: string): Record<string, string> | null {
+  const platforms: Readonly<Record<string, Record<string, string>>> = {
+    // cargo-chef is a host utility. Prefer the catalogue's static musl builds
+    // on Linux so installing a manylinux Soldr wheel does not silently raise
+    // the host glibc floor to whatever built the helper.
+    "x86_64-unknown-linux-gnu": { os: "linux", arch: "x86_64", libc: "musl" },
+    "aarch64-unknown-linux-gnu": { os: "linux", arch: "aarch64", libc: "musl" },
+    "x86_64-apple-darwin": { os: "darwin", arch: "x86_64" },
+    "aarch64-apple-darwin": { os: "darwin", arch: "aarch64" },
+    "x86_64-pc-windows-msvc": { os: "windows", arch: "x86_64", abi: "msvc" },
+    "aarch64-pc-windows-msvc": { os: "windows", arch: "aarch64", abi: "msvc" },
+  };
+  return platforms[target] ?? null;
+}
+
+function selectToolchainSupportAsset(
+  catalog: Record<string, unknown>,
+  version: string,
+  target: string,
+): SupportAsset | null {
+  const releases = catalog["releases"];
+  if (!Array.isArray(releases)) throw new Error("soldr-toolchain cargo-chef catalogue has no releases array");
+  const releaseTag = version.startsWith("v") ? version : `v${version}`;
+  const release = releases.find(
+    (candidate) =>
+      typeof candidate === "object" &&
+      candidate !== null &&
+      (candidate as Record<string, unknown>)["version"] === releaseTag,
+  ) as Record<string, unknown> | undefined;
+  if (!release) return null;
+  const expectedPlatform = toolchainPlatformForTarget(target);
+  if (!expectedPlatform) return null;
+  const platforms = release["platforms"];
+  if (!Array.isArray(platforms)) return null;
+  for (const candidate of platforms) {
+    if (typeof candidate !== "object" || candidate === null) continue;
+    const record = candidate as Record<string, unknown>;
+    const platform = record["platform"];
+    const asset = record["asset"];
+    if (typeof platform !== "object" || platform === null || typeof asset !== "object" || asset === null) continue;
+    const platformRecord = platform as Record<string, unknown>;
+    if (!Object.entries(expectedPlatform).every(([key, value]) => platformRecord[key] === value)) continue;
+    const assetRecord = asset as Record<string, unknown>;
+    const filename = typeof assetRecord["filename"] === "string" ? assetRecord["filename"] : "";
+    const archiveExt = archiveExtForFilename(filename);
+    const urls = Array.isArray(assetRecord["urls"])
+      ? assetRecord["urls"].filter((url): url is string => typeof url === "string" && url.length > 0)
+      : [];
+    const sha256 = typeof assetRecord["sha256"] === "string" ? assetRecord["sha256"].toLowerCase() : "";
+    if (!archiveExt || urls.length === 0 || !/^[0-9a-f]{64}$/.test(sha256)) {
+      throw new Error(`soldr-toolchain cargo-chef ${releaseTag} asset for ${target} is incomplete`);
+    }
+    return { filename, urls, sha256, archiveExt };
+  }
+  return null;
+}
+
+function prepareZipArchivePath(archivePath: string, archiveExt: ArchiveExt): string {
+  if (archiveExt !== "whl") return archivePath;
+  const zipPath = `${archivePath}.zip`;
+  fs.copyFileSync(archivePath, zipPath);
+  return zipPath;
 }
 
 async function extractBinary(
@@ -228,8 +402,12 @@ async function extractBinary(
   outDir: string,
 ): Promise<string> {
   fs.mkdirSync(outDir, { recursive: true });
-  if (archiveExt === "zip") {
-    await tc.extractZip(archivePath, outDir);
+  if (archiveExt === "zip" || archiveExt === "whl") {
+    // Windows PowerShell's Expand-Archive rejects a valid ZIP payload when
+    // its filename ends in .whl. tool-cache can fall back to that extractor
+    // on self-hosted Windows runners, so give the verified wheel a .zip name.
+    const zipPath = prepareZipArchivePath(archivePath, archiveExt);
+    await tc.extractZip(zipPath, outDir);
   } else if (archiveExt === "tar.gz") {
     await tc.extractTar(archivePath, outDir, "xz");
   } else {
@@ -436,6 +614,7 @@ function hasRequiredReleasePayload(
   installDir: string,
   binaryName: string,
   resolvedVersion: string,
+  requireBundledCargoChef = true,
 ): boolean {
   const usesMulticallRuntime = versionAtLeast(resolvedVersion, "0.8.1");
   const needsEmbeddedZccachePayload = versionAtLeast(resolvedVersion, "0.7.103");
@@ -451,9 +630,33 @@ function hasRequiredReleasePayload(
 
   return (
     hasRuntimePayload &&
-    (!needsCargoChef || hasBundledCargoChefPayload(installDir, binaryName)) &&
+    (!needsCargoChef || !requireBundledCargoChef || hasBundledCargoChefPayload(installDir, binaryName)) &&
     (!needsLegacyClangShim || hasBundledClangShimPayload(installDir, binaryName))
   );
+}
+
+function ensureMulticallRuntimeAlias(installDir: string, binaryName: string): string {
+  const suffix = platformBinarySuffix(binaryName);
+  const source = path.join(installDir, binaryName);
+  const destination = path.join(installDir, `soldr-daemon${suffix}`);
+  try {
+    fs.rmSync(destination, { force: true });
+  } catch {
+    // The following link/copy reports the actionable failure.
+  }
+  try {
+    fs.linkSync(source, destination);
+  } catch {
+    fs.copyFileSync(source, destination);
+  }
+  if (process.platform !== "win32") fs.chmodSync(destination, 0o755);
+  return path.basename(destination);
+}
+
+function exportBundledCargoChefIfPresent(installDir: string, binaryName: string): void {
+  if (hasBundledCargoChefPayload(installDir, binaryName)) {
+    core.exportVariable("SOLDR_CARGO_CHEF_LOCAL_DIR", installDir);
+  }
 }
 
 function clearBundledReleasePayload(installDir: string, binaryName: string): void {
@@ -540,6 +743,11 @@ async function buildFromSource(opts: {
       target,
       binary_name: binaryName,
     });
+    try {
+      fs.rmSync(releaseInstallMetadataPath(installDir), { force: true });
+    } catch {
+      // best effort stale release-metadata cleanup
+    }
     return destination;
   } finally {
     try {
@@ -561,6 +769,64 @@ async function downloadWithHeaders(url: string, dest: string, headers: Record<st
   const buffer = Buffer.from(await response.arrayBuffer());
   fs.mkdirSync(path.dirname(dest), { recursive: true });
   fs.writeFileSync(dest, buffer);
+}
+
+function fileSha256(filePath: string): string {
+  return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
+function verifyDownloadedAsset(filePath: string, expectedSha256?: string): void {
+  if (!expectedSha256) return;
+  const actual = fileSha256(filePath);
+  if (actual !== expectedSha256.toLowerCase()) {
+    throw new Error(
+      `SHA-256 mismatch for ${path.basename(filePath)}: expected ${expectedSha256}, got ${actual}`,
+    );
+  }
+}
+
+async function installCargoChefSupport(opts: {
+  version: string;
+  target: string;
+  installDir: string;
+  binaryName: string;
+  log: (message: string) => void;
+}): Promise<string> {
+  const { version, target, installDir, binaryName, log } = opts;
+  const catalogUrl = "https://zackees.github.io/soldr-toolchain/cargo-chef/manifest.json";
+  const catalog = await fetchJson(catalogUrl, "");
+  const asset = selectToolchainSupportAsset(catalog, version, target);
+  if (!asset) {
+    throw new Error(`soldr-toolchain has no cargo-chef ${version} support asset for ${target}`);
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-cargo-chef-"));
+  const cargoChefName = `cargo-chef${platformBinarySuffix(binaryName)}`;
+  const failures: string[] = [];
+  try {
+    for (const [index, url] of asset.urls.entries()) {
+      const archivePath = path.join(tmp, `${index}-${asset.filename}`);
+      const extractDir = path.join(tmp, `extract-${index}`);
+      try {
+        log(`Downloading cargo-chef ${version} support for ${target}`);
+        await downloadWithHeaders(url, archivePath, {});
+        verifyDownloadedAsset(archivePath, asset.sha256);
+        const source = await extractBinary(archivePath, asset.archiveExt, cargoChefName, extractDir);
+        const destination = path.join(installDir, cargoChefName);
+        fs.copyFileSync(source, destination);
+        if (process.platform !== "win32") fs.chmodSync(destination, 0o755);
+        return cargoChefName;
+      } catch (error) {
+        failures.push(error instanceof Error ? error.message : String(error));
+      }
+    }
+  } finally {
+    try {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    } catch {
+      // best effort cleanup
+    }
+  }
+  throw new Error(`failed to install cargo-chef ${version} support for ${target}: ${failures.join("; ")}`);
 }
 
 export async function ensureSoldr(opts: {
@@ -616,12 +882,19 @@ export async function ensureSoldr(opts: {
   const current = await installedVersion(binaryPath);
   if (current !== null && resolvedVersion) {
     if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
+      const installMetadata = loadReleaseInstallMetadata(installDir);
+      const isPypiWheelInstall =
+        installMetadata?.source === "pypi-wheel" &&
+        installMetadata.target === target &&
+        normalizeVersion(installMetadata.version ?? "") === normalizeVersion(resolvedVersion);
       const hasRequiredPayload = hasRequiredReleasePayload(
         installDir,
         binaryName,
         resolvedVersion,
+        !isPypiWheelInstall || bundledCargoChefVersionForSoldr(resolvedVersion) !== null,
       );
       if (hasRequiredPayload) {
+        exportBundledCargoChefIfPresent(installDir, binaryName);
         log(`Using cached soldr ${current} at ${binaryPath}`);
         core.setOutput("installed_version", current);
         return;
@@ -635,25 +908,59 @@ export async function ensureSoldr(opts: {
 
   log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
   const release = await fetchRelease(repo, resolvedVersion, githubToken);
-  const { name: assetName, url: downloadUrl, archiveExt } = selectAsset(release, target);
   const tagName = typeof release["tag_name"] === "string" ? (release["tag_name"] as string) : resolvedVersion;
+  let asset = selectReleaseAsset(release, target);
+  if (!asset) {
+    if (!canUseOfficialPypiFallback(repo, tagName)) {
+      throw new Error(
+        `no release asset found for target ${target} in ${repo}; ` +
+        `PyPI fallback is supported only for known wheel-compatible official releases`,
+      );
+    }
+    log(`Combined GitHub release archive is absent for ${target}; resolving the exact ${tagName} PyPI wheel`);
+    const pypiRelease = await fetchPypiRelease(tagName);
+    asset = selectPypiWheel(pypiRelease, target);
+    if (!asset) {
+      throw new Error(`no combined release archive or PyPI wheel found for target ${target} at ${tagName}`);
+    }
+  }
+  const { name: assetName, url: downloadUrl, archiveExt } = asset;
 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-release-"));
   try {
     const archivePath = path.join(tmp, assetName);
     const extractDir = path.join(tmp, "extract");
     log(`Downloading ${assetName}`);
-    await downloadWithHeaders(downloadUrl, archivePath, requestHeaders(githubToken));
+    const downloadHeaders = asset.source === "github-release" ? requestHeaders(githubToken) : {};
+    await downloadWithHeaders(downloadUrl, archivePath, downloadHeaders);
+    verifyDownloadedAsset(archivePath, asset.expectedSha256);
     const sourceBinary = await extractBinary(archivePath, archiveExt, binaryName, extractDir);
     clearBundledReleasePayload(installDir, binaryName);
     fs.copyFileSync(sourceBinary, binaryPath);
     if (process.platform !== "win32") {
       fs.chmodSync(binaryPath, 0o755);
     }
-    const copied = copyBundledReleasePayload(extractDir, installDir, binaryName);
+    const copied = asset.source === "pypi-wheel"
+      ? [ensureMulticallRuntimeAlias(installDir, binaryName)]
+      : copyBundledReleasePayload(extractDir, installDir, binaryName);
+    const cargoChefVersion = asset.source === "pypi-wheel"
+      ? bundledCargoChefVersionForSoldr(tagName)
+      : null;
+    if (cargoChefVersion) {
+      copied.push(
+        await installCargoChefSupport({
+          version: cargoChefVersion,
+          target,
+          installDir,
+          binaryName,
+          log,
+        }),
+      );
+    }
     if (copied.length > 0) {
       log(`Installed bundled soldr release payload: ${copied.join(", ")}`);
     }
+    exportBundledCargoChefIfPresent(installDir, binaryName);
   } finally {
     try {
       fs.rmSync(tmp, { recursive: true, force: true });
@@ -661,8 +968,26 @@ export async function ensureSoldr(opts: {
       // best effort cleanup
     }
   }
+  if (asset.source === "pypi-wheel") {
+    const installed = await installedVersion(binaryPath);
+    if (installed === null || normalizeVersion(installed) !== normalizeVersion(tagName)) {
+      throw new Error(
+        `installed PyPI wheel did not execute as exact soldr ${normalizeVersion(tagName)} ` +
+        `(reported ${installed ?? "no valid version"})`,
+      );
+    }
+    if (!hasRequiredReleasePayload(installDir, binaryName, tagName, true)) {
+      throw new Error(`installed PyPI wheel is missing required runtime payload for soldr ${tagName}`);
+    }
+  }
   const metadataPath = sourceMetadataPath(installDir);
   if (fs.existsSync(metadataPath)) fs.unlinkSync(metadataPath);
+  writeReleaseInstallMetadata(installDir, {
+    source: asset.source,
+    version: tagName,
+    target,
+    asset_name: assetName,
+  });
   log(`Installed soldr ${tagName} at ${binaryPath}`);
   core.setOutput("installed_version", tagName);
 }
@@ -670,9 +995,12 @@ export async function ensureSoldr(opts: {
 export const _internal = {
   bundledReleasePayloadNames,
   bundledZccacheBinaryNames,
+  bundledCargoChefVersionForSoldr,
+  canUseOfficialPypiFallback,
   clearBundledReleasePayload,
   copyBundledReleasePayload,
   embeddedZccacheBinaryNames,
+  ensureMulticallRuntimeAlias,
   extractTarBuffer,
   hasBundledCargoChefPayload,
   hasBundledClangShimPayload,
@@ -680,5 +1008,10 @@ export const _internal = {
   hasEmbeddedZccachePayload,
   hasMulticallRuntimePayload,
   hasRequiredReleasePayload,
+  prepareZipArchivePath,
+  selectPypiWheel,
+  selectReleaseAsset,
+  selectToolchainSupportAsset,
+  verifyDownloadedAsset,
   versionAtLeast,
 };

@@ -95,6 +95,135 @@ test("copyBundledReleasePayload keeps bundled tools from combined soldr archives
   }
 });
 
+test("selectPypiWheel maps an official wheel to the requested target and digest", () => {
+  const selected = _internal.selectPypiWheel(
+    {
+      urls: [
+        {
+          filename: "soldr-0.9.0-py3-none-win_amd64.whl",
+          url: "https://files.pythonhosted.org/soldr-0.9.0-py3-none-win_amd64.whl",
+          digests: { sha256: "a".repeat(64) },
+          yanked: false,
+        },
+        {
+          filename: "soldr-0.9.0-py3-none-win_arm64.whl",
+          url: "https://files.pythonhosted.org/soldr-0.9.0-py3-none-win_arm64.whl",
+          digests: { sha256: "b".repeat(64) },
+          yanked: false,
+        },
+      ],
+    },
+    "aarch64-pc-windows-msvc",
+  );
+
+  assert.deepEqual(selected, {
+    name: "soldr-0.9.0-py3-none-win_arm64.whl",
+    url: "https://files.pythonhosted.org/soldr-0.9.0-py3-none-win_arm64.whl",
+    archiveExt: "whl",
+    source: "pypi-wheel",
+    expectedSha256: "b".repeat(64),
+  });
+});
+
+test("selectPypiWheel rejects wheel metadata without a valid SHA-256", () => {
+  assert.equal(
+    _internal.selectPypiWheel(
+      {
+        urls: [
+          {
+            filename: "soldr-0.9.0-py3-none-win_arm64.whl",
+            url: "https://files.pythonhosted.org/soldr-0.9.0-py3-none-win_arm64.whl",
+            digests: {},
+          },
+        ],
+      },
+      "aarch64-pc-windows-msvc",
+    ),
+    null,
+  );
+});
+
+test("wheel extraction stages a .zip name for Windows PowerShell compatibility", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-wheel-zip-"));
+  try {
+    const wheel = path.join(root, "soldr.whl");
+    fs.writeFileSync(wheel, "zip payload");
+    const staged = _internal.prepareZipArchivePath(wheel, "whl");
+    assert.equal(staged, `${wheel}.zip`);
+    assert.equal(fs.readFileSync(staged, "utf8"), "zip payload");
+    assert.equal(_internal.prepareZipArchivePath(staged, "zip"), staged);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PyPI fallback is restricted to the official soldr repository", () => {
+  assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.9.0"), true);
+  assert.equal(_internal.canUseOfficialPypiFallback("ZACKEES/SOLDR", "v0.9.0"), true);
+  assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.0"), false);
+  assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.8.44"), false);
+});
+
+test("soldr 0.9.0 wheel installs use its pinned cargo-chef support release", () => {
+  assert.equal(_internal.bundledCargoChefVersionForSoldr("v0.9.0"), "0.1.73");
+  assert.equal(_internal.bundledCargoChefVersionForSoldr("0.9.1"), null);
+});
+
+test("selectToolchainSupportAsset matches the complete host platform", () => {
+  const selected = _internal.selectToolchainSupportAsset(
+    {
+      releases: [
+        {
+          version: "v0.1.73",
+          platforms: [
+            {
+              platform: { os: "linux", arch: "x86_64", libc: "glibc" },
+              asset: { filename: "wrong.tar.zst", urls: ["https://example.invalid/wrong"], sha256: "a".repeat(64) },
+            },
+            {
+              platform: { os: "linux", arch: "x86_64", libc: "musl" },
+              asset: { filename: "bundle.tar.zst", urls: ["https://example.invalid/right"], sha256: "b".repeat(64) },
+            },
+          ],
+        },
+      ],
+    },
+    "0.1.73",
+    "x86_64-unknown-linux-gnu",
+  );
+
+  assert.deepEqual(selected, {
+    filename: "bundle.tar.zst",
+    urls: ["https://example.invalid/right"],
+    sha256: "b".repeat(64),
+    archiveExt: "tar.zst",
+  });
+});
+
+test("wheel installs materialize the soldr-daemon multicall alias", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-wheel-alias-"));
+  try {
+    fs.writeFileSync(path.join(root, "soldr.exe"), "multicall");
+    assert.equal(_internal.ensureMulticallRuntimeAlias(root, "soldr.exe"), "soldr-daemon.exe");
+    assert.equal(fs.readFileSync(path.join(root, "soldr-daemon.exe"), "utf8"), "multicall");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PyPI wheel digest verification fails closed", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-wheel-digest-"));
+  try {
+    const wheel = path.join(root, "soldr.whl");
+    fs.writeFileSync(wheel, "verified wheel bytes");
+    const digest = "0772cc9226f7820d08d74d548c7e451b651fcae0195340f609a3aa011fbe9c76";
+    assert.doesNotThrow(() => _internal.verifyDownloadedAsset(wheel, digest));
+    assert.throws(() => _internal.verifyDownloadedAsset(wheel, "0".repeat(64)), /SHA-256 mismatch/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("clearBundledReleasePayload removes stale sibling bundled tools", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "ensure-soldr-clear-"));
   try {

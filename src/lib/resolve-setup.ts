@@ -1029,9 +1029,6 @@ export async function resolveSetup(
   if (cargoRegistryCacheEnabled) {
     setEnv("SOLDR_SKIP_CARGO_REGISTRY_SAVE", "1");
   }
-  if (!soldrRef && semverAtLeast(soldrVersionResolved || soldrVersionRequested, "0.7.43")) {
-    setEnv("SOLDR_CARGO_CHEF_LOCAL_DIR", binDir);
-  }
   if (dylintCacheEnabled) {
     setEnv("DYLINT_DRIVER_PATH", dylintDriverPath);
     setEnv("SETUP_SOLDR_DYLINT_CACHE_KEY", dylintCacheKey);

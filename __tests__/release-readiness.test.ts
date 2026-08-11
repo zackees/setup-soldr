@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  PYPI_WHEEL_PLATFORM_TAGS,
   REQUIRED_RELEASE_TARGETS,
   assertReleaseReady,
+  pypiWheelHasTarget,
   retryReleaseRequest,
 } from "../src/lib/release-readiness.js";
 
@@ -26,6 +28,39 @@ test("release readiness rejects drafts and missing target assets", () => {
   const release = readyRelease();
   release["assets"] = (release["assets"] as unknown[]).slice(1);
   assert.throws(() => assertReleaseReady(release), /x86_64-unknown-linux-gnu/);
+});
+
+test("release readiness accepts a PyPI wheel when a combined archive is absent", () => {
+  const release = readyRelease();
+  release["assets"] = (release["assets"] as unknown[]).slice(1);
+  const target = REQUIRED_RELEASE_TARGETS[0];
+  const platformTag = PYPI_WHEEL_PLATFORM_TAGS[target];
+  const pypi = {
+    urls: [
+      {
+        filename: `soldr-0.9.0-py3-none-${platformTag}.whl`,
+        url: `https://files.pythonhosted.org/soldr-0.9.0-py3-none-${platformTag}.whl`,
+        yanked: false,
+        digests: { sha256: "a".repeat(64) },
+      },
+    ],
+  };
+
+  assert.equal(pypiWheelHasTarget((pypi.urls as unknown[])[0], target), true);
+  assert.doesNotThrow(() => assertReleaseReady(release, REQUIRED_RELEASE_TARGETS, pypi));
+});
+
+test("release readiness rejects yanked or wrong-platform wheel fallbacks", () => {
+  const target = "aarch64-pc-windows-msvc";
+  const good = {
+    filename: "soldr-0.9.0-py3-none-win_arm64.whl",
+    url: "https://files.pythonhosted.org/soldr-0.9.0-py3-none-win_arm64.whl",
+    digests: { sha256: "b".repeat(64) },
+  };
+  assert.equal(pypiWheelHasTarget(good, target), true);
+  assert.equal(pypiWheelHasTarget({ ...good, yanked: true }, target), false);
+  assert.equal(pypiWheelHasTarget({ ...good, filename: "soldr-0.9.0-py3-none-win_amd64.whl" }, target), false);
+  assert.equal(pypiWheelHasTarget({ ...good, digests: {} }, target), false);
 });
 
 test("a transient 404 retries the exact requested release", async () => {

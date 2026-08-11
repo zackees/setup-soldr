@@ -279,9 +279,9 @@ test("dylint mode resolves newest nightly identity and keys the foundation cache
   );
 });
 
-test("soldr 0.7.43+ exports bundled cargo-chef local dir", async () => {
+test("cargo-chef local dir is exported only after its bundled binary is installed", async () => {
   const { result } = await run({}, { INPUT_VERSION: "0.7.43" });
-  assert.equal(result.envExports["SOLDR_CARGO_CHEF_LOCAL_DIR"], result.binDir);
+  assert.equal(result.envExports["SOLDR_CARGO_CHEF_LOCAL_DIR"], undefined);
 });
 
 test("invalid dylint cache boolean rejects with clear error", async () => {

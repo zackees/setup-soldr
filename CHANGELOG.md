@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Default to soldr `0.9.0` (was `0.8.43`). Setup keeps combined GitHub
+  release archives as the preferred install source and falls back to the
+  matching hash-verified PyPI wheel when an exact runner archive is absent.
+  Wheel installs materialize the `soldr-daemon` multicall alias locally and
+  hydrate soldr's pinned cargo-chef helper from the same hash-verified public
+  toolchain catalogue used to assemble combined release archives. Linux wheel
+  installs select the catalogue's static musl helper so the fallback preserves
+  the wheel's broad glibc compatibility. Promotion now requires native wheel
+  install smokes on Linux x64/ARM64, Intel macOS, and Windows ARM64.
+
 - Make the cargo-registry Soldr path reachable behind
   `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` (#266). The v2 cache owns a Soldr archive
   for `registry/` plus a separate tar+zstd archive containing only
