@@ -20,6 +20,7 @@ const wheelPlatformTags = {
 
 const cargoChefVersionBySoldr = {
   "0.9.0": "0.1.73",
+  "0.9.1": "0.1.73",
 };
 
 const cargoChefPlatforms = {

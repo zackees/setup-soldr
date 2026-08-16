@@ -160,13 +160,16 @@ test("wheel extraction stages a .zip name for Windows PowerShell compatibility",
 test("PyPI fallback is restricted to the official soldr repository", () => {
   assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.9.0"), true);
   assert.equal(_internal.canUseOfficialPypiFallback("ZACKEES/SOLDR", "v0.9.0"), true);
+  assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.9.1"), true);
   assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.0"), false);
+  assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.1"), false);
   assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.8.44"), false);
 });
 
-test("soldr 0.9.0 wheel installs use its pinned cargo-chef support release", () => {
+test("soldr 0.9.0 and 0.9.1 wheel installs use their pinned cargo-chef support release", () => {
   assert.equal(_internal.bundledCargoChefVersionForSoldr("v0.9.0"), "0.1.73");
-  assert.equal(_internal.bundledCargoChefVersionForSoldr("0.9.1"), null);
+  assert.equal(_internal.bundledCargoChefVersionForSoldr("v0.9.1"), "0.1.73");
+  assert.equal(_internal.bundledCargoChefVersionForSoldr("0.9.2"), null);
 });
 
 test("selectToolchainSupportAsset matches the complete host platform", () => {

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Default to soldr `0.9.1` (was `0.9.0`). 0.9.1 keeps the same install
+  contract as 0.9.0: combined GitHub release archives preferred, exact
+  hash-verified PyPI wheel fallback for wheel-compatible releases (now
+  `0.9.0` and `0.9.1`), and the same pinned cargo-chef `0.1.73` helper.
+  0.9.1 fixes the Linux-hosted MSVC wheel link (`lld-link` linker export)
+  and the daemon stop-then-relaunch root-ownership race.
+
 - Default to soldr `0.9.0` (was `0.8.43`). Setup keeps combined GitHub
   release archives as the preferred install source and falls back to the
   matching hash-verified PyPI wheel when an exact runner archive is absent.
