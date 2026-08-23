@@ -20,9 +20,9 @@ inputs:
     required: false
     default: "true"
   version:
-    description: Soldr version or tag to install. Defaults to 0.9.1.
+    description: Soldr version or tag to install. Defaults to 0.9.2.
     required: false
-    default: "0.9.1"
+    default: "0.9.2"
   repo:
     description: Internal override for the Soldr source repository used by integration branches.
     required: false
