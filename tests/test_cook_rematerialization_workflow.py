@@ -70,9 +70,12 @@ def test_warm_gate_requires_transport_hits_zero_external_work_and_ten_x_speedup(
     assert "ZCCACHE_DISABLE=1 soldr cargo build" in script
     assert "--message-format=json-render-diagnostics" in script
     assert "assert_warm.py" in script
+    # setup-soldr's own copy, not the soldr submodule's. The Contract Tests
+    # job checks out without submodules, so reading through _vender/soldr
+    # raises FileNotFoundError in CI while passing locally against a populated
+    # submodule -- a test that only fails where nobody is looking.
     assertion_source = (
-        REPO_ROOT
-        / "_vender/soldr/ci/cook_rematerialization/assert_warm.py"
+        REPO_ROOT / "tests/cook-rematerialization/assert_warm.py"
     ).read_text(encoding="utf-8")
     assert 'if report["external_dirty"]' in assertion_source
     assert 'if report["external_build_script_runs"]' in assertion_source
