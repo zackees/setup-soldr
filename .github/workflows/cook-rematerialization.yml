@@ -255,7 +255,7 @@ jobs:
           printf '%s\n' "$warm_ms" > "$RUNNER_TEMP/warm-ms.txt"
           printf '%s\n' "$warm_ms" > "$RUNNER_TEMP/warm-samples.txt"
           test "$(target/release/cook-rematerialization-fixture)" = '{"value":42}'
-          python "$GITHUB_WORKSPACE/_vender/soldr/ci/cook_rematerialization/assert_warm.py" \
+          python "$GITHUB_WORKSPACE/tests/cook-rematerialization/assert_warm.py" \
             "$RUNNER_TEMP/warm-messages.jsonl" \
             "$RUNNER_TEMP/warm-stderr.log" \
             "$RUNNER_TEMP/baseline-ms.txt" \
