@@ -19,7 +19,15 @@ RUN python3 -m venv /opt/soldr \
     && /opt/soldr/bin/pip install --disable-pip-version-check "soldr==${SOLDR_VERSION}" \
     && /opt/soldr/bin/soldr --version
 
-ENV PATH="/opt/soldr/bin:${PATH}" \
+# The rust image ships CARGO_HOME=/usr/local/cargo. Relocate it onto the path
+# the stack actually mounts a volume at, so the registry the seed downloads is
+# the registry the warm container restores. Without this the seed archived a
+# directory Cargo never wrote to (104 bytes, 0 entries) and the warm build
+# would silently re-download every crate -- an offline rematerialization proof
+# passing for the wrong reason. Toolchain binaries stay on PATH; RUSTUP_HOME
+# is untouched.
+ENV CARGO_HOME=/root/.cargo \
+    PATH="/opt/soldr/bin:${PATH}" \
     CARGO_BUILD_JOBS=2 \
     SOLDR_JOBS=2
 WORKDIR /workspace
