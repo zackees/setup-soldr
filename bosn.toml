@@ -11,6 +11,10 @@ runner = { scope = "stack", destination = "/runner" }
 [stack.integration.mounts]
 repo = { source = ".", destination = "/repo" }
 
+[task.build-action]
+stack = "integration"
+cmd = "rm -rf /build && git clone --no-hardlinks /repo /build && cd /build && npm ci && npm run build && cp dist/main.js dist/post.js /repo/dist/ && cp cook/dist/main.js cook/dist/post.js /repo/cook/dist/ && cp cleanup/dist/index.js /repo/cleanup/dist/index.js"
+
 [task.source-path-smoke]
 stack = "integration"
 cmd = "bash /repo/tests/cook-rematerialization/source_path_smoke.sh"

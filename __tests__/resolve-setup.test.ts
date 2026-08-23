@@ -453,17 +453,18 @@ test("source ref changes setup cache key", async () => {
   assert.notEqual(base["cache_key"], branch["cache_key"]);
 });
 
-test("local source identity changes when the working tree changes", () => {
+test("local source identity requires a clean pinned checkout", () => {
   const root = mkTmp("setup-soldr-local-source-");
   const sourcePath = path.join(root, "soldr");
   try {
     initGitSource(sourcePath);
     const clean = resolveLocalSourceIdentity(sourcePath);
+    assert.match(clean, /^local-[0-9a-f]{40}$/);
     fs.appendFileSync(path.join(sourcePath, "Cargo.toml"), "\n# dirty\n", "utf8");
-    const dirty = resolveLocalSourceIdentity(sourcePath);
-    assert.match(clean, /^local-[0-9a-f]{12}-[0-9a-f]{12}$/);
-    assert.match(dirty, /^local-[0-9a-f]{12}-[0-9a-f]{12}$/);
-    assert.notEqual(clean, dirty);
+    assert.throws(
+      () => resolveLocalSourceIdentity(sourcePath),
+      /clean pinned checkout/,
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -489,20 +490,21 @@ test("source-path bypasses release lookup and keys caches on the pinned checkout
     });
 
     assert.equal(result.soldrSourcePath, sourcePath);
-    assert.match(result.soldrSourceIdentity, /^local-[0-9a-f]{12}-[0-9a-f]{12}$/);
+    assert.match(result.soldrSourceIdentity, /^local-[0-9a-f]{40}$/);
     assert.equal(result.soldrRef, "local-source");
     assert.equal(result.soldrVersionRequested, "");
     assert.equal(result.soldrVersionResolved, result.soldrSourceIdentity);
 
     fs.appendFileSync(path.join(sourcePath, "Cargo.toml"), "\n# local edit\n", "utf8");
-    const dirtyResult = await resolveSetup(ctx, inputs, {
-      fetchReleaseTag: async () => {
-        throw new Error("source-path must not query a release");
-      },
-      systemRustupOverride: async () => false,
-    });
-    assert.notEqual(result.soldrSourceIdentity, dirtyResult.soldrSourceIdentity);
-    assert.notEqual(result.setupCache.key, dirtyResult.setupCache.key);
+    await assert.rejects(
+      resolveSetup(ctx, inputs, {
+        fetchReleaseTag: async () => {
+          throw new Error("source-path must not query a release");
+        },
+        systemRustupOverride: async () => false,
+      }),
+      /clean pinned checkout/,
+    );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

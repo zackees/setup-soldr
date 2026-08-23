@@ -7,7 +7,6 @@
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs";
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import * as core from "@actions/core";
 import {
@@ -277,7 +276,7 @@ export function resolveLocalSourceIdentity(sourcePath: string): string {
   const runGit = (args: string[]): string =>
     execFileSync("git", ["-C", sourcePath, ...args], {
       encoding: "utf8",
-      maxBuffer: 64 * 1024 * 1024,
+      maxBuffer: 4 * 1024 * 1024,
       windowsHide: true,
     }).trim();
 
@@ -292,30 +291,13 @@ export function resolveLocalSourceIdentity(sourcePath: string): string {
     );
   }
 
-  const status = runGit(["status", "--porcelain=v1", "--untracked-files=all"]);
-  const digest = createHash("sha256");
-  digest.update(head, "utf8");
-  digest.update("\0");
-  digest.update(status, "utf8");
-  if (status) {
-    digest.update("\0");
-    digest.update(runGit(["diff", "--binary", "HEAD", "--", "."]), "utf8");
-    const untracked = runGit(["ls-files", "--others", "--exclude-standard", "-z"])
-      .split("\0")
-      .filter(Boolean)
-      .sort();
-    for (const relative of untracked) {
-      const absolute = path.join(sourcePath, ...relative.split("/"));
-      digest.update("\0");
-      digest.update(relative, "utf8");
-      try {
-        digest.update(fs.readFileSync(absolute));
-      } catch {
-        // A concurrently removed untracked file is already represented by status.
-      }
-    }
+  const trackedStatus = runGit(["status", "--porcelain=v1", "--untracked-files=no"]);
+  if (trackedStatus) {
+    throw new Error(
+      `source-path must be a clean pinned checkout; commit tracked changes before use: ${sourcePath}`,
+    );
   }
-  return `local-${head.slice(0, 12)}-${digest.digest("hex").slice(0, 12)}`;
+  return `local-${head}`;
 }
 
 /**
