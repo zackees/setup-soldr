@@ -26,8 +26,17 @@ RUN python3 -m venv /opt/soldr \
 # would silently re-download every crate -- an offline rematerialization proof
 # passing for the wrong reason. Toolchain binaries stay on PATH; RUSTUP_HOME
 # is untouched.
-ENV CARGO_HOME=/root/.cargo \
+# ZCCACHE_CACHE_DIR is pinned rather than left to soldr's default so the
+# seed archives exactly the directory the warm run restores. Deriving it
+# would be a guess, and a wrong guess archives an empty tree that still
+# passes a `test -s` check -- the CARGO_HOME defect this file already fixed.
+ENV ZCCACHE_CACHE_DIR=/root/.soldr/cache/zccache \
+    CARGO_HOME=/root/.cargo \
     PATH="/opt/soldr/bin:${PATH}" \
-    CARGO_BUILD_JOBS=2 \
-    SOLDR_JOBS=2
+    CARGO_BUILD_JOBS=1 \
+    SOLDR_JOBS=1
+# Serial builds. This host gives Docker 7.8 GiB shared with whatever else is
+# running, and at 2 jobs the cc-rs compile of sqlite3.c was OOM-killed mid-seed
+# -- soldr named the remedy itself (soldr#2453). A cache proof that dies under
+# memory pressure is measuring the host, not the cache.
 WORKDIR /workspace
