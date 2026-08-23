@@ -78,6 +78,7 @@ export interface RawInputs {
   version: string;
   repo: string;
   ref: string;
+  sourcePath: string;
   cache: string;
   cacheDir: string;
   cacheKeySuffix: string;
@@ -292,6 +293,8 @@ export interface ResolveResult {
   // Soldr
   soldrRepo: string;
   soldrRef: string;
+  soldrSourcePath: string;
+  soldrSourceIdentity: string;
   soldrVersionRequested: string;
   soldrVersionResolved: string;
 

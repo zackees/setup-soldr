@@ -113,6 +113,26 @@ test("buildCookBaseCacheKey stays Cargo.lock-oriented and omits SHA", () => {
   assert.equal(buildCookBaseCacheKey(parts), buildCookBaseCacheKey(parts));
 });
 
+test("cook cache keys honor an explicit cache-key suffix", () => {
+  const parts = {
+    runnerOs: "linux",
+    runnerArch: "x64",
+    libc: "glibc",
+    rustcRelease: "1.84.1",
+    flagsHash: "abc12345",
+    lockHash: "deadbeef",
+    soldrVersion: "0.9.3",
+    keySuffix: "rematerialization/run 42",
+  };
+  assert.match(buildCookCacheKey(parts), /-xrematerialization_run_42$/);
+  assert.match(buildCookBaseCacheKey(parts), /-xrematerialization_run_42$/);
+  const restorePrefix = buildCookDeltaCacheRestorePrefix({
+    ...parts,
+    buildShapeHash: "shape",
+  });
+  assert.match(restorePrefix, /-xrematerialization_run_42-sshape-$/);
+});
+
 test("buildCookDeltaCacheKey includes build shape and commit SHA", () => {
   const parts = {
     runnerOs: "linux",

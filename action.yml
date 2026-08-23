@@ -31,6 +31,10 @@ inputs:
     description: Internal override that builds Soldr from a Git ref instead of downloading a release asset.
     required: false
     default: ""
+  source-path:
+    description: Internal development override that builds Soldr from a pinned local Git checkout (for example `_vender/soldr`) instead of downloading a release asset. The checkout must include its required submodules. Production consumers should leave this empty.
+    required: false
+    default: ""
   token:
     description: GitHub token used for authenticated release metadata and asset download requests.
     required: false
@@ -67,10 +71,10 @@ inputs:
       `cache-preset: minimal`). Valid values:
 
         - "minimal":    build-cache=false, target-cache=false,
-                        cargo-registry-cache=false, prebuild-deps=soldr-cook
-                        (cook-only; smallest footprint).
+                        cargo-registry-cache=true, prebuild-deps=soldr-cook
+                        (dependency rematerialization only).
         - "foundation": build-cache=true, target-cache=false,
-                        cargo-registry-cache=false, prebuild-deps=soldr-cook
+                        cargo-registry-cache=true, prebuild-deps=soldr-cook
                         (the current default; no behavior change).
         - "full":       build-cache=true, target-cache=true,
                         cargo-registry-cache=true, prebuild-deps=soldr-cook,
@@ -396,9 +400,11 @@ inputs:
       setup-soldr#102. Also exports
       SOLDR_SKIP_CARGO_REGISTRY_SAVE=1 so the zccache CLI's built-in
       cargo-registry save (honored in zccache >=1.4.4) no-ops and the
-      payload is not double-saved. Default "false" keeps setup-soldr's
-      default cache footprint small; opt in explicitly when registry restore
-      timing beats the upload/retention cost for the repository.
+      payload is not double-saved. When this input is empty and
+      `prebuild-deps: soldr-cook` is active, setup-soldr enables this required
+      companion automatically so a fresh job rematerializes both compiled
+      dependency artifacts and their registry/git sources. Set "false"
+      explicitly to opt out.
 
       Deliberately NOT cached on this layer: ~/.cargo/.package-cache and
       ~/.cargo/.package-cache-mutate are cargo's "another build is running"
@@ -409,8 +415,9 @@ inputs:
       full $CARGO_HOME so accidentally-staged secrets never enter the
       archive.
 
-      Empty (default) resolves to "false" unless `cache-preset: full`
-      overrides it. (#251 cache-preset)
+      Empty (default) resolves to "true" when `prebuild-deps: soldr-cook`
+      is active, otherwise "false"; cache presets may override it explicitly.
+      (#251, #470)
     required: false
     default: ""
   dylint:
@@ -780,6 +787,18 @@ outputs:
       The resolved `cache-preset` value (one of "minimal", "foundation",
       "full") that filled unset cache-affecting inputs this run. Empty
       string when no preset was set. (#251)
+  cook-cache-hit:
+    description: Whether the long-lived dependency base was restored and loaded for usable rematerialization; a compatible delta hit is reported separately.
+  cook-cache-base-hit:
+    description: Whether the long-lived Cargo.lock-oriented cook base archive was restored and loaded.
+  cook-cache-delta-hit:
+    description: Whether the compatible build-shape cook delta archive was restored and loaded on top of the base.
+  cook-cache-status:
+    description: Dependency-rematerialization transport status (disabled, miss, base-hit, hit, or covered-by-target-cache).
+  cook-cache-load-report-json:
+    description: JSON load diagnostics for the base and delta archives, including restored-file and mtime replay counters.
+  cargo-registry-cache-hit:
+    description: Whether the Cargo registry/git source half of the dependency-rematerialization closure restored an exact cache key.
   build-cache-hit:
     description: >
       Whether the action restored the Soldr-owned zccache compilation

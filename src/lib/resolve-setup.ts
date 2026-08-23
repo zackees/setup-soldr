@@ -7,6 +7,8 @@
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import * as core from "@actions/core";
 import {
   cargoConfigHash,
@@ -271,6 +273,51 @@ export function detectZccachePrivateOverlap(
 // `fetchReleaseTagDefault` and `resolveSoldrReleaseVersion` live in
 // ./fetch-release.js — used directly from resolveSetup() below.
 
+export function resolveLocalSourceIdentity(sourcePath: string): string {
+  const runGit = (args: string[]): string =>
+    execFileSync("git", ["-C", sourcePath, ...args], {
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      windowsHide: true,
+    }).trim();
+
+  let head: string;
+  try {
+    head = runGit(["rev-parse", "HEAD"]);
+  } catch (error) {
+    throw new Error(
+      `source-path must be a Git checkout with a resolvable HEAD: ${sourcePath}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+
+  const status = runGit(["status", "--porcelain=v1", "--untracked-files=all"]);
+  const digest = createHash("sha256");
+  digest.update(head, "utf8");
+  digest.update("\0");
+  digest.update(status, "utf8");
+  if (status) {
+    digest.update("\0");
+    digest.update(runGit(["diff", "--binary", "HEAD", "--", "."]), "utf8");
+    const untracked = runGit(["ls-files", "--others", "--exclude-standard", "-z"])
+      .split("\0")
+      .filter(Boolean)
+      .sort();
+    for (const relative of untracked) {
+      const absolute = path.join(sourcePath, ...relative.split("/"));
+      digest.update("\0");
+      digest.update(relative, "utf8");
+      try {
+        digest.update(fs.readFileSync(absolute));
+      } catch {
+        // A concurrently removed untracked file is already represented by status.
+      }
+    }
+  }
+  return `local-${head.slice(0, 12)}-${digest.digest("hex").slice(0, 12)}`;
+}
+
 /**
  * Resolve setup state. The orchestrator calls this once at the start of the
  * action and uses the returned ResolveResult to drive every subsequent step.
@@ -370,14 +417,14 @@ export async function resolveSetup(
     minimal: {
       buildCache: "false",
       targetCache: "false",
-      cargoRegistryCache: "false",
+      cargoRegistryCache: "true",
       prebuildDeps: "soldr-cook",
       buildCacheMode: "",
     },
     foundation: {
       buildCache: "true",
       targetCache: "false",
-      cargoRegistryCache: "false",
+      cargoRegistryCache: "true",
       prebuildDeps: "soldr-cook",
       buildCacheMode: "",
     },
@@ -562,11 +609,27 @@ export async function resolveSetup(
   }
 
   const soldrRepo = inputs.repo.trim() || "zackees/soldr";
-  const soldrRef = inputs.ref.trim();
-  const soldrVersionRequested = inputs.version.trim();
-  const soldrVersionResolved = await timeSubPhase("resolve", "soldr-version", () =>
-    resolveSoldrReleaseVersion(soldrRepo, soldrVersionRequested, soldrRef, env, deps),
-  );
+  const sourcePathInput = inputs.sourcePath.trim();
+  let soldrSourcePath = "";
+  let soldrSourceIdentity = "";
+  if (sourcePathInput) {
+    soldrSourcePath = expanduser(sourcePathInput, env);
+    if (!path.isAbsolute(soldrSourcePath)) soldrSourcePath = path.join(workspace, soldrSourcePath);
+    soldrSourcePath = path.resolve(soldrSourcePath);
+    if (!fs.existsSync(path.join(soldrSourcePath, "Cargo.toml"))) {
+      throw new Error(`source-path does not contain Cargo.toml: ${soldrSourcePath}`);
+    }
+    soldrSourceIdentity = await timeSubPhase("resolve", "soldr-source", async () =>
+      resolveLocalSourceIdentity(soldrSourcePath),
+    );
+  }
+  const soldrRef = soldrSourcePath ? "local-source" : inputs.ref.trim();
+  const soldrVersionRequested = soldrSourcePath ? "" : inputs.version.trim();
+  const soldrVersionResolved = soldrSourcePath
+    ? soldrSourceIdentity
+    : await timeSubPhase("resolve", "soldr-version", () =>
+      resolveSoldrReleaseVersion(soldrRepo, soldrVersionRequested, soldrRef, env, deps),
+    );
 
   const toolchainSignature = {
     channel: toolchain.cacheChannel,
@@ -578,6 +641,7 @@ export async function resolveSetup(
     setup_cache_layout: setupCacheLayoutValue,
     soldr_repo: soldrRepo,
     soldr_ref: soldrRef || "release",
+    soldr_source_identity: soldrSourceIdentity,
     soldr_version: soldrVersionResolved || soldrRef || "source-ref",
   };
   // Python uses json.dumps(sort_keys=True) without compact separators here,
@@ -1156,6 +1220,9 @@ export async function resolveSetup(
   }
   log(`soldr repo=${soldrRepo}`);
   log(`soldr ref=${soldrRef || "release"}`);
+  if (soldrSourcePath) {
+    log(`soldr source-path=${soldrSourcePath} identity=${soldrSourceIdentity}`);
+  }
   if (soldrVersionResolved) {
     log(`soldr version=${soldrVersionResolved}`);
   }
@@ -1285,6 +1352,8 @@ export async function resolveSetup(
     rustupStrategy,
     soldrRepo,
     soldrRef,
+    soldrSourcePath,
+    soldrSourceIdentity,
     soldrVersionRequested,
     soldrVersionResolved,
     setupCache,

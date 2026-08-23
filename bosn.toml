@@ -1,0 +1,16 @@
+[stack.integration]
+dockerfile = "tests/cook-rematerialization/Dockerfile"
+family = "setup-soldr-rematerialization"
+default = true
+
+[stack.integration.volumes]
+cargo-home = { scope = "stack", destination = "/root/.cargo" }
+rustup-home = { scope = "stack", destination = "/root/.rustup" }
+runner = { scope = "stack", destination = "/runner" }
+
+[stack.integration.mounts]
+repo = { source = ".", destination = "/repo" }
+
+[task.source-path-smoke]
+stack = "integration"
+cmd = "bash /repo/tests/cook-rematerialization/source_path_smoke.sh"

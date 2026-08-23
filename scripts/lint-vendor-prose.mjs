@@ -22,6 +22,7 @@ const EXCLUDED_DIR_BASENAMES = new Set([
   "node_modules",
   "dist",
   "vendor",
+  "_vender",
   "zccache",
 ]);
 

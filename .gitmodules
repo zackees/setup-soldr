@@ -1,3 +1,3 @@
-[submodule "soldr"]
-	path = soldr
-	url = https://github.com/zackees/soldr.git
+[submodule "_vender/soldr"]
+	path = _vender/soldr
+	url = https://github.com/zackees/soldr

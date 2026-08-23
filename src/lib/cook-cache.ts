@@ -36,6 +36,8 @@ export interface CookCacheKeyParts {
   /** soldr version included so a cook output produced by a buggy soldr
    * doesn't survive across soldr upgrades. */
   soldrVersion: string;
+  /** Optional user namespace used to isolate explicit validation generations. */
+  keySuffix?: string;
 }
 
 export interface CookDeltaCacheKeyParts extends CookCacheKeyParts {
@@ -227,7 +229,7 @@ export function hashCookFlags(flags: string[]): string {
 
 export function buildCookCacheKey(parts: CookCacheKeyParts): string {
   const release = parts.rustcRelease.trim() || "unresolved";
-  return [
+  const segments = [
     COOK_KEY_PREFIX,
     parts.runnerOs,
     parts.runnerArch,
@@ -236,7 +238,9 @@ export function buildCookCacheKey(parts: CookCacheKeyParts): string {
     `f${parts.flagsHash}`,
     `l${parts.lockHash}`,
     `soldr${parts.soldrVersion}`,
-  ].join("-");
+  ];
+  if (parts.keySuffix?.trim()) segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+  return segments.join("-");
 }
 
 function keyFragment(value: string, fallback: string): string {
@@ -252,7 +256,7 @@ function shortHash(value: string, fallback: string): string {
 
 function cookKeyParts(parts: CookCacheKeyParts): string[] {
   const release = keyFragment(parts.rustcRelease, "unresolved");
-  return [
+  const segments = [
     keyFragment(parts.runnerOs, "unknown-os"),
     keyFragment(parts.runnerArch, "unknown-arch"),
     keyFragment(parts.libc, "unknown-libc"),
@@ -261,6 +265,8 @@ function cookKeyParts(parts: CookCacheKeyParts): string[] {
     `l${keyFragment(parts.lockHash, "no-lock")}`,
     `soldr${keyFragment(parts.soldrVersion, "unset")}`,
   ];
+  if (parts.keySuffix?.trim()) segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+  return segments;
 }
 
 export function buildCookBaseCacheKey(parts: CookCacheKeyParts): string {
