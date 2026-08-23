@@ -77,7 +77,13 @@ jobs:
           # skips ("cook: skipped - Cargo.lock path Cargo.lock does not
           # exist"). Pointing the action at the Rust project is context the
           # defaults need in order to apply at all.
-          source-path: _vender/soldr
+          # No source-path: the shipped default installs a RELEASED soldr.
+          # Building soldr from source here would put the source build's
+          # target/ in the same directory cook is caching, and that
+          # self-reference makes the cook layer restore an exact key match
+          # with a 0-byte archive, then silently fall back to a full
+          # re-cook. The mainstream path is a released binary cooking a
+          # separate project, so that is what this tests.
           lockfile: _vender/soldr/Cargo.lock
           target-dir: _vender/soldr/target
           toolchain: 1.95.0
@@ -117,7 +123,6 @@ jobs:
         name: Install soldr with shipped defaults
         uses: ./
         with:
-          source-path: _vender/soldr
           lockfile: _vender/soldr/Cargo.lock
           target-dir: _vender/soldr/target
           toolchain: 1.95.0
