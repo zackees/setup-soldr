@@ -48585,7 +48585,7 @@ function hashCookFlags(flags) {
 }
 function buildCookCacheKey(parts) {
     const release = parts.rustcRelease.trim() || "unresolved";
-    return [
+    const segments = [
         COOK_KEY_PREFIX,
         parts.runnerOs,
         parts.runnerArch,
@@ -48594,7 +48594,10 @@ function buildCookCacheKey(parts) {
         `f${parts.flagsHash}`,
         `l${parts.lockHash}`,
         `soldr${parts.soldrVersion}`,
-    ].join("-");
+    ];
+    if (parts.keySuffix?.trim())
+        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+    return segments.join("-");
 }
 function keyFragment(value, fallback) {
     const cleaned = value.trim().replace(/[^A-Za-z0-9_.-]+/g, "_");
@@ -48608,7 +48611,7 @@ function shortHash(value, fallback) {
 }
 function cookKeyParts(parts) {
     const release = keyFragment(parts.rustcRelease, "unresolved");
-    return [
+    const segments = [
         keyFragment(parts.runnerOs, "unknown-os"),
         keyFragment(parts.runnerArch, "unknown-arch"),
         keyFragment(parts.libc, "unknown-libc"),
@@ -48617,6 +48620,9 @@ function cookKeyParts(parts) {
         `l${keyFragment(parts.lockHash, "no-lock")}`,
         `soldr${keyFragment(parts.soldrVersion, "unset")}`,
     ];
+    if (parts.keySuffix?.trim())
+        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+    return segments;
 }
 function buildCookBaseCacheKey(parts) {
     return [COOK_BASE_KEY_PREFIX, ...cookKeyParts(parts)].join("-");
@@ -49672,6 +49678,8 @@ function dumpDiagnostics(opts) {
         lines.push(`  soldr_path=${opts.result.soldrPath}`);
         lines.push(`  soldr_repo=${opts.result.soldrRepo}`);
         lines.push(`  soldr_ref=${opts.result.soldrRef || "(release)"}`);
+        lines.push(`  soldr_source_path=${opts.result.soldrSourcePath || "(release)"}`);
+        lines.push(`  soldr_source_identity=${opts.result.soldrSourceIdentity || "(release)"}`);
         lines.push(`  soldr_version_requested=${opts.result.soldrVersionRequested}`);
         lines.push(`  soldr_version_resolved=${opts.result.soldrVersionResolved}`);
         lines.push(`  toolchain_channel=${opts.result.toolchain.channel}`);
@@ -50386,6 +50394,7 @@ function readRawInputs(env) {
         version: get("version"),
         repo: get("repo"),
         ref: get("ref"),
+        sourcePath: get("source-path"),
         cache: get("cache"),
         cacheDir: get("cache-dir"),
         cacheKeySuffix: get("cache-key-suffix"),
