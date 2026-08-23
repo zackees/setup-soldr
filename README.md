@@ -544,7 +544,7 @@ preferred for new workflows.
 
 ## Notes
 
-- Development branches may pin the tracked `_vender/soldr` checkout and pass `source-path: _vender/soldr`; setup-soldr requires a clean checkout and keys the build on its exact commit. Production installs remain release-asset based.
+- Development branches may pin the tracked `_vender/soldr` checkout and pass `source-path: _vender/soldr`; setup-soldr keys the build on the checkout's exact `HEAD`; commit local edits before expecting a new source identity. Production installs remain release-asset based.
 - `soldr-cook` rematerialization is a two-part dependency closure: the cooked `target/` base (fingerprints, dep-info, rlibs/proc macros, build-script executables and outputs) plus Cargo registry/git sources. The action restores both by default and reports transport/load status through the `cook-cache-*` outputs.
 - The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.9.2`. Combined GitHub release archives remain preferred; for explicitly supported wheel-compatible releases (currently `0.9.0`, `0.9.1`, and `0.9.2`), a missing exact target archive falls back to the matching hash-verified wheel from the same version on PyPI.
 - For soldr `0.7.43+`, the action installs the release-pinned `cargo-chef`

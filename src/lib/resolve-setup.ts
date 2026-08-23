@@ -291,12 +291,6 @@ export function resolveLocalSourceIdentity(sourcePath: string): string {
     );
   }
 
-  const trackedStatus = runGit(["status", "--porcelain=v1", "--untracked-files=no"]);
-  if (trackedStatus) {
-    throw new Error(
-      `source-path must be a clean pinned checkout; commit tracked changes before use: ${sourcePath}`,
-    );
-  }
   return `local-${head}`;
 }
 

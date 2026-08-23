@@ -453,7 +453,7 @@ test("source ref changes setup cache key", async () => {
   assert.notEqual(base["cache_key"], branch["cache_key"]);
 });
 
-test("local source identity requires a clean pinned checkout", () => {
+test("local source identity is the exact pinned HEAD", () => {
   const root = mkTmp("setup-soldr-local-source-");
   const sourcePath = path.join(root, "soldr");
   try {
@@ -461,9 +461,10 @@ test("local source identity requires a clean pinned checkout", () => {
     const clean = resolveLocalSourceIdentity(sourcePath);
     assert.match(clean, /^local-[0-9a-f]{40}$/);
     fs.appendFileSync(path.join(sourcePath, "Cargo.toml"), "\n# dirty\n", "utf8");
-    assert.throws(
-      () => resolveLocalSourceIdentity(sourcePath),
-      /clean pinned checkout/,
+    assert.equal(
+      resolveLocalSourceIdentity(sourcePath),
+      clean,
+      "uncommitted edits are intentionally outside the pinned identity",
     );
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -496,15 +497,14 @@ test("source-path bypasses release lookup and keys caches on the pinned checkout
     assert.equal(result.soldrVersionResolved, result.soldrSourceIdentity);
 
     fs.appendFileSync(path.join(sourcePath, "Cargo.toml"), "\n# local edit\n", "utf8");
-    await assert.rejects(
-      resolveSetup(ctx, inputs, {
-        fetchReleaseTag: async () => {
-          throw new Error("source-path must not query a release");
-        },
-        systemRustupOverride: async () => false,
-      }),
-      /clean pinned checkout/,
-    );
+    const unchangedPin = await resolveSetup(ctx, inputs, {
+      fetchReleaseTag: async () => {
+        throw new Error("source-path must not query a release");
+      },
+      systemRustupOverride: async () => false,
+    });
+    assert.equal(unchangedPin.soldrSourceIdentity, result.soldrSourceIdentity);
+    assert.equal(unchangedPin.setupCache.key, result.setupCache.key);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
