@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Default to soldr `0.9.2` (was `0.9.1`). The release preserves the existing
+  combined-archive and hash-verified wheel install contract, including the
+  pinned cargo-chef `0.1.73` helper. It adds the terminal release-surface
+  completeness gate, lowers the GNU Linux binary baseline to glibc 2.17,
+  updates embedded zccache to `1.13.5`, and includes wrapper, broker, daemon,
+  toolchain-provisioning, and cross-target correctness fixes.
+
 - Default to soldr `0.9.1` (was `0.9.0`). 0.9.1 keeps the same install
   contract as 0.9.0: combined GitHub release archives preferred, exact
   hash-verified PyPI wheel fallback for wheel-compatible releases (now
