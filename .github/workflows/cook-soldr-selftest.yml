@@ -1,0 +1,151 @@
+name: Cook self-test (soldr)
+
+# Proves the default configuration rematerializes a real third-party closure.
+#
+# The sibling `cook-rematerialization` workflow drives a synthetic fixture and
+# pins every input explicitly. This one does the opposite on purpose: it builds
+# soldr itself -- a large real workspace -- and passes NO cook inputs, so what
+# is under test is the shipped default. If `prebuild-deps` ever stops defaulting
+# to soldr-cook, or cook gets gated off on a platform, the warm job here starts
+# recompiling third-party crates and fails.
+#
+# Linux is the gate. Windows and macOS are assumed to work (cook has no
+# platform gate in `decideCookGate`) but are runnable on demand via
+# workflow_dispatch rather than being asserted by a green check nobody ran.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: Runner to exercise (Linux is the only one run automatically)
+        type: choice
+        default: ubuntu-24.04
+        options:
+          - ubuntu-24.04
+          - windows-2022
+          - macos-14
+  pull_request:
+    paths:
+      - 'action.yml'
+      - 'src/**'
+      - 'dist/**'
+      - '_vender/soldr'
+      - '.github/workflows/cook-soldr-selftest.yml'
+      - 'tests/cook-rematerialization/assert_no_external_rebuild.py'
+  push:
+    branches: [main]
+    paths:
+      - 'action.yml'
+      - 'src/**'
+      - 'dist/**'
+      - '_vender/soldr'
+      - '.github/workflows/cook-soldr-selftest.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cook-soldr-selftest-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Isolate this run's cache namespace so a rerun cannot be warmed by the
+  # previous run's entries -- the warm job would then pass without the seed
+  # job having produced anything.
+  CACHE_GENERATION: cook-selftest-${{ github.run_id }}-${{ github.run_attempt }}
+
+jobs:
+  seed:
+    name: Seed soldr dependency closure
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+
+      - id: setup
+        name: Install soldr with shipped defaults
+        uses: ./
+        with:
+          # Deliberately no prebuild-deps / prebuild-deps-delta-cache here.
+          # The shipped defaults are the subject of this test.
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+
+      - name: Require cook to be active by default
+        shell: bash
+        env:
+          COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
+        run: |
+          set -euo pipefail
+          echo "cook-cache-status=$COOK_STATUS"
+          if [ "$COOK_STATUS" = "disabled" ]; then
+            echo "::error::cook is disabled under shipped defaults on ${{ runner.os }}; \
+          this workflow exists to catch exactly that"
+            exit 1
+          fi
+
+      - name: Build soldr so the closure is populated
+        shell: bash
+        working-directory: _vender/soldr
+        run: soldr cargo build -p soldr-cli --locked
+
+  warm:
+    name: Rematerialize soldr dependency closure
+    needs: seed
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+
+      - id: setup
+        name: Install soldr with shipped defaults
+        uses: ./
+        with:
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+
+      - name: Require the dependency closure to have been restored
+        shell: bash
+        env:
+          COOK_HIT: ${{ steps.setup.outputs.cook-cache-hit }}
+          COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
+        run: |
+          set -euo pipefail
+          echo "cook-cache-hit=$COOK_HIT cook-cache-status=$COOK_STATUS"
+          if [ "$COOK_HIT" != "true" ]; then
+            echo "::error::warm job did not restore the cook closure the seed job saved; \
+          without a restore the freshness assertion below proves nothing"
+            exit 1
+          fi
+
+      - id: build
+        name: Prove no third-party code rebuilds
+        shell: bash
+        working-directory: _vender/soldr
+        run: |
+          set -euo pipefail
+          soldr cargo build -p soldr-cli --locked \
+            --message-format=json-render-diagnostics \
+            > "$RUNNER_TEMP/warm-messages.jsonl" \
+            2> "$RUNNER_TEMP/warm-stderr.log"
+          python "$GITHUB_WORKSPACE/tests/cook-rematerialization/assert_no_external_rebuild.py" \
+            "$RUNNER_TEMP/warm-messages.jsonl" \
+            "$RUNNER_TEMP/warm-report.json" \
+            200
+
+      - name: Upload rematerialization evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cook-selftest-${{ runner.os }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/warm-report.json
+            ${{ runner.temp }}/warm-stderr.log
+          if-no-files-found: warn
+          retention-days: 7
