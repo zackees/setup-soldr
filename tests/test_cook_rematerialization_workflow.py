@@ -17,11 +17,13 @@ def _step(job: dict, name: str) -> dict:
     return next(step for step in job["steps"] if step.get("name") == name)
 
 
-def test_rematerialization_workflow_has_isolated_baseline_seed_and_warm_jobs() -> None:
+def test_rematerialization_workflow_has_isolated_baseline_seed_delta_and_warm_jobs() -> None:
     workflow = _load()
     jobs = workflow["jobs"]
-    assert set(jobs) == {"baseline", "seed", "warm"}
-    assert jobs["warm"]["needs"] == ["baseline", "seed"]
+    assert set(jobs) == {"baseline", "seed", "delta-seed", "warm"}
+    assert jobs["delta-seed"]["needs"] == "seed"
+    assert jobs["warm"]["needs"] == ["baseline", "delta-seed"]
+    assert "github.run_attempt" in workflow["env"]["CACHE_GENERATION"]
     for job in jobs.values():
         checkout = job["steps"][0]
         assert checkout["uses"] == "actions/checkout@v4"
@@ -30,7 +32,7 @@ def test_rematerialization_workflow_has_isolated_baseline_seed_and_warm_jobs() -
 
 def test_seed_and_warm_use_pinned_source_and_only_dependency_closure_caches() -> None:
     workflow = _load()
-    for job_name in ("seed", "warm"):
+    for job_name in ("seed", "delta-seed", "warm"):
         setup = next(
             step for step in workflow["jobs"][job_name]["steps"] if step.get("uses") == "./"
         )
@@ -51,9 +53,17 @@ def test_warm_gate_requires_transport_hits_zero_external_work_and_ten_x_speedup(
     warm = workflow["jobs"]["warm"]
     transport = _step(warm, "Require both dependency-closure transports")
     assert "cook-cache-hit" in transport["env"]["COOK_HIT"]
+    assert "cook-cache-base-hit" in transport["env"]["BASE_HIT"]
+    assert "cook-cache-delta-hit" in transport["env"]["DELTA_HIT"]
     assert "cargo-registry-cache-hit" in transport["env"]["REGISTRY_HIT"]
     assert 'test "$COOK_HIT" = true' in transport["run"]
+    assert 'test "$BASE_HIT" = true' in transport["run"]
+    assert 'test "$DELTA_HIT" = true' in transport["run"]
     assert 'test "$REGISTRY_HIT" = true' in transport["run"]
+    assert 'test "$COOK_STATUS" = hit' in transport["run"]
+    seed = _step(workflow["jobs"]["seed"], "Record seed transport state")
+    assert 'test "$COOK_HIT" = false' in seed["run"]
+    assert 'test "$REGISTRY_HIT" = false' in seed["run"]
 
     build = _step(warm, "Prove only workspace code rebuilds")
     script = build["run"]

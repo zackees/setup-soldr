@@ -9,6 +9,7 @@ import * as path from "node:path";
 import * as fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import * as core from "@actions/core";
+import * as toml from "@iarna/toml";
 import {
   cargoConfigHash,
   canonicalJsonStringify,
@@ -292,6 +293,39 @@ export function resolveLocalSourceIdentity(sourcePath: string): string {
   }
 
   return `local-${head}`;
+}
+
+export function resolveLocalSourceVersion(sourcePath: string): string {
+  const manifestPath = path.join(sourcePath, "Cargo.toml");
+  let parsed: unknown;
+  try {
+    parsed = toml.parse(fs.readFileSync(manifestPath, "utf8"));
+  } catch (error) {
+    throw new Error(
+      `failed to parse local Soldr Cargo.toml at ${manifestPath}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+  const root = parsed as Record<string, unknown>;
+  const workspace = root["workspace"] as Record<string, unknown> | undefined;
+  const packageTable = workspace?.["package"] as Record<string, unknown> | undefined;
+  const version = packageTable?.["version"];
+  if (typeof version !== "string" || !/^\d+\.\d+\.\d+(?:[-+].*)?$/.test(version)) {
+    throw new Error(`local Soldr Cargo.toml has no valid workspace.package.version: ${manifestPath}`);
+  }
+  return version;
+}
+
+export function resolveManifestWorkspace(targetDir: string, workspace: string): string {
+  let current = path.dirname(path.resolve(targetDir));
+  while (true) {
+    if (fs.existsSync(path.join(current, "Cargo.toml"))) return current;
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return path.resolve(workspace);
 }
 
 /**
@@ -588,6 +622,7 @@ export async function resolveSetup(
   const sourcePathInput = inputs.sourcePath.trim();
   let soldrSourcePath = "";
   let soldrSourceIdentity = "";
+  let soldrSourceVersion = "";
   if (sourcePathInput) {
     soldrSourcePath = expanduser(sourcePathInput, env);
     if (!path.isAbsolute(soldrSourcePath)) soldrSourcePath = path.join(workspace, soldrSourcePath);
@@ -595,14 +630,19 @@ export async function resolveSetup(
     if (!fs.existsSync(path.join(soldrSourcePath, "Cargo.toml"))) {
       throw new Error(`source-path does not contain Cargo.toml: ${soldrSourcePath}`);
     }
-    soldrSourceIdentity = await timeSubPhase("resolve", "soldr-source", async () =>
-      resolveLocalSourceIdentity(soldrSourcePath),
+    [soldrSourceIdentity, soldrSourceVersion] = await timeSubPhase(
+      "resolve",
+      "soldr-source",
+      async () => [
+        resolveLocalSourceIdentity(soldrSourcePath),
+        resolveLocalSourceVersion(soldrSourcePath),
+      ],
     );
   }
   const soldrRef = soldrSourcePath ? "local-source" : inputs.ref.trim();
   const soldrVersionRequested = soldrSourcePath ? "" : inputs.version.trim();
   const soldrVersionResolved = soldrSourcePath
-    ? soldrSourceIdentity
+    ? soldrSourceVersion
     : await timeSubPhase("resolve", "soldr-version", () =>
       resolveSoldrReleaseVersion(soldrRepo, soldrVersionRequested, soldrRef, env, deps),
     );
@@ -638,13 +678,13 @@ export async function resolveSetup(
     targetCachePath = path.join(workspace, targetCachePath);
   }
   targetCachePath = path.resolve(targetCachePath);
-  const manifestWorkspace = path.dirname(targetCachePath);
+  const manifestWorkspace = resolveManifestWorkspace(targetCachePath, workspace);
 
   // #295-followup: parallelize the independent manifest and Cargo-config
-  // walks. Manifests are rooted next to the selected target directory rather
-  // than at the action checkout root, so a tracked development tool checkout
-  // under `_vender/` cannot add seconds of unrelated traversal while a fixture
-  // below it still hashes its own Cargo.toml closure.
+  // walks. Manifests are rooted at the nearest Cargo.toml ancestor of the
+  // selected target directory (falling back to the action workspace), so
+  // nonstandard target layouts stay correct while a tracked development tool
+  // checkout under `_vender/` cannot add unrelated traversal.
   const [wsManifestHash, cargoConfigHashValue] = await timeSubPhase("resolve", "ws-hash", () =>
     Promise.all([workspaceManifestHash(manifestWorkspace), cargoConfigHash(workspace)]),
   );
@@ -867,7 +907,13 @@ export async function resolveSetup(
     runnerTemp,
   });
   const cargoRegistryCachePrefix = `setup-soldr-cargoregistry-${cargoRegistryFormat === "soldr-v2" ? "v2" : "v1"}-${runnerOs}-${runnerArch}`;
-  const cargoRegistryCacheRestorePrefix = `${cargoRegistryCachePrefix}-${cargoLockHash}-`;
+  // Production registry content is shared across jobs (#375). A pinned local
+  // source validation run may opt into an explicit generation namespace so its
+  // seed/warm proof cannot reuse an older registry archive.
+  const cargoRegistryValidationNamespace =
+    soldrSourcePath && sanitizedSuffix ? `x${sanitizedSuffix}-` : "";
+  const cargoRegistryCacheRestorePrefix =
+    `${cargoRegistryCachePrefix}-${cargoLockHash}-${cargoRegistryValidationNamespace}`;
   // #371: drop git SHA from the exact key, same anti-pattern fix as
   // #237 did for build-cache. With SHA, every commit produced a new
   // exact-key entry that no future probe could ever hit (only same-
@@ -1300,7 +1346,7 @@ export async function resolveSetup(
     runnerArch,
     target: crossTarget,
     soldrRepo,
-    soldrVersion: soldrVersionResolved || soldrVersionRequested,
+    soldrVersion: soldrSourceIdentity || soldrVersionResolved || soldrVersionRequested,
   });
   for (const archivePath of blessedPrepareCache.archivePaths) makeDirs(path.dirname(archivePath));
 

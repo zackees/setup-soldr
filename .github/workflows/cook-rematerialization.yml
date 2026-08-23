@@ -20,7 +20,7 @@ concurrency:
 
 env:
   FIXTURE: _vender/soldr/tests/fixtures/cook-rematerialization
-  CACHE_GENERATION: cook-remat-${{ github.run_id }}
+  CACHE_GENERATION: cook-remat-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
   baseline:
@@ -97,11 +97,56 @@ jobs:
           COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
         run: |
           set -euo pipefail
+          test "$COOK_HIT" = false
+          test "$REGISTRY_HIT" = false
+          test "$COOK_STATUS" = miss
           printf 'seed cook_hit=%s registry_hit=%s status=%s\n' \
             "$COOK_HIT" "$REGISTRY_HIT" "$COOK_STATUS"
 
+  delta-seed:
+    needs: seed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - id: setup
+        name: Seed compatible cook delta
+        uses: ./
+        with:
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache: true
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: true
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: soldr-cook
+          prebuild-deps-delta-cache: true
+          target-dir: ${{ env.FIXTURE }}/target
+          lockfile: ${{ env.FIXTURE }}/Cargo.lock
+          linker: platform-default
+
+      - name: Require base restore before delta save
+        shell: bash
+        env:
+          BASE_HIT: ${{ steps.setup.outputs.cook-cache-base-hit }}
+          DELTA_HIT: ${{ steps.setup.outputs.cook-cache-delta-hit }}
+          REGISTRY_HIT: ${{ steps.setup.outputs.cargo-registry-cache-hit }}
+          COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
+        run: |
+          set -euo pipefail
+          test "$BASE_HIT" = true
+          test "$DELTA_HIT" = false
+          test "$REGISTRY_HIT" = true
+          test "$COOK_STATUS" = base-hit
+
   warm:
-    needs: [baseline, seed]
+    needs: [baseline, delta-seed]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -132,18 +177,27 @@ jobs:
         shell: bash
         env:
           COOK_HIT: ${{ steps.setup.outputs.cook-cache-hit }}
+          BASE_HIT: ${{ steps.setup.outputs.cook-cache-base-hit }}
+          DELTA_HIT: ${{ steps.setup.outputs.cook-cache-delta-hit }}
           REGISTRY_HIT: ${{ steps.setup.outputs.cargo-registry-cache-hit }}
           COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
           LOAD_REPORT: ${{ steps.setup.outputs.cook-cache-load-report-json }}
         run: |
           set -euo pipefail
           test "$COOK_HIT" = true
+          test "$BASE_HIT" = true
+          test "$DELTA_HIT" = true
           test "$REGISTRY_HIT" = true
-          case "$COOK_STATUS" in
-            base-hit|hit) ;;
-            *) echo "unexpected cook status: $COOK_STATUS" >&2; exit 1 ;;
-          esac
+          test "$COOK_STATUS" = hit
           printf '%s\n' "$LOAD_REPORT" | python -m json.tool
+          python - <<'PY'
+          import json
+          import os
+          report = json.loads(os.environ["LOAD_REPORT"])
+          assert report["base"]["cacheFilesRestored"] > 0
+          assert report["delta"] is not None
+          assert isinstance(report["delta"]["mtimesApplied"], int)
+          PY
 
       - id: build
         name: Prove only workspace code rebuilds

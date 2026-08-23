@@ -878,7 +878,10 @@ export async function run(): Promise<void> {
       flagsHash,
       lockHash,
       soldrVersion:
-        result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim() || "unset",
+        result.soldrSourceIdentity.trim() ||
+        result.soldrVersionResolved.trim() ||
+        result.soldrVersionRequested.trim() ||
+        "unset",
       keySuffix: inputs.cacheKeySuffix.trim(),
     };
     cookProjectRoot = path.dirname(result.targetCache.targetPath);

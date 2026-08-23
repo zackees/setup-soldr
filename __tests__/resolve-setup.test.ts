@@ -11,9 +11,11 @@ import {
   detectZccachePrivateOverlap,
   readRawInputs,
   resolveLocalSourceIdentity,
+  resolveManifestWorkspace,
   resolveSetup,
 } from "../src/lib/resolve-setup.js";
 import { createLogger } from "../src/lib/log-utils.js";
+import { supportsLayeredCookCache } from "../src/lib/cook-cache.js";
 import type { ActionContext, RawInputs, ResolveResult } from "../src/lib/types.js";
 
 function mkTmp(prefix: string): string {
@@ -22,7 +24,11 @@ function mkTmp(prefix: string): string {
 
 function initGitSource(sourcePath: string): void {
   fs.mkdirSync(sourcePath, { recursive: true });
-  fs.writeFileSync(path.join(sourcePath, "Cargo.toml"), "[workspace]\n", "utf8");
+  fs.writeFileSync(
+    path.join(sourcePath, "Cargo.toml"),
+    "[workspace]\n[workspace.package]\nversion = \"0.9.2\"\n",
+    "utf8",
+  );
   const git = (...args: string[]): void => {
     execFileSync("git", ["-C", sourcePath, ...args], { stdio: "ignore", windowsHide: true });
   };
@@ -444,6 +450,25 @@ test("latest release lookup uses token input for GitHub API auth", async () => {
   }
 });
 
+test("manifest workspace follows the nearest Cargo.toml instead of target layout", () => {
+  const root = mkTmp("setup-soldr-manifest-root-");
+  const workspace = path.join(root, "workspace");
+  const nested = path.join(workspace, "apps", "demo");
+  const externalTarget = path.join(root, "external-target");
+  try {
+    fs.mkdirSync(nested, { recursive: true });
+    fs.writeFileSync(path.join(workspace, "Cargo.toml"), "[workspace]\n", "utf8");
+    fs.writeFileSync(path.join(nested, "Cargo.toml"), "[package]\nname='demo'\n", "utf8");
+    assert.equal(
+      resolveManifestWorkspace(path.join(nested, ".cache", "target"), workspace),
+      nested,
+    );
+    assert.equal(resolveManifestWorkspace(externalTarget, workspace), workspace);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("source ref changes setup cache key", async () => {
   const { outputs: base } = await run({}, { INPUT_REPO: "zackees/soldr" });
   const { outputs: branch } = await run({}, {
@@ -481,6 +506,9 @@ test("source-path bypasses release lookup and keys caches on the pinned checkout
       INPUT_SOURCE_PATH: "_vender/soldr",
       INPUT_VERSION: "0.9.2",
       INPUT_REF: "ignored-ref",
+      INPUT_CACHE_KEY_SUFFIX: "run 42",
+      INPUT_PREBUILD_DEPS: "soldr-cook",
+      INPUT_CARGO_REGISTRY_CACHE: "true",
     });
     const inputs = readRawInputs(ctx.env);
     const result = await resolveSetup(ctx, inputs, {
@@ -494,7 +522,9 @@ test("source-path bypasses release lookup and keys caches on the pinned checkout
     assert.match(result.soldrSourceIdentity, /^local-[0-9a-f]{40}$/);
     assert.equal(result.soldrRef, "local-source");
     assert.equal(result.soldrVersionRequested, "");
-    assert.equal(result.soldrVersionResolved, result.soldrSourceIdentity);
+    assert.equal(result.soldrVersionResolved, "0.9.2");
+    assert.equal(supportsLayeredCookCache(result.soldrVersionResolved), true);
+    assert.match(result.cargoRegistryCache.key, /-xrun-42-/);
 
     fs.appendFileSync(path.join(sourcePath, "Cargo.toml"), "\n# local edit\n", "utf8");
     const unchangedPin = await resolveSetup(ctx, inputs, {
