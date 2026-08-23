@@ -19,8 +19,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FIXTURE: _vender/soldr/tests/fixtures/cook-rematerialization
+  FIXTURE_SOURCE: _vender/soldr/tests/fixtures/cook-rematerialization
   CACHE_GENERATION: cook-remat-${{ github.run_id }}-${{ github.run_attempt }}
+  CARGO_BUILD_JOBS: "2"
+  SOLDR_JOBS: "2"
 
 jobs:
   baseline:
@@ -32,6 +34,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Stage isolated fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf "$fixture"
+          cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
 
       - name: Build pinned development Soldr without caches
         uses: ./
@@ -47,7 +57,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cd "$FIXTURE"
+          cd "$RUNNER_TEMP/cook-rematerialization-fixture"
           rm -rf target
           started_ns="$(date +%s%N)"
           ZCCACHE_DISABLE=1 soldr cargo build \
@@ -70,6 +80,14 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Stage isolated fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf "$fixture"
+          cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+
       - id: setup
         name: Seed dependency-rematerialization closure
         uses: ./
@@ -85,8 +103,8 @@ jobs:
           soldr-mini-cache: false
           prebuild-deps: soldr-cook
           prebuild-deps-delta-cache: true
-          target-dir: ${{ env.FIXTURE }}/target
-          lockfile: ${{ env.FIXTURE }}/Cargo.lock
+          target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
+          lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
           linker: platform-default
 
       - name: Record seed transport state
@@ -112,6 +130,14 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Stage isolated fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf "$fixture"
+          cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+
       - id: setup
         name: Seed compatible cook delta
         uses: ./
@@ -127,8 +153,8 @@ jobs:
           soldr-mini-cache: false
           prebuild-deps: soldr-cook
           prebuild-deps-delta-cache: true
-          target-dir: ${{ env.FIXTURE }}/target
-          lockfile: ${{ env.FIXTURE }}/Cargo.lock
+          target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
+          lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
           linker: platform-default
 
       - name: Require base restore before delta save
@@ -154,6 +180,14 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Stage isolated fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf "$fixture"
+          cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+
       - id: setup
         name: Restore dependency-rematerialization closure
         uses: ./
@@ -169,8 +203,8 @@ jobs:
           soldr-mini-cache: false
           prebuild-deps: soldr-cook
           prebuild-deps-delta-cache: true
-          target-dir: ${{ env.FIXTURE }}/target
-          lockfile: ${{ env.FIXTURE }}/Cargo.lock
+          target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
+          lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
           linker: platform-default
 
       - name: Require both dependency-closure transports
@@ -206,7 +240,7 @@ jobs:
           BASELINE_MS: ${{ needs.baseline.outputs.baseline-ms }}
         run: |
           set -euo pipefail
-          cd "$FIXTURE"
+          cd "$RUNNER_TEMP/cook-rematerialization-fixture"
           started_ns="$(date +%s%N)"
           ZCCACHE_DISABLE=1 soldr cargo build \
             --release \
