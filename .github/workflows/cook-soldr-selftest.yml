@@ -70,7 +70,16 @@ jobs:
         with:
           # Deliberately no prebuild-deps / prebuild-deps-delta-cache here.
           # The shipped defaults are the subject of this test.
+          #
+          # lockfile/target-dir ARE set, and are not a cook setting: this
+          # repo is a TypeScript action with no Cargo.lock at its root, so
+          # the default lockfile path does not resolve and cook correctly
+          # skips ("cook: skipped - Cargo.lock path Cargo.lock does not
+          # exist"). Pointing the action at the Rust project is context the
+          # defaults need in order to apply at all.
           source-path: _vender/soldr
+          lockfile: _vender/soldr/Cargo.lock
+          target-dir: _vender/soldr/target
           toolchain: 1.95.0
           cache-key-suffix: ${{ env.CACHE_GENERATION }}
 
@@ -82,8 +91,10 @@ jobs:
           set -euo pipefail
           echo "cook-cache-status=$COOK_STATUS"
           if [ "$COOK_STATUS" = "disabled" ]; then
-            echo "::error::cook is disabled under shipped defaults on ${{ runner.os }}; \
-          this workflow exists to catch exactly that"
+            echo "::error::cook is disabled under shipped defaults on ${{ runner.os }}. \
+          Check the setup step's 'cook: skipped - <reason>' line: a missing \
+          Cargo.lock means this workflow is misconfigured; anything else \
+          means the default regressed, which is what this exists to catch."
             exit 1
           fi
 
@@ -107,6 +118,8 @@ jobs:
         uses: ./
         with:
           source-path: _vender/soldr
+          lockfile: _vender/soldr/Cargo.lock
+          target-dir: _vender/soldr/target
           toolchain: 1.95.0
           cache-key-suffix: ${{ env.CACHE_GENERATION }}
 
