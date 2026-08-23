@@ -631,13 +631,22 @@ export async function resolveSetup(
   const runnerArch = sanitizeFragment((env["ACTION_ARCH"] ?? "unknown").toLowerCase());
   const cachePrefix = `setup-soldr-v4-${runnerOs}-${runnerArch}`;
   let cacheKey = `${cachePrefix}-${digest}`;
-  // #295-followup: parallelize the two independent workspace-wide hash
-  // walks. Both traverse different subsets of `workspace` (manifests
-  // vs .cargo/config.toml) and have no shared state, so running them
-  // sequentially just wastes resolve-phase wall clock. Cheap correctness
-  // improvement; no behavior change.
+
+  const targetDirInput = inputs.targetDir.trim() || "target";
+  let targetCachePath = expanduser(targetDirInput, env);
+  if (!path.isAbsolute(targetCachePath)) {
+    targetCachePath = path.join(workspace, targetCachePath);
+  }
+  targetCachePath = path.resolve(targetCachePath);
+  const manifestWorkspace = path.dirname(targetCachePath);
+
+  // #295-followup: parallelize the independent manifest and Cargo-config
+  // walks. Manifests are rooted next to the selected target directory rather
+  // than at the action checkout root, so a tracked development tool checkout
+  // under `_vender/` cannot add seconds of unrelated traversal while a fixture
+  // below it still hashes its own Cargo.toml closure.
   const [wsManifestHash, cargoConfigHashValue] = await timeSubPhase("resolve", "ws-hash", () =>
-    Promise.all([workspaceManifestHash(workspace), cargoConfigHash(workspace)]),
+    Promise.all([workspaceManifestHash(manifestWorkspace), cargoConfigHash(workspace)]),
   );
 
   const suffix = inputs.cacheKeySuffix.trim();
@@ -664,12 +673,6 @@ export async function resolveSetup(
   // Assembled below once `cargoLockHash` is known.
 
   // ---- target cache ----
-  const targetDirInput = inputs.targetDir.trim() || "target";
-  let targetCachePath = expanduser(targetDirInput, env);
-  if (!path.isAbsolute(targetCachePath)) {
-    targetCachePath = path.join(workspace, targetCachePath);
-  }
-  targetCachePath = path.resolve(targetCachePath);
   makeDirs(targetCachePath);
   const lockfilePath = resolveLockfilePath(workspace, targetCachePath, inputs.lockfile);
   const cargoLockHash = lockfilePath

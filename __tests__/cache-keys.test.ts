@@ -229,11 +229,11 @@ test("workspaceManifestHash changes when manifest content changes", async () => 
   assert.notEqual(a, b);
 });
 
-test("workspaceManifestHash ignores .git/target/.soldr/node_modules", async () => {
+test("workspaceManifestHash ignores repository and generated trees", async () => {
   const tmp = mkTmp("ws-");
   fs.writeFileSync(path.join(tmp, "Cargo.toml"), "root", "utf8");
   const before = await workspaceManifestHash(tmp);
-  for (const ignored of [".git", "target", ".soldr", "node_modules"]) {
+  for (const ignored of [".git", "target", ".soldr", "node_modules", "_vender"]) {
     fs.mkdirSync(path.join(tmp, ignored), { recursive: true });
     fs.writeFileSync(path.join(tmp, ignored, "Cargo.toml"), "ignored", "utf8");
   }
