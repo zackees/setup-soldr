@@ -155,15 +155,14 @@ jobs:
         env:
           BUILD_ARGS: ${{ inputs.build_args }}
           MIN_EXTERNAL: ${{ inputs.min_external }}
-          CARGO_LOG: cargo::core::compiler::fingerprint=trace
         run: |
           set -euo pipefail
           read -r -a build_args <<< "$BUILD_ARGS"
-          # Keep setup-soldr's CC/CXX wrapper identity in Cargo's native-build
-          # fingerprints. ZCCACHE_DISABLE makes that wrapper bypass its cache;
-          # routing through `soldr cargo` would strip CC/CXX and manufacture a
-          # false EnvVarChanged miss for crates such as blake3.
-          ZCCACHE_DISABLE=1 cargo build --release --locked \
+          # Match the command that created the cooked fingerprints, including
+          # soldr's CC/CXX wrapper identity for native build scripts. A zccache
+          # object hit cannot hide a Cargo freshness miss: every unit Cargo
+          # elects to rebuild still appears in the JSON message stream below.
+          soldr cargo build --release --locked \
             "${build_args[@]}" \
             --message-format=json-render-diagnostics \
             > "$RUNNER_TEMP/${{ inputs.cache_key }}-warm-messages.jsonl" \

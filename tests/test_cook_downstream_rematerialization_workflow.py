@@ -64,7 +64,8 @@ def test_reusable_workflow_proves_a_clean_job_loaded_the_cook_base() -> None:
     assert 'test "$REGISTRY_HIT" = true' in warm_guard["run"]
 
     build = next(step for step in jobs["warm"]["steps"] if step.get("id") == "build")
-    assert "ZCCACHE_DISABLE=1 soldr cargo build" in build["run"]
+    assert "soldr cargo build" in build["run"]
+    assert "ZCCACHE_DISABLE" not in build["run"]
     assert "assert_no_external_rebuild.py" in build["run"]
 
 
