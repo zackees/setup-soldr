@@ -176,7 +176,7 @@ EXPECTED_OUTPUTS = {
     "compile-cache-verification",
 }
 
-EXPECTED_SOLDR_DEFAULT_VERSION = "0.9.2"
+EXPECTED_SOLDR_DEFAULT_VERSION = "0.9.3"
 
 
 def _load_action() -> dict:

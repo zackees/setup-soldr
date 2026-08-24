@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Default to soldr `0.9.3` (was `0.9.2`). This release preserves complete
+  cooked dependency closures across archive hydration, including build-script
+  executables required for Cargo freshness, so a clean runner can reuse the
+  rematerialized graph without rebuilding external crates. It retains the
+  pinned cargo-chef `0.1.73` helper and hash-verified wheel fallback.
+
 - Make Linux `soldr-cook` dependency rematerialization verifiable and complete
   (#470): pair Cargo registry/git sources with every cook-enabled cache preset,
   expose base/delta/load diagnostics through `cook-cache-*` outputs, and add a
