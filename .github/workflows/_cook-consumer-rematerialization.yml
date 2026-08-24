@@ -155,6 +155,7 @@ jobs:
         env:
           BUILD_ARGS: ${{ inputs.build_args }}
           MIN_EXTERNAL: ${{ inputs.min_external }}
+          CARGO_LOG: cargo::core::compiler::fingerprint=trace
         run: |
           set -euo pipefail
           read -r -a build_args <<< "$BUILD_ARGS"
