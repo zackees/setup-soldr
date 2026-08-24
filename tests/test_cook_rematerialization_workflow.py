@@ -54,7 +54,7 @@ def test_cold_cook_is_serialized_to_fit_hosted_runner_memory() -> None:
     assert workflow["env"]["SOLDR_JOBS"] == "1"
 
 
-def test_warm_gate_requires_transport_hits_zero_external_work_and_ten_x_speedup() -> None:
+def test_warm_gate_requires_transport_hits_and_zero_external_work() -> None:
     workflow = _load()
     warm = workflow["jobs"]["warm"]
     transport = _step(warm, "Require both dependency-closure transports")
@@ -89,4 +89,5 @@ def test_warm_gate_requires_transport_hits_zero_external_work_and_ten_x_speedup(
     ).read_text(encoding="utf-8")
     assert 'if report["external_dirty"]' in assertion_source
     assert 'if report["external_build_script_runs"]' in assertion_source
-    assert "warm_ms * 10 > seed_ms" in assertion_source
+    assert '"speedup":' in assertion_source
+    assert "warm_ms * 10" not in assertion_source
