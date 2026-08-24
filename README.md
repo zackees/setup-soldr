@@ -686,6 +686,64 @@ service check, dispatch the workflow with
 matrix and adds a two-job target-cache save/restore smoke using
 `@actions/cache`, emitted as `cache_backend=actions-cache`.
 
+### Poisoned-dependency detection (async yank check)
+
+A cache key is content-addressed: platform, toolchain, flags, `Cargo.lock` hash,
+soldr version. That covers every input whose *content* can change — which is
+exactly why it cannot catch a **yank**.
+
+When a crate is yanked, `Cargo.lock` is byte-identical, so the lockfile hash and
+therefore the whole cache key are unchanged. A cached closure built from the
+withdrawn crate keeps matching its key. Because Actions cache entries are
+immutable, that closure is **self-poisoning**: every later run rematerializes
+the yanked artifact and reports success. A yank is a *trust* change, not a
+content change, so the invalidation has to come from outside the key.
+
+The action therefore checks yank status **asynchronously**, off the critical
+path. When nothing is yanked — the overwhelmingly common case — no run waits on
+the registry and the check costs nothing measurable.
+
+On detection the action does two things:
+
+1. **Fails the run.** Continuing would ship an artifact built from withdrawn
+   code. The red build is the point: it short-circuits an unsafe build without
+   having slowed down every clean run to get there.
+2. **Deletes the offending cache key and its entry.** Deletion is the repair,
+   not cleanup. The next run misses honestly, rebuilds against current registry
+   state, and rematerializes a clean closure — no manual step beyond re-running.
+
+The whole cost of the guarantee is one failed build per yank event, and that
+failure is self-correcting.
+
+**Asynchronous does not mean fire-and-forget.** A build that went green while
+the check was still in flight would have no check at all on precisely the runs
+where it matters, so the post step *joins* the outstanding check before the job
+is allowed to succeed. Three outcomes are possible, and all must be reached
+before success is reported:
+
+| Outcome | Result |
+|---|---|
+| completed, nothing yanked | success |
+| completed, yank found | delete the key, fail the run |
+| errored, unreachable, or join timed out | reported as **not checked** — never a silent pass |
+
+A slow or unreachable registry is not evidence that nothing is yanked, so it is
+always surfaced as `not checked` rather than folded into a pass.
+
+#### Testing the abort path
+
+`SOLDR_TEST_DEP_YANKED` forces a named dependency to be treated as yanked
+without contacting a registry, so the abort-and-delete path can be exercised in
+unit tests and in a real workflow run:
+
+```yaml
+env:
+  SOLDR_TEST_DEP_YANKED: arrayref      # comma-separated for several
+```
+
+If the named crate is absent from the lockfile the verdict is `clean`, so a
+stale value cannot silently disable the check by matching nothing.
+
 ### Recovering pre-trim cache behavior (migration)
 
 PR [#219](https://github.com/zackees/setup-soldr/pull/219) ("Trim default cache
