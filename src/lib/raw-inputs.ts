@@ -21,6 +21,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     version: get("version"),
     repo: get("repo"),
     ref: get("ref"),
+    sourcePath: get("source-path"),
     cache: get("cache"),
     cacheDir: get("cache-dir"),
     cacheKeySuffix: get("cache-key-suffix"),

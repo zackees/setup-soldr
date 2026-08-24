@@ -22,6 +22,8 @@ const cargoChefVersionBySoldr = {
   "0.9.0": "0.1.73",
   "0.9.1": "0.1.73",
   "0.9.2": "0.1.73",
+  "0.9.3": "0.1.73",
+  "0.9.4": "0.1.73",
 };
 
 const cargoChefPlatforms = {

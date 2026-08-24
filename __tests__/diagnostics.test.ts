@@ -25,6 +25,7 @@ function fixtureRawInputs(): RawInputs {
     version: "0.7.35",
     repo: "zackees/soldr",
     ref: "",
+    sourcePath: "",
     cache: "true",
     cacheDir: "",
     cacheKeySuffix: "zccache-demo",

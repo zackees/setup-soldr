@@ -45624,6 +45624,7 @@ exports.walkDirSize = walkDirSize;
 exports.isZccacheArtifactPayloadPath = isZccacheArtifactPayloadPath;
 exports.detectCompressMagic = detectCompressMagic;
 exports.planTarPayload = planTarPayload;
+exports.paxTarCreateArgs = paxTarCreateArgs;
 exports.decompressCache = decompressCache;
 exports.compressCache = compressCache;
 const fs = __importStar(__nccwpck_require__(51455));
@@ -46073,6 +46074,15 @@ function publicPayload(plan) {
     };
 }
 /**
+ * Create a pax tar stream so fractional mtimes survive cache round trips.
+ * Cargo fingerprints native build-script inputs at subsecond precision; the
+ * classic tar header truncates those mtimes and can make an otherwise warm
+ * dependency (for example blake3) rebuild on a fresh runner.
+ */
+function paxTarCreateArgs(parent, manifestPath) {
+    return ["--format=pax", "-cf", "-", "-C", parent, "-T", manifestPath];
+}
+/**
  * Decompress <cache-dir>.tar.zst (or .tar.gz) into <cache-dir>.
  *
  *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <extractRoot>`.
@@ -46321,11 +46331,11 @@ async function compressCache(opts) {
         try {
             await fs.writeFile(manifestPath, entries.map((entry) => `${entry}\n`).join(""), "utf8");
             if (debug) {
-                log(`[debug] compress cmd: tar -cf - -C ${parent} -T ${manifestPath} | ` +
+                log(`[debug] compress cmd: tar --format=pax -cf - -C ${parent} -T ${manifestPath} | ` +
                     `zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}` +
                     `${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`);
             }
-            await runPipe(["tar", ["-cf", "-", "-C", parent, "-T", manifestPath]], [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]]);
+            await runPipe(["tar", paxTarCreateArgs(parent, manifestPath)], [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]]);
         }
         finally {
             await fs.rm(manifestDir, { recursive: true, force: true }).catch(() => undefined);
@@ -48585,7 +48595,7 @@ function hashCookFlags(flags) {
 }
 function buildCookCacheKey(parts) {
     const release = parts.rustcRelease.trim() || "unresolved";
-    return [
+    const segments = [
         COOK_KEY_PREFIX,
         parts.runnerOs,
         parts.runnerArch,
@@ -48594,7 +48604,10 @@ function buildCookCacheKey(parts) {
         `f${parts.flagsHash}`,
         `l${parts.lockHash}`,
         `soldr${parts.soldrVersion}`,
-    ].join("-");
+    ];
+    if (parts.keySuffix?.trim())
+        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+    return segments.join("-");
 }
 function keyFragment(value, fallback) {
     const cleaned = value.trim().replace(/[^A-Za-z0-9_.-]+/g, "_");
@@ -48608,7 +48621,7 @@ function shortHash(value, fallback) {
 }
 function cookKeyParts(parts) {
     const release = keyFragment(parts.rustcRelease, "unresolved");
-    return [
+    const segments = [
         keyFragment(parts.runnerOs, "unknown-os"),
         keyFragment(parts.runnerArch, "unknown-arch"),
         keyFragment(parts.libc, "unknown-libc"),
@@ -48617,6 +48630,9 @@ function cookKeyParts(parts) {
         `l${keyFragment(parts.lockHash, "no-lock")}`,
         `soldr${keyFragment(parts.soldrVersion, "unset")}`,
     ];
+    if (parts.keySuffix?.trim())
+        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+    return segments;
 }
 function buildCookBaseCacheKey(parts) {
     return [COOK_BASE_KEY_PREFIX, ...cookKeyParts(parts)].join("-");
@@ -49672,6 +49688,8 @@ function dumpDiagnostics(opts) {
         lines.push(`  soldr_path=${opts.result.soldrPath}`);
         lines.push(`  soldr_repo=${opts.result.soldrRepo}`);
         lines.push(`  soldr_ref=${opts.result.soldrRef || "(release)"}`);
+        lines.push(`  soldr_source_path=${opts.result.soldrSourcePath || "(release)"}`);
+        lines.push(`  soldr_source_identity=${opts.result.soldrSourceIdentity || "(release)"}`);
         lines.push(`  soldr_version_requested=${opts.result.soldrVersionRequested}`);
         lines.push(`  soldr_version_resolved=${opts.result.soldrVersionResolved}`);
         lines.push(`  toolchain_channel=${opts.result.toolchain.channel}`);
@@ -50386,6 +50404,7 @@ function readRawInputs(env) {
         version: get("version"),
         repo: get("repo"),
         ref: get("ref"),
+        sourcePath: get("source-path"),
         cache: get("cache"),
         cacheDir: get("cache-dir"),
         cacheKeySuffix: get("cache-key-suffix"),
@@ -52297,13 +52316,42 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.prepareActionsCacheArchive = prepareActionsCacheArchive;
 exports.saveReservedCache = saveReservedCache;
 exports.isReservationConflict = isReservationConflict;
 const fsp = __importStar(__nccwpck_require__(51455));
+const path = __importStar(__nccwpck_require__(76760));
 const config_js_1 = __nccwpck_require__(17606);
 const cacheHttpClient = __importStar(__nccwpck_require__(73171));
 const cacheUtils = __importStar(__nccwpck_require__(98299));
 const twirp = __importStar(__nccwpck_require__(96819));
+const cacheTar = __importStar(__nccwpck_require__(95321));
+const defaultArchiveTools = {
+    resolvePaths: cacheUtils.resolvePaths,
+    createTempDirectory: cacheUtils.createTempDirectory,
+    createTar: cacheTar.createTar,
+    stat: fsp.stat,
+    removeDirectory: async (directory) => {
+        await fsp.rm(directory, { recursive: true, force: true });
+    },
+};
+async function prepareActionsCacheArchive(reservation, archive, tools = defaultArchiveTools) {
+    const cachePaths = await tools.resolvePaths([archive.archivePath]);
+    if (cachePaths.length === 0) {
+        throw new Error(`produced archive does not exist: ${archive.archivePath}`);
+    }
+    const archiveFolder = await tools.createTempDirectory();
+    try {
+        const uploadArchivePath = path.join(archiveFolder, cacheUtils.getCacheFileName(reservation.compressionMethod));
+        await tools.createTar(archiveFolder, cachePaths, reservation.compressionMethod);
+        const archiveBytes = (await tools.stat(uploadArchivePath)).size;
+        return { archivePath: uploadArchivePath, archiveBytes, cleanupDir: archiveFolder };
+    }
+    catch (error) {
+        await tools.removeDirectory(archiveFolder).catch(() => undefined);
+        throw error;
+    }
+}
 function log(options, message) {
     options.log?.(`two-phase-cache: ${message}`);
 }
@@ -52360,19 +52408,24 @@ async function saveReservedCache(options) {
         log(options, `archive production failed: ${error instanceof Error ? error.message : String(error)}`);
         return { status: "failed", error: error instanceof Error ? error.message : String(error) };
     }
+    let uploadArchive;
     try {
+        uploadArchive = options.prepareUpload
+            ? await options.prepareUpload(reservation, archive)
+            : await prepareActionsCacheArchive(reservation, archive);
+        log(options, `prepared Actions-cache wrapper inner=${archive.archiveBytes}B outer=${uploadArchive.archiveBytes}B`);
         if (options.upload) {
-            const cacheId = await options.upload(reservation, archive);
+            const cacheId = await options.upload(reservation, uploadArchive);
             return { status: "saved", cacheId, archive };
         }
         if (reservation.service === "v1") {
-            await cacheHttpClient.saveCache(reservation.cacheId, archive.archivePath, "", {
-                archiveSizeBytes: archive.archiveBytes,
+            await cacheHttpClient.saveCache(reservation.cacheId, uploadArchive.archivePath, "", {
+                archiveSizeBytes: uploadArchive.archiveBytes,
             });
             return { status: "saved", cacheId: reservation.cacheId, archive };
         }
-        await cacheHttpClient.saveCache(-1, archive.archivePath, reservation.signedUploadUrl, {
-            archiveSizeBytes: archive.archiveBytes,
+        await cacheHttpClient.saveCache(-1, uploadArchive.archivePath, reservation.signedUploadUrl, {
+            archiveSizeBytes: uploadArchive.archiveBytes,
             uploadChunkSize: 64 * 1024 * 1024,
             uploadConcurrency: 8,
             useAzureSdk: true,
@@ -52380,7 +52433,7 @@ async function saveReservedCache(options) {
         const finalized = await twirp.internalCacheTwirpClient().FinalizeCacheEntryUpload({
             key: options.key,
             version: reservation.version,
-            sizeBytes: `${archive.archiveBytes}`,
+            sizeBytes: `${uploadArchive.archiveBytes}`,
         });
         if (!finalized.ok)
             throw new Error(finalized.message || "cache finalization failed");
@@ -52391,6 +52444,9 @@ async function saveReservedCache(options) {
     }
     finally {
         await fsp.rm(archive.archivePath, { force: true }).catch(() => undefined);
+        if (uploadArchive?.cleanupDir) {
+            await fsp.rm(uploadArchive.cleanupDir, { recursive: true, force: true }).catch(() => undefined);
+        }
     }
 }
 function isReservationConflict(result) {

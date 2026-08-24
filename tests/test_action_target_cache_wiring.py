@@ -27,6 +27,7 @@ EXPECTED_INPUTS = {
     "version",
     "repo",
     "ref",
+    "source-path",
     "token",
     "cache",
     "cache-dir",
@@ -118,6 +119,12 @@ EXPECTED_OUTPUTS = {
     "cache-key",
     "cache-preset-effective",
     "cache-restore-status",
+    "cook-cache-hit",
+    "cook-cache-base-hit",
+    "cook-cache-delta-hit",
+    "cook-cache-status",
+    "cook-cache-load-report-json",
+    "cargo-registry-cache-hit",
     "build-cache-hit",
     "build-cache-key",
     "build-cache-path",
@@ -169,7 +176,7 @@ EXPECTED_OUTPUTS = {
     "compile-cache-verification",
 }
 
-EXPECTED_SOLDR_DEFAULT_VERSION = "0.9.2"
+EXPECTED_SOLDR_DEFAULT_VERSION = "0.9.4"
 
 
 def _load_action() -> dict:

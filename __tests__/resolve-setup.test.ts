@@ -3,19 +3,40 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { execFileSync } from "node:child_process";
 import {
   buildOutputs,
   detectMuslCcEnv,
   detectUserLinkerEnv,
   detectZccachePrivateOverlap,
   readRawInputs,
+  resolveLocalSourceIdentity,
+  resolveManifestWorkspace,
   resolveSetup,
 } from "../src/lib/resolve-setup.js";
 import { createLogger } from "../src/lib/log-utils.js";
+import { supportsLayeredCookCache } from "../src/lib/cook-cache.js";
 import type { ActionContext, RawInputs, ResolveResult } from "../src/lib/types.js";
 
 function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+}
+
+function initGitSource(sourcePath: string): void {
+  fs.mkdirSync(sourcePath, { recursive: true });
+  fs.writeFileSync(
+    path.join(sourcePath, "Cargo.toml"),
+    "[workspace]\n[workspace.package]\nversion = \"0.9.2\"\n",
+    "utf8",
+  );
+  const git = (...args: string[]): void => {
+    execFileSync("git", ["-C", sourcePath, ...args], { stdio: "ignore", windowsHide: true });
+  };
+  git("init");
+  git("config", "user.name", "setup-soldr tests");
+  git("config", "user.email", "setup-soldr-tests@example.invalid");
+  git("add", "Cargo.toml");
+  git("commit", "-m", "seed local source");
 }
 
 function makeWorkspace(opts: {
@@ -429,6 +450,25 @@ test("latest release lookup uses token input for GitHub API auth", async () => {
   }
 });
 
+test("manifest workspace follows the nearest Cargo.toml instead of target layout", () => {
+  const root = mkTmp("setup-soldr-manifest-root-");
+  const workspace = path.join(root, "workspace");
+  const nested = path.join(workspace, "apps", "demo");
+  const externalTarget = path.join(root, "external-target");
+  try {
+    fs.mkdirSync(nested, { recursive: true });
+    fs.writeFileSync(path.join(workspace, "Cargo.toml"), "[workspace]\n", "utf8");
+    fs.writeFileSync(path.join(nested, "Cargo.toml"), "[package]\nname='demo'\n", "utf8");
+    assert.equal(
+      resolveManifestWorkspace(path.join(nested, ".cache", "target"), workspace),
+      nested,
+    );
+    assert.equal(resolveManifestWorkspace(externalTarget, workspace), workspace);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("source ref changes setup cache key", async () => {
   const { outputs: base } = await run({}, { INPUT_REPO: "zackees/soldr" });
   const { outputs: branch } = await run({}, {
@@ -436,6 +476,68 @@ test("source ref changes setup cache key", async () => {
     INPUT_REF: "feature-x",
   });
   assert.notEqual(base["cache_key"], branch["cache_key"]);
+});
+
+test("local source identity is the exact pinned HEAD", () => {
+  const root = mkTmp("setup-soldr-local-source-");
+  const sourcePath = path.join(root, "soldr");
+  try {
+    initGitSource(sourcePath);
+    const clean = resolveLocalSourceIdentity(sourcePath);
+    assert.match(clean, /^local-[0-9a-f]{40}$/);
+    fs.appendFileSync(path.join(sourcePath, "Cargo.toml"), "\n# dirty\n", "utf8");
+    assert.equal(
+      resolveLocalSourceIdentity(sourcePath),
+      clean,
+      "uncommitted edits are intentionally outside the pinned identity",
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("source-path bypasses release lookup and keys caches on the pinned checkout", async () => {
+  const { root, workspace, runnerTemp } = makeWorkspace({});
+  const sourcePath = path.join(workspace, "_vender", "soldr");
+  try {
+    initGitSource(sourcePath);
+    const ctx = makeContext(root, workspace, runnerTemp);
+    ctx.env = withInputs(ctx.env, {
+      INPUT_SOURCE_PATH: "_vender/soldr",
+      INPUT_VERSION: "0.9.2",
+      INPUT_REF: "ignored-ref",
+      INPUT_CACHE_KEY_SUFFIX: "run 42",
+      INPUT_PREBUILD_DEPS: "soldr-cook",
+      INPUT_CARGO_REGISTRY_CACHE: "true",
+    });
+    const inputs = readRawInputs(ctx.env);
+    const result = await resolveSetup(ctx, inputs, {
+      fetchReleaseTag: async () => {
+        throw new Error("source-path must not query a release");
+      },
+      systemRustupOverride: async () => false,
+    });
+
+    assert.equal(result.soldrSourcePath, sourcePath);
+    assert.match(result.soldrSourceIdentity, /^local-[0-9a-f]{40}$/);
+    assert.equal(result.soldrRef, "local-source");
+    assert.equal(result.soldrVersionRequested, "");
+    assert.equal(result.soldrVersionResolved, "0.9.2");
+    assert.equal(supportsLayeredCookCache(result.soldrVersionResolved), true);
+    assert.match(result.cargoRegistryCache.key, /-xrun-42-/);
+
+    fs.appendFileSync(path.join(sourcePath, "Cargo.toml"), "\n# local edit\n", "utf8");
+    const unchangedPin = await resolveSetup(ctx, inputs, {
+      fetchReleaseTag: async () => {
+        throw new Error("source-path must not query a release");
+      },
+      systemRustupOverride: async () => false,
+    });
+    assert.equal(unchangedPin.soldrSourceIdentity, result.soldrSourceIdentity);
+    assert.equal(unchangedPin.setupCache.key, result.setupCache.key);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 // --- lockfile-only restore key ---
@@ -1481,33 +1583,32 @@ test("prebuild-deps=none does not flip cargo-registry-cache (#267)", async () =>
   );
 });
 
-test("cache-preset=minimal + prebuild-deps still produces cargo-registry-cache=false (#267)", async () => {
-  // Preset explicitly sets cargoRegistryCache="false", which is non-empty
-  // after fillFromPreset, so the #267 implicit-pairing logic does NOT
-  // override it. Minimal stays minimal.
+test("cache-preset=minimal retains the registry sources required by soldr-cook (#470)", async () => {
+  // Dependency rematerialization requires both the cooked target artifacts
+  // and the exact Cargo registry/git sources that Cargo fingerprints.
   const { result } = await run({}, { INPUT_CACHE_PRESET: "minimal" });
   assert.equal(result.cachePresetEffective, "minimal");
   assert.equal(
     result.cargoRegistryCache.enabled,
-    false,
-    "minimal preset (cargo-registry-cache=false explicit) beats #267 pairing",
+    true,
+    "minimal keeps the registry half of the dependency closure",
   );
 });
 
-test("cache-preset: foundation matches the historical default (#251)", async () => {
+test("cache-preset: foundation keeps the complete dependency closure (#470)", async () => {
   const { result } = await run({}, { INPUT_CACHE_PRESET: "foundation" });
   assert.equal(result.cachePresetEffective, "foundation");
   assert.equal(result.buildCache.enabled, true);
   assert.equal(result.targetCache.enabled, false);
-  assert.equal(result.cargoRegistryCache.enabled, false);
+  assert.equal(result.cargoRegistryCache.enabled, true);
 });
 
-test("cache-preset: minimal disables build-cache + target-cache + cargo-registry-cache (#251)", async () => {
+test("cache-preset: minimal disables build/target caches but keeps dependency sources (#470)", async () => {
   const { result } = await run({}, { INPUT_CACHE_PRESET: "minimal" });
   assert.equal(result.cachePresetEffective, "minimal");
   assert.equal(result.buildCache.enabled, false, "minimal turns build-cache off");
   assert.equal(result.targetCache.enabled, false);
-  assert.equal(result.cargoRegistryCache.enabled, false);
+  assert.equal(result.cargoRegistryCache.enabled, true);
 });
 
 test("cache-preset: full enables target-cache + cargo-registry + thin build-cache-mode (#251)", async () => {

@@ -38,6 +38,8 @@ const CARGO_CHEF_VERSION_BY_SOLDR: Readonly<Record<string, string>> = {
   "0.9.0": "0.1.73",
   "0.9.1": "0.1.73",
   "0.9.2": "0.1.73",
+  "0.9.3": "0.1.73",
+  "0.9.4": "0.1.73",
 };
 
 interface TargetInfo {
@@ -760,6 +762,54 @@ async function buildFromSource(opts: {
   }
 }
 
+async function buildFromLocalSource(opts: {
+  sourcePath: string;
+  sourceIdentity: string;
+  installDir: string;
+  target: string;
+  binaryName: string;
+  log: (msg: string) => void;
+}): Promise<string> {
+  const { sourcePath, sourceIdentity, installDir, target, binaryName, log } = opts;
+  const buildEnv: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined) buildEnv[key] = value;
+  }
+  buildEnv["CARGO_TERM_COLOR"] = buildEnv["CARGO_TERM_COLOR"] ?? "always";
+  const cargoTargetDir = path.join(os.tmpdir(), "setup-soldr-source-build", sourceIdentity);
+  fs.mkdirSync(cargoTargetDir, { recursive: true });
+  buildEnv["CARGO_TARGET_DIR"] = cargoTargetDir;
+
+  log(`Building soldr from local source ${sourcePath} (${sourceIdentity})`);
+  await streamExec(
+    "cargo",
+    ["build", "--locked", "--bin", "soldr", "--target", target],
+    { cwd: sourcePath, env: buildEnv },
+  );
+  const builtBinary = path.join(cargoTargetDir, target, "debug", binaryName);
+  if (!fs.existsSync(builtBinary)) {
+    throw new Error(`built soldr binary not found at ${builtBinary}`);
+  }
+
+  clearBundledReleasePayload(installDir, binaryName);
+  const destination = path.join(installDir, binaryName);
+  fs.copyFileSync(builtBinary, destination);
+  if (process.platform !== "win32") fs.chmodSync(destination, 0o755);
+  writeSourceMetadata(sourceMetadataPath(installDir), {
+    repo: "local",
+    ref: "working-tree",
+    commit_sha: sourceIdentity,
+    target,
+    binary_name: binaryName,
+  });
+  try {
+    fs.rmSync(releaseInstallMetadataPath(installDir), { force: true });
+  } catch {
+    // best effort stale release-metadata cleanup
+  }
+  return destination;
+}
+
 async function downloadWithHeaders(url: string, dest: string, headers: Record<string, string>): Promise<void> {
   // tc.downloadTool supports auth/headers via separate args; rather than rely
   // on that, do a manual fetch+pipe to keep behavior parity with the Python
@@ -846,6 +896,42 @@ export async function ensureSoldr(opts: {
   const requestedRef = resolveResult.soldrRef.trim();
   const requestedVersion = resolveResult.soldrVersionRequested.trim();
   const repo = resolveResult.soldrRepo.trim() || "zackees/soldr";
+  const sourcePath = resolveResult.soldrSourcePath.trim();
+  const sourceIdentity = resolveResult.soldrSourceIdentity.trim();
+
+  if (sourcePath) {
+    const localRepo = "local";
+    if (
+      sourceInstallMatches(
+        installDir,
+        localRepo,
+        "working-tree",
+        sourceIdentity,
+        target,
+        binaryName,
+      )
+    ) {
+      const current = await installedVersion(binaryPath);
+      if (current !== null) {
+        clearBundledReleasePayload(installDir, binaryName);
+        log(`Using cached soldr ${current} built from ${sourcePath} (${sourceIdentity})`);
+        core.setOutput("installed_version", current);
+        return;
+      }
+    }
+    const builtPath = await buildFromLocalSource({
+      sourcePath,
+      sourceIdentity,
+      installDir,
+      target,
+      binaryName,
+      log,
+    });
+    const current = await installedVersion(builtPath);
+    log(`Installed soldr ${current ?? sourceIdentity} from ${sourcePath} (${sourceIdentity}) at ${builtPath}`);
+    core.setOutput("installed_version", current ?? sourceIdentity);
+    return;
+  }
 
   if (requestedRef) {
     if (requestedVersion) {

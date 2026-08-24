@@ -7,7 +7,9 @@
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import * as core from "@actions/core";
+import * as toml from "@iarna/toml";
 import {
   cargoConfigHash,
   canonicalJsonStringify,
@@ -271,6 +273,61 @@ export function detectZccachePrivateOverlap(
 // `fetchReleaseTagDefault` and `resolveSoldrReleaseVersion` live in
 // ./fetch-release.js — used directly from resolveSetup() below.
 
+export function resolveLocalSourceIdentity(sourcePath: string): string {
+  const runGit = (args: string[]): string =>
+    execFileSync("git", ["-C", sourcePath, ...args], {
+      encoding: "utf8",
+      maxBuffer: 4 * 1024 * 1024,
+      windowsHide: true,
+    }).trim();
+
+  let head: string;
+  try {
+    head = runGit(["rev-parse", "HEAD"]);
+  } catch (error) {
+    throw new Error(
+      `source-path must be a Git checkout with a resolvable HEAD: ${sourcePath}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+
+  return `local-${head}`;
+}
+
+export function resolveLocalSourceVersion(sourcePath: string): string {
+  const manifestPath = path.join(sourcePath, "Cargo.toml");
+  let parsed: unknown;
+  try {
+    parsed = toml.parse(fs.readFileSync(manifestPath, "utf8"));
+  } catch (error) {
+    throw new Error(
+      `failed to parse local Soldr Cargo.toml at ${manifestPath}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+  const root = parsed as Record<string, unknown>;
+  const workspace = root["workspace"] as Record<string, unknown> | undefined;
+  const packageTable = workspace?.["package"] as Record<string, unknown> | undefined;
+  const version = packageTable?.["version"];
+  if (typeof version !== "string" || !/^\d+\.\d+\.\d+(?:[-+].*)?$/.test(version)) {
+    throw new Error(`local Soldr Cargo.toml has no valid workspace.package.version: ${manifestPath}`);
+  }
+  return version;
+}
+
+export function resolveManifestWorkspace(targetDir: string, workspace: string): string {
+  let current = path.dirname(path.resolve(targetDir));
+  while (true) {
+    if (fs.existsSync(path.join(current, "Cargo.toml"))) return current;
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return path.resolve(workspace);
+}
+
 /**
  * Resolve setup state. The orchestrator calls this once at the start of the
  * action and uses the returned ResolveResult to drive every subsequent step.
@@ -370,14 +427,14 @@ export async function resolveSetup(
     minimal: {
       buildCache: "false",
       targetCache: "false",
-      cargoRegistryCache: "false",
+      cargoRegistryCache: "true",
       prebuildDeps: "soldr-cook",
       buildCacheMode: "",
     },
     foundation: {
       buildCache: "true",
       targetCache: "false",
-      cargoRegistryCache: "false",
+      cargoRegistryCache: "true",
       prebuildDeps: "soldr-cook",
       buildCacheMode: "",
     },
@@ -562,11 +619,33 @@ export async function resolveSetup(
   }
 
   const soldrRepo = inputs.repo.trim() || "zackees/soldr";
-  const soldrRef = inputs.ref.trim();
-  const soldrVersionRequested = inputs.version.trim();
-  const soldrVersionResolved = await timeSubPhase("resolve", "soldr-version", () =>
-    resolveSoldrReleaseVersion(soldrRepo, soldrVersionRequested, soldrRef, env, deps),
-  );
+  const sourcePathInput = inputs.sourcePath.trim();
+  let soldrSourcePath = "";
+  let soldrSourceIdentity = "";
+  let soldrSourceVersion = "";
+  if (sourcePathInput) {
+    soldrSourcePath = expanduser(sourcePathInput, env);
+    if (!path.isAbsolute(soldrSourcePath)) soldrSourcePath = path.join(workspace, soldrSourcePath);
+    soldrSourcePath = path.resolve(soldrSourcePath);
+    if (!fs.existsSync(path.join(soldrSourcePath, "Cargo.toml"))) {
+      throw new Error(`source-path does not contain Cargo.toml: ${soldrSourcePath}`);
+    }
+    [soldrSourceIdentity, soldrSourceVersion] = await timeSubPhase(
+      "resolve",
+      "soldr-source",
+      async () => [
+        resolveLocalSourceIdentity(soldrSourcePath),
+        resolveLocalSourceVersion(soldrSourcePath),
+      ],
+    );
+  }
+  const soldrRef = soldrSourcePath ? "local-source" : inputs.ref.trim();
+  const soldrVersionRequested = soldrSourcePath ? "" : inputs.version.trim();
+  const soldrVersionResolved = soldrSourcePath
+    ? soldrSourceVersion
+    : await timeSubPhase("resolve", "soldr-version", () =>
+      resolveSoldrReleaseVersion(soldrRepo, soldrVersionRequested, soldrRef, env, deps),
+    );
 
   const toolchainSignature = {
     channel: toolchain.cacheChannel,
@@ -578,6 +657,7 @@ export async function resolveSetup(
     setup_cache_layout: setupCacheLayoutValue,
     soldr_repo: soldrRepo,
     soldr_ref: soldrRef || "release",
+    soldr_source_identity: soldrSourceIdentity,
     soldr_version: soldrVersionResolved || soldrRef || "source-ref",
   };
   // Python uses json.dumps(sort_keys=True) without compact separators here,
@@ -591,13 +671,22 @@ export async function resolveSetup(
   const runnerArch = sanitizeFragment((env["ACTION_ARCH"] ?? "unknown").toLowerCase());
   const cachePrefix = `setup-soldr-v4-${runnerOs}-${runnerArch}`;
   let cacheKey = `${cachePrefix}-${digest}`;
-  // #295-followup: parallelize the two independent workspace-wide hash
-  // walks. Both traverse different subsets of `workspace` (manifests
-  // vs .cargo/config.toml) and have no shared state, so running them
-  // sequentially just wastes resolve-phase wall clock. Cheap correctness
-  // improvement; no behavior change.
+
+  const targetDirInput = inputs.targetDir.trim() || "target";
+  let targetCachePath = expanduser(targetDirInput, env);
+  if (!path.isAbsolute(targetCachePath)) {
+    targetCachePath = path.join(workspace, targetCachePath);
+  }
+  targetCachePath = path.resolve(targetCachePath);
+  const manifestWorkspace = resolveManifestWorkspace(targetCachePath, workspace);
+
+  // #295-followup: parallelize the independent manifest and Cargo-config
+  // walks. Manifests are rooted at the nearest Cargo.toml ancestor of the
+  // selected target directory (falling back to the action workspace), so
+  // nonstandard target layouts stay correct while a tracked development tool
+  // checkout under `_vender/` cannot add unrelated traversal.
   const [wsManifestHash, cargoConfigHashValue] = await timeSubPhase("resolve", "ws-hash", () =>
-    Promise.all([workspaceManifestHash(workspace), cargoConfigHash(workspace)]),
+    Promise.all([workspaceManifestHash(manifestWorkspace), cargoConfigHash(workspace)]),
   );
 
   const suffix = inputs.cacheKeySuffix.trim();
@@ -624,12 +713,6 @@ export async function resolveSetup(
   // Assembled below once `cargoLockHash` is known.
 
   // ---- target cache ----
-  const targetDirInput = inputs.targetDir.trim() || "target";
-  let targetCachePath = expanduser(targetDirInput, env);
-  if (!path.isAbsolute(targetCachePath)) {
-    targetCachePath = path.join(workspace, targetCachePath);
-  }
-  targetCachePath = path.resolve(targetCachePath);
   makeDirs(targetCachePath);
   const lockfilePath = resolveLockfilePath(workspace, targetCachePath, inputs.lockfile);
   const cargoLockHash = lockfilePath
@@ -824,7 +907,13 @@ export async function resolveSetup(
     runnerTemp,
   });
   const cargoRegistryCachePrefix = `setup-soldr-cargoregistry-${cargoRegistryFormat === "soldr-v2" ? "v2" : "v1"}-${runnerOs}-${runnerArch}`;
-  const cargoRegistryCacheRestorePrefix = `${cargoRegistryCachePrefix}-${cargoLockHash}-`;
+  // Production registry content is shared across jobs (#375). A pinned local
+  // source validation run may opt into an explicit generation namespace so its
+  // seed/warm proof cannot reuse an older registry archive.
+  const cargoRegistryValidationNamespace =
+    soldrSourcePath && sanitizedSuffix ? `x${sanitizedSuffix}-` : "";
+  const cargoRegistryCacheRestorePrefix =
+    `${cargoRegistryCachePrefix}-${cargoLockHash}-${cargoRegistryValidationNamespace}`;
   // #371: drop git SHA from the exact key, same anti-pattern fix as
   // #237 did for build-cache. With SHA, every commit produced a new
   // exact-key entry that no future probe could ever hit (only same-
@@ -1156,6 +1245,9 @@ export async function resolveSetup(
   }
   log(`soldr repo=${soldrRepo}`);
   log(`soldr ref=${soldrRef || "release"}`);
+  if (soldrSourcePath) {
+    log(`soldr source-path=${soldrSourcePath} identity=${soldrSourceIdentity}`);
+  }
   if (soldrVersionResolved) {
     log(`soldr version=${soldrVersionResolved}`);
   }
@@ -1254,7 +1346,7 @@ export async function resolveSetup(
     runnerArch,
     target: crossTarget,
     soldrRepo,
-    soldrVersion: soldrVersionResolved || soldrVersionRequested,
+    soldrVersion: soldrSourceIdentity || soldrVersionResolved || soldrVersionRequested,
   });
   for (const archivePath of blessedPrepareCache.archivePaths) makeDirs(path.dirname(archivePath));
 
@@ -1285,6 +1377,8 @@ export async function resolveSetup(
     rustupStrategy,
     soldrRepo,
     soldrRef,
+    soldrSourcePath,
+    soldrSourceIdentity,
     soldrVersionRequested,
     soldrVersionResolved,
     setupCache,

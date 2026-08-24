@@ -9,6 +9,8 @@ on:
       - action.yml
       - src/**
       - dist/**
+      - _vender/soldr
+      - .gitmodules
       - __tests__/**
       - scripts/*bench*.mjs
       - scripts/bench-workloads/**
@@ -24,6 +26,7 @@ on:
       - .github/workflows/rust-ci.yml
       - .github/workflows/release-lane.yml
       - .github/workflows/release-lane-smoke.yml
+      - .github/workflows/cook-rematerialization.yml
       - .github/workflows/setup-soldr-contract.yml
   pull_request:
     paths:
@@ -31,6 +34,8 @@ on:
       - action.yml
       - src/**
       - dist/**
+      - _vender/soldr
+      - .gitmodules
       - __tests__/**
       - scripts/*bench*.mjs
       - scripts/bench-workloads/**
@@ -46,6 +51,7 @@ on:
       - .github/workflows/rust-ci.yml
       - .github/workflows/release-lane.yml
       - .github/workflows/release-lane-smoke.yml
+      - .github/workflows/cook-rematerialization.yml
       - .github/workflows/setup-soldr-contract.yml
   workflow_dispatch:
 
@@ -141,6 +147,7 @@ jobs:
           python -m pytest \
             tests/test_action_target_cache_wiring.py \
             tests/test_bench_cache_modes_workflow.py \
+            tests/test_cook_rematerialization_workflow.py \
             tests/test_rust_ci_workflow.py \
             tests/test_release_rollout_contract.py \
             tests/test_release_lane_workflow.py

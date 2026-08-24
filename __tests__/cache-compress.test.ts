@@ -5,11 +5,61 @@ import * as fs from "node:fs";
 import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
-import { detectCompressMagic, planTarPayload } from "../src/lib/cache-compress.js";
+import {
+  detectCompressMagic,
+  paxTarCreateArgs,
+  planTarPayload,
+} from "../src/lib/cache-compress.js";
 
 function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }
+
+test("cache archives use pax headers to preserve fractional mtimes", () => {
+  assert.deepEqual(paxTarCreateArgs("/cache", "/tmp/manifest.txt"), [
+    "--format=pax",
+    "-cf",
+    "-",
+    "-C",
+    "/cache",
+    "-T",
+    "/tmp/manifest.txt",
+  ]);
+});
+
+test("pax cache archives round-trip fractional mtimes", () => {
+  const root = mkTmp("cache-pax-mtime-");
+  try {
+    const cache = path.join(root, "cache");
+    const extracted = path.join(root, "extracted");
+    const manifest = path.join(root, "manifest.txt");
+    const archive = path.join(root, "cache.tar");
+    const input = path.join(cache, "input.txt");
+    fs.mkdirSync(cache);
+    fs.mkdirSync(extracted);
+    fs.writeFileSync(input, "fingerprinted input");
+    fs.writeFileSync(manifest, "cache/input.txt\n");
+    const mtimeSeconds = 1_700_000_000.123;
+    fs.utimesSync(input, mtimeSeconds, mtimeSeconds);
+
+    const create = spawnSync("tar", paxTarCreateArgs(root, manifest), {
+      encoding: null,
+      maxBuffer: 8 * 1024 * 1024,
+    });
+    assert.equal(create.status, 0, create.stderr?.toString());
+    fs.writeFileSync(archive, create.stdout);
+    const extract = spawnSync("tar", ["-xf", archive, "-C", extracted], { encoding: "utf8" });
+    assert.equal(extract.status, 0, extract.stderr);
+
+    const restored = fs.statSync(path.join(extracted, "cache", "input.txt"));
+    assert.ok(
+      Math.abs(restored.mtimeMs - fs.statSync(input).mtimeMs) < 1,
+      `fractional mtime changed: source=${fs.statSync(input).mtimeMs} restored=${restored.mtimeMs}`,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("detectCompressMagic identifies zstd by magic bytes", async () => {
   const root = mkTmp("magic-zstd-");

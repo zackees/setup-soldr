@@ -841,6 +841,11 @@ export async function run(): Promise<void> {
   let cookDeltaArchive = "";
   let cookBaseManifest = "";
   let cookLayered = false;
+  core.setOutput("cook-cache-hit", "false");
+  core.setOutput("cook-cache-base-hit", "false");
+  core.setOutput("cook-cache-delta-hit", "false");
+  core.setOutput("cook-cache-status", cookActive ? "miss" : "disabled");
+  core.setOutput("cook-cache-load-report-json", "{}");
   let cookRestoreT0 = Date.now();
   let cookRestorePromise: Promise<{ hit: boolean; matchedKey: string; archiveBytes: number }> | null = null;
   let cookLayeredRestorePromise: ReturnType<typeof restoreLayeredCookCacheArchives> | null = null;
@@ -873,7 +878,11 @@ export async function run(): Promise<void> {
       flagsHash,
       lockHash,
       soldrVersion:
-        result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim() || "unset",
+        result.soldrSourceIdentity.trim() ||
+        result.soldrVersionResolved.trim() ||
+        result.soldrVersionRequested.trim() ||
+        "unset",
+      keySuffix: inputs.cacheKeySuffix.trim(),
     };
     cookProjectRoot = path.dirname(result.targetCache.targetPath);
     cookTargetDir = result.targetCache.targetPath;
@@ -1380,6 +1389,14 @@ export async function run(): Promise<void> {
     });
     const baseReady = layeredCookBaseReady(restore, loaded);
     const deltaReady = layeredCookDeltaReady(restore, loaded);
+    core.setOutput("cook-cache-base-hit", baseReady ? "true" : "false");
+    core.setOutput("cook-cache-delta-hit", deltaReady ? "true" : "false");
+    core.setOutput("cook-cache-hit", baseReady ? "true" : "false");
+    core.setOutput("cook-cache-status", deltaReady ? "hit" : baseReady ? "base-hit" : "miss");
+    core.setOutput("cook-cache-load-report-json", JSON.stringify({
+      base: loaded.baseReport,
+      delta: loaded.deltaReport,
+    }));
     statsCollector.record({
       label: "cook-cache-base",
       operation: "restore",
@@ -1450,6 +1467,8 @@ export async function run(): Promise<void> {
     core.saveState("cookDeltaCompressLevel", "3");
   } else if (cookActive && cookRestorePromise) {
     const restore = await cookRestorePromise;
+    core.setOutput("cook-cache-hit", restore.hit ? "true" : "false");
+    core.setOutput("cook-cache-status", restore.hit ? "hit" : "miss");
     statsCollector.record({
       label: "cook-cache",
       operation: "restore",
@@ -1488,6 +1507,7 @@ export async function run(): Promise<void> {
     // non-layered path.
     core.saveState("cookCompressLevel", "9");
   } else if (cookSkippedDueToTargetHit) {
+    core.setOutput("cook-cache-status", "covered-by-target-cache");
     logger.log(
       `cook: skipped - target-cache matched at lockfile/shape level (matched=${targetCacheMatchedKey}); cook output would be redundant`,
     );

@@ -1,8 +1,10 @@
 import * as fsp from "node:fs/promises";
+import * as path from "node:path";
 import { getCacheServiceVersion } from "@actions/cache/lib/internal/config.js";
 import * as cacheHttpClient from "@actions/cache/lib/internal/cacheHttpClient.js";
 import * as cacheUtils from "@actions/cache/lib/internal/cacheUtils.js";
 import * as twirp from "@actions/cache/lib/internal/shared/cacheTwirpClient.js";
+import * as cacheTar from "@actions/cache/lib/internal/tar.js";
 
 type CompressionMethod = Awaited<ReturnType<typeof cacheUtils.getCompressionMethod>>;
 
@@ -14,6 +16,12 @@ export interface ReservedCacheArchive {
   sourceFiles?: number;
   deletedCacheFiles?: number;
   compressMs?: number;
+}
+
+export interface ActionsCacheArchive {
+  archivePath: string;
+  archiveBytes: number;
+  cleanupDir?: string;
 }
 
 export interface TwoPhaseCacheResult {
@@ -30,7 +38,56 @@ export interface TwoPhaseCacheOptions {
   log?: (message: string) => void;
   produce: () => Promise<ReservedCacheArchive>;
   reserve?: () => Promise<Reservation | null>;
-  upload?: (reservation: Reservation, archive: ReservedCacheArchive) => Promise<number | undefined>;
+  prepareUpload?: (
+    reservation: Reservation,
+    archive: ReservedCacheArchive,
+  ) => Promise<ActionsCacheArchive>;
+  upload?: (
+    reservation: Reservation,
+    archive: ActionsCacheArchive,
+  ) => Promise<number | undefined>;
+}
+
+interface ActionsCacheArchiveTools {
+  resolvePaths: (paths: string[]) => Promise<string[]>;
+  createTempDirectory: () => Promise<string>;
+  createTar: typeof cacheTar.createTar;
+  stat: (archivePath: string) => Promise<{ size: number }>;
+  removeDirectory: (directory: string) => Promise<void>;
+}
+
+const defaultArchiveTools: ActionsCacheArchiveTools = {
+  resolvePaths: cacheUtils.resolvePaths,
+  createTempDirectory: cacheUtils.createTempDirectory,
+  createTar: cacheTar.createTar,
+  stat: fsp.stat,
+  removeDirectory: async (directory) => {
+    await fsp.rm(directory, { recursive: true, force: true });
+  },
+};
+
+export async function prepareActionsCacheArchive(
+  reservation: Reservation,
+  archive: ReservedCacheArchive,
+  tools: ActionsCacheArchiveTools = defaultArchiveTools,
+): Promise<ActionsCacheArchive> {
+  const cachePaths = await tools.resolvePaths([archive.archivePath]);
+  if (cachePaths.length === 0) {
+    throw new Error(`produced archive does not exist: ${archive.archivePath}`);
+  }
+  const archiveFolder = await tools.createTempDirectory();
+  try {
+    const uploadArchivePath = path.join(
+      archiveFolder,
+      cacheUtils.getCacheFileName(reservation.compressionMethod),
+    );
+    await tools.createTar(archiveFolder, cachePaths, reservation.compressionMethod);
+    const archiveBytes = (await tools.stat(uploadArchivePath)).size;
+    return { archivePath: uploadArchivePath, archiveBytes, cleanupDir: archiveFolder };
+  } catch (error) {
+    await tools.removeDirectory(archiveFolder).catch(() => undefined);
+    throw error;
+  }
 }
 
 export interface Reservation {
@@ -97,20 +154,28 @@ export async function saveReservedCache(options: TwoPhaseCacheOptions): Promise<
     log(options, `archive production failed: ${error instanceof Error ? error.message : String(error)}`);
     return { status: "failed", error: error instanceof Error ? error.message : String(error) };
   }
+  let uploadArchive: ActionsCacheArchive | undefined;
   try {
+    uploadArchive = options.prepareUpload
+      ? await options.prepareUpload(reservation, archive)
+      : await prepareActionsCacheArchive(reservation, archive);
+    log(
+      options,
+      `prepared Actions-cache wrapper inner=${archive.archiveBytes}B outer=${uploadArchive.archiveBytes}B`,
+    );
     if (options.upload) {
-      const cacheId = await options.upload(reservation, archive);
+      const cacheId = await options.upload(reservation, uploadArchive);
       return { status: "saved", cacheId, archive };
     }
     if (reservation.service === "v1") {
-      await cacheHttpClient.saveCache(reservation.cacheId!, archive.archivePath, "", {
-        archiveSizeBytes: archive.archiveBytes,
+      await cacheHttpClient.saveCache(reservation.cacheId!, uploadArchive.archivePath, "", {
+        archiveSizeBytes: uploadArchive.archiveBytes,
       });
       return { status: "saved", cacheId: reservation.cacheId, archive };
     }
 
-    await cacheHttpClient.saveCache(-1, archive.archivePath, reservation.signedUploadUrl, {
-      archiveSizeBytes: archive.archiveBytes,
+    await cacheHttpClient.saveCache(-1, uploadArchive.archivePath, reservation.signedUploadUrl, {
+      archiveSizeBytes: uploadArchive.archiveBytes,
       uploadChunkSize: 64 * 1024 * 1024,
       uploadConcurrency: 8,
       useAzureSdk: true,
@@ -118,7 +183,7 @@ export async function saveReservedCache(options: TwoPhaseCacheOptions): Promise<
     const finalized = await twirp.internalCacheTwirpClient().FinalizeCacheEntryUpload({
       key: options.key,
       version: reservation.version!,
-      sizeBytes: `${archive.archiveBytes}`,
+      sizeBytes: `${uploadArchive.archiveBytes}`,
     });
     if (!finalized.ok) throw new Error(finalized.message || "cache finalization failed");
     return { status: "saved", cacheId: Number.parseInt(finalized.entryId, 10), archive };
@@ -126,6 +191,9 @@ export async function saveReservedCache(options: TwoPhaseCacheOptions): Promise<
     return { status: "failed", error: error instanceof Error ? error.message : String(error), archive };
   } finally {
     await fsp.rm(archive.archivePath, { force: true }).catch(() => undefined);
+    if (uploadArchive?.cleanupDir) {
+      await fsp.rm(uploadArchive.cleanupDir, { recursive: true, force: true }).catch(() => undefined);
+    }
   }
 }
 

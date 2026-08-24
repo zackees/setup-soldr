@@ -1,0 +1,91 @@
+[stack.integration]
+dockerfile = "tests/cook-rematerialization/Dockerfile"
+family = "setup-soldr-rematerialization"
+default = true
+
+[stack.integration.volumes]
+cargo-home = { scope = "stack", destination = "/root/.cargo" }
+rustup-home = { scope = "stack", destination = "/root/.rustup" }
+runner = { scope = "stack", destination = "/runner" }
+
+[stack.integration.mounts]
+repo = { source = ".", destination = "/repo" }
+
+[task.build-action]
+stack = "integration"
+cmd = "rm -rf /build && git clone --no-hardlinks /repo /build && cd /build && npm ci && npm run build && cp dist/main.js dist/post.js /repo/dist/ && cp cook/dist/main.js cook/dist/post.js /repo/cook/dist/ && cp cleanup/dist/index.js /repo/cleanup/dist/index.js"
+
+[task.source-path-smoke]
+stack = "integration"
+cmd = "bash /repo/tests/cook-rematerialization/source_path_smoke.sh"
+
+[stack.remat-seed]
+dockerfile = "tests/cook-rematerialization/Dockerfile.synthetic"
+family = "setup-soldr-synthetic-rematerialization"
+
+[stack.remat-seed.volumes]
+cargo-home = { scope = "stack", destination = "/root/.cargo" }
+soldr-home = { scope = "stack", destination = "/root/.soldr" }
+artifact = { scope = "machine", destination = "/artifact" }
+
+[stack.remat-seed.mounts]
+repo = { source = ".", destination = "/repo", readonly = true }
+
+[stack.remat-warm]
+dockerfile = "tests/cook-rematerialization/Dockerfile.synthetic"
+family = "setup-soldr-synthetic-rematerialization"
+
+[stack.remat-warm.volumes]
+cargo-home = { scope = "stack", destination = "/root/.cargo" }
+soldr-home = { scope = "stack", destination = "/root/.soldr" }
+artifact = { scope = "machine", destination = "/artifact" }
+
+[stack.remat-warm.mounts]
+repo = { source = ".", destination = "/repo", readonly = true }
+
+[task.seed-release-rematerialization]
+stack = "remat-seed"
+cmd = "bash /repo/tests/cook-rematerialization/seed_release.sh"
+
+[task.verify-release-rematerialization]
+stack = "remat-warm"
+cmd = "bash /repo/tests/cook-rematerialization/verify_release_warm.sh"
+
+# Compile-cache rematerialization proof (cache ENABLED, unlike remat-*).
+# Separate stack volumes so the warm container cannot inherit the seed's
+# cargo-home or soldr-home; only the machine-scoped artifact volume crosses.
+[stack.cachehit-seed]
+dockerfile = "tests/cook-rematerialization/Dockerfile.synthetic"
+family = "setup-soldr-synthetic-rematerialization"
+
+# Only the archive is a volume. CARGO_HOME and the soldr home (which holds
+# the compile cache) deliberately live in the container's own layer, so each
+# run starts provably empty by construction rather than by a wipe script that
+# has to know every location a cache could hide in. The artifact volume is the
+# one thing that must outlive the container -- it carries the archives the
+# warm run rematerializes from.
+[stack.cachehit-seed.volumes]
+artifact = { scope = "machine", destination = "/artifact" }
+
+[stack.cachehit-seed.mounts]
+repo = { source = ".", destination = "/repo", readonly = true }
+
+[stack.cachehit-warm]
+dockerfile = "tests/cook-rematerialization/Dockerfile.synthetic"
+family = "setup-soldr-synthetic-rematerialization"
+
+# Same reasoning as cachehit-seed: a fresh container layer is the cleanest
+# possible starting state, and only the archive crosses between the two.
+[stack.cachehit-warm.volumes]
+artifact = { scope = "machine", destination = "/artifact" }
+
+[stack.cachehit-warm.mounts]
+repo = { source = ".", destination = "/repo", readonly = true }
+
+[task.seed-cache-hits]
+stack = "cachehit-seed"
+cmd = "bash /repo/tests/cook-rematerialization/seed_cached.sh"
+
+[task.verify-cache-hits]
+stack = "cachehit-warm"
+cmd = "bash /repo/tests/cook-rematerialization/verify_cached.sh"
