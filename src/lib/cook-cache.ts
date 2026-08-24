@@ -21,6 +21,11 @@ import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import * as cache from "@actions/cache";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
+import {
+  assertArchiveWorthSaving,
+  checkRestoredArchive,
+  unusablePayloadMessage,
+} from "./cache-payload.js";
 import { formatLogLine } from "./log-utils.js";
 import { isReservationConflict, saveReservedCache } from "./two-phase-actions-cache.js";
 
@@ -481,10 +486,18 @@ async function restoreOneLayer(
     log(`${label}: no entry for key ${key}`);
     return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
   }
-  const bytes = await archiveSize(archivePath);
+  // #475: this used to stat the archive, put the size in the log line, and
+  // then return `hit: matched === key` without consulting it -- which is how
+  // #474 reported `exact=true archive=0B` and fell back to a full re-cook
+  // while every summary counted a hit.
+  const check = await checkRestoredArchive(archivePath);
+  if (!check.usable) {
+    core.warning(unusablePayloadMessage(label, matched, check));
+    return { hit: false, matchedKey: matched, archivePath, archiveBytes: check.bytes };
+  }
   const hit = matched === key;
-  log(`${label}: restored matched=${matched} exact=${hit} archive=${bytes}B`);
-  return { hit, matchedKey: matched, archivePath, archiveBytes: bytes };
+  log(`${label}: restored matched=${matched} exact=${hit} archive=${check.bytes}B`);
+  return { hit, matchedKey: matched, archivePath, archiveBytes: check.bytes };
 }
 
 export async function restoreLayeredCookCacheArchives(
@@ -920,6 +933,11 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
       const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
       if (run.code !== 0) throw new Error(`soldr save ${layer} exited ${run.code}`);
       const report = saveReport(run.payload);
+      // #475: a zero exit from `soldr save` is not proof it produced a usable
+      // archive. Uploading an empty one poisons the key permanently, because
+      // Actions cache entries are immutable and every later run would match
+      // it. Throwing here means "did not save", which is the right outcome.
+      await assertArchiveWorthSaving(`cook-cache-${layer}`, archivePath);
       return {
         archivePath,
         archiveBytes: report.archiveBytes ?? await archiveSize(archivePath),
