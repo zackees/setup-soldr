@@ -5,7 +5,9 @@
 - Default to soldr `0.9.4` (was `0.9.3`). Cook now rematerializes excluded
   vendored and patched workspaces, preserves fractional Cargo fingerprint
   mtimes through archive hydration, and supplements the portable cargo-chef
-  pass with the exact requested package and feature graph.
+  pass with the exact requested package and feature graph. Legacy Cargo
+  registry archives now use pax headers so native dependency source mtimes
+  also retain their fractional precision across fresh-runner cache restores.
 
 - Default to soldr `0.9.3` (was `0.9.2`). This release preserves complete
   cooked dependency closures across archive hydration, including build-script

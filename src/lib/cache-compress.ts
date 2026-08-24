@@ -526,6 +526,16 @@ export interface DecompressResult {
 }
 
 /**
+ * Create a pax tar stream so fractional mtimes survive cache round trips.
+ * Cargo fingerprints native build-script inputs at subsecond precision; the
+ * classic tar header truncates those mtimes and can make an otherwise warm
+ * dependency (for example blake3) rebuild on a fresh runner.
+ */
+export function paxTarCreateArgs(parent: string, manifestPath: string): string[] {
+  return ["--format=pax", "-cf", "-", "-C", parent, "-T", manifestPath];
+}
+
+/**
  * Decompress <cache-dir>.tar.zst (or .tar.gz) into <cache-dir>.
  *
  *   zstd: `zstd -d <archive>` piped into `tar -xf - -C <extractRoot>`.
@@ -936,13 +946,13 @@ export async function compressCache(opts: {
       );
       if (debug) {
         log(
-          `[debug] compress cmd: tar -cf - -C ${parent} -T ${manifestPath} | ` +
+          `[debug] compress cmd: tar --format=pax -cf - -C ${parent} -T ${manifestPath} | ` +
             `zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}` +
             `${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`,
         );
       }
       await runPipe(
-        ["tar", ["-cf", "-", "-C", parent, "-T", manifestPath]],
+        ["tar", paxTarCreateArgs(parent, manifestPath)],
         [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]],
       );
     } finally {
