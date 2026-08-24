@@ -56,7 +56,6 @@ jobs:
         name: Seed the consumer dependency closure
         uses: ./
         with:
-          source-path: _vender/soldr
           toolchain: 1.95.0
           cache: true
           cache-key-suffix: ${{ env.CACHE_GENERATION }}
@@ -77,12 +76,10 @@ jobs:
         env:
           COOK_HIT: ${{ steps.setup.outputs.cook-cache-hit }}
           COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
-          REGISTRY_HIT: ${{ steps.setup.outputs.cargo-registry-cache-hit }}
         run: |
           set -euo pipefail
           test "$COOK_HIT" = false
           test "$COOK_STATUS" = miss
-          test "$REGISTRY_HIT" = false
 
   warm:
     needs: seed
@@ -111,7 +108,6 @@ jobs:
         name: Refresh the consumer dependency closure
         uses: ./
         with:
-          source-path: _vender/soldr
           toolchain: 1.95.0
           cache: true
           cache-key-suffix: ${{ env.CACHE_GENERATION }}

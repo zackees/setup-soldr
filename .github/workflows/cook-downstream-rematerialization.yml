@@ -41,7 +41,7 @@ jobs:
       min_external: 100
 
   soldr:
-    needs: zccache
+    needs: running-process
     uses: ./.github/workflows/_cook-consumer-rematerialization.yml
     with:
       repository: zackees/soldr
@@ -51,7 +51,7 @@ jobs:
       min_external: 150
 
   fbuild:
-    needs: soldr
+    needs: running-process
     uses: ./.github/workflows/_cook-consumer-rematerialization.yml
     with:
       repository: FastLED/fbuild

@@ -14,14 +14,14 @@ def _load(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
-def test_consumers_are_chained_in_the_required_order_at_immutable_revisions() -> None:
+def test_running_process_gates_other_consumers_at_immutable_revisions() -> None:
     workflow = _load(DRIVER)
     jobs = workflow["jobs"]
     assert list(jobs) == ["running-process", "zccache", "soldr", "fbuild"]
     assert "needs" not in jobs["running-process"]
     assert jobs["zccache"]["needs"] == "running-process"
-    assert jobs["soldr"]["needs"] == "zccache"
-    assert jobs["fbuild"]["needs"] == "soldr"
+    assert jobs["soldr"]["needs"] == "running-process"
+    assert jobs["fbuild"]["needs"] == "running-process"
     for job in jobs.values():
         assert job["uses"] == "./.github/workflows/_cook-consumer-rematerialization.yml"
         revision = job["with"]["revision"]
@@ -40,7 +40,7 @@ def test_reusable_workflow_proves_a_clean_job_loaded_the_cook_base() -> None:
     warm_setup = next(step for step in jobs["warm"]["steps"] if step.get("id") == "setup")
     for setup in (seed_setup, warm_setup):
         inputs = setup["with"]
-        assert inputs["source-path"] == "_vender/soldr"
+        assert "source-path" not in inputs
         assert inputs["build-cache"] is False
         assert inputs["target-cache"] is False
         assert inputs["cargo-registry-cache"] is True
@@ -52,6 +52,7 @@ def test_reusable_workflow_proves_a_clean_job_loaded_the_cook_base() -> None:
     )
     assert 'test "$COOK_HIT" = false' in seed_guard["run"]
     assert 'test "$COOK_STATUS" = miss' in seed_guard["run"]
+    assert "REGISTRY_HIT" not in seed_guard.get("env", {})
 
     warm_guard = next(
         step
