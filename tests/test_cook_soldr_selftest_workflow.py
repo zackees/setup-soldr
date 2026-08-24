@@ -29,6 +29,12 @@ def test_cook_is_on_by_default_in_the_action() -> None:
     assert action["inputs"]["prebuild-deps-delta-cache"]["default"] == "true"
 
 
+def test_cold_cook_is_serialized_to_fit_hosted_runner_memory() -> None:
+    workflow = _workflow()
+    assert workflow["env"]["CARGO_BUILD_JOBS"] == "1"
+    assert workflow["env"]["SOLDR_JOBS"] == "1"
+
+
 def test_the_selftest_pins_no_cook_inputs() -> None:
     workflow = _workflow()
     for job_name, job in workflow["jobs"].items():

@@ -1,0 +1,61 @@
+name: Cook downstream rematerialization
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - action.yml
+      - src/**
+      - dist/**
+      - _vender/soldr
+      - .gitmodules
+      - .github/workflows/_cook-consumer-rematerialization.yml
+      - .github/workflows/cook-downstream-rematerialization.yml
+      - tests/cook-rematerialization/assert_no_external_rebuild.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cook-downstream-rematerialization-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  running-process:
+    uses: ./.github/workflows/_cook-consumer-rematerialization.yml
+    with:
+      repository: zackees/running-process
+      revision: 8ef10115e8698aa2b2be2bc440a9c83411c1f370
+      cache_key: running-process
+      build_args: -p running-process
+      min_external: 50
+
+  zccache:
+    needs: running-process
+    uses: ./.github/workflows/_cook-consumer-rematerialization.yml
+    with:
+      repository: zackees/zccache
+      revision: d8f9d4dbe6e2dc1146130a405e544ce8de50b798
+      cache_key: zccache
+      build_args: --workspace
+      min_external: 100
+
+  soldr:
+    needs: zccache
+    uses: ./.github/workflows/_cook-consumer-rematerialization.yml
+    with:
+      repository: zackees/soldr
+      revision: ed6c6314d3ed31445995695e25d62eb7d9b7b5be
+      cache_key: soldr
+      build_args: -p soldr-cli
+      min_external: 150
+
+  fbuild:
+    needs: soldr
+    uses: ./.github/workflows/_cook-consumer-rematerialization.yml
+    with:
+      repository: FastLED/fbuild
+      revision: a287987c51466007130095b00e0e46f677f53cbc
+      cache_key: fbuild
+      build_args: -p fbuild-cli -p fbuild-daemon
+      min_external: 100

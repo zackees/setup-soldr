@@ -48,6 +48,12 @@ def test_seed_and_warm_use_pinned_source_and_only_dependency_closure_caches() ->
         assert inputs["lockfile"].endswith("/Cargo.lock")
 
 
+def test_cold_cook_is_serialized_to_fit_hosted_runner_memory() -> None:
+    workflow = _load()
+    assert workflow["env"]["CARGO_BUILD_JOBS"] == "1"
+    assert workflow["env"]["SOLDR_JOBS"] == "1"
+
+
 def test_warm_gate_requires_transport_hits_zero_external_work_and_ten_x_speedup() -> None:
     workflow = _load()
     warm = workflow["jobs"]["warm"]

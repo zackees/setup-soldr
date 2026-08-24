@@ -53,6 +53,10 @@ env:
   # previous run's entries -- the warm job would then pass without the seed
   # job having produced anything.
   CACHE_GENERATION: cook-selftest-${{ github.run_id }}-${{ github.run_attempt }}
+  # soldr's release profile uses codegen-units=1/LTO. Its cold cook exceeded
+  # hosted-runner memory when a second compiler overlapped zccache-cli-core.
+  CARGO_BUILD_JOBS: "1"
+  SOLDR_JOBS: "1"
 
 jobs:
   seed:

@@ -1,0 +1,182 @@
+name: Cook consumer rematerialization
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        required: true
+        type: string
+      revision:
+        required: true
+        type: string
+      cache_key:
+        required: true
+        type: string
+      build_args:
+        required: true
+        type: string
+      min_external:
+        required: true
+        type: number
+
+permissions:
+  contents: read
+
+env:
+  # Release cooks in these workspaces contain large single-process LLVM and
+  # C-amalgamation peaks. A second compiler can exceed hosted-runner memory.
+  CARGO_BUILD_JOBS: "1"
+  SOLDR_JOBS: "1"
+  CACHE_GENERATION: consumer-${{ inputs.cache_key }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+jobs:
+  seed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out setup-soldr
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check out consumer
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.revision }}
+          path: consumer
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Require an initially empty consumer target
+        shell: bash
+        run: test ! -e "$GITHUB_WORKSPACE/consumer/target"
+
+      - id: setup
+        name: Seed the consumer dependency closure
+        uses: ./
+        with:
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache: true
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: true
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: soldr-cook
+          prebuild-deps-flags: "--release"
+          prebuild-deps-delta-cache: true
+          target-dir: ${{ github.workspace }}/consumer/target
+          lockfile: ${{ github.workspace }}/consumer/Cargo.lock
+          linker: platform-default
+
+      - name: Require a cold cook seed
+        shell: bash
+        env:
+          COOK_HIT: ${{ steps.setup.outputs.cook-cache-hit }}
+          COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
+          REGISTRY_HIT: ${{ steps.setup.outputs.cargo-registry-cache-hit }}
+        run: |
+          set -euo pipefail
+          test "$COOK_HIT" = false
+          test "$COOK_STATUS" = miss
+          test "$REGISTRY_HIT" = false
+
+  warm:
+    needs: seed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out setup-soldr
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Check out consumer
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          ref: ${{ inputs.revision }}
+          path: consumer
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Require an initially empty consumer target
+        shell: bash
+        run: test ! -e "$GITHUB_WORKSPACE/consumer/target"
+
+      - id: setup
+        name: Refresh the consumer dependency closure
+        uses: ./
+        with:
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache: true
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: true
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: soldr-cook
+          prebuild-deps-flags: "--release"
+          prebuild-deps-delta-cache: true
+          target-dir: ${{ github.workspace }}/consumer/target
+          lockfile: ${{ github.workspace }}/consumer/Cargo.lock
+          linker: platform-default
+
+      - name: Require the refreshed dependency closure
+        shell: bash
+        env:
+          COOK_HIT: ${{ steps.setup.outputs.cook-cache-hit }}
+          BASE_HIT: ${{ steps.setup.outputs.cook-cache-base-hit }}
+          REGISTRY_HIT: ${{ steps.setup.outputs.cargo-registry-cache-hit }}
+          COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
+          LOAD_REPORT: ${{ steps.setup.outputs.cook-cache-load-report-json }}
+        run: |
+          set -euo pipefail
+          test "$COOK_HIT" = true
+          test "$BASE_HIT" = true
+          test "$REGISTRY_HIT" = true
+          test "$COOK_STATUS" = base-hit || test "$COOK_STATUS" = hit
+          printf '%s\n' "$LOAD_REPORT" | python -m json.tool
+          python - <<'PY'
+          import json
+          import os
+          report = json.loads(os.environ["LOAD_REPORT"])
+          assert report["base"]["cacheFilesRestored"] > 0
+          PY
+
+      - id: build
+        name: Prove no third-party code rebuilds
+        shell: bash
+        working-directory: consumer
+        env:
+          BUILD_ARGS: ${{ inputs.build_args }}
+          MIN_EXTERNAL: ${{ inputs.min_external }}
+        run: |
+          set -euo pipefail
+          read -r -a build_args <<< "$BUILD_ARGS"
+          ZCCACHE_DISABLE=1 soldr cargo build --release --locked \
+            "${build_args[@]}" \
+            --message-format=json-render-diagnostics \
+            > "$RUNNER_TEMP/${{ inputs.cache_key }}-warm-messages.jsonl" \
+            2> "$RUNNER_TEMP/${{ inputs.cache_key }}-warm-stderr.log"
+          python "$GITHUB_WORKSPACE/tests/cook-rematerialization/assert_no_external_rebuild.py" \
+            "$RUNNER_TEMP/${{ inputs.cache_key }}-warm-messages.jsonl" \
+            "$RUNNER_TEMP/${{ inputs.cache_key }}-warm-report.json" \
+            "$MIN_EXTERNAL"
+
+      - name: Upload rematerialization evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cook-consumer-${{ inputs.cache_key }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            ${{ runner.temp }}/${{ inputs.cache_key }}-warm-report.json
+            ${{ runner.temp }}/${{ inputs.cache_key }}-warm-messages.jsonl
+            ${{ runner.temp }}/${{ inputs.cache_key }}-warm-stderr.log

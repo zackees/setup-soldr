@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import yaml
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DRIVER = REPO_ROOT / ".github/workflows/cook-downstream-rematerialization.yml"
+REUSABLE = REPO_ROOT / ".github/workflows/_cook-consumer-rematerialization.yml"
+
+
+def _load(path: Path) -> dict:
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def test_consumers_are_chained_in_the_required_order_at_immutable_revisions() -> None:
+    workflow = _load(DRIVER)
+    jobs = workflow["jobs"]
+    assert list(jobs) == ["running-process", "zccache", "soldr", "fbuild"]
+    assert "needs" not in jobs["running-process"]
+    assert jobs["zccache"]["needs"] == "running-process"
+    assert jobs["soldr"]["needs"] == "zccache"
+    assert jobs["fbuild"]["needs"] == "soldr"
+    for job in jobs.values():
+        assert job["uses"] == "./.github/workflows/_cook-consumer-rematerialization.yml"
+        revision = job["with"]["revision"]
+        assert len(revision) == 40
+        int(revision, 16)
+    assert jobs["running-process"]["with"]["build_args"] == "-p running-process"
+
+
+def test_reusable_workflow_proves_a_clean_job_loaded_the_cook_base() -> None:
+    workflow = _load(REUSABLE)
+    jobs = workflow["jobs"]
+    assert list(jobs) == ["seed", "warm"]
+    assert jobs["warm"]["needs"] == "seed"
+
+    seed_setup = next(step for step in jobs["seed"]["steps"] if step.get("id") == "setup")
+    warm_setup = next(step for step in jobs["warm"]["steps"] if step.get("id") == "setup")
+    for setup in (seed_setup, warm_setup):
+        inputs = setup["with"]
+        assert inputs["source-path"] == "_vender/soldr"
+        assert inputs["build-cache"] is False
+        assert inputs["target-cache"] is False
+        assert inputs["cargo-registry-cache"] is True
+        assert inputs["prebuild-deps"] == "soldr-cook"
+        assert inputs["prebuild-deps-flags"] == "--release"
+
+    seed_guard = next(
+        step for step in jobs["seed"]["steps"] if step.get("name") == "Require a cold cook seed"
+    )
+    assert 'test "$COOK_HIT" = false' in seed_guard["run"]
+    assert 'test "$COOK_STATUS" = miss' in seed_guard["run"]
+
+    warm_guard = next(
+        step
+        for step in jobs["warm"]["steps"]
+        if step.get("name") == "Require the refreshed dependency closure"
+    )
+    assert 'test "$COOK_HIT" = true' in warm_guard["run"]
+    assert 'test "$BASE_HIT" = true' in warm_guard["run"]
+    assert 'test "$REGISTRY_HIT" = true' in warm_guard["run"]
+
+    build = next(step for step in jobs["warm"]["steps"] if step.get("id") == "build")
+    assert "ZCCACHE_DISABLE=1 soldr cargo build" in build["run"]
+    assert "assert_no_external_rebuild.py" in build["run"]
+
+
+def test_reusable_workflow_serializes_cold_release_cooks() -> None:
+    workflow = _load(REUSABLE)
+    assert workflow["env"]["CARGO_BUILD_JOBS"] == "1"
+    assert workflow["env"]["SOLDR_JOBS"] == "1"

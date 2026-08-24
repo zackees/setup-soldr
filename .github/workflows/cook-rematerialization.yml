@@ -21,8 +21,10 @@ concurrency:
 env:
   FIXTURE_SOURCE: _vender/soldr/tests/fixtures/cook-rematerialization
   CACHE_GENERATION: cook-remat-${{ github.run_id }}-${{ github.run_attempt }}
-  CARGO_BUILD_JOBS: "2"
-  SOLDR_JOBS: "2"
+  # Cold release cooks contain single-process LLVM and sqlite amalgamation
+  # peaks that exceed hosted-runner memory when another compiler overlaps.
+  CARGO_BUILD_JOBS: "1"
+  SOLDR_JOBS: "1"
 
 jobs:
   baseline:
