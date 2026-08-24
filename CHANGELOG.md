@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Make Linux `soldr-cook` dependency rematerialization verifiable and complete
+  (#470): pair Cargo registry/git sources with every cook-enabled cache preset,
+  expose base/delta/load diagnostics through `cook-cache-*` outputs, and add a
+  pinned `_vender/soldr` development checkout plus `source-path` override for
+  testing unreleased Soldr commits without changing the production default.
+  The coordinated Soldr change preserves build-script executables in cooked
+  target archives and promotes `soldr hydrate` while retaining `soldr load` as
+  a compatibility alias.
+
 - Default to soldr `0.9.2` (was `0.9.1`). The release preserves the existing
   combined-archive and hash-verified wheel install contract, including the
   pinned cargo-chef `0.1.73` helper. It adds the terminal release-surface

@@ -23,8 +23,10 @@
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
+import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
+import { checkRestoredArchive, unusablePayloadMessage } from "./cache-payload.js";
 
 export interface MiniCacheKeyParts {
   runnerOs: string;
@@ -140,6 +142,14 @@ export async function restoreMiniCache(opts: MiniCacheRestoreOpts): Promise<Mini
   } catch (err) {
     log(`soldr-mini-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
     return { hit: false, matchedKey: matched, archiveBytes };
+  }
+  // #475: a decompress that does not throw is not proof the payload was
+  // usable. Validate before claiming a hit, the same rule every other layer
+  // now applies.
+  const check = await checkRestoredArchive(archivePath);
+  if (!check.usable) {
+    core.warning(unusablePayloadMessage("soldr-mini-cache", matched, check));
+    return { hit: false, matchedKey: matched, archiveBytes: check.bytes };
   }
   log(`soldr-mini-cache: restored matched=${matched} archive=${archiveBytes}B target=${installDir}`);
   return { hit: true, matchedKey: matched, archiveBytes };

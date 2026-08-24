@@ -292,6 +292,8 @@ export function dumpDiagnostics(opts: DumpOptions): void {
     lines.push(`  soldr_path=${opts.result.soldrPath}`);
     lines.push(`  soldr_repo=${opts.result.soldrRepo}`);
     lines.push(`  soldr_ref=${opts.result.soldrRef || "(release)"}`);
+    lines.push(`  soldr_source_path=${opts.result.soldrSourcePath || "(release)"}`);
+    lines.push(`  soldr_source_identity=${opts.result.soldrSourceIdentity || "(release)"}`);
     lines.push(`  soldr_version_requested=${opts.result.soldrVersionRequested}`);
     lines.push(`  soldr_version_resolved=${opts.result.soldrVersionResolved}`);
     lines.push(`  toolchain_channel=${opts.result.toolchain.channel}`);

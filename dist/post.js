@@ -47106,6 +47106,132 @@ async function evictIfOverBudget(policy, deps) {
 
 /***/ }),
 
+/***/ 94326:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/**
+ * One payload-validation rule for every cache restore path (#475).
+ *
+ * A cache that misses is fine. A cache that reports a hit and hands back an
+ * unusable payload is worse than no cache, because it removes the signal that
+ * would tell you to investigate: the restore claims an exact key match, the
+ * fallback still produces a correct build, and the only symptom is cold-path
+ * time on a run nobody is timing.
+ *
+ * Two instances of that shape were filed before this existed -- #474 (a cook
+ * layer restoring `exact=true archive=0B`, then falling back to a full
+ * re-cook) and #473 (a truncated toolchain entry poisoning every later run).
+ * `solo-toolchain-cache` already had the right instinct, checking that the
+ * decompressed tree was non-empty; nothing else did. This makes that instinct
+ * shared rather than incidental.
+ *
+ * Deliberately NOT content hashing: it would cost real time on every restore
+ * of a multi-hundred-MB archive to catch a rare fault, and the failure modes
+ * actually observed (zero-length, truncated) are caught far more cheaply.
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.checkRestoredArchive = checkRestoredArchive;
+exports.unusablePayloadMessage = unusablePayloadMessage;
+exports.assertArchiveWorthSaving = assertArchiveWorthSaving;
+const fsp = __importStar(__nccwpck_require__(51455));
+/**
+ * Stat a restored archive and decide whether it may be reported as a hit.
+ *
+ * A zero-byte archive cannot be valid for any layer or codec, so it is the one
+ * check that is safe to apply everywhere without knowing what the layer holds.
+ */
+async function checkRestoredArchive(archivePath) {
+    let bytes;
+    try {
+        bytes = (await fsp.stat(archivePath)).size;
+    }
+    catch {
+        return { usable: false, bytes: 0, rejection: "missing" };
+    }
+    if (bytes === 0) {
+        return { usable: false, bytes: 0, rejection: "empty" };
+    }
+    return { usable: true, bytes, rejection: null };
+}
+/**
+ * The warning a layer emits when a matched key produced an unusable payload.
+ *
+ * Phrased to name the key, because the failure is indistinguishable from a
+ * working cache at a glance and the key is what makes it searchable. Callers
+ * should route this to `core.warning`, not an info line: a full rebuild after
+ * a matched restore should not require reading raw CI logs to notice.
+ */
+function unusablePayloadMessage(label, matchedKey, check) {
+    const why = check.rejection === "missing"
+        ? "the archive is not on disk"
+        : "the archive is zero bytes";
+    return (`${label}: cache key matched but ${why}, treating as a MISS ` +
+        `(key=${matchedKey}). The build will run the cold path; this is a cache ` +
+        `fault, not a source change.`);
+}
+/**
+ * Refuse to upload an archive that would poison the key it is saved under.
+ *
+ * Actions cache entries are immutable: once a key holds a bad payload, every
+ * later run matches that key and gets the bad payload, and no amount of
+ * re-running fixes it. That is the permanent half of #473 -- and it is why
+ * validating on restore alone is not enough. A restore-side check turns a
+ * poisoned entry into an honest miss on every run forever; a save-side check
+ * stops it being written in the first place.
+ *
+ * Throws rather than returning a flag so a caller cannot accidentally ignore
+ * it: the save paths already treat a thrown error as "did not save", which is
+ * exactly the right outcome.
+ */
+async function assertArchiveWorthSaving(label, archivePath) {
+    const check = await checkRestoredArchive(archivePath);
+    if (!check.usable) {
+        const why = check.rejection === "missing" ? "was not written" : "is zero bytes";
+        throw new Error(`${label}: refusing to upload an archive that ${why} (${archivePath}). ` +
+            `Cache keys are immutable, so saving it would serve this payload to ` +
+            `every later run that matches the key.`);
+    }
+    return check.bytes;
+}
+
+
+/***/ }),
+
 /***/ 43408:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -48550,6 +48676,7 @@ const core = __importStar(__nccwpck_require__(37484));
 const exec = __importStar(__nccwpck_require__(95236));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
+const cache_payload_js_1 = __nccwpck_require__(94326);
 const log_utils_js_1 = __nccwpck_require__(28129);
 const two_phase_actions_cache_js_1 = __nccwpck_require__(27190);
 function layeredCookBaseReady(restore, loaded) {
@@ -48585,7 +48712,7 @@ function hashCookFlags(flags) {
 }
 function buildCookCacheKey(parts) {
     const release = parts.rustcRelease.trim() || "unresolved";
-    return [
+    const segments = [
         COOK_KEY_PREFIX,
         parts.runnerOs,
         parts.runnerArch,
@@ -48594,7 +48721,10 @@ function buildCookCacheKey(parts) {
         `f${parts.flagsHash}`,
         `l${parts.lockHash}`,
         `soldr${parts.soldrVersion}`,
-    ].join("-");
+    ];
+    if (parts.keySuffix?.trim())
+        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+    return segments.join("-");
 }
 function keyFragment(value, fallback) {
     const cleaned = value.trim().replace(/[^A-Za-z0-9_.-]+/g, "_");
@@ -48608,7 +48738,7 @@ function shortHash(value, fallback) {
 }
 function cookKeyParts(parts) {
     const release = keyFragment(parts.rustcRelease, "unresolved");
-    return [
+    const segments = [
         keyFragment(parts.runnerOs, "unknown-os"),
         keyFragment(parts.runnerArch, "unknown-arch"),
         keyFragment(parts.libc, "unknown-libc"),
@@ -48617,6 +48747,9 @@ function cookKeyParts(parts) {
         `l${keyFragment(parts.lockHash, "no-lock")}`,
         `soldr${keyFragment(parts.soldrVersion, "unset")}`,
     ];
+    if (parts.keySuffix?.trim())
+        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+    return segments;
 }
 function buildCookBaseCacheKey(parts) {
     return [COOK_BASE_KEY_PREFIX, ...cookKeyParts(parts)].join("-");
@@ -48819,10 +48952,18 @@ async function restoreOneLayer(label, key, archivePath, restoreKeys, log) {
         log(`${label}: no entry for key ${key}`);
         return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
     }
-    const bytes = await archiveSize(archivePath);
+    // #475: this used to stat the archive, put the size in the log line, and
+    // then return `hit: matched === key` without consulting it -- which is how
+    // #474 reported `exact=true archive=0B` and fell back to a full re-cook
+    // while every summary counted a hit.
+    const check = await (0, cache_payload_js_1.checkRestoredArchive)(archivePath);
+    if (!check.usable) {
+        core.warning((0, cache_payload_js_1.unusablePayloadMessage)(label, matched, check));
+        return { hit: false, matchedKey: matched, archivePath, archiveBytes: check.bytes };
+    }
     const hit = matched === key;
-    log(`${label}: restored matched=${matched} exact=${hit} archive=${bytes}B`);
-    return { hit, matchedKey: matched, archivePath, archiveBytes: bytes };
+    log(`${label}: restored matched=${matched} exact=${hit} archive=${check.bytes}B`);
+    return { hit, matchedKey: matched, archivePath, archiveBytes: check.bytes };
 }
 async function restoreLayeredCookCacheArchives(opts) {
     // #295: parallel-restore base + delta instead of the previous serial
@@ -49219,6 +49360,11 @@ async function saveLayeredCookCache(opts) {
             if (run.code !== 0)
                 throw new Error(`soldr save ${layer} exited ${run.code}`);
             const report = saveReport(run.payload);
+            // #475: a zero exit from `soldr save` is not proof it produced a usable
+            // archive. Uploading an empty one poisons the key permanently, because
+            // Actions cache entries are immutable and every later run would match
+            // it. Throwing here means "did not save", which is the right outcome.
+            await (0, cache_payload_js_1.assertArchiveWorthSaving)(`cook-cache-${layer}`, archivePath);
             return {
                 archivePath,
                 archiveBytes: report.archiveBytes ?? await archiveSize(archivePath),
@@ -49672,6 +49818,8 @@ function dumpDiagnostics(opts) {
         lines.push(`  soldr_path=${opts.result.soldrPath}`);
         lines.push(`  soldr_repo=${opts.result.soldrRepo}`);
         lines.push(`  soldr_ref=${opts.result.soldrRef || "(release)"}`);
+        lines.push(`  soldr_source_path=${opts.result.soldrSourcePath || "(release)"}`);
+        lines.push(`  soldr_source_identity=${opts.result.soldrSourceIdentity || "(release)"}`);
         lines.push(`  soldr_version_requested=${opts.result.soldrVersionRequested}`);
         lines.push(`  soldr_version_resolved=${opts.result.soldrVersionResolved}`);
         lines.push(`  toolchain_channel=${opts.result.toolchain.channel}`);
@@ -50386,6 +50534,7 @@ function readRawInputs(env) {
         version: get("version"),
         repo: get("repo"),
         ref: get("ref"),
+        sourcePath: get("source-path"),
         cache: get("cache"),
         cacheDir: get("cache-dir"),
         cacheKeySuffix: get("cache-key-suffix"),
@@ -50965,8 +51114,10 @@ exports.isEligibleForMiniCache = isEligibleForMiniCache;
 const fs = __importStar(__nccwpck_require__(73024));
 const fsp = __importStar(__nccwpck_require__(51455));
 const path = __importStar(__nccwpck_require__(76760));
+const core = __importStar(__nccwpck_require__(37484));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
+const cache_payload_js_1 = __nccwpck_require__(94326);
 // Schema segment `v2` (still inside the `soldr-mini-` eviction namespace):
 // v1 entries were archived by setup-soldr <= v0.9.64, whose bundled-payload
 // allowlist dropped `soldr-clang-shim` from the soldr release archive.
@@ -51041,6 +51192,14 @@ async function restoreMiniCache(opts) {
     catch (err) {
         log(`soldr-mini-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
         return { hit: false, matchedKey: matched, archiveBytes };
+    }
+    // #475: a decompress that does not throw is not proof the payload was
+    // usable. Validate before claiming a hit, the same rule every other layer
+    // now applies.
+    const check = await (0, cache_payload_js_1.checkRestoredArchive)(archivePath);
+    if (!check.usable) {
+        core.warning((0, cache_payload_js_1.unusablePayloadMessage)("soldr-mini-cache", matched, check));
+        return { hit: false, matchedKey: matched, archiveBytes: check.bytes };
     }
     log(`soldr-mini-cache: restored matched=${matched} archive=${archiveBytes}B target=${installDir}`);
     return { hit: true, matchedKey: matched, archiveBytes };

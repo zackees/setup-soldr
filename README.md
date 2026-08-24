@@ -436,6 +436,7 @@ preferred for new workflows.
 | Input | Meaning |
 |---|---|
 | `version` | Soldr release tag or version to install. Defaults to `0.9.2`. |
+| `source-path` | Internal development override that builds Soldr from a pinned local Git checkout such as `_vender/soldr`; the checkout must include required submodules. Release assets remain the production default. |
 | `cross-targets` | One canonical target per job for Soldr blessed preparation; use a matrix for multiple targets. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
@@ -455,7 +456,7 @@ preferred for new workflows.
 | `seed-isolated-build-cache` | Optional newline/comma-separated isolated `SOLDR_CACHE_DIR` roots to pre-seed from the restored build-cache (issue #240). Copies only the content-addressed zccache artifact store (no logs/sockets/live daemon state) into `<root>/cache/zccache`, so a daemon-isolated coverage/integration phase starts warm instead of cold. Default empty (no seeding). |
 | `verify-compile-cache` | Guard against silently-bypassed compile caching. `off` (default) no check; `warn` emits a warning when a job expected to use zccache reports `hits + misses == 0`; `error`/`true` fails the post step. Names the likely bypass (RUSTC_WRAPPER, SOLDR_CACHE_DIR, ZCCACHE_CACHE_DIR, shims) and sets the `compile-cache-verification` output. Legitimate no-compile / passthrough / build-cache-off jobs are skipped, never failed. |
 | `zccache-seed-strict` | When `true`, setup fails if setup-soldr cannot seed older soldr releases' pinned zccache install from a vendored or managed release source. Default `false` keeps the seed best-effort and allows soldr's normal managed fallback path. Embedded-zccache soldr releases skip this seed because no external zccache install is needed. Enable this in repos where a later `cargo install zccache` fallback is unacceptable on older soldr pins. |
-| `prebuild-deps` | Dependency prebuild mode. Default `soldr-cook` runs `soldr cook` and restores/saves a long-enduring dependency cache; set to `none` to skip. `cargo-chef` is accepted as a legacy alias. |
+| `prebuild-deps` | Dependency prebuild mode. Default `soldr-cook` runs `soldr cook` and restores/saves a long-enduring dependency cache; its required Cargo registry/git source closure is paired automatically unless `cargo-registry-cache: false` is explicit. Set to `none` to skip. `cargo-chef` is accepted as a legacy alias. |
 | `prebuild-deps-flags` | Flags forwarded to `soldr cook`; default `--release`. Material flags are hashed into the cook cache key. |
 | `prebuild-deps-delta-cache` | Default `true`. With soldr `>=0.7.38`, restore/save the cook cache as a protobuf-backed base layer plus a smaller commit/build-shape delta layer. Set to `false` to use the legacy single cook archive. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
@@ -470,7 +471,7 @@ preferred for new workflows.
 | `cache-encrypt-key` | Optional 256-bit AES key (64-char hex, 44-char base64, or 43-char base64url). When set, every managed cache layer's `.tar.zst` archive is wrapped with AES-256-GCM before upload and verified+decrypted on restore. Pass via a GitHub Actions secret. See "Release-grade usage: encrypted cache" below. (#387) |
 | `cache-encrypt-on-failure` | Behavior when an encrypted entry fails GCM authentication (wrong key, tampered ciphertext, or AAD mismatch). Default `error` stops the run; `skip` logs the failure and treats the entry as a cold miss. Has no effect when `cache-encrypt-key` is empty. (#387) |
 | `source-mtime-normalize` | Opt-in. When `true`, rewrite the mtime of tracked Rust build-input files under `${{ github.workspace }}` to each file's last-commit timestamp before the target-cache restore. Default `false`. See "Source mtime normalization" below. |
-| `cargo-registry-cache` | When `true`, setup-soldr caches `~/.cargo/registry`, `.global-cache`, and `git/` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Legacy-v1 remains the codec default because Windows 2025 run 31089551078 failed both fixed performance gates; `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` opts into the split parallel-extract format where compatible. Requires zccache `>=1.4.4` (skip-flag support). Default `false` keeps the layer itself off. |
+| `cargo-registry-cache` | Caches `~/.cargo/registry`, `.global-cache`, and `git/` and exports `SOLDR_SKIP_CARGO_REGISTRY_SAVE=1` so zccache CLI's built-in registry save no-ops. Empty enables it automatically with `prebuild-deps: soldr-cook`, because Cargo source trees are part of the rematerialized dependency closure; set `false` explicitly to opt out. Legacy-v1 remains the codec default because Windows 2025 run 31089551078 failed both fixed performance gates; `SOLDR_CARGO_REGISTRY_VIA_SOLDR=1` opts into the split parallel-extract format where compatible. Requires zccache `>=1.4.4`. |
 | `dylint` | Enable Dylint mode. Default `false`, so normal jobs do not fetch the nightly map, restore or install a nightly, substitute toolchains, or prepare Dylint caches. When `true`, setup-soldr maps the configured exact Rust release to the newest compatible dated nightly and scopes that identity to Soldr's Dylint subprocesses. |
 | `dylint-foundation-cache` | Cache the exact Dylint nightly/components plus cargo-dylint, dylint-link, and compatible driver. Default `true` in Dylint mode and inert otherwise. The key includes the dated nightly, compiler release, and full compiler commit. |
 | `dylint-output-cache` | Restore and save the isolated custom-library and workspace-check trees separately from the long-lived foundation. Default `true` in Dylint mode and inert otherwise; a save requires a successful Dylint run. |
@@ -501,6 +502,12 @@ preferred for new workflows.
 | `cache-hit` | Whether the action restored an exact cache hit. |
 | `cache-key` | Primary key used for the action-managed cache/state root. |
 | `cache-restore-status` | Diagnostic restore status for the action-managed cache/state root. |
+| `cook-cache-hit` | Whether the long-lived dependency base was restored and loaded for usable rematerialization. |
+| `cook-cache-base-hit` | Whether the Cargo.lock-oriented base archive was restored and loaded. |
+| `cook-cache-delta-hit` | Whether a compatible build-shape delta was restored and loaded over the base. |
+| `cook-cache-status` | Dependency-rematerialization transport status (`disabled`, `miss`, `base-hit`, `hit`, or `covered-by-target-cache`). |
+| `cook-cache-load-report-json` | JSON base/delta load diagnostics, including restored-file and mtime replay counters. |
+| `cargo-registry-cache-hit` | Whether the Cargo registry/git source half of the dependency closure restored an exact key. |
 | `build-cache-hit` | Whether the Soldr-owned zccache compilation cache was restored. Empty only when `build-cache` is disabled. |
 | `build-cache-key` | Primary key used for the Soldr-owned zccache compilation cache. |
 | `build-cache-path` | Soldr-owned zccache compilation cache path. |
@@ -537,6 +544,8 @@ preferred for new workflows.
 
 ## Notes
 
+- Development branches may pin the tracked `_vender/soldr` checkout and pass `source-path: _vender/soldr`; setup-soldr keys the build on the checkout's exact `HEAD`; commit local edits before expecting a new source identity. Production installs remain release-asset based.
+- `soldr-cook` rematerialization is a two-part dependency closure: the cooked `target/` base (fingerprints, dep-info, rlibs/proc macros, build-script executables and outputs) plus Cargo registry/git sources. The action restores both by default and reports transport/load status through the `cook-cache-*` outputs.
 - The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.9.2`. Combined GitHub release archives remain preferred; for explicitly supported wheel-compatible releases (currently `0.9.0`, `0.9.1`, and `0.9.2`), a missing exact target archive falls back to the matching hash-verified wheel from the same version on PyPI.
 - For soldr `0.7.43+`, the action installs the release-pinned `cargo-chef`
   binary and exports `SOLDR_CARGO_CHEF_LOCAL_DIR`, so `soldr cook` does not
@@ -676,6 +685,64 @@ service check, dispatch the workflow with
 `cache_backend=local-tar-zstd+actions-cache-smoke`; this keeps the normal local
 matrix and adds a two-job target-cache save/restore smoke using
 `@actions/cache`, emitted as `cache_backend=actions-cache`.
+
+### Poisoned-dependency detection (async yank check)
+
+A cache key is content-addressed: platform, toolchain, flags, `Cargo.lock` hash,
+soldr version. That covers every input whose *content* can change — which is
+exactly why it cannot catch a **yank**.
+
+When a crate is yanked, `Cargo.lock` is byte-identical, so the lockfile hash and
+therefore the whole cache key are unchanged. A cached closure built from the
+withdrawn crate keeps matching its key. Because Actions cache entries are
+immutable, that closure is **self-poisoning**: every later run rematerializes
+the yanked artifact and reports success. A yank is a *trust* change, not a
+content change, so the invalidation has to come from outside the key.
+
+The action therefore checks yank status **asynchronously**, off the critical
+path. When nothing is yanked — the overwhelmingly common case — no run waits on
+the registry and the check costs nothing measurable.
+
+On detection the action does two things:
+
+1. **Fails the run.** Continuing would ship an artifact built from withdrawn
+   code. The red build is the point: it short-circuits an unsafe build without
+   having slowed down every clean run to get there.
+2. **Deletes the offending cache key and its entry.** Deletion is the repair,
+   not cleanup. The next run misses honestly, rebuilds against current registry
+   state, and rematerializes a clean closure — no manual step beyond re-running.
+
+The whole cost of the guarantee is one failed build per yank event, and that
+failure is self-correcting.
+
+**Asynchronous does not mean fire-and-forget.** A build that went green while
+the check was still in flight would have no check at all on precisely the runs
+where it matters, so the post step *joins* the outstanding check before the job
+is allowed to succeed. Three outcomes are possible, and all must be reached
+before success is reported:
+
+| Outcome | Result |
+|---|---|
+| completed, nothing yanked | success |
+| completed, yank found | delete the key, fail the run |
+| errored, unreachable, or join timed out | reported as **not checked** — never a silent pass |
+
+A slow or unreachable registry is not evidence that nothing is yanked, so it is
+always surfaced as `not checked` rather than folded into a pass.
+
+#### Testing the abort path
+
+`SOLDR_TEST_DEP_YANKED` forces a named dependency to be treated as yanked
+without contacting a registry, so the abort-and-delete path can be exercised in
+unit tests and in a real workflow run:
+
+```yaml
+env:
+  SOLDR_TEST_DEP_YANKED: arrayref      # comma-separated for several
+```
+
+If the named crate is absent from the lockfile the verdict is `clean`, so a
+stale value cannot silently disable the check by matching nothing.
 
 ### Recovering pre-trim cache behavior (migration)
 

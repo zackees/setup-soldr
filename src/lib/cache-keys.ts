@@ -46,6 +46,7 @@ const IGNORED_MANIFEST_DIRS: ReadonlySet<string> = new Set([
   "target",
   ".soldr",
   "node_modules",
+  "_vender",
 ]);
 
 // --------------------- core hashing helpers ---------------------

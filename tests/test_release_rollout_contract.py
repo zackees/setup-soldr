@@ -47,6 +47,7 @@ def test_rollout_contract_workflow_runs_remaining_python_contract_tests() -> Non
 
     assert "python -m pytest" in workflow
     assert "tests/test_action_target_cache_wiring.py" in workflow
+    assert "tests/test_cook_rematerialization_workflow.py" in workflow
     assert "tests/test_rust_ci_workflow.py" in workflow
     assert "tests/test_release_rollout_contract.py" in workflow
 

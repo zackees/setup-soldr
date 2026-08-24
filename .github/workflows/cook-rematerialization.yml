@@ -1,0 +1,276 @@
+name: Cook rematerialization
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - action.yml
+      - src/**
+      - dist/**
+      - _vender/soldr
+      - .gitmodules
+      - .github/workflows/cook-rematerialization.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cook-rematerialization-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FIXTURE_SOURCE: _vender/soldr/tests/fixtures/cook-rematerialization
+  CACHE_GENERATION: cook-remat-${{ github.run_id }}-${{ github.run_attempt }}
+  CARGO_BUILD_JOBS: "2"
+  SOLDR_JOBS: "2"
+
+jobs:
+  baseline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    outputs:
+      baseline-ms: ${{ steps.build.outputs.ms }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Stage isolated fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf "$fixture"
+          cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+
+      - name: Build pinned development Soldr without caches
+        uses: ./
+        with:
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache: false
+          prebuild-deps: none
+          linker: platform-default
+
+      - id: build
+        name: Measure clean dependency build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf target
+          started_ns="$(date +%s%N)"
+          ZCCACHE_DISABLE=1 soldr cargo build \
+            --release \
+            --locked \
+            --message-format=json-render-diagnostics \
+            > "$RUNNER_TEMP/baseline-messages.jsonl" \
+            2> "$RUNNER_TEMP/baseline-stderr.log"
+          finished_ns="$(date +%s%N)"
+          baseline_ms="$(( (finished_ns - started_ns) / 1000000 ))"
+          echo "ms=$baseline_ms" >> "$GITHUB_OUTPUT"
+          test "$(target/release/cook-rematerialization-fixture)" = '{"value":42}'
+          echo "baseline_ms=$baseline_ms"
+
+  seed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Stage isolated fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf "$fixture"
+          cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+
+      - id: setup
+        name: Seed dependency-rematerialization closure
+        uses: ./
+        with:
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache: true
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: true
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: soldr-cook
+          prebuild-deps-delta-cache: true
+          target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
+          lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
+          linker: platform-default
+
+      - name: Record seed transport state
+        shell: bash
+        env:
+          COOK_HIT: ${{ steps.setup.outputs.cook-cache-hit }}
+          REGISTRY_HIT: ${{ steps.setup.outputs.cargo-registry-cache-hit }}
+          COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
+        run: |
+          set -euo pipefail
+          test "$COOK_HIT" = false
+          test "$REGISTRY_HIT" = false
+          test "$COOK_STATUS" = miss
+          printf 'seed cook_hit=%s registry_hit=%s status=%s\n' \
+            "$COOK_HIT" "$REGISTRY_HIT" "$COOK_STATUS"
+
+  delta-seed:
+    needs: seed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Stage isolated fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf "$fixture"
+          cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+
+      - id: setup
+        name: Seed compatible cook delta
+        uses: ./
+        with:
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache: true
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: true
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: soldr-cook
+          prebuild-deps-delta-cache: true
+          target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
+          lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
+          linker: platform-default
+
+      - name: Require base restore before delta save
+        shell: bash
+        env:
+          BASE_HIT: ${{ steps.setup.outputs.cook-cache-base-hit }}
+          DELTA_HIT: ${{ steps.setup.outputs.cook-cache-delta-hit }}
+          REGISTRY_HIT: ${{ steps.setup.outputs.cargo-registry-cache-hit }}
+          COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
+        run: |
+          set -euo pipefail
+          test "$BASE_HIT" = true
+          test "$DELTA_HIT" = false
+          test "$REGISTRY_HIT" = true
+          test "$COOK_STATUS" = base-hit
+
+  warm:
+    needs: [baseline, delta-seed]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Stage isolated fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
+          rm -rf "$fixture"
+          cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+
+      - id: setup
+        name: Restore dependency-rematerialization closure
+        uses: ./
+        with:
+          source-path: _vender/soldr
+          toolchain: 1.95.0
+          cache: true
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: true
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: soldr-cook
+          prebuild-deps-delta-cache: true
+          target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
+          lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
+          linker: platform-default
+
+      - name: Require both dependency-closure transports
+        shell: bash
+        env:
+          COOK_HIT: ${{ steps.setup.outputs.cook-cache-hit }}
+          BASE_HIT: ${{ steps.setup.outputs.cook-cache-base-hit }}
+          DELTA_HIT: ${{ steps.setup.outputs.cook-cache-delta-hit }}
+          REGISTRY_HIT: ${{ steps.setup.outputs.cargo-registry-cache-hit }}
+          COOK_STATUS: ${{ steps.setup.outputs.cook-cache-status }}
+          LOAD_REPORT: ${{ steps.setup.outputs.cook-cache-load-report-json }}
+        run: |
+          set -euo pipefail
+          test "$COOK_HIT" = true
+          test "$BASE_HIT" = true
+          test "$DELTA_HIT" = true
+          test "$REGISTRY_HIT" = true
+          test "$COOK_STATUS" = hit
+          printf '%s\n' "$LOAD_REPORT" | python -m json.tool
+          python - <<'PY'
+          import json
+          import os
+          report = json.loads(os.environ["LOAD_REPORT"])
+          assert report["base"]["cacheFilesRestored"] > 0
+          assert report["delta"] is not None
+          assert isinstance(report["delta"]["mtimesApplied"], int)
+          PY
+
+      - id: build
+        name: Prove only workspace code rebuilds
+        shell: bash
+        env:
+          BASELINE_MS: ${{ needs.baseline.outputs.baseline-ms }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/cook-rematerialization-fixture"
+          started_ns="$(date +%s%N)"
+          ZCCACHE_DISABLE=1 soldr cargo build \
+            --release \
+            --locked \
+            -vv \
+            --message-format=json-render-diagnostics \
+            > "$RUNNER_TEMP/warm-messages.jsonl" \
+            2> "$RUNNER_TEMP/warm-stderr.log"
+          finished_ns="$(date +%s%N)"
+          warm_ms="$(( (finished_ns - started_ns) / 1000000 ))"
+          printf '%s\n' "$BASELINE_MS" > "$RUNNER_TEMP/baseline-ms.txt"
+          printf '%s\n' "$warm_ms" > "$RUNNER_TEMP/warm-ms.txt"
+          printf '%s\n' "$warm_ms" > "$RUNNER_TEMP/warm-samples.txt"
+          test "$(target/release/cook-rematerialization-fixture)" = '{"value":42}'
+          python "$GITHUB_WORKSPACE/tests/cook-rematerialization/assert_warm.py" \
+            "$RUNNER_TEMP/warm-messages.jsonl" \
+            "$RUNNER_TEMP/warm-stderr.log" \
+            "$RUNNER_TEMP/baseline-ms.txt" \
+            "$RUNNER_TEMP/warm-ms.txt" \
+            "$RUNNER_TEMP/warm-samples.txt" \
+            "$RUNNER_TEMP/warm-report.json"
+          echo "warm_ms=$warm_ms" >> "$GITHUB_OUTPUT"
+
+      - name: Upload rematerialization evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cook-rematerialization-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/warm-report.json
+            ${{ runner.temp }}/warm-messages.jsonl
+            ${{ runner.temp }}/warm-stderr.log

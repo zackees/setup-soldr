@@ -1,0 +1,5 @@
+
+# These run inside Linux containers; a CR byte makes bash read
+# `set -euo pipefail` as an invalid option and the container dies
+# with an error that looks nothing like a line-ending problem.
+tests/cook-rematerialization/** text eol=lf
