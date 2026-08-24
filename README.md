@@ -6,7 +6,7 @@
 Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain with `rustup`, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or rustup homes by default. The default Soldr version is `0.9.2`.
 
 -->
-Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or toolchain homes by default. The default Soldr version is `0.9.3`.
+Public GitHub Action for installing one released `soldr` binary, provisioning the resolved Rust toolchain, and restoring cacheable Soldr/zccache state without rehydrating large Cargo or toolchain homes by default. The default Soldr version is `0.9.4`.
 
 This repository is intended to be generated from `zackees/soldr`. The source-of-truth contract and release process still live in `soldr` issue #137 and `docs/SETUP_SOLDR_PUBLIC_ACTION.md`.
 
@@ -439,7 +439,7 @@ preferred for new workflows.
 
 | Input | Meaning |
 |---|---|
-| `version` | Soldr release tag or version to install. Defaults to `0.9.3`. |
+| `version` | Soldr release tag or version to install. Defaults to `0.9.4`. |
 | `source-path` | Internal development override that builds Soldr from a pinned local Git checkout such as `_vender/soldr`; the checkout must include required submodules. Release assets remain the production default. |
 | `cross-targets` | One canonical target per job for Soldr blessed preparation; use a matrix for multiple targets. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
@@ -550,7 +550,7 @@ preferred for new workflows.
 
 - Development branches may pin the tracked `_vender/soldr` checkout and pass `source-path: _vender/soldr`; setup-soldr keys the build on the checkout's exact `HEAD`; commit local edits before expecting a new source identity. Production installs remain release-asset based.
 - `soldr-cook` rematerialization is a two-part dependency closure: the cooked `target/` base (fingerprints, dep-info, rlibs/proc macros, build-script executables and outputs) plus Cargo registry/git sources. The action restores both by default and reports transport/load status through the `cook-cache-*` outputs.
-- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.9.3`. Combined GitHub release archives remain preferred; for explicitly supported wheel-compatible releases (currently `0.9.0` through `0.9.3`), a missing exact target archive falls back to the matching hash-verified wheel from the same version on PyPI.
+- The action installs exactly one released `soldr` binary for the active runner target, defaulting to Soldr `0.9.4`. Combined GitHub release archives remain preferred; for explicitly supported wheel-compatible releases (currently `0.9.0` through `0.9.4`), a missing exact target archive falls back to the matching hash-verified wheel from the same version on PyPI.
 - For soldr `0.7.43+`, the action installs the release-pinned `cargo-chef`
   binary and exports `SOLDR_CARGO_CHEF_LOCAL_DIR`, so `soldr cook` does not
   need a live upstream GitHub lookup. Combined archives bundle the helper;

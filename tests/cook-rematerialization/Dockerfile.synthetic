@@ -14,7 +14,7 @@ RUN apt-get update \
        zstd \
     && rm -rf /var/lib/apt/lists/*
 
-ARG SOLDR_VERSION=0.9.3
+ARG SOLDR_VERSION=0.9.4
 RUN python3 -m venv /opt/soldr \
     && /opt/soldr/bin/pip install --disable-pip-version-check "soldr==${SOLDR_VERSION}" \
     && /opt/soldr/bin/soldr --version
