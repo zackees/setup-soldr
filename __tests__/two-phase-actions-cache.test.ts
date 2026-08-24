@@ -35,6 +35,7 @@ test("only the reservation winner produces and uploads under concurrency", async
       produced += 1;
       return { archivePath: "cache.tzst", archiveBytes: 12 };
     },
+    prepareUpload: async () => ({ archivePath: "actions-cache.tzst", archiveBytes: 24 }),
     upload: async () => {
       uploaded += 1;
       return 42;
@@ -44,4 +45,29 @@ test("only the reservation winner produces and uploads under concurrency", async
   assert.equal(produced, 1);
   assert.equal(uploaded, 1);
   assert.deepEqual(results.map((r) => r.status).sort(), ["saved", "skipped-reservation"]);
+});
+
+test("uploads an Actions-cache wrapper instead of the producer archive", async () => {
+  let uploadedPath = "";
+  let uploadedBytes = 0;
+  const result = await saveReservedCache({
+    paths: ["payload.tar.zst"],
+    key: "cook-wrapped",
+    reserve: async () => winner,
+    produce: async () => ({ archivePath: "payload.tar.zst", archiveBytes: 182 }),
+    prepareUpload: async (_reservation, produced) => {
+      assert.equal(produced.archivePath, "payload.tar.zst");
+      return { archivePath: "actions-cache.tar.zst", archiveBytes: 211 };
+    },
+    upload: async (_reservation, prepared) => {
+      uploadedPath = prepared.archivePath;
+      uploadedBytes = prepared.archiveBytes;
+      return 42;
+    },
+  });
+  assert.equal(result.status, "saved");
+  assert.equal(uploadedPath, "actions-cache.tar.zst");
+  assert.equal(uploadedBytes, 211);
+  assert.equal(result.archive?.archivePath, "payload.tar.zst");
+  assert.equal(result.archive?.archiveBytes, 182);
 });
