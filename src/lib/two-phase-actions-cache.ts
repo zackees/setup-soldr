@@ -48,22 +48,46 @@ export interface TwoPhaseCacheOptions {
   ) => Promise<number | undefined>;
 }
 
-async function prepareActionsCacheArchive(
+interface ActionsCacheArchiveTools {
+  resolvePaths: (paths: string[]) => Promise<string[]>;
+  createTempDirectory: () => Promise<string>;
+  createTar: typeof cacheTar.createTar;
+  stat: (archivePath: string) => Promise<{ size: number }>;
+  removeDirectory: (directory: string) => Promise<void>;
+}
+
+const defaultArchiveTools: ActionsCacheArchiveTools = {
+  resolvePaths: cacheUtils.resolvePaths,
+  createTempDirectory: cacheUtils.createTempDirectory,
+  createTar: cacheTar.createTar,
+  stat: fsp.stat,
+  removeDirectory: async (directory) => {
+    await fsp.rm(directory, { recursive: true, force: true });
+  },
+};
+
+export async function prepareActionsCacheArchive(
   reservation: Reservation,
   archive: ReservedCacheArchive,
+  tools: ActionsCacheArchiveTools = defaultArchiveTools,
 ): Promise<ActionsCacheArchive> {
-  const cachePaths = await cacheUtils.resolvePaths([archive.archivePath]);
+  const cachePaths = await tools.resolvePaths([archive.archivePath]);
   if (cachePaths.length === 0) {
     throw new Error(`produced archive does not exist: ${archive.archivePath}`);
   }
-  const archiveFolder = await cacheUtils.createTempDirectory();
-  const uploadArchivePath = path.join(
-    archiveFolder,
-    cacheUtils.getCacheFileName(reservation.compressionMethod),
-  );
-  await cacheTar.createTar(archiveFolder, cachePaths, reservation.compressionMethod);
-  const archiveBytes = (await fsp.stat(uploadArchivePath)).size;
-  return { archivePath: uploadArchivePath, archiveBytes, cleanupDir: archiveFolder };
+  const archiveFolder = await tools.createTempDirectory();
+  try {
+    const uploadArchivePath = path.join(
+      archiveFolder,
+      cacheUtils.getCacheFileName(reservation.compressionMethod),
+    );
+    await tools.createTar(archiveFolder, cachePaths, reservation.compressionMethod);
+    const archiveBytes = (await tools.stat(uploadArchivePath)).size;
+    return { archivePath: uploadArchivePath, archiveBytes, cleanupDir: archiveFolder };
+  } catch (error) {
+    await tools.removeDirectory(archiveFolder).catch(() => undefined);
+    throw error;
+  }
 }
 
 export interface Reservation {
