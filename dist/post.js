@@ -52309,10 +52309,23 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.saveReservedCache = saveReservedCache;
 exports.isReservationConflict = isReservationConflict;
 const fsp = __importStar(__nccwpck_require__(51455));
+const path = __importStar(__nccwpck_require__(76760));
 const config_js_1 = __nccwpck_require__(17606);
 const cacheHttpClient = __importStar(__nccwpck_require__(73171));
 const cacheUtils = __importStar(__nccwpck_require__(98299));
 const twirp = __importStar(__nccwpck_require__(96819));
+const cacheTar = __importStar(__nccwpck_require__(95321));
+async function prepareActionsCacheArchive(reservation, archive) {
+    const cachePaths = await cacheUtils.resolvePaths([archive.archivePath]);
+    if (cachePaths.length === 0) {
+        throw new Error(`produced archive does not exist: ${archive.archivePath}`);
+    }
+    const archiveFolder = await cacheUtils.createTempDirectory();
+    const uploadArchivePath = path.join(archiveFolder, cacheUtils.getCacheFileName(reservation.compressionMethod));
+    await cacheTar.createTar(archiveFolder, cachePaths, reservation.compressionMethod);
+    const archiveBytes = (await fsp.stat(uploadArchivePath)).size;
+    return { archivePath: uploadArchivePath, archiveBytes, cleanupDir: archiveFolder };
+}
 function log(options, message) {
     options.log?.(`two-phase-cache: ${message}`);
 }
@@ -52369,19 +52382,24 @@ async function saveReservedCache(options) {
         log(options, `archive production failed: ${error instanceof Error ? error.message : String(error)}`);
         return { status: "failed", error: error instanceof Error ? error.message : String(error) };
     }
+    let uploadArchive;
     try {
+        uploadArchive = options.prepareUpload
+            ? await options.prepareUpload(reservation, archive)
+            : await prepareActionsCacheArchive(reservation, archive);
+        log(options, `prepared Actions-cache wrapper inner=${archive.archiveBytes}B outer=${uploadArchive.archiveBytes}B`);
         if (options.upload) {
-            const cacheId = await options.upload(reservation, archive);
+            const cacheId = await options.upload(reservation, uploadArchive);
             return { status: "saved", cacheId, archive };
         }
         if (reservation.service === "v1") {
-            await cacheHttpClient.saveCache(reservation.cacheId, archive.archivePath, "", {
-                archiveSizeBytes: archive.archiveBytes,
+            await cacheHttpClient.saveCache(reservation.cacheId, uploadArchive.archivePath, "", {
+                archiveSizeBytes: uploadArchive.archiveBytes,
             });
             return { status: "saved", cacheId: reservation.cacheId, archive };
         }
-        await cacheHttpClient.saveCache(-1, archive.archivePath, reservation.signedUploadUrl, {
-            archiveSizeBytes: archive.archiveBytes,
+        await cacheHttpClient.saveCache(-1, uploadArchive.archivePath, reservation.signedUploadUrl, {
+            archiveSizeBytes: uploadArchive.archiveBytes,
             uploadChunkSize: 64 * 1024 * 1024,
             uploadConcurrency: 8,
             useAzureSdk: true,
@@ -52389,7 +52407,7 @@ async function saveReservedCache(options) {
         const finalized = await twirp.internalCacheTwirpClient().FinalizeCacheEntryUpload({
             key: options.key,
             version: reservation.version,
-            sizeBytes: `${archive.archiveBytes}`,
+            sizeBytes: `${uploadArchive.archiveBytes}`,
         });
         if (!finalized.ok)
             throw new Error(finalized.message || "cache finalization failed");
@@ -52400,6 +52418,9 @@ async function saveReservedCache(options) {
     }
     finally {
         await fsp.rm(archive.archivePath, { force: true }).catch(() => undefined);
+        if (uploadArchive?.cleanupDir) {
+            await fsp.rm(uploadArchive.cleanupDir, { recursive: true, force: true }).catch(() => undefined);
+        }
     }
 }
 function isReservationConflict(result) {
