@@ -65,7 +65,10 @@ jobs:
           solo-toolchain-cache: false
           soldr-mini-cache: false
           prebuild-deps: soldr-cook
-          prebuild-deps-flags: "--release"
+          # Match the eventual package/workspace selection exactly. Cooking a
+          # larger workspace can unify extra dependency features and produce
+          # artifacts Cargo cannot reuse for a narrower `-p` build.
+          prebuild-deps-flags: "--release ${{ inputs.build_args }}"
           prebuild-deps-delta-cache: true
           target-dir: ${{ github.workspace }}/consumer/target
           lockfile: ${{ github.workspace }}/consumer/Cargo.lock
@@ -117,7 +120,7 @@ jobs:
           solo-toolchain-cache: false
           soldr-mini-cache: false
           prebuild-deps: soldr-cook
-          prebuild-deps-flags: "--release"
+          prebuild-deps-flags: "--release ${{ inputs.build_args }}"
           prebuild-deps-delta-cache: true
           target-dir: ${{ github.workspace }}/consumer/target
           lockfile: ${{ github.workspace }}/consumer/Cargo.lock

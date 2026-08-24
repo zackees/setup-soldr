@@ -45,7 +45,7 @@ def test_reusable_workflow_proves_a_clean_job_loaded_the_cook_base() -> None:
         assert inputs["target-cache"] is False
         assert inputs["cargo-registry-cache"] is True
         assert inputs["prebuild-deps"] == "soldr-cook"
-        assert inputs["prebuild-deps-flags"] == "--release"
+        assert inputs["prebuild-deps-flags"] == "--release ${{ inputs.build_args }}"
 
     seed_guard = next(
         step for step in jobs["seed"]["steps"] if step.get("name") == "Require a cold cook seed"
