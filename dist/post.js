@@ -52306,6 +52306,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.prepareActionsCacheArchive = prepareActionsCacheArchive;
 exports.saveReservedCache = saveReservedCache;
 exports.isReservationConflict = isReservationConflict;
 const fsp = __importStar(__nccwpck_require__(51455));
@@ -52315,16 +52316,31 @@ const cacheHttpClient = __importStar(__nccwpck_require__(73171));
 const cacheUtils = __importStar(__nccwpck_require__(98299));
 const twirp = __importStar(__nccwpck_require__(96819));
 const cacheTar = __importStar(__nccwpck_require__(95321));
-async function prepareActionsCacheArchive(reservation, archive) {
-    const cachePaths = await cacheUtils.resolvePaths([archive.archivePath]);
+const defaultArchiveTools = {
+    resolvePaths: cacheUtils.resolvePaths,
+    createTempDirectory: cacheUtils.createTempDirectory,
+    createTar: cacheTar.createTar,
+    stat: fsp.stat,
+    removeDirectory: async (directory) => {
+        await fsp.rm(directory, { recursive: true, force: true });
+    },
+};
+async function prepareActionsCacheArchive(reservation, archive, tools = defaultArchiveTools) {
+    const cachePaths = await tools.resolvePaths([archive.archivePath]);
     if (cachePaths.length === 0) {
         throw new Error(`produced archive does not exist: ${archive.archivePath}`);
     }
-    const archiveFolder = await cacheUtils.createTempDirectory();
-    const uploadArchivePath = path.join(archiveFolder, cacheUtils.getCacheFileName(reservation.compressionMethod));
-    await cacheTar.createTar(archiveFolder, cachePaths, reservation.compressionMethod);
-    const archiveBytes = (await fsp.stat(uploadArchivePath)).size;
-    return { archivePath: uploadArchivePath, archiveBytes, cleanupDir: archiveFolder };
+    const archiveFolder = await tools.createTempDirectory();
+    try {
+        const uploadArchivePath = path.join(archiveFolder, cacheUtils.getCacheFileName(reservation.compressionMethod));
+        await tools.createTar(archiveFolder, cachePaths, reservation.compressionMethod);
+        const archiveBytes = (await tools.stat(uploadArchivePath)).size;
+        return { archivePath: uploadArchivePath, archiveBytes, cleanupDir: archiveFolder };
+    }
+    catch (error) {
+        await tools.removeDirectory(archiveFolder).catch(() => undefined);
+        throw error;
+    }
 }
 function log(options, message) {
     options.log?.(`two-phase-cache: ${message}`);
