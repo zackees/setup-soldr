@@ -68,3 +68,5 @@ def test_the_warm_job_refuses_to_assert_without_a_restore() -> None:
 
     build = next(s for s in warm["steps"] if s.get("id") == "build")
     assert "assert_no_external_rebuild.py" in build["run"]
+    assert "cargo metadata --locked --format-version=1" in build["run"]
+    assert '"$RUNNER_TEMP/warm-metadata.json"' in build["run"]

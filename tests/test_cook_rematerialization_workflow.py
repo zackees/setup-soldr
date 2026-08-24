@@ -73,7 +73,11 @@ def test_warm_gate_requires_transport_hits_zero_external_work_and_ten_x_speedup(
 
     build = _step(warm, "Prove only workspace code rebuilds")
     script = build["run"]
-    assert "ZCCACHE_DISABLE=1 soldr cargo build" in script
+    assert "soldr cargo build" in script
+    assert "ZCCACHE_DISABLE" not in script
+    baseline = _step(workflow["jobs"]["baseline"], "Measure clean dependency build")
+    assert "soldr cargo build" in baseline["run"]
+    assert "ZCCACHE_DISABLE" not in baseline["run"]
     assert "--message-format=json-render-diagnostics" in script
     assert "assert_warm.py" in script
     # setup-soldr's own copy, not the soldr submodule's. The Contract Tests

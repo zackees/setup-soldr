@@ -158,6 +158,8 @@ jobs:
         run: |
           set -euo pipefail
           read -r -a build_args <<< "$BUILD_ARGS"
+          cargo metadata --locked --format-version=1 \
+            > "$RUNNER_TEMP/${{ inputs.cache_key }}-metadata.json"
           # Match the command that created the cooked fingerprints, including
           # soldr's CC/CXX wrapper identity for native build scripts. A zccache
           # object hit cannot hide a Cargo freshness miss: every unit Cargo
@@ -170,7 +172,8 @@ jobs:
           python "$GITHUB_WORKSPACE/tests/cook-rematerialization/assert_no_external_rebuild.py" \
             "$RUNNER_TEMP/${{ inputs.cache_key }}-warm-messages.jsonl" \
             "$RUNNER_TEMP/${{ inputs.cache_key }}-warm-report.json" \
-            "$MIN_EXTERNAL"
+            "$MIN_EXTERNAL" \
+            "$RUNNER_TEMP/${{ inputs.cache_key }}-metadata.json"
 
       - name: Upload rematerialization evidence
         if: always()
@@ -183,3 +186,4 @@ jobs:
             ${{ runner.temp }}/${{ inputs.cache_key }}-warm-report.json
             ${{ runner.temp }}/${{ inputs.cache_key }}-warm-messages.jsonl
             ${{ runner.temp }}/${{ inputs.cache_key }}-warm-stderr.log
+            ${{ runner.temp }}/${{ inputs.cache_key }}-metadata.json

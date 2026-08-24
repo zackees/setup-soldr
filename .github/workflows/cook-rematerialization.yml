@@ -62,7 +62,7 @@ jobs:
           cd "$RUNNER_TEMP/cook-rematerialization-fixture"
           rm -rf target
           started_ns="$(date +%s%N)"
-          ZCCACHE_DISABLE=1 soldr cargo build \
+          soldr cargo build \
             --release \
             --locked \
             --message-format=json-render-diagnostics \
@@ -244,7 +244,9 @@ jobs:
           set -euo pipefail
           cd "$RUNNER_TEMP/cook-rematerialization-fixture"
           started_ns="$(date +%s%N)"
-          ZCCACHE_DISABLE=1 soldr cargo build \
+          # Match cook's soldr-managed CC/CXX identity. The JSON stream below
+          # detects Cargo rebuilds even when zccache serves compiler objects.
+          soldr cargo build \
             --release \
             --locked \
             -vv \

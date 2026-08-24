@@ -152,6 +152,8 @@ jobs:
         working-directory: _vender/soldr
         run: |
           set -euo pipefail
+          cargo metadata --locked --format-version=1 \
+            > "$RUNNER_TEMP/warm-metadata.json"
           soldr cargo build -p soldr-cli --locked \
             --message-format=json-render-diagnostics \
             > "$RUNNER_TEMP/warm-messages.jsonl" \
@@ -159,7 +161,8 @@ jobs:
           python "$GITHUB_WORKSPACE/tests/cook-rematerialization/assert_no_external_rebuild.py" \
             "$RUNNER_TEMP/warm-messages.jsonl" \
             "$RUNNER_TEMP/warm-report.json" \
-            200
+            200 \
+            "$RUNNER_TEMP/warm-metadata.json"
 
       - name: Upload rematerialization evidence
         if: always()
@@ -169,5 +172,6 @@ jobs:
           path: |
             ${{ runner.temp }}/warm-report.json
             ${{ runner.temp }}/warm-stderr.log
+            ${{ runner.temp }}/warm-metadata.json
           if-no-files-found: warn
           retention-days: 7
