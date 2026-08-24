@@ -155,13 +155,14 @@ jobs:
         env:
           BUILD_ARGS: ${{ inputs.build_args }}
           MIN_EXTERNAL: ${{ inputs.min_external }}
-          # Persist Cargo's exact freshness decision in the uploaded stderr
-          # evidence so a native build-script miss names the stale input.
-          CARGO_LOG: cargo::core::compiler::fingerprint=trace
         run: |
           set -euo pipefail
           read -r -a build_args <<< "$BUILD_ARGS"
-          ZCCACHE_DISABLE=1 soldr cargo build --release --locked \
+          # Keep setup-soldr's CC/CXX wrapper identity in Cargo's native-build
+          # fingerprints. ZCCACHE_DISABLE makes that wrapper bypass its cache;
+          # routing through `soldr cargo` would strip CC/CXX and manufacture a
+          # false EnvVarChanged miss for crates such as blake3.
+          ZCCACHE_DISABLE=1 cargo build --release --locked \
             "${build_args[@]}" \
             --message-format=json-render-diagnostics \
             > "$RUNNER_TEMP/${{ inputs.cache_key }}-warm-messages.jsonl" \
