@@ -1077,6 +1077,12 @@ export async function resolveSetup(
   setEnv("CARGO_HOME", cargoHome);
   setEnv("RUSTUP_HOME", rustupHome);
   setEnv("ZCCACHE_CACHE_DIR", zccacheCacheDir);
+  if (!env["SOLDR_TOOLCHAIN_ORIGIN"]?.trim()) {
+    setEnv(
+      "SOLDR_TOOLCHAIN_ORIGIN",
+      "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets",
+    );
+  }
   // soldr#807: warn when SOLDR_ZCCACHE_PRIVATE is truthy because the
   // explicit ZCCACHE_CACHE_DIR above will silently win and the opt-in
   // private-session path under <cwd>/.zccache won't be used.
