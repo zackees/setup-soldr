@@ -94,3 +94,21 @@ def test_cross_prepare_matrix_records_every_blessed_target_contract() -> None:
     assert (SMOKE_FIXTURE_PATH / "Cargo.toml").is_file()
     assert (SMOKE_FIXTURE_PATH / "Cargo.lock").is_file()
     assert (SMOKE_FIXTURE_PATH / "src" / "main.rs").is_file()
+
+
+def test_cross_prepare_workflow_proves_managed_cache_seed_and_exact_hit() -> None:
+    workflow = yaml.safe_load(CROSS_WORKFLOW_PATH.read_text(encoding="utf-8"))
+    jobs = workflow["jobs"]
+
+    assert jobs["cache-hit"]["needs"] == "cache-seed"
+    seed_setup = next(step for step in jobs["cache-seed"]["steps"] if step.get("id") == "setup")
+    hit_setup = next(step for step in jobs["cache-hit"]["steps"] if step.get("id") == "setup")
+    for setup in (seed_setup, hit_setup):
+        assert setup["uses"] == "./"
+        assert setup["with"]["cross-targets"] == "x86_64-pc-windows-msvc"
+        assert setup["with"]["cache"] is True
+
+    text = CROSS_WORKFLOW_PATH.read_text(encoding="utf-8")
+    assert "blessed-prepare-cache-key" in text
+    assert "blessed-prepare-cache-hit" in text
+    assert 'test "$CACHE_HIT" = "true"' in text
