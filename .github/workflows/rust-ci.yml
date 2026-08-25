@@ -98,7 +98,7 @@ on:
         default: true
       dylint:
         description: >
-          When true, installs `cargo-dylint` + `dylint-link` and runs
+          When true, asks setup-soldr/Soldr to prepare the pinned Dylint stack and runs
           `cargo dylint --all --workspace`. Opt-in because dylint requires
           consumer-provided `dylint.toml` + driver crates.
         type: boolean
@@ -108,12 +108,12 @@ on:
         description: Exact cargo-dylint version installed by the Dylint job.
         type: string
         required: false
-        default: "6.0.1"
+        default: "6.0.3"
       dylint-link-version:
         description: Exact dylint-link version installed by the Dylint job.
         type: string
         required: false
-        default: "6.0.1"
+        default: "6.0.3"
   workflow_dispatch:
     inputs:
       os:
@@ -189,12 +189,12 @@ on:
         description: Exact cargo-dylint version installed by the Dylint job.
         type: string
         required: false
-        default: "6.0.1"
+        default: "6.0.3"
       dylint-link-version:
         description: Exact dylint-link version installed by the Dylint job.
         type: string
         required: false
-        default: "6.0.1"
+        default: "6.0.3"
 
 jobs:
   warm:
@@ -596,20 +596,9 @@ jobs:
         with:
           toolchain: ${{ inputs.toolchain }}
           cache: ${{ inputs.cache }}
+          dylint: true
           cargo-dylint-version: ${{ inputs.cargo-dylint-version }}
           dylint-link-version: ${{ inputs.dylint-link-version }}
-
-      - name: Install cargo-dylint and dylint-link
-        shell: bash
-        env:
-          CARGO_DYLINT_VERSION: ${{ inputs.cargo-dylint-version }}
-          DYLINT_LINK_VERSION: ${{ inputs.dylint-link-version }}
-        run: |
-          set -euo pipefail
-          soldr cargo install \
-            "cargo-dylint@${CARGO_DYLINT_VERSION}" \
-            "dylint-link@${DYLINT_LINK_VERSION}" \
-            --locked
 
       - name: cargo dylint
         shell: bash

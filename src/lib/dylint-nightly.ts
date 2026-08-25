@@ -118,7 +118,7 @@ export async function resolveDylintNightly(
   env: Record<string, string | undefined>,
   fetchBytes: FetchBytes = defaultFetchBytes,
 ): Promise<DylintNightlyIdentity> {
-  const origin = (env["SOLDR_TOOLCHAIN_ORIGIN"] || "https://zackees.github.io/soldr-toolchain")
+  const origin = (env["SOLDR_TOOLCHAIN_ORIGIN"] || DEFAULT_DYLINT_CATALOGUE_ORIGIN)
     .trim()
     .replace(/\/+$/, "");
   const catalogueUrl =
@@ -154,3 +154,9 @@ export async function resolveDylintNightly(
   }
   throw new Error(`${lastDigestError}; catalogue was refreshed once and unverified bytes were rejected`);
 }
+
+// Dylint's small, SHA-pinned metadata catalogue is published directly from
+// the assets branch. This is deliberately not exported to Soldr itself: its
+// full SDK catalogue has a separate publication endpoint and lifecycle.
+export const DEFAULT_DYLINT_CATALOGUE_ORIGIN =
+  "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets";

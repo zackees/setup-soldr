@@ -241,9 +241,9 @@ release lane below when a job needs a strict build-and-upload contract.
 | `fmt` | boolean | `true` | `soldr cargo fmt --all -- --check`. |
 | `clippy` | boolean | `true` | `soldr cargo clippy --workspace --all-targets -- -D warnings`. |
 | `test` | boolean | `true` | `soldr cargo test --workspace`. |
-| `dylint` | boolean | `false` | `soldr cargo dylint --all --workspace` (installs `cargo-dylint` + `dylint-link` first). Opt-in: needs a consumer-provided `dylint.toml`. |
-| `cargo-dylint-version` | string | `6.0.1` | Exact `cargo-dylint` version installed by the Dylint job. |
-| `dylint-link-version` | string | `6.0.1` | Exact `dylint-link` version installed by the Dylint job. |
+| `dylint` | boolean | `false` | `soldr cargo dylint --all --workspace`. setup-soldr first runs `soldr dylint prepare`, which materializes the pinned prebuilt tools, nightly components, and driver. Opt-in: needs a consumer-provided `dylint.toml`. |
+| `cargo-dylint-version` | string | `6.0.3` | Exact catalogued `cargo-dylint` version required from Soldr. |
+| `dylint-link-version` | string | `6.0.3` | Exact catalogued `dylint-link` version required from Soldr. |
 
 #### Default cross-compile consumer
 
@@ -478,8 +478,8 @@ preferred for new workflows.
 | `dylint-cache` | Compatibility opt-in for the original Dylint tool/driver cache when `dylint` mode is not enabled. |
 | `dylint-toolchain` | Nightly toolchain used by the Dylint driver, such as `nightly-2026-03-26`. Empty defaults to the resolved action toolchain. Included in the Dylint cache key. |
 | `dylint-driver-rev` | Git revision or version identity for the compatible Dylint driver source. Included in the Dylint cache key. |
-| `cargo-dylint-version` | `cargo-dylint` version installed by the workflow. Default `6.0.1`; included in the Dylint cache key. |
-| `dylint-link-version` | `dylint-link` version installed by the workflow. Default `6.0.1`; included in the Dylint cache key. |
+| `cargo-dylint-version` | `cargo-dylint` version materialized and verified by Soldr. Default `6.0.3`; included in the Dylint cache key. |
+| `dylint-link-version` | `dylint-link` version materialized and verified by Soldr. Default `6.0.3`; included in the Dylint cache key. |
 | `dylint-cache-paths` | Optional newline- or comma-separated path override for the Dylint cache. Empty uses `$CARGO_HOME/bin/cargo-dylint*`, `$CARGO_HOME/bin/dylint-link*`, `$CARGO_HOME/.crates.toml`, `$CARGO_HOME/.crates2.json`, and `$RUNNER_TEMP/dylint-drivers`. |
 | `compile-cache-stats` | Controls compile-cache (zccache) diagnostic output. `none` suppresses all compile-cache info. `summarize` (default) renders a per-session totals table into `$GITHUB_STEP_SUMMARY` and emits scalar action outputs (hit rate, hits, misses, total). `detailed` adds per-extension and per-tool rollup tables and sets `compile-cache-rollups-json`. Requires soldr `>=0.7.22` for the typed `soldr cache report --json` payload; older releases fall back to a single-line note in the summary. |
 
@@ -633,9 +633,13 @@ recorded misses with zero hits — naming the likely fix.
 ## Dylint caches
 
 `dylint: true` selects the newest compatible dated nightly from the verified
-soldr-toolchain map. Its foundation key contains the dated channel, observed
-compiler release and full commit, host, required-component contract, and
-tool/driver versions; unrelated workspace changes do not invalidate it.
+soldr-toolchain map, then runs `soldr dylint prepare`. Soldr owns downloading
+and verifying the catalogued `cargo-dylint`, `dylint-link`, dated nightly
+components, and matching prebuilt driver; setup-soldr exports the managed tool
+directories so direct Dylint UI-test builds can resolve `dylint-link`. Its
+foundation key contains the dated channel, observed compiler release and full
+commit, host, required-component contract, and tool/driver versions; unrelated
+workspace changes do not invalidate it.
 
 The separate output layer contains compiled custom libraries and workspace
 check state. Its key includes the compiler identity, driver, lockfile,
@@ -643,13 +647,11 @@ manifests, configuration, target shape, and source revision. The post step
 saves either cold layer only after Soldr records a successful outer Dylint
 run. Restoring output never skips the actual lint command.
 
-`dylint-cache: true` enables an exact-key cache for workflows that install
-`cargo-dylint`, install `dylint-link`, and build a compatible Dylint driver
-from pinned source. This deliberately does not vendor Dylint binaries into
-setup-soldr or soldr release archives: Dylint drivers are tightly coupled to
-the nightly toolchain, host triple, and driver source revision, so a cache-only
-mode keeps the default action small and makes the trust boundary explicit.
-The 6.0.1 defaults work for the standard Dylint driver flow. Set
+`dylint-cache: true` without `dylint: true` retains the legacy exact-key,
+cache-only mode for workflows that manage their own Dylint installation. It
+does not prepare or install anything on a cold run. New workflows should use
+`dylint: true`, whose Soldr-owned prebuilt flow does not compile Dylint tools
+or the driver from source. The 6.0.3 defaults match Soldr 0.9.5. Set
 `dylint-driver-rev` only when a consumer builds a custom driver whose source
 revision is not already identified by the selected Dylint release/toolchain;
 that revision becomes part of the cache key.

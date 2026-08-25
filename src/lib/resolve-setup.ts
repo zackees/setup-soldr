@@ -995,8 +995,8 @@ export async function resolveSetup(
     "success.txt",
   );
   const dylintDriverRev = inputs.dylintDriverRev.trim() || "none";
-  const cargoDylintVersion = inputs.cargoDylintVersion.trim() || "6.0.1";
-  const dylintLinkVersion = inputs.dylintLinkVersion.trim() || "6.0.1";
+  const cargoDylintVersion = inputs.cargoDylintVersion.trim() || "6.0.3";
+  const dylintLinkVersion = inputs.dylintLinkVersion.trim() || "6.0.3";
   const customDylintPaths = splitPathInput(inputs.dylintCachePaths).map((p) =>
     path.isAbsolute(expanduser(p, env)) ? resolveAbsolute(p, env) : path.resolve(workspace, p),
   );
@@ -1337,8 +1337,8 @@ export async function resolveSetup(
     cacheIdentity: dylintModeEnabled ? dylintCacheIdentity : "",
     successMarker: dylintModeEnabled ? dylintSuccessMarker : "",
     driverRev: dylintCacheEnabled ? dylintDriverRev : "",
-    cargoDylintVersion: dylintCacheEnabled ? cargoDylintVersion : "",
-    dylintLinkVersion: dylintCacheEnabled ? dylintLinkVersion : "",
+    cargoDylintVersion: dylintModeEnabled || dylintCacheEnabled ? cargoDylintVersion : "",
+    dylintLinkVersion: dylintModeEnabled || dylintCacheEnabled ? dylintLinkVersion : "",
   };
 
   const blessedPrepareCache = planBlessedPrepareCache({
