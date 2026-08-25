@@ -15,6 +15,9 @@ import {
   hashStringArray,
   stageDiffForSave,
   applyStagedToLiveRoots,
+  deleteCorruptSoloCacheEntries,
+  saveSoloCache,
+  soloCacheEntryExistsForRef,
   verifyRestoredToolchain,
   type RootMap,
 } from "../src/lib/solo-toolchain-cache.js";
@@ -52,9 +55,10 @@ test("verifyRestoredToolchain rejects a restored toolchain with unusable target 
   const result = await verifyRestoredToolchain({
     expectedRelease: "",
     expectedTargets: ["aarch64-unknown-linux-gnu"],
-    rustcCommand: "rustc",
+    channel: "stable",
+    rustupCommand: "rustup",
     log: (message) => logs.push(message),
-    runTargetProbe: async () => ({ code: 1, stderr: "can't find crate for `std`" }),
+    runRustup: async () => ({ code: 1, stdout: "", stderr: "can't find target library" }),
   });
   assert.equal(result.match, false);
   assert.ok(logs.some((line) => line.includes("target std probe failed")));
@@ -64,11 +68,130 @@ test("verifyRestoredToolchain accepts a valid target std probe", async () => {
   const result = await verifyRestoredToolchain({
     expectedRelease: "",
     expectedTargets: ["aarch64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"],
-    rustcCommand: "rustc",
+    channel: "stable",
+    rustupCommand: "rustup",
     log: () => {},
-    runTargetProbe: async () => ({ code: 0, stderr: "" }),
+    runRustup: async () => ({ code: 0, stdout: "", stderr: "" }),
   });
   assert.equal(result.match, true);
+});
+
+test("#473 verification pins the requested channel and rejects missing components", async () => {
+  const calls: string[][] = [];
+  const result = await verifyRestoredToolchain({
+    expectedRelease: "1.95.0",
+    expectedComponents: ["rustfmt", "clippy"],
+    channel: "1.95.0",
+    rustupCommand: "rustup",
+    log: () => {},
+    runRustup: async (args) => {
+      calls.push(args);
+      if (args[0] === "run") return { code: 0, stdout: "rustc 1.95.0 (abc 2026-01-01)\n", stderr: "" };
+      return { code: 0, stdout: "rustfmt-x86_64-pc-windows-msvc\n", stderr: "" };
+    },
+  });
+  assert.equal(result.match, false);
+  assert.deepEqual(calls[0], ["run", "1.95.0", "rustc", "--version"]);
+  assert.deepEqual(calls[1], ["component", "list", "--toolchain", "1.95.0", "--installed"]);
+});
+
+test("#473 verification rejects registered components with corrupt executables", async () => {
+  const result = await verifyRestoredToolchain({
+    expectedRelease: "",
+    expectedComponents: ["rustfmt", "clippy"],
+    channel: "stable",
+    rustupCommand: "rustup",
+    log: () => {},
+    runRustup: async (args) => {
+      if (args[0] === "component") {
+        return { code: 0, stdout: "rustfmt-host\nclippy-host\n", stderr: "" };
+      }
+      if (args.includes("clippy-driver")) return { code: 1, stdout: "", stderr: "corrupt" };
+      return { code: 0, stdout: "rustfmt 1.95.0\n", stderr: "" };
+    },
+  });
+  assert.equal(result.match, false);
+});
+
+test("#473 verification accepts rustup preview aliases in installed output", async () => {
+  const result = await verifyRestoredToolchain({
+    expectedRelease: "",
+    expectedComponents: ["llvm-tools-preview"],
+    channel: "stable",
+    rustupCommand: "rustup",
+    log: () => {},
+    runRustup: async () => ({
+      code: 0,
+      stdout: "llvm-tools-x86_64-unknown-linux-gnu\n",
+      stderr: "",
+    }),
+  });
+  assert.equal(result.match, true);
+});
+
+test("#473 failed poison deletion cannot turn save id=-1 into false repair success", async () => {
+  const root = mkTmp("solo-save-id-");
+  try {
+    const stagingDir = path.join(root, "staged");
+    fs.mkdirSync(stagingDir, { recursive: true });
+    writeFile(stagingDir, "payload", "ok");
+    const archive = path.join(root, "made.tar.zst");
+    fs.writeFileSync(archive, "archive");
+    const result = await saveSoloCache({
+      stagingDir,
+      key: "solo-toolchain-v3-repair",
+      level: "1",
+      debug: false,
+      log: () => {},
+      cacheArchivePath: path.join(root, "canonical.tar.zst"),
+      skipExistingProbe: true,
+      compress: async () => ({ archivePath: archive, archiveBytes: 7, inflatedBytes: 2, fileCount: 1, payload: null }),
+      saveCache: async () => -1,
+    });
+    assert.equal(result.status, "failed");
+  } finally {
+    rmDir(root);
+  }
+});
+
+test("#473 concurrent repaired writer is accepted only after an exact-key lookup", async () => {
+  const root = mkTmp("solo-save-race-");
+  try {
+    const stagingDir = path.join(root, "staged");
+    fs.mkdirSync(stagingDir, { recursive: true });
+    writeFile(stagingDir, "payload", "ok");
+    const archive = path.join(root, "made.tar.zst");
+    fs.writeFileSync(archive, "archive");
+    const key = "solo-toolchain-v3-repair";
+    const result = await saveSoloCache({
+      stagingDir, key, level: "1", debug: false, log: () => {},
+      cacheArchivePath: path.join(root, "canonical.tar.zst"),
+      skipExistingProbe: true,
+      compress: async () => ({ archivePath: archive, archiveBytes: 7, inflatedBytes: 2, fileCount: 1, payload: null }),
+      saveCache: async () => -1,
+      lookupExactKey: async () => key,
+    });
+    assert.equal(result.status, "race-precheck-skipped");
+  } finally {
+    rmDir(root);
+  }
+});
+
+test("#473 repair-race proof rejects an exact key found only on another ref", async () => {
+  const key = "solo-toolchain-v3-cross-ref";
+  const exists = await soloCacheEntryExistsForRef({
+    owner: "zackees",
+    repo: "setup-soldr",
+    token: "test-token",
+    key,
+    ref: "refs/pull/473/merge",
+    log: () => {},
+    listCaches: async () => [
+      { id: 1, key, ref: "refs/heads/main" },
+      { id: 2, key: "other", ref: "refs/pull/473/merge" },
+    ],
+  });
+  assert.equal(exists, false);
 });
 
 test("hashStringArray is case-insensitive and trims", () => {
@@ -87,7 +210,7 @@ test("buildSoloCacheKeys produces stable exact key with all parts", () => {
   });
   assert.equal(
     keys.exact,
-    "solo-toolchain-v2-linux-x64-glibc-rustc1.84.1-cdeadbeef-tcafebabe-soldr0.7.28",
+    "solo-toolchain-v3-linux-x64-glibc-rustc1.84.1-cdeadbeef-tcafebabe-soldr0.7.28",
   );
 });
 
@@ -103,9 +226,9 @@ test("buildSoloCacheKeys restore-key ladder drops in the documented order", () =
   });
   // 1) drop soldr version, 2) also drop targets, 3) also drop components
   assert.deepEqual(keys.fallbacks, [
-    "solo-toolchain-v2-linux-x64-glibc-rustc1.84.1-cch-tth-soldr",
-    "solo-toolchain-v2-linux-x64-glibc-rustc1.84.1-cch-t-soldr",
-    "solo-toolchain-v2-linux-x64-glibc-rustc1.84.1-c-t-soldr",
+    "solo-toolchain-v3-linux-x64-glibc-rustc1.84.1-cch-tth-soldr",
+    "solo-toolchain-v3-linux-x64-glibc-rustc1.84.1-cch-t-soldr",
+    "solo-toolchain-v3-linux-x64-glibc-rustc1.84.1-c-t-soldr",
   ]);
 });
 
@@ -222,4 +345,74 @@ test("stageDiffForSave silently skips entries whose root isn't in the map", asyn
     rmDir(liveA);
     rmDir(stagingDir);
   }
+});
+
+test("#473 stageDiffForSave includes files replaced during cache repair", async () => {
+  const live = mkTmp("solo-repair-live-");
+  const stagingDir = mkTmp("solo-repair-stage-");
+  try {
+    writeFile(live, "1.95.0/lib/rustlib/aarch64-unknown-linux-gnu/lib/libcore.rlib", "repaired");
+    const after: SnapshotEntry = {
+      root: live,
+      relpath: "1.95.0/lib/rustlib/aarch64-unknown-linux-gnu/lib/libcore.rlib",
+      kind: "file",
+      size: 8,
+    };
+    const diff: SnapshotDiff = {
+      added: [],
+      removed: [],
+      changed: [{ before: { ...after, size: 0 }, after }],
+    };
+    const result = await stageDiffForSave(diff, {
+      "rustup-toolchains": live,
+      "cargo-bin": path.join(live, "cargo-bin"),
+    }, stagingDir);
+    assert.equal(result.stagedFiles, 1);
+    assert.equal(
+      fs.readFileSync(path.join(stagingDir, "rustup-toolchains", after.relpath), "utf8"),
+      "repaired",
+    );
+  } finally {
+    rmDir(live);
+    rmDir(stagingDir);
+  }
+});
+
+test("#473 stageDiffForSave reports a disappearing repair file as missing", async () => {
+  const live = mkTmp("solo-repair-missing-");
+  const stagingDir = mkTmp("solo-repair-missing-stage-");
+  try {
+    const result = await stageDiffForSave({
+      added: [{ root: live, relpath: "vanished.rlib", kind: "file", size: 8 }],
+      removed: [],
+      changed: [],
+    }, {
+      "rustup-toolchains": live,
+      "cargo-bin": path.join(live, "cargo-bin"),
+    }, stagingDir);
+    assert.deepEqual(result, { stagedFiles: 0, stagedSymlinks: 0, missingFiles: 1 });
+  } finally {
+    rmDir(live);
+    rmDir(stagingDir);
+  }
+});
+
+test("#473 corrupt-cache deletion is scoped to the matched key and current ref", async () => {
+  const deleted: number[] = [];
+  const result = await deleteCorruptSoloCacheEntries({
+    owner: "zackees",
+    repo: "example",
+    token: "test-token",
+    key: "solo-toolchain-v3-linux-x64-bad",
+    ref: "refs/heads/main",
+    log: () => {},
+    listCaches: async () => [
+      { id: 1, key: "solo-toolchain-v3-linux-x64-bad", ref: "refs/heads/main" },
+      { id: 2, key: "solo-toolchain-v3-linux-x64-bad", ref: "refs/pull/1/merge" },
+      { id: 3, key: "another-key", ref: "refs/heads/main" },
+    ],
+    deleteCacheById: async (id) => { deleted.push(id); },
+  });
+  assert.deepEqual(deleted, [1]);
+  assert.deepEqual(result, { found: 1, deleted: 1, failed: 0 });
 });

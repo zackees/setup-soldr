@@ -14,7 +14,9 @@ import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import { compressCache, type CachePayloadProfile } from "./lib/cache-compress.js";
 import {
+  deleteCorruptSoloCacheEntries,
   saveSoloCache,
+  soloCacheEntryExistsForRef,
   soloCacheArchivePath,
   stageDiffForSave,
   type RootMap as SoloRootMap,
@@ -1730,12 +1732,38 @@ export async function run(): Promise<void> {
     const soloMatchedKey = core.getState("soloToolchainMatchedKey");
     const soloExactHit = core.getState("soloToolchainExactHit") === "true";
     const soloIncrementalEmpty = core.getState("soloToolchainIncrementalEmpty") === "true";
+    const soloRestoreInvalid = core.getState("soloToolchainRestoreInvalid") === "true";
+    const soloInvalidMatchedKey = core.getState("soloToolchainInvalidMatchedKey");
     const soloSaveDiffPath = core.getState("soloToolchainSaveDiffPath");
     const soloLevel = core.getState("soloToolchainLevel") || "9"; // #310
     log(
       `solo-toolchain-cache: post-step exactKey=${soloExactKey} matched=${soloMatchedKey} ` +
-        `exactHit=${soloExactHit} incrementalEmpty=${soloIncrementalEmpty} saveDiffPath=${soloSaveDiffPath}`,
+        `exactHit=${soloExactHit} restoreInvalid=${soloRestoreInvalid} ` +
+        `incrementalEmpty=${soloIncrementalEmpty} saveDiffPath=${soloSaveDiffPath}`,
     );
+    const [soloRepoOwner, soloRepoName] = (process.env["GITHUB_REPOSITORY"] ?? "").trim().split("/");
+    const soloCacheToken = (process.env["GITHUB_TOKEN"] ?? "").trim() ||
+      (process.env["INPUT_TOKEN"] ?? "").trim();
+    const soloCacheRef = (process.env["GITHUB_REF"] ?? "").trim();
+    let repairDeletionComplete = false;
+    if (soloRestoreInvalid) {
+      const deletion = await deleteCorruptSoloCacheEntries({
+        owner: soloRepoOwner ?? "",
+        repo: soloRepoName ?? "",
+        token: soloCacheToken,
+        key: soloInvalidMatchedKey,
+        ref: soloCacheRef,
+        log,
+      });
+      repairDeletionComplete = deletion.failed === 0 && deletion.deleted === deletion.found;
+      if (deletion.failed > 0 || deletion.deleted < deletion.found) {
+        core.warning(
+          `solo-toolchain-cache: could not fully delete poisoned key=${soloInvalidMatchedKey}; ` +
+          `found=${deletion.found} deleted=${deletion.deleted} failed=${deletion.failed}. ` +
+          `The workflow token needs actions: write permission for automatic repair (#473).`,
+        );
+      }
+    }
     // #313: pre-save lookupOnly probe. When several parallel jobs in
     // the same workflow all enable solo-toolchain-cache with the SAME
     // key (rustc × components × targets × soldr-version), each one
@@ -1743,7 +1771,7 @@ export async function run(): Promise<void> {
     // to reject all-but-one with id=-1. The wasted uploads dominate
     // the post-step (~100 s × N parallel jobs).
     let raceSkipped = false;
-    if (!(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
+    if (!soloRestoreInvalid && !(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
       try {
         const probeStart = Date.now();
         // #316: probe MUST use the same paths array that the actual
@@ -1791,14 +1819,22 @@ export async function run(): Promise<void> {
       log("solo-toolchain-cache: exact hit and no install delta — skipping save");
     } else if (!soloSaveDiffPath || !fs.existsSync(soloSaveDiffPath)) {
       log("solo-toolchain-cache: no save-diff manifest available, skipping save");
+      if (soloRestoreInvalid) {
+        core.setFailed("solo-toolchain-cache: repaired a poisoned restore but has no replacement manifest (#473)");
+      }
     } else {
       try {
         const manifest = JSON.parse(fs.readFileSync(soloSaveDiffPath, "utf8")) as {
           added?: SnapshotDiff["added"];
+          changed?: SnapshotDiff["changed"];
         };
         const added = Array.isArray(manifest.added) ? manifest.added : [];
-        if (added.length === 0) {
+        const changed = Array.isArray(manifest.changed) ? manifest.changed : [];
+        if (added.length === 0 && changed.length === 0) {
           log("solo-toolchain-cache: empty save-diff manifest, skipping save");
+          if (soloRestoreInvalid) {
+            core.setFailed("solo-toolchain-cache: repaired a poisoned restore but replacement manifest is empty (#473)");
+          }
         } else {
           const soloRootMap: SoloRootMap = {
             "rustup-toolchains": path.join(result.rustupHome, "toolchains"),
@@ -1813,13 +1849,20 @@ export async function run(): Promise<void> {
           const stagingDir = path.join(runnerTemp, "setup-soldr-solo-cache", "staged");
           const soloSaveStart = Date.now();
           const staged = await stageDiffForSave(
-            { added, removed: [], changed: [] },
+            { added, removed: [], changed },
             soloRootMap,
             stagingDir,
           );
           log(
-            `solo-toolchain-cache: staged ${staged.stagedFiles} files (missing=${staged.missingFiles})`,
+            `solo-toolchain-cache: staged ${staged.stagedFiles} files and ${staged.stagedSymlinks} symlinks (missing=${staged.missingFiles})`,
           );
+          if (soloRestoreInvalid && (staged.missingFiles > 0 || staged.stagedFiles + staged.stagedSymlinks === 0)) {
+            core.setFailed(
+              `solo-toolchain-cache: refusing incomplete repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
+                `files=${staged.stagedFiles} symlinks=${staged.stagedSymlinks} missing=${staged.missingFiles}`,
+            );
+            throw new Error("repaired solo-toolchain staging was incomplete");
+          }
           const saveResult = await saveSoloCache({
             stagingDir,
             key: soloExactKey,
@@ -1831,6 +1874,17 @@ export async function run(): Promise<void> {
             // restoreSoloCache uses, ensuring @actions/cache version
             // hash agrees and restore can find the entry.
             cacheArchivePath: soloCacheArchivePath(runnerTemp),
+            skipExistingProbe: soloRestoreInvalid,
+            lookupExactKey: soloRestoreInvalid && repairDeletionComplete
+              ? async () => (await soloCacheEntryExistsForRef({
+                owner: soloRepoOwner ?? "",
+                repo: soloRepoName ?? "",
+                token: soloCacheToken,
+                key: soloExactKey,
+                ref: soloCacheRef,
+                log,
+              })) ? soloExactKey : undefined
+              : undefined,
           });
           // #269: always record so the post-step save table shows
           // skipped/race-precheck/etc layers too, not just saved ones.
@@ -1848,14 +1902,28 @@ export async function run(): Promise<void> {
             durationMs: Date.now() - soloSaveStart,
             timestamp: new Date().toISOString(),
           });
-          if (saveResult.status !== "saved") {
+          const repairRaceWonElsewhere = soloRestoreInvalid &&
+            saveResult.status === "race-precheck-skipped" && repairDeletionComplete;
+          if (saveResult.status !== "saved" && !repairRaceWonElsewhere) {
             log(`solo-toolchain-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
+            if (soloRestoreInvalid) {
+              core.setFailed(
+                `solo-toolchain-cache: failed to publish repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
+                  `${saveResult.status}${saveResult.error ? ` (${saveResult.error})` : ""}`,
+              );
+            }
           }
         }
       } catch (err) {
         log(
           `solo-toolchain-cache: save failed: ${err instanceof Error ? err.message : String(err)}`,
         );
+        if (soloRestoreInvalid) {
+          core.setFailed(
+            `solo-toolchain-cache: failed to publish repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
+              `${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
       }
     }
   }

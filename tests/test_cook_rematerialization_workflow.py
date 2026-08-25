@@ -54,19 +54,20 @@ def test_cold_cook_is_serialized_to_fit_hosted_runner_memory() -> None:
     assert workflow["env"]["SOLDR_JOBS"] == "1"
 
 
-def test_warm_gate_requires_transport_hits_and_zero_external_work() -> None:
+def test_warm_gate_requires_usable_transports_and_zero_external_work() -> None:
     workflow = _load()
     warm = workflow["jobs"]["warm"]
-    transport = _step(warm, "Require both dependency-closure transports")
+    transport = _step(warm, "Require usable dependency-closure transports")
     assert "cook-cache-hit" in transport["env"]["COOK_HIT"]
     assert "cook-cache-base-hit" in transport["env"]["BASE_HIT"]
     assert "cook-cache-delta-hit" in transport["env"]["DELTA_HIT"]
     assert "cargo-registry-cache-hit" in transport["env"]["REGISTRY_HIT"]
     assert 'test "$COOK_HIT" = true' in transport["run"]
     assert 'test "$BASE_HIT" = true' in transport["run"]
-    assert 'test "$DELTA_HIT" = true' in transport["run"]
+    assert 'test "$DELTA_HIT" = false' in transport["run"]
     assert 'test "$REGISTRY_HIT" = true' in transport["run"]
-    assert 'test "$COOK_STATUS" = hit' in transport["run"]
+    assert 'test "$COOK_STATUS" = base-hit' in transport["run"]
+    assert 'report["delta"]["cacheFilesRestored"] == 0' in transport["run"]
     seed = _step(workflow["jobs"]["seed"], "Record seed transport state")
     assert 'test "$COOK_HIT" = false' in seed["run"]
     assert 'test "$REGISTRY_HIT" = false' in seed["run"]

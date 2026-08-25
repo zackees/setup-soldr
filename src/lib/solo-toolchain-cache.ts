@@ -19,6 +19,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as cache from "@actions/cache";
 import * as exec from "@actions/exec";
+import * as github from "@actions/github";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
 import type { SnapshotDiff, SnapshotEntry } from "./toolchain-snapshot.js";
 
@@ -101,6 +102,124 @@ export interface SoloSaveResult {
   error?: string;
 }
 
+export interface SoloCacheEntryRef {
+  id: number;
+  key: string;
+  ref: string;
+}
+
+export interface DeleteCorruptSoloCacheResult {
+  found: number;
+  deleted: number;
+  failed: number;
+}
+
+/** Prove an exact cache key exists on one ref; unlike restoreCache, this retains ref identity. */
+export async function soloCacheEntryExistsForRef(opts: {
+  owner: string;
+  repo: string;
+  token: string;
+  key: string;
+  ref: string;
+  log: (msg: string) => void;
+  listCaches?: () => Promise<SoloCacheEntryRef[]>;
+}): Promise<boolean> {
+  const { owner, repo, token, key, ref, log } = opts;
+  if (!owner || !repo || !token || !key || !ref) return false;
+  try {
+    let entries: SoloCacheEntryRef[];
+    if (opts.listCaches) {
+      entries = await opts.listCaches();
+    } else {
+      const octokit = github.getOctokit(token);
+      entries = [];
+      let page = 1;
+      while (true) {
+        const response = await octokit.rest.actions.getActionsCacheList({
+          owner, repo, key, ref, per_page: 100, page,
+        });
+        const items = response.data.actions_caches ?? [];
+        for (const item of items) {
+          if (item.id != null && item.key != null && item.ref != null) {
+            entries.push({ id: item.id, key: item.key, ref: item.ref });
+          }
+        }
+        if (items.length < 100) break;
+        page += 1;
+      }
+    }
+    return entries.some((entry) => entry.key === key && entry.ref === ref);
+  } catch (err) {
+    log(`solo-toolchain-cache: failed to prove replacement key=${key} ref=${ref}: ${err instanceof Error ? err.message : String(err)}`);
+    return false;
+  }
+}
+
+/** Delete immutable poisoned entries before uploading a verified repair. */
+export async function deleteCorruptSoloCacheEntries(opts: {
+  owner: string;
+  repo: string;
+  token: string;
+  key: string;
+  ref: string;
+  log: (msg: string) => void;
+  listCaches?: () => Promise<SoloCacheEntryRef[]>;
+  deleteCacheById?: (id: number) => Promise<void>;
+}): Promise<DeleteCorruptSoloCacheResult> {
+  const { owner, repo, token, key, ref, log } = opts;
+  if (!owner || !repo || !token || !key || !ref) {
+    log("solo-toolchain-cache: cannot delete corrupt entry: repository, token, key, or ref is missing");
+    return { found: 0, deleted: 0, failed: 1 };
+  }
+  const octokit = github.getOctokit(token);
+  const listCaches = opts.listCaches ?? (async (): Promise<SoloCacheEntryRef[]> => {
+    const entries: SoloCacheEntryRef[] = [];
+    let page = 1;
+    while (true) {
+      const response = await octokit.rest.actions.getActionsCacheList({
+        owner,
+        repo,
+        key,
+        ref,
+        per_page: 100,
+        page,
+      });
+      const items = response.data.actions_caches ?? [];
+      for (const item of items) {
+        if (item.id != null && item.key != null && item.ref != null) {
+          entries.push({ id: item.id, key: item.key, ref: item.ref });
+        }
+      }
+      if (items.length < 100) break;
+      page += 1;
+    }
+    return entries;
+  });
+  const deleteCacheById = opts.deleteCacheById ?? (async (id: number): Promise<void> => {
+    await octokit.rest.actions.deleteActionsCacheById({ owner, repo, cache_id: id });
+  });
+  let entries: SoloCacheEntryRef[];
+  try {
+    entries = (await listCaches()).filter((entry) => entry.key === key && entry.ref === ref);
+  } catch (err) {
+    log(`solo-toolchain-cache: failed to list corrupt entry key=${key} ref=${ref}: ${err instanceof Error ? err.message : String(err)}`);
+    return { found: 0, deleted: 0, failed: 1 };
+  }
+  let deleted = 0;
+  let failed = 0;
+  for (const entry of entries) {
+    try {
+      await deleteCacheById(entry.id);
+      deleted += 1;
+      log(`solo-toolchain-cache: deleted corrupt entry id=${entry.id} key=${key} ref=${ref}`);
+    } catch (err) {
+      failed += 1;
+      log(`solo-toolchain-cache: failed to delete corrupt entry id=${entry.id} key=${key}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  return { found: entries.length, deleted, failed };
+}
+
 /**
  * Map this run's host platform to a libc tag. Conservative v1: assume
  * glibc on Linux unless we see a musl signal. macOS/Windows have no
@@ -149,7 +268,9 @@ export function hashStringArray(items: string[]): string {
  *       from `setup-soldr-solo-stage-save` to `staged`. v1 caches
  *       are unreadable by v2 restorers ("archive was empty").
  */
-const SOLO_CACHE_SCHEMA_VERSION = 2;
+// v3 (#473) stages repaired `changed` files as well as newly `added` files,
+// invalidating the incomplete v2 entries that could contain only six files.
+const SOLO_CACHE_SCHEMA_VERSION = 3;
 
 export function buildSoloCacheKeys(parts: SoloCacheKeyParts): SoloCacheKeys {
   const release = parts.rustcRelease.trim() || "unresolved";
@@ -177,7 +298,7 @@ async function ensureDir(p: string): Promise<void> {
 }
 
 /**
- * Copy the inodes named in `diff.added` into a flat staging directory
+ * Copy newly added and repaired/changed inodes into a flat staging directory
  * structured as `<stagingDir>/<root-tag>/<relpath>`. The staging dir
  * is what `compressCache` later tars + zstds. Returns the count of
  * actually-copied files (directories and symlinks are recreated rather
@@ -187,12 +308,14 @@ export async function stageDiffForSave(
   diff: SnapshotDiff,
   rootMap: RootMap,
   stagingDir: string,
-): Promise<{ stagedFiles: number; missingFiles: number }> {
+): Promise<{ stagedFiles: number; stagedSymlinks: number; missingFiles: number }> {
   await fsp.rm(stagingDir, { recursive: true, force: true });
   await ensureDir(stagingDir);
   let stagedFiles = 0;
+  let stagedSymlinks = 0;
   let missingFiles = 0;
-  for (const entry of diff.added) {
+  const entries = [...diff.added, ...diff.changed.map((change) => change.after)];
+  for (const entry of entries) {
     const tag = findRootTag(entry.root, rootMap);
     if (tag === null) continue;
     const src = path.join(entry.root, entry.relpath);
@@ -206,8 +329,9 @@ export async function stageDiffForSave(
       const target = entry.linkTarget ?? "";
       try {
         await fsp.symlink(target, dst);
+        stagedSymlinks += 1;
       } catch {
-        // best-effort; restore replays via the same path
+        missingFiles += 1;
       }
       continue;
     }
@@ -218,7 +342,7 @@ export async function stageDiffForSave(
       missingFiles += 1;
     }
   }
-  return { stagedFiles, missingFiles };
+  return { stagedFiles, stagedSymlinks, missingFiles };
 }
 
 /**
@@ -334,6 +458,14 @@ export async function saveSoloCache(opts: {
    * Defaults to soloCacheArchivePath(dirname(stagingDir)).
    */
   cacheArchivePath?: string;
+  /** A validated-bad entry was deleted; do not let a stale listing suppress repair. */
+  skipExistingProbe?: boolean;
+  /** Test seam for cache upload. */
+  saveCache?: (paths: string[], key: string) => Promise<number>;
+  /** Test seam for exact-key lookup after a lost save race. */
+  lookupExactKey?: (paths: string[], key: string) => Promise<string | undefined>;
+  /** Test seam for archive creation. */
+  compress?: typeof compressCache;
 }): Promise<SoloSaveResult> {
   const { stagingDir, key, level, debug, log } = opts;
   const cacheArchive = opts.cacheArchivePath ?? soloCacheArchivePath(path.dirname(stagingDir));
@@ -345,7 +477,7 @@ export async function saveSoloCache(opts: {
   let inflatedBytes: number | undefined;
   let fileCount: number | undefined;
   try {
-    const compress = await compressCache({
+    const compress = await (opts.compress ?? compressCache)({
       cacheDir: stagingDir,
       codec: "zstd",
       level,
@@ -387,7 +519,8 @@ export async function saveSoloCache(opts: {
   // a probe here catches that and skips the wasted upload. The probe
   // requires a non-empty paths array even in lookupOnly mode, hence
   // the throwaway directory.
-  try {
+  if (!opts.skipExistingProbe) {
+    try {
     // #316: use the canonical archive path for the probe too. The
     // probe MUST hash the same paths as save+restore so the
     // @actions/cache cache "version" matches; otherwise the probe
@@ -404,14 +537,36 @@ export async function saveSoloCache(opts: {
         archivePath,
       };
     }
-  } catch (err) {
-    log(
-      `solo-toolchain-cache: post-compress lookupOnly probe failed (will attempt save anyway): ${err instanceof Error ? err.message : String(err)}`,
-    );
+    } catch (err) {
+      log(
+        `solo-toolchain-cache: post-compress lookupOnly probe failed (will attempt save anyway): ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   try {
-    const id = await cache.saveCache([archivePath], key);
+    const id = await (opts.saveCache ?? cache.saveCache)([archivePath], key);
+    if (id <= 0) {
+      if (opts.lookupExactKey) {
+        const lookup = opts.lookupExactKey;
+        const existing = await lookup([archivePath], key);
+        if (existing === key) {
+          log(`solo-toolchain-cache: save lost a repair race, but exact replacement now exists key=${key}`);
+          return {
+            status: "race-precheck-skipped",
+            archiveBytes,
+            inflatedBytes,
+            fileCount,
+            archivePath,
+          };
+        }
+      }
+      return {
+        status: "failed",
+        error: `cache upload returned non-positive id=${id}; replacement was not proven`,
+        archivePath,
+      };
+    }
     log(`solo-toolchain-cache: saved id=${id} key=${key} archive=${archivePath}`);
     return {
       status: "saved",
@@ -476,7 +631,7 @@ export async function restoreSoloCache(opts: {
   const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
   if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
     log(`solo-toolchain-cache: restored archive has unknown codec, treating as miss`);
-    return { hit: false, matchedKey: matched, restoredBytes: 0, archivePath, verified: false };
+    return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false };
   }
   const stagingOut = path.join(stagingDir, "staged");
   try {
@@ -528,35 +683,54 @@ export async function restoreSoloCache(opts: {
 export async function verifyRestoredToolchain(opts: {
   expectedRelease: string;
   expectedTargets?: string[];
-  rustcCommand: string;
+  expectedComponents?: string[];
+  channel: string;
+  rustupCommand: string;
   log: (msg: string) => void;
-  /** Test seam for the target probe; production invokes rustc directly. */
-  runTargetProbe?: (target: string) => Promise<{ code: number; stderr: string }>;
+  /** Test seam; production invokes rustup with the supplied arguments. */
+  runRustup?: (args: string[]) => Promise<{ code: number; stdout: string; stderr: string }>;
+  /** Test seam for file-based components such as rust-src. */
+  pathExists?: (candidate: string) => Promise<boolean>;
 }): Promise<{ match: boolean; observedRelease: string | null }> {
-  const { expectedRelease, expectedTargets = [], rustcCommand, log } = opts;
+  const {
+    expectedRelease,
+    expectedTargets = [],
+    expectedComponents = [],
+    channel,
+    rustupCommand,
+    log,
+  } = opts;
+  const runRustup = opts.runRustup ?? (async (args: string[]) => {
+    let stdout = "";
+    let stderr = "";
+    const code = await exec.exec(rustupCommand, args, {
+      silent: true,
+      ignoreReturnCode: true,
+      listeners: {
+        stdout: (data: Buffer) => { stdout += data.toString("utf8"); },
+        stderr: (data: Buffer) => { stderr += data.toString("utf8"); },
+      },
+    });
+    return { code, stdout, stderr };
+  });
   let releaseMatch = true;
   let observedRelease: string | null = null;
-  let stdout = "";
-  let code = -1;
   if (expectedRelease.trim()) {
+    let version: { code: number; stdout: string; stderr: string };
     try {
-      code = await exec.exec(rustcCommand, ["--version"], {
-        silent: true,
-        ignoreReturnCode: true,
-        listeners: { stdout: (data: Buffer) => { stdout += data.toString("utf8"); } },
-      });
+      version = await runRustup(["run", channel, "rustc", "--version"]);
     } catch (err) {
       log(`solo-toolchain-cache: rustc --version threw: ${err instanceof Error ? err.message : String(err)}`);
       return { match: false, observedRelease: null };
     }
-    if (code !== 0) {
-      log(`solo-toolchain-cache: rustc --version exited ${code}; cannot verify restore`);
+    if (version.code !== 0) {
+      log(`solo-toolchain-cache: rustup run ${channel} rustc --version exited ${version.code}; cannot verify restore`);
       return { match: false, observedRelease: null };
     }
-    const match = stdout.trim().match(/^rustc\s+(\S+)/);
+    const match = version.stdout.trim().match(/^rustc\s+(\S+)/);
     observedRelease = match ? (match[1] ?? null) : null;
     if (observedRelease === null) {
-      log(`solo-toolchain-cache: rustc --version output not parseable: ${stdout.trim()}`);
+      log(`solo-toolchain-cache: rustc --version output not parseable: ${version.stdout.trim()}`);
       return { match: false, observedRelease: null };
     }
     releaseMatch = observedRelease === expectedRelease;
@@ -566,23 +740,20 @@ export async function verifyRestoredToolchain(opts: {
   }
 
   const targets = [...new Set(expectedTargets.map((target) => target.trim()).filter(Boolean))];
-  const runTargetProbe = opts.runTargetProbe ?? (async (target: string) => {
+  const runTargetProbe = async (target: string) => {
     const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "setup-soldr-target-probe-"));
     const source = path.join(tempDir, "probe.rs");
     const output = path.join(tempDir, "probe.rmeta");
     await fsp.writeFile(source, "pub fn setup_soldr_target_probe() {}\n", "utf8");
     let stderr = "";
     try {
-      const probeCode = await exec.exec(rustcCommand, ["--target", target, "--crate-type", "lib", "--emit", "metadata", source, "-o", output], {
-        silent: true,
-        ignoreReturnCode: true,
-        listeners: { stderr: (data: Buffer) => { stderr += data.toString("utf8"); } },
-      });
-      return { code: probeCode, stderr };
+      const probe = await runRustup(["run", channel, "rustc", "--target", target, "--crate-type", "lib", "--emit", "metadata", source, "-o", output]);
+      stderr = probe.stderr;
+      return { code: probe.code, stderr };
     } finally {
       await fsp.rm(tempDir, { recursive: true, force: true });
     }
-  });
+  };
   let targetsMatch = true;
   for (const target of targets) {
     let probe: { code: number; stderr: string };
@@ -601,5 +772,56 @@ export async function verifyRestoredToolchain(opts: {
       log(`solo-toolchain-cache: target std probe passed target=${target}`);
     }
   }
-  return { match: releaseMatch && targetsMatch, observedRelease };
+  let componentsMatch = true;
+  const components = [...new Set(expectedComponents.map((component) => component.trim()).filter(Boolean))];
+  if (components.length > 0) {
+    let listed: { code: number; stdout: string; stderr: string };
+    try {
+      listed = await runRustup(["component", "list", "--toolchain", channel, "--installed"]);
+    } catch (err) {
+      listed = { code: -1, stdout: "", stderr: err instanceof Error ? err.message : String(err) };
+    }
+    const installed = new Set(
+      listed.stdout.split(/\r?\n/).map((line) => line.trim().split(/\s+/, 1)[0]).filter((name): name is string => Boolean(name)),
+    );
+    const installedName = (component: string): string =>
+      component.endsWith("-preview") ? component.slice(0, -"-preview".length) : component;
+    const missing = components.filter((component) => {
+      const normalized = installedName(component);
+      return ![...installed].some((name) => name === normalized || name.startsWith(`${normalized}-`));
+    });
+    componentsMatch = listed.code === 0 && missing.length === 0;
+    if (!componentsMatch) {
+      log(`solo-toolchain-cache: component verification failed channel=${channel} missing=${missing.join(",") || "list-command-failed"}`);
+    }
+    const executableComponents: Record<string, string> = {
+      rustfmt: "rustfmt",
+      clippy: "clippy-driver",
+      miri: "cargo-miri",
+      "rust-analyzer": "rust-analyzer",
+    };
+    for (const component of components) {
+      const executable = executableComponents[installedName(component)];
+      if (!executable) continue;
+      const probe = await runRustup(["run", channel, executable, "--version"]).catch((err) => ({
+        code: -1,
+        stdout: "",
+        stderr: err instanceof Error ? err.message : String(err),
+      }));
+      if (probe.code !== 0) {
+        componentsMatch = false;
+        log(`solo-toolchain-cache: component payload probe failed component=${component} exit=${probe.code}`);
+      }
+    }
+    if (components.includes("rust-src")) {
+      const sysroot = await runRustup(["run", channel, "rustc", "--print", "sysroot"]).catch(() => ({ code: -1, stdout: "", stderr: "" }));
+      const sourceManifest = path.join(sysroot.stdout.trim(), "lib", "rustlib", "src", "rust", "library", "Cargo.toml");
+      const pathExists = opts.pathExists ?? (async (candidate: string) => fsp.access(candidate).then(() => true, () => false));
+      if (sysroot.code !== 0 || !(await pathExists(sourceManifest))) {
+        componentsMatch = false;
+        log("solo-toolchain-cache: component payload probe failed component=rust-src");
+      }
+    }
+  }
+  return { match: releaseMatch && targetsMatch && componentsMatch, observedRelease };
 }

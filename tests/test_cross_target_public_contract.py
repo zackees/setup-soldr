@@ -35,7 +35,7 @@ def test_cross_target_action_description_has_only_blessed_contract() -> None:
 def test_readme_recommends_only_target_driven_cross_compilation() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
 
-    assert "The default Soldr version is `0.9.7`." in readme
+    assert "The default Soldr version is `0.9.9`." in readme
     assert "### Legacy cross-compile auto-bootstrap" not in readme
     assert "soldr cargo zigbuild" not in readme
     assert "cross-tool:" not in readme
@@ -50,7 +50,7 @@ def test_default_soldr_version_is_one_public_constant() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
     contract = CONTRACT_PATH.read_text(encoding="utf-8")
 
-    assert version == "0.9.7"
+    assert version == "0.9.9"
     assert f"The default Soldr version is `{version}`." in readme
     assert f'EXPECTED_SOLDR_DEFAULT_VERSION = "{version}"' in contract
 
@@ -94,3 +94,21 @@ def test_cross_prepare_matrix_records_every_blessed_target_contract() -> None:
     assert (SMOKE_FIXTURE_PATH / "Cargo.toml").is_file()
     assert (SMOKE_FIXTURE_PATH / "Cargo.lock").is_file()
     assert (SMOKE_FIXTURE_PATH / "src" / "main.rs").is_file()
+
+
+def test_cross_prepare_workflow_proves_managed_cache_seed_and_exact_hit() -> None:
+    workflow = yaml.safe_load(CROSS_WORKFLOW_PATH.read_text(encoding="utf-8"))
+    jobs = workflow["jobs"]
+
+    assert jobs["cache-hit"]["needs"] == "cache-seed"
+    seed_setup = next(step for step in jobs["cache-seed"]["steps"] if step.get("id") == "setup")
+    hit_setup = next(step for step in jobs["cache-hit"]["steps"] if step.get("id") == "setup")
+    for setup in (seed_setup, hit_setup):
+        assert setup["uses"] == "./"
+        assert setup["with"]["cross-targets"] == "x86_64-pc-windows-msvc"
+        assert setup["with"]["cache"] is True
+
+    text = CROSS_WORKFLOW_PATH.read_text(encoding="utf-8")
+    assert "blessed-prepare-cache-key" in text
+    assert "blessed-prepare-cache-hit" in text
+    assert 'test "$CACHE_HIT" = "true"' in text

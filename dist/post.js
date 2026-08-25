@@ -19111,6 +19111,769 @@ exports.Deprecation = Deprecation;
 
 /***/ }),
 
+/***/ 27437:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Some numerical data is initialized as -1 even when it doesn't need initialization to help the JIT infer types
+// aliases for shorter compressed code (most minifers don't do this)
+var ab = ArrayBuffer, u8 = Uint8Array, u16 = Uint16Array, i16 = Int16Array, u32 = (/* unused pure expression or super */ null && (Uint32Array)), i32 = Int32Array;
+var slc = function (v, s, e) {
+    if (u8.prototype.slice)
+        return u8.prototype.slice.call(v, s, e);
+    if (s == null || s < 0)
+        s = 0;
+    if (e == null || e > v.length)
+        e = v.length;
+    var n = new u8(e - s);
+    n.set(v.subarray(s, e));
+    return n;
+};
+var fill = function (v, n, s, e) {
+    if (u8.prototype.fill)
+        return u8.prototype.fill.call(v, n, s, e);
+    if (s == null || s < 0)
+        s = 0;
+    if (e == null || e > v.length)
+        e = v.length;
+    for (; s < e; ++s)
+        v[s] = n;
+    return v;
+};
+var cpw = function (v, t, s, e) {
+    if (u8.prototype.copyWithin)
+        return u8.prototype.copyWithin.call(v, t, s, e);
+    if (s == null || s < 0)
+        s = 0;
+    if (e == null || e > v.length)
+        e = v.length;
+    while (s < e) {
+        v[t++] = v[s++];
+    }
+};
+/**
+ * Codes for errors generated within this library
+ */
+exports.ZstdErrorCode = {
+    InvalidData: 0,
+    WindowSizeTooLarge: 1,
+    InvalidBlockType: 2,
+    FSEAccuracyTooHigh: 3,
+    DistanceTooFarBack: 4,
+    UnexpectedEOF: 5
+};
+// error codes
+var ec = [
+    'invalid zstd data',
+    'window size too large (>2046MB)',
+    'invalid block type',
+    'FSE accuracy too high',
+    'match distance too far back',
+    'unexpected EOF'
+];
+var err = function (ind, msg, nt) {
+    var e = new Error(msg || ec[ind]);
+    e.code = ind;
+    if (Error.captureStackTrace)
+        Error.captureStackTrace(e, err);
+    if (!nt)
+        throw e;
+    return e;
+};
+var rb = function (d, b, n) {
+    var i = 0, o = 0;
+    for (; i < n; ++i)
+        o |= d[b++] << (i << 3);
+    return o;
+};
+var b4 = function (d, b) { return (d[b] | (d[b + 1] << 8) | (d[b + 2] << 16) | (d[b + 3] << 24)) >>> 0; };
+// read Zstandard frame header
+var rzfh = function (dat, w) {
+    var n3 = dat[0] | (dat[1] << 8) | (dat[2] << 16);
+    if (n3 == 0x2FB528 && dat[3] == 253) {
+        // Zstandard
+        var flg = dat[4];
+        //    single segment       checksum             dict flag     frame content flag
+        var ss = (flg >> 5) & 1, cc = (flg >> 2) & 1, df = flg & 3, fcf = flg >> 6;
+        if (flg & 8)
+            err(0);
+        // byte
+        var bt = 6 - ss;
+        // dict bytes
+        var db = df == 3 ? 4 : df;
+        // dictionary id
+        var di = rb(dat, bt, db);
+        bt += db;
+        // frame size bytes
+        var fsb = fcf ? (1 << fcf) : ss;
+        // frame source size
+        var fss = rb(dat, bt, fsb) + ((fcf == 1) && 256);
+        // window size
+        var ws = fss;
+        if (!ss) {
+            // window descriptor
+            var wb = 1 << (10 + (dat[5] >> 3));
+            ws = wb + (wb >> 3) * (dat[5] & 7);
+        }
+        if (ws > 2145386496)
+            err(1);
+        var buf = new u8((w == 1 ? (fss || ws) : w ? 0 : ws) + 12);
+        buf[0] = 1, buf[4] = 4, buf[8] = 8;
+        return {
+            b: bt + fsb,
+            y: 0,
+            l: 0,
+            d: di,
+            w: (w && w != 1) ? w : buf.subarray(12),
+            e: ws,
+            o: new i32(buf.buffer, 0, 3),
+            u: fss,
+            c: cc,
+            m: Math.min(131072, ws)
+        };
+    }
+    else if (((n3 >> 4) | (dat[3] << 20)) == 0x184D2A5) {
+        // skippable
+        return b4(dat, 4) + 8;
+    }
+    err(0);
+};
+// most significant bit for nonzero
+var msb = function (val) {
+    var bits = 0;
+    for (; (1 << bits) <= val; ++bits)
+        ;
+    return bits - 1;
+};
+// read finite state entropy
+var rfse = function (dat, bt, mal) {
+    // table pos
+    var tpos = (bt << 3) + 4;
+    // accuracy log
+    var al = (dat[bt] & 15) + 5;
+    if (al > mal)
+        err(3);
+    // size
+    var sz = 1 << al;
+    // probabilities symbols  repeat   index   high threshold
+    var probs = sz, sym = -1, re = -1, i = -1, ht = sz;
+    // optimization: single allocation is much faster
+    var buf = new ab(512 + (sz << 2));
+    var freq = new i16(buf, 0, 256);
+    // same view as freq
+    var dstate = new u16(buf, 0, 256);
+    var nstate = new u16(buf, 512, sz);
+    var bb1 = 512 + (sz << 1);
+    var syms = new u8(buf, bb1, sz);
+    var nbits = new u8(buf, bb1 + sz);
+    while (sym < 255 && probs > 0) {
+        var bits = msb(probs + 1);
+        var cbt = tpos >> 3;
+        // mask
+        var msk = (1 << (bits + 1)) - 1;
+        var val = ((dat[cbt] | (dat[cbt + 1] << 8) | (dat[cbt + 2] << 16)) >> (tpos & 7)) & msk;
+        // mask (1 fewer bit)
+        var msk1fb = (1 << bits) - 1;
+        // max small value
+        var msv = msk - probs - 1;
+        // small value
+        var sval = val & msk1fb;
+        if (sval < msv)
+            tpos += bits, val = sval;
+        else {
+            tpos += bits + 1;
+            if (val > msk1fb)
+                val -= msv;
+        }
+        freq[++sym] = --val;
+        if (val == -1) {
+            probs += val;
+            syms[--ht] = sym;
+        }
+        else
+            probs -= val;
+        if (!val) {
+            do {
+                // repeat byte
+                var rbt = tpos >> 3;
+                re = ((dat[rbt] | (dat[rbt + 1] << 8)) >> (tpos & 7)) & 3;
+                tpos += 2;
+                sym += re;
+            } while (re == 3);
+        }
+    }
+    if (sym > 255 || probs)
+        err(0);
+    var sympos = 0;
+    // sym step (coprime with sz - formula from zstd source)
+    var sstep = (sz >> 1) + (sz >> 3) + 3;
+    // sym mask
+    var smask = sz - 1;
+    for (var s = 0; s <= sym; ++s) {
+        var sf = freq[s];
+        if (sf < 1) {
+            dstate[s] = -sf;
+            continue;
+        }
+        // This is split into two loops in zstd to avoid branching, but as JS is higher-level that is unnecessary
+        for (i = 0; i < sf; ++i) {
+            syms[sympos] = s;
+            do {
+                sympos = (sympos + sstep) & smask;
+            } while (sympos >= ht);
+        }
+    }
+    // After spreading symbols, should be zero again
+    if (sympos)
+        err(0);
+    for (i = 0; i < sz; ++i) {
+        // next state
+        var ns = dstate[syms[i]]++;
+        // num bits
+        var nb = nbits[i] = al - msb(ns);
+        nstate[i] = (ns << nb) - sz;
+    }
+    return [(tpos + 7) >> 3, {
+            b: al,
+            s: syms,
+            n: nbits,
+            t: nstate
+        }];
+};
+// read huffman
+var rhu = function (dat, bt) {
+    //  index  weight count
+    var i = 0, wc = -1;
+    //    buffer             header byte
+    var buf = new u8(292), hb = dat[bt];
+    // huffman weights
+    var hw = buf.subarray(0, 256);
+    // rank count
+    var rc = buf.subarray(256, 268);
+    // rank index
+    var ri = new u16(buf.buffer, 268);
+    // NOTE: at this point bt is 1 less than expected
+    if (hb < 128) {
+        // end byte, fse decode table
+        var _a = rfse(dat, bt + 1, 6), ebt = _a[0], fdt = _a[1];
+        bt += hb;
+        var epos = ebt << 3;
+        // last byte
+        var lb = dat[bt];
+        if (!lb)
+            err(0);
+        //  state1   state2   state1 bits   state2 bits
+        var st1 = 0, st2 = 0, btr1 = fdt.b, btr2 = btr1;
+        // fse pos
+        // pre-increment to account for original deficit of 1
+        var fpos = (++bt << 3) - 8 + msb(lb);
+        for (;;) {
+            fpos -= btr1;
+            if (fpos < epos)
+                break;
+            var cbt = fpos >> 3;
+            st1 += ((dat[cbt] | (dat[cbt + 1] << 8)) >> (fpos & 7)) & ((1 << btr1) - 1);
+            hw[++wc] = fdt.s[st1];
+            fpos -= btr2;
+            if (fpos < epos)
+                break;
+            cbt = fpos >> 3;
+            st2 += ((dat[cbt] | (dat[cbt + 1] << 8)) >> (fpos & 7)) & ((1 << btr2) - 1);
+            hw[++wc] = fdt.s[st2];
+            btr1 = fdt.n[st1];
+            st1 = fdt.t[st1];
+            btr2 = fdt.n[st2];
+            st2 = fdt.t[st2];
+        }
+        if (++wc > 255)
+            err(0);
+    }
+    else {
+        wc = hb - 127;
+        for (; i < wc; i += 2) {
+            var byte = dat[++bt];
+            hw[i] = byte >> 4;
+            hw[i + 1] = byte & 15;
+        }
+        ++bt;
+    }
+    // weight exponential sum
+    var wes = 0;
+    for (i = 0; i < wc; ++i) {
+        var wt = hw[i];
+        // bits must be at most 11, same as weight
+        if (wt > 11)
+            err(0);
+        wes += wt && (1 << (wt - 1));
+    }
+    // max bits
+    var mb = msb(wes) + 1;
+    // table size
+    var ts = 1 << mb;
+    // remaining sum
+    var rem = ts - wes;
+    // must be power of 2
+    if (rem & (rem - 1))
+        err(0);
+    hw[wc++] = msb(rem) + 1;
+    for (i = 0; i < wc; ++i) {
+        var wt = hw[i];
+        ++rc[hw[i] = wt && (mb + 1 - wt)];
+    }
+    // huf buf
+    var hbuf = new u8(ts << 1);
+    //    symbols                      num bits
+    var syms = hbuf.subarray(0, ts), nb = hbuf.subarray(ts);
+    ri[mb] = 0;
+    for (i = mb; i > 0; --i) {
+        var pv = ri[i];
+        fill(nb, i, pv, ri[i - 1] = pv + rc[i] * (1 << (mb - i)));
+    }
+    if (ri[0] != ts)
+        err(0);
+    for (i = 0; i < wc; ++i) {
+        var bits = hw[i];
+        if (bits) {
+            var code = ri[bits];
+            fill(syms, i, code, ri[bits] = code + (1 << (mb - bits)));
+        }
+    }
+    return [bt, {
+            n: nb,
+            b: mb,
+            s: syms
+        }];
+};
+// Tables generated using this:
+// https://gist.github.com/101arrowz/a979452d4355992cbf8f257cbffc9edd
+// default literal length table
+var dllt = /*#__PURE__*/ rfse(/*#__PURE__*/ new u8([
+    81, 16, 99, 140, 49, 198, 24, 99, 12, 33, 196, 24, 99, 102, 102, 134, 70, 146, 4
+]), 0, 6)[1];
+// default match length table
+var dmlt = /*#__PURE__*/ rfse(/*#__PURE__*/ new u8([
+    33, 20, 196, 24, 99, 140, 33, 132, 16, 66, 8, 33, 132, 16, 66, 8, 33, 68, 68, 68, 68, 68, 68, 68, 68, 36, 9
+]), 0, 6)[1];
+// default offset code table
+var doct = /*#__PURE__ */ rfse(/*#__PURE__*/ new u8([
+    32, 132, 16, 66, 102, 70, 68, 68, 68, 68, 36, 73, 2
+]), 0, 5)[1];
+// bits to baseline
+var b2bl = function (b, s) {
+    var len = b.length, bl = new i32(len);
+    for (var i = 0; i < len; ++i) {
+        bl[i] = s;
+        s += 1 << b[i];
+    }
+    return bl;
+};
+// literal length bits
+var llb = /*#__PURE__ */ new u8(( /*#__PURE__ */new i32([
+    0, 0, 0, 0, 16843009, 50528770, 134678020, 202050057, 269422093
+])).buffer, 0, 36);
+// literal length baseline
+var llbl = /*#__PURE__ */ b2bl(llb, 0);
+// match length bits
+var mlb = /*#__PURE__ */ new u8(( /*#__PURE__ */new i32([
+    0, 0, 0, 0, 0, 0, 0, 0, 16843009, 50528770, 117769220, 185207048, 252579084, 16
+])).buffer, 0, 53);
+// match length baseline
+var mlbl = /*#__PURE__ */ b2bl(mlb, 3);
+// decode huffman stream
+var dhu = function (dat, out, hu) {
+    var len = dat.length, ss = out.length, lb = dat[len - 1], msk = (1 << hu.b) - 1, eb = -hu.b;
+    if (!lb)
+        err(0);
+    var st = 0, btr = hu.b, pos = (len << 3) - 8 + msb(lb) - btr, i = -1;
+    for (; pos > eb && i < ss;) {
+        var cbt = pos >> 3;
+        var val = (dat[cbt] | (dat[cbt + 1] << 8) | (dat[cbt + 2] << 16)) >> (pos & 7);
+        st = ((st << btr) | val) & msk;
+        out[++i] = hu.s[st];
+        pos -= (btr = hu.n[st]);
+    }
+    if (pos != eb || i + 1 != ss)
+        err(0);
+};
+// decode huffman stream 4x
+// TODO: use workers to parallelize
+var dhu4 = function (dat, out, hu) {
+    var bt = 6;
+    var ss = out.length, sz1 = (ss + 3) >> 2, sz2 = sz1 << 1, sz3 = sz1 + sz2;
+    dhu(dat.subarray(bt, bt += dat[0] | (dat[1] << 8)), out.subarray(0, sz1), hu);
+    dhu(dat.subarray(bt, bt += dat[2] | (dat[3] << 8)), out.subarray(sz1, sz2), hu);
+    dhu(dat.subarray(bt, bt += dat[4] | (dat[5] << 8)), out.subarray(sz2, sz3), hu);
+    dhu(dat.subarray(bt), out.subarray(sz3), hu);
+};
+// read Zstandard block
+var rzb = function (dat, st, out) {
+    var _a;
+    var bt = st.b;
+    //    byte 0        block type
+    var b0 = dat[bt], btype = (b0 >> 1) & 3;
+    st.l = b0 & 1;
+    var sz = (b0 >> 3) | (dat[bt + 1] << 5) | (dat[bt + 2] << 13);
+    // end byte for block
+    var ebt = (bt += 3) + sz;
+    if (btype == 1) {
+        if (bt >= dat.length)
+            return;
+        st.b = bt + 1;
+        if (out) {
+            fill(out, dat[bt], st.y, st.y += sz);
+            return out;
+        }
+        return fill(new u8(sz), dat[bt]);
+    }
+    if (ebt > dat.length)
+        return;
+    if (btype == 0) {
+        st.b = ebt;
+        if (out) {
+            out.set(dat.subarray(bt, ebt), st.y);
+            st.y += sz;
+            return out;
+        }
+        return slc(dat, bt, ebt);
+    }
+    if (btype == 2) {
+        //    byte 3        lit btype     size format
+        var b3 = dat[bt], lbt = b3 & 3, sf = (b3 >> 2) & 3;
+        // lit src size  lit cmp sz 4 streams
+        var lss = b3 >> 4, lcs = 0, s4 = 0;
+        if (lbt < 2) {
+            if (sf & 1)
+                lss |= (dat[++bt] << 4) | ((sf & 2) && (dat[++bt] << 12));
+            else
+                lss = b3 >> 3;
+        }
+        else {
+            s4 = sf;
+            if (sf < 2)
+                lss |= ((dat[++bt] & 63) << 4), lcs = (dat[bt] >> 6) | (dat[++bt] << 2);
+            else if (sf == 2)
+                lss |= (dat[++bt] << 4) | ((dat[++bt] & 3) << 12), lcs = (dat[bt] >> 2) | (dat[++bt] << 6);
+            else
+                lss |= (dat[++bt] << 4) | ((dat[++bt] & 63) << 12), lcs = (dat[bt] >> 6) | (dat[++bt] << 2) | (dat[++bt] << 10);
+        }
+        ++bt;
+        // add literals to end - can never overlap with backreferences because unused literals always appended
+        var buf = out ? out.subarray(st.y, st.y + st.m) : new u8(st.m);
+        // starting point for literals
+        var spl = buf.length - lss;
+        if (lbt == 0)
+            buf.set(dat.subarray(bt, bt += lss), spl);
+        else if (lbt == 1)
+            fill(buf, dat[bt++], spl);
+        else {
+            // huffman table
+            var hu = st.h;
+            if (lbt == 2) {
+                var hud = rhu(dat, bt);
+                // subtract description length
+                lcs += bt - (bt = hud[0]);
+                st.h = hu = hud[1];
+            }
+            else if (!hu)
+                err(0);
+            (s4 ? dhu4 : dhu)(dat.subarray(bt, bt += lcs), buf.subarray(spl), hu);
+        }
+        // num sequences
+        var ns = dat[bt++];
+        if (ns) {
+            if (ns == 255)
+                ns = (dat[bt++] | (dat[bt++] << 8)) + 0x7F00;
+            else if (ns > 127)
+                ns = ((ns - 128) << 8) | dat[bt++];
+            // symbol compression modes
+            var scm = dat[bt++];
+            if (scm & 3)
+                err(0);
+            var dts = [dmlt, doct, dllt];
+            for (var i = 2; i > -1; --i) {
+                var md = (scm >> ((i << 1) + 2)) & 3;
+                if (md == 1) {
+                    // rle buf
+                    var rbuf = new u8([0, 0, dat[bt++]]);
+                    dts[i] = {
+                        s: rbuf.subarray(2, 3),
+                        n: rbuf.subarray(0, 1),
+                        t: new u16(rbuf.buffer, 0, 1),
+                        b: 0
+                    };
+                }
+                else if (md == 2) {
+                    // accuracy log 8 for offsets, 9 for others
+                    _a = rfse(dat, bt, 9 - (i & 1)), bt = _a[0], dts[i] = _a[1];
+                }
+                else if (md == 3) {
+                    if (!st.t)
+                        err(0);
+                    dts[i] = st.t[i];
+                }
+            }
+            var _b = st.t = dts, mlt = _b[0], oct = _b[1], llt = _b[2];
+            var lb = dat[ebt - 1];
+            if (!lb)
+                err(0);
+            var spos = (ebt << 3) - 8 + msb(lb) - llt.b, cbt = spos >> 3, oubt = 0;
+            var lst = ((dat[cbt] | (dat[cbt + 1] << 8)) >> (spos & 7)) & ((1 << llt.b) - 1);
+            cbt = (spos -= oct.b) >> 3;
+            var ost = ((dat[cbt] | (dat[cbt + 1] << 8)) >> (spos & 7)) & ((1 << oct.b) - 1);
+            cbt = (spos -= mlt.b) >> 3;
+            var mst = ((dat[cbt] | (dat[cbt + 1] << 8)) >> (spos & 7)) & ((1 << mlt.b) - 1);
+            for (++ns; --ns;) {
+                var llc = llt.s[lst];
+                var lbtr = llt.n[lst];
+                var mlc = mlt.s[mst];
+                var mbtr = mlt.n[mst];
+                var ofc = oct.s[ost];
+                var obtr = oct.n[ost];
+                cbt = (spos -= ofc) >> 3;
+                var ofp = 1 << ofc;
+                var off = ofp + (((dat[cbt] | (dat[cbt + 1] << 8) | (dat[cbt + 2] << 16) | (dat[cbt + 3] << 24)) >>> (spos & 7)) & (ofp - 1));
+                cbt = (spos -= mlb[mlc]) >> 3;
+                var ml = mlbl[mlc] + (((dat[cbt] | (dat[cbt + 1] << 8) | (dat[cbt + 2] << 16)) >> (spos & 7)) & ((1 << mlb[mlc]) - 1));
+                cbt = (spos -= llb[llc]) >> 3;
+                var ll = llbl[llc] + (((dat[cbt] | (dat[cbt + 1] << 8) | (dat[cbt + 2] << 16)) >> (spos & 7)) & ((1 << llb[llc]) - 1));
+                cbt = (spos -= lbtr) >> 3;
+                lst = llt.t[lst] + (((dat[cbt] | (dat[cbt + 1] << 8)) >> (spos & 7)) & ((1 << lbtr) - 1));
+                cbt = (spos -= mbtr) >> 3;
+                mst = mlt.t[mst] + (((dat[cbt] | (dat[cbt + 1] << 8)) >> (spos & 7)) & ((1 << mbtr) - 1));
+                cbt = (spos -= obtr) >> 3;
+                ost = oct.t[ost] + (((dat[cbt] | (dat[cbt + 1] << 8)) >> (spos & 7)) & ((1 << obtr) - 1));
+                if (off > 3) {
+                    st.o[2] = st.o[1];
+                    st.o[1] = st.o[0];
+                    st.o[0] = off -= 3;
+                }
+                else {
+                    var idx = off - (ll != 0);
+                    if (idx) {
+                        off = idx == 3 ? st.o[0] - 1 : st.o[idx];
+                        if (idx > 1)
+                            st.o[2] = st.o[1];
+                        st.o[1] = st.o[0];
+                        st.o[0] = off;
+                    }
+                    else
+                        off = st.o[0];
+                }
+                for (var i = 0; i < ll; ++i) {
+                    buf[oubt + i] = buf[spl + i];
+                }
+                oubt += ll, spl += ll;
+                var stin = oubt - off;
+                if (stin < 0) {
+                    var len = -stin;
+                    var bs = st.e + stin;
+                    if (len > ml)
+                        len = ml;
+                    for (var i = 0; i < len; ++i) {
+                        buf[oubt + i] = st.w[bs + i];
+                    }
+                    oubt += len, ml -= len, stin = 0;
+                }
+                for (var i = 0; i < ml; ++i) {
+                    buf[oubt + i] = buf[stin + i];
+                }
+                oubt += ml;
+            }
+            if (oubt != spl) {
+                while (spl < buf.length) {
+                    buf[oubt++] = buf[spl++];
+                }
+            }
+            else
+                oubt = buf.length;
+            if (out)
+                st.y += oubt;
+            else
+                buf = slc(buf, 0, oubt);
+        }
+        else if (out) {
+            st.y += lss;
+            if (spl) {
+                for (var i = 0; i < lss; ++i) {
+                    buf[i] = buf[spl + i];
+                }
+            }
+        }
+        else if (spl)
+            buf = slc(buf, spl);
+        st.b = ebt;
+        return buf;
+    }
+    err(2);
+};
+// concat
+var cct = function (bufs, ol) {
+    if (bufs.length == 1)
+        return bufs[0];
+    var buf = new u8(ol);
+    for (var i = 0, b = 0; i < bufs.length; ++i) {
+        var chk = bufs[i];
+        buf.set(chk, b);
+        b += chk.length;
+    }
+    return buf;
+};
+/**
+ * Decompresses Zstandard data
+ * @param dat The input data
+ * @param buf The output buffer. If unspecified, the function will allocate
+ *            exactly enough memory to fit the decompressed data. If your
+ *            data has multiple frames and you know the output size, specifying
+ *            it will yield better performance.
+ * @returns The decompressed data
+ */
+function decompress(dat, buf) {
+    var bufs = [], nb = +!buf;
+    var bt = 0, ol = 0;
+    for (; dat.length;) {
+        var st = rzfh(dat, nb || buf);
+        if (typeof st == 'object') {
+            if (nb) {
+                buf = null;
+                if (st.w.length == st.u) {
+                    bufs.push(buf = st.w);
+                    ol += st.u;
+                }
+            }
+            else {
+                bufs.push(buf);
+                st.e = 0;
+            }
+            for (; !st.l;) {
+                var blk = rzb(dat, st, buf);
+                if (!blk)
+                    err(5);
+                if (buf)
+                    st.e = st.y;
+                else {
+                    bufs.push(blk);
+                    ol += blk.length;
+                    cpw(st.w, 0, blk.length);
+                    st.w.set(blk, st.w.length - blk.length);
+                }
+            }
+            bt = st.b + (st.c * 4);
+        }
+        else
+            bt = st;
+        dat = dat.subarray(bt);
+    }
+    return cct(bufs, ol);
+}
+exports.decompress = decompress;
+/**
+ * Decompressor for Zstandard streamed data
+ */
+var Decompress = /*#__PURE__*/ (function () {
+    /**
+     * Creates a Zstandard decompressor
+     * @param ondata The handler for stream data
+     */
+    function Decompress(ondata) {
+        this.ondata = ondata;
+        this.c = [];
+        this.l = 0;
+        this.z = 0;
+    }
+    /**
+     * Pushes data to be decompressed
+     * @param chunk The chunk of data to push
+     * @param final Whether or not this is the last chunk in the stream
+     */
+    Decompress.prototype.push = function (chunk, final) {
+        if (typeof this.s == 'number') {
+            var sub = Math.min(chunk.length, this.s);
+            chunk = chunk.subarray(sub);
+            this.s -= sub;
+        }
+        var sl = chunk.length;
+        var ncs = sl + this.l;
+        if (!this.s) {
+            if (final) {
+                if (!ncs) {
+                    this.ondata(new u8(0), true);
+                    return;
+                }
+                // min for frame + one block
+                if (ncs < 5)
+                    err(5);
+            }
+            else if (ncs < 18) {
+                this.c.push(chunk);
+                this.l = ncs;
+                return;
+            }
+            if (this.l) {
+                this.c.push(chunk);
+                chunk = cct(this.c, ncs);
+                this.c = [];
+                this.l = 0;
+            }
+            if (typeof (this.s = rzfh(chunk)) == 'number')
+                return this.push(chunk, final);
+        }
+        if (typeof this.s != 'number') {
+            if (ncs < (this.z || 3)) {
+                if (final)
+                    err(5);
+                this.c.push(chunk);
+                this.l = ncs;
+                return;
+            }
+            if (this.l) {
+                this.c.push(chunk);
+                chunk = cct(this.c, ncs);
+                this.c = [];
+                this.l = 0;
+            }
+            if (!this.z && ncs < (this.z = (chunk[this.s.b] & 2) ? 4 : 3 + ((chunk[this.s.b] >> 3) | (chunk[this.s.b + 1] << 5) | (chunk[this.s.b + 2] << 13)))) {
+                if (final)
+                    err(5);
+                this.c.push(chunk);
+                this.l = ncs;
+                return;
+            }
+            else
+                this.z = 0;
+            for (;;) {
+                var blk = rzb(chunk, this.s);
+                if (!blk) {
+                    if (final)
+                        err(5);
+                    var adc = chunk.subarray(this.s.b);
+                    this.s.b = 0;
+                    this.c.push(adc), this.l += adc.length;
+                    return;
+                }
+                else {
+                    this.ondata(blk, false);
+                    cpw(this.s.w, 0, blk.length);
+                    this.s.w.set(blk, this.s.w.length - blk.length);
+                }
+                if (this.s.l) {
+                    var rest = chunk.subarray(this.s.b);
+                    this.s = this.s.c * 4;
+                    this.push(rest, final);
+                    return;
+                }
+            }
+        }
+        else if (final)
+            err(5);
+    };
+    return Decompress;
+}());
+exports.Decompress = Decompress;
+
+
+/***/ }),
+
 /***/ 83813:
 /***/ ((module) => {
 
@@ -47478,9 +48241,9 @@ async function restoreCargoRegistryArchive(input) {
     if (!(0, soldr_load_shim_js_1.semverGte)(input.soldrVersion, soldr_load_shim_js_1.MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP)) {
         return { used: false, codecPath: "unsupported", archiveBytes: 0, restoredBytes: 0, restoredFiles: 0, durationMs: 0 };
     }
-    const registryLoaded = input.operations?.restoreRegistry
+    const registryRestore = input.operations?.restoreRegistry
         ? await input.operations.restoreRegistry(input.plan.registryArchivePath, path.join(input.cargoHome, "registry"))
-        : (await (0, soldr_load_shim_js_1.tryLoadViaSoldr)({
+        : await (0, soldr_load_shim_js_1.tryLoadViaSoldr)({
             archivePath: input.plan.registryArchivePath,
             targetDir: path.join(input.cargoHome, "registry"),
             soldrPath: input.soldrPath,
@@ -47488,9 +48251,13 @@ async function restoreCargoRegistryArchive(input) {
             autoDefenderExclude: input.autoDefenderExclude,
             debug: input.debug,
             log: input.log,
-        })).used;
-    if (!registryLoaded) {
+        });
+    if (!registryRestore.used) {
         throw new Error("Soldr v2 cargo-registry archive is corrupt or incompatible");
+    }
+    const restoredFiles = registryRestore.restoredFiles;
+    if (typeof restoredFiles !== "number" || !Number.isInteger(restoredFiles) || restoredFiles <= 0) {
+        throw new Error("Soldr v2 cargo-registry archive is unusable: restore reported no files");
     }
     if (await exists(input.plan.extrasArchivePath)) {
         if (input.operations?.restoreExtras) {
@@ -47504,13 +48271,12 @@ async function restoreCargoRegistryArchive(input) {
     const extrasBytes = await exists(input.plan.extrasArchivePath)
         ? (await fs.stat(input.plan.extrasArchivePath)).size
         : 0;
-    const stats = await payloadStats(input.cargoHome);
     return {
         used: true,
         codecPath: "soldr-v2",
         archiveBytes: registryBytes + extrasBytes,
-        restoredBytes: stats.bytes,
-        restoredFiles: stats.files,
+        restoredBytes: registryRestore.restoredBytes ?? 0,
+        restoredFiles,
         durationMs: Date.now() - started,
     };
 }
@@ -48766,11 +49532,13 @@ async function runCook(opts) {
  */
 async function restoreCookCache(opts) {
     const { exactKey, archivePath, targetDir, longWindow, log } = opts;
+    const warn = opts.warn ?? log;
+    const restore = opts.restoreCache ?? cache.restoreCache;
     await fsp.mkdir(path.dirname(archivePath), { recursive: true });
     await fsp.rm(archivePath, { force: true });
     let matched;
     try {
-        matched = await cache.restoreCache([archivePath], exactKey);
+        matched = await restore([archivePath], exactKey);
     }
     catch (err) {
         log(`cook-cache: restore failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -48785,19 +49553,25 @@ async function restoreCookCache(opts) {
         archiveBytes = (await fsp.stat(archivePath)).size;
     }
     catch {
-        return { hit: false, matchedKey: matched, archiveBytes: 0 };
+        warn(`cook-cache: matched key ${matched} produced an unusable payload: archive=0B (missing); treating as miss`);
+        return { hit: false, matchedKey: "", archiveBytes: 0 };
+    }
+    if (archiveBytes === 0) {
+        warn(`cook-cache: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
+        return { hit: false, matchedKey: "", archiveBytes: 0 };
     }
     // SOLDRENC-framed (encrypted) archives appear as magic="unknown" here;
     // delegate the detection to decompressCache when a cache-encrypt-key is set.
     const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
     const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
     if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
-        log(`cook-cache: restored archive has unknown codec, treating as miss`);
+        warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
+            `archive=${archiveBytes}B codec=unknown; treating as miss`);
         return { hit: false, matchedKey: matched, archiveBytes };
     }
     await fsp.mkdir(targetDir, { recursive: true });
     try {
-        await (0, cache_compress_js_1.decompressCache)({
+        const decompressed = await (opts.decompress ?? cache_compress_js_1.decompressCache)({
             archivePath,
             targetDir,
             longWindow,
@@ -48805,9 +49579,16 @@ async function restoreCookCache(opts) {
             debug: opts.debug,
             cacheKey: exactKey,
         });
+        if (decompressed.fileCount === 0) {
+            warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
+                `archive=${archiveBytes}B extracted_files=${decompressed.fileCount} ` +
+                `extracted_bytes=${decompressed.inflatedBytes}; treating as miss`);
+            return { hit: false, matchedKey: "", archiveBytes };
+        }
     }
     catch (err) {
-        log(`cook-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
+        warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
+            `archive=${archiveBytes}B decompress failed: ${err instanceof Error ? err.message : String(err)}; treating as miss`);
         return { hit: false, matchedKey: matched, archiveBytes };
     }
     log(`cook-cache: restored matched=${matched} archive=${archiveBytes}B target=${targetDir}`);
@@ -48821,12 +49602,12 @@ async function archiveSize(archivePath) {
         return 0;
     }
 }
-async function restoreOneLayer(label, key, archivePath, restoreKeys, log) {
+async function restoreOneLayer(label, key, archivePath, restoreKeys, log, warn, restore) {
     await fsp.mkdir(path.dirname(archivePath), { recursive: true });
     await fsp.rm(archivePath, { force: true });
     let matched;
     try {
-        matched = await cache.restoreCache([archivePath], key, restoreKeys ?? []);
+        matched = await restore([archivePath], key, restoreKeys ?? []);
     }
     catch (err) {
         log(`${label}: restore failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -48837,11 +49618,17 @@ async function restoreOneLayer(label, key, archivePath, restoreKeys, log) {
         return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
     }
     const bytes = await archiveSize(archivePath);
+    if (bytes === 0) {
+        warn(`${label}: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
+        return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
+    }
     const hit = matched === key;
     log(`${label}: restored matched=${matched} exact=${hit} archive=${bytes}B`);
     return { hit, matchedKey: matched, archivePath, archiveBytes: bytes };
 }
 async function restoreLayeredCookCacheArchives(opts) {
+    const restore = opts.restoreCache ?? cache.restoreCache;
+    const warn = opts.warn ?? opts.log;
     // #295: parallel-restore base + delta instead of the previous serial
     // `await base; if (base.matchedKey) await delta` shape. The delta
     // key is independently computed (includes everything the base key
@@ -48855,8 +49642,8 @@ async function restoreLayeredCookCacheArchives(opts) {
     // typical warm-cache case (zackees/setup-soldr#295 measurement on
     // Integration v0.9.30 rerun).
     const [base, delta] = await Promise.all([
-        restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log),
-        restoreOneLayer("cook-cache-delta", opts.deltaKey, opts.deltaArchivePath, opts.deltaRestoreKeys ?? [], opts.log),
+        restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log, warn, restore),
+        restoreOneLayer("cook-cache-delta", opts.deltaKey, opts.deltaArchivePath, opts.deltaRestoreKeys ?? [], opts.log, warn, restore),
     ]);
     // Preserve the pre-#295 contract: when base missed, the delta is
     // semantically invalid even if it happened to restore (no base to
@@ -48944,17 +49731,24 @@ async function loadOneLayer(opts) {
     if (opts.manifestOut) {
         args.push("--manifest-out", opts.manifestOut);
     }
-    const run = await runSoldrJson(opts.soldrBinary, args, opts.projectRoot, opts.log);
-    if (run.code !== 0) {
-        opts.log(`${opts.label}: soldr load failed with exit ${run.code}`);
+    const result = await opts.run(opts.soldrBinary, args, opts.projectRoot, opts.log);
+    if (result.code !== 0) {
+        opts.warn(`${opts.label}: matched archive is unusable: soldr load failed with exit ${result.code}; treating as miss`);
         return { loaded: false, report: null };
     }
-    const report = loadReport(run.payload);
+    const report = loadReport(result.payload);
+    if (report.cacheFilesRestored === null || report.cacheFilesRestored <= 0) {
+        opts.warn(`${opts.label}: matched archive is unusable: soldr load reported ` +
+            `cache_files_restored=${report.cacheFilesRestored ?? "missing"}; treating as miss`);
+        return { loaded: false, report };
+    }
     opts.log(`${opts.label}: loaded cache_files=${report.cacheFilesRestored ?? "?"} ` +
         `mtimes_applied=${report.mtimesApplied ?? "?"}`);
     return { loaded: true, report };
 }
 async function loadLayeredCookCache(opts) {
+    const warn = opts.warn ?? opts.log;
+    const run = opts.runSoldrJson ?? runSoldrJson;
     if (!opts.restore.base.matchedKey) {
         return { baseLoaded: false, deltaLoaded: false, baseReport: null, deltaReport: null };
     }
@@ -48966,6 +49760,8 @@ async function loadLayeredCookCache(opts) {
         archivePath: opts.baseArchivePath,
         manifestOut: opts.baseManifestPath,
         log: opts.log,
+        warn,
+        run,
     });
     if (!base.loaded) {
         return {
@@ -48990,6 +49786,8 @@ async function loadLayeredCookCache(opts) {
         targetDir: opts.targetDir,
         archivePath: opts.deltaArchivePath,
         log: opts.log,
+        warn,
+        run,
     });
     return {
         baseLoaded: true,
@@ -49827,6 +50625,1025 @@ function loggingEnabled(value) {
 
 /***/ }),
 
+/***/ 49252:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Soldr binary installer. Owned by Agent 2.
+//
+// Port of .github/actions/setup-soldr/ensure_soldr.py.
+// Downloads the soldr binary from a GitHub release asset (or builds from a
+// git ref when INPUT_REF is set) and places it under $SOLDR_INSTALL_DIR.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports._internal = void 0;
+exports.installedSoldrReleaseIsUsable = installedSoldrReleaseIsUsable;
+exports.ensureSoldr = ensureSoldr;
+const fs = __importStar(__nccwpck_require__(73024));
+const node_crypto_1 = __nccwpck_require__(77598);
+const os = __importStar(__nccwpck_require__(48161));
+const path = __importStar(__nccwpck_require__(76760));
+const core = __importStar(__nccwpck_require__(37484));
+const exec = __importStar(__nccwpck_require__(95236));
+const tc = __importStar(__nccwpck_require__(33472));
+const fzstd = __importStar(__nccwpck_require__(27437));
+const log_utils_js_1 = __nccwpck_require__(28129);
+const release_readiness_js_1 = __nccwpck_require__(4375);
+const verify_soldr_js_1 = __nccwpck_require__(82947);
+const CARGO_CHEF_VERSION_BY_SOLDR = {
+    "0.9.0": "0.1.73",
+    "0.9.1": "0.1.73",
+    "0.9.2": "0.1.73",
+    "0.9.3": "0.1.73",
+    "0.9.4": "0.1.73",
+    "0.9.5": "0.1.73",
+    "0.9.6": "0.1.73",
+};
+function detectTarget() {
+    const machine = process.arch;
+    let arch;
+    if (machine === "x64")
+        arch = "x86_64";
+    else if (machine === "arm64")
+        arch = "aarch64";
+    else
+        throw new Error(`unsupported architecture: ${machine}`);
+    if (process.platform === "linux") {
+        return { target: `${arch}-unknown-linux-gnu`, binaryName: "soldr" };
+    }
+    if (process.platform === "darwin") {
+        return { target: `${arch}-apple-darwin`, binaryName: "soldr" };
+    }
+    if (process.platform === "win32") {
+        return { target: `${arch}-pc-windows-msvc`, binaryName: "soldr.exe" };
+    }
+    throw new Error(`unsupported operating system: ${process.platform}`);
+}
+function normalizeVersion(value) {
+    return value.startsWith("v") ? value.slice(1) : value;
+}
+function versionAtLeast(value, minimum) {
+    const parse = (v) => {
+        const m = normalizeVersion(v).match(/^(\d+)\.(\d+)\.(\d+)/);
+        if (!m)
+            return null;
+        return [Number(m[1]), Number(m[2]), Number(m[3])];
+    };
+    const got = parse(value);
+    const want = parse(minimum);
+    if (!got || !want)
+        return false;
+    for (let i = 0; i < 3; i += 1) {
+        if (got[i] > want[i])
+            return true;
+        if (got[i] < want[i])
+            return false;
+    }
+    return true;
+}
+function requestHeaders(githubToken) {
+    const headers = {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "setup-soldr-action",
+    };
+    if (githubToken.trim()) {
+        headers["Authorization"] = `Bearer ${githubToken.trim()}`;
+    }
+    return headers;
+}
+async function fetchJson(url, githubToken) {
+    const response = await fetch(url, { headers: requestHeaders(githubToken) });
+    if (!response.ok) {
+        throw new Error(`GitHub API returned HTTP ${response.status} for ${url}`);
+    }
+    const payload = (await response.json());
+    if (typeof payload !== "object" || payload === null) {
+        throw new Error(`unexpected JSON payload from ${url}`);
+    }
+    return payload;
+}
+function releaseUrl(repo, version) {
+    if (version) {
+        const tag = version.startsWith("v") ? version : `v${version}`;
+        return `https://api.github.com/repos/${repo}/releases/tags/${tag}`;
+    }
+    return `https://api.github.com/repos/${repo}/releases/latest`;
+}
+async function fetchRelease(repo, version, githubToken) {
+    const url = releaseUrl(repo, version);
+    try {
+        return await (0, release_readiness_js_1.retryReleaseRequest)(() => fetchJson(url, githubToken), {
+            onRetry: (attempt, error) => {
+                const detail = error instanceof Error ? error.message : String(error);
+                core.info(`Release ${version || "latest"} was not ready (attempt ${attempt}/3): ${detail}; retrying exact tag`);
+            },
+        });
+    }
+    catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(`failed to fetch exact soldr release ${version || "latest"} from ${repo}: ${detail}`);
+    }
+}
+async function fetchPypiRelease(version) {
+    const normalized = normalizeVersion(version);
+    if (!normalized)
+        throw new Error("cannot resolve a PyPI wheel without an exact soldr version");
+    const url = `https://pypi.org/pypi/soldr/${encodeURIComponent(normalized)}/json`;
+    try {
+        return await (0, release_readiness_js_1.retryReleaseRequest)(() => fetchJson(url, ""));
+    }
+    catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(`failed to fetch soldr ${normalized} wheel metadata from PyPI: ${detail}`);
+    }
+}
+function canUseOfficialPypiFallback(repo, version) {
+    return (repo.trim().toLowerCase() === "zackees/soldr" &&
+        bundledCargoChefVersionForSoldr(version) !== null);
+}
+function bundledCargoChefVersionForSoldr(version) {
+    return CARGO_CHEF_VERSION_BY_SOLDR[normalizeVersion(version)] ?? null;
+}
+async function resolveRefCommitSha(repo, ref, githubToken) {
+    const url = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`;
+    const payload = await fetchJson(url, githubToken);
+    const sha = payload["sha"];
+    if (typeof sha !== "string" || !sha) {
+        throw new Error(`failed to resolve commit sha for ${repo}@${ref}`);
+    }
+    return sha;
+}
+async function installedVersion(binaryPath) {
+    if (!fs.existsSync(binaryPath))
+        return null;
+    let stdout = "";
+    const code = await exec.exec(binaryPath, ["version", "--json"], {
+        silent: true,
+        ignoreReturnCode: true,
+        listeners: {
+            stdout: (data) => {
+                stdout += data.toString("utf8");
+            },
+        },
+    });
+    if (code !== 0)
+        return null;
+    try {
+        // Tolerant parse: extra fields, surrounding noise, and the silent-binary
+        // regression (empty stdout, e.g. soldr v0.7.85/v0.7.87) all resolve to
+        // null here, which makes the caller refresh the cached install.
+        const payload = (0, verify_soldr_js_1.parseVersionJsonOutput)(stdout);
+        const v = payload["soldr_version"];
+        return typeof v === "string" ? v : null;
+    }
+    catch {
+        return null;
+    }
+}
+/**
+ * Validate the complete cached release payload using the same contract as
+ * ensureSoldr's reuse path: executable version plus every required bundled
+ * companion for that release/install source.
+ */
+async function installedSoldrReleaseIsUsable(binaryPath, expectedVersion) {
+    const current = await installedVersion(binaryPath);
+    if (current === null || normalizeVersion(current) !== normalizeVersion(expectedVersion)) {
+        return false;
+    }
+    const installDir = path.dirname(binaryPath);
+    const binaryName = path.basename(binaryPath);
+    const installMetadata = loadReleaseInstallMetadata(installDir);
+    const { target } = detectTarget();
+    const isPypiWheelInstall = installMetadata?.source === "pypi-wheel" &&
+        installMetadata.target === target &&
+        normalizeVersion(installMetadata.version ?? "") === normalizeVersion(expectedVersion);
+    return hasRequiredReleasePayload(installDir, binaryName, expectedVersion, !isPypiWheelInstall || bundledCargoChefVersionForSoldr(expectedVersion) !== null);
+}
+function sourceMetadataPath(installDir) {
+    return path.join(installDir, ".setup-soldr-source.json");
+}
+function releaseInstallMetadataPath(installDir) {
+    return path.join(installDir, ".setup-soldr-install.json");
+}
+function loadReleaseInstallMetadata(installDir) {
+    const metadataPath = releaseInstallMetadataPath(installDir);
+    if (!fs.existsSync(metadataPath))
+        return null;
+    try {
+        const data = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+        if (typeof data !== "object" || data === null)
+            return null;
+        return data;
+    }
+    catch {
+        return null;
+    }
+}
+function writeReleaseInstallMetadata(installDir, metadata) {
+    fs.writeFileSync(releaseInstallMetadataPath(installDir), JSON.stringify(metadata, Object.keys(metadata).sort(), 2), "utf8");
+}
+function loadSourceMetadata(p) {
+    if (!fs.existsSync(p))
+        return null;
+    try {
+        const data = JSON.parse(fs.readFileSync(p, "utf8"));
+        if (typeof data !== "object" || data === null)
+            return null;
+        const out = {};
+        for (const [k, v] of Object.entries(data)) {
+            out[k] = String(v);
+        }
+        return out;
+    }
+    catch {
+        return null;
+    }
+}
+function writeSourceMetadata(p, metadata) {
+    fs.writeFileSync(p, JSON.stringify(metadata, Object.keys(metadata).sort(), 2), "utf8");
+}
+function sourceInstallMatches(installDir, repo, ref, commitSha, target, binaryName) {
+    const binaryPath = path.join(installDir, binaryName);
+    const metadata = loadSourceMetadata(sourceMetadataPath(installDir));
+    if (!metadata || !fs.existsSync(binaryPath))
+        return false;
+    return (metadata.repo === repo &&
+        metadata.ref === ref &&
+        metadata.commit_sha === commitSha &&
+        metadata.target === target &&
+        metadata.binary_name === binaryName);
+}
+function selectReleaseAsset(release, target) {
+    const assets = release["assets"];
+    if (!Array.isArray(assets))
+        throw new Error("release payload has no assets array");
+    // Preference order: tar.zst (newer releases — soldr 0.7.30+ ships these
+    // for every platform including Windows MSVC), tar.gz (older Linux/macOS),
+    // zip (older Windows). First-match wins per extension class.
+    const extPreference = ["tar.zst", "tar.gz", "zip"];
+    for (const ext of extPreference) {
+        const suffix = `.${ext}`;
+        for (const asset of assets) {
+            if (typeof asset !== "object" || asset === null)
+                continue;
+            const a = asset;
+            const name = typeof a["name"] === "string" ? a["name"] : "";
+            if (name.includes(target) && name.endsWith(suffix)) {
+                const url = a["browser_download_url"];
+                if (typeof url !== "string")
+                    continue;
+                return { name, url, archiveExt: ext, source: "github-release" };
+            }
+        }
+    }
+    return null;
+}
+function selectPypiWheel(pypiRelease, target) {
+    const files = pypiRelease["urls"];
+    if (!Array.isArray(files))
+        throw new Error("PyPI release payload has no urls array");
+    for (const file of files) {
+        if (!(0, release_readiness_js_1.pypiWheelHasTarget)(file, target) || typeof file !== "object" || file === null)
+            continue;
+        const record = file;
+        const name = record["filename"];
+        const url = record["url"];
+        const digests = record["digests"];
+        const expectedSha256 = typeof digests === "object" &&
+            digests !== null &&
+            typeof digests["sha256"] === "string"
+            ? digests["sha256"].toLowerCase()
+            : undefined;
+        if (!expectedSha256 || !/^[0-9a-f]{64}$/.test(expectedSha256)) {
+            throw new Error(`PyPI wheel ${name} has no valid SHA-256 digest`);
+        }
+        return {
+            name,
+            url,
+            archiveExt: "whl",
+            source: "pypi-wheel",
+            expectedSha256,
+        };
+    }
+    return null;
+}
+function archiveExtForFilename(filename) {
+    if (filename.endsWith(".tar.zst"))
+        return "tar.zst";
+    if (filename.endsWith(".tar.gz") || filename.endsWith(".tgz"))
+        return "tar.gz";
+    if (filename.endsWith(".zip"))
+        return "zip";
+    return null;
+}
+function toolchainPlatformForTarget(target) {
+    const platforms = {
+        // cargo-chef is a host utility. Prefer the catalogue's static musl builds
+        // on Linux so installing a manylinux Soldr wheel does not silently raise
+        // the host glibc floor to whatever built the helper.
+        "x86_64-unknown-linux-gnu": { os: "linux", arch: "x86_64", libc: "musl" },
+        "aarch64-unknown-linux-gnu": { os: "linux", arch: "aarch64", libc: "musl" },
+        "x86_64-apple-darwin": { os: "darwin", arch: "x86_64" },
+        "aarch64-apple-darwin": { os: "darwin", arch: "aarch64" },
+        "x86_64-pc-windows-msvc": { os: "windows", arch: "x86_64", abi: "msvc" },
+        "aarch64-pc-windows-msvc": { os: "windows", arch: "aarch64", abi: "msvc" },
+    };
+    return platforms[target] ?? null;
+}
+function selectToolchainSupportAsset(catalog, version, target) {
+    const releases = catalog["releases"];
+    if (!Array.isArray(releases))
+        throw new Error("soldr-toolchain cargo-chef catalogue has no releases array");
+    const releaseTag = version.startsWith("v") ? version : `v${version}`;
+    const release = releases.find((candidate) => typeof candidate === "object" &&
+        candidate !== null &&
+        candidate["version"] === releaseTag);
+    if (!release)
+        return null;
+    const expectedPlatform = toolchainPlatformForTarget(target);
+    if (!expectedPlatform)
+        return null;
+    const platforms = release["platforms"];
+    if (!Array.isArray(platforms))
+        return null;
+    for (const candidate of platforms) {
+        if (typeof candidate !== "object" || candidate === null)
+            continue;
+        const record = candidate;
+        const platform = record["platform"];
+        const asset = record["asset"];
+        if (typeof platform !== "object" || platform === null || typeof asset !== "object" || asset === null)
+            continue;
+        const platformRecord = platform;
+        if (!Object.entries(expectedPlatform).every(([key, value]) => platformRecord[key] === value))
+            continue;
+        const assetRecord = asset;
+        const filename = typeof assetRecord["filename"] === "string" ? assetRecord["filename"] : "";
+        const archiveExt = archiveExtForFilename(filename);
+        const urls = Array.isArray(assetRecord["urls"])
+            ? assetRecord["urls"].filter((url) => typeof url === "string" && url.length > 0)
+            : [];
+        const sha256 = typeof assetRecord["sha256"] === "string" ? assetRecord["sha256"].toLowerCase() : "";
+        if (!archiveExt || urls.length === 0 || !/^[0-9a-f]{64}$/.test(sha256)) {
+            throw new Error(`soldr-toolchain cargo-chef ${releaseTag} asset for ${target} is incomplete`);
+        }
+        return { filename, urls, sha256, archiveExt };
+    }
+    return null;
+}
+function prepareZipArchivePath(archivePath, archiveExt) {
+    if (archiveExt !== "whl")
+        return archivePath;
+    const zipPath = `${archivePath}.zip`;
+    fs.copyFileSync(archivePath, zipPath);
+    return zipPath;
+}
+async function extractBinary(archivePath, archiveExt, binaryName, outDir) {
+    fs.mkdirSync(outDir, { recursive: true });
+    if (archiveExt === "zip" || archiveExt === "whl") {
+        // Windows PowerShell's Expand-Archive rejects a valid ZIP payload when
+        // its filename ends in .whl. tool-cache can fall back to that extractor
+        // on self-hosted Windows runners, so give the verified wheel a .zip name.
+        const zipPath = prepareZipArchivePath(archivePath, archiveExt);
+        await tc.extractZip(zipPath, outDir);
+    }
+    else if (archiveExt === "tar.gz") {
+        await tc.extractTar(archivePath, outDir, "xz");
+    }
+    else {
+        // Extract tar.zst in-process so setup does not depend on zstd being installed
+        // before soldr itself is available.
+        await extractTarZst(archivePath, outDir);
+    }
+    const found = findFile(outDir, binaryName);
+    if (!found)
+        throw new Error(`downloaded archive did not contain ${binaryName}`);
+    return found;
+}
+async function extractTarZst(archivePath, outDir) {
+    const compressed = fs.readFileSync(archivePath);
+    let decompressed;
+    try {
+        decompressed = fzstd.decompress(compressed);
+    }
+    catch (err) {
+        throw new Error(`failed to decompress ${path.basename(archivePath)} with embedded zstd: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    extractTarBuffer(decompressed, outDir);
+}
+const TAR_BLOCK_SIZE = 512;
+function tarString(block, start, length) {
+    const slice = block.subarray(start, start + length);
+    let end = slice.indexOf(0);
+    if (end < 0)
+        end = slice.length;
+    return Buffer.from(slice.subarray(0, end)).toString("utf8");
+}
+function tarOctal(block, start, length) {
+    const raw = tarString(block, start, length).trim();
+    if (!raw)
+        return 0;
+    const parsed = Number.parseInt(raw, 8);
+    if (!Number.isFinite(parsed)) {
+        throw new Error(`invalid tar octal field: ${JSON.stringify(raw)}`);
+    }
+    return parsed;
+}
+function isZeroBlock(block) {
+    for (const byte of block) {
+        if (byte !== 0)
+            return false;
+    }
+    return true;
+}
+function tarEntryName(block) {
+    const name = tarString(block, 0, 100);
+    const prefix = tarString(block, 345, 155);
+    return prefix ? `${prefix}/${name}` : name;
+}
+function safeTarDestination(outDir, entryName) {
+    const normalizedName = entryName.replace(/\\/g, "/");
+    if (!normalizedName || path.isAbsolute(normalizedName)) {
+        throw new Error(`unsafe tar entry path: ${JSON.stringify(entryName)}`);
+    }
+    const destination = path.resolve(outDir, normalizedName);
+    const root = path.resolve(outDir);
+    if (destination !== root && !destination.startsWith(`${root}${path.sep}`)) {
+        throw new Error(`unsafe tar entry path: ${JSON.stringify(entryName)}`);
+    }
+    return destination;
+}
+function extractTarBuffer(tarData, outDir) {
+    fs.mkdirSync(outDir, { recursive: true });
+    let offset = 0;
+    let pendingLongName = null;
+    while (offset + TAR_BLOCK_SIZE <= tarData.length) {
+        const header = tarData.subarray(offset, offset + TAR_BLOCK_SIZE);
+        offset += TAR_BLOCK_SIZE;
+        if (isZeroBlock(header))
+            break;
+        const typeflag = String.fromCharCode(header[156] ?? 0);
+        const size = tarOctal(header, 124, 12);
+        const dataStart = offset;
+        const dataEnd = dataStart + size;
+        if (dataEnd > tarData.length) {
+            throw new Error("truncated tar archive");
+        }
+        const data = tarData.subarray(dataStart, dataEnd);
+        offset += Math.ceil(size / TAR_BLOCK_SIZE) * TAR_BLOCK_SIZE;
+        if (typeflag === "L") {
+            pendingLongName = Buffer.from(data).toString("utf8").replace(/\0.*$/s, "");
+            continue;
+        }
+        if (typeflag === "x" || typeflag === "g") {
+            continue;
+        }
+        const entryName = pendingLongName ?? tarEntryName(header);
+        pendingLongName = null;
+        if (!entryName)
+            continue;
+        const destination = safeTarDestination(outDir, entryName);
+        if (typeflag === "5") {
+            fs.mkdirSync(destination, { recursive: true });
+            continue;
+        }
+        if (typeflag !== "0" && typeflag !== "\0") {
+            continue;
+        }
+        fs.mkdirSync(path.dirname(destination), { recursive: true });
+        fs.writeFileSync(destination, Buffer.from(data));
+        if (process.platform !== "win32") {
+            const mode = tarOctal(header, 100, 8);
+            if (mode > 0)
+                fs.chmodSync(destination, mode);
+        }
+    }
+}
+function findFile(root, name) {
+    const stack = [root];
+    while (stack.length > 0) {
+        const dir = stack.pop();
+        let entries;
+        try {
+            entries = fs.readdirSync(dir, { withFileTypes: true });
+        }
+        catch {
+            continue;
+        }
+        for (const e of entries) {
+            const p = path.join(dir, e.name);
+            if (e.isFile() && e.name === name)
+                return p;
+            if (e.isDirectory())
+                stack.push(p);
+        }
+    }
+    return null;
+}
+function platformBinarySuffix(binaryName) {
+    return binaryName.endsWith(".exe") ? ".exe" : "";
+}
+function bundledReleasePayloadNames(binaryName) {
+    const suffix = platformBinarySuffix(binaryName);
+    return [
+        `zccache${suffix}`,
+        `zccache-soldr${suffix}`,
+        `zccache-daemon${suffix}`,
+        `zccache-fp${suffix}`,
+        `soldr-daemon${suffix}`,
+        `soldr-shim${suffix}`,
+        `crgx${suffix}`,
+        `cargo-chef${suffix}`,
+        `soldr-clang-shim${suffix}`,
+        "manifest.json",
+    ];
+}
+function bundledZccacheBinaryNames(binaryName) {
+    const suffix = platformBinarySuffix(binaryName);
+    return [`zccache${suffix}`, `zccache-daemon${suffix}`, `zccache-fp${suffix}`];
+}
+function hasBundledZccachePayload(installDir, binaryName) {
+    return bundledZccacheBinaryNames(binaryName).every((name) => fs.existsSync(path.join(installDir, name)));
+}
+function embeddedZccacheBinaryNames(binaryName) {
+    const suffix = platformBinarySuffix(binaryName);
+    return [`soldr-daemon${suffix}`, `soldr-shim${suffix}`];
+}
+function hasEmbeddedZccachePayload(installDir, binaryName) {
+    return embeddedZccacheBinaryNames(binaryName).every((name) => fs.existsSync(path.join(installDir, name)));
+}
+function hasMulticallRuntimePayload(installDir, binaryName) {
+    const suffix = platformBinarySuffix(binaryName);
+    return fs.existsSync(path.join(installDir, `soldr-daemon${suffix}`));
+}
+function hasBundledCargoChefPayload(installDir, binaryName) {
+    const suffix = platformBinarySuffix(binaryName);
+    return fs.existsSync(path.join(installDir, `cargo-chef${suffix}`));
+}
+// Sidecar-based soldr releases from 0.7.66 through 0.8.0 ship
+// `soldr-clang-shim`, and their blessed `soldr build` surface requires it
+// next to the running executable. Soldr 0.8.1+ folds clang/toolchain/zccache
+// shims into the main multicall binary, so those releases deliberately omit
+// this sidecar.
+function hasBundledClangShimPayload(installDir, binaryName) {
+    const suffix = platformBinarySuffix(binaryName);
+    return fs.existsSync(path.join(installDir, `soldr-clang-shim${suffix}`));
+}
+function hasRequiredReleasePayload(installDir, binaryName, resolvedVersion, requireBundledCargoChef = true) {
+    const usesMulticallRuntime = versionAtLeast(resolvedVersion, "0.8.1");
+    const needsEmbeddedZccachePayload = versionAtLeast(resolvedVersion, "0.7.103");
+    const needsCargoChef = versionAtLeast(resolvedVersion, "0.7.43");
+    const needsLegacyClangShim = versionAtLeast(resolvedVersion, "0.7.66") && !usesMulticallRuntime;
+    const hasRuntimePayload = usesMulticallRuntime
+        ? hasMulticallRuntimePayload(installDir, binaryName)
+        : needsEmbeddedZccachePayload
+            ? hasEmbeddedZccachePayload(installDir, binaryName)
+            : hasBundledZccachePayload(installDir, binaryName);
+    return (hasRuntimePayload &&
+        (!needsCargoChef || !requireBundledCargoChef || hasBundledCargoChefPayload(installDir, binaryName)) &&
+        (!needsLegacyClangShim || hasBundledClangShimPayload(installDir, binaryName)));
+}
+function ensureMulticallRuntimeAlias(installDir, binaryName) {
+    const suffix = platformBinarySuffix(binaryName);
+    const source = path.join(installDir, binaryName);
+    const destination = path.join(installDir, `soldr-daemon${suffix}`);
+    try {
+        fs.rmSync(destination, { force: true });
+    }
+    catch {
+        // The following link/copy reports the actionable failure.
+    }
+    try {
+        fs.linkSync(source, destination);
+    }
+    catch {
+        fs.copyFileSync(source, destination);
+    }
+    if (process.platform !== "win32")
+        fs.chmodSync(destination, 0o755);
+    return path.basename(destination);
+}
+function exportBundledCargoChefIfPresent(installDir, binaryName) {
+    if (hasBundledCargoChefPayload(installDir, binaryName)) {
+        core.exportVariable("SOLDR_CARGO_CHEF_LOCAL_DIR", installDir);
+    }
+}
+function clearBundledReleasePayload(installDir, binaryName) {
+    for (const name of bundledReleasePayloadNames(binaryName)) {
+        try {
+            fs.rmSync(path.join(installDir, name), { force: true });
+        }
+        catch {
+            // best effort stale-payload cleanup
+        }
+    }
+}
+function copyBundledReleasePayload(extractDir, installDir, binaryName) {
+    const copied = [];
+    for (const name of bundledReleasePayloadNames(binaryName)) {
+        const source = findFile(extractDir, name);
+        if (!source)
+            continue;
+        const destination = path.join(installDir, name);
+        fs.copyFileSync(source, destination);
+        if (name !== "manifest.json" && process.platform !== "win32") {
+            fs.chmodSync(destination, 0o755);
+        }
+        copied.push(name);
+    }
+    return copied;
+}
+async function buildFromSource(opts) {
+    const { repo, ref, commitSha, installDir, target, binaryName, githubToken, log } = opts;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-source-"));
+    try {
+        const archivePath = path.join(tmp, "source.zip");
+        const sourceRoot = path.join(tmp, "source");
+        log(`Downloading soldr source from ${repo}@${ref} (${commitSha})`);
+        const archiveUrl = `https://api.github.com/repos/${repo}/zipball/${commitSha}`;
+        await downloadWithHeaders(archiveUrl, archivePath, requestHeaders(githubToken));
+        fs.mkdirSync(sourceRoot, { recursive: true });
+        await tc.extractZip(archivePath, sourceRoot);
+        const dirs = fs.readdirSync(sourceRoot, { withFileTypes: true }).filter((e) => e.isDirectory());
+        if (dirs.length !== 1) {
+            throw new Error("source archive did not contain exactly one repository root");
+        }
+        const repoRoot = path.join(sourceRoot, dirs[0].name);
+        const buildEnv = {};
+        for (const [k, v] of Object.entries(process.env)) {
+            if (v !== undefined)
+                buildEnv[k] = v;
+        }
+        buildEnv["CARGO_TERM_COLOR"] = buildEnv["CARGO_TERM_COLOR"] ?? "always";
+        log(`Building soldr from source ref ${ref} (${commitSha})`);
+        // #389: streamExec prefixes each `Compiling foo` line so the
+        // forensic log shows where the soldr build wall-clock went.
+        await (0, log_utils_js_1.streamExec)("cargo", ["build", "--locked", "--bin", "soldr", "--target", target], { cwd: repoRoot, env: buildEnv });
+        const builtBinary = path.join(repoRoot, "target", target, "debug", binaryName);
+        if (!fs.existsSync(builtBinary)) {
+            throw new Error(`built soldr binary not found at ${builtBinary}`);
+        }
+        clearBundledReleasePayload(installDir, binaryName);
+        const destination = path.join(installDir, binaryName);
+        fs.copyFileSync(builtBinary, destination);
+        if (process.platform !== "win32") {
+            fs.chmodSync(destination, 0o755);
+        }
+        writeSourceMetadata(sourceMetadataPath(installDir), {
+            repo,
+            ref,
+            commit_sha: commitSha,
+            target,
+            binary_name: binaryName,
+        });
+        try {
+            fs.rmSync(releaseInstallMetadataPath(installDir), { force: true });
+        }
+        catch {
+            // best effort stale release-metadata cleanup
+        }
+        return destination;
+    }
+    finally {
+        try {
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
+        catch {
+            // best effort cleanup
+        }
+    }
+}
+async function buildFromLocalSource(opts) {
+    const { sourcePath, sourceIdentity, installDir, target, binaryName, log } = opts;
+    const buildEnv = {};
+    for (const [key, value] of Object.entries(process.env)) {
+        if (value !== undefined)
+            buildEnv[key] = value;
+    }
+    buildEnv["CARGO_TERM_COLOR"] = buildEnv["CARGO_TERM_COLOR"] ?? "always";
+    const cargoTargetDir = path.join(os.tmpdir(), "setup-soldr-source-build", sourceIdentity);
+    fs.mkdirSync(cargoTargetDir, { recursive: true });
+    buildEnv["CARGO_TARGET_DIR"] = cargoTargetDir;
+    log(`Building soldr from local source ${sourcePath} (${sourceIdentity})`);
+    await (0, log_utils_js_1.streamExec)("cargo", ["build", "--locked", "--bin", "soldr", "--target", target], { cwd: sourcePath, env: buildEnv });
+    const builtBinary = path.join(cargoTargetDir, target, "debug", binaryName);
+    if (!fs.existsSync(builtBinary)) {
+        throw new Error(`built soldr binary not found at ${builtBinary}`);
+    }
+    clearBundledReleasePayload(installDir, binaryName);
+    const destination = path.join(installDir, binaryName);
+    fs.copyFileSync(builtBinary, destination);
+    if (process.platform !== "win32")
+        fs.chmodSync(destination, 0o755);
+    writeSourceMetadata(sourceMetadataPath(installDir), {
+        repo: "local",
+        ref: "working-tree",
+        commit_sha: sourceIdentity,
+        target,
+        binary_name: binaryName,
+    });
+    try {
+        fs.rmSync(releaseInstallMetadataPath(installDir), { force: true });
+    }
+    catch {
+        // best effort stale release-metadata cleanup
+    }
+    return destination;
+}
+async function downloadWithHeaders(url, dest, headers) {
+    // tc.downloadTool supports auth/headers via separate args; rather than rely
+    // on that, do a manual fetch+pipe to keep behavior parity with the Python
+    // implementation. We stream to disk to avoid loading large archives in RAM.
+    const response = await fetch(url, { headers });
+    if (!response.ok || !response.body) {
+        throw new Error(`download failed for ${url}: HTTP ${response.status}`);
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.writeFileSync(dest, buffer);
+}
+function fileSha256(filePath) {
+    return (0, node_crypto_1.createHash)("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+function verifyDownloadedAsset(filePath, expectedSha256) {
+    if (!expectedSha256)
+        return;
+    const actual = fileSha256(filePath);
+    if (actual !== expectedSha256.toLowerCase()) {
+        throw new Error(`SHA-256 mismatch for ${path.basename(filePath)}: expected ${expectedSha256}, got ${actual}`);
+    }
+}
+async function installCargoChefSupport(opts) {
+    const { version, target, installDir, binaryName, log } = opts;
+    const catalogUrl = "https://zackees.github.io/soldr-toolchain/cargo-chef/manifest.json";
+    const catalog = await fetchJson(catalogUrl, "");
+    const asset = selectToolchainSupportAsset(catalog, version, target);
+    if (!asset) {
+        throw new Error(`soldr-toolchain has no cargo-chef ${version} support asset for ${target}`);
+    }
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-cargo-chef-"));
+    const cargoChefName = `cargo-chef${platformBinarySuffix(binaryName)}`;
+    const failures = [];
+    try {
+        for (const [index, url] of asset.urls.entries()) {
+            const archivePath = path.join(tmp, `${index}-${asset.filename}`);
+            const extractDir = path.join(tmp, `extract-${index}`);
+            try {
+                log(`Downloading cargo-chef ${version} support for ${target}`);
+                await downloadWithHeaders(url, archivePath, {});
+                verifyDownloadedAsset(archivePath, asset.sha256);
+                const source = await extractBinary(archivePath, asset.archiveExt, cargoChefName, extractDir);
+                const destination = path.join(installDir, cargoChefName);
+                fs.copyFileSync(source, destination);
+                if (process.platform !== "win32")
+                    fs.chmodSync(destination, 0o755);
+                return cargoChefName;
+            }
+            catch (error) {
+                failures.push(error instanceof Error ? error.message : String(error));
+            }
+        }
+    }
+    finally {
+        try {
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
+        catch {
+            // best effort cleanup
+        }
+    }
+    throw new Error(`failed to install cargo-chef ${version} support for ${target}: ${failures.join("; ")}`);
+}
+async function ensureSoldr(opts) {
+    const logger = (0, log_utils_js_1.createLogger)(process.env);
+    const log = (msg) => logger.log(msg);
+    const { resolveResult, githubToken } = opts;
+    const installDir = path.dirname(resolveResult.soldrPath);
+    fs.mkdirSync(installDir, { recursive: true });
+    const { target, binaryName } = detectTarget();
+    const binaryPath = path.join(installDir, binaryName);
+    const requestedRef = resolveResult.soldrRef.trim();
+    const requestedVersion = resolveResult.soldrVersionRequested.trim();
+    const repo = resolveResult.soldrRepo.trim() || "zackees/soldr";
+    const sourcePath = resolveResult.soldrSourcePath.trim();
+    const sourceIdentity = resolveResult.soldrSourceIdentity.trim();
+    if (sourcePath) {
+        const localRepo = "local";
+        if (sourceInstallMatches(installDir, localRepo, "working-tree", sourceIdentity, target, binaryName)) {
+            const current = await installedVersion(binaryPath);
+            if (current !== null) {
+                clearBundledReleasePayload(installDir, binaryName);
+                log(`Using cached soldr ${current} built from ${sourcePath} (${sourceIdentity})`);
+                core.setOutput("installed_version", current);
+                return;
+            }
+        }
+        const builtPath = await buildFromLocalSource({
+            sourcePath,
+            sourceIdentity,
+            installDir,
+            target,
+            binaryName,
+            log,
+        });
+        const current = await installedVersion(builtPath);
+        log(`Installed soldr ${current ?? sourceIdentity} from ${sourcePath} (${sourceIdentity}) at ${builtPath}`);
+        core.setOutput("installed_version", current ?? sourceIdentity);
+        return;
+    }
+    if (requestedRef) {
+        if (requestedVersion) {
+            log(`Ignoring requested release version ${JSON.stringify(requestedVersion)} because ref is set`);
+        }
+        const commitSha = await resolveRefCommitSha(repo, requestedRef, githubToken);
+        if (sourceInstallMatches(installDir, repo, requestedRef, commitSha, target, binaryName)) {
+            const current = await installedVersion(binaryPath);
+            if (current !== null) {
+                clearBundledReleasePayload(installDir, binaryName);
+                log(`Using cached soldr ${current} built from ${repo}@${requestedRef} (${commitSha})`);
+                core.setOutput("installed_version", current);
+                return;
+            }
+        }
+        const builtPath = await buildFromSource({
+            repo,
+            ref: requestedRef,
+            commitSha,
+            installDir,
+            target,
+            binaryName,
+            githubToken,
+            log,
+        });
+        const current = await installedVersion(builtPath);
+        log(`Installed soldr ${current ?? requestedRef} from ${repo}@${requestedRef} (${commitSha}) at ${builtPath}`);
+        core.setOutput("installed_version", current ?? requestedRef);
+        return;
+    }
+    // Release branch
+    const resolvedVersion = resolveResult.soldrVersionResolved.trim() || requestedVersion;
+    const current = await installedVersion(binaryPath);
+    if (current !== null && resolvedVersion) {
+        if (normalizeVersion(current) === normalizeVersion(resolvedVersion)) {
+            const installMetadata = loadReleaseInstallMetadata(installDir);
+            const isPypiWheelInstall = installMetadata?.source === "pypi-wheel" &&
+                installMetadata.target === target &&
+                normalizeVersion(installMetadata.version ?? "") === normalizeVersion(resolvedVersion);
+            const hasRequiredPayload = hasRequiredReleasePayload(installDir, binaryName, resolvedVersion, !isPypiWheelInstall || bundledCargoChefVersionForSoldr(resolvedVersion) !== null);
+            if (hasRequiredPayload) {
+                exportBundledCargoChefIfPresent(installDir, binaryName);
+                log(`Using cached soldr ${current} at ${binaryPath}`);
+                core.setOutput("installed_version", current);
+                return;
+            }
+            log(`Cached soldr ${current} is missing bundled release payload; refreshing`);
+        }
+        if (normalizeVersion(current) !== normalizeVersion(resolvedVersion)) {
+            log(`Cached soldr ${current} does not match requested release ${resolvedVersion}; refreshing`);
+        }
+    }
+    log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
+    const release = await fetchRelease(repo, resolvedVersion, githubToken);
+    const tagName = typeof release["tag_name"] === "string" ? release["tag_name"] : resolvedVersion;
+    let asset = selectReleaseAsset(release, target);
+    if (!asset) {
+        if (!canUseOfficialPypiFallback(repo, tagName)) {
+            throw new Error(`no release asset found for target ${target} in ${repo}; ` +
+                `PyPI fallback is supported only for known wheel-compatible official releases`);
+        }
+        log(`Combined GitHub release archive is absent for ${target}; resolving the exact ${tagName} PyPI wheel`);
+        const pypiRelease = await fetchPypiRelease(tagName);
+        asset = selectPypiWheel(pypiRelease, target);
+        if (!asset) {
+            throw new Error(`no combined release archive or PyPI wheel found for target ${target} at ${tagName}`);
+        }
+    }
+    const { name: assetName, url: downloadUrl, archiveExt } = asset;
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-release-"));
+    try {
+        const archivePath = path.join(tmp, assetName);
+        const extractDir = path.join(tmp, "extract");
+        log(`Downloading ${assetName}`);
+        const downloadHeaders = asset.source === "github-release" ? requestHeaders(githubToken) : {};
+        await downloadWithHeaders(downloadUrl, archivePath, downloadHeaders);
+        verifyDownloadedAsset(archivePath, asset.expectedSha256);
+        const sourceBinary = await extractBinary(archivePath, archiveExt, binaryName, extractDir);
+        clearBundledReleasePayload(installDir, binaryName);
+        fs.copyFileSync(sourceBinary, binaryPath);
+        if (process.platform !== "win32") {
+            fs.chmodSync(binaryPath, 0o755);
+        }
+        const copied = asset.source === "pypi-wheel"
+            ? [ensureMulticallRuntimeAlias(installDir, binaryName)]
+            : copyBundledReleasePayload(extractDir, installDir, binaryName);
+        const cargoChefVersion = asset.source === "pypi-wheel"
+            ? bundledCargoChefVersionForSoldr(tagName)
+            : null;
+        if (cargoChefVersion) {
+            copied.push(await installCargoChefSupport({
+                version: cargoChefVersion,
+                target,
+                installDir,
+                binaryName,
+                log,
+            }));
+        }
+        if (copied.length > 0) {
+            log(`Installed bundled soldr release payload: ${copied.join(", ")}`);
+        }
+        exportBundledCargoChefIfPresent(installDir, binaryName);
+    }
+    finally {
+        try {
+            fs.rmSync(tmp, { recursive: true, force: true });
+        }
+        catch {
+            // best effort cleanup
+        }
+    }
+    if (asset.source === "pypi-wheel") {
+        const installed = await installedVersion(binaryPath);
+        if (installed === null || normalizeVersion(installed) !== normalizeVersion(tagName)) {
+            throw new Error(`installed PyPI wheel did not execute as exact soldr ${normalizeVersion(tagName)} ` +
+                `(reported ${installed ?? "no valid version"})`);
+        }
+        if (!hasRequiredReleasePayload(installDir, binaryName, tagName, true)) {
+            throw new Error(`installed PyPI wheel is missing required runtime payload for soldr ${tagName}`);
+        }
+    }
+    const metadataPath = sourceMetadataPath(installDir);
+    if (fs.existsSync(metadataPath))
+        fs.unlinkSync(metadataPath);
+    writeReleaseInstallMetadata(installDir, {
+        source: asset.source,
+        version: tagName,
+        target,
+        asset_name: assetName,
+    });
+    log(`Installed soldr ${tagName} at ${binaryPath}`);
+    core.setOutput("installed_version", tagName);
+}
+exports._internal = {
+    bundledReleasePayloadNames,
+    bundledZccacheBinaryNames,
+    bundledCargoChefVersionForSoldr,
+    canUseOfficialPypiFallback,
+    clearBundledReleasePayload,
+    copyBundledReleasePayload,
+    embeddedZccacheBinaryNames,
+    ensureMulticallRuntimeAlias,
+    extractTarBuffer,
+    hasBundledCargoChefPayload,
+    hasBundledClangShimPayload,
+    hasBundledZccachePayload,
+    hasEmbeddedZccachePayload,
+    hasMulticallRuntimePayload,
+    hasRequiredReleasePayload,
+    prepareZipArchivePath,
+    selectPypiWheel,
+    selectReleaseAsset,
+    selectToolchainSupportAsset,
+    verifyDownloadedAsset,
+    versionAtLeast,
+};
+
+
+/***/ }),
+
 /***/ 28129:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -50474,6 +52291,116 @@ function readRawInputs(env) {
 
 /***/ }),
 
+/***/ 4375:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Release-readiness helpers shared by the action installer and the v0 rollout
+// contract. A concrete version is always exact: retrying a just-published
+// release is allowed, choosing a different release is not.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PYPI_WHEEL_PLATFORM_TAGS = exports.REQUIRED_RELEASE_TARGETS = void 0;
+exports.pypiWheelHasTarget = pypiWheelHasTarget;
+exports.assertReleaseReady = assertReleaseReady;
+exports.isRetryableReleaseError = isRetryableReleaseError;
+exports.retryReleaseRequest = retryReleaseRequest;
+exports.REQUIRED_RELEASE_TARGETS = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+];
+exports.PYPI_WHEEL_PLATFORM_TAGS = {
+    "x86_64-unknown-linux-gnu": "manylinux_2_17_x86_64.manylinux2014_x86_64",
+    "aarch64-unknown-linux-gnu": "manylinux_2_17_aarch64.manylinux2014_aarch64",
+    "x86_64-apple-darwin": "macosx_10_12_x86_64",
+    "aarch64-apple-darwin": "macosx_11_0_arm64",
+    "x86_64-pc-windows-msvc": "win_amd64",
+    "aarch64-pc-windows-msvc": "win_arm64",
+};
+function assetHasTarget(asset, target) {
+    if (typeof asset !== "object" || asset === null)
+        return false;
+    const record = asset;
+    const name = typeof record["name"] === "string" ? record["name"] : "";
+    const url = typeof record["browser_download_url"] === "string" ? record["browser_download_url"].trim() : "";
+    return (name.includes(target) &&
+        (name.endsWith(".tar.zst") || name.endsWith(".tar.gz") || name.endsWith(".zip")) &&
+        url.length > 0);
+}
+function pypiWheelHasTarget(file, target) {
+    if (typeof file !== "object" || file === null)
+        return false;
+    const platformTag = exports.PYPI_WHEEL_PLATFORM_TAGS[target];
+    if (!platformTag)
+        return false;
+    const record = file;
+    const filename = typeof record["filename"] === "string" ? record["filename"] : "";
+    const url = typeof record["url"] === "string" ? record["url"].trim() : "";
+    const digests = record["digests"];
+    const sha256 = typeof digests === "object" &&
+        digests !== null &&
+        typeof digests["sha256"] === "string"
+        ? digests["sha256"].toLowerCase()
+        : "";
+    return (filename.startsWith("soldr-") &&
+        filename.endsWith(`-${platformTag}.whl`) &&
+        record["yanked"] !== true &&
+        url.length > 0 &&
+        /^[0-9a-f]{64}$/.test(sha256));
+}
+/** Throws when a release cannot safely become setup-soldr's default. */
+function assertReleaseReady(release, requiredTargets = exports.REQUIRED_RELEASE_TARGETS, pypiRelease) {
+    const tag = typeof release["tag_name"] === "string" ? release["tag_name"].trim() : "";
+    if (!tag)
+        throw new Error("release payload has no tag_name");
+    if (release["draft"] === true)
+        throw new Error(`release ${tag} is still a draft`);
+    const assets = release["assets"];
+    if (!Array.isArray(assets))
+        throw new Error(`release ${tag} has no assets array`);
+    const pypiFiles = pypiRelease?.["urls"];
+    const missing = requiredTargets.filter((target) => !assets.some((asset) => assetHasTarget(asset, target)) &&
+        !(Array.isArray(pypiFiles) && pypiFiles.some((file) => pypiWheelHasTarget(file, target))));
+    if (missing.length > 0) {
+        throw new Error(`release ${tag} is missing usable assets for: ${missing.join(", ")}`);
+    }
+}
+function isRetryableReleaseError(error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const status = message.match(/HTTP\s+(\d{3})\b/)?.[1];
+    if (!status)
+        return false;
+    const code = Number(status);
+    return code === 404 || code >= 500;
+}
+async function retryReleaseRequest(request, options = {}) {
+    const attempts = options.attempts ?? 3;
+    const delayMs = options.delayMs ?? 500;
+    const sleep = options.sleep ?? ((delay) => new Promise((resolve) => setTimeout(resolve, delay)));
+    let lastError;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+        try {
+            return await request();
+        }
+        catch (error) {
+            lastError = error;
+            if (attempt === attempts || !isRetryableReleaseError(error))
+                break;
+            options.onRetry?.(attempt, error);
+            await sleep(delayMs);
+        }
+    }
+    const detail = lastError instanceof Error ? lastError.message : String(lastError);
+    throw new Error(`release request failed after ${attempts} attempts: ${detail}`);
+}
+
+
+/***/ }),
+
 /***/ 35326:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -50716,6 +52643,7 @@ exports.CARGO_REGISTRY_VIA_SOLDR_ENV = exports.MIN_SOLDR_VERSION_FOR_SAVE_ROUNDT
 exports.cargoRegistryViaSoldrEnvOn = cargoRegistryViaSoldrEnvOn;
 exports.semverGte = semverGte;
 exports.detectSoldrManifest = detectSoldrManifest;
+exports.parseSoldrLoadReport = parseSoldrLoadReport;
 exports.tryLoadViaSoldr = tryLoadViaSoldr;
 exports.saveViaSoldr = saveViaSoldr;
 exports.trySaveViaSoldr = trySaveViaSoldr;
@@ -50796,6 +52724,23 @@ async function detectSoldrManifest(archivePath) {
     const first = (res.stdout ?? "").split(/\r?\n/, 2)[0]?.trim();
     return first === SOLDR_MANIFEST_NAME;
 }
+function parseSoldrLoadReport(stdout) {
+    for (const line of stdout.split(/\r?\n/).map((entry) => entry.trim()).filter(Boolean).reverse()) {
+        try {
+            const payload = JSON.parse(line);
+            const files = payload["cache_files_restored"];
+            const bytes = payload["cache_bytes_restored"] ?? payload["restored_bytes"];
+            return {
+                restoredFiles: typeof files === "number" && Number.isFinite(files) ? files : null,
+                restoredBytes: typeof bytes === "number" && Number.isFinite(bytes) ? bytes : null,
+            };
+        }
+        catch {
+            // Tolerate diagnostic noise around the final JSON payload.
+        }
+    }
+    return { restoredFiles: null, restoredBytes: null };
+}
 /**
  * Attempt to invoke `soldr load` for parallel extraction. Returns
  * `{ used: false }` when the binary isn't available, the version is
@@ -50804,7 +52749,7 @@ async function detectSoldrManifest(archivePath) {
  */
 async function tryLoadViaSoldr(opts) {
     const t0 = Date.now();
-    const noOp = { used: false, durationMs: 0 };
+    const noOp = { used: false, durationMs: 0, restoredFiles: null, restoredBytes: null };
     const log = opts.log ?? (() => undefined);
     if (!opts.soldrPath) {
         if (opts.debug)
@@ -50832,7 +52777,7 @@ async function tryLoadViaSoldr(opts) {
         }
         return noOp;
     }
-    const args = ["load", "--archive", opts.archivePath, "--cache-dir", opts.targetDir];
+    const args = ["load", "--archive", opts.archivePath, "--cache-dir", opts.targetDir, "--json"];
     if (opts.autoDefenderExclude && process.platform === "win32") {
         args.push("--auto-defender-exclude");
     }
@@ -50841,8 +52786,20 @@ async function tryLoadViaSoldr(opts) {
     }
     if (opts.debug)
         log(`[debug] soldr-load-shim: invoking ${opts.soldrPath} ${args.join(" ")}`);
-    await exec.exec(opts.soldrPath, args);
-    return { used: true, durationMs: Date.now() - t0 };
+    let stdout = "";
+    const code = await exec.exec(opts.soldrPath, args, {
+        silent: true,
+        ignoreReturnCode: true,
+        listeners: {
+            stdout: (data) => {
+                stdout += data.toString("utf8");
+            },
+        },
+    });
+    if (code !== 0)
+        throw new Error(`soldr load exited with code ${code}`);
+    const { restoredFiles, restoredBytes } = parseSoldrLoadReport(stdout);
+    return { used: true, durationMs: Date.now() - t0, restoredFiles, restoredBytes };
 }
 /**
  * Bundle a cache directory via `soldr save` after the caller has selected a
@@ -50978,6 +52935,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.verifyMiniCacheBinary = verifyMiniCacheBinary;
 exports.buildMiniCacheKey = buildMiniCacheKey;
 exports.restoreMiniCache = restoreMiniCache;
 exports.saveMiniCache = saveMiniCache;
@@ -50987,6 +52945,7 @@ const fsp = __importStar(__nccwpck_require__(51455));
 const path = __importStar(__nccwpck_require__(76760));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
+const ensure_soldr_js_1 = __nccwpck_require__(49252);
 // Schema segment `v2` (still inside the `soldr-mini-` eviction namespace):
 // v1 entries were archived by setup-soldr <= v0.9.64, whose bundled-payload
 // allowlist dropped `soldr-clang-shim` from the soldr release archive.
@@ -50994,6 +52953,9 @@ const cache_compress_js_1 = __nccwpck_require__(24978);
 // blessed `soldr build` surface) and the immutable-key save could never
 // repair it in place, so the namespace bump side-steps the stale entries.
 const MINI_KEY_PREFIX = "soldr-mini-v2";
+async function verifyMiniCacheBinary(binaryPath, expectedVersion) {
+    return (0, ensure_soldr_js_1.installedSoldrReleaseIsUsable)(binaryPath, expectedVersion);
+}
 /**
  * Build the mini-cache key. Deliberately coarse — only the dimensions
  * that change soldr's binary content. No toolchain hash, no Cargo.lock,
@@ -51017,12 +52979,14 @@ function buildMiniCacheKey(parts) {
  */
 async function restoreMiniCache(opts) {
     const { exactKey, installDir, archivePath, longWindow, log } = opts;
+    const warn = opts.warn ?? log;
+    const restore = opts.restoreCache ?? cache.restoreCache;
     await fsp.mkdir(installDir, { recursive: true });
     await fsp.mkdir(path.dirname(archivePath), { recursive: true });
     await fsp.rm(archivePath, { force: true });
     let matched;
     try {
-        matched = await cache.restoreCache([archivePath], exactKey);
+        matched = await restore([archivePath], exactKey);
     }
     catch (err) {
         log(`soldr-mini-cache: restore threw: ${err instanceof Error ? err.message : String(err)}`);
@@ -51037,7 +53001,12 @@ async function restoreMiniCache(opts) {
         archiveBytes = (await fsp.stat(archivePath)).size;
     }
     catch {
-        return { hit: false, matchedKey: matched, archiveBytes: 0 };
+        warn(`soldr-mini-cache: matched key ${matched} produced an unusable payload: archive=0B (missing); treating as miss`);
+        return { hit: false, matchedKey: "", archiveBytes: 0 };
+    }
+    if (archiveBytes === 0) {
+        warn(`soldr-mini-cache: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
+        return { hit: false, matchedKey: "", archiveBytes: 0 };
     }
     // Codec sniff stays for the legacy plaintext path. Encrypted archives
     // produce magic="unknown" here, so we additionally let decompressCache
@@ -51045,11 +53014,12 @@ async function restoreMiniCache(opts) {
     const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
     const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
     if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
-        log(`soldr-mini-cache: archive has unknown codec, treating as miss`);
+        warn(`soldr-mini-cache: matched key ${matched} produced an unusable payload: ` +
+            `archive=${archiveBytes}B codec=unknown; treating as miss`);
         return { hit: false, matchedKey: matched, archiveBytes };
     }
     try {
-        await (0, cache_compress_js_1.decompressCache)({
+        const decompressed = await (opts.decompress ?? cache_compress_js_1.decompressCache)({
             archivePath,
             targetDir: installDir,
             longWindow,
@@ -51057,10 +53027,23 @@ async function restoreMiniCache(opts) {
             debug: opts.debug,
             cacheKey: exactKey,
         });
+        if (decompressed.fileCount === 0) {
+            warn(`soldr-mini-cache: matched key ${matched} produced an unusable payload: ` +
+                `archive=${archiveBytes}B extracted_files=${decompressed.fileCount} ` +
+                `extracted_bytes=${decompressed.inflatedBytes}; treating as miss`);
+            return { hit: false, matchedKey: "", archiveBytes };
+        }
     }
     catch (err) {
-        log(`soldr-mini-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
+        warn(`soldr-mini-cache: matched key ${matched} produced an unusable payload: ` +
+            `archive=${archiveBytes}B decompress failed: ${err instanceof Error ? err.message : String(err)}; treating as miss`);
         return { hit: false, matchedKey: matched, archiveBytes };
+    }
+    const binaryValid = await (opts.verifyBinary ?? verifyMiniCacheBinary)(opts.binaryPath, opts.expectedVersion);
+    if (!binaryValid) {
+        warn(`soldr-mini-cache: matched key ${matched} produced an unusable payload: ` +
+            `soldr binary is missing, corrupt, or not version ${opts.expectedVersion}; treating as miss`);
+        return { hit: false, matchedKey: "", archiveBytes };
     }
     log(`soldr-mini-cache: restored matched=${matched} archive=${archiveBytes}B target=${installDir}`);
     return { hit: true, matchedKey: matched, archiveBytes };
@@ -51225,6 +53208,8 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.soloCacheArchivePath = soloCacheArchivePath;
+exports.soloCacheEntryExistsForRef = soloCacheEntryExistsForRef;
+exports.deleteCorruptSoloCacheEntries = deleteCorruptSoloCacheEntries;
 exports.detectLibc = detectLibc;
 exports.hashStringArray = hashStringArray;
 exports.buildSoloCacheKeys = buildSoloCacheKeys;
@@ -51240,6 +53225,7 @@ const os = __importStar(__nccwpck_require__(48161));
 const path = __importStar(__nccwpck_require__(76760));
 const cache = __importStar(__nccwpck_require__(5116));
 const exec = __importStar(__nccwpck_require__(95236));
+const github = __importStar(__nccwpck_require__(93228));
 const cache_compress_js_1 = __nccwpck_require__(24978);
 /**
  * The two live roots whose deltas this cache layer tracks. The string keys
@@ -51260,6 +53246,100 @@ const ROOT_TAGS = ["rustup-toolchains", "cargo-bin"];
  */
 function soloCacheArchivePath(runnerTemp) {
     return path.join(runnerTemp, "setup-soldr-solo-cache.tar.zst");
+}
+/** Prove an exact cache key exists on one ref; unlike restoreCache, this retains ref identity. */
+async function soloCacheEntryExistsForRef(opts) {
+    const { owner, repo, token, key, ref, log } = opts;
+    if (!owner || !repo || !token || !key || !ref)
+        return false;
+    try {
+        let entries;
+        if (opts.listCaches) {
+            entries = await opts.listCaches();
+        }
+        else {
+            const octokit = github.getOctokit(token);
+            entries = [];
+            let page = 1;
+            while (true) {
+                const response = await octokit.rest.actions.getActionsCacheList({
+                    owner, repo, key, ref, per_page: 100, page,
+                });
+                const items = response.data.actions_caches ?? [];
+                for (const item of items) {
+                    if (item.id != null && item.key != null && item.ref != null) {
+                        entries.push({ id: item.id, key: item.key, ref: item.ref });
+                    }
+                }
+                if (items.length < 100)
+                    break;
+                page += 1;
+            }
+        }
+        return entries.some((entry) => entry.key === key && entry.ref === ref);
+    }
+    catch (err) {
+        log(`solo-toolchain-cache: failed to prove replacement key=${key} ref=${ref}: ${err instanceof Error ? err.message : String(err)}`);
+        return false;
+    }
+}
+/** Delete immutable poisoned entries before uploading a verified repair. */
+async function deleteCorruptSoloCacheEntries(opts) {
+    const { owner, repo, token, key, ref, log } = opts;
+    if (!owner || !repo || !token || !key || !ref) {
+        log("solo-toolchain-cache: cannot delete corrupt entry: repository, token, key, or ref is missing");
+        return { found: 0, deleted: 0, failed: 1 };
+    }
+    const octokit = github.getOctokit(token);
+    const listCaches = opts.listCaches ?? (async () => {
+        const entries = [];
+        let page = 1;
+        while (true) {
+            const response = await octokit.rest.actions.getActionsCacheList({
+                owner,
+                repo,
+                key,
+                ref,
+                per_page: 100,
+                page,
+            });
+            const items = response.data.actions_caches ?? [];
+            for (const item of items) {
+                if (item.id != null && item.key != null && item.ref != null) {
+                    entries.push({ id: item.id, key: item.key, ref: item.ref });
+                }
+            }
+            if (items.length < 100)
+                break;
+            page += 1;
+        }
+        return entries;
+    });
+    const deleteCacheById = opts.deleteCacheById ?? (async (id) => {
+        await octokit.rest.actions.deleteActionsCacheById({ owner, repo, cache_id: id });
+    });
+    let entries;
+    try {
+        entries = (await listCaches()).filter((entry) => entry.key === key && entry.ref === ref);
+    }
+    catch (err) {
+        log(`solo-toolchain-cache: failed to list corrupt entry key=${key} ref=${ref}: ${err instanceof Error ? err.message : String(err)}`);
+        return { found: 0, deleted: 0, failed: 1 };
+    }
+    let deleted = 0;
+    let failed = 0;
+    for (const entry of entries) {
+        try {
+            await deleteCacheById(entry.id);
+            deleted += 1;
+            log(`solo-toolchain-cache: deleted corrupt entry id=${entry.id} key=${key} ref=${ref}`);
+        }
+        catch (err) {
+            failed += 1;
+            log(`solo-toolchain-cache: failed to delete corrupt entry id=${entry.id} key=${key}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+    return { found: entries.length, deleted, failed };
 }
 /**
  * Map this run's host platform to a libc tag. Conservative v1: assume
@@ -51310,7 +53390,9 @@ function hashStringArray(items) {
  *       from `setup-soldr-solo-stage-save` to `staged`. v1 caches
  *       are unreadable by v2 restorers ("archive was empty").
  */
-const SOLO_CACHE_SCHEMA_VERSION = 2;
+// v3 (#473) stages repaired `changed` files as well as newly `added` files,
+// invalidating the incomplete v2 entries that could contain only six files.
+const SOLO_CACHE_SCHEMA_VERSION = 3;
 function buildSoloCacheKeys(parts) {
     const release = parts.rustcRelease.trim() || "unresolved";
     const base = `solo-toolchain-v${SOLO_CACHE_SCHEMA_VERSION}-${parts.runnerOs}-${parts.runnerArch}-${parts.libc}-rustc${release}`;
@@ -51335,7 +53417,7 @@ async function ensureDir(p) {
     await fsp.mkdir(p, { recursive: true });
 }
 /**
- * Copy the inodes named in `diff.added` into a flat staging directory
+ * Copy newly added and repaired/changed inodes into a flat staging directory
  * structured as `<stagingDir>/<root-tag>/<relpath>`. The staging dir
  * is what `compressCache` later tars + zstds. Returns the count of
  * actually-copied files (directories and symlinks are recreated rather
@@ -51345,8 +53427,10 @@ async function stageDiffForSave(diff, rootMap, stagingDir) {
     await fsp.rm(stagingDir, { recursive: true, force: true });
     await ensureDir(stagingDir);
     let stagedFiles = 0;
+    let stagedSymlinks = 0;
     let missingFiles = 0;
-    for (const entry of diff.added) {
+    const entries = [...diff.added, ...diff.changed.map((change) => change.after)];
+    for (const entry of entries) {
         const tag = findRootTag(entry.root, rootMap);
         if (tag === null)
             continue;
@@ -51361,9 +53445,10 @@ async function stageDiffForSave(diff, rootMap, stagingDir) {
             const target = entry.linkTarget ?? "";
             try {
                 await fsp.symlink(target, dst);
+                stagedSymlinks += 1;
             }
             catch {
-                // best-effort; restore replays via the same path
+                missingFiles += 1;
             }
             continue;
         }
@@ -51375,7 +53460,7 @@ async function stageDiffForSave(diff, rootMap, stagingDir) {
             missingFiles += 1;
         }
     }
-    return { stagedFiles, missingFiles };
+    return { stagedFiles, stagedSymlinks, missingFiles };
 }
 /**
  * Inverse of stageDiffForSave: copy files from a (just-restored)
@@ -51486,7 +53571,7 @@ async function saveSoloCache(opts) {
     let inflatedBytes;
     let fileCount;
     try {
-        const compress = await (0, cache_compress_js_1.compressCache)({
+        const compress = await (opts.compress ?? cache_compress_js_1.compressCache)({
             cacheDir: stagingDir,
             codec: "zstd",
             level,
@@ -51532,29 +53617,52 @@ async function saveSoloCache(opts) {
     // a probe here catches that and skips the wasted upload. The probe
     // requires a non-empty paths array even in lookupOnly mode, hence
     // the throwaway directory.
+    if (!opts.skipExistingProbe) {
+        try {
+            // #316: use the canonical archive path for the probe too. The
+            // probe MUST hash the same paths as save+restore so the
+            // @actions/cache cache "version" matches; otherwise the probe
+            // sees MISS for entries that the actual restore would also miss
+            // for the wrong reason (path-version mismatch, not key absence).
+            const existing = await cache.restoreCache([cacheArchive], key, [], { lookupOnly: true });
+            if (existing) {
+                log(`solo-toolchain-cache: post-compress lookupOnly probe found existing key=${existing} — skipping upload (#313)`);
+                return {
+                    status: "race-precheck-skipped",
+                    archiveBytes,
+                    inflatedBytes,
+                    fileCount,
+                    archivePath,
+                };
+            }
+        }
+        catch (err) {
+            log(`solo-toolchain-cache: post-compress lookupOnly probe failed (will attempt save anyway): ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
     try {
-        // #316: use the canonical archive path for the probe too. The
-        // probe MUST hash the same paths as save+restore so the
-        // @actions/cache cache "version" matches; otherwise the probe
-        // sees MISS for entries that the actual restore would also miss
-        // for the wrong reason (path-version mismatch, not key absence).
-        const existing = await cache.restoreCache([cacheArchive], key, [], { lookupOnly: true });
-        if (existing) {
-            log(`solo-toolchain-cache: post-compress lookupOnly probe found existing key=${existing} — skipping upload (#313)`);
+        const id = await (opts.saveCache ?? cache.saveCache)([archivePath], key);
+        if (id <= 0) {
+            if (opts.lookupExactKey) {
+                const lookup = opts.lookupExactKey;
+                const existing = await lookup([archivePath], key);
+                if (existing === key) {
+                    log(`solo-toolchain-cache: save lost a repair race, but exact replacement now exists key=${key}`);
+                    return {
+                        status: "race-precheck-skipped",
+                        archiveBytes,
+                        inflatedBytes,
+                        fileCount,
+                        archivePath,
+                    };
+                }
+            }
             return {
-                status: "race-precheck-skipped",
-                archiveBytes,
-                inflatedBytes,
-                fileCount,
+                status: "failed",
+                error: `cache upload returned non-positive id=${id}; replacement was not proven`,
                 archivePath,
             };
         }
-    }
-    catch (err) {
-        log(`solo-toolchain-cache: post-compress lookupOnly probe failed (will attempt save anyway): ${err instanceof Error ? err.message : String(err)}`);
-    }
-    try {
-        const id = await cache.saveCache([archivePath], key);
         log(`solo-toolchain-cache: saved id=${id} key=${key} archive=${archivePath}`);
         return {
             status: "saved",
@@ -51609,7 +53717,7 @@ async function restoreSoloCache(opts) {
     const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
     if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
         log(`solo-toolchain-cache: restored archive has unknown codec, treating as miss`);
-        return { hit: false, matchedKey: matched, restoredBytes: 0, archivePath, verified: false };
+        return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false };
     }
     const stagingOut = path.join(stagingDir, "staged");
     try {
@@ -51658,55 +53766,60 @@ async function restoreSoloCache(opts) {
  * `expectedRelease` empty disables the check (returns `match: true`).
  */
 async function verifyRestoredToolchain(opts) {
-    const { expectedRelease, expectedTargets = [], rustcCommand, log } = opts;
+    const { expectedRelease, expectedTargets = [], expectedComponents = [], channel, rustupCommand, log, } = opts;
+    const runRustup = opts.runRustup ?? (async (args) => {
+        let stdout = "";
+        let stderr = "";
+        const code = await exec.exec(rustupCommand, args, {
+            silent: true,
+            ignoreReturnCode: true,
+            listeners: {
+                stdout: (data) => { stdout += data.toString("utf8"); },
+                stderr: (data) => { stderr += data.toString("utf8"); },
+            },
+        });
+        return { code, stdout, stderr };
+    });
     let releaseMatch = true;
     let observedRelease = null;
-    let stdout = "";
-    let code = -1;
     if (expectedRelease.trim()) {
+        let version;
         try {
-            code = await exec.exec(rustcCommand, ["--version"], {
-                silent: true,
-                ignoreReturnCode: true,
-                listeners: { stdout: (data) => { stdout += data.toString("utf8"); } },
-            });
+            version = await runRustup(["run", channel, "rustc", "--version"]);
         }
         catch (err) {
             log(`solo-toolchain-cache: rustc --version threw: ${err instanceof Error ? err.message : String(err)}`);
             return { match: false, observedRelease: null };
         }
-        if (code !== 0) {
-            log(`solo-toolchain-cache: rustc --version exited ${code}; cannot verify restore`);
+        if (version.code !== 0) {
+            log(`solo-toolchain-cache: rustup run ${channel} rustc --version exited ${version.code}; cannot verify restore`);
             return { match: false, observedRelease: null };
         }
-        const match = stdout.trim().match(/^rustc\s+(\S+)/);
+        const match = version.stdout.trim().match(/^rustc\s+(\S+)/);
         observedRelease = match ? (match[1] ?? null) : null;
         if (observedRelease === null) {
-            log(`solo-toolchain-cache: rustc --version output not parseable: ${stdout.trim()}`);
+            log(`solo-toolchain-cache: rustc --version output not parseable: ${version.stdout.trim()}`);
             return { match: false, observedRelease: null };
         }
         releaseMatch = observedRelease === expectedRelease;
         log(`solo-toolchain-cache: verify rustc release expected=${expectedRelease} observed=${observedRelease} match=${releaseMatch}`);
     }
     const targets = [...new Set(expectedTargets.map((target) => target.trim()).filter(Boolean))];
-    const runTargetProbe = opts.runTargetProbe ?? (async (target) => {
+    const runTargetProbe = async (target) => {
         const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "setup-soldr-target-probe-"));
         const source = path.join(tempDir, "probe.rs");
         const output = path.join(tempDir, "probe.rmeta");
         await fsp.writeFile(source, "pub fn setup_soldr_target_probe() {}\n", "utf8");
         let stderr = "";
         try {
-            const probeCode = await exec.exec(rustcCommand, ["--target", target, "--crate-type", "lib", "--emit", "metadata", source, "-o", output], {
-                silent: true,
-                ignoreReturnCode: true,
-                listeners: { stderr: (data) => { stderr += data.toString("utf8"); } },
-            });
-            return { code: probeCode, stderr };
+            const probe = await runRustup(["run", channel, "rustc", "--target", target, "--crate-type", "lib", "--emit", "metadata", source, "-o", output]);
+            stderr = probe.stderr;
+            return { code: probe.code, stderr };
         }
         finally {
             await fsp.rm(tempDir, { recursive: true, force: true });
         }
-    });
+    };
     let targetsMatch = true;
     for (const target of targets) {
         let probe;
@@ -51727,7 +53840,57 @@ async function verifyRestoredToolchain(opts) {
             log(`solo-toolchain-cache: target std probe passed target=${target}`);
         }
     }
-    return { match: releaseMatch && targetsMatch, observedRelease };
+    let componentsMatch = true;
+    const components = [...new Set(expectedComponents.map((component) => component.trim()).filter(Boolean))];
+    if (components.length > 0) {
+        let listed;
+        try {
+            listed = await runRustup(["component", "list", "--toolchain", channel, "--installed"]);
+        }
+        catch (err) {
+            listed = { code: -1, stdout: "", stderr: err instanceof Error ? err.message : String(err) };
+        }
+        const installed = new Set(listed.stdout.split(/\r?\n/).map((line) => line.trim().split(/\s+/, 1)[0]).filter((name) => Boolean(name)));
+        const installedName = (component) => component.endsWith("-preview") ? component.slice(0, -"-preview".length) : component;
+        const missing = components.filter((component) => {
+            const normalized = installedName(component);
+            return ![...installed].some((name) => name === normalized || name.startsWith(`${normalized}-`));
+        });
+        componentsMatch = listed.code === 0 && missing.length === 0;
+        if (!componentsMatch) {
+            log(`solo-toolchain-cache: component verification failed channel=${channel} missing=${missing.join(",") || "list-command-failed"}`);
+        }
+        const executableComponents = {
+            rustfmt: "rustfmt",
+            clippy: "clippy-driver",
+            miri: "cargo-miri",
+            "rust-analyzer": "rust-analyzer",
+        };
+        for (const component of components) {
+            const executable = executableComponents[installedName(component)];
+            if (!executable)
+                continue;
+            const probe = await runRustup(["run", channel, executable, "--version"]).catch((err) => ({
+                code: -1,
+                stdout: "",
+                stderr: err instanceof Error ? err.message : String(err),
+            }));
+            if (probe.code !== 0) {
+                componentsMatch = false;
+                log(`solo-toolchain-cache: component payload probe failed component=${component} exit=${probe.code}`);
+            }
+        }
+        if (components.includes("rust-src")) {
+            const sysroot = await runRustup(["run", channel, "rustc", "--print", "sysroot"]).catch(() => ({ code: -1, stdout: "", stderr: "" }));
+            const sourceManifest = path.join(sysroot.stdout.trim(), "lib", "rustlib", "src", "rust", "library", "Cargo.toml");
+            const pathExists = opts.pathExists ?? (async (candidate) => fsp.access(candidate).then(() => true, () => false));
+            if (sysroot.code !== 0 || !(await pathExists(sourceManifest))) {
+                componentsMatch = false;
+                log("solo-toolchain-cache: component payload probe failed component=rust-src");
+            }
+        }
+    }
+    return { match: releaseMatch && targetsMatch && componentsMatch, observedRelease };
 }
 
 
@@ -52452,6 +54615,204 @@ async function saveReservedCache(options) {
 }
 function isReservationConflict(result) {
     return result.status === "skipped-reservation";
+}
+
+
+/***/ }),
+
+/***/ 82947:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Soldr smoke-test. Owned by Agent 2.
+//
+// Port of .github/actions/setup-soldr/verify_soldr.py.
+// Runs `soldr version --json` and asserts the binary is on PATH, returns
+// the resolved version string for the action output.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.versionTuple = versionTuple;
+exports.parseVersionJsonOutput = parseVersionJsonOutput;
+exports.verifySoldr = verifySoldr;
+const exec = __importStar(__nccwpck_require__(95236));
+const log_utils_js_1 = __nccwpck_require__(28129);
+function versionTuple(value) {
+    const cleaned = value.trim().replace(/^v/, "");
+    const parts = cleaned.split(".");
+    if (parts.length < 3)
+        return null;
+    const major = parseInt(parts[0] ?? "", 10);
+    const minor = parseInt(parts[1] ?? "", 10);
+    const rawPatch = parts[2] ?? "";
+    const patchStr = rawPatch.split("-", 1)[0] ?? "";
+    const patch = parseInt(patchStr, 10);
+    if (!Number.isFinite(major) || !Number.isFinite(minor) || !Number.isFinite(patch))
+        return null;
+    if (Number.isNaN(major) || Number.isNaN(minor) || Number.isNaN(patch))
+        return null;
+    return { major, minor, patch };
+}
+function compareVersions(a, b) {
+    if (a.major !== b.major)
+        return a.major - b.major;
+    if (a.minor !== b.minor)
+        return a.minor - b.minor;
+    return a.patch - b.patch;
+}
+function isTransientZccacheStatusFailure(combined) {
+    const lower = combined.toLowerCase();
+    return lower.includes("zccache status failed") && lower.includes("daemon not running");
+}
+/**
+ * Parse the stdout of `soldr version --json` into a JSON object,
+ * defensively against both failure shapes seen in the wild:
+ *
+ * - soldr v0.7.85 and v0.7.87 shipped release binaries that exit 0 while
+ *   printing nothing at all, for every subcommand (upstream silent-binary
+ *   regression; fixed in v0.7.89). Bare `JSON.parse("")` surfaced that as
+ *   the cryptic "Unexpected end of JSON input", which downstream consumers
+ *   (e.g. FastLED/fbuild) misread as a version-JSON schema incompatibility.
+ *   Empty output now gets a targeted, actionable error instead.
+ * - Extra human-readable lines before/after the JSON body (progress notes,
+ *   update hints a future soldr may print) are tolerated by falling back to
+ *   the outermost `{...}` span when the raw output does not parse directly.
+ *
+ * Extra or missing fields inside the object remain the caller's concern —
+ * only JSON syntax is enforced here.
+ */
+function parseVersionJsonOutput(stdout) {
+    const trimmed = stdout.trim();
+    if (!trimmed) {
+        throw new Error("soldr version --json produced no output (binary exited 0 silently). " +
+            "soldr v0.7.85 and v0.7.87 shipped broken release binaries that print " +
+            "nothing for every command — pin soldr 0.7.89 or newer " +
+            "(the version --json shape itself is unchanged since 0.7.35).");
+    }
+    let firstError;
+    try {
+        return asJsonObject(JSON.parse(trimmed));
+    }
+    catch (err) {
+        firstError = err;
+    }
+    // Tolerate surrounding non-JSON noise: retry on the outermost {...} span.
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+        try {
+            return asJsonObject(JSON.parse(trimmed.slice(start, end + 1)));
+        }
+        catch {
+            // fall through to the descriptive error below
+        }
+    }
+    const snippet = trimmed.length > 300 ? `${trimmed.slice(0, 300)}...` : trimmed;
+    throw new Error(`soldr version --json returned non-JSON output: ${firstError.message}\n` +
+        `raw output: ${snippet}`);
+}
+function asJsonObject(value) {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+        throw new Error("payload is not a JSON object");
+    }
+    return value;
+}
+async function captureAll(command, args) {
+    let stdout = "";
+    let combined = "";
+    const code = await exec.exec(command, args, {
+        silent: true,
+        ignoreReturnCode: true,
+        listeners: {
+            stdout: (data) => {
+                const s = data.toString("utf8");
+                stdout += s;
+                combined += s;
+            },
+            stderr: (data) => {
+                combined += data.toString("utf8");
+            },
+        },
+    });
+    return { code, stdout, combined };
+}
+async function verifySoldr(opts) {
+    const logger = (0, log_utils_js_1.createLogger)(process.env);
+    const log = (msg) => logger.log(msg);
+    const { soldrPath, buildCacheMode, requireRustPlan } = opts;
+    log(`Verifying soldr at ${soldrPath}`);
+    const { code, stdout, combined } = await captureAll(soldrPath, ["version", "--json"]);
+    if (code !== 0) {
+        throw new Error(`soldr version --json failed (exit ${code}):\n${combined}`);
+    }
+    const payload = parseVersionJsonOutput(stdout);
+    const soldrVersion = String(payload["soldr_version"] ?? "");
+    if (!soldrVersion) {
+        throw new Error("soldr version --json missing soldr_version field");
+    }
+    if (opts.minimumVersion) {
+        const parsed = versionTuple(soldrVersion);
+        const required = versionTuple(opts.minimumVersion);
+        if (!parsed || !required || parsed.major < required.major || (parsed.major === required.major && (parsed.minor < required.minor || (parsed.minor === required.minor && parsed.patch < required.patch)))) {
+            throw new Error(`cross-targets requires soldr ${opts.minimumVersion} or newer; installed ${soldrVersion}`);
+        }
+    }
+    if (requireRustPlan) {
+        const parsed = versionTuple(soldrVersion);
+        const required = { major: 0, minor: 7, patch: 10 };
+        if (parsed === null || compareVersions(parsed, required) < 0) {
+            throw new Error(`setup-soldr build-cache-mode ${JSON.stringify(buildCacheMode || "thin")} requires soldr v0.7.10 or newer for the zccache Rust artifact plan API; installed ${soldrVersion}.`);
+        }
+    }
+    // Smoke checks. cargo/rustc exit codes ignored — they're informational.
+    await exec.exec("cargo", ["--version"], { ignoreReturnCode: true });
+    await exec.exec("rustc", ["--version"], { ignoreReturnCode: true });
+    log("+ soldr status --json");
+    const status = await captureAll("soldr", ["status", "--json"]);
+    if (status.code === 0) {
+        if (status.stdout.trim()) {
+            for (const line of status.stdout.split(/\r?\n/)) {
+                if (line)
+                    log(line);
+            }
+        }
+    }
+    else if (!isTransientZccacheStatusFailure(status.combined)) {
+        throw new Error(`soldr status --json failed (exit ${status.code}):\n${status.combined}`);
+    }
+    return { soldrVersion };
 }
 
 
@@ -53922,10 +56283,34 @@ async function run() {
         const soloMatchedKey = core.getState("soloToolchainMatchedKey");
         const soloExactHit = core.getState("soloToolchainExactHit") === "true";
         const soloIncrementalEmpty = core.getState("soloToolchainIncrementalEmpty") === "true";
+        const soloRestoreInvalid = core.getState("soloToolchainRestoreInvalid") === "true";
+        const soloInvalidMatchedKey = core.getState("soloToolchainInvalidMatchedKey");
         const soloSaveDiffPath = core.getState("soloToolchainSaveDiffPath");
         const soloLevel = core.getState("soloToolchainLevel") || "9"; // #310
         log(`solo-toolchain-cache: post-step exactKey=${soloExactKey} matched=${soloMatchedKey} ` +
-            `exactHit=${soloExactHit} incrementalEmpty=${soloIncrementalEmpty} saveDiffPath=${soloSaveDiffPath}`);
+            `exactHit=${soloExactHit} restoreInvalid=${soloRestoreInvalid} ` +
+            `incrementalEmpty=${soloIncrementalEmpty} saveDiffPath=${soloSaveDiffPath}`);
+        const [soloRepoOwner, soloRepoName] = (process.env["GITHUB_REPOSITORY"] ?? "").trim().split("/");
+        const soloCacheToken = (process.env["GITHUB_TOKEN"] ?? "").trim() ||
+            (process.env["INPUT_TOKEN"] ?? "").trim();
+        const soloCacheRef = (process.env["GITHUB_REF"] ?? "").trim();
+        let repairDeletionComplete = false;
+        if (soloRestoreInvalid) {
+            const deletion = await (0, solo_toolchain_cache_js_1.deleteCorruptSoloCacheEntries)({
+                owner: soloRepoOwner ?? "",
+                repo: soloRepoName ?? "",
+                token: soloCacheToken,
+                key: soloInvalidMatchedKey,
+                ref: soloCacheRef,
+                log,
+            });
+            repairDeletionComplete = deletion.failed === 0 && deletion.deleted === deletion.found;
+            if (deletion.failed > 0 || deletion.deleted < deletion.found) {
+                core.warning(`solo-toolchain-cache: could not fully delete poisoned key=${soloInvalidMatchedKey}; ` +
+                    `found=${deletion.found} deleted=${deletion.deleted} failed=${deletion.failed}. ` +
+                    `The workflow token needs actions: write permission for automatic repair (#473).`);
+            }
+        }
         // #313: pre-save lookupOnly probe. When several parallel jobs in
         // the same workflow all enable solo-toolchain-cache with the SAME
         // key (rustc × components × targets × soldr-version), each one
@@ -53933,7 +56318,7 @@ async function run() {
         // to reject all-but-one with id=-1. The wasted uploads dominate
         // the post-step (~100 s × N parallel jobs).
         let raceSkipped = false;
-        if (!(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
+        if (!soloRestoreInvalid && !(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
             try {
                 const probeStart = Date.now();
                 // #316: probe MUST use the same paths array that the actual
@@ -53975,13 +56360,20 @@ async function run() {
         }
         else if (!soloSaveDiffPath || !fs.existsSync(soloSaveDiffPath)) {
             log("solo-toolchain-cache: no save-diff manifest available, skipping save");
+            if (soloRestoreInvalid) {
+                core.setFailed("solo-toolchain-cache: repaired a poisoned restore but has no replacement manifest (#473)");
+            }
         }
         else {
             try {
                 const manifest = JSON.parse(fs.readFileSync(soloSaveDiffPath, "utf8"));
                 const added = Array.isArray(manifest.added) ? manifest.added : [];
-                if (added.length === 0) {
+                const changed = Array.isArray(manifest.changed) ? manifest.changed : [];
+                if (added.length === 0 && changed.length === 0) {
                     log("solo-toolchain-cache: empty save-diff manifest, skipping save");
+                    if (soloRestoreInvalid) {
+                        core.setFailed("solo-toolchain-cache: repaired a poisoned restore but replacement manifest is empty (#473)");
+                    }
                 }
                 else {
                     const soloRootMap = {
@@ -53996,8 +56388,13 @@ async function run() {
                     // empty and the cache hit looks like a miss.
                     const stagingDir = path.join(runnerTemp, "setup-soldr-solo-cache", "staged");
                     const soloSaveStart = Date.now();
-                    const staged = await (0, solo_toolchain_cache_js_1.stageDiffForSave)({ added, removed: [], changed: [] }, soloRootMap, stagingDir);
-                    log(`solo-toolchain-cache: staged ${staged.stagedFiles} files (missing=${staged.missingFiles})`);
+                    const staged = await (0, solo_toolchain_cache_js_1.stageDiffForSave)({ added, removed: [], changed }, soloRootMap, stagingDir);
+                    log(`solo-toolchain-cache: staged ${staged.stagedFiles} files and ${staged.stagedSymlinks} symlinks (missing=${staged.missingFiles})`);
+                    if (soloRestoreInvalid && (staged.missingFiles > 0 || staged.stagedFiles + staged.stagedSymlinks === 0)) {
+                        core.setFailed(`solo-toolchain-cache: refusing incomplete repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
+                            `files=${staged.stagedFiles} symlinks=${staged.stagedSymlinks} missing=${staged.missingFiles}`);
+                        throw new Error("repaired solo-toolchain staging was incomplete");
+                    }
                     const saveResult = await (0, solo_toolchain_cache_js_1.saveSoloCache)({
                         stagingDir,
                         key: soloExactKey,
@@ -54009,6 +56406,17 @@ async function run() {
                         // restoreSoloCache uses, ensuring @actions/cache version
                         // hash agrees and restore can find the entry.
                         cacheArchivePath: (0, solo_toolchain_cache_js_1.soloCacheArchivePath)(runnerTemp),
+                        skipExistingProbe: soloRestoreInvalid,
+                        lookupExactKey: soloRestoreInvalid && repairDeletionComplete
+                            ? async () => (await (0, solo_toolchain_cache_js_1.soloCacheEntryExistsForRef)({
+                                owner: soloRepoOwner ?? "",
+                                repo: soloRepoName ?? "",
+                                token: soloCacheToken,
+                                key: soloExactKey,
+                                ref: soloCacheRef,
+                                log,
+                            })) ? soloExactKey : undefined
+                            : undefined,
                     });
                     // #269: always record so the post-step save table shows
                     // skipped/race-precheck/etc layers too, not just saved ones.
@@ -54026,13 +56434,23 @@ async function run() {
                         durationMs: Date.now() - soloSaveStart,
                         timestamp: new Date().toISOString(),
                     });
-                    if (saveResult.status !== "saved") {
+                    const repairRaceWonElsewhere = soloRestoreInvalid &&
+                        saveResult.status === "race-precheck-skipped" && repairDeletionComplete;
+                    if (saveResult.status !== "saved" && !repairRaceWonElsewhere) {
                         log(`solo-toolchain-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
+                        if (soloRestoreInvalid) {
+                            core.setFailed(`solo-toolchain-cache: failed to publish repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
+                                `${saveResult.status}${saveResult.error ? ` (${saveResult.error})` : ""}`);
+                        }
                     }
                 }
             }
             catch (err) {
                 log(`solo-toolchain-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
+                if (soloRestoreInvalid) {
+                    core.setFailed(`solo-toolchain-cache: failed to publish repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
+                        `${err instanceof Error ? err.message : String(err)}`);
+                }
             }
         }
     }
@@ -69774,6 +72192,24 @@ exports.StorageContextClient = StorageContextClient;
 
 /***/ }),
 
+/***/ 83627:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.KnownEncryptionAlgorithmType = void 0;
+/** Known values of {@link EncryptionAlgorithmType} that the service accepts. */
+var KnownEncryptionAlgorithmType;
+(function (KnownEncryptionAlgorithmType) {
+    KnownEncryptionAlgorithmType["AES256"] = "AES256";
+})(KnownEncryptionAlgorithmType || (exports.KnownEncryptionAlgorithmType = KnownEncryptionAlgorithmType = {}));
+//# sourceMappingURL=generatedModels.js.map
+
+/***/ }),
+
 /***/ 30247:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -80100,6 +82536,132 @@ exports.listType = {
 
 /***/ }),
 
+/***/ 56635:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=appendBlob.js.map
+
+/***/ }),
+
+/***/ 68355:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blob.js.map
+
+/***/ }),
+
+/***/ 17188:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=blockBlob.js.map
+
+/***/ }),
+
+/***/ 15337:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=container.js.map
+
+/***/ }),
+
+/***/ 82354:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const tslib_1 = __nccwpck_require__(61860);
+tslib_1.__exportStar(__nccwpck_require__(26865), exports);
+tslib_1.__exportStar(__nccwpck_require__(15337), exports);
+tslib_1.__exportStar(__nccwpck_require__(68355), exports);
+tslib_1.__exportStar(__nccwpck_require__(14400), exports);
+tslib_1.__exportStar(__nccwpck_require__(56635), exports);
+tslib_1.__exportStar(__nccwpck_require__(17188), exports);
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 14400:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=pageBlob.js.map
+
+/***/ }),
+
+/***/ 26865:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/*
+ * Copyright (c) Microsoft Corporation.
+ * Licensed under the MIT License.
+ *
+ * Code generated by Microsoft (R) AutoRest Code Generator.
+ * Changes may cause incorrect behavior and will be lost if the code is regenerated.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=service.js.map
+
+/***/ }),
+
 /***/ 40535:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -83315,132 +85877,6 @@ const filterBlobsOperationSpec = {
 
 /***/ }),
 
-/***/ 56635:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=appendBlob.js.map
-
-/***/ }),
-
-/***/ 68355:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blob.js.map
-
-/***/ }),
-
-/***/ 17188:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=blockBlob.js.map
-
-/***/ }),
-
-/***/ 15337:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=container.js.map
-
-/***/ }),
-
-/***/ 82354:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tslib_1 = __nccwpck_require__(61860);
-tslib_1.__exportStar(__nccwpck_require__(26865), exports);
-tslib_1.__exportStar(__nccwpck_require__(15337), exports);
-tslib_1.__exportStar(__nccwpck_require__(68355), exports);
-tslib_1.__exportStar(__nccwpck_require__(14400), exports);
-tslib_1.__exportStar(__nccwpck_require__(56635), exports);
-tslib_1.__exportStar(__nccwpck_require__(17188), exports);
-//# sourceMappingURL=index.js.map
-
-/***/ }),
-
-/***/ 14400:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=pageBlob.js.map
-
-/***/ }),
-
-/***/ 26865:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-//# sourceMappingURL=service.js.map
-
-/***/ }),
-
 /***/ 5313:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -83511,24 +85947,6 @@ class StorageClient extends coreHttpCompat.ExtendedServiceClient {
 }
 exports.StorageClient = StorageClient;
 //# sourceMappingURL=storageClient.js.map
-
-/***/ }),
-
-/***/ 83627:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.KnownEncryptionAlgorithmType = void 0;
-/** Known values of {@link EncryptionAlgorithmType} that the service accepts. */
-var KnownEncryptionAlgorithmType;
-(function (KnownEncryptionAlgorithmType) {
-    KnownEncryptionAlgorithmType["AES256"] = "AES256";
-})(KnownEncryptionAlgorithmType || (exports.KnownEncryptionAlgorithmType = KnownEncryptionAlgorithmType = {}));
-//# sourceMappingURL=generatedModels.js.map
 
 /***/ }),
 

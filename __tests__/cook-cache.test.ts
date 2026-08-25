@@ -20,7 +20,10 @@ import {
   isCookMode,
   canonicalizeCookFlags,
   layeredCookDeltaReady,
+  loadLayeredCookCache,
   parseCookFlags,
+  restoreCookCache,
+  restoreLayeredCookCacheArchives,
   supportsLayeredCookCache,
 } from "../src/lib/cook-cache.js";
 
@@ -206,6 +209,138 @@ test("layeredCookDeltaReady accepts loaded restore-key delta matches", () => {
     ),
     true,
   );
+});
+
+test("#475 single cook restore rejects a matched zero-byte archive with a warning", async () => {
+  const root = mkTmp("cook-zero-archive-");
+  const archivePath = path.join(root, "cook.tar.zst");
+  const warnings: string[] = [];
+  try {
+    const result = await restoreCookCache({
+      exactKey: "cook-exact",
+      archivePath,
+      targetDir: path.join(root, "target"),
+      longWindow: 27,
+      debug: false,
+      log: () => {},
+      warn: (message) => warnings.push(message),
+      restoreCache: async (paths, key) => {
+        fs.writeFileSync(paths[0]!, Buffer.alloc(0));
+        return key;
+      },
+    });
+    assert.deepEqual(result, { hit: false, matchedKey: "", archiveBytes: 0 });
+    assert.ok(warnings.some((line) => line.includes("cook-exact") && line.includes("archive=0B")));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("#475 layered cook restore rejects matched zero-byte archives before soldr load", async () => {
+  const root = mkTmp("cook-layer-zero-");
+  const warnings: string[] = [];
+  try {
+    const result = await restoreLayeredCookCacheArchives({
+      baseKey: "base-exact",
+      deltaKey: "delta-exact",
+      baseArchivePath: path.join(root, "base.tar.zst"),
+      deltaArchivePath: path.join(root, "delta.tar.zst"),
+      log: () => {},
+      warn: (message) => warnings.push(message),
+      restoreCache: async (paths, key) => {
+        fs.writeFileSync(paths[0]!, Buffer.alloc(0));
+        return key;
+      },
+    });
+    assert.equal(result.base.hit, false);
+    assert.equal(result.base.matchedKey, "");
+    assert.equal(result.delta.hit, false);
+    assert.equal(result.delta.matchedKey, "");
+    assert.ok(warnings.some((line) => line.includes("cook-cache-base:") && line.includes("base-exact")));
+    assert.ok(warnings.some((line) => line.includes("cook-cache-delta:") && line.includes("delta-exact")));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("#475 single cook restore rejects a non-empty archive that extracts no payload", async () => {
+  const root = mkTmp("cook-empty-extract-");
+  const archivePath = path.join(root, "cook.tar.zst");
+  const warnings: string[] = [];
+  try {
+    const result = await restoreCookCache({
+      exactKey: "cook-truncated",
+      archivePath,
+      targetDir: path.join(root, "target"),
+      longWindow: 27,
+      debug: false,
+      log: () => {},
+      warn: (message) => warnings.push(message),
+      restoreCache: async (paths, key) => {
+        fs.writeFileSync(paths[0]!, Buffer.from([0x1f, 0x8b, 0x08]));
+        return key;
+      },
+      decompress: async () => ({ archiveBytes: 3, inflatedBytes: 0, fileCount: 0 }),
+    });
+    assert.equal(result.hit, false);
+    assert.equal(result.matchedKey, "");
+    assert.ok(warnings.some((line) => line.includes("extracted_files=0")));
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("#475 layered cook rejects a successful base load with a missing structural report", async () => {
+  const warnings: string[] = [];
+  const loaded = await loadLayeredCookCache({
+    soldrBinary: "soldr",
+    projectRoot: ".",
+    targetDir: "target",
+    baseArchivePath: "base.tar.zst",
+    deltaArchivePath: "delta.tar.zst",
+    baseManifestPath: "base.pb",
+    restore: {
+      base: { hit: true, matchedKey: "base", archivePath: "base.tar.zst", archiveBytes: 10 },
+      delta: { hit: true, matchedKey: "delta", archivePath: "delta.tar.zst", archiveBytes: 10 },
+    },
+    log: () => {},
+    warn: (message) => warnings.push(message),
+    runSoldrJson: async () => ({ code: 0, stdout: "", stderr: "", payload: {} }),
+  });
+  assert.equal(loaded.baseLoaded, false);
+  assert.equal(loaded.deltaLoaded, false);
+  assert.ok(warnings.some((line) => line.includes("cook-cache-base") && line.includes("missing")));
+});
+
+test("#475 layered cook rejects a delta load that reports zero restored files", async () => {
+  const warnings: string[] = [];
+  let calls = 0;
+  const loaded = await loadLayeredCookCache({
+    soldrBinary: "soldr",
+    projectRoot: ".",
+    targetDir: "target",
+    baseArchivePath: "base.tar.zst",
+    deltaArchivePath: "delta.tar.zst",
+    baseManifestPath: "base.pb",
+    restore: {
+      base: { hit: true, matchedKey: "base", archivePath: "base.tar.zst", archiveBytes: 10 },
+      delta: { hit: true, matchedKey: "delta", archivePath: "delta.tar.zst", archiveBytes: 10 },
+    },
+    log: () => {},
+    warn: (message) => warnings.push(message),
+    runSoldrJson: async () => {
+      calls += 1;
+      return {
+        code: 0,
+        stdout: "",
+        stderr: "",
+        payload: { cache_files_restored: calls === 1 ? 5 : 0 },
+      };
+    },
+  });
+  assert.equal(loaded.baseLoaded, true);
+  assert.equal(loaded.deltaLoaded, false);
+  assert.ok(warnings.some((line) => line.includes("cook-cache-delta") && line.includes("=0")));
 });
 
 test("supportsLayeredCookCache gates soldr versions", () => {
