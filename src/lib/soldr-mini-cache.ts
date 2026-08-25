@@ -25,6 +25,7 @@ import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 import * as cache from "@actions/cache";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
+import { installedSoldrReleaseIsUsable } from "./ensure-soldr.js";
 
 export interface MiniCacheKeyParts {
   runnerOs: string;
@@ -40,6 +41,13 @@ export interface MiniCacheRestoreOpts {
   longWindow: number;
   debug: boolean;
   log: (msg: string) => void;
+  warn?: (msg: string) => void;
+  binaryPath: string;
+  expectedVersion: string;
+  /** Test seams for exercising corrupted cache payloads without the cache service. */
+  restoreCache?: typeof cache.restoreCache;
+  decompress?: typeof decompressCache;
+  verifyBinary?: (binaryPath: string, expectedVersion: string) => Promise<boolean>;
 }
 
 export interface MiniCacheRestoreResult {
@@ -75,6 +83,13 @@ export interface MiniCacheSaveResult {
 // repair it in place, so the namespace bump side-steps the stale entries.
 const MINI_KEY_PREFIX = "soldr-mini-v2";
 
+export async function verifyMiniCacheBinary(
+  binaryPath: string,
+  expectedVersion: string,
+): Promise<boolean> {
+  return installedSoldrReleaseIsUsable(binaryPath, expectedVersion);
+}
+
 /**
  * Build the mini-cache key. Deliberately coarse — only the dimensions
  * that change soldr's binary content. No toolchain hash, no Cargo.lock,
@@ -99,12 +114,14 @@ export function buildMiniCacheKey(parts: MiniCacheKeyParts): string {
  */
 export async function restoreMiniCache(opts: MiniCacheRestoreOpts): Promise<MiniCacheRestoreResult> {
   const { exactKey, installDir, archivePath, longWindow, log } = opts;
+  const warn = opts.warn ?? log;
+  const restore = opts.restoreCache ?? cache.restoreCache;
   await fsp.mkdir(installDir, { recursive: true });
   await fsp.mkdir(path.dirname(archivePath), { recursive: true });
   await fsp.rm(archivePath, { force: true });
   let matched: string | undefined;
   try {
-    matched = await cache.restoreCache([archivePath], exactKey);
+    matched = await restore([archivePath], exactKey);
   } catch (err) {
     log(`soldr-mini-cache: restore threw: ${err instanceof Error ? err.message : String(err)}`);
     return { hit: false, matchedKey: "", archiveBytes: 0 };
@@ -117,7 +134,12 @@ export async function restoreMiniCache(opts: MiniCacheRestoreOpts): Promise<Mini
   try {
     archiveBytes = (await fsp.stat(archivePath)).size;
   } catch {
-    return { hit: false, matchedKey: matched, archiveBytes: 0 };
+    warn(`soldr-mini-cache: matched key ${matched} produced an unusable payload: archive=0B (missing); treating as miss`);
+    return { hit: false, matchedKey: "", archiveBytes: 0 };
+  }
+  if (archiveBytes === 0) {
+    warn(`soldr-mini-cache: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
+    return { hit: false, matchedKey: "", archiveBytes: 0 };
   }
   // Codec sniff stays for the legacy plaintext path. Encrypted archives
   // produce magic="unknown" here, so we additionally let decompressCache
@@ -125,11 +147,14 @@ export async function restoreMiniCache(opts: MiniCacheRestoreOpts): Promise<Mini
   const magic = await detectCompressMagic(archivePath);
   const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
   if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
-    log(`soldr-mini-cache: archive has unknown codec, treating as miss`);
+    warn(
+      `soldr-mini-cache: matched key ${matched} produced an unusable payload: ` +
+      `archive=${archiveBytes}B codec=unknown; treating as miss`,
+    );
     return { hit: false, matchedKey: matched, archiveBytes };
   }
   try {
-    await decompressCache({
+    const decompressed = await (opts.decompress ?? decompressCache)({
       archivePath,
       targetDir: installDir,
       longWindow,
@@ -137,9 +162,31 @@ export async function restoreMiniCache(opts: MiniCacheRestoreOpts): Promise<Mini
       debug: opts.debug,
       cacheKey: exactKey,
     });
+    if (decompressed.fileCount === 0) {
+      warn(
+        `soldr-mini-cache: matched key ${matched} produced an unusable payload: ` +
+        `archive=${archiveBytes}B extracted_files=${decompressed.fileCount} ` +
+        `extracted_bytes=${decompressed.inflatedBytes}; treating as miss`,
+      );
+      return { hit: false, matchedKey: "", archiveBytes };
+    }
   } catch (err) {
-    log(`soldr-mini-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `soldr-mini-cache: matched key ${matched} produced an unusable payload: ` +
+      `archive=${archiveBytes}B decompress failed: ${err instanceof Error ? err.message : String(err)}; treating as miss`,
+    );
     return { hit: false, matchedKey: matched, archiveBytes };
+  }
+  const binaryValid = await (opts.verifyBinary ?? verifyMiniCacheBinary)(
+    opts.binaryPath,
+    opts.expectedVersion,
+  );
+  if (!binaryValid) {
+    warn(
+      `soldr-mini-cache: matched key ${matched} produced an unusable payload: ` +
+      `soldr binary is missing, corrupt, or not version ${opts.expectedVersion}; treating as miss`,
+    );
+    return { hit: false, matchedKey: "", archiveBytes };
   }
   log(`soldr-mini-cache: restored matched=${matched} archive=${archiveBytes}B target=${installDir}`);
   return { hit: true, matchedKey: matched, archiveBytes };

@@ -298,7 +298,10 @@ export interface CargoRegistryArchiveResult {
 /** Injectable archive primitives keep payload orchestration independently testable. */
 export interface CargoRegistryArchiveOperations {
   saveRegistry: (cacheDir: string, archivePath: string) => Promise<boolean>;
-  restoreRegistry: (archivePath: string, targetDir: string) => Promise<boolean>;
+  restoreRegistry: (
+    archivePath: string,
+    targetDir: string,
+  ) => Promise<{ used: boolean; restoredFiles: number | null; restoredBytes: number | null }>;
   saveExtras: (cargoHome: string, extras: string[], archivePath: string) => Promise<void>;
   restoreExtras: (cargoHome: string, archivePath: string) => Promise<void>;
 }
@@ -398,13 +401,12 @@ export async function restoreCargoRegistryArchive(input: {
   if (!semverGte(input.soldrVersion, MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP)) {
     return { used: false, codecPath: "unsupported", archiveBytes: 0, restoredBytes: 0, restoredFiles: 0, durationMs: 0 };
   }
-  const registryLoaded = input.operations?.restoreRegistry
+  const registryRestore = input.operations?.restoreRegistry
     ? await input.operations.restoreRegistry(
         input.plan.registryArchivePath,
         path.join(input.cargoHome, "registry"),
       )
-    : (
-        await tryLoadViaSoldr({
+    : await tryLoadViaSoldr({
           archivePath: input.plan.registryArchivePath,
           targetDir: path.join(input.cargoHome, "registry"),
           soldrPath: input.soldrPath,
@@ -412,10 +414,15 @@ export async function restoreCargoRegistryArchive(input: {
           autoDefenderExclude: input.autoDefenderExclude,
           debug: input.debug,
           log: input.log,
-        })
-      ).used;
-  if (!registryLoaded) {
+        });
+  if (!registryRestore.used) {
     throw new Error("Soldr v2 cargo-registry archive is corrupt or incompatible");
+  }
+  const restoredFiles = registryRestore.restoredFiles;
+  if (typeof restoredFiles !== "number" || !Number.isInteger(restoredFiles) || restoredFiles <= 0) {
+    throw new Error(
+      "Soldr v2 cargo-registry archive is unusable: restore reported no files",
+    );
   }
   if (await exists(input.plan.extrasArchivePath)) {
     if (input.operations?.restoreExtras) {
@@ -428,13 +435,12 @@ export async function restoreCargoRegistryArchive(input: {
   const extrasBytes = await exists(input.plan.extrasArchivePath)
     ? (await fs.stat(input.plan.extrasArchivePath)).size
     : 0;
-  const stats = await payloadStats(input.cargoHome);
   return {
     used: true,
     codecPath: "soldr-v2",
     archiveBytes: registryBytes + extrasBytes,
-    restoredBytes: stats.bytes,
-    restoredFiles: stats.files,
+    restoredBytes: registryRestore.restoredBytes ?? 0,
+    restoredFiles,
     durationMs: Date.now() - started,
   };
 }

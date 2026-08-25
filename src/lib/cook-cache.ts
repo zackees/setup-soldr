@@ -74,6 +74,10 @@ export interface CookRestoreOpts {
   longWindow: number;
   debug: boolean;
   log: (msg: string) => void;
+  warn?: (msg: string) => void;
+  /** Test seams for exercising corrupted cache payloads without the cache service. */
+  restoreCache?: typeof cache.restoreCache;
+  decompress?: typeof decompressCache;
 }
 
 export interface CookRestoreResult {
@@ -96,6 +100,9 @@ export interface CookLayeredRestoreOpts {
   baseArchivePath: string;
   deltaArchivePath: string;
   log: (msg: string) => void;
+  warn?: (msg: string) => void;
+  /** Test seam for exercising corrupted cache payloads without the cache service. */
+  restoreCache?: typeof cache.restoreCache;
 }
 
 export interface CookLayeredRestoreResult {
@@ -128,6 +135,9 @@ export interface CookLayeredLoadOpts {
   baseManifestPath: string;
   restore: CookLayeredRestoreResult;
   log: (msg: string) => void;
+  warn?: (msg: string) => void;
+  /** Test seam for validating Soldr load reports without spawning a binary. */
+  runSoldrJson?: typeof runSoldrJson;
 }
 
 export function layeredCookBaseReady(
@@ -408,11 +418,13 @@ export async function runCook(opts: CookRunOpts): Promise<CookRunResult> {
  */
 export async function restoreCookCache(opts: CookRestoreOpts): Promise<CookRestoreResult> {
   const { exactKey, archivePath, targetDir, longWindow, log } = opts;
+  const warn = opts.warn ?? log;
+  const restore = opts.restoreCache ?? cache.restoreCache;
   await fsp.mkdir(path.dirname(archivePath), { recursive: true });
   await fsp.rm(archivePath, { force: true });
   let matched: string | undefined;
   try {
-    matched = await cache.restoreCache([archivePath], exactKey);
+    matched = await restore([archivePath], exactKey);
   } catch (err) {
     log(`cook-cache: restore failed: ${err instanceof Error ? err.message : String(err)}`);
     return { hit: false, matchedKey: "", archiveBytes: 0 };
@@ -425,19 +437,27 @@ export async function restoreCookCache(opts: CookRestoreOpts): Promise<CookResto
   try {
     archiveBytes = (await fsp.stat(archivePath)).size;
   } catch {
-    return { hit: false, matchedKey: matched, archiveBytes: 0 };
+    warn(`cook-cache: matched key ${matched} produced an unusable payload: archive=0B (missing); treating as miss`);
+    return { hit: false, matchedKey: "", archiveBytes: 0 };
+  }
+  if (archiveBytes === 0) {
+    warn(`cook-cache: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
+    return { hit: false, matchedKey: "", archiveBytes: 0 };
   }
   // SOLDRENC-framed (encrypted) archives appear as magic="unknown" here;
   // delegate the detection to decompressCache when a cache-encrypt-key is set.
   const magic = await detectCompressMagic(archivePath);
   const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
   if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
-    log(`cook-cache: restored archive has unknown codec, treating as miss`);
+    warn(
+      `cook-cache: matched key ${matched} produced an unusable payload: ` +
+      `archive=${archiveBytes}B codec=unknown; treating as miss`,
+    );
     return { hit: false, matchedKey: matched, archiveBytes };
   }
   await fsp.mkdir(targetDir, { recursive: true });
   try {
-    await decompressCache({
+    const decompressed = await (opts.decompress ?? decompressCache)({
       archivePath,
       targetDir,
       longWindow,
@@ -445,8 +465,19 @@ export async function restoreCookCache(opts: CookRestoreOpts): Promise<CookResto
       debug: opts.debug,
       cacheKey: exactKey,
     });
+    if (decompressed.fileCount === 0) {
+      warn(
+        `cook-cache: matched key ${matched} produced an unusable payload: ` +
+        `archive=${archiveBytes}B extracted_files=${decompressed.fileCount} ` +
+        `extracted_bytes=${decompressed.inflatedBytes}; treating as miss`,
+      );
+      return { hit: false, matchedKey: "", archiveBytes };
+    }
   } catch (err) {
-    log(`cook-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
+    warn(
+      `cook-cache: matched key ${matched} produced an unusable payload: ` +
+      `archive=${archiveBytes}B decompress failed: ${err instanceof Error ? err.message : String(err)}; treating as miss`,
+    );
     return { hit: false, matchedKey: matched, archiveBytes };
   }
   log(`cook-cache: restored matched=${matched} archive=${archiveBytes}B target=${targetDir}`);
@@ -467,12 +498,14 @@ async function restoreOneLayer(
   archivePath: string,
   restoreKeys: string[] | undefined,
   log: (msg: string) => void,
+  warn: (msg: string) => void,
+  restore: typeof cache.restoreCache,
 ): Promise<CookLayerRestoreInfo> {
   await fsp.mkdir(path.dirname(archivePath), { recursive: true });
   await fsp.rm(archivePath, { force: true });
   let matched: string | undefined;
   try {
-    matched = await cache.restoreCache([archivePath], key, restoreKeys ?? []);
+    matched = await restore([archivePath], key, restoreKeys ?? []);
   } catch (err) {
     log(`${label}: restore failed: ${err instanceof Error ? err.message : String(err)}`);
     return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
@@ -482,6 +515,10 @@ async function restoreOneLayer(
     return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
   }
   const bytes = await archiveSize(archivePath);
+  if (bytes === 0) {
+    warn(`${label}: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
+    return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
+  }
   const hit = matched === key;
   log(`${label}: restored matched=${matched} exact=${hit} archive=${bytes}B`);
   return { hit, matchedKey: matched, archivePath, archiveBytes: bytes };
@@ -490,6 +527,8 @@ async function restoreOneLayer(
 export async function restoreLayeredCookCacheArchives(
   opts: CookLayeredRestoreOpts,
 ): Promise<CookLayeredRestoreResult> {
+  const restore = opts.restoreCache ?? cache.restoreCache;
+  const warn = opts.warn ?? opts.log;
   // #295: parallel-restore base + delta instead of the previous serial
   // `await base; if (base.matchedKey) await delta` shape. The delta
   // key is independently computed (includes everything the base key
@@ -503,13 +542,15 @@ export async function restoreLayeredCookCacheArchives(
   // typical warm-cache case (zackees/setup-soldr#295 measurement on
   // Integration v0.9.30 rerun).
   const [base, delta] = await Promise.all([
-    restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log),
+    restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log, warn, restore),
     restoreOneLayer(
       "cook-cache-delta",
       opts.deltaKey,
       opts.deltaArchivePath,
       opts.deltaRestoreKeys ?? [],
       opts.log,
+      warn,
+      restore,
     ),
   ]);
   // Preserve the pre-#295 contract: when base missed, the delta is
@@ -604,6 +645,8 @@ async function loadOneLayer(opts: {
   archivePath: string;
   manifestOut?: string;
   log: (msg: string) => void;
+  warn: (msg: string) => void;
+  run: typeof runSoldrJson;
 }): Promise<{ loaded: boolean; report: CookLayerLoadReport | null }> {
   const args = [
     "load",
@@ -618,12 +661,19 @@ async function loadOneLayer(opts: {
   if (opts.manifestOut) {
     args.push("--manifest-out", opts.manifestOut);
   }
-  const run = await runSoldrJson(opts.soldrBinary, args, opts.projectRoot, opts.log);
-  if (run.code !== 0) {
-    opts.log(`${opts.label}: soldr load failed with exit ${run.code}`);
+  const result = await opts.run(opts.soldrBinary, args, opts.projectRoot, opts.log);
+  if (result.code !== 0) {
+    opts.warn(`${opts.label}: matched archive is unusable: soldr load failed with exit ${result.code}; treating as miss`);
     return { loaded: false, report: null };
   }
-  const report = loadReport(run.payload);
+  const report = loadReport(result.payload);
+  if (report.cacheFilesRestored === null || report.cacheFilesRestored <= 0) {
+    opts.warn(
+      `${opts.label}: matched archive is unusable: soldr load reported ` +
+      `cache_files_restored=${report.cacheFilesRestored ?? "missing"}; treating as miss`,
+    );
+    return { loaded: false, report };
+  }
   opts.log(
     `${opts.label}: loaded cache_files=${report.cacheFilesRestored ?? "?"} ` +
       `mtimes_applied=${report.mtimesApplied ?? "?"}`,
@@ -634,6 +684,8 @@ async function loadOneLayer(opts: {
 export async function loadLayeredCookCache(
   opts: CookLayeredLoadOpts,
 ): Promise<CookLayeredLoadResult> {
+  const warn = opts.warn ?? opts.log;
+  const run = opts.runSoldrJson ?? runSoldrJson;
   if (!opts.restore.base.matchedKey) {
     return { baseLoaded: false, deltaLoaded: false, baseReport: null, deltaReport: null };
   }
@@ -645,6 +697,8 @@ export async function loadLayeredCookCache(
     archivePath: opts.baseArchivePath,
     manifestOut: opts.baseManifestPath,
     log: opts.log,
+    warn,
+    run,
   });
   if (!base.loaded) {
     return {
@@ -669,6 +723,8 @@ export async function loadLayeredCookCache(
     targetDir: opts.targetDir,
     archivePath: opts.deltaArchivePath,
     log: opts.log,
+    warn,
+    run,
   });
   return {
     baseLoaded: true,

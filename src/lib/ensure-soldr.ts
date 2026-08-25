@@ -193,6 +193,35 @@ async function installedVersion(binaryPath: string): Promise<string | null> {
   }
 }
 
+/**
+ * Validate the complete cached release payload using the same contract as
+ * ensureSoldr's reuse path: executable version plus every required bundled
+ * companion for that release/install source.
+ */
+export async function installedSoldrReleaseIsUsable(
+  binaryPath: string,
+  expectedVersion: string,
+): Promise<boolean> {
+  const current = await installedVersion(binaryPath);
+  if (current === null || normalizeVersion(current) !== normalizeVersion(expectedVersion)) {
+    return false;
+  }
+  const installDir = path.dirname(binaryPath);
+  const binaryName = path.basename(binaryPath);
+  const installMetadata = loadReleaseInstallMetadata(installDir);
+  const { target } = detectTarget();
+  const isPypiWheelInstall =
+    installMetadata?.source === "pypi-wheel" &&
+    installMetadata.target === target &&
+    normalizeVersion(installMetadata.version ?? "") === normalizeVersion(expectedVersion);
+  return hasRequiredReleasePayload(
+    installDir,
+    binaryName,
+    expectedVersion,
+    !isPypiWheelInstall || bundledCargoChefVersionForSoldr(expectedVersion) !== null,
+  );
+}
+
 function sourceMetadataPath(installDir: string): string {
   return path.join(installDir, ".setup-soldr-source.json");
 }
