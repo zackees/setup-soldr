@@ -26,6 +26,13 @@ export interface BlessedPrepareCacheUse {
   save: boolean;
 }
 
+export interface BlessedPrepareRestoreValidation {
+  hit: boolean;
+  matchedKey: string;
+  archiveBytes: number;
+  archivesUsable: boolean;
+}
+
 const TRIPLE = /^[a-z0-9]+(?:_[a-z0-9]+)*-[a-z0-9]+(?:-[a-z0-9]+)+$/;
 
 export function parseSingleCrossTarget(raw: string): string | null {
@@ -136,6 +143,42 @@ export function decideBlessedPrepareCacheUse(input: {
     restore: effectiveExactHit || fallbackHit,
     save: input.enabled && !effectiveExactHit,
   };
+}
+
+/** A matched prepared cache is usable only when every expected archive is non-empty. */
+export function validateBlessedPrepareRestore(input: {
+  hit: boolean;
+  matchedKey: string;
+  archivePaths: string[];
+  exists?: (file: string) => boolean;
+  statSize?: (file: string) => number;
+  warn?: (message: string) => void;
+}): BlessedPrepareRestoreValidation {
+  const exists = input.exists ?? fs.existsSync;
+  const statSize = input.statSize ?? ((file: string) => fs.statSync(file).size);
+  let archiveBytes = 0;
+  let archivesUsable = input.archivePaths.length > 0;
+  for (const archivePath of input.archivePaths) {
+    try {
+      if (!exists(archivePath)) {
+        archivesUsable = false;
+        continue;
+      }
+      const bytes = statSize(archivePath);
+      archiveBytes += Math.max(0, bytes);
+      if (bytes <= 0) archivesUsable = false;
+    } catch {
+      archivesUsable = false;
+    }
+  }
+  if (input.matchedKey && !archivesUsable) {
+    input.warn?.(
+      `blessed-prepare-cache: matched key=${input.matchedKey} archive=${archiveBytes}B ` +
+      "but one or more prepared archives are missing or empty; treating as miss",
+    );
+    return { hit: false, matchedKey: "", archiveBytes, archivesUsable: false };
+  }
+  return { hit: input.hit, matchedKey: input.matchedKey, archiveBytes, archivesUsable };
 }
 
 export function assertMinimumSoldrVersion(version: string, minimum = "0.8.43"): void {

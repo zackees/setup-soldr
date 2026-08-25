@@ -209,7 +209,7 @@ jobs:
           lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
           linker: platform-default
 
-      - name: Require both dependency-closure transports
+      - name: Require usable dependency-closure transports
         shell: bash
         env:
           COOK_HIT: ${{ steps.setup.outputs.cook-cache-hit }}
@@ -222,9 +222,10 @@ jobs:
           set -euo pipefail
           test "$COOK_HIT" = true
           test "$BASE_HIT" = true
-          test "$DELTA_HIT" = true
+          # A matched delta that restores zero files is now an honest miss.
+          test "$DELTA_HIT" = false
           test "$REGISTRY_HIT" = true
-          test "$COOK_STATUS" = hit
+          test "$COOK_STATUS" = base-hit
           printf '%s\n' "$LOAD_REPORT" | python -m json.tool
           python - <<'PY'
           import json
@@ -232,6 +233,7 @@ jobs:
           report = json.loads(os.environ["LOAD_REPORT"])
           assert report["base"]["cacheFilesRestored"] > 0
           assert report["delta"] is not None
+          assert report["delta"]["cacheFilesRestored"] == 0
           assert isinstance(report["delta"]["mtimesApplied"], int)
           PY
 

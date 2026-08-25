@@ -141,6 +141,7 @@ async function main(): Promise<void> {
       baseArchivePath: plan.baseArchivePath,
       deltaArchivePath: plan.deltaArchivePath,
       log: (msg) => core.info(msg),
+      warn: (msg) => core.warning(msg),
     });
     const loaded = await loadLayeredCookCache({
       soldrBinary: soldrPath,
@@ -151,6 +152,7 @@ async function main(): Promise<void> {
       baseManifestPath: plan.baseManifestPath,
       restore,
       log: (msg) => core.info(msg),
+      warn: (msg) => core.warning(msg),
     });
     const baseReady = layeredCookBaseReady(restore, loaded);
     const deltaReady = layeredCookDeltaReady(restore, loaded);
@@ -188,6 +190,7 @@ async function main(): Promise<void> {
       longWindow: 27,
       debug,
       log: (msg) => core.info(msg),
+      warn: (msg) => core.warning(msg),
     });
     cacheHit = restore.hit;
     if (!restore.hit) {

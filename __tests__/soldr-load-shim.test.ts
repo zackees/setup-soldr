@@ -11,17 +11,30 @@ import {
   detectSoldrManifest,
   semverGte,
   tryLoadViaSoldr,
+  parseSoldrLoadReport,
   trySaveViaSoldr,
   cargoRegistryViaSoldrEnvOn,
   CARGO_REGISTRY_VIA_SOLDR_ENV,
   MIN_SOLDR_VERSION_FOR_LOAD,
   MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
 } from "../src/lib/soldr-load-shim.js";
+
 import {
   cargoRegistryArchiveFormat,
   planCargoRegistryArchive,
   cargoRegistryPayloadPaths,
 } from "../src/lib/cargo-registry-archive.js";
+
+test("#475 parses Soldr's authoritative restored-file report", () => {
+  assert.deepEqual(
+    parseSoldrLoadReport('diagnostic noise\n{"cache_files_restored":7,"cache_bytes_restored":1234}\n'),
+    { restoredFiles: 7, restoredBytes: 1234 },
+  );
+  assert.deepEqual(parseSoldrLoadReport('{"command":"load"}'), {
+    restoredFiles: null,
+    restoredBytes: null,
+  });
+});
 
 test("v2 cargo-registry plan owns registry and optional extras without CARGO_HOME", () => {
   const cargoHome = path.join("runner", "cargo-home");

@@ -75,6 +75,7 @@ import {
   decideBlessedPrepareCacheUse,
   executeBlessedPrepare,
   prepareTargetsFor,
+  validateBlessedPrepareRestore,
 } from "./lib/blessed-cross-prepare.js";
 import {
   type TargetLifecycleContract,
@@ -547,22 +548,30 @@ export async function run(): Promise<void> {
     // entry exists. post.ts saves `[archivePath]` (just the .tar.zst), so
     // restore must use the same single-path array. The decompression below
     // unpacks archivePath → buildCachePath afterwards.
-    const restore = await restoreCacheSafe(
+    let restore = await restoreCacheSafe(
       [archivePath],
       result.buildCache.key,
       restoreKeys,
       logger,
     );
-    core.setOutput("build-cache-hit", restore.hit ? "true" : "false");
-    core.setOutput("build-cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
-    core.setOutput("build_cache_hit", restore.hit ? "true" : "false");
-    core.setOutput("build_cache_matched_key", restore.matchedKey);
-    core.saveState("buildCacheExactHit", restore.hit ? "true" : "false");
-    core.saveState("buildCacheMatchedKey", restore.matchedKey);
     let buildArchiveBytes: number | null = null;
     let buildInflatedBytes: number | null = null;
     let buildFileCount: number | null = null;
-    if (fileExists(archivePath)) {
+    if (restore.matchedKey) {
+      try {
+        buildArchiveBytes = fs.statSync(archivePath).size;
+      } catch {
+        buildArchiveBytes = 0;
+      }
+      if (buildArchiveBytes === 0) {
+        logger.warning(
+          `build-cache: matched key ${restore.matchedKey} produced an unusable payload: ` +
+          `archive=0B; treating as miss`,
+        );
+        restore = { hit: false, matchedKey: "" };
+      }
+    }
+    if (restore.matchedKey && fileExists(archivePath)) {
       const magic = await detectCompressMagic(archivePath);
       const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
       if (magic === "zstd" || magic === "gzip" || haveEncryptKey) {
@@ -577,13 +586,34 @@ export async function run(): Promise<void> {
           buildArchiveBytes = dr.archiveBytes;
           buildInflatedBytes = dr.inflatedBytes;
           buildFileCount = dr.fileCount;
+          if (dr.fileCount === 0) {
+            logger.warning(
+              `build-cache: matched key ${restore.matchedKey} produced an unusable payload: ` +
+              `archive=${dr.archiveBytes}B extracted_files=0 extracted_bytes=${dr.inflatedBytes}; treating as miss`,
+            );
+            restore = { hit: false, matchedKey: "" };
+          }
         } catch (err) {
-          logger.log(
-            `build-cache decompress failed: ${err instanceof Error ? err.message : String(err)}`,
+          logger.warning(
+            `build-cache: matched key ${restore.matchedKey} produced an unusable payload: ` +
+            `archive=${buildArchiveBytes ?? 0}B decompress failed: ${err instanceof Error ? err.message : String(err)}; treating as miss`,
           );
+          restore = { hit: false, matchedKey: "" };
         }
+      } else {
+        logger.warning(
+          `build-cache: matched key ${restore.matchedKey} produced an unusable payload: ` +
+          `archive=${buildArchiveBytes ?? 0}B codec=unknown; treating as miss`,
+        );
+        restore = { hit: false, matchedKey: "" };
       }
     }
+    core.setOutput("build-cache-hit", restore.hit ? "true" : "false");
+    core.setOutput("build-cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
+    core.setOutput("build_cache_hit", restore.hit ? "true" : "false");
+    core.setOutput("build_cache_matched_key", restore.matchedKey);
+    core.saveState("buildCacheExactHit", restore.hit ? "true" : "false");
+    core.saveState("buildCacheMatchedKey", restore.matchedKey);
     // Source-mtime replay (preserve-source-mtimes opt-in). post.ts dropped
     // a `setup-soldr-source-mtimes.json` sidecar inside the build-cache
     // dir on the cold side; if it's present after decompress, walk it and
@@ -674,7 +704,12 @@ export async function run(): Promise<void> {
     const plan = result.blessedPrepareCache;
     if (!plan.enabled) return;
     const t0 = Date.now();
-    const restore = await restoreCacheSafe(plan.archivePaths, plan.key, plan.restoreKeys, logger);
+    const restored = await restoreCacheSafe(plan.archivePaths, plan.key, plan.restoreKeys, logger);
+    const restore = validateBlessedPrepareRestore({
+      ...restored,
+      archivePaths: plan.archivePaths,
+      warn: (message) => logger.warning(message),
+    });
     core.saveState("blessedPrepareCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("blessedPrepareCacheMatchedKey", restore.matchedKey);
     core.setOutput("blessed-prepare-cache-hit", restore.hit ? "true" : "false");
@@ -682,7 +717,7 @@ export async function run(): Promise<void> {
     statsCollector.record({
       label: "blessed-prepare-cache", operation: "restore", hit: restore.hit,
       key: plan.key, matchedKey: restore.matchedKey, restoreKeys: plan.restoreKeys,
-      archiveBytes: null, inflatedBytes: null, fileCount: null,
+      archiveBytes: restore.archiveBytes, inflatedBytes: null, fileCount: null,
       durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
     });
   })();
@@ -935,6 +970,7 @@ export async function run(): Promise<void> {
         baseArchivePath: cookBaseArchive,
         deltaArchivePath: cookDeltaArchive,
         log: (msg) => logger.log(msg),
+        warn: (msg) => logger.warning(msg),
       });
     } else {
       if (deltaRequested) {
@@ -955,6 +991,7 @@ export async function run(): Promise<void> {
         longWindow: 27,
         debug: debugMode,
         log: (msg) => logger.log(msg),
+        warn: (msg) => logger.warning(msg),
       });
     }
   }
@@ -1187,6 +1224,9 @@ export async function run(): Promise<void> {
       longWindow: 27,
       debug: debugMode,
       log: (msg) => logger.log(msg),
+      warn: (msg) => logger.warning(msg),
+      binaryPath: result.soldrPath,
+      expectedVersion: result.soldrVersionResolved || result.soldrVersionRequested,
     });
     miniHit = restore.hit;
     statsCollector.record({
@@ -1324,26 +1364,42 @@ export async function run(): Promise<void> {
           archiveBytes = archiveResult.archiveBytes;
           restoredBytes = archiveResult.restoredBytes;
           restoredFiles = archiveResult.restoredFiles;
-          logger.log(
-            `cargo-registry: extracted format=${archiveResult.codecPath} archive_bytes=${archiveBytes} restored_bytes=${restoredBytes} files=${restoredFiles} duration_ms=${archiveResult.durationMs}`,
-          );
+          if (archiveBytes === 0 || restoredFiles === 0) {
+            logger.warning(
+              `cargo-registry: matched key ${matched} produced an unusable payload: ` +
+              `archive=${archiveBytes}B extracted_files=${restoredFiles} ` +
+              `extracted_bytes=${restoredBytes}; treating as miss`,
+            );
+            markRegistryMiss();
+          } else {
+            logger.log(
+              `cargo-registry: extracted format=${archiveResult.codecPath} archive_bytes=${archiveBytes} restored_bytes=${restoredBytes} files=${restoredFiles} duration_ms=${archiveResult.durationMs}`,
+            );
+          }
         }
       } catch (err) {
-        if (
-          shouldSkipCargoRegistryExtractionError(
-            err,
-            result.cargoRegistryCache.archive.format,
-            process.env["SETUP_SOLDR_CACHE_ENCRYPT_ON_FAILURE"],
-          )
-        ) {
+        const errorCode = (err as NodeJS.ErrnoException | undefined)?.code;
+        const encryptionFailure = errorCode === "EAUTHFAIL" || errorCode === "EENCNOKEY";
+        const skipEncryptionFailure = shouldSkipCargoRegistryExtractionError(
+          err,
+          result.cargoRegistryCache.archive.format,
+          process.env["SETUP_SOLDR_CACHE_ENCRYPT_ON_FAILURE"],
+        );
+        if (skipEncryptionFailure) {
           core.warning(
             `cargo-registry encrypted archive could not be restored; cache-encrypt-on-failure=skip treats it as a cold miss: ${err instanceof Error ? err.message : String(err)}`,
           );
           markRegistryMiss();
-        } else {
+        } else if (encryptionFailure) {
           throw new Error(
             `cargo-registry archive extraction failed for ${registryDownload.hit ? "exact-hit" : "fallback-hit"} ${matched}: ${err instanceof Error ? err.message : String(err)}`,
           );
+        } else {
+          logger.warning(
+            `cargo-registry: matched key ${matched} produced an unusable payload: ` +
+            `${err instanceof Error ? err.message : String(err)}; treating as miss`,
+          );
+          markRegistryMiss();
         }
       }
     }
@@ -1374,7 +1430,9 @@ export async function run(): Promise<void> {
     const matchedKey = core.getState("blessedPrepareCacheMatchedKey");
     const prepareTargets = prepareTargetsFor(preparePlan.target);
     const archivesExist = preparePlan.archivePaths.length === prepareTargets.length
-      && preparePlan.archivePaths.every((archivePath) => fs.existsSync(archivePath));
+      && preparePlan.archivePaths.every(
+        (archivePath) => fs.existsSync(archivePath) && fs.statSync(archivePath).size > 0,
+      );
     const cacheUse = decideBlessedPrepareCacheUse({
       enabled: preparePlan.enabled,
       exactHit,
@@ -1434,6 +1492,7 @@ export async function run(): Promise<void> {
       baseManifestPath: cookBaseManifest,
       restore,
       log: (msg) => logger.log(msg),
+      warn: (msg) => logger.warning(msg),
     });
     const baseReady = layeredCookBaseReady(restore, loaded);
     const deltaReady = layeredCookDeltaReady(restore, loaded);

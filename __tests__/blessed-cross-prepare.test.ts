@@ -9,6 +9,7 @@ import {
   buildPrepareArgs,
   decideBlessedPrepareCacheUse,
   assertMinimumSoldrVersion,
+  validateBlessedPrepareRestore,
 } from "../src/lib/blessed-cross-prepare.js";
 
 test("one canonical target is normalized and merged before cache planning", () => {
@@ -114,4 +115,37 @@ test("fallback prepare restores old assets, fills gaps, and promotes the exact k
     }),
     { effectiveExactHit: true, fallbackHit: false, restore: true, save: false },
   );
+});
+
+test("#475 blessed-prepare rejects a matched zero-byte archive with a warning", () => {
+  const warnings: string[] = [];
+  const result = validateBlessedPrepareRestore({
+    hit: true,
+    matchedKey: "setup-soldr-prepare-v3-exact",
+    archivePaths: ["prepared.tar.zst"],
+    exists: () => true,
+    statSize: () => 0,
+    warn: (message) => warnings.push(message),
+  });
+  assert.deepEqual(result, {
+    hit: false,
+    matchedKey: "",
+    archiveBytes: 0,
+    archivesUsable: false,
+  });
+  assert.ok(warnings.some((line) => line.includes("setup-soldr-prepare-v3-exact") && line.includes("archive=0B")));
+});
+
+test("#475 blessed-prepare requires every universal2 archive to be non-empty", () => {
+  const result = validateBlessedPrepareRestore({
+    hit: false,
+    matchedKey: "setup-soldr-prepare-v3-fallback",
+    archivePaths: ["x86_64.tar.zst", "aarch64.tar.zst"],
+    exists: () => true,
+    statSize: (file) => file.startsWith("x86_64") ? 42 : 0,
+  });
+  assert.equal(result.hit, false);
+  assert.equal(result.matchedKey, "");
+  assert.equal(result.archiveBytes, 42);
+  assert.equal(result.archivesUsable, false);
 });

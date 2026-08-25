@@ -113,7 +113,7 @@ test("v2 round trip owns registry and Cargo extras but never unrelated CARGO_HOM
     },
     async restoreRegistry(_archivePath, targetDir) {
       await fs.cp(path.join(snapshot, "registry"), targetDir, { recursive: true });
-      return true;
+      return { used: true, restoredFiles: 1, restoredBytes: 16 };
     },
     async saveExtras(_cargoHome, extras, archivePath) {
       for (const extra of extras) {
@@ -161,7 +161,7 @@ test("v2 round trip owns registry and Cargo extras but never unrelated CARGO_HOM
     await fs.rm(path.join(cargoHome, "registry"), { recursive: true, force: true });
     await fs.rm(path.join(cargoHome, ".global-cache"), { force: true });
     await fs.rm(path.join(cargoHome, "git"), { recursive: true, force: true });
-    await restoreCargoRegistryArchive({
+    const restored = await restoreCargoRegistryArchive({
       plan,
       cargoHome,
       soldrPath: "fake-soldr",
@@ -169,11 +169,24 @@ test("v2 round trip owns registry and Cargo extras but never unrelated CARGO_HOM
       cacheKey: "v2-test-key",
       operations,
     });
+    assert.equal(restored.restoredFiles, 1);
 
     assert.equal(await fs.readFile(path.join(cargoHome, "registry", "crate.cache"), "utf8"), "registry payload");
     assert.equal(await fs.readFile(path.join(cargoHome, ".global-cache"), "utf8"), "cargo gc state");
     assert.equal(await fs.readFile(path.join(cargoHome, "git", "db", "HEAD"), "utf8"), "git payload");
     assert.equal(await fs.readFile(path.join(cargoHome, "credentials.toml"), "utf8"), "secret must stay local");
+
+    // A valid restore that overwrites an identical pre-existing file must
+    // retain the extractor's positive report instead of using a net tree delta.
+    const overwritten = await restoreCargoRegistryArchive({
+      plan,
+      cargoHome,
+      soldrPath: "fake-soldr",
+      soldrVersion: "0.7.47",
+      cacheKey: "v2-test-key",
+      operations,
+    });
+    assert.equal(overwritten.restoredFiles, 1);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }
@@ -201,12 +214,51 @@ test("missing optional extras are valid and corrupt v2 registry restores fail vi
           soldrVersion: "0.7.47",
           cacheKey: "exact-hit-key",
           operations: {
-            restoreRegistry: async () => false,
+            restoreRegistry: async () => ({ used: false, restoredFiles: null, restoredBytes: null }),
             restoreExtras: async () => undefined,
           },
         }),
       /corrupt or incompatible/,
     );
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+test("#475 v2 restore rejects missing or zero authoritative file reports before extras", async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "cargo-registry-report-"));
+  const cargoHome = path.join(root, "cargo-home");
+  const plan = planCargoRegistryArchive({
+    format: "soldr-v2",
+    cargoHome,
+    runnerTemp: path.join(root, "runner-temp"),
+  });
+  try {
+    await fs.mkdir(path.dirname(plan.registryArchivePath), { recursive: true });
+    await fs.writeFile(plan.registryArchivePath, "registry archive");
+    await fs.writeFile(plan.extrasArchivePath, "extras archive");
+
+    for (const restoredFiles of [null, 0]) {
+      let extrasRestored = false;
+      await assert.rejects(
+        () =>
+          restoreCargoRegistryArchive({
+            plan,
+            cargoHome,
+            soldrPath: "fake-soldr",
+            soldrVersion: "0.7.47",
+            cacheKey: "exact-hit-key",
+            operations: {
+              restoreRegistry: async () => ({ used: true, restoredFiles, restoredBytes: 0 }),
+              restoreExtras: async () => {
+                extrasRestored = true;
+              },
+            },
+          }),
+        /restore reported no files/,
+      );
+      assert.equal(extrasRestored, false);
+    }
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }

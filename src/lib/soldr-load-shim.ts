@@ -97,6 +97,8 @@ export async function detectSoldrManifest(archivePath: string): Promise<boolean>
 export interface SoldrLoadResult {
   used: boolean;
   durationMs: number;
+  restoredFiles: number | null;
+  restoredBytes: number | null;
 }
 
 export interface SoldrLoadOpts {
@@ -112,6 +114,26 @@ export interface SoldrLoadOpts {
   log?: (msg: string) => void;
 }
 
+export function parseSoldrLoadReport(stdout: string): {
+  restoredFiles: number | null;
+  restoredBytes: number | null;
+} {
+  for (const line of stdout.split(/\r?\n/).map((entry) => entry.trim()).filter(Boolean).reverse()) {
+    try {
+      const payload = JSON.parse(line) as Record<string, unknown>;
+      const files = payload["cache_files_restored"];
+      const bytes = payload["cache_bytes_restored"] ?? payload["restored_bytes"];
+      return {
+        restoredFiles: typeof files === "number" && Number.isFinite(files) ? files : null,
+        restoredBytes: typeof bytes === "number" && Number.isFinite(bytes) ? bytes : null,
+      };
+    } catch {
+      // Tolerate diagnostic noise around the final JSON payload.
+    }
+  }
+  return { restoredFiles: null, restoredBytes: null };
+}
+
 /**
  * Attempt to invoke `soldr load` for parallel extraction. Returns
  * `{ used: false }` when the binary isn't available, the version is
@@ -120,7 +142,7 @@ export interface SoldrLoadOpts {
  */
 export async function tryLoadViaSoldr(opts: SoldrLoadOpts): Promise<SoldrLoadResult> {
   const t0 = Date.now();
-  const noOp: SoldrLoadResult = { used: false, durationMs: 0 };
+  const noOp: SoldrLoadResult = { used: false, durationMs: 0, restoredFiles: null, restoredBytes: null };
   const log = opts.log ?? ((): void => undefined);
   if (!opts.soldrPath) {
     if (opts.debug) log(`[debug] soldr-load-shim: no soldr binary path supplied`);
@@ -149,7 +171,7 @@ export async function tryLoadViaSoldr(opts: SoldrLoadOpts): Promise<SoldrLoadRes
     }
     return noOp;
   }
-  const args: string[] = ["load", "--archive", opts.archivePath, "--cache-dir", opts.targetDir];
+  const args: string[] = ["load", "--archive", opts.archivePath, "--cache-dir", opts.targetDir, "--json"];
   if (opts.autoDefenderExclude && process.platform === "win32") {
     args.push("--auto-defender-exclude");
   }
@@ -157,8 +179,19 @@ export async function tryLoadViaSoldr(opts: SoldrLoadOpts): Promise<SoldrLoadRes
     args.push("--profile-extract");
   }
   if (opts.debug) log(`[debug] soldr-load-shim: invoking ${opts.soldrPath} ${args.join(" ")}`);
-  await exec.exec(opts.soldrPath, args);
-  return { used: true, durationMs: Date.now() - t0 };
+  let stdout = "";
+  const code = await exec.exec(opts.soldrPath, args, {
+    silent: true,
+    ignoreReturnCode: true,
+    listeners: {
+      stdout: (data: Buffer) => {
+        stdout += data.toString("utf8");
+      },
+    },
+  });
+  if (code !== 0) throw new Error(`soldr load exited with code ${code}`);
+  const { restoredFiles, restoredBytes } = parseSoldrLoadReport(stdout);
+  return { used: true, durationMs: Date.now() - t0, restoredFiles, restoredBytes };
 }
 
 export interface SoldrSaveResult {
