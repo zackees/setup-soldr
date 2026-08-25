@@ -277,10 +277,7 @@ test("dylint mode resolves newest nightly identity and keys the foundation cache
   assert.equal(result.dylintCache.rustcCommitHash.length, 40);
   assert.equal(result.dylintCache.cargoDylintVersion, "6.0.3");
   assert.equal(result.dylintCache.dylintLinkVersion, "6.0.3");
-  assert.equal(
-    result.envExports["SOLDR_TOOLCHAIN_ORIGIN"],
-    "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets",
-  );
+  assert.equal(result.envExports["SOLDR_TOOLCHAIN_ORIGIN"], undefined);
   assert.match(result.dylintCache.key, /^setup-soldr-dylint-v2-/);
   assert.ok(result.dylintCache.paths.some((p) => p.includes("nightly-2026-01-18")));
   assert.equal(

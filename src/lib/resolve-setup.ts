@@ -33,10 +33,7 @@ import {
 import { parseSingleCrossTarget, mergeToolchainTargets, planBlessedPrepareCache } from "./blessed-cross-prepare.js";
 import { createLogger } from "./log-utils.js";
 import { parseEncryptionKey } from "./cache-encrypt.js";
-import {
-  DEFAULT_SOLDR_TOOLCHAIN_ORIGIN,
-  resolveDylintNightly,
-} from "./dylint-nightly.js";
+import { resolveDylintNightly } from "./dylint-nightly.js";
 import {
   detectMuslCcEnv,
   tripleToCcRsSuffix,
@@ -1073,13 +1070,6 @@ export async function resolveSetup(
     envExports[name] = value;
   };
   setEnv("SOLDR_CACHE_DIR", soldrRoot);
-  // GitHub Pages currently serves the soldr-toolchain index but returns 404
-  // for catalogue JSON. Keep setup-soldr and its Soldr child on the
-  // authoritative SHA-pinned assets branch unless the caller overrides it.
-  setEnv(
-    "SOLDR_TOOLCHAIN_ORIGIN",
-    env["SOLDR_TOOLCHAIN_ORIGIN"]?.trim() || DEFAULT_SOLDR_TOOLCHAIN_ORIGIN,
-  );
   setEnv("CARGO_HOME", cargoHome);
   setEnv("RUSTUP_HOME", rustupHome);
   setEnv("ZCCACHE_CACHE_DIR", zccacheCacheDir);

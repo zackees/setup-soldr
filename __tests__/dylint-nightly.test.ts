@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { test } from "node:test";
 
 import {
-  DEFAULT_SOLDR_TOOLCHAIN_ORIGIN,
+  DEFAULT_DYLINT_CATALOGUE_ORIGIN,
   resolveDylintNightly,
 } from "../src/lib/dylint-nightly.js";
 
@@ -59,7 +59,7 @@ test("selects the first newest nightly for a stable patch channel", async () => 
   assert.equal(identity.rustcRelease, "1.94.0-nightly");
   assert.equal(identity.rustcCommitHash.length, 40);
   assert.equal(requests.length, 2);
-  assert.equal(requests[0], `${DEFAULT_SOLDR_TOOLCHAIN_ORIGIN}/catalogue.v1.json`);
+  assert.equal(requests[0], `${DEFAULT_DYLINT_CATALOGUE_ORIGIN}/catalogue.v1.json`);
 });
 
 test("rejects a selected nightly that is not the first entry", async () => {
