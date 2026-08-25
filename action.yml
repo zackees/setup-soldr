@@ -717,6 +717,13 @@ inputs:
       cache: false disables only prepared-state archive caching. The packaging
       target universal2-apple-darwin provisions both real Apple Rust targets;
       it is never requested as a Rust standard-library target. Default empty.
+      When caching is enabled, prepared compiler/SDK archives are cached
+      automatically with stable host + target + Soldr-repository restore
+      prefixes. A new Soldr release reuses the prior toolchain archive, then
+      downloads only genuinely changed assets and promotes the result to its
+      own immutable exact key. This avoids repeatedly fetching large
+      soldr-toolchain LFS payloads such as LLVM, GNU/Linux, MinGW, musl, xwin,
+      and Apple SDK bundles.
     required: false
     default: ""
   soldr-mini-cache:

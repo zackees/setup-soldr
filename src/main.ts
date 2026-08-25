@@ -70,7 +70,12 @@ import {
 } from "./lib/soldr-mini-cache.js";
 import { dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { diagnoseShimBypass } from "./lib/shim-bypass-check.js";
-import { assertMinimumSoldrVersion, executeBlessedPrepare, prepareTargetsFor } from "./lib/blessed-cross-prepare.js";
+import {
+  assertMinimumSoldrVersion,
+  decideBlessedPrepareCacheUse,
+  executeBlessedPrepare,
+  prepareTargetsFor,
+} from "./lib/blessed-cross-prepare.js";
 import {
   type TargetLifecycleContract,
   assertTargetOperationSupported,
@@ -669,14 +674,14 @@ export async function run(): Promise<void> {
     const plan = result.blessedPrepareCache;
     if (!plan.enabled) return;
     const t0 = Date.now();
-    const restore = await restoreCacheSafe(plan.archivePaths, plan.key, [], logger);
+    const restore = await restoreCacheSafe(plan.archivePaths, plan.key, plan.restoreKeys, logger);
     core.saveState("blessedPrepareCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("blessedPrepareCacheMatchedKey", restore.matchedKey);
     core.setOutput("blessed-prepare-cache-hit", restore.hit ? "true" : "false");
     core.setOutput("blessed-prepare-cache-key", plan.key);
     statsCollector.record({
       label: "blessed-prepare-cache", operation: "restore", hit: restore.hit,
-      key: plan.key, matchedKey: restore.matchedKey, restoreKeys: [],
+      key: plan.key, matchedKey: restore.matchedKey, restoreKeys: plan.restoreKeys,
       archiveBytes: null, inflatedBytes: null, fileCount: null,
       durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
     });
@@ -1333,16 +1338,23 @@ export async function run(): Promise<void> {
     const installedVersion = result.soldrVersionResolved || result.soldrVersionRequested;
     assertMinimumSoldrVersion(installedVersion);
     const exactHit = core.getState("blessedPrepareCacheExactHit") === "true";
+    const matchedKey = core.getState("blessedPrepareCacheMatchedKey");
     const prepareTargets = prepareTargetsFor(preparePlan.target);
     const archivesExist = preparePlan.archivePaths.length === prepareTargets.length
       && preparePlan.archivePaths.every((archivePath) => fs.existsSync(archivePath));
-    const effectiveExactHit = exactHit && archivesExist;
+    const cacheUse = decideBlessedPrepareCacheUse({
+      enabled: preparePlan.enabled,
+      exactHit,
+      matchedKey,
+      archivesExist,
+    });
+    const { effectiveExactHit, fallbackHit } = cacheUse;
     if (exactHit && !archivesExist) {
       logger.log("cross-prepare: exact cache key restored without every prepared archive; reseeding");
       core.saveState("blessedPrepareCacheExactHit", "false");
       core.setOutput("blessed-prepare-cache-hit", "false");
     }
-    logger.log(`cross-prepare: target=${preparePlan.target} cache=${preparePlan.enabled ? (effectiveExactHit ? "hit" : "miss") : "disabled"}`);
+    logger.log(`cross-prepare: target=${preparePlan.target} cache=${preparePlan.enabled ? (effectiveExactHit ? "hit" : fallbackHit ? "fallback-hit" : "miss") : "disabled"}`);
     const contracts: TargetLifecycleContract[] = [];
     for (const [index, target] of prepareTargets.entries()) {
       await executeBlessedPrepare({
@@ -1350,8 +1362,11 @@ export async function run(): Promise<void> {
         target,
         githubEnv: process.env["GITHUB_ENV"],
         archivePath: preparePlan.archivePaths[index],
-        restore: preparePlan.enabled && effectiveExactHit,
-        save: preparePlan.enabled && !effectiveExactHit,
+        // Fallback archives are intentionally replayed across Soldr releases.
+        // Soldr always validates expected versioned paths after restore and
+        // downloads only missing/current assets before saving the exact key.
+        restore: cacheUse.restore,
+        save: cacheUse.save,
       });
       const targetPlan = await queryTargetPlan(result.soldrPath, target, (message) => logger.log(message));
       if (!targetPlan) {

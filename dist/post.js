@@ -46829,8 +46829,8 @@ exports.evictIfOverBudget = evictIfOverBudget;
 const github = __importStar(__nccwpck_require__(93228));
 /**
  * Cache-key prefixes for FOUNDATION layers that must NEVER be
- * evicted by this routine. These are small (< 250 MB each) and
- * long-lived; each one delivers ~5-15 s/warm-job wall-clock when hit.
+ * evicted by this routine. These are deliberately long-lived and
+ * expensive to recreate; each one delivers substantial warm-job savings.
  */
 exports.FOUNDATION_PREFIXES = [
     "solo-toolchain-v", // ~170 MB, skips ~8-11 s rustup install
@@ -46850,6 +46850,7 @@ exports.FOUNDATION_PREFIXES = [
     "cook-base-v2-", // ~300 MB per platform, skips ~200 s cold cook
     "setup-soldr-prepare-v1-",
     "setup-soldr-prepare-v2-",
+    "setup-soldr-prepare-v3-", // cross compiler/SDK archives; avoids repeated LFS downloads
 ];
 /**
  * #356: graduated age-floor tier table.
