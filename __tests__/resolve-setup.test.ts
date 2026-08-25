@@ -1420,6 +1420,20 @@ test(
   },
 );
 
+test("cache keys use GitHub RUNNER_ARCH when ACTION_ARCH is unset", async () => {
+  const { root, workspace, runnerTemp } = makeWorkspace({});
+  const ctx = makeContext(root, workspace, runnerTemp);
+  delete ctx.env["ACTION_ARCH"];
+  ctx.env["RUNNER_ARCH"] = "X64";
+  const inputs = readRawInputs(ctx.env);
+  const result = await resolveSetup(ctx, inputs, {
+    fetchReleaseTag: async () => "v0.7.11",
+    systemRustupOverride: async () => true,
+  });
+  assert.match(result.setupCache.key, /^setup-soldr-v4-linux-x64-/);
+  assert.doesNotMatch(result.setupCache.key, /-unknown-/);
+});
+
 /* retired per-lane cross-tool tests
 // --------------------- per-(host × target) tool cache plans (setup-soldr#106) ---------------------
 //
