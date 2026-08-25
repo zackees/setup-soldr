@@ -160,6 +160,107 @@ export interface EvictResult {
   deletedBytes?: number;
 }
 
+export interface DeleteCacheKeysResult {
+  found: number;
+  deleted: number;
+  failed: number;
+}
+
+/**
+ * Delete every Actions-cache entry whose key exactly matches one of `keys`.
+ *
+ * This is the targeted repair path used when a restored dependency closure is
+ * later found to contain a yanked crate. It deliberately lives beside the LRU
+ * eviction implementation so both paths share the same list-by-key and
+ * delete-by-id Actions API plumbing.
+ */
+export async function deleteCacheEntriesByKeys(opts: {
+  owner: string;
+  repo: string;
+  token: string;
+  keys: readonly string[];
+  log: (msg: string) => void;
+  listCachesForKey?: (key: string) => Promise<CacheEntry[]>;
+  deleteCacheById?: (cacheId: number) => Promise<void>;
+}): Promise<DeleteCacheKeysResult> {
+  const keys = [...new Set(opts.keys.map((key) => key.trim()).filter(Boolean))];
+  if (!opts.owner || !opts.repo || !opts.token || keys.length === 0) {
+    opts.log("cache-eviction: cannot delete targeted keys: repository, token, or keys are missing");
+    return { found: 0, deleted: 0, failed: keys.length || 1 };
+  }
+  const octokit = github.getOctokit(opts.token);
+  const listCachesForKey = opts.listCachesForKey ?? (async (key: string): Promise<CacheEntry[]> => {
+    const entries: CacheEntry[] = [];
+    let page = 1;
+    while (true) {
+      const response = await octokit.rest.actions.getActionsCacheList({
+        owner: opts.owner,
+        repo: opts.repo,
+        key,
+        per_page: 100,
+        page,
+      });
+      const items = response.data.actions_caches ?? [];
+      for (const item of items) {
+        if (item.id != null && item.key != null && item.size_in_bytes != null && item.created_at != null) {
+          entries.push({
+            id: item.id,
+            key: item.key,
+            size_in_bytes: item.size_in_bytes,
+            created_at: item.created_at,
+          });
+        }
+      }
+      if (items.length < 100) break;
+      page += 1;
+    }
+    return entries;
+  });
+  const deleteCacheById = opts.deleteCacheById ?? (async (cacheId: number): Promise<void> => {
+    await octokit.rest.actions.deleteActionsCacheById({
+      owner: opts.owner,
+      repo: opts.repo,
+      cache_id: cacheId,
+    });
+  });
+
+  const entriesById = new Map<number, CacheEntry>();
+  let failed = 0;
+  for (const key of keys) {
+    try {
+      for (const entry of await listCachesForKey(key)) {
+        if (entry.key === key) entriesById.set(entry.id, entry);
+      }
+    } catch (err) {
+      failed += 1;
+      opts.log(
+        `cache-eviction: failed to list poisoned key=${key}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
+  let deleted = 0;
+  for (const entry of entriesById.values()) {
+    try {
+      await deleteCacheById(entry.id);
+      deleted += 1;
+      opts.log(`cache-eviction: deleted poisoned entry id=${entry.id} key=${entry.key}`);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status === 404) {
+        deleted += 1;
+        continue;
+      }
+      failed += 1;
+      opts.log(
+        `cache-eviction: failed to delete poisoned entry id=${entry.id} key=${entry.key} ` +
+          `(status=${status ?? "?"}): ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+  return { found: entriesById.size, deleted, failed };
+}
+
 /**
  * Run an eviction pass. Returns a summary suitable for logging.
  * Never throws on permission/network errors — best-effort.

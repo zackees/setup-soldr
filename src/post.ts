@@ -53,7 +53,12 @@ import {
 } from "./lib/compile-cache-stats.js";
 import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
-import { evictIfOverBudget, type CacheEvictionPolicy } from "./lib/cache-eviction.js";
+import {
+  deleteCacheEntriesByKeys,
+  evictIfOverBudget,
+  type CacheEvictionPolicy,
+} from "./lib/cache-eviction.js";
+import { waitForYankAuditResult } from "./lib/yank-audit.js";
 import {
   snapshotSourceMtimes,
   writeSnapshotFile,
@@ -1289,6 +1294,69 @@ export async function run(): Promise<void> {
     logsArchiveDir,
     log,
   });
+
+  // #476: main launched this audit after the final dependency-bearing
+  // restore, so it ran concurrently with the consumer's build. Join before
+  // any save: a poisoned restored closure must never be republished under a
+  // new exact key or allowed to produce a successful job.
+  if (core.getState("yankAuditStarted") === "true") {
+    const auditPath = core.getState("yankAuditResultPath");
+    let cacheKeys: string[] = [];
+    try {
+      const parsed = JSON.parse(core.getState("yankAuditCacheKeys")) as unknown;
+      if (Array.isArray(parsed)) {
+        cacheKeys = [...new Set(parsed.filter((key): key is string => typeof key === "string" && key.length > 0))];
+      }
+    } catch {
+      // The result below will still be surfaced as not checked if state was
+      // damaged; never convert malformed state into a clean verdict.
+    }
+    const audit = auditPath
+      ? await waitForYankAuditResult(auditPath, { timeoutMs: 60_000 })
+      : { status: "not-checked" as const, errors: ["audit result path is missing"] };
+    if (audit.status === "not-checked" && audit.joinTimedOut) {
+      core.setFailed(
+        `yank-audit: not checked because the background audit did not reach a terminal result: ` +
+          `${(audit.errors ?? ["join timed out"]).join("; ")}. ` +
+          `Refusing to save caches or report success while the audit may still be in flight.`,
+      );
+      return;
+    } else if (audit.status === "not-checked") {
+      core.warning(
+        `yank-audit: not checked: ${(audit.errors ?? ["unknown registry error"]).join("; ")}`,
+      );
+    } else if (audit.status === "clean") {
+      log(
+        `yank-audit: clean checked=${audit.checkedCount ?? 0}/${audit.dependencyCount ?? 0} ` +
+          `cache_keys=${cacheKeys.length}`,
+      );
+    } else if (audit.status === "yanked") {
+      const yanked = audit.yanked ?? [];
+      const crates = yanked.map((dependency) => `${dependency.name} ${dependency.version}`).join(", ");
+      const githubRepository = (process.env["GITHUB_REPOSITORY"] ?? "").trim();
+      const [owner, repo] = githubRepository.split("/");
+      const token = (process.env["GITHUB_TOKEN"] ?? "").trim() ||
+        (process.env["INPUT_TOKEN"] ?? "").trim();
+      const deletion = await deleteCacheEntriesByKeys({
+        owner: owner ?? "",
+        repo: repo ?? "",
+        token,
+        keys: cacheKeys,
+        log,
+      });
+      const deletionComplete = deletion.failed === 0 && deletion.deleted === deletion.found;
+      const repair = deletionComplete
+        ? `poisoned entries deleted=${deletion.deleted}/${deletion.found}; rerun to rebuild from a clean cache miss`
+        : `automatic deletion incomplete (deleted=${deletion.deleted}/${deletion.found}, failures=${deletion.failed}); ` +
+          `grant the workflow actions: write permission or manually delete these exact cache keys before retrying`;
+      core.setFailed(
+        `yank-audit: restored dependency closure contains yanked crate(s): ${crates}; ` +
+          `cache key(s): ${cacheKeys.join(", ") || "unknown"}; ` +
+          `${repair}. This run is aborted.`,
+      );
+      return;
+    }
+  }
 
   // Source-mtime snapshot (preserve-source-mtimes opt-in). Walk tracked
   // sources, capture each (mtime, size, content-hash), and drop the JSON

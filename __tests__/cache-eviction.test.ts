@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  deleteCacheEntriesByKeys,
   evictIfOverBudget,
   thresholdsForPolicy,
   ageFloorForOvershoot,
@@ -271,4 +272,60 @@ test("entries NOT matching foundation prefix are evictable", () => {
       `${key} should NOT be classified as foundation`,
     );
   }
+});
+
+test("targeted yank repair deletes exact poisoned keys and the retry misses", async () => {
+  const store = new Map<number, CacheEntry>([
+    [1, entry(1, "build-poisoned", 10, 1)],
+    [2, entry(2, "cook-poisoned", 20, 1)],
+    [3, entry(3, "healthy", 30, 1)],
+  ]);
+  const result = await deleteCacheEntriesByKeys({
+    owner: "owner",
+    repo: "repo",
+    token: "token",
+    keys: ["build-poisoned", "cook-poisoned"],
+    log: () => undefined,
+    listCachesForKey: async (key) => [...store.values()].filter((item) => item.key === key),
+    deleteCacheById: async (id) => { store.delete(id); },
+  });
+  assert.deepEqual(result, { found: 2, deleted: 2, failed: 0 });
+  assert.equal([...store.values()].some((item) => item.key === "build-poisoned"), false);
+  assert.equal([...store.values()].some((item) => item.key === "cook-poisoned"), false);
+  assert.equal([...store.values()].some((item) => item.key === "healthy"), true);
+});
+
+test("targeted yank repair reports permission failure and leaves the poisoned key", async () => {
+  const poisoned = entry(9, "poisoned", 10, 1);
+  const result = await deleteCacheEntriesByKeys({
+    owner: "owner",
+    repo: "repo",
+    token: "read-only-token",
+    keys: ["poisoned"],
+    log: () => undefined,
+    listCachesForKey: async () => [poisoned],
+    deleteCacheById: async () => {
+      const error = new Error("forbidden") as Error & { status: number };
+      error.status = 403;
+      throw error;
+    },
+  });
+  assert.deepEqual(result, { found: 1, deleted: 0, failed: 1 });
+});
+
+test("targeted yank repair treats a concurrent 404 deletion race as repaired", async () => {
+  const result = await deleteCacheEntriesByKeys({
+    owner: "owner",
+    repo: "repo",
+    token: "token",
+    keys: ["poisoned"],
+    log: () => undefined,
+    listCachesForKey: async () => [entry(9, "poisoned", 10, 1)],
+    deleteCacheById: async () => {
+      const error = new Error("gone") as Error & { status: number };
+      error.status = 404;
+      throw error;
+    },
+  });
+  assert.deepEqual(result, { found: 1, deleted: 1, failed: 0 });
 });
