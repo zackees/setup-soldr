@@ -985,6 +985,8 @@ export async function run(): Promise<void> {
   let soloMatchedKey = "";
   let soloExactHit = false;
   let forceToolchainRepair = false;
+  let soloRestoreInvalid = false;
+  let soloRestoredBytes = 0;
   // Pre-restore snapshot — only needed when solo cache is enabled, so
   // we can compute the full save-diff (post-install vs runner-image,
   // not vs post-restore baseline). (#302: timed as sub-phase.)
@@ -1016,6 +1018,7 @@ export async function run(): Promise<void> {
       }),
     );
     soloMatchedKey = restored.matchedKey;
+    soloRestoredBytes = restored.restoredBytes;
     let verifiedMatch = true;
     if (restored.verified && restored.matchedKey) {
       const expected = result.toolchain.cacheChannel.trim();
@@ -1026,17 +1029,30 @@ export async function run(): Promise<void> {
       const verify = await verifyRestoredToolchain({
         expectedRelease: expected,
         expectedTargets: result.toolchain.targets,
-        rustcCommand: rustcCmd,
+        expectedComponents: result.toolchain.components,
+        channel: result.toolchain.channel,
+        rustupCommand: process.platform === "win32" ? "rustup.exe" : "rustup",
         log: (msg) => logger.log(msg),
       });
       verifiedMatch = verify.match;
-      forceToolchainRepair = restored.verified && !verify.match;
     }
-    soloExactHit = restored.hit && verifiedMatch;
+    soloRestoreInvalid = Boolean(restored.matchedKey) && (!restored.verified || !verifiedMatch);
+    forceToolchainRepair = soloRestoreInvalid;
+    if (soloRestoreInvalid) {
+      core.warning(
+        `solo-toolchain-cache: restored entry failed validation; key=${restored.matchedKey} ` +
+          `archive=${restored.restoredBytes}B. The requested toolchain and targets will be repaired, ` +
+          `then the poisoned cache entry will be deleted and replaced (#473).`,
+      );
+    }
+    soloExactHit = restored.hit && restored.verified && verifiedMatch;
     core.saveState("soloToolchainEnabled", "true");
     core.saveState("soloToolchainExactKey", soloKeys.exact);
     core.saveState("soloToolchainMatchedKey", soloMatchedKey);
     core.saveState("soloToolchainExactHit", soloExactHit ? "true" : "false");
+    core.saveState("soloToolchainRestoreInvalid", soloRestoreInvalid ? "true" : "false");
+    core.saveState("soloToolchainInvalidMatchedKey", soloRestoreInvalid ? soloMatchedKey : "");
+    core.saveState("soloToolchainRestoredBytes", String(soloRestoredBytes));
     core.saveState("soloToolchainLevel", soloLevel);
     statsCollector.record({
       label: "solo-toolchain-cache",
@@ -1053,6 +1069,7 @@ export async function run(): Promise<void> {
     });
   } else {
     core.saveState("soloToolchainEnabled", "false");
+    core.saveState("soloToolchainRestoreInvalid", "false");
   }
   const baselineSnapshot = await timeSubPhase("toolchain", "snapshot-base", () =>
     walkSnapshot(snapshotRoots),
@@ -1082,6 +1099,22 @@ export async function run(): Promise<void> {
         forceRepair: forceToolchainRepair,
       }),
     );
+    if (forceToolchainRepair) {
+      const repaired = await verifyRestoredToolchain({
+        expectedRelease: result.toolchain.cacheChannel.trim(),
+        expectedTargets: result.toolchain.targets,
+        expectedComponents: result.toolchain.components,
+        channel: result.toolchain.channel,
+        rustupCommand: process.platform === "win32" ? "rustup.exe" : "rustup",
+        log: (msg) => logger.log(msg),
+      });
+      if (!repaired.match) {
+        throw new Error(
+          `solo-toolchain-cache: repair did not restore the requested toolchain and targets for key=${soloMatchedKey}`,
+        );
+      }
+      logger.log(`solo-toolchain-cache: repaired toolchain and requested targets verified for key=${soloMatchedKey}`);
+    }
   }
   const postInstallSnapshot = await timeSubPhase("toolchain", "snapshot-post", () =>
     walkSnapshot(snapshotRoots),

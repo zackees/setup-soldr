@@ -625,6 +625,10 @@ inputs:
       components AFTER setup-soldr (the snapshot won't include
       them) or when the warm-cycle win isn't worth the ~12 s
       first cold-save.
+      If a restored entry fails validation, setup-soldr repairs the requested
+      toolchain and targets, deletes the poisoned entry, and uploads the
+      verified replacement. Automatic deletion requires `actions: write` on
+      the workflow GITHUB_TOKEN; a missing permission is reported visibly.
     required: false
     default: "true"
   solo-toolchain-cache-level:
