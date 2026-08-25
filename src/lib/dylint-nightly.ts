@@ -118,7 +118,7 @@ export async function resolveDylintNightly(
   env: Record<string, string | undefined>,
   fetchBytes: FetchBytes = defaultFetchBytes,
 ): Promise<DylintNightlyIdentity> {
-  const origin = (env["SOLDR_TOOLCHAIN_ORIGIN"] || "https://zackees.github.io/soldr-toolchain")
+  const origin = (env["SOLDR_TOOLCHAIN_ORIGIN"] || DEFAULT_SOLDR_TOOLCHAIN_ORIGIN)
     .trim()
     .replace(/\/+$/, "");
   const catalogueUrl =
@@ -154,3 +154,6 @@ export async function resolveDylintNightly(
   }
   throw new Error(`${lastDigestError}; catalogue was refreshed once and unverified bytes were rejected`);
 }
+
+export const DEFAULT_SOLDR_TOOLCHAIN_ORIGIN =
+  "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets";

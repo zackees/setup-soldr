@@ -238,12 +238,11 @@ export interface CargoRegistryCachePlan {
 }
 
 /**
- * Explicit opt-in Dylint tool/driver cache (setup-soldr#221).
+ * Dylint mode and legacy tool/driver cache plan (setup-soldr#221).
  *
- * This is intentionally cache-only rather than vendoring Dylint binaries into
- * every setup-soldr install. Workflows provide their pinned nightly/driver
- * revision and keep their normal cold install/build steps; warm runs restore
- * the cargo-dylint/dylint-link binaries plus the compatible driver directory.
+ * `dylint: true` asks Soldr to prepare its catalogued binaries and compatible
+ * prebuilt driver on cold runs. `dylint-cache: true` without Dylint mode keeps
+ * the original cache-only contract for workflows that own installation.
  */
 export interface DylintCachePlan {
   enabled: boolean;

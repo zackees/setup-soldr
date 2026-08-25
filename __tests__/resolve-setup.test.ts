@@ -275,6 +275,12 @@ test("dylint mode resolves newest nightly identity and keys the foundation cache
   assert.equal(result.dylintCache.toolchain, "nightly-2026-01-18");
   assert.equal(result.dylintCache.rustcRelease, "1.94.0-nightly");
   assert.equal(result.dylintCache.rustcCommitHash.length, 40);
+  assert.equal(result.dylintCache.cargoDylintVersion, "6.0.3");
+  assert.equal(result.dylintCache.dylintLinkVersion, "6.0.3");
+  assert.equal(
+    result.envExports["SOLDR_TOOLCHAIN_ORIGIN"],
+    "https://raw.githubusercontent.com/zackees/soldr-toolchain/assets",
+  );
   assert.match(result.dylintCache.key, /^setup-soldr-dylint-v2-/);
   assert.ok(result.dylintCache.paths.some((p) => p.includes("nightly-2026-01-18")));
   assert.equal(
@@ -298,6 +304,25 @@ test("dylint mode resolves newest nightly identity and keys the foundation cache
     ),
     false,
   );
+});
+
+test("dylint mode keeps preparation pins when caching is disabled", async () => {
+  const { result } = await run(
+    {},
+    { INPUT_DYLINT: "true", INPUT_CACHE: "false", INPUT_TOOLCHAIN: "1.94.1" },
+    undefined,
+    async () => ({
+      channel: "nightly-2026-01-18",
+      rustVersion: "1.94",
+      rustcRelease: "1.94.0-nightly",
+      rustcCommitHash: "1111111111111111111111111111111111111111",
+    }),
+  );
+  assert.equal(result.dylintCache.enabled, false);
+  assert.equal(result.dylintCache.outputCacheEnabled, false);
+  assert.notEqual(result.dylintCache.cacheIdentity, "");
+  assert.equal(result.dylintCache.cargoDylintVersion, "6.0.3");
+  assert.equal(result.dylintCache.dylintLinkVersion, "6.0.3");
 });
 
 test("cargo-chef local dir is exported only after its bundled binary is installed", async () => {

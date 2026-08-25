@@ -21,6 +21,7 @@ import {
 import { ensureRustToolchain } from "./lib/ensure-rust-toolchain.js";
 import { ensureSoldr } from "./lib/ensure-soldr.js";
 import { verifySoldr } from "./lib/verify-soldr.js";
+import { prepareDylint } from "./lib/prepare-dylint.js";
 import { installPassthrough } from "./lib/install-passthrough.js";
 import { normalizeSourceMtime } from "./lib/normalize-source-mtime.js";
 import { detectSharedTargetWarning } from "./lib/detect-shared-target-warning.js";
@@ -1246,6 +1247,24 @@ export async function run(): Promise<void> {
     core.setOutput("soldr_version", "passthrough");
   }
   await finishPhase("verify");
+
+  // ---- Dylint foundation ----
+  // Dylint mode is a complete setup contract: Soldr fetches and verifies its
+  // pinned command binaries, dated nightly/components, and matching driver.
+  // Direct Dylint UI tests also need the managed linker directory on PATH.
+  await markPhase("dylint-prepare");
+  await prepareDylint({
+    // cacheIdentity exists for Dylint mode even when every cache layer is
+    // disabled; preparation is functionality, not a cache side effect.
+    enabled: result.dylintCache.cacheIdentity !== "",
+    soldrPath: result.soldrPath,
+    soldrRoot: result.soldrRoot,
+    workspace: result.workspace,
+    cargoDylintVersion: result.dylintCache.cargoDylintVersion,
+    dylintLinkVersion: result.dylintCache.dylintLinkVersion,
+    addPath: (directory) => core.addPath(directory),
+  });
+  await finishPhase("dylint-prepare");
 
   // ---- cargo-registry extraction ----
   // Network download overlapped other layers in parallel-restore. Extraction

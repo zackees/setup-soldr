@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
 
-import { resolveDylintNightly } from "../src/lib/dylint-nightly.js";
+import {
+  DEFAULT_SOLDR_TOOLCHAIN_ORIGIN,
+  resolveDylintNightly,
+} from "../src/lib/dylint-nightly.js";
 
 function fixtures(selected = "nightly-2026-01-18"): { catalogue: Buffer; map: Buffer } {
   const map = Buffer.from(
@@ -56,6 +59,7 @@ test("selects the first newest nightly for a stable patch channel", async () => 
   assert.equal(identity.rustcRelease, "1.94.0-nightly");
   assert.equal(identity.rustcCommitHash.length, 40);
   assert.equal(requests.length, 2);
+  assert.equal(requests[0], `${DEFAULT_SOLDR_TOOLCHAIN_ORIGIN}/catalogue.v1.json`);
 });
 
 test("rejects a selected nightly that is not the first entry", async () => {
