@@ -5,11 +5,25 @@ import { shortJsonHash, sanitizeFragment } from "./cache-keys.js";
 
 export interface BlessedPrepareCachePlan {
   enabled: boolean;
-  schemaVersion: 2;
+  schemaVersion: 3;
   target: string;
   key: string;
+  /**
+   * Stable, host/target/repository-scoped prefixes. These deliberately omit
+   * the Soldr release so immutable toolchain payloads survive frequent Soldr
+   * releases. `soldr prepare --restore --save` validates/fills version gaps
+   * before promoting a fallback to the current exact key.
+   */
+  restoreKeys: string[];
   archivePath: string;
   archivePaths: string[];
+}
+
+export interface BlessedPrepareCacheUse {
+  effectiveExactHit: boolean;
+  fallbackHit: boolean;
+  restore: boolean;
+  save: boolean;
 }
 
 const TRIPLE = /^[a-z0-9]+(?:_[a-z0-9]+)*-[a-z0-9]+(?:-[a-z0-9]+)+$/;
@@ -49,8 +63,19 @@ export function blessedPrepareCacheKey(input: {
   soldrRepo: string;
   soldrVersion: string;
 }): string {
-  const identityHash = shortJsonHash({ repo: input.soldrRepo.trim(), soldr_version: input.soldrVersion.trim() });
-  return `setup-soldr-prepare-v2-${sanitizeFragment(input.runnerOs)}-${sanitizeFragment(input.runnerArch)}-${sanitizeFragment(input.target)}-${identityHash}`;
+  const base = blessedPrepareCacheBase(input);
+  const soldrHash = shortJsonHash({ soldr_version: input.soldrVersion.trim() });
+  return `${base}-s${soldrHash}`;
+}
+
+function blessedPrepareCacheBase(input: {
+  runnerOs: string;
+  runnerArch: string;
+  target: string;
+  soldrRepo: string;
+}): string {
+  const repoHash = shortJsonHash({ repo: input.soldrRepo.trim() });
+  return `setup-soldr-prepare-v3-${sanitizeFragment(input.runnerOs)}-${sanitizeFragment(input.runnerArch)}-${sanitizeFragment(input.target)}-r${repoHash}`;
 }
 
 export function planBlessedPrepareCache(input: {
@@ -66,17 +91,21 @@ export function planBlessedPrepareCache(input: {
 }): BlessedPrepareCachePlan {
   const target = input.target ?? "";
   const enabled = input.enabled && input.cacheEnabled && !input.ref.trim() && Boolean(target);
+  // Keep the established archive path even though the key schema is v3:
+  // @actions/cache includes the path list in its internal cache version.
   const archiveRoot = target
     ? path.join(input.runnerTemp, "setup-soldr-prepare", "v2", sanitizeFragment(target))
     : "";
   const archivePaths = target === "universal2-apple-darwin"
     ? prepareTargetsFor(target).map((realTarget) => path.join(archiveRoot, `${sanitizeFragment(realTarget)}.tar.zst`))
     : target ? [path.join(archiveRoot, "prepared.tar.zst")] : [];
+  const restoreKeys = enabled ? [`${blessedPrepareCacheBase({ ...input, target })}-`] : [];
   return {
     enabled,
-    schemaVersion: 2,
+    schemaVersion: 3,
     target,
     key: enabled ? blessedPrepareCacheKey({ ...input, target }) : "",
+    restoreKeys,
     archivePath: archivePaths[0] ?? "",
     archivePaths,
   };
@@ -88,6 +117,25 @@ export function buildPrepareArgs(input: { target: string; githubEnv?: string; ar
   if (input.restore && input.archivePath) args.push("--restore", input.archivePath);
   if (input.save && input.archivePath) args.push("--save", input.archivePath);
   return args;
+}
+
+export function decideBlessedPrepareCacheUse(input: {
+  enabled: boolean;
+  exactHit: boolean;
+  matchedKey: string;
+  archivesExist: boolean;
+}): BlessedPrepareCacheUse {
+  const effectiveExactHit = input.enabled && input.exactHit && input.archivesExist;
+  const fallbackHit = input.enabled
+    && !input.exactHit
+    && Boolean(input.matchedKey)
+    && input.archivesExist;
+  return {
+    effectiveExactHit,
+    fallbackHit,
+    restore: effectiveExactHit || fallbackHit,
+    save: input.enabled && !effectiveExactHit,
+  };
 }
 
 export function assertMinimumSoldrVersion(version: string, minimum = "0.8.43"): void {

@@ -245,6 +245,7 @@ test("entries matching ANY foundation prefix are protected", () => {
     "soldr-mini-linux-x64-glibc-v0.7.51",
     "setup-soldr-v4-linux-unknown-abc-def",
     "setup-soldr-cargoregistry-v1-linux-unknown-abc",
+    "setup-soldr-prepare-v3-Linux-X64-aarch64-unknown-linux-gnu-rabc-sdef",
     // #368: cook-cache-base is foundation. Lockfile-keyed →
     // serves many CI cycles. Eviction observed within 20 min on
     // zccache before this was added.

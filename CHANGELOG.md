@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Keep prepared cross-toolchain caches warm across Soldr releases. Exact cache
+  keys remain immutable per Soldr version, while automatic host/target/source
+  restore prefixes reuse the previous LLVM, GNU/Linux, MinGW, musl, xwin, and
+  Apple-target archive. Soldr validates the restored versioned paths, downloads
+  only genuine gaps, and promotes the completed archive to the current exact
+  key. The v3 prepared caches are protected by the action's foundation-cache
+  eviction policy, and custom Soldr forks remain repository-isolated.
+
 - Default to soldr `0.9.4` (was `0.9.3`). Cook now rematerializes excluded
   vendored and patched workspaces, preserves fractional Cargo fingerprint
   mtimes through archive hydration, and supplements the portable cargo-chef
