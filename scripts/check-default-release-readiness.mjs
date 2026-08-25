@@ -36,16 +36,21 @@ const cargoChefPlatforms = {
 };
 
 const action = readFileSync("action.yml", "utf8");
-const version = action.match(/^  version:\r?\n[\s\S]*?^    default:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
-if (!version) throw new Error("could not read inputs.version default from action.yml");
+const requestedVersion = action.match(/^  version:\r?\n[\s\S]*?^    default:\s*["']?([^"'\r\n]+)["']?\s*$/m)?.[1]?.trim();
+if (!requestedVersion) throw new Error("could not read inputs.version default from action.yml");
 
-const tag = version.startsWith("v") ? version : `v${version}`;
 const headers = { Accept: "application/vnd.github+json", "User-Agent": "setup-soldr-release-readiness" };
 const token = process.env.GITHUB_TOKEN?.trim();
 if (token) headers.Authorization = `Bearer ${token}`;
-const response = await fetch(`https://api.github.com/repos/zackees/soldr/releases/tags/${tag}`, { headers });
-if (!response.ok) throw new Error(`default release ${tag} returned HTTP ${response.status}`);
+const releaseEndpoint = requestedVersion.toLowerCase() === "latest"
+  ? "https://api.github.com/repos/zackees/soldr/releases/latest"
+  : `https://api.github.com/repos/zackees/soldr/releases/tags/${requestedVersion.startsWith("v") ? requestedVersion : `v${requestedVersion}`}`;
+const response = await fetch(releaseEndpoint, { headers });
+if (!response.ok) throw new Error(`default release ${requestedVersion} returned HTTP ${response.status}`);
 const release = await response.json();
+const tag = typeof release.tag_name === "string" ? release.tag_name.trim() : "";
+if (!/^v?\d+\.\d+\.\d+$/.test(tag)) throw new Error("default release has no semantic tag_name");
+const version = tag.replace(/^v/, "");
 if (release.draft) throw new Error(`default release ${tag} is a draft`);
 if (!Array.isArray(release.assets)) throw new Error(`default release ${tag} has no assets array`);
 
