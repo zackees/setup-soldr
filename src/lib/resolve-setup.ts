@@ -667,8 +667,12 @@ export async function resolveSetup(
   const { createHash } = await import("node:crypto");
   const digest = createHash("sha256").update(signatureString, "utf8").digest("hex").slice(0, 16);
 
-  const runnerOs = sanitizeFragment((env["ACTION_OS"] ?? env["RUNNER_OS"] ?? process.platform).toLowerCase());
-  const runnerArch = sanitizeFragment((env["ACTION_ARCH"] ?? env["RUNNER_ARCH"] ?? process.arch).toLowerCase());
+  const runnerOs = sanitizeFragment(
+    (env["ACTION_OS"]?.trim() || env["RUNNER_OS"]?.trim() || process.platform).toLowerCase(),
+  );
+  const runnerArch = sanitizeFragment(
+    (env["ACTION_ARCH"]?.trim() || env["RUNNER_ARCH"]?.trim() || process.arch).toLowerCase(),
+  );
   const cachePrefix = `setup-soldr-v4-${runnerOs}-${runnerArch}`;
   let cacheKey = `${cachePrefix}-${digest}`;
 

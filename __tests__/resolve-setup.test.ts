@@ -1420,11 +1420,13 @@ test(
   },
 );
 
-test("cache keys use GitHub RUNNER_ARCH when ACTION_ARCH is unset", async () => {
+test("cache keys use trimmed GitHub runner identity when ACTION overrides are blank", async () => {
   const { root, workspace, runnerTemp } = makeWorkspace({});
   const ctx = makeContext(root, workspace, runnerTemp);
-  delete ctx.env["ACTION_ARCH"];
-  ctx.env["RUNNER_ARCH"] = "X64";
+  ctx.env["ACTION_OS"] = "  ";
+  ctx.env["ACTION_ARCH"] = "  ";
+  ctx.env["RUNNER_OS"] = " Linux ";
+  ctx.env["RUNNER_ARCH"] = " X64 ";
   const inputs = readRawInputs(ctx.env);
   const result = await resolveSetup(ctx, inputs, {
     fetchReleaseTag: async () => "v0.7.11",
