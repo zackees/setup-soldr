@@ -326,3 +326,65 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
         run: test "${SETUP_SOLDR_TOOLCHAIN_TARGETS}" = "[\"${TARGET}\"]"
+
+  cache-seed:
+    name: x86_64-pc-windows-msvc prepared cache seed
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout action
+        uses: actions/checkout@v4
+
+      - name: Seed the managed prepared-toolchain cache
+        id: setup
+        uses: ./
+        with:
+          cross-targets: x86_64-pc-windows-msvc
+          cache: true
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: false
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: none
+
+      - name: Assert stable prepared-cache identity
+        shell: bash
+        env:
+          CACHE_KEY: ${{ steps.setup.outputs.blessed-prepare-cache-key }}
+        run: |
+          set -euo pipefail
+          case "$CACHE_KEY" in
+            setup-soldr-prepare-v3-linux-x64-x86_64-pc-windows-msvc-r*-s*) ;;
+            *) echo "unexpected prepared-cache key: $CACHE_KEY" >&2; exit 1 ;;
+          esac
+
+  cache-hit:
+    name: x86_64-pc-windows-msvc prepared cache exact hit
+    needs: cache-seed
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout action
+        uses: actions/checkout@v4
+
+      - name: Restore the managed prepared-toolchain cache
+        id: setup
+        uses: ./
+        with:
+          cross-targets: x86_64-pc-windows-msvc
+          cache: true
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: false
+          solo-toolchain-cache: false
+          soldr-mini-cache: false
+          prebuild-deps: none
+
+      - name: Require an exact prepared-cache hit
+        shell: bash
+        env:
+          CACHE_HIT: ${{ steps.setup.outputs.blessed-prepare-cache-hit }}
+          CACHE_KEY: ${{ steps.setup.outputs.blessed-prepare-cache-key }}
+        run: |
+          set -euo pipefail
+          test "$CACHE_HIT" = "true"
+          test -n "$CACHE_KEY"
