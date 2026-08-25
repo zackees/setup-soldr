@@ -75,6 +75,7 @@ import {
   decideBlessedPrepareCacheUse,
   executeBlessedPrepare,
   prepareTargetsFor,
+  validateBlessedPrepareRestore,
 } from "./lib/blessed-cross-prepare.js";
 import {
   type TargetLifecycleContract,
@@ -703,7 +704,12 @@ export async function run(): Promise<void> {
     const plan = result.blessedPrepareCache;
     if (!plan.enabled) return;
     const t0 = Date.now();
-    const restore = await restoreCacheSafe(plan.archivePaths, plan.key, plan.restoreKeys, logger);
+    const restored = await restoreCacheSafe(plan.archivePaths, plan.key, plan.restoreKeys, logger);
+    const restore = validateBlessedPrepareRestore({
+      ...restored,
+      archivePaths: plan.archivePaths,
+      warn: (message) => logger.warning(message),
+    });
     core.saveState("blessedPrepareCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("blessedPrepareCacheMatchedKey", restore.matchedKey);
     core.setOutput("blessed-prepare-cache-hit", restore.hit ? "true" : "false");
@@ -711,7 +717,7 @@ export async function run(): Promise<void> {
     statsCollector.record({
       label: "blessed-prepare-cache", operation: "restore", hit: restore.hit,
       key: plan.key, matchedKey: restore.matchedKey, restoreKeys: plan.restoreKeys,
-      archiveBytes: null, inflatedBytes: null, fileCount: null,
+      archiveBytes: restore.archiveBytes, inflatedBytes: null, fileCount: null,
       durationMs: Date.now() - t0, timestamp: new Date().toISOString(),
     });
   })();
@@ -1424,7 +1430,9 @@ export async function run(): Promise<void> {
     const matchedKey = core.getState("blessedPrepareCacheMatchedKey");
     const prepareTargets = prepareTargetsFor(preparePlan.target);
     const archivesExist = preparePlan.archivePaths.length === prepareTargets.length
-      && preparePlan.archivePaths.every((archivePath) => fs.existsSync(archivePath));
+      && preparePlan.archivePaths.every(
+        (archivePath) => fs.existsSync(archivePath) && fs.statSync(archivePath).size > 0,
+      );
     const cacheUse = decideBlessedPrepareCacheUse({
       enabled: preparePlan.enabled,
       exactHit,
