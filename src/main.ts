@@ -7,6 +7,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { spawn } from "node:child_process";
 import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import * as exec from "@actions/exec";
@@ -96,6 +97,13 @@ import type {
   CargoRegistryArchiveFormat,
   ResolveResult,
 } from "./lib/types.js";
+import {
+  YANK_AUDIT_WORKER_ARG,
+  readRegistryDependencies,
+  runYankAuditWorker,
+  writeYankAuditResult,
+  type YankAuditWorkerConfig,
+} from "./lib/yank-audit.js";
 
 /**
  * Map (hit, matchedKey) → workflow-visible restore-status string.
@@ -422,6 +430,7 @@ export async function run(): Promise<void> {
   const debugMode = result.debugMode;
   const debugLog = debugMode ? (msg: string): void => logger.log(msg) : (): void => undefined;
   const statsCollector = new StatsCollector();
+  const dependencyCacheMatchedKeys: string[] = [];
 
   // ---- source-mtime-normalize ----
   if (isTruthy(inputs.sourceMtimeNormalize)) {
@@ -526,6 +535,7 @@ export async function run(): Promise<void> {
     core.saveState("targetCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("targetCacheMatchedKey", restore.matchedKey);
     targetCacheMatchedKey = restore.matchedKey;
+    if (restore.matchedKey) dependencyCacheMatchedKeys.push(restore.matchedKey);
     statsCollector.record({
       label: "target-cache", operation: "restore", hit: restore.hit,
       key: result.targetCache.key, matchedKey: restore.matchedKey, restoreKeys,
@@ -615,6 +625,7 @@ export async function run(): Promise<void> {
     core.setOutput("build_cache_matched_key", restore.matchedKey);
     core.saveState("buildCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("buildCacheMatchedKey", restore.matchedKey);
+    if (restore.matchedKey) dependencyCacheMatchedKeys.push(restore.matchedKey);
     // Source-mtime replay (preserve-source-mtimes opt-in). post.ts dropped
     // a `setup-soldr-source-mtimes.json` sidecar inside the build-cache
     // dir on the cold side; if it's present after decompress, walk it and
@@ -1391,6 +1402,7 @@ export async function run(): Promise<void> {
             );
             markRegistryMiss();
           } else {
+            dependencyCacheMatchedKeys.push(matched);
             logger.log(
               `cargo-registry: extracted format=${archiveResult.codecPath} archive_bytes=${archiveBytes} restored_bytes=${restoredBytes} files=${restoredFiles} duration_ms=${archiveResult.durationMs}`,
             );
@@ -1515,6 +1527,12 @@ export async function run(): Promise<void> {
     });
     const baseReady = layeredCookBaseReady(restore, loaded);
     const deltaReady = layeredCookDeltaReady(restore, loaded);
+    if (baseReady && restore.base.matchedKey) {
+      dependencyCacheMatchedKeys.push(restore.base.matchedKey);
+    }
+    if (deltaReady && restore.delta.matchedKey) {
+      dependencyCacheMatchedKeys.push(restore.delta.matchedKey);
+    }
     core.setOutput("cook-cache-base-hit", baseReady ? "true" : "false");
     core.setOutput("cook-cache-delta-hit", deltaReady ? "true" : "false");
     core.setOutput("cook-cache-hit", baseReady ? "true" : "false");
@@ -1624,6 +1642,7 @@ export async function run(): Promise<void> {
     core.saveState("cookLayered", "false");
     core.saveState("cookExactKey", cookKey);
     core.saveState("cookMatchedKey", restore.matchedKey);
+    if (restore.hit && restore.matchedKey) dependencyCacheMatchedKeys.push(restore.matchedKey);
     core.saveState("cookHit", restore.hit ? "true" : "false");
     core.saveState("cookRan", cookRan ? "true" : "false");
     core.saveState("cookTargetDir", cookTargetDir);
@@ -1645,6 +1664,74 @@ export async function run(): Promise<void> {
     core.saveState("cookLayered", "false");
   }
   await finishPhase("cook");
+
+  // #476: content-addressed keys cannot observe a later registry yank. Start
+  // the network check only after every dependency-bearing restore has been
+  // validated, then let it run concurrently with the consumer's build. The
+  // post action joins this result before any cache save can report success.
+  const poisonedCandidates = [...new Set(dependencyCacheMatchedKeys.filter(Boolean))];
+  core.saveState("yankAuditStarted", "false");
+  if (poisonedCandidates.length > 0) {
+    const resultPath = path.join(ctx.runnerTemp, "setup-soldr-yank-audit", "result.json");
+    const configPath = path.join(ctx.runnerTemp, "setup-soldr-yank-audit", "config.json");
+    try {
+      if (!result.targetCache.lockfilePath) {
+        throw new Error("restored dependency cache has no Cargo.lock path");
+      }
+      const lockfilePath = path.isAbsolute(result.targetCache.lockfilePath)
+        ? result.targetCache.lockfilePath
+        : path.resolve(ctx.workspace, result.targetCache.lockfilePath);
+      const dependencies = readRegistryDependencies(lockfilePath);
+      const config: YankAuditWorkerConfig = {
+        dependencies,
+        requestTimeoutMs: 30_000,
+        // Finish before post's 60s join ceiling even if every registry
+        // request stalls. The worker aborts all in-flight requests together.
+        overallTimeoutMs: 45_000,
+      };
+      fs.mkdirSync(path.dirname(configPath), { recursive: true });
+      fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`, "utf8");
+      writeYankAuditResult(resultPath, { status: "pending" });
+      core.saveState("yankAuditStarted", "true");
+      core.saveState("yankAuditResultPath", resultPath);
+      core.saveState("yankAuditCacheKeys", JSON.stringify(poisonedCandidates));
+      if (dependencies.length === 0) {
+        writeYankAuditResult(resultPath, {
+          status: "clean",
+          checkedAt: new Date().toISOString(),
+          dependencyCount: 0,
+          checkedCount: 0,
+          yanked: [],
+          errors: [],
+        });
+      } else {
+        const entrypoint = process.argv[1];
+        if (!entrypoint) throw new Error("Node action entrypoint is unavailable");
+        const child = spawn(
+          process.execPath,
+          [entrypoint, YANK_AUDIT_WORKER_ARG, configPath, resultPath],
+          { detached: true, stdio: "ignore", windowsHide: true },
+        );
+        child.unref();
+        logger.log(
+          `yank-audit: started pid=${child.pid ?? "unknown"} dependencies=${dependencies.length} ` +
+            `cache_keys=${poisonedCandidates.length}`,
+        );
+      }
+    } catch (err) {
+      writeYankAuditResult(resultPath, {
+        status: "not-checked",
+        checkedAt: new Date().toISOString(),
+        errors: [err instanceof Error ? err.message : String(err)],
+      });
+      core.saveState("yankAuditStarted", "true");
+      core.saveState("yankAuditResultPath", resultPath);
+      core.saveState("yankAuditCacheKeys", JSON.stringify(poisonedCandidates));
+      logger.warning(
+        `yank-audit: not checked: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
 
   // ---- shared-target warning ----
   await detectSharedTargetWarning({
@@ -1746,8 +1833,20 @@ if (
   // the dev path — we rely on the env-var opt-out for tests instead.
   !process.env["SETUP_SOLDR_TEST_IMPORT"]
 ) {
-  run().catch((err: unknown) => {
-    const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
-    core.setFailed(`setup-soldr failed: ${message}`);
-  });
+  if (process.argv[2] === YANK_AUDIT_WORKER_ARG) {
+    const configPath = process.argv[3];
+    const resultPath = process.argv[4];
+    if (!configPath || !resultPath) {
+      process.exitCode = 2;
+    } else {
+      runYankAuditWorker(configPath, resultPath).catch(() => {
+        process.exitCode = 1;
+      });
+    }
+  } else {
+    run().catch((err: unknown) => {
+      const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
+      core.setFailed(`setup-soldr failed: ${message}`);
+    });
+  }
 }
