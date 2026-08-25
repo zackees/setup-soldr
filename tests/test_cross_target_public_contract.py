@@ -35,7 +35,7 @@ def test_cross_target_action_description_has_only_blessed_contract() -> None:
 def test_readme_recommends_only_target_driven_cross_compilation() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
 
-    assert "The default Soldr version is `0.9.9`." in readme
+    assert "The default Soldr version is `latest`." in readme
     assert "### Legacy cross-compile auto-bootstrap" not in readme
     assert "soldr cargo zigbuild" not in readme
     assert "cross-tool:" not in readme
@@ -50,7 +50,7 @@ def test_default_soldr_version_is_one_public_constant() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
     contract = CONTRACT_PATH.read_text(encoding="utf-8")
 
-    assert version == "0.9.9"
+    assert version == "latest"
     assert f"The default Soldr version is `{version}`." in readme
     assert f'EXPECTED_SOLDR_DEFAULT_VERSION = "{version}"' in contract
 
