@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Default to soldr `0.9.6` and extend the hash-verified PyPI wheel fallback
+  contract through `0.9.6`, retaining the pinned cargo-chef `0.1.73` helper.
+
 - Keep prepared cross-toolchain caches warm across Soldr releases. Exact cache
   keys remain immutable per Soldr version, while automatic host/target/source
   restore prefixes reuse the previous LLVM, GNU/Linux, MinGW, musl, xwin, and
