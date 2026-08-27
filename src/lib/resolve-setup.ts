@@ -395,7 +395,10 @@ export async function resolveSetup(
     ? path.resolve(ctx.runnerTemp)
     : path.resolve(path.join(workspace, ".tmp"));
   const ciTestsEnabled = parseOptInBool("ci-tests", inputs.ciTests, false);
-  const dylintModeEnabled = ciTestsEnabled || parseOptInBool("dylint", inputs.dylint, false);
+  // Dylint has its own nightly/driver compatibility matrix and is deliberately
+  // not folded into ci-tests. The ci-test resource contract shares the stable
+  // compile domain; callers opt into Dylint separately when they need it.
+  const dylintModeEnabled = parseOptInBool("dylint", inputs.dylint, false);
   const explicitCargoRegistryCache = inputs.cargoRegistryCache.trim();
 
   // ---- cache-preset resolution (#251) ----
