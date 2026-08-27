@@ -119,6 +119,9 @@ EXPECTED_OUTPUTS = {
     "cache-hit",
     "cache-key",
     "cache-preset-effective",
+    # soldr#2931 / setup-soldr#496: what this lane actually persists, so a
+    # consumer can read the resolved tier policy instead of inferring it.
+    "cache-policy-json",
     "cache-restore-status",
     "cook-cache-hit",
     "cook-cache-base-hit",
