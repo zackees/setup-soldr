@@ -69,6 +69,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     prebuildDepsFlags: get("prebuild-deps-flags"),
     prebuildDepsDeltaCache: get("prebuild-deps-delta-cache"),
     soldrMiniCache: get("soldr-mini-cache"),
+    ciTests: get("ci-tests"),
     dylint: get("dylint"),
     dylintFoundationCache: get("dylint-foundation-cache"),
     dylintOutputCache: get("dylint-output-cache"),

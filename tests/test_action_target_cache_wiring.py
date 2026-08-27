@@ -77,6 +77,7 @@ EXPECTED_INPUTS = {
     "prebuild-deps-delta-cache",
     "soldr-mini-cache",
     "dylint",
+    "ci-tests",
     "dylint-foundation-cache",
     "dylint-output-cache",
     "dylint-cache",
