@@ -251,6 +251,48 @@ test("dylint mode is false by default and performs no nightly lookup", async () 
   assert.equal(result.envExports["SOLDR_DYLINT_CONFIGURED_TOOLCHAIN"], undefined);
 });
 
+test("ci-tests enables the Dylint foundation and bounded defaults", async () => {
+  const { result, inputs } = await run(
+    {},
+    { "INPUT_CI-TESTS": "true", INPUT_TOOLCHAIN: "1.94.1" },
+    undefined,
+    async () => ({
+      channel: "nightly-2026-01-18",
+      rustVersion: "1.94",
+      rustcRelease: "1.94.0-nightly",
+      rustcCommitHash: "1111111111111111111111111111111111111111",
+    }),
+  );
+  assert.equal(result.dylintCache.enabled, true);
+  assert.equal(inputs.prebuildDeps, "none");
+  assert.equal(result.envExports["CARGO_BUILD_JOBS"], "1");
+  assert.equal(result.envExports["SOLDR_JOBS"], "1");
+  assert.equal(result.envExports["NEXTEST_TEST_THREADS"], "1");
+  assert.equal(result.envExports["SETUP_SOLDR_CI_TESTS"], "true");
+});
+
+test("ci-tests preserves explicit workflow concurrency limits", async () => {
+  const { result } = await run(
+    {},
+    {
+      "INPUT_CI-TESTS": "true",
+      CARGO_BUILD_JOBS: "4",
+      SOLDR_JOBS: "3",
+      NEXTEST_TEST_THREADS: "2",
+    },
+    undefined,
+    async () => ({
+      channel: "nightly-2026-01-18",
+      rustVersion: "1.94",
+      rustcRelease: "1.94.0-nightly",
+      rustcCommitHash: "1111111111111111111111111111111111111111",
+    }),
+  );
+  assert.equal(result.envExports["CARGO_BUILD_JOBS"], "4");
+  assert.equal(result.envExports["SOLDR_JOBS"], "3");
+  assert.equal(result.envExports["NEXTEST_TEST_THREADS"], "2");
+});
+
 test("dylint mode resolves newest nightly identity and keys the foundation cache", async () => {
   let requested = "";
   const { result, outputs, inputs } = await run(

@@ -124,6 +124,13 @@ test("dylint mode inputs round-trip and remain empty when omitted", () => {
   assert.equal(omitted.dylint, "");
 });
 
+test("ci-tests input round-trips through readRawInputs", () => {
+  const enabled = readRawInputs({ "INPUT_CI-TESTS": "true" });
+  assert.equal(enabled.ciTests, "true");
+  const omitted = readRawInputs({});
+  assert.equal(omitted.ciTests, "");
+});
+
 test("timestamp-format input round-trips through readRawInputs", () => {
   const r = readRawInputs({ "INPUT_TIMESTAMP-FORMAT": "seconds" });
   assert.equal(r.timestampFormat, "seconds");

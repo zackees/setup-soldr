@@ -126,6 +126,7 @@ export interface RawInputs {
   prebuildDepsFlags: string;
   prebuildDepsDeltaCache: string;
   soldrMiniCache: string;
+  ciTests: string;
   dylint: string;
   dylintFoundationCache: string;
   dylintOutputCache: string;

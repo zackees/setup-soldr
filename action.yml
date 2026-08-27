@@ -420,6 +420,15 @@ inputs:
       (#251, #470)
     required: false
     default: ""
+  ci-tests:
+    description: >
+      Prepare the prescribed CI-test domain without running a hidden test
+      command. Enables the compatible Dylint foundation and defaults
+      CARGO_BUILD_JOBS, SOLDR_JOBS, and NEXTEST_TEST_THREADS to one unless
+      the workflow already sets them. Call the repository's explicit test
+      command after this action.
+    required: false
+    default: "false"
   dylint:
     description: >
       Enable Dylint mode. Default "false": setup-soldr performs no nightly

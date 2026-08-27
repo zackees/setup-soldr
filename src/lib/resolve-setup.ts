@@ -394,7 +394,8 @@ export async function resolveSetup(
   const runnerTemp = ctx.runnerTemp
     ? path.resolve(ctx.runnerTemp)
     : path.resolve(path.join(workspace, ".tmp"));
-  const dylintModeEnabled = parseOptInBool("dylint", inputs.dylint, false);
+  const ciTestsEnabled = parseOptInBool("ci-tests", inputs.ciTests, false);
+  const dylintModeEnabled = ciTestsEnabled || parseOptInBool("dylint", inputs.dylint, false);
   const explicitCargoRegistryCache = inputs.cargoRegistryCache.trim();
 
   // ---- cache-preset resolution (#251) ----
@@ -1073,6 +1074,14 @@ export async function resolveSetup(
     if (GITHUB_ENV_DENY_LIST.has(name)) return;
     envExports[name] = value;
   };
+  if (ciTestsEnabled) {
+    // This profile prepares CI prerequisites; callers retain ownership of
+    // their explicit test command. Explicit scheduler limits always win.
+    setEnv("CARGO_BUILD_JOBS", env["CARGO_BUILD_JOBS"]?.trim() || "1");
+    setEnv("SOLDR_JOBS", env["SOLDR_JOBS"]?.trim() || "1");
+    setEnv("NEXTEST_TEST_THREADS", env["NEXTEST_TEST_THREADS"]?.trim() || "1");
+    setEnv("SETUP_SOLDR_CI_TESTS", "true");
+  }
   setEnv("SOLDR_CACHE_DIR", soldrRoot);
   setEnv("CARGO_HOME", cargoHome);
   setEnv("RUSTUP_HOME", rustupHome);
