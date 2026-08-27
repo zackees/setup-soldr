@@ -270,6 +270,123 @@ export function detectZccachePrivateOverlap(
   );
 }
 
+/**
+ * Detect a job-level `ZCCACHE_CACHE_TEST_BINS` opt-in (soldr#2931 /
+ * setup-soldr#496).
+ *
+ * zccache#1527 made the compiler service refuse `--test` harness link products
+ * at cache admission *by default*, because a test executable statically links
+ * the whole dependency graph: its identity key changes with any transitive
+ * input while its size is measured in tens of megabytes, so it is the single
+ * worst size-per-stability trade in the store. `ZCCACHE_CACHE_TEST_BINS=1` is
+ * the escape hatch that turns that exclusion back off.
+ *
+ * setup-soldr never sets that variable (see the env-export block below), but a
+ * workflow can set it at the job/step level and it would then silently reverse
+ * the tier-3 rule for every compile this action wraps. Return a warning string
+ * the caller should surface via `core.warning`; return `null` otherwise.
+ * Mirrors `detectZccachePrivateOverlap` above — the detector is pure so it can
+ * be unit-tested without a runner.
+ */
+export function detectZccacheTestBinOptIn(
+  env: Record<string, string | undefined>,
+): string | null {
+  const raw = (env["ZCCACHE_CACHE_TEST_BINS"] ?? "").trim().toLowerCase();
+  if (!TRUTHY_VALUES.has(raw)) return null;
+  return (
+    "setup-soldr: ZCCACHE_CACHE_TEST_BINS is set truthy in this job's " +
+    "environment, which re-enables caching of linked test binaries. " +
+    "soldr#2931 classifies linked test products (integration-test " +
+    "executables, benches, examples built for tests, doctest products and " +
+    "their debug sidecars) as tier-3 'none' — never cacheable at any layer, " +
+    "because their identity key is maximally unstable relative to their " +
+    "size. zccache#1527 excludes them by default and setup-soldr " +
+    "deliberately never sets this variable. Unset it unless you are " +
+    "knowingly reproducing the 3.3 GB nextest-archive failure that " +
+    "exhausted a hosted Windows runner's disk (os error 112). See " +
+    "https://github.com/zackees/soldr/issues/2931."
+  );
+}
+
+/**
+ * Decide whether a `ci-tests: true` lane must refuse the bulk `target/`
+ * snapshot that `build-cache-mode: full` would otherwise persist
+ * (soldr#2931 / setup-soldr#496).
+ *
+ * WHY THIS EXISTS. `build-cache-mode: full` + target caching is the only
+ * configuration in this action that saves the *entire* `target/` directory
+ * (see the `targetTreeCacheEnabled` branch below, where `targetCachePaths`
+ * becomes `[targetCachePath, targetCacheBundlePath]`). `target/<profile>/deps/`
+ * is where every linked test executable lands, so a bulk snapshot is by
+ * construction a snapshot of tier-3 artifacts. soldr's own repo is the worked
+ * example: `crates/soldr-cli/tests/` had 98 top-level files, each compiled into
+ * its own executable statically linking the whole dependency graph, which
+ * produced a 3,302,138,143-byte nextest archive and exhausted a hosted Windows
+ * runner's disk with `os error 112`.
+ *
+ * A ci-test lane is the *worst possible producer* for that snapshot, because
+ * linked test products are not a side effect of the lane — they are its entire
+ * output. So `ci-tests: true` carries a cache-ownership contract: this job will
+ * not persist a bulk target tree.
+ *
+ * WHY THE REFUSAL IS ABSOLUTE RATHER THAN EXPLICIT-INPUT-WINS. The
+ * `cache-preset` convention in this file is "explicit fine-grained input beats
+ * the preset" — a preset is a bundle of *defaults*, so anything the user
+ * actually typed outranks it. That rule governs preset-vs-explicit; it does not
+ * govern explicit-vs-explicit, which is what this conflict is: `ci-tests` and
+ * `build-cache-mode` are both things the user typed. Note also that no preset
+ * can even reach this state — `cache-preset: full` resolves `buildCacheMode` to
+ * `"thin"`, so the bulk-snapshot path is reachable only from an explicit
+ * `build-cache-mode: full` (or the deprecated `target-cache-mode: full`). If
+ * explicit input won here, the contract would be unreachable and this code
+ * would be a no-op.
+ *
+ * For explicit-vs-explicit cache-layer conflicts this file already refuses
+ * outright: `dylint-output-cache` + `build-cache-mode=full` *throws*. We soften
+ * that to warn-and-degrade because, unlike the Dylint overlap, the degraded
+ * result is still correct — the bounded thin bundle plus the per-unit zccache
+ * store carry the lane, just with a smaller warm set — and hard-failing an
+ * existing workflow over a cache-shape preference is disproportionate. The
+ * escape hatch is free and needs no new input surface: a job that genuinely
+ * wants a bulk `target/` snapshot simply does not opt into the `ci-tests`
+ * profile.
+ *
+ * Returns the warning to surface via `core.warning`, or `null` when the
+ * configuration is already compliant. Pure so it can be unit-tested directly,
+ * matching the `detectZccachePrivateOverlap` idiom above.
+ */
+export function detectCiTestsTargetTreeRefusal(opts: {
+  ciTestsEnabled: boolean;
+  buildCacheEnabled: boolean;
+  targetCacheRequested: boolean;
+  buildCacheMode: string;
+}): string | null {
+  const { ciTestsEnabled, buildCacheEnabled, targetCacheRequested, buildCacheMode } = opts;
+  if (!ciTestsEnabled) return null;
+  if (buildCacheMode !== "full") return null;
+  // Mirrors the `targetTreeCacheEnabled` predicate below: no bulk snapshot is
+  // taken unless build-cache is on AND target caching was requested, so there
+  // is nothing to refuse in any other combination.
+  if (!buildCacheEnabled || !targetCacheRequested) return null;
+  return (
+    "setup-soldr: refusing build-cache-mode=full on a ci-tests lane; " +
+    "degrading to 'thin'. `ci-tests: true` declares that this job's product " +
+    "is linked test binaries (integration-test executables, benches, " +
+    "examples built for tests, doctest products and their debug sidecars), " +
+    "and mode 'full' persists a bulk snapshot of the whole target/ " +
+    "directory — which on such a lane is almost entirely those products. " +
+    "soldr#2931 classifies them as tier-3 'none': never cacheable at any " +
+    "layer. Only tier-1 cook dependency compilation and the tier-2 per-unit " +
+    "zccache store are durable, and both survive this degrade. The worked " +
+    "example is soldr's own repo, where 98 top-level integration-test files " +
+    "each linked their own executable and produced a 3,302,138,143-byte " +
+    "archive that exhausted a hosted Windows runner's disk (os error 112). " +
+    "If you really want a bulk target/ snapshot on this job, drop " +
+    "`ci-tests: true`. See https://github.com/zackees/soldr/issues/2931 and " +
+    "https://github.com/zackees/setup-soldr/issues/496."
+  );
+}
+
 // `fetchReleaseTagDefault` and `resolveSoldrReleaseVersion` live in
 // ./fetch-release.js — used directly from resolveSetup() below.
 
@@ -766,7 +883,7 @@ export async function resolveSetup(
     legacyTargetCacheMode !== "off";
 
   const explicitBuildCacheMode = inputs.buildCacheMode.trim();
-  const buildCacheMode = normalizeBuildCacheMode(
+  let buildCacheMode = normalizeBuildCacheMode(
     inputs.buildCacheMode,
     legacyTargetCacheModeInput,
     !explicitBuildCacheMode && targetCacheRequested,
@@ -775,6 +892,27 @@ export async function resolveSetup(
 
   const buildCacheInputRaw = inputs.buildCache.trim() || "true";
   const buildCacheEnabled = cacheUmbrellaEnabled && !isFalsy(buildCacheInputRaw);
+
+  // soldr#2931 / setup-soldr#496: `ci-tests: true` carries a cache-ownership
+  // contract — a lane whose entire product is linked test binaries may not
+  // persist a bulk `target/` snapshot. Degrade the mode to 'thin' BEFORE
+  // anything downstream reads it, so the whole cascade (runtime mode, target
+  // cache key prefixes, target cache paths, soft budget, the env exports and
+  // the log summary) is consistently thin rather than a full-mode key pointing
+  // at a bounded bundle. See `detectCiTestsTargetTreeRefusal` for why this
+  // refusal is absolute instead of following the preset-vs-explicit rule.
+  const ciTestsTargetTreeRefusal = detectCiTestsTargetTreeRefusal({
+    ciTestsEnabled,
+    buildCacheEnabled,
+    targetCacheRequested,
+    buildCacheMode,
+  });
+  const ciTestsTargetTreeRefused = ciTestsTargetTreeRefusal !== null;
+  if (ciTestsTargetTreeRefusal) {
+    core.warning(ciTestsTargetTreeRefusal);
+    buildCacheMode = "thin";
+  }
+
   const buildCacheRuntimeMode = buildCacheMode === "once" ? "full" : buildCacheMode;
   let targetCacheEnabled = buildCacheEnabled && targetCacheRequested;
   if (buildCacheMode === "thin" && cargoLockHash === "no-lock") {
@@ -1068,6 +1206,36 @@ export async function resolveSetup(
     makeDirs(dylintDriverPath);
   }
 
+  // ---- effective cache-ownership policy (soldr#2931 / setup-soldr#496) ----
+  // A consumer asking "what does my lane actually persist?" had no answer
+  // short of reading the resolver. Assemble one honest, versioned signal from
+  // the layer decisions already made above, ordered by the stability gradient
+  // the policy defines: pinned downloads first, then tier-1 cook dependency
+  // compilation, then the tier-2 per-unit zccache store, then the bounded
+  // target bundle. `test_products` is a constant because tier 3 is a rule, not
+  // a setting — linked test products are never persisted at any layer, and
+  // zccache#1527 enforces the same exclusion at compiler admission.
+  const cachePolicyLayers: string[] = [];
+  if (cacheUmbrellaEnabled) cachePolicyLayers.push("toolchain");
+  if (cargoRegistryCacheEnabled) cachePolicyLayers.push("cargo-registry");
+  if (cacheUmbrellaEnabled && cookPrebuildEnabled) cachePolicyLayers.push("cook");
+  if (buildCacheEnabled) cachePolicyLayers.push("zccache-unit");
+  if (targetCacheEnabled) {
+    cachePolicyLayers.push(targetTreeCacheEnabled ? "target-tree" : "target-bundle");
+  }
+  if (dylintCacheEnabled) cachePolicyLayers.push("dylint-foundation");
+  if (dylintOutputCacheEnabled) cachePolicyLayers.push("dylint-output");
+  const cachePolicyJson = JSON.stringify({
+    schema: 1,
+    layers: cachePolicyLayers,
+    // The bulk `target/` snapshot — the only layer that can carry linked test
+    // products into a cache entry, which is why it is called out separately.
+    target_tree_snapshot: targetTreeCacheEnabled,
+    test_products: "never",
+    ci_tests: ciTestsEnabled,
+    ci_tests_target_tree_refused: ciTestsTargetTreeRefused,
+  });
+
   // ---- env exports ----
   const cacheShutdownOnIdleSeconds = parseCacheShutdownOnIdleSeconds(inputs.cacheShutdownOnIdle);
   const rustBacktraceValue = parseRustBacktrace(inputs.rustBacktrace);
@@ -1089,6 +1257,18 @@ export async function resolveSetup(
   setEnv("CARGO_HOME", cargoHome);
   setEnv("RUSTUP_HOME", rustupHome);
   setEnv("ZCCACHE_CACHE_DIR", zccacheCacheDir);
+  // soldr#2931 / setup-soldr#496: `ZCCACHE_CACHE_TEST_BINS` is DELIBERATELY
+  // absent from this block and must stay absent. zccache#1527 refuses `--test`
+  // harness link products at cache admission by default; that variable is the
+  // opt-in that turns the exclusion back off. setup-soldr never sets it — not
+  // even to "0" — so zccache's own default stands and there is no setup-soldr
+  // value for a consumer to have to override. If it is truthy in the job
+  // environment we warn rather than silently inherit it.
+  const zccacheTestBinOptIn = detectZccacheTestBinOptIn(env);
+  if (zccacheTestBinOptIn) core.warning(zccacheTestBinOptIn);
+  // Machine-readable statement of what this lane persists; mirrored 1:1 into
+  // the `cache-policy-json` output by applyResolveResult().
+  setEnv("SETUP_SOLDR_CACHE_POLICY_JSON", cachePolicyJson);
   // soldr#807: warn when SOLDR_ZCCACHE_PRIVATE is truthy because the
   // explicit ZCCACHE_CACHE_DIR above will silently win and the opt-in
   // private-session path under <cwd>/.zccache won't be used.
@@ -1258,6 +1438,14 @@ export async function resolveSetup(
   if (targetCacheEnabled) {
     log(`target-cache soft-budget-bytes=${targetCacheBudgetBytes}`);
     log(`target-cache soft-budget-files=${targetCacheBudgetFiles}`);
+  }
+  // soldr#2931: state the cache-ownership policy in the same plan block that
+  // states the keys, so a red lane's log shows both what was persisted and why.
+  log(`cache-policy layers=${cachePolicyLayers.join("+") || "none"}`);
+  log(`cache-policy target-tree-snapshot=${targetTreeCacheEnabled ? "true" : "false"}`);
+  log("cache-policy test-products=never (soldr#2931 tier 3)");
+  if (ciTestsTargetTreeRefused) {
+    log("cache-policy ci-tests-target-tree=refused (build-cache-mode full -> thin)");
   }
   log(`soldr repo=${soldrRepo}`);
   log(`soldr ref=${soldrRef || "release"}`);
@@ -1436,6 +1624,15 @@ export async function applyResolveResult(result: ResolveResult): Promise<void> {
   for (const [key, value] of Object.entries(outputs)) {
     core.setOutput(key, value);
   }
+  // soldr#2931 / setup-soldr#496: additive `cache-policy-json` output. It is
+  // emitted here rather than from buildOutputs() because the value is already
+  // carried verbatim in envExports (later steps and Soldr itself read
+  // SETUP_SOLDR_CACHE_POLICY_JSON from $GITHUB_ENV), so mirroring it costs one
+  // line and needs no second source of truth. Never renames or removes an
+  // existing output. The empty-string fallback cannot be hit through
+  // resolveSetup(), which always sets the variable; it only keeps a
+  // hand-assembled ResolveResult in a test from emitting `undefined`.
+  core.setOutput("cache-policy-json", result.envExports["SETUP_SOLDR_CACHE_POLICY_JSON"] ?? "");
 }
 
 // `buildOutputs` and `pythonDefaultJson` are re-exported at the top of

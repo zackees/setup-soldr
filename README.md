@@ -688,6 +688,39 @@ service check, dispatch the workflow with
 matrix and adds a two-job target-cache save/restore smoke using
 `@actions/cache`, emitted as `cache_backend=actions-cache`.
 
+### Cache ownership and priority
+
+Which artifacts earn a cache slot is decided by the stability of their identity
+key relative to their size. A key that survives an ordinary commit buys many
+warm runs per save; a key that changes on every commit buys none, and pays the
+save cost anyway.
+
+| Priority | What | Why it earns the slot |
+|---|---|---|
+| 1 | Pinned toolchain and SDK downloads (`setup-cache`, `soldr-mini`, `cargo-registry`) | Keyed on a version and a platform. Immutable once pinned. |
+| 2 | `cook` dependency compilation | Keyed on `Cargo.lock` and the build shape. Durable across every commit that does not change dependencies. |
+| 3 | The per-unit zccache store | Content-addressed per compilation unit, so an unchanged unit is a hit no matter what else moved. Safe by construction. |
+| 4 | Nothing else | Anything whose key is as unstable as its size is large is not worth a slot. |
+
+**Linked test products are never cached** — integration-test executables,
+benches, examples built for tests, doctest products, their debug sidecars, and
+test-specific incremental state. A test binary statically links the whole
+dependency graph, so any transitive change invalidates it, and it costs tens of
+megabytes each. zccache refuses `--test` harness link products at cache
+admission, and setup-soldr never sets `ZCCACHE_CACHE_TEST_BINS`, so that default
+stands. The worked failure is
+[soldr#2931](https://github.com/zackees/soldr/issues/2931): a workspace with 98
+top-level integration-test files produced a 3.3 GB nextest archive and exhausted
+a hosted Windows runner's disk with `os error 112`.
+
+`build-cache-mode: full` with target caching on is the only configuration that
+snapshots the entire `target/` tree, which is where those products live.
+Setting `ci-tests: true` therefore refuses it: the mode degrades to `thin`, a
+warning explains why, and cook plus the zccache unit store still carry the lane.
+A job that genuinely wants the bulk snapshot simply does not opt into
+`ci-tests`. The resolved layers are reported by the `cache-policy-json` output
+and the `SETUP_SOLDR_CACHE_POLICY_JSON` env var.
+
 ### Recovering pre-trim cache behavior (migration)
 
 PR [#219](https://github.com/zackees/setup-soldr/pull/219) ("Trim default cache

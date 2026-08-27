@@ -427,6 +427,18 @@ inputs:
       NEXTEST_TEST_THREADS to one unless the workflow already sets them.
       Dylint remains an explicit separate-toolchain opt-in. Call the
       repository's explicit test command after this action.
+
+      Cache contract (soldr#2931): linked test products — integration-test
+      executables, benches, examples built for tests, doctest products, their
+      debug sidecars, and test-specific incremental state — are never
+      persisted by any cache layer. Because a ci-test lane's entire output is
+      those products, setting this to "true" additionally refuses a bulk
+      `target/` snapshot: if `build-cache-mode` resolves to "full" with target
+      caching on, the mode is degraded to "thin" and a warning is emitted.
+      Tier-1 cook dependency compilation and the tier-2 per-unit zccache store
+      are unaffected. Omit `ci-tests` if a job genuinely needs the bulk
+      snapshot. The resolved layers are reported by the `cache-policy-json`
+      output.
     required: false
     default: "false"
   dylint:
@@ -809,6 +821,21 @@ outputs:
       The resolved `cache-preset` value (one of "minimal", "foundation",
       "full") that filled unset cache-affecting inputs this run. Empty
       string when no preset was set. (#251)
+  cache-policy-json:
+    description: >
+      JSON statement of the cache-ownership policy this lane resolved to
+      (soldr#2931). Shape:
+      `{"schema":1,"layers":[...],"target_tree_snapshot":bool,
+      "test_products":"never","ci_tests":bool,
+      "ci_tests_target_tree_refused":bool}`.
+      `layers` is ordered by the stability gradient and drawn from
+      "toolchain", "cargo-registry", "cook", "zccache-unit",
+      "target-bundle" | "target-tree", "dylint-foundation", "dylint-output".
+      `test_products` is the constant "never": linked test binaries, benches,
+      examples built for tests, doctest products and their debug sidecars are
+      not cacheable at any layer. `ci_tests_target_tree_refused` is true when
+      `ci-tests: true` degraded `build-cache-mode` from "full" to "thin".
+      Also exported as `SETUP_SOLDR_CACHE_POLICY_JSON`.
   cook-cache-hit:
     description: Whether the long-lived dependency base was restored and loaded for usable rematerialization; a compatible delta hit is reported separately.
   cook-cache-base-hit:
