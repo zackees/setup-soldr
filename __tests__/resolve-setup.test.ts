@@ -271,6 +271,28 @@ test("ci-tests enables the Dylint foundation and bounded defaults", async () => 
   assert.equal(result.envExports["SETUP_SOLDR_CI_TESTS"], "true");
 });
 
+test("ci-tests preserves explicit workflow concurrency limits", async () => {
+  const { result } = await run(
+    {},
+    {
+      "INPUT_CI-TESTS": "true",
+      CARGO_BUILD_JOBS: "4",
+      SOLDR_JOBS: "3",
+      NEXTEST_TEST_THREADS: "2",
+    },
+    undefined,
+    async () => ({
+      channel: "nightly-2026-01-18",
+      rustVersion: "1.94",
+      rustcRelease: "1.94.0-nightly",
+      rustcCommitHash: "1111111111111111111111111111111111111111",
+    }),
+  );
+  assert.equal(result.envExports["CARGO_BUILD_JOBS"], "4");
+  assert.equal(result.envExports["SOLDR_JOBS"], "3");
+  assert.equal(result.envExports["NEXTEST_TEST_THREADS"], "2");
+});
+
 test("dylint mode resolves newest nightly identity and keys the foundation cache", async () => {
   let requested = "";
   const { result, outputs, inputs } = await run(
