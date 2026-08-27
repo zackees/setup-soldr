@@ -6,9 +6,11 @@ import * as path from "node:path";
 import { execFileSync } from "node:child_process";
 import {
   buildOutputs,
+  detectCiTestsTargetTreeRefusal,
   detectMuslCcEnv,
   detectUserLinkerEnv,
   detectZccachePrivateOverlap,
+  detectZccacheTestBinOptIn,
   readRawInputs,
   resolveLocalSourceIdentity,
   resolveManifestWorkspace,
@@ -291,6 +293,141 @@ test("ci-tests preserves explicit workflow concurrency limits", async () => {
   assert.equal(result.envExports["CARGO_BUILD_JOBS"], "4");
   assert.equal(result.envExports["SOLDR_JOBS"], "3");
   assert.equal(result.envExports["NEXTEST_TEST_THREADS"], "2");
+});
+
+// ============================================================================
+// soldr#2931 / setup-soldr#496 — ci-tests cache-ownership contract.
+// A ci-test lane's entire product is linked test binaries, so it may not
+// persist a bulk target/ snapshot. build-cache-mode=full + target caching is
+// the only configuration that takes one, so ci-tests degrades it to thin.
+// ============================================================================
+
+interface CachePolicySignal {
+  schema: number;
+  layers: string[];
+  target_tree_snapshot: boolean;
+  test_products: string;
+  ci_tests: boolean;
+  ci_tests_target_tree_refused: boolean;
+}
+
+function cachePolicy(result: ResolveResult): CachePolicySignal {
+  const raw = result.envExports["SETUP_SOLDR_CACHE_POLICY_JSON"];
+  assert.ok(raw, "SETUP_SOLDR_CACHE_POLICY_JSON must always be exported");
+  return JSON.parse(raw!) as CachePolicySignal;
+}
+
+test("ci-tests refuses a bulk target/ snapshot and degrades full to thin (soldr#2931)", async () => {
+  const { result } = await run({}, {
+    "INPUT_CI-TESTS": "true",
+    INPUT_TARGET_CACHE: "true",
+    INPUT_BUILD_CACHE_MODE: "full",
+  });
+  assert.equal(result.buildCache.mode, "thin", "ci-tests degrades full to thin");
+  assert.equal(result.envExports["SETUP_SOLDR_BUILD_CACHE_MODE"], "thin");
+  assert.equal(result.envExports["SOLDR_BUILD_CACHE_MODE"], "thin");
+  assert.equal(result.targetCache.enabled, true, "the bounded bundle still carries the lane");
+  assert.equal(result.targetCache.effectiveMode, "thin");
+  assert.equal(
+    result.targetCache.paths,
+    result.targetCache.bundlePath,
+    "only the bounded bundle is persisted — never the whole target/ tree",
+  );
+  assert.ok(
+    !result.targetCache.paths.includes(result.targetCache.targetPath),
+    "target/ must not appear in the saved paths on a ci-tests lane",
+  );
+  const policy = cachePolicy(result);
+  assert.equal(policy.ci_tests, true);
+  assert.equal(policy.ci_tests_target_tree_refused, true);
+  assert.equal(policy.target_tree_snapshot, false);
+  assert.ok(policy.layers.includes("target-bundle"));
+  assert.ok(!policy.layers.includes("target-tree"));
+});
+
+test("ci-tests with default cache settings is unchanged (soldr#2931)", async () => {
+  const { result } = await run({}, { "INPUT_CI-TESTS": "true" });
+  // Nothing to refuse: target caching is default-off, so no bulk snapshot was
+  // ever on the table and the historical resolution is untouched.
+  assert.equal(result.targetCache.enabled, false);
+  assert.equal(result.buildCache.enabled, true);
+  assert.equal(result.envExports["SETUP_SOLDR_CI_TESTS"], "true");
+  const policy = cachePolicy(result);
+  assert.equal(policy.ci_tests, true);
+  assert.equal(policy.ci_tests_target_tree_refused, false);
+  assert.equal(policy.target_tree_snapshot, false);
+  assert.deepEqual(policy.layers, ["toolchain", "zccache-unit"]);
+});
+
+test("non-ci-tests lanes keep build-cache-mode=full and the target tree (soldr#2931)", async () => {
+  const { result } = await run({}, {
+    INPUT_TARGET_CACHE: "true",
+    INPUT_BUILD_CACHE_MODE: "full",
+  });
+  assert.equal(result.buildCache.mode, "full", "the refusal must not leak onto ordinary lanes");
+  assert.equal(result.targetCache.effectiveMode, "full");
+  assert.ok(
+    result.targetCache.paths.includes(result.targetCache.targetPath),
+    "full mode on a non-ci-tests lane still snapshots the whole target/ tree",
+  );
+  const policy = cachePolicy(result);
+  assert.equal(policy.ci_tests, false);
+  assert.equal(policy.ci_tests_target_tree_refused, false);
+  assert.equal(policy.target_tree_snapshot, true);
+  assert.ok(policy.layers.includes("target-tree"));
+});
+
+test("cache policy is exported on every lane and never permits test products (soldr#2931)", async () => {
+  const { result } = await run({});
+  const policy = cachePolicy(result);
+  assert.equal(policy.schema, 1);
+  assert.equal(policy.test_products, "never");
+  assert.equal(policy.ci_tests, false);
+  assert.deepEqual(policy.layers, ["toolchain", "zccache-unit"]);
+});
+
+test("cache policy lists cook and cargo-registry in stability order (soldr#2931)", async () => {
+  const { result } = await run({}, { INPUT_PREBUILD_DEPS: "soldr-cook" });
+  const policy = cachePolicy(result);
+  assert.deepEqual(policy.layers, ["toolchain", "cargo-registry", "cook", "zccache-unit"]);
+});
+
+test("setup-soldr never sets ZCCACHE_CACHE_TEST_BINS itself (soldr#2931)", async () => {
+  const { result } = await run({}, { "INPUT_CI-TESTS": "true" });
+  assert.equal(
+    result.envExports["ZCCACHE_CACHE_TEST_BINS"],
+    undefined,
+    "zccache's default test-binary exclusion must stand — not even a '0' override",
+  );
+});
+
+test("detectZccacheTestBinOptIn flags only a truthy job-level opt-in (soldr#2931)", () => {
+  assert.equal(detectZccacheTestBinOptIn({}), null);
+  assert.equal(detectZccacheTestBinOptIn({ ZCCACHE_CACHE_TEST_BINS: "0" }), null);
+  assert.equal(detectZccacheTestBinOptIn({ ZCCACHE_CACHE_TEST_BINS: "off" }), null);
+  const warning = detectZccacheTestBinOptIn({ ZCCACHE_CACHE_TEST_BINS: "1" });
+  assert.ok(warning, "a truthy opt-in must produce a warning");
+  assert.match(warning!, /ZCCACHE_CACHE_TEST_BINS/);
+  assert.match(warning!, /soldr\/issues\/2931/);
+});
+
+test("detectCiTestsTargetTreeRefusal fires only on the bulk-snapshot combination", () => {
+  const base = {
+    ciTestsEnabled: true,
+    buildCacheEnabled: true,
+    targetCacheRequested: true,
+    buildCacheMode: "full",
+  };
+  const warning = detectCiTestsTargetTreeRefusal(base);
+  assert.ok(warning, "the bulk-snapshot combination must produce a warning");
+  assert.match(warning!, /refusing build-cache-mode=full on a ci-tests lane/);
+  assert.match(warning!, /soldr\/issues\/2931/);
+  assert.match(warning!, /setup-soldr\/issues\/496/);
+  assert.equal(detectCiTestsTargetTreeRefusal({ ...base, ciTestsEnabled: false }), null);
+  assert.equal(detectCiTestsTargetTreeRefusal({ ...base, buildCacheMode: "thin" }), null);
+  assert.equal(detectCiTestsTargetTreeRefusal({ ...base, buildCacheMode: "once" }), null);
+  assert.equal(detectCiTestsTargetTreeRefusal({ ...base, buildCacheEnabled: false }), null);
+  assert.equal(detectCiTestsTargetTreeRefusal({ ...base, targetCacheRequested: false }), null);
 });
 
 test("dylint mode resolves newest nightly identity and keys the foundation cache", async () => {
