@@ -225,21 +225,35 @@ inputs:
     default: "false"
   target-cache:
     description: >
-      Deprecated compatibility input. Empty (default) resolves to "false"
-      unless `cache-preset: full` overrides it. Set to "true" to enable
-      Rust target artifact caching; prefer `build-cache-mode` for selecting
-      once/thin/full. (#251 cache-preset)
+      DEPRECATED AND INERT with soldr >= the release containing zackees/soldr#3001.
+      Soldr removed its target cache entirely: the `rust_plan` machinery that
+      consumed SOLDR_TARGET_CACHE_* was deleted, so this layer has nothing left
+      to drive and setting it has no effect. It remains declared so existing
+      workflows do not fail on an unexpected input, and it still functions for
+      a pinned older soldr.
+
+      Use `soldr cook` instead -- it is the durable dependency cache, and
+      zackees/soldr#2996 measured it both smaller and faster than the target
+      cache it replaces (497.4 MiB vs 635.0 MiB on one lane, 378.4 s saved per
+      warm run).
+
+      Empty (default) resolves to "false" unless `cache-preset: full` overrides
+      it. (#251 cache-preset)
     required: false
     default: ""
   target-cache-mode:
     description: >
-      Deprecated compatibility input translated into build-cache-mode.
-      "hot" maps to "thin", "full" maps to "full", and "off" disables Rust
-      target artifact caching.
+      DEPRECATED AND INERT -- see `target-cache`. Translated into
+      build-cache-mode; "hot" maps to "thin", "full" maps to "full", and "off"
+      disables Rust target artifact caching. With a soldr that has dropped the
+      target cache, every value behaves the same: nothing happens.
     required: false
     default: ""
   target-dir:
-    description: Cargo target directory used by soldr when constructing the Rust artifact cache plan.
+    description: >
+      Cargo target directory. Its only remaining consumers are cache-key
+      shaping and the cook layer; the Rust artifact cache plan it was named
+      for no longer exists (see `target-cache`).
     required: false
     default: target
   target-cache-profile:
