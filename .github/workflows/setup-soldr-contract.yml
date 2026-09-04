@@ -164,6 +164,12 @@ jobs:
           node-version: 24
 
       - name: Verify the action default is published and complete
+        # The script sends `Authorization: Bearer $GITHUB_TOKEN` when the
+        # variable is set. Without it the releases lookup is an anonymous
+        # call against the shared per-IP rate limit and fails with HTTP 403
+        # on busy runners (2026-09-04, run 33914038321, green on rerun).
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/check-default-release-readiness.mjs
 
   wheel-fallback-smoke:
