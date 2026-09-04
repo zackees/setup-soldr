@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Fix `setup-soldr failed: Error: downloaded archive did not contain soldr`
+  when installing soldr `0.9.12+`. Since soldr `0.9.12`, releases publish a
+  debug-symbol sidecar asset (`soldr-vX.Y.Z-<triple>-symbols.tar.zst`,
+  documented in soldr's `docs/DEBUG_SIDECARS.md`) alongside the binary
+  archive, and GitHub lists it first — the release-asset picker was matching
+  it by target-triple substring and treating it as the installable archive.
+  `selectReleaseAsset` (`src/lib/ensure-soldr.ts`) and `assetHasTarget`
+  (`src/lib/release-readiness.ts`) now share an `isSymbolsSidecar` helper
+  that excludes any asset name ending in `-symbols` before its archive
+  extension, and `selectReleaseAsset` additionally prefers an asset named
+  exactly `soldr-<tag>-<target>.<ext>` over a looser substring match when one
+  is present.
+
 - Default to soldr `0.9.6` and extend the hash-verified PyPI wheel fallback
   contract through `0.9.6`, retaining the pinned cargo-chef `0.1.73` helper.
 

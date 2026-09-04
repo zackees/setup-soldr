@@ -53164,24 +53164,37 @@ function selectReleaseAsset(release, target) {
     const assets = release["assets"];
     if (!Array.isArray(assets))
         throw new Error("release payload has no assets array");
+    const tag = typeof release["tag_name"] === "string" ? release["tag_name"].trim() : "";
     // Preference order: tar.zst (newer releases — soldr 0.7.30+ ships these
     // for every platform including Windows MSVC), tar.gz (older Linux/macOS),
-    // zip (older Windows). First-match wins per extension class.
+    // zip (older Windows). Within each extension class, an asset named exactly
+    // `soldr-<tag>-<target>.<ext>` wins; otherwise the first substring match
+    // wins (matching earlier, pre-#1010 release naming). Debug-symbol sidecar
+    // assets (`soldr-vX.Y.Z-<triple>-symbols.tar.zst`, soldr#? / DEBUG_SIDECARS.md)
+    // are never eligible — GitHub lists them ahead of the real binary archive.
     const extPreference = ["tar.zst", "tar.gz", "zip"];
     for (const ext of extPreference) {
         const suffix = `.${ext}`;
+        const exactName = tag ? `soldr-${tag}-${target}.${ext}` : null;
+        let fallback = null;
         for (const asset of assets) {
             if (typeof asset !== "object" || asset === null)
                 continue;
             const a = asset;
             const name = typeof a["name"] === "string" ? a["name"] : "";
-            if (name.includes(target) && name.endsWith(suffix)) {
-                const url = a["browser_download_url"];
-                if (typeof url !== "string")
-                    continue;
+            if (!name.includes(target) || !name.endsWith(suffix) || (0, release_readiness_js_1.isSymbolsSidecar)(name))
+                continue;
+            const url = a["browser_download_url"];
+            if (typeof url !== "string")
+                continue;
+            if (exactName && name === exactName) {
                 return { name, url, archiveExt: ext, source: "github-release" };
             }
+            if (!fallback)
+                fallback = { name, url };
         }
+        if (fallback)
+            return { name: fallback.name, url: fallback.url, archiveExt: ext, source: "github-release" };
     }
     return null;
 }
@@ -54555,6 +54568,7 @@ function readRawInputs(env) {
 // release is allowed, choosing a different release is not.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.PYPI_WHEEL_PLATFORM_TAGS = exports.REQUIRED_RELEASE_TARGETS = void 0;
+exports.isSymbolsSidecar = isSymbolsSidecar;
 exports.pypiWheelHasTarget = pypiWheelHasTarget;
 exports.assertReleaseReady = assertReleaseReady;
 exports.isRetryableReleaseError = isRetryableReleaseError;
@@ -54575,6 +54589,22 @@ exports.PYPI_WHEEL_PLATFORM_TAGS = {
     "x86_64-pc-windows-msvc": "win_amd64",
     "aarch64-pc-windows-msvc": "win_arm64",
 };
+const ARCHIVE_SUFFIXES = [".tar.zst", ".tar.gz", ".zip"];
+/**
+ * True when `name` is a debug-symbol sidecar asset, i.e. the archive
+ * extension-stripped name ends with `-symbols` (soldr's
+ * `soldr-vX.Y.Z-<triple>-symbols.tar.zst` contract — see
+ * soldr's docs/DEBUG_SIDECARS.md). Sidecars are never a valid soldr binary
+ * archive and must be skipped by every asset matcher.
+ */
+function isSymbolsSidecar(name) {
+    for (const suffix of ARCHIVE_SUFFIXES) {
+        if (name.endsWith(suffix)) {
+            return name.slice(0, -suffix.length).endsWith("-symbols");
+        }
+    }
+    return false;
+}
 function assetHasTarget(asset, target) {
     if (typeof asset !== "object" || asset === null)
         return false;
@@ -54583,6 +54613,7 @@ function assetHasTarget(asset, target) {
     const url = typeof record["browser_download_url"] === "string" ? record["browser_download_url"].trim() : "";
     return (name.includes(target) &&
         (name.endsWith(".tar.zst") || name.endsWith(".tar.gz") || name.endsWith(".zip")) &&
+        !isSymbolsSidecar(name) &&
         url.length > 0);
 }
 function pypiWheelHasTarget(file, target) {
