@@ -13,7 +13,7 @@ import * as exec from "@actions/exec";
 import * as tc from "@actions/tool-cache";
 import * as fzstd from "fzstd";
 import { createLogger, streamExec } from "./log-utils.js";
-import { pypiWheelHasTarget, retryReleaseRequest } from "./release-readiness.js";
+import { isSymbolsSidecar, pypiWheelHasTarget, retryReleaseRequest } from "./release-readiness.js";
 import type { ResolveResult } from "./types.js";
 import { parseVersionJsonOutput } from "./verify-soldr.js";
 
@@ -310,22 +310,32 @@ function selectReleaseAsset(
 ): InstallAsset | null {
   const assets = release["assets"];
   if (!Array.isArray(assets)) throw new Error("release payload has no assets array");
+  const tag = typeof release["tag_name"] === "string" ? (release["tag_name"] as string).trim() : "";
   // Preference order: tar.zst (newer releases — soldr 0.7.30+ ships these
   // for every platform including Windows MSVC), tar.gz (older Linux/macOS),
-  // zip (older Windows). First-match wins per extension class.
+  // zip (older Windows). Within each extension class, an asset named exactly
+  // `soldr-<tag>-<target>.<ext>` wins; otherwise the first substring match
+  // wins (matching earlier, pre-#1010 release naming). Debug-symbol sidecar
+  // assets (`soldr-vX.Y.Z-<triple>-symbols.tar.zst`, soldr#? / DEBUG_SIDECARS.md)
+  // are never eligible — GitHub lists them ahead of the real binary archive.
   const extPreference: ArchiveExt[] = ["tar.zst", "tar.gz", "zip"];
   for (const ext of extPreference) {
     const suffix = `.${ext}`;
+    const exactName = tag ? `soldr-${tag}-${target}.${ext}` : null;
+    let fallback: { name: string; url: string } | null = null;
     for (const asset of assets) {
       if (typeof asset !== "object" || asset === null) continue;
       const a = asset as Record<string, unknown>;
       const name = typeof a["name"] === "string" ? (a["name"] as string) : "";
-      if (name.includes(target) && name.endsWith(suffix)) {
-        const url = a["browser_download_url"];
-        if (typeof url !== "string") continue;
+      if (!name.includes(target) || !name.endsWith(suffix) || isSymbolsSidecar(name)) continue;
+      const url = a["browser_download_url"];
+      if (typeof url !== "string") continue;
+      if (exactName && name === exactName) {
         return { name, url, archiveExt: ext, source: "github-release" };
       }
+      if (!fallback) fallback = { name, url };
     }
+    if (fallback) return { name: fallback.name, url: fallback.url, archiveExt: ext, source: "github-release" };
   }
   return null;
 }

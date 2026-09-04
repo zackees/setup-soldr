@@ -22,6 +22,24 @@ export const PYPI_WHEEL_PLATFORM_TAGS: Readonly<Record<string, string>> = {
 
 export type ReleasePayload = Record<string, unknown>;
 
+const ARCHIVE_SUFFIXES = [".tar.zst", ".tar.gz", ".zip"] as const;
+
+/**
+ * True when `name` is a debug-symbol sidecar asset, i.e. the archive
+ * extension-stripped name ends with `-symbols` (soldr's
+ * `soldr-vX.Y.Z-<triple>-symbols.tar.zst` contract — see
+ * soldr's docs/DEBUG_SIDECARS.md). Sidecars are never a valid soldr binary
+ * archive and must be skipped by every asset matcher.
+ */
+export function isSymbolsSidecar(name: string): boolean {
+  for (const suffix of ARCHIVE_SUFFIXES) {
+    if (name.endsWith(suffix)) {
+      return name.slice(0, -suffix.length).endsWith("-symbols");
+    }
+  }
+  return false;
+}
+
 function assetHasTarget(asset: unknown, target: string): boolean {
   if (typeof asset !== "object" || asset === null) return false;
   const record = asset as Record<string, unknown>;
@@ -30,6 +48,7 @@ function assetHasTarget(asset: unknown, target: string): boolean {
   return (
     name.includes(target) &&
     (name.endsWith(".tar.zst") || name.endsWith(".tar.gz") || name.endsWith(".zip")) &&
+    !isSymbolsSidecar(name) &&
     url.length > 0
   );
 }

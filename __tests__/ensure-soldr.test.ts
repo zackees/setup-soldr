@@ -95,6 +95,95 @@ test("copyBundledReleasePayload keeps bundled tools from combined soldr archives
   }
 });
 
+test("selectReleaseAsset skips a -symbols sidecar listed before the real archive", () => {
+  const target = "x86_64-unknown-linux-gnu";
+  const release = {
+    tag_name: "v0.9.12",
+    assets: [
+      {
+        name: `soldr-v0.9.12-${target}-symbols.tar.zst`,
+        browser_download_url: `https://example.invalid/soldr-v0.9.12-${target}-symbols.tar.zst`,
+      },
+      {
+        name: `soldr-v0.9.12-${target}.tar.zst`,
+        browser_download_url: `https://example.invalid/soldr-v0.9.12-${target}.tar.zst`,
+      },
+    ],
+  };
+
+  assert.deepEqual(_internal.selectReleaseAsset(release, target), {
+    name: `soldr-v0.9.12-${target}.tar.zst`,
+    url: `https://example.invalid/soldr-v0.9.12-${target}.tar.zst`,
+    archiveExt: "tar.zst",
+    source: "github-release",
+  });
+});
+
+test("selectReleaseAsset returns null when a release only publishes symbols sidecars", () => {
+  const target = "aarch64-unknown-linux-gnu";
+  const release = {
+    tag_name: "v0.9.12",
+    assets: [
+      {
+        name: `soldr-v0.9.12-${target}-symbols.tar.zst`,
+        browser_download_url: `https://example.invalid/soldr-v0.9.12-${target}-symbols.tar.zst`,
+      },
+      {
+        name: `soldr-v0.9.12-${target}-symbols.tar.gz`,
+        browser_download_url: `https://example.invalid/soldr-v0.9.12-${target}-symbols.tar.gz`,
+      },
+    ],
+  };
+
+  assert.equal(_internal.selectReleaseAsset(release, target), null);
+});
+
+test("selectReleaseAsset prefers the exact soldr-<tag>-<target>.<ext> name over a looser substring match", () => {
+  const target = "x86_64-unknown-linux-gnu";
+  const release = {
+    tag_name: "v0.9.12",
+    assets: [
+      {
+        // Substring match only (e.g. a musl variant that also contains the gnu target string
+        // as a prefix collision) — must lose to the exact match below.
+        name: `soldr-v0.9.12-${target}-old-variant.tar.zst`,
+        browser_download_url: `https://example.invalid/soldr-v0.9.12-${target}-old-variant.tar.zst`,
+      },
+      {
+        name: `soldr-v0.9.12-${target}.tar.zst`,
+        browser_download_url: `https://example.invalid/soldr-v0.9.12-${target}.tar.zst`,
+      },
+    ],
+  };
+
+  assert.deepEqual(_internal.selectReleaseAsset(release, target), {
+    name: `soldr-v0.9.12-${target}.tar.zst`,
+    url: `https://example.invalid/soldr-v0.9.12-${target}.tar.zst`,
+    archiveExt: "tar.zst",
+    source: "github-release",
+  });
+});
+
+test("selectReleaseAsset keeps prior first-match behaviour for older releases with no exact name", () => {
+  const target = "x86_64-pc-windows-msvc";
+  const release = {
+    tag_name: "v0.7.10",
+    assets: [
+      {
+        name: `soldr-${target}.zip`,
+        browser_download_url: `https://example.invalid/soldr-${target}.zip`,
+      },
+    ],
+  };
+
+  assert.deepEqual(_internal.selectReleaseAsset(release, target), {
+    name: `soldr-${target}.zip`,
+    url: `https://example.invalid/soldr-${target}.zip`,
+    archiveExt: "zip",
+    source: "github-release",
+  });
+});
+
 test("selectPypiWheel maps an official wheel to the requested target and digest", () => {
   const selected = _internal.selectPypiWheel(
     {
