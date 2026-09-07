@@ -253,7 +253,7 @@ test("dylint mode is false by default and performs no nightly lookup", async () 
   assert.equal(result.envExports["SOLDR_DYLINT_CONFIGURED_TOOLCHAIN"], undefined);
 });
 
-test("ci-tests enables bounded defaults without coupling Dylint", async () => {
+test("ci-tests bounds test threads only, not compiler admission", async () => {
   const { result, inputs } = await run(
     {},
     { "INPUT_CI-TESTS": "true", INPUT_TOOLCHAIN: "1.94.1" },
@@ -267,8 +267,24 @@ test("ci-tests enables bounded defaults without coupling Dylint", async () => {
   );
   assert.equal(result.dylintCache.enabled, false);
   assert.equal(inputs.prebuildDeps, "");
-  assert.equal(result.envExports["CARGO_BUILD_JOBS"], "1");
-  assert.equal(result.envExports["SOLDR_JOBS"], "1");
+  // soldr#3138: no default compile-concurrency cap. These two size the shared
+  // ceiling that both Cargo's producer queue and the embedded zccache
+  // admission gate draw from, so exporting "1" serialized every compiler
+  // child in the job. The amalgamation units that motivated the cap now get
+  // *exclusive* admission from the service instead (zccache >= 1.13.11), which
+  // protects the one huge unit without serializing the small ones. Left unset,
+  // soldr resolves its own topology-aware default.
+  assert.ok(
+    !("CARGO_BUILD_JOBS" in result.envExports),
+    "ci-tests must not export a default CARGO_BUILD_JOBS",
+  );
+  assert.ok(
+    !("SOLDR_JOBS" in result.envExports),
+    "ci-tests must not export a default SOLDR_JOBS",
+  );
+  // Test-process concurrency is a different resource from compiler admission,
+  // and this half of soldr's ci-test contract is deliberate: "only
+  // NEXTEST_TEST_THREADS defaults to one".
   assert.equal(result.envExports["NEXTEST_TEST_THREADS"], "1");
   assert.equal(result.envExports["SETUP_SOLDR_CI_TESTS"], "true");
 });

@@ -1248,8 +1248,50 @@ export async function resolveSetup(
   if (ciTestsEnabled) {
     // This profile prepares CI prerequisites; callers retain ownership of
     // their explicit test command. Explicit scheduler limits always win.
-    setEnv("CARGO_BUILD_JOBS", env["CARGO_BUILD_JOBS"]?.trim() || "1");
-    setEnv("SOLDR_JOBS", env["SOLDR_JOBS"]?.trim() || "1");
+    //
+    // soldr#3138: `CARGO_BUILD_JOBS` and `SOLDR_JOBS` deliberately have NO
+    // default here. They used to default to "1", which pinned the shared
+    // compile-concurrency ceiling that soldr's Cargo producer queue *and*
+    // the embedded zccache admission gate both size themselves from -- so a
+    // whole job ran one compiler child at a time.
+    //
+    // That cap predates the mechanism that replaced it. Since zccache
+    // 1.13.11 the embedded service grants amalgamation crates and measured
+    // heavy links *exclusive* admission (soldr's classifier lives in
+    // `crates/soldr-daemon/src/amalgamation.rs`), so the one enormous unit
+    // compiles alone while ordinary units still run N-wide. Capping the
+    // shared ceiling at 1 does not add protection on top of that -- it only
+    // serializes every small unit too, and the amalgamation was already
+    // being handled.
+    //
+    // This is soldr's own documented `ci-test` contract, verbatim: "Unset
+    // CARGO_BUILD_JOBS and SOLDR_JOBS remain unset, explicit values are
+    // preserved byte-for-byte, and only NEXTEST_TEST_THREADS defaults to
+    // one." Left unset, soldr resolves a topology-aware default
+    // (`logical - 1`, additionally capped at `physical + 2` under SMT --
+    // `soldr-core/src/core/jobs.rs`) instead of 1.
+    //
+    // soldr's own gate lane already proved this: it carried five separate
+    // `unset CARGO_BUILD_JOBS SOLDR_JOBS` statements whose only job was to
+    // undo this export at each step boundary, because a GITHUB_ENV write
+    // applies to every subsequent step. Not exporting a default is what
+    // those five statements were reaching for.
+    //
+    // An explicit value from the caller is still re-exported unchanged, so
+    // a lane that genuinely needs a cap (a true-bootstrap step running with
+    // RUSTC_WRAPPER="", where the admission gate cannot engage) sets it
+    // itself and keeps it.
+    const explicitCargoBuildJobs = env["CARGO_BUILD_JOBS"]?.trim();
+    if (explicitCargoBuildJobs) {
+      setEnv("CARGO_BUILD_JOBS", explicitCargoBuildJobs);
+    }
+    const explicitSoldrJobs = env["SOLDR_JOBS"]?.trim();
+    if (explicitSoldrJobs) {
+      setEnv("SOLDR_JOBS", explicitSoldrJobs);
+    }
+    // NEXTEST_TEST_THREADS keeps its default of one: that half of the
+    // contract is intentional, and test-process concurrency is a different
+    // resource from compiler admission.
     setEnv("NEXTEST_TEST_THREADS", env["NEXTEST_TEST_THREADS"]?.trim() || "1");
     setEnv("SETUP_SOLDR_CI_TESTS", "true");
   }
