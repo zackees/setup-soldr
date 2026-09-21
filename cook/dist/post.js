@@ -316,6 +316,129 @@ module.exports = Multipart
 /***/ }),
 
 /***/ 1:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __importStar(__nccwpck_require__(429));
+const fs = __importStar(__nccwpck_require__(239));
+const cook_cache_js_1 = __nccwpck_require__(265);
+function state(name) {
+    return core.getState(`deferredCook${name}`);
+}
+function stateBool(name) {
+    return state(name) === "true";
+}
+async function main() {
+    if (!stateBool("Enabled")) {
+        core.info("cook-cache: post-step disabled - skipping save");
+        return;
+    }
+    const ran = stateBool("Ran");
+    const targetDir = state("TargetDir");
+    const failOnError = stateBool("FailOnError");
+    if (!ran) {
+        core.info("cook-cache: cook did not run successfully - skipping save");
+        return;
+    }
+    if (!targetDir || !fs.existsSync(targetDir)) {
+        const message = `cook-cache: target dir ${targetDir || "(empty)"} missing - skipping save`;
+        if (failOnError)
+            throw new Error(message);
+        core.info(message);
+        return;
+    }
+    if (stateBool("Layered")) {
+        const saveLayer = state("SaveLayer") || "none";
+        if (saveLayer === "none") {
+            core.info("cook-cache: layered cache warm or cook did not run successfully - skipping save");
+            return;
+        }
+        const projectRoot = state("ProjectRoot");
+        if (!projectRoot || !fs.existsSync(projectRoot)) {
+            const message = `cook-cache: project root ${projectRoot || "(empty)"} missing - skipping save`;
+            if (failOnError)
+                throw new Error(message);
+            core.info(message);
+            return;
+        }
+        const saveKey = saveLayer === "delta" ? state("DeltaExactKey") : state("BaseExactKey");
+        const archivePath = saveLayer === "delta" ? state("DeltaArchive") : state("BaseArchive");
+        const zstdLevel = saveLayer === "delta"
+            ? state("DeltaCompressLevel") || "3"
+            : state("BaseCompressLevel") || "9";
+        const saveResult = await (0, cook_cache_js_1.saveLayeredCookCache)({
+            soldrBinary: state("SoldrBinary") || process.env["SOLDR_BINARY"]?.trim() || "soldr",
+            projectRoot,
+            targetDir,
+            exactKey: saveKey,
+            archivePath,
+            layer: saveLayer === "delta" ? "delta" : "base",
+            zstdLevel,
+            baseManifestPath: state("BaseManifest"),
+            log: (msg) => core.info(msg),
+        });
+        core.info(`cook-cache-${saveLayer}: save status=${saveResult.status}`);
+        if (saveResult.status === "failed" && failOnError) {
+            throw new Error(`cook-cache-${saveLayer}: save failed: ${saveResult.error ?? "unknown error"}`);
+        }
+        return;
+    }
+    const saveResult = await (0, cook_cache_js_1.saveCookCache)({
+        targetDir,
+        exactKey: state("ExactKey"),
+        level: state("CompressLevel") || "9",
+        longWindow: 27,
+        debug: stateBool("Debug"),
+        log: (msg) => core.info(msg),
+    });
+    core.info(`cook-cache: save status=${saveResult.status}`);
+    if (saveResult.status === "failed" && failOnError) {
+        throw new Error(`cook-cache: save failed: ${saveResult.error ?? "unknown error"}`);
+    }
+}
+main().catch((err) => {
+    core.setFailed(err instanceof Error ? err.message : String(err));
+});
+
+
+/***/ }),
+
+/***/ 2:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -349,7 +472,7 @@ const custom = import_node_util.inspect.custom;
 
 /***/ }),
 
-/***/ 2:
+/***/ 3:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -430,7 +553,7 @@ exports.AccountSASResourceTypes = AccountSASResourceTypes;
 
 /***/ }),
 
-/***/ 3:
+/***/ 4:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -815,7 +938,7 @@ const promiseWithTimeout = (timeoutMs, promise) => __awaiter(void 0, void 0, voi
 
 /***/ }),
 
-/***/ 4:
+/***/ 5:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -833,7 +956,7 @@ exports.SearchState = SearchState;
 
 /***/ }),
 
-/***/ 5:
+/***/ 6:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -989,7 +1112,7 @@ module.exports = Agent
 
 /***/ }),
 
-/***/ 6:
+/***/ 7:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -1062,990 +1185,6 @@ function isNamedKeyCredential(credential) {
         typeof credential.name === "string");
 }
 //# sourceMappingURL=azureNamedKeyCredential.js.map
-
-/***/ }),
-
-/***/ 7:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-// Cook cache layer — long-lived deps tarball keyed by Cargo.lock content.
-//
-// Per CLAUDE.md "Cache-lifetime axis" + the cook simulation findings:
-// the base cook cache is long-lived/large and keyed by Cargo.lock content.
-// It must NOT include SHA in the key (causes catastrophic eviction churn).
-// Content-addressable keying gives parent-to-branch sharing automatically:
-// same Cargo.lock = same key, regardless of branch or commit. The delta
-// layer is intentionally short-lived and includes commit/build shape so
-// normal code-only changes upload a small secondary archive.
-//
-// Save path: snapshot `target/` immediately after cook completes, before
-// the user's `cargo build` adds project artifacts. The legacy path keeps
-// the historical tar+zstd-19/long-window archive; the layered path delegates
-// protobuf manifest and archive construction to `soldr save`.
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.LAYERED_COOK_MIN_SOLDR_VERSION = void 0;
-exports.layeredCookBaseReady = layeredCookBaseReady;
-exports.layeredCookDeltaReady = layeredCookDeltaReady;
-exports.hashCookFlags = hashCookFlags;
-exports.buildCookCacheKey = buildCookCacheKey;
-exports.buildCookBaseCacheKey = buildCookBaseCacheKey;
-exports.hashCookBuildShape = hashCookBuildShape;
-exports.buildCookDeltaCacheKey = buildCookDeltaCacheKey;
-exports.buildCookDeltaCacheRestorePrefix = buildCookDeltaCacheRestorePrefix;
-exports.supportsLayeredCookCache = supportsLayeredCookCache;
-exports.isCookMode = isCookMode;
-exports.decideCookGate = decideCookGate;
-exports.runCook = runCook;
-exports.restoreCookCache = restoreCookCache;
-exports.restoreLayeredCookCacheArchives = restoreLayeredCookCacheArchives;
-exports.loadLayeredCookCache = loadLayeredCookCache;
-exports.saveCookCache = saveCookCache;
-exports.saveLayeredCookCache = saveLayeredCookCache;
-exports.parseCookFlags = parseCookFlags;
-exports.canonicalizeCookFlags = canonicalizeCookFlags;
-const node_crypto_1 = __nccwpck_require__(265);
-const fs = __importStar(__nccwpck_require__(239));
-const fsp = __importStar(__nccwpck_require__(106));
-const path = __importStar(__nccwpck_require__(475));
-const core = __importStar(__nccwpck_require__(429));
-const exec = __importStar(__nccwpck_require__(17));
-const cache = __importStar(__nccwpck_require__(206));
-const cache_compress_js_1 = __nccwpck_require__(24);
-const log_utils_js_1 = __nccwpck_require__(184);
-const two_phase_actions_cache_js_1 = __nccwpck_require__(36);
-function layeredCookBaseReady(restore, loaded) {
-    return restore.base.hit && loaded.baseLoaded;
-}
-function layeredCookDeltaReady(restore, loaded) {
-    return layeredCookBaseReady(restore, loaded) &&
-        Boolean(restore.delta.matchedKey) &&
-        loaded.deltaLoaded;
-}
-const COOK_KEY_PREFIX = "cook";
-const COOK_BASE_KEY_PREFIX = "cook-base-v2";
-const COOK_DELTA_KEY_PREFIX = "cook-delta-v2";
-exports.LAYERED_COOK_MIN_SOLDR_VERSION = "0.7.38";
-const COOK_MODE = "soldr-cook";
-const LEGACY_COOK_MODE = "cargo-chef";
-/**
- * Compute the canonical flag fingerprint. Sorts and lowercases so flag
- * order doesn't perturb the key, and so `--release` vs `--RELEASE`
- * collapse. Only flags that affect cook output structure should be
- * here; cosmetic flags must be filtered upstream.
- */
-function hashCookFlags(flags) {
-    const sorted = [...flags.map((s) => s.trim()).filter((s) => s.length > 0)].sort();
-    if (sorted.length === 0)
-        return "none";
-    const h = (0, node_crypto_1.createHash)("sha256");
-    for (const s of sorted) {
-        h.update(s);
-        h.update("\0");
-    }
-    return h.digest("hex").slice(0, 8);
-}
-function buildCookCacheKey(parts) {
-    const release = parts.rustcRelease.trim() || "unresolved";
-    const segments = [
-        COOK_KEY_PREFIX,
-        parts.runnerOs,
-        parts.runnerArch,
-        parts.libc,
-        `rustc${release}`,
-        `f${parts.flagsHash}`,
-        `l${parts.lockHash}`,
-        `soldr${parts.soldrVersion}`,
-    ];
-    if (parts.keySuffix?.trim())
-        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
-    return segments.join("-");
-}
-function keyFragment(value, fallback) {
-    const cleaned = value.trim().replace(/[^A-Za-z0-9_.-]+/g, "_");
-    return cleaned || fallback;
-}
-function shortHash(value, fallback) {
-    const trimmed = value.trim();
-    if (!trimmed)
-        return fallback;
-    return (0, node_crypto_1.createHash)("sha256").update(trimmed, "utf8").digest("hex").slice(0, 12);
-}
-function cookKeyParts(parts) {
-    const release = keyFragment(parts.rustcRelease, "unresolved");
-    const segments = [
-        keyFragment(parts.runnerOs, "unknown-os"),
-        keyFragment(parts.runnerArch, "unknown-arch"),
-        keyFragment(parts.libc, "unknown-libc"),
-        `rustc${release}`,
-        `f${keyFragment(parts.flagsHash, "none")}`,
-        `l${keyFragment(parts.lockHash, "no-lock")}`,
-        `soldr${keyFragment(parts.soldrVersion, "unset")}`,
-    ];
-    if (parts.keySuffix?.trim())
-        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
-    return segments;
-}
-function buildCookBaseCacheKey(parts) {
-    return [COOK_BASE_KEY_PREFIX, ...cookKeyParts(parts)].join("-");
-}
-function hashCookBuildShape(value) {
-    return shortHash(value, "no-shape");
-}
-function buildCookDeltaCacheKey(parts) {
-    const sha = keyFragment(parts.githubSha || "nosha", "nosha").slice(0, 16);
-    const shape = keyFragment(parts.buildShapeHash, "no-shape");
-    return [
-        COOK_DELTA_KEY_PREFIX,
-        ...cookKeyParts(parts),
-        `s${shape}`,
-        `g${sha}`,
-    ].join("-");
-}
-function buildCookDeltaCacheRestorePrefix(parts) {
-    const shape = keyFragment(parts.buildShapeHash, "no-shape");
-    return [
-        COOK_DELTA_KEY_PREFIX,
-        ...cookKeyParts(parts),
-        `s${shape}`,
-    ].join("-") + "-";
-}
-function parseVersion(value) {
-    const cleaned = value.trim().replace(/^v/i, "");
-    const match = /^(\d+)\.(\d+)\.(\d+)(?:[.+-].*)?$/.exec(cleaned);
-    if (!match)
-        return null;
-    return {
-        major: Number(match[1] ?? NaN),
-        minor: Number(match[2] ?? NaN),
-        patch: Number(match[3] ?? NaN),
-    };
-}
-function supportsLayeredCookCache(soldrVersion) {
-    const parsed = parseVersion(soldrVersion);
-    if (!parsed)
-        return false;
-    const min = parseVersion(exports.LAYERED_COOK_MIN_SOLDR_VERSION);
-    if (parsed.major !== min.major)
-        return parsed.major > min.major;
-    if (parsed.minor !== min.minor)
-        return parsed.minor > min.minor;
-    return parsed.patch >= min.patch;
-}
-function isCookMode(mode) {
-    const normalized = mode.trim().toLowerCase();
-    return normalized === COOK_MODE || normalized === LEGACY_COOK_MODE;
-}
-/**
- * Decide whether to run cook based on the runtime environment. Returns a
- * reason string for diagnostic logging in both branches.
- */
-function decideCookGate(opts) {
-    const mode = opts.prebuildDeps.trim().toLowerCase();
-    if (mode === "" || mode === "none" || mode === "off" || mode === "false") {
-        return { enabled: false, reason: `prebuild-deps=${opts.prebuildDeps || "(empty)"} - cook disabled` };
-    }
-    if (!isCookMode(mode)) {
-        return {
-            enabled: false,
-            reason: `prebuild-deps=${opts.prebuildDeps} - unknown strategy, ` +
-                `only "${COOK_MODE}" supported ("${LEGACY_COOK_MODE}" remains an alias)`,
-        };
-    }
-    if (!opts.cacheUmbrella) {
-        return { enabled: false, reason: "cache: false - cook produces no value without caching" };
-    }
-    if (!opts.lockfilePath) {
-        return { enabled: false, reason: "no Cargo.lock found - cook needs a lockfile to derive recipe" };
-    }
-    if (!fs.existsSync(opts.lockfilePath)) {
-        return { enabled: false, reason: `Cargo.lock path ${opts.lockfilePath} does not exist` };
-    }
-    return { enabled: true, reason: `${COOK_MODE} enabled` };
-}
-/**
- * Run `soldr cook` in the project directory. The soldr-cook mode emits
- * the recipe and runs the dependency compile. We tolerate failure: cook
- * is an optimization, not a correctness primitive, so any non-zero exit
- * is logged and the action proceeds. The user's normal `cargo build`
- * step will work fine without a cooked target.
- */
-async function runCook(opts) {
-    const { soldrBinary, projectRoot, flags, log } = opts;
-    log(`cook: running '${soldrBinary} cook ${flags.join(" ")}' in ${projectRoot}`);
-    const t0 = Date.now();
-    let exitCode = 0;
-    try {
-        // #359: prepend MM:SS timestamps to each line of cook output (cargo's
-        // Compiling/Downloading lines) so forensic analysis of slow cook
-        // phases can pinpoint the bottleneck crate from the log alone.
-        // ANSI color escape sequences in cargo's output pass through
-        // unchanged — we only modify the line prefix, not the line body.
-        // Color forcing (CARGO_TERM_COLOR/FORCE_COLOR/CLICOLOR_FORCE) is
-        // already injected by resolve-setup.ts when timestamps are enabled.
-        exitCode = await exec.exec(soldrBinary, ["cook", ...flags], {
-            cwd: projectRoot,
-            ignoreReturnCode: true,
-            silent: true,
-            listeners: {
-                stdline: (line) => {
-                    process.stdout.write(`${(0, log_utils_js_1.formatLogLine)(process.env, line)}\n`);
-                },
-                errline: (line) => {
-                    process.stderr.write(`${(0, log_utils_js_1.formatLogLine)(process.env, line)}\n`);
-                },
-            },
-        });
-    }
-    catch (err) {
-        log(`cook: exec threw: ${err instanceof Error ? err.message : String(err)}`);
-        exitCode = 1;
-    }
-    const ranSeconds = (Date.now() - t0) / 1000;
-    if (exitCode !== 0) {
-        log(`cook: failed with exit ${exitCode} after ${ranSeconds.toFixed(1)}s; continuing without cooked deps`);
-    }
-    else {
-        log(`cook: completed in ${ranSeconds.toFixed(1)}s`);
-    }
-    return { exitCode, ranSeconds };
-}
-/**
- * Attempt to restore a cooked target directory from the actions cache.
- * Single exact key — no fallback ladder; cook is content-addressable so
- * a fallback would either be redundant or wrong.
- */
-async function restoreCookCache(opts) {
-    const { exactKey, archivePath, targetDir, longWindow, log } = opts;
-    const warn = opts.warn ?? log;
-    const restore = opts.restoreCache ?? cache.restoreCache;
-    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
-    await fsp.rm(archivePath, { force: true });
-    let matched;
-    try {
-        matched = await restore([archivePath], exactKey);
-    }
-    catch (err) {
-        log(`cook-cache: restore failed: ${err instanceof Error ? err.message : String(err)}`);
-        return { hit: false, matchedKey: "", archiveBytes: 0 };
-    }
-    if (!matched) {
-        log(`cook-cache: no entry for key ${exactKey}`);
-        return { hit: false, matchedKey: "", archiveBytes: 0 };
-    }
-    let archiveBytes = 0;
-    try {
-        archiveBytes = (await fsp.stat(archivePath)).size;
-    }
-    catch {
-        warn(`cook-cache: matched key ${matched} produced an unusable payload: archive=0B (missing); treating as miss`);
-        return { hit: false, matchedKey: "", archiveBytes: 0 };
-    }
-    if (archiveBytes === 0) {
-        warn(`cook-cache: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
-        return { hit: false, matchedKey: "", archiveBytes: 0 };
-    }
-    // SOLDRENC-framed (encrypted) archives appear as magic="unknown" here;
-    // delegate the detection to decompressCache when a cache-encrypt-key is set.
-    const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
-    const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
-    if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
-        warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
-            `archive=${archiveBytes}B codec=unknown; treating as miss`);
-        return { hit: false, matchedKey: matched, archiveBytes };
-    }
-    await fsp.mkdir(targetDir, { recursive: true });
-    try {
-        const decompressed = await (opts.decompress ?? cache_compress_js_1.decompressCache)({
-            archivePath,
-            targetDir,
-            longWindow,
-            log,
-            debug: opts.debug,
-            cacheKey: exactKey,
-        });
-        if (decompressed.fileCount === 0) {
-            warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
-                `archive=${archiveBytes}B extracted_files=${decompressed.fileCount} ` +
-                `extracted_bytes=${decompressed.inflatedBytes}; treating as miss`);
-            return { hit: false, matchedKey: "", archiveBytes };
-        }
-    }
-    catch (err) {
-        warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
-            `archive=${archiveBytes}B decompress failed: ${err instanceof Error ? err.message : String(err)}; treating as miss`);
-        return { hit: false, matchedKey: matched, archiveBytes };
-    }
-    log(`cook-cache: restored matched=${matched} archive=${archiveBytes}B target=${targetDir}`);
-    return { hit: true, matchedKey: matched, archiveBytes };
-}
-async function archiveSize(archivePath) {
-    try {
-        return (await fsp.stat(archivePath)).size;
-    }
-    catch {
-        return 0;
-    }
-}
-async function restoreOneLayer(label, key, archivePath, restoreKeys, log, warn, restore) {
-    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
-    await fsp.rm(archivePath, { force: true });
-    let matched;
-    try {
-        matched = await restore([archivePath], key, restoreKeys ?? []);
-    }
-    catch (err) {
-        log(`${label}: restore failed: ${err instanceof Error ? err.message : String(err)}`);
-        return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
-    }
-    if (!matched) {
-        log(`${label}: no entry for key ${key}`);
-        return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
-    }
-    const bytes = await archiveSize(archivePath);
-    if (bytes === 0) {
-        warn(`${label}: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
-        return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
-    }
-    const hit = matched === key;
-    log(`${label}: restored matched=${matched} exact=${hit} archive=${bytes}B`);
-    return { hit, matchedKey: matched, archivePath, archiveBytes: bytes };
-}
-async function restoreLayeredCookCacheArchives(opts) {
-    const restore = opts.restoreCache ?? cache.restoreCache;
-    const warn = opts.warn ?? opts.log;
-    // #295: parallel-restore base + delta instead of the previous serial
-    // `await base; if (base.matchedKey) await delta` shape. The delta
-    // key is independently computed (includes everything the base key
-    // does + source/git fingerprint) so the two restores have no data
-    // dependency. Serializing them spent ~11s wall clock per warm run
-    // for zero correctness benefit — the delta restore on a base-MISS
-    // was always going to be skipped on the cook side anyway (cook
-    // never reads a delta archive when base wasn't restored). Cost when
-    // base misses: one extra HEAD round-trip, paid in parallel anyway
-    // and bounded by the larger restore. Saves up to ~11s in the
-    // typical warm-cache case (zackees/setup-soldr#295 measurement on
-    // Integration v0.9.30 rerun).
-    const [base, delta] = await Promise.all([
-        restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log, warn, restore),
-        restoreOneLayer("cook-cache-delta", opts.deltaKey, opts.deltaArchivePath, opts.deltaRestoreKeys ?? [], opts.log, warn, restore),
-    ]);
-    // Preserve the pre-#295 contract: when base missed, the delta is
-    // semantically invalid even if it happened to restore (no base to
-    // overlay onto). Discard the delta archive in that case so callers
-    // can rely on `base.matchedKey === "" ⇒ delta.hit === false`.
-    if (!base.matchedKey) {
-        return {
-            base,
-            delta: { hit: false, matchedKey: "", archivePath: opts.deltaArchivePath, archiveBytes: 0 },
-        };
-    }
-    return { base, delta };
-}
-async function runSoldrJson(soldrBinary, args, cwd, log) {
-    let stdout = "";
-    let stderr = "";
-    log(`cook-cache: running '${soldrBinary} ${args.join(" ")}' in ${cwd}`);
-    let code = 1;
-    try {
-        code = await exec.exec(soldrBinary, args, {
-            cwd,
-            ignoreReturnCode: true,
-            silent: true,
-            listeners: {
-                stdout: (data) => {
-                    stdout += data.toString("utf8");
-                },
-                stderr: (data) => {
-                    stderr += data.toString("utf8");
-                },
-            },
-        });
-    }
-    catch (err) {
-        stderr += err instanceof Error ? err.message : String(err);
-    }
-    let payload = null;
-    const lastLine = stdout
-        .split(/\r?\n/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0)
-        .at(-1);
-    if (lastLine) {
-        try {
-            const parsed = JSON.parse(lastLine);
-            if (typeof parsed === "object" && parsed !== null) {
-                payload = parsed;
-            }
-        }
-        catch {
-            // Best-effort diagnostics only; non-JSON output is still surfaced below.
-        }
-    }
-    if (stdout.trim())
-        log(`cook-cache: stdout: ${stdout.trim()}`);
-    if (stderr.trim())
-        log(`cook-cache: stderr: ${stderr.trim()}`);
-    return { code, stdout, stderr, payload };
-}
-function numField(payload, name) {
-    const value = payload?.[name];
-    return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-function loadReport(payload) {
-    return {
-        cacheFilesRestored: numField(payload, "cache_files_restored"),
-        sourceFilesInManifest: numField(payload, "source_files_in_manifest"),
-        mtimesApplied: numField(payload, "mtimes_applied"),
-        mtimesSkippedMissing: numField(payload, "mtimes_skipped_missing"),
-        mtimesSkippedSizeMismatch: numField(payload, "mtimes_skipped_size_mismatch"),
-        mtimesSkippedModified: numField(payload, "mtimes_skipped_modified"),
-    };
-}
-async function loadOneLayer(opts) {
-    const args = [
-        "load",
-        "--archive",
-        opts.archivePath,
-        "--cache-dir",
-        opts.targetDir,
-        "--workspace",
-        opts.projectRoot,
-        "--json",
-    ];
-    if (opts.manifestOut) {
-        args.push("--manifest-out", opts.manifestOut);
-    }
-    const result = await opts.run(opts.soldrBinary, args, opts.projectRoot, opts.log);
-    if (result.code !== 0) {
-        opts.warn(`${opts.label}: matched archive is unusable: soldr load failed with exit ${result.code}; treating as miss`);
-        return { loaded: false, report: null };
-    }
-    const report = loadReport(result.payload);
-    if (report.cacheFilesRestored === null || report.cacheFilesRestored <= 0) {
-        opts.warn(`${opts.label}: matched archive is unusable: soldr load reported ` +
-            `cache_files_restored=${report.cacheFilesRestored ?? "missing"}; treating as miss`);
-        return { loaded: false, report };
-    }
-    opts.log(`${opts.label}: loaded cache_files=${report.cacheFilesRestored ?? "?"} ` +
-        `mtimes_applied=${report.mtimesApplied ?? "?"}`);
-    return { loaded: true, report };
-}
-async function loadLayeredCookCache(opts) {
-    const warn = opts.warn ?? opts.log;
-    const run = opts.runSoldrJson ?? runSoldrJson;
-    if (!opts.restore.base.matchedKey) {
-        return { baseLoaded: false, deltaLoaded: false, baseReport: null, deltaReport: null };
-    }
-    const base = await loadOneLayer({
-        label: "cook-cache-base",
-        soldrBinary: opts.soldrBinary,
-        projectRoot: opts.projectRoot,
-        targetDir: opts.targetDir,
-        archivePath: opts.baseArchivePath,
-        manifestOut: opts.baseManifestPath,
-        log: opts.log,
-        warn,
-        run,
-    });
-    if (!base.loaded) {
-        return {
-            baseLoaded: false,
-            deltaLoaded: false,
-            baseReport: base.report,
-            deltaReport: null,
-        };
-    }
-    if (!opts.restore.delta.matchedKey) {
-        return {
-            baseLoaded: true,
-            deltaLoaded: false,
-            baseReport: base.report,
-            deltaReport: null,
-        };
-    }
-    const delta = await loadOneLayer({
-        label: "cook-cache-delta",
-        soldrBinary: opts.soldrBinary,
-        projectRoot: opts.projectRoot,
-        targetDir: opts.targetDir,
-        archivePath: opts.deltaArchivePath,
-        log: opts.log,
-        warn,
-        run,
-    });
-    return {
-        baseLoaded: true,
-        deltaLoaded: delta.loaded,
-        baseReport: base.report,
-        deltaReport: delta.report,
-    };
-}
-/**
- * Tar+zstd the post-cook target directory and upload via actions cache.
- * Caller passes the same `longWindow` as the restore side so the archive
- * is readable on subsequent runs.
- */
-async function saveCookCache(opts) {
-    const { targetDir, exactKey, level, longWindow, debug, log } = opts;
-    if (!fs.existsSync(targetDir))
-        return { status: "skipped-missing-target" };
-    try {
-        if ((await fsp.readdir(targetDir)).length === 0)
-            return { status: "skipped-empty" };
-    }
-    catch {
-        return { status: "skipped-missing-target" };
-    }
-    const archivePath = `${targetDir}.tar.zst`;
-    const reserveStart = Date.now();
-    const result = await (0, two_phase_actions_cache_js_1.saveReservedCache)({
-        paths: [archivePath],
-        key: exactKey,
-        log,
-        produce: async () => {
-            const compressStart = Date.now();
-            const compressed = await (0, cache_compress_js_1.compressCache)({
-                cacheDir: targetDir,
-                codec: "zstd",
-                level,
-                longWindow,
-                debug,
-                log,
-                cacheKey: exactKey,
-            });
-            if (!compressed.archivePath)
-                throw new Error("compressCache returned null archive (zstd unavailable?)");
-            return {
-                archivePath: compressed.archivePath,
-                archiveBytes: compressed.archiveBytes,
-                inflatedBytes: compressed.inflatedBytes ?? undefined,
-                fileCount: compressed.fileCount ?? undefined,
-                compressMs: Date.now() - compressStart,
-            };
-        },
-    });
-    const reserveMs = Date.now() - reserveStart;
-    if ((0, two_phase_actions_cache_js_1.isReservationConflict)(result))
-        return { status: "skipped-race-precheck", reserveMs };
-    if (result.status === "failed")
-        return { status: "failed", error: result.error, reserveMs };
-    const archive = result.archive;
-    return {
-        status: "saved",
-        cacheId: result.cacheId,
-        archiveBytes: archive.archiveBytes,
-        inflatedBytes: archive.inflatedBytes,
-        fileCount: archive.fileCount,
-        archivePath: archive.archivePath,
-        compressMs: archive.compressMs,
-        reserveMs,
-    };
-}
-async function saveCookCacheLegacy(opts) {
-    const { targetDir, exactKey, level, longWindow, debug, log } = opts;
-    if (!fs.existsSync(targetDir)) {
-        return { status: "skipped-missing-target" };
-    }
-    // Bail if the directory is effectively empty — cook should have produced
-    // *something*; an empty target dir indicates cook failed silently or the
-    // gate let us through when it shouldn't have.
-    let entryCount = 0;
-    try {
-        entryCount = (await fsp.readdir(targetDir)).length;
-    }
-    catch { /* */ }
-    if (entryCount === 0) {
-        return { status: "skipped-empty" };
-    }
-    // #268 Fix A: pre-compress key-existence probe. `@actions/cache`'s
-    // `restoreCache(paths, key, _, { lookupOnly: true })` issues a
-    // HEAD-like call that returns the matched key (if any) without
-    // downloading anything. When it returns truthy, a parallel job has
-    // already saved this exact key — we'd lose the reservation race
-    // after a 19-min `--zstd-level 19` compress anyway, so we skip the
-    // compress entirely and avoid the wasted wall-clock. Restore-side
-    // benefits because the sibling job's entry is now the durable
-    // record. (See zccache PR #480 — 19m 5s burned for this exact race.)
-    //
-    // `paths` must match what `saveCache([archivePath], exactKey)` will
-    // pass later — `cacheUtils.getCacheVersion` hashes the path list
-    // into the cache version, so a mismatch returns null even on hit.
-    // `compressCache` derives archivePath as `${cacheDir}.tar.zst`
-    // (cache-compress.ts:743), so we can predict it without compressing.
-    const probeArchivePath = `${targetDir}.tar.zst`;
-    try {
-        const existing = await cache.restoreCache([probeArchivePath], exactKey, [], { lookupOnly: true });
-        if (existing) {
-            log(`cook-cache: pre-compress probe found existing entry for key=${exactKey} — ` +
-                `skipping compress + save to avoid the reservation-race wall-clock waste ` +
-                `(setup-soldr#268 Fix A)`);
-            return { status: "skipped-race-precheck" };
-        }
-    }
-    catch (err) {
-        // Probe failure is non-fatal — proceed to the legacy compress+save
-        // path so we don't regress reliability.
-        if (debug) {
-            log(`cook-cache: pre-compress key probe threw (${err instanceof Error ? err.message : String(err)}) — falling back to compress+save`);
-        }
-    }
-    let archivePath = null;
-    let archiveBytes;
-    let inflatedBytes;
-    let fileCount;
-    // #268 Fix B: capture compress wall-clock so a race-loss after a long
-    // compress is loud, not silent. Operators reading the log shouldn't
-    // have to scroll to spot 19 wasted minutes.
-    const compressStart = Date.now();
-    try {
-        const compress = await (0, cache_compress_js_1.compressCache)({
-            cacheDir: targetDir,
-            codec: "zstd",
-            level,
-            longWindow,
-            debug,
-            log,
-            cacheKey: exactKey,
-        });
-        archivePath = compress.archivePath;
-        archiveBytes = compress.archiveBytes;
-        if (compress.inflatedBytes !== null)
-            inflatedBytes = compress.inflatedBytes;
-        if (compress.fileCount !== null)
-            fileCount = compress.fileCount;
-    }
-    catch (err) {
-        return { status: "failed", error: err instanceof Error ? err.message : String(err) };
-    }
-    if (!archivePath) {
-        return { status: "failed", error: "compressCache returned null archive (zstd unavailable?)" };
-    }
-    const compressMs = Date.now() - compressStart;
-    const uploadStart = Date.now();
-    try {
-        const id = await cache.saveCache([archivePath], exactKey);
-        const uploadMs = Date.now() - uploadStart;
-        if (id <= 0) {
-            // @actions/cache returns -1 when reserveCache fails — typically
-            // because the key already exists (parallel job got there first)
-            // or the cache budget is exhausted. Not an error: future runs
-            // will hit the entry the other job saved.
-            log(`cook-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +
-                `job already saved key=${exactKey} or repo cache budget is exhausted`);
-            // #268 Fix B: when the compress was meaningfully expensive
-            // (>30s) and we end up discarding the upload, surface a top-
-            // level warning so it shows up in the job's annotations panel.
-            // Fix A (reserve key BEFORE compressing) is the real fix but
-            // requires plumbing two-phase cache APIs; this raises the
-            // visibility of the symptom in the meantime.
-            const COMPRESS_WASTE_WARN_MS = 30_000;
-            if (compressMs >= COMPRESS_WASTE_WARN_MS) {
-                const seconds = (compressMs / 1000).toFixed(0);
-                const archiveDisplay = archiveBytes
-                    ? `${(archiveBytes / (1024 * 1024)).toFixed(1)} MiB`
-                    : "unknown size";
-                core.warning(`setup-soldr: cook-cache spent ${seconds}s compressing a ${archiveDisplay} ` +
-                    `archive then lost the cache reservation race for key=${exactKey}. ` +
-                    `That wall-clock was burned — see setup-soldr#268 for the fix-A (reserve ` +
-                    `key BEFORE compressing) tracking issue.`);
-            }
-            return {
-                status: "skipped-race",
-                cacheId: id,
-                archiveBytes,
-                inflatedBytes,
-                fileCount,
-                archivePath,
-                compressMs,
-                uploadMs,
-            };
-        }
-        log(`cook-cache: saved id=${id} key=${exactKey} archive=${archivePath}`);
-        return {
-            status: "saved",
-            cacheId: id,
-            archiveBytes,
-            inflatedBytes,
-            fileCount,
-            archivePath,
-            compressMs,
-            uploadMs,
-        };
-    }
-    catch (err) {
-        return {
-            status: "failed",
-            error: err instanceof Error ? err.message : String(err),
-            archivePath,
-        };
-    }
-}
-function saveReport(payload) {
-    return {
-        sourceFiles: numField(payload, "source_files"),
-        cacheFiles: numField(payload, "cache_files"),
-        deletedCacheFiles: numField(payload, "deleted_cache_files"),
-        archiveBytes: numField(payload, "archive_bytes"),
-    };
-}
-async function saveLayeredCookCache(opts) {
-    const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
-    if (!fs.existsSync(targetDir))
-        return { status: "skipped-missing-target" };
-    try {
-        if ((await fsp.readdir(targetDir)).length === 0)
-            return { status: "skipped-empty" };
-    }
-    catch {
-        return { status: "skipped-missing-target" };
-    }
-    if (layer === "delta" && (!opts.baseManifestPath || !fs.existsSync(opts.baseManifestPath))) {
-        return { status: "skipped-missing-manifest" };
-    }
-    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
-    await fsp.rm(archivePath, { force: true });
-    const args = ["save", "--cache-dir", targetDir, "--workspace", projectRoot, "--out", archivePath, "--zstd-level", zstdLevel, "--json"];
-    if (layer === "delta")
-        args.push("--delta-from-manifest", opts.baseManifestPath);
-    const reserveStart = Date.now();
-    const result = await (0, two_phase_actions_cache_js_1.saveReservedCache)({
-        paths: [archivePath],
-        key: exactKey,
-        log,
-        produce: async () => {
-            const compressStart = Date.now();
-            const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
-            if (run.code !== 0)
-                throw new Error(`soldr save ${layer} exited ${run.code}`);
-            const report = saveReport(run.payload);
-            return {
-                archivePath,
-                archiveBytes: report.archiveBytes ?? await archiveSize(archivePath),
-                fileCount: report.cacheFiles ?? undefined,
-                sourceFiles: report.sourceFiles ?? undefined,
-                deletedCacheFiles: report.deletedCacheFiles ?? undefined,
-                compressMs: Date.now() - compressStart,
-            };
-        },
-    });
-    const reserveMs = Date.now() - reserveStart;
-    if ((0, two_phase_actions_cache_js_1.isReservationConflict)(result))
-        return { status: "skipped-race-precheck", archivePath, reserveMs };
-    if (result.status === "failed")
-        return { status: "failed", archivePath, error: result.error, reserveMs };
-    const archive = result.archive;
-    return {
-        status: "saved",
-        cacheId: result.cacheId,
-        archiveBytes: archive.archiveBytes,
-        fileCount: archive.fileCount,
-        sourceFiles: archive.sourceFiles,
-        deletedCacheFiles: archive.deletedCacheFiles,
-        archivePath,
-        compressMs: archive.compressMs,
-        reserveMs,
-    };
-}
-async function saveLayeredCookCacheLegacy(opts) {
-    const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
-    if (!fs.existsSync(targetDir)) {
-        return { status: "skipped-missing-target" };
-    }
-    let entryCount = 0;
-    try {
-        entryCount = (await fsp.readdir(targetDir)).length;
-    }
-    catch { /* */ }
-    if (entryCount === 0) {
-        return { status: "skipped-empty" };
-    }
-    if (layer === "delta") {
-        const manifest = opts.baseManifestPath ?? "";
-        if (!manifest || !fs.existsSync(manifest)) {
-            return { status: "skipped-missing-manifest" };
-        }
-    }
-    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
-    await fsp.rm(archivePath, { force: true });
-    const args = [
-        "save",
-        "--cache-dir",
-        targetDir,
-        "--workspace",
-        projectRoot,
-        "--out",
-        archivePath,
-        "--zstd-level",
-        zstdLevel,
-        "--json",
-    ];
-    if (layer === "delta") {
-        args.push("--delta-from-manifest", opts.baseManifestPath);
-    }
-    // #268 Fix A: pre-compress probe — bail out if a sibling job already
-    // saved this exact key. The layered path uses `soldr save
-    // --zstd-level 19` which is the dominant 19-minute wall-clock burner
-    // on the cook-base archive (zccache PR #480). Probe is a HEAD-like
-    // call costing ~100-1000 ms; far cheaper than the full compress.
-    // `paths` must match the later `saveCache([archivePath], exactKey)`
-    // — the version hash includes the path list (cacheUtils.getCacheVersion).
-    try {
-        const existing = await cache.restoreCache([archivePath], exactKey, [], { lookupOnly: true });
-        if (existing) {
-            log(`cook-cache-${layer}: pre-compress probe found existing entry for key=${exactKey} ` +
-                `— skipping compress + save (setup-soldr#268 Fix A)`);
-            return { status: "skipped-race-precheck", archivePath };
-        }
-    }
-    catch (err) {
-        // Probe failure is non-fatal — fall through to legacy compress+save.
-        log(`cook-cache-${layer}: pre-compress key probe threw (${err instanceof Error ? err.message : String(err)}) — falling back to compress+save`);
-    }
-    // #268 Fix B: capture compress wall-clock so a race-loss after a long
-    // compress is loud, not silent (mirrors the non-layered path above).
-    const compressStart = Date.now();
-    const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
-    if (run.code !== 0) {
-        return {
-            status: "failed",
-            error: `soldr save ${layer} exited ${run.code}`,
-            archivePath,
-        };
-    }
-    const compressMs = Date.now() - compressStart;
-    const report = saveReport(run.payload);
-    const archiveBytes = report.archiveBytes ?? await archiveSize(archivePath);
-    const uploadStart = Date.now();
-    try {
-        const id = await cache.saveCache([archivePath], exactKey);
-        const uploadMs = Date.now() - uploadStart;
-        if (id <= 0) {
-            log(`cook-cache-${layer}: save did not reserve a new entry (id=${id}) ` +
-                `for key=${exactKey}`);
-            // #268 Fix B: same surface-as-warning treatment as the non-
-            // layered path. The layered path uses `soldr save --zstd-level
-            // 19` which is the dominant wall-clock burner (zccache PR #480
-            // observed 19m 5s before losing the race).
-            const COMPRESS_WASTE_WARN_MS = 30_000;
-            if (compressMs >= COMPRESS_WASTE_WARN_MS) {
-                const seconds = (compressMs / 1000).toFixed(0);
-                const archiveDisplay = archiveBytes
-                    ? `${(archiveBytes / (1024 * 1024)).toFixed(1)} MiB`
-                    : "unknown size";
-                core.warning(`setup-soldr: cook-cache-${layer} spent ${seconds}s compressing a ` +
-                    `${archiveDisplay} archive then lost the cache reservation race for ` +
-                    `key=${exactKey}. That wall-clock was burned — see setup-soldr#268 ` +
-                    `for the fix-A (reserve key BEFORE compressing) tracking issue.`);
-            }
-            return {
-                status: "skipped-race",
-                cacheId: id,
-                archiveBytes,
-                fileCount: report.cacheFiles ?? undefined,
-                sourceFiles: report.sourceFiles ?? undefined,
-                deletedCacheFiles: report.deletedCacheFiles ?? undefined,
-                archivePath,
-                compressMs,
-                uploadMs,
-            };
-        }
-        log(`cook-cache-${layer}: saved id=${id} key=${exactKey} archive=${archivePath}`);
-        return {
-            status: "saved",
-            cacheId: id,
-            archiveBytes,
-            fileCount: report.cacheFiles ?? undefined,
-            sourceFiles: report.sourceFiles ?? undefined,
-            deletedCacheFiles: report.deletedCacheFiles ?? undefined,
-            archivePath,
-            compressMs,
-            uploadMs,
-        };
-    }
-    catch (err) {
-        return {
-            status: "failed",
-            error: err instanceof Error ? err.message : String(err),
-            archiveBytes,
-            fileCount: report.cacheFiles ?? undefined,
-            sourceFiles: report.sourceFiles ?? undefined,
-            deletedCacheFiles: report.deletedCacheFiles ?? undefined,
-            archivePath,
-        };
-    }
-}
-/** Tokenize a free-form flags string into a flags array. Whitespace-split. */
-function parseCookFlags(raw) {
-    return raw
-        .trim()
-        .split(/\s+/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-}
-/**
- * From a flags array, extract only the tokens that materially affect cook
- * output structure for hashing. Excludes verbosity / colour flags.
- *
- * Conservative: keep anything that isn't on a known-cosmetic list. This
- * over-keys (extra misses on cosmetic-only changes) rather than under-keys
- * (serving stale cooked artifacts under a key that doesn't reflect them).
- */
-function canonicalizeCookFlags(flags) {
-    const COSMETIC = new Set([
-        "--verbose", "-v", "-vv", "--quiet", "-q",
-        "--color=auto", "--color=always", "--color=never",
-        "--no-default-features", // affects output; KEEP — moved out below
-    ]);
-    COSMETIC.delete("--no-default-features"); // safety net for the comment above
-    const out = [];
-    for (let i = 0; i < flags.length; i++) {
-        const f = flags[i];
-        if (COSMETIC.has(f))
-            continue;
-        if (f === "--color" || f === "--message-format") {
-            i += 1; // skip the value
-            continue;
-        }
-        out.push(f);
-    }
-    return out;
-}
-
 
 /***/ }),
 
@@ -4082,7 +3221,7 @@ Object.defineProperty(exports, "getOneofValue", ({ enumerable: true, get: functi
 Object.defineProperty(exports, "clearOneofValue", ({ enumerable: true, get: function () { return oneof_1.clearOneofValue; } }));
 Object.defineProperty(exports, "getSelectedOneofValue", ({ enumerable: true, get: function () { return oneof_1.getSelectedOneofValue; } }));
 // Enum object type guard and reflection util, may be interesting to the user.
-var enum_object_1 = __nccwpck_require__(263);
+var enum_object_1 = __nccwpck_require__(262);
 Object.defineProperty(exports, "listEnumValues", ({ enumerable: true, get: function () { return enum_object_1.listEnumValues; } }));
 Object.defineProperty(exports, "listEnumNames", ({ enumerable: true, get: function () { return enum_object_1.listEnumNames; } }));
 Object.defineProperty(exports, "listEnumNumbers", ({ enumerable: true, get: function () { return enum_object_1.listEnumNumbers; } }));
@@ -4279,7 +3418,7 @@ const { parseMIMEType, serializeAMimeType } = __nccwpck_require__(25)
 
 let random
 try {
-  const crypto = __nccwpck_require__(265)
+  const crypto = __nccwpck_require__(264)
   random = (max) => crypto.randomInt(0, max)
 } catch {
   random = (max) => Math.floor(Math.random(max))
@@ -7106,8 +6245,8 @@ const fs = __importStar(__nccwpck_require__(495));
 const url_1 = __nccwpck_require__(83);
 const utils = __importStar(__nccwpck_require__(75));
 const uploadUtils_1 = __nccwpck_require__(155);
-const downloadUtils_1 = __nccwpck_require__(3);
-const options_1 = __nccwpck_require__(256);
+const downloadUtils_1 = __nccwpck_require__(4);
+const options_1 = __nccwpck_require__(255);
 const requestUtils_1 = __nccwpck_require__(251);
 const config_1 = __nccwpck_require__(38);
 const user_agent_1 = __nccwpck_require__(340);
@@ -16861,7 +16000,7 @@ module.exports = 'AGFzbQEAAAABMAhgAX8Bf2ADf39/AX9gBH9/f38Bf2AAAGADf39/AGABfwBgAn
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.storageSharedKeyCredentialPolicyName = void 0;
 exports.storageSharedKeyCredentialPolicy = storageSharedKeyCredentialPolicy;
-const node_crypto_1 = __nccwpck_require__(265);
+const node_crypto_1 = __nccwpck_require__(264);
 const constants_js_1 = __nccwpck_require__(37);
 const utils_common_js_1 = __nccwpck_require__(443);
 const SharedKeyComparator_js_1 = __nccwpck_require__(169);
@@ -18598,7 +17737,7 @@ const {
   ResponseExceededMaxSizeError,
   ClientDestroyedError
 } = __nccwpck_require__(457)
-const buildConnector = __nccwpck_require__(257)
+const buildConnector = __nccwpck_require__(256)
 const {
   kUrl,
   kReset,
@@ -22184,7 +21323,7 @@ var import_decompressResponsePolicy = __nccwpck_require__(229);
 var import_exponentialRetryPolicy = __nccwpck_require__(369);
 var import_setClientRequestIdPolicy = __nccwpck_require__(146);
 var import_logPolicy = __nccwpck_require__(71);
-var import_multipartPolicy = __nccwpck_require__(262);
+var import_multipartPolicy = __nccwpck_require__(261);
 var import_proxyPolicy = __nccwpck_require__(442);
 var import_redirectPolicy = __nccwpck_require__(324);
 var import_systemErrorRetryPolicy = __nccwpck_require__(210);
@@ -22194,7 +21333,7 @@ var import_tracingPolicy = __nccwpck_require__(320);
 var import_defaultRetryPolicy = __nccwpck_require__(55);
 var import_userAgentPolicy = __nccwpck_require__(365);
 var import_tlsPolicy = __nccwpck_require__(355);
-var import_formDataPolicy = __nccwpck_require__(259);
+var import_formDataPolicy = __nccwpck_require__(258);
 var import_bearerTokenAuthenticationPolicy = __nccwpck_require__(209);
 var import_ndJsonPolicy = __nccwpck_require__(230);
 var import_auxiliaryAuthenticationHeaderPolicy = __nccwpck_require__(186);
@@ -29676,17 +28815,17 @@ const Dispatcher = __nccwpck_require__(447)
 const errors = __nccwpck_require__(457)
 const Pool = __nccwpck_require__(321)
 const BalancedPool = __nccwpck_require__(358)
-const Agent = __nccwpck_require__(5)
+const Agent = __nccwpck_require__(6)
 const util = __nccwpck_require__(69)
 const { InvalidArgumentError } = errors
 const api = __nccwpck_require__(135)
-const buildConnector = __nccwpck_require__(257)
+const buildConnector = __nccwpck_require__(256)
 const MockClient = __nccwpck_require__(192)
 const MockAgent = __nccwpck_require__(354)
 const MockPool = __nccwpck_require__(330)
 const mockErrors = __nccwpck_require__(222)
 const ProxyAgent = __nccwpck_require__(325)
-const RetryHandler = __nccwpck_require__(264)
+const RetryHandler = __nccwpck_require__(263)
 const { getGlobalDispatcher, setGlobalDispatcher } = __nccwpck_require__(353)
 const DecoratorHandler = __nccwpck_require__(445)
 const RedirectHandler = __nccwpck_require__(366)
@@ -29867,7 +29006,7 @@ tslib_1.__exportStar(__nccwpck_require__(173), exports);
 tslib_1.__exportStar(__nccwpck_require__(119), exports);
 tslib_1.__exportStar(__nccwpck_require__(302), exports);
 tslib_1.__exportStar(__nccwpck_require__(201), exports);
-tslib_1.__exportStar(__nccwpck_require__(261), exports);
+tslib_1.__exportStar(__nccwpck_require__(260), exports);
 //# sourceMappingURL=index.js.map
 
 /***/ }),
@@ -30089,7 +29228,7 @@ exports.create = create;
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UserDelegationKeyCredential = void 0;
-const node_crypto_1 = __nccwpck_require__(265);
+const node_crypto_1 = __nccwpck_require__(264);
 /**
  * ONLY AVAILABLE IN NODE.JS RUNTIME.
  *
@@ -45284,7 +44423,7 @@ __export(sha256_exports, {
   computeSha256Hmac: () => computeSha256Hmac
 });
 module.exports = __toCommonJS(sha256_exports);
-var import_node_crypto = __nccwpck_require__(265);
+var import_node_crypto = __nccwpck_require__(264);
 async function computeSha256Hmac(key, stringToSign, encoding) {
   const decodedKey = Buffer.from(key, "base64");
   return (0, import_node_crypto.createHmac)("sha256", decodedKey).update(stringToSign).digest(encoding);
@@ -50636,7 +49775,7 @@ exports.isEncryptedArchive = isEncryptedArchive;
 exports.getEncryptionConfig = getEncryptionConfig;
 exports.decryptedTempPathFor = decryptedTempPathFor;
 exports._testInMemoryRoundTrip = _testInMemoryRoundTrip;
-const crypto = __importStar(__nccwpck_require__(265));
+const crypto = __importStar(__nccwpck_require__(264));
 const fs = __importStar(__nccwpck_require__(239));
 const fsp = __importStar(__nccwpck_require__(106));
 const path = __importStar(__nccwpck_require__(475));
@@ -52801,7 +51940,7 @@ exports.retryHttpClientResponse = retryHttpClientResponse;
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageSharedKeyCredential = void 0;
-const node_crypto_1 = __nccwpck_require__(265);
+const node_crypto_1 = __nccwpck_require__(264);
 const StorageSharedKeyCredentialPolicy_js_1 = __nccwpck_require__(123);
 const Credential_js_1 = __nccwpck_require__(93);
 /**
@@ -52868,129 +52007,6 @@ module.exports = require("node:buffer");
 /***/ }),
 
 /***/ 255:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(429));
-const fs = __importStar(__nccwpck_require__(239));
-const cook_cache_js_1 = __nccwpck_require__(7);
-function state(name) {
-    return core.getState(`deferredCook${name}`);
-}
-function stateBool(name) {
-    return state(name) === "true";
-}
-async function main() {
-    if (!stateBool("Enabled")) {
-        core.info("cook-cache: post-step disabled - skipping save");
-        return;
-    }
-    const ran = stateBool("Ran");
-    const targetDir = state("TargetDir");
-    const failOnError = stateBool("FailOnError");
-    if (!ran) {
-        core.info("cook-cache: cook did not run successfully - skipping save");
-        return;
-    }
-    if (!targetDir || !fs.existsSync(targetDir)) {
-        const message = `cook-cache: target dir ${targetDir || "(empty)"} missing - skipping save`;
-        if (failOnError)
-            throw new Error(message);
-        core.info(message);
-        return;
-    }
-    if (stateBool("Layered")) {
-        const saveLayer = state("SaveLayer") || "none";
-        if (saveLayer === "none") {
-            core.info("cook-cache: layered cache warm or cook did not run successfully - skipping save");
-            return;
-        }
-        const projectRoot = state("ProjectRoot");
-        if (!projectRoot || !fs.existsSync(projectRoot)) {
-            const message = `cook-cache: project root ${projectRoot || "(empty)"} missing - skipping save`;
-            if (failOnError)
-                throw new Error(message);
-            core.info(message);
-            return;
-        }
-        const saveKey = saveLayer === "delta" ? state("DeltaExactKey") : state("BaseExactKey");
-        const archivePath = saveLayer === "delta" ? state("DeltaArchive") : state("BaseArchive");
-        const zstdLevel = saveLayer === "delta"
-            ? state("DeltaCompressLevel") || "3"
-            : state("BaseCompressLevel") || "9";
-        const saveResult = await (0, cook_cache_js_1.saveLayeredCookCache)({
-            soldrBinary: state("SoldrBinary") || process.env["SOLDR_BINARY"]?.trim() || "soldr",
-            projectRoot,
-            targetDir,
-            exactKey: saveKey,
-            archivePath,
-            layer: saveLayer === "delta" ? "delta" : "base",
-            zstdLevel,
-            baseManifestPath: state("BaseManifest"),
-            log: (msg) => core.info(msg),
-        });
-        core.info(`cook-cache-${saveLayer}: save status=${saveResult.status}`);
-        if (saveResult.status === "failed" && failOnError) {
-            throw new Error(`cook-cache-${saveLayer}: save failed: ${saveResult.error ?? "unknown error"}`);
-        }
-        return;
-    }
-    const saveResult = await (0, cook_cache_js_1.saveCookCache)({
-        targetDir,
-        exactKey: state("ExactKey"),
-        level: state("CompressLevel") || "9",
-        longWindow: 27,
-        debug: stateBool("Debug"),
-        log: (msg) => core.info(msg),
-    });
-    core.info(`cook-cache: save status=${saveResult.status}`);
-    if (saveResult.status === "failed" && failOnError) {
-        throw new Error(`cook-cache: save failed: ${saveResult.error ?? "unknown error"}`);
-    }
-}
-main().catch((err) => {
-    core.setFailed(err instanceof Error ? err.message : String(err));
-});
-
-
-/***/ }),
-
-/***/ 256:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -53114,7 +52130,7 @@ exports.getDownloadOptions = getDownloadOptions;
 
 /***/ }),
 
-/***/ 257:
+/***/ 256:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -53311,7 +52327,7 @@ module.exports = buildConnector
 
 /***/ }),
 
-/***/ 258:
+/***/ 257:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -53339,7 +52355,7 @@ exports.StorageContextClient = StorageContextClient;
 
 /***/ }),
 
-/***/ 259:
+/***/ 258:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -53376,7 +52392,7 @@ function formDataPolicy() {
 
 /***/ }),
 
-/***/ 260:
+/***/ 259:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -53514,7 +52530,7 @@ function buildMultipartBody(parts) {
 
 /***/ }),
 
-/***/ 261:
+/***/ 260:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -53531,7 +52547,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 /***/ }),
 
-/***/ 262:
+/***/ 261:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 var __defProp = Object.defineProperty;
@@ -53582,7 +52598,7 @@ function multipartPolicy() {
 
 /***/ }),
 
-/***/ 263:
+/***/ 262:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -53677,7 +52693,7 @@ exports.listEnumNumbers = listEnumNumbers;
 
 /***/ }),
 
-/***/ 264:
+/***/ 263:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const assert = __nccwpck_require__(491)
@@ -54020,11 +53036,1012 @@ module.exports = RetryHandler
 
 /***/ }),
 
-/***/ 265:
+/***/ 264:
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("node:crypto");
+
+/***/ }),
+
+/***/ 265:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Cook cache layer — long-lived deps tarball keyed by Cargo.lock content.
+//
+// Per CLAUDE.md "Cache-lifetime axis" + the cook simulation findings:
+// the base cook cache is long-lived/large and keyed by Cargo.lock content.
+// It must NOT include SHA in the key (causes catastrophic eviction churn).
+// Content-addressable keying gives parent-to-branch sharing automatically:
+// same Cargo.lock = same key, regardless of branch or commit. The delta
+// layer is intentionally short-lived and includes commit/build shape so
+// normal code-only changes upload a small secondary archive.
+//
+// Save path: snapshot `target/` immediately after cook completes, before
+// the user's `cargo build` adds project artifacts. The legacy path keeps
+// the historical tar+zstd-19/long-window archive; the layered path delegates
+// protobuf manifest and archive construction to `soldr save`.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LAYERED_COOK_MIN_SOLDR_VERSION = void 0;
+exports.layeredCookBaseReady = layeredCookBaseReady;
+exports.layeredCookDeltaReady = layeredCookDeltaReady;
+exports.hashCookFlags = hashCookFlags;
+exports.buildCookCacheKey = buildCookCacheKey;
+exports.buildCookBaseCacheKey = buildCookBaseCacheKey;
+exports.hashCookBuildShape = hashCookBuildShape;
+exports.buildCookDeltaCacheKey = buildCookDeltaCacheKey;
+exports.buildCookDeltaCacheRestorePrefix = buildCookDeltaCacheRestorePrefix;
+exports.supportsLayeredCookCache = supportsLayeredCookCache;
+exports.isCookMode = isCookMode;
+exports.decideCookGate = decideCookGate;
+exports.runCook = runCook;
+exports.restoreCookCache = restoreCookCache;
+exports.restoreLayeredCookCacheArchives = restoreLayeredCookCacheArchives;
+exports.loadLayeredCookCache = loadLayeredCookCache;
+exports.saveCookCache = saveCookCache;
+exports.saveLayeredCookCache = saveLayeredCookCache;
+exports.parseCookFlags = parseCookFlags;
+exports.canonicalizeCookFlags = canonicalizeCookFlags;
+const node_crypto_1 = __nccwpck_require__(264);
+const fs = __importStar(__nccwpck_require__(239));
+const fsp = __importStar(__nccwpck_require__(106));
+const path = __importStar(__nccwpck_require__(475));
+const core = __importStar(__nccwpck_require__(429));
+const exec = __importStar(__nccwpck_require__(17));
+const cache = __importStar(__nccwpck_require__(206));
+const cache_compress_js_1 = __nccwpck_require__(24);
+const log_utils_js_1 = __nccwpck_require__(184);
+const two_phase_actions_cache_js_1 = __nccwpck_require__(36);
+function layeredCookBaseReady(restore, loaded) {
+    return restore.base.hit && loaded.baseLoaded;
+}
+function layeredCookDeltaReady(restore, loaded) {
+    return layeredCookBaseReady(restore, loaded) &&
+        Boolean(restore.delta.matchedKey) &&
+        loaded.deltaLoaded;
+}
+const COOK_KEY_PREFIX = "cook";
+const COOK_BASE_KEY_PREFIX = "cook-base-v2";
+const COOK_DELTA_KEY_PREFIX = "cook-delta-v2";
+exports.LAYERED_COOK_MIN_SOLDR_VERSION = "0.7.38";
+const COOK_MODE = "soldr-cook";
+const LEGACY_COOK_MODE = "cargo-chef";
+/**
+ * Compute the canonical flag fingerprint. Sorts and lowercases so flag
+ * order doesn't perturb the key, and so `--release` vs `--RELEASE`
+ * collapse. Only flags that affect cook output structure should be
+ * here; cosmetic flags must be filtered upstream.
+ */
+function hashCookFlags(flags) {
+    const sorted = [...flags.map((s) => s.trim()).filter((s) => s.length > 0)].sort();
+    if (sorted.length === 0)
+        return "none";
+    const h = (0, node_crypto_1.createHash)("sha256");
+    for (const s of sorted) {
+        h.update(s);
+        h.update("\0");
+    }
+    return h.digest("hex").slice(0, 8);
+}
+function buildCookCacheKey(parts) {
+    const release = parts.rustcRelease.trim() || "unresolved";
+    const segments = [
+        COOK_KEY_PREFIX,
+        parts.runnerOs,
+        parts.runnerArch,
+        parts.libc,
+        `rustc${release}`,
+        `f${parts.flagsHash}`,
+        `l${parts.lockHash}`,
+        `soldr${parts.soldrVersion}`,
+    ];
+    if (parts.keySuffix?.trim())
+        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+    return segments.join("-");
+}
+function keyFragment(value, fallback) {
+    const cleaned = value.trim().replace(/[^A-Za-z0-9_.-]+/g, "_");
+    return cleaned || fallback;
+}
+function shortHash(value, fallback) {
+    const trimmed = value.trim();
+    if (!trimmed)
+        return fallback;
+    return (0, node_crypto_1.createHash)("sha256").update(trimmed, "utf8").digest("hex").slice(0, 12);
+}
+function cookKeyParts(parts) {
+    const release = keyFragment(parts.rustcRelease, "unresolved");
+    const segments = [
+        keyFragment(parts.runnerOs, "unknown-os"),
+        keyFragment(parts.runnerArch, "unknown-arch"),
+        keyFragment(parts.libc, "unknown-libc"),
+        `rustc${release}`,
+        `f${keyFragment(parts.flagsHash, "none")}`,
+        `l${keyFragment(parts.lockHash, "no-lock")}`,
+        `soldr${keyFragment(parts.soldrVersion, "unset")}`,
+    ];
+    if (parts.keySuffix?.trim())
+        segments.push(`x${keyFragment(parts.keySuffix, "none")}`);
+    return segments;
+}
+function buildCookBaseCacheKey(parts) {
+    return [COOK_BASE_KEY_PREFIX, ...cookKeyParts(parts)].join("-");
+}
+function hashCookBuildShape(value) {
+    return shortHash(value, "no-shape");
+}
+function buildCookDeltaCacheKey(parts) {
+    const sha = keyFragment(parts.githubSha || "nosha", "nosha").slice(0, 16);
+    const shape = keyFragment(parts.buildShapeHash, "no-shape");
+    return [
+        COOK_DELTA_KEY_PREFIX,
+        ...cookKeyParts(parts),
+        `s${shape}`,
+        `g${sha}`,
+    ].join("-");
+}
+function buildCookDeltaCacheRestorePrefix(parts) {
+    const shape = keyFragment(parts.buildShapeHash, "no-shape");
+    return [
+        COOK_DELTA_KEY_PREFIX,
+        ...cookKeyParts(parts),
+        `s${shape}`,
+    ].join("-") + "-";
+}
+function parseVersion(value) {
+    const cleaned = value.trim().replace(/^v/i, "");
+    const match = /^(\d+)\.(\d+)\.(\d+)(?:[.+-].*)?$/.exec(cleaned);
+    if (!match)
+        return null;
+    return {
+        major: Number(match[1] ?? NaN),
+        minor: Number(match[2] ?? NaN),
+        patch: Number(match[3] ?? NaN),
+    };
+}
+function supportsLayeredCookCache(soldrVersion) {
+    const parsed = parseVersion(soldrVersion);
+    if (!parsed)
+        return false;
+    const min = parseVersion(exports.LAYERED_COOK_MIN_SOLDR_VERSION);
+    if (parsed.major !== min.major)
+        return parsed.major > min.major;
+    if (parsed.minor !== min.minor)
+        return parsed.minor > min.minor;
+    return parsed.patch >= min.patch;
+}
+function isCookMode(mode) {
+    const normalized = mode.trim().toLowerCase();
+    return normalized === COOK_MODE || normalized === LEGACY_COOK_MODE;
+}
+/**
+ * Decide whether to run cook based on the runtime environment. Returns a
+ * reason string for diagnostic logging in both branches.
+ */
+function decideCookGate(opts) {
+    const mode = opts.prebuildDeps.trim().toLowerCase();
+    if (mode === "" || mode === "none" || mode === "off" || mode === "false") {
+        return { enabled: false, reason: `prebuild-deps=${opts.prebuildDeps || "(empty)"} - cook disabled` };
+    }
+    if (!isCookMode(mode)) {
+        return {
+            enabled: false,
+            reason: `prebuild-deps=${opts.prebuildDeps} - unknown strategy, ` +
+                `only "${COOK_MODE}" supported ("${LEGACY_COOK_MODE}" remains an alias)`,
+        };
+    }
+    if (!opts.cacheUmbrella) {
+        return { enabled: false, reason: "cache: false - cook produces no value without caching" };
+    }
+    if (!opts.lockfilePath) {
+        return { enabled: false, reason: "no Cargo.lock found - cook needs a lockfile to derive recipe" };
+    }
+    if (!fs.existsSync(opts.lockfilePath)) {
+        return { enabled: false, reason: `Cargo.lock path ${opts.lockfilePath} does not exist` };
+    }
+    return { enabled: true, reason: `${COOK_MODE} enabled` };
+}
+/**
+ * Run `soldr cook` in the project directory. The soldr-cook mode emits
+ * the recipe and runs the dependency compile. We tolerate failure: cook
+ * is an optimization, not a correctness primitive, so any non-zero exit
+ * is logged and the action proceeds. The user's normal `cargo build`
+ * step will work fine without a cooked target.
+ */
+async function runCook(opts) {
+    const { soldrBinary, projectRoot, flags, log } = opts;
+    log(`cook: running '${soldrBinary} cook ${flags.join(" ")}' in ${projectRoot}`);
+    const t0 = Date.now();
+    let exitCode = 0;
+    try {
+        // #359: prepend MM:SS timestamps to each line of cook output (cargo's
+        // Compiling/Downloading lines) so forensic analysis of slow cook
+        // phases can pinpoint the bottleneck crate from the log alone.
+        // ANSI color escape sequences in cargo's output pass through
+        // unchanged — we only modify the line prefix, not the line body.
+        // Color forcing (CARGO_TERM_COLOR/FORCE_COLOR/CLICOLOR_FORCE) is
+        // already injected by resolve-setup.ts when timestamps are enabled.
+        exitCode = await exec.exec(soldrBinary, ["cook", ...flags], {
+            cwd: projectRoot,
+            ignoreReturnCode: true,
+            silent: true,
+            listeners: {
+                stdline: (line) => {
+                    process.stdout.write(`${(0, log_utils_js_1.formatLogLine)(process.env, line)}\n`);
+                },
+                errline: (line) => {
+                    process.stderr.write(`${(0, log_utils_js_1.formatLogLine)(process.env, line)}\n`);
+                },
+            },
+        });
+    }
+    catch (err) {
+        log(`cook: exec threw: ${err instanceof Error ? err.message : String(err)}`);
+        exitCode = 1;
+    }
+    const ranSeconds = (Date.now() - t0) / 1000;
+    if (exitCode !== 0) {
+        log(`cook: failed with exit ${exitCode} after ${ranSeconds.toFixed(1)}s; continuing without cooked deps`);
+    }
+    else {
+        log(`cook: completed in ${ranSeconds.toFixed(1)}s`);
+    }
+    return { exitCode, ranSeconds };
+}
+/**
+ * Attempt to restore a cooked target directory from the actions cache.
+ * Single exact key — no fallback ladder; cook is content-addressable so
+ * a fallback would either be redundant or wrong.
+ */
+async function restoreCookCache(opts) {
+    const { exactKey, archivePath, targetDir, longWindow, log } = opts;
+    const warn = opts.warn ?? log;
+    const restore = opts.restoreCache ?? cache.restoreCache;
+    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
+    await fsp.rm(archivePath, { force: true });
+    let matched;
+    try {
+        matched = await restore([archivePath], exactKey);
+    }
+    catch (err) {
+        log(`cook-cache: restore failed: ${err instanceof Error ? err.message : String(err)}`);
+        return { hit: false, matchedKey: "", archiveBytes: 0 };
+    }
+    if (!matched) {
+        log(`cook-cache: no entry for key ${exactKey}`);
+        return { hit: false, matchedKey: "", archiveBytes: 0 };
+    }
+    let archiveBytes = 0;
+    try {
+        archiveBytes = (await fsp.stat(archivePath)).size;
+    }
+    catch {
+        warn(`cook-cache: matched key ${matched} produced an unusable payload: archive=0B (missing); treating as miss`);
+        return { hit: false, matchedKey: "", archiveBytes: 0 };
+    }
+    if (archiveBytes === 0) {
+        warn(`cook-cache: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
+        return { hit: false, matchedKey: "", archiveBytes: 0 };
+    }
+    // SOLDRENC-framed (encrypted) archives appear as magic="unknown" here;
+    // delegate the detection to decompressCache when a cache-encrypt-key is set.
+    const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
+    const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
+    if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
+        warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
+            `archive=${archiveBytes}B codec=unknown; treating as miss`);
+        return { hit: false, matchedKey: matched, archiveBytes };
+    }
+    await fsp.mkdir(targetDir, { recursive: true });
+    try {
+        const decompressed = await (opts.decompress ?? cache_compress_js_1.decompressCache)({
+            archivePath,
+            targetDir,
+            longWindow,
+            log,
+            debug: opts.debug,
+            cacheKey: exactKey,
+        });
+        if (decompressed.fileCount === 0) {
+            warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
+                `archive=${archiveBytes}B extracted_files=${decompressed.fileCount} ` +
+                `extracted_bytes=${decompressed.inflatedBytes}; treating as miss`);
+            return { hit: false, matchedKey: "", archiveBytes };
+        }
+    }
+    catch (err) {
+        warn(`cook-cache: matched key ${matched} produced an unusable payload: ` +
+            `archive=${archiveBytes}B decompress failed: ${err instanceof Error ? err.message : String(err)}; treating as miss`);
+        return { hit: false, matchedKey: matched, archiveBytes };
+    }
+    log(`cook-cache: restored matched=${matched} archive=${archiveBytes}B target=${targetDir}`);
+    return { hit: true, matchedKey: matched, archiveBytes };
+}
+async function archiveSize(archivePath) {
+    try {
+        return (await fsp.stat(archivePath)).size;
+    }
+    catch {
+        return 0;
+    }
+}
+async function restoreOneLayer(label, key, archivePath, restoreKeys, log, warn, restore) {
+    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
+    await fsp.rm(archivePath, { force: true });
+    let matched;
+    try {
+        matched = await restore([archivePath], key, restoreKeys ?? []);
+    }
+    catch (err) {
+        log(`${label}: restore failed: ${err instanceof Error ? err.message : String(err)}`);
+        return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
+    }
+    if (!matched) {
+        log(`${label}: no entry for key ${key}`);
+        return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
+    }
+    const bytes = await archiveSize(archivePath);
+    if (bytes === 0) {
+        warn(`${label}: matched key ${matched} produced an unusable payload: archive=0B; treating as miss`);
+        return { hit: false, matchedKey: "", archivePath, archiveBytes: 0 };
+    }
+    const hit = matched === key;
+    log(`${label}: restored matched=${matched} exact=${hit} archive=${bytes}B`);
+    return { hit, matchedKey: matched, archivePath, archiveBytes: bytes };
+}
+async function restoreLayeredCookCacheArchives(opts) {
+    const restore = opts.restoreCache ?? cache.restoreCache;
+    const warn = opts.warn ?? opts.log;
+    // #295: parallel-restore base + delta instead of the previous serial
+    // `await base; if (base.matchedKey) await delta` shape. The delta
+    // key is independently computed (includes everything the base key
+    // does + source/git fingerprint) so the two restores have no data
+    // dependency. Serializing them spent ~11s wall clock per warm run
+    // for zero correctness benefit — the delta restore on a base-MISS
+    // was always going to be skipped on the cook side anyway (cook
+    // never reads a delta archive when base wasn't restored). Cost when
+    // base misses: one extra HEAD round-trip, paid in parallel anyway
+    // and bounded by the larger restore. Saves up to ~11s in the
+    // typical warm-cache case (zackees/setup-soldr#295 measurement on
+    // Integration v0.9.30 rerun).
+    const [base, delta] = await Promise.all([
+        restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log, warn, restore),
+        restoreOneLayer("cook-cache-delta", opts.deltaKey, opts.deltaArchivePath, opts.deltaRestoreKeys ?? [], opts.log, warn, restore),
+    ]);
+    // Preserve the pre-#295 contract: when base missed, the delta is
+    // semantically invalid even if it happened to restore (no base to
+    // overlay onto). Discard the delta archive in that case so callers
+    // can rely on `base.matchedKey === "" ⇒ delta.hit === false`.
+    if (!base.matchedKey) {
+        return {
+            base,
+            delta: { hit: false, matchedKey: "", archivePath: opts.deltaArchivePath, archiveBytes: 0 },
+        };
+    }
+    return { base, delta };
+}
+async function runSoldrJson(soldrBinary, args, cwd, log) {
+    let stdout = "";
+    let stderr = "";
+    log(`cook-cache: running '${soldrBinary} ${args.join(" ")}' in ${cwd}`);
+    let code = 1;
+    try {
+        code = await exec.exec(soldrBinary, args, {
+            cwd,
+            ignoreReturnCode: true,
+            silent: true,
+            listeners: {
+                stdout: (data) => {
+                    stdout += data.toString("utf8");
+                },
+                stderr: (data) => {
+                    stderr += data.toString("utf8");
+                },
+            },
+        });
+    }
+    catch (err) {
+        stderr += err instanceof Error ? err.message : String(err);
+    }
+    let payload = null;
+    const lastLine = stdout
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+        .at(-1);
+    if (lastLine) {
+        try {
+            const parsed = JSON.parse(lastLine);
+            if (typeof parsed === "object" && parsed !== null) {
+                payload = parsed;
+            }
+        }
+        catch {
+            // Best-effort diagnostics only; non-JSON output is still surfaced below.
+        }
+    }
+    if (stdout.trim())
+        log(`cook-cache: stdout: ${stdout.trim()}`);
+    if (stderr.trim())
+        log(`cook-cache: stderr: ${stderr.trim()}`);
+    return { code, stdout, stderr, payload };
+}
+function numField(payload, name) {
+    const value = payload?.[name];
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+function loadReport(payload) {
+    return {
+        cacheFilesRestored: numField(payload, "cache_files_restored"),
+        sourceFilesInManifest: numField(payload, "source_files_in_manifest"),
+        mtimesApplied: numField(payload, "mtimes_applied"),
+        mtimesSkippedMissing: numField(payload, "mtimes_skipped_missing"),
+        mtimesSkippedSizeMismatch: numField(payload, "mtimes_skipped_size_mismatch"),
+        mtimesSkippedModified: numField(payload, "mtimes_skipped_modified"),
+    };
+}
+async function loadOneLayer(opts) {
+    const args = [
+        "load",
+        "--archive",
+        opts.archivePath,
+        "--cache-dir",
+        opts.targetDir,
+        "--workspace",
+        opts.projectRoot,
+        "--json",
+    ];
+    if (opts.manifestOut) {
+        args.push("--manifest-out", opts.manifestOut);
+    }
+    const result = await opts.run(opts.soldrBinary, args, opts.projectRoot, opts.log);
+    if (result.code !== 0) {
+        opts.warn(`${opts.label}: matched archive is unusable: soldr load failed with exit ${result.code}; treating as miss`);
+        return { loaded: false, report: null };
+    }
+    const report = loadReport(result.payload);
+    if (report.cacheFilesRestored === null || report.cacheFilesRestored <= 0) {
+        opts.warn(`${opts.label}: matched archive is unusable: soldr load reported ` +
+            `cache_files_restored=${report.cacheFilesRestored ?? "missing"}; treating as miss`);
+        return { loaded: false, report };
+    }
+    opts.log(`${opts.label}: loaded cache_files=${report.cacheFilesRestored ?? "?"} ` +
+        `mtimes_applied=${report.mtimesApplied ?? "?"}`);
+    return { loaded: true, report };
+}
+async function loadLayeredCookCache(opts) {
+    const warn = opts.warn ?? opts.log;
+    const run = opts.runSoldrJson ?? runSoldrJson;
+    if (!opts.restore.base.matchedKey) {
+        return { baseLoaded: false, deltaLoaded: false, baseReport: null, deltaReport: null };
+    }
+    const base = await loadOneLayer({
+        label: "cook-cache-base",
+        soldrBinary: opts.soldrBinary,
+        projectRoot: opts.projectRoot,
+        targetDir: opts.targetDir,
+        archivePath: opts.baseArchivePath,
+        manifestOut: opts.baseManifestPath,
+        log: opts.log,
+        warn,
+        run,
+    });
+    if (!base.loaded) {
+        return {
+            baseLoaded: false,
+            deltaLoaded: false,
+            baseReport: base.report,
+            deltaReport: null,
+        };
+    }
+    if (!opts.restore.delta.matchedKey) {
+        return {
+            baseLoaded: true,
+            deltaLoaded: false,
+            baseReport: base.report,
+            deltaReport: null,
+        };
+    }
+    const delta = await loadOneLayer({
+        label: "cook-cache-delta",
+        soldrBinary: opts.soldrBinary,
+        projectRoot: opts.projectRoot,
+        targetDir: opts.targetDir,
+        archivePath: opts.deltaArchivePath,
+        log: opts.log,
+        warn,
+        run,
+    });
+    return {
+        baseLoaded: true,
+        deltaLoaded: delta.loaded,
+        baseReport: base.report,
+        deltaReport: delta.report,
+    };
+}
+/**
+ * Tar+zstd the post-cook target directory and upload via actions cache.
+ * Caller passes the same `longWindow` as the restore side so the archive
+ * is readable on subsequent runs.
+ */
+async function saveCookCache(opts) {
+    const { targetDir, exactKey, level, longWindow, debug, log } = opts;
+    if (!fs.existsSync(targetDir))
+        return { status: "skipped-missing-target" };
+    try {
+        if ((await fsp.readdir(targetDir)).length === 0)
+            return { status: "skipped-empty" };
+    }
+    catch {
+        return { status: "skipped-missing-target" };
+    }
+    const archivePath = `${targetDir}.tar.zst`;
+    const reserveStart = Date.now();
+    const result = await (0, two_phase_actions_cache_js_1.saveReservedCache)({
+        paths: [archivePath],
+        key: exactKey,
+        log,
+        produce: async () => {
+            const compressStart = Date.now();
+            const compressed = await (0, cache_compress_js_1.compressCache)({
+                cacheDir: targetDir,
+                codec: "zstd",
+                level,
+                longWindow,
+                debug,
+                log,
+                cacheKey: exactKey,
+            });
+            if (!compressed.archivePath)
+                throw new Error("compressCache returned null archive (zstd unavailable?)");
+            return {
+                archivePath: compressed.archivePath,
+                archiveBytes: compressed.archiveBytes,
+                inflatedBytes: compressed.inflatedBytes ?? undefined,
+                fileCount: compressed.fileCount ?? undefined,
+                compressMs: Date.now() - compressStart,
+            };
+        },
+    });
+    const reserveMs = Date.now() - reserveStart;
+    if ((0, two_phase_actions_cache_js_1.isReservationConflict)(result))
+        return { status: "skipped-race-precheck", reserveMs };
+    if (result.status === "failed")
+        return { status: "failed", error: result.error, reserveMs };
+    const archive = result.archive;
+    return {
+        status: "saved",
+        cacheId: result.cacheId,
+        archiveBytes: archive.archiveBytes,
+        inflatedBytes: archive.inflatedBytes,
+        fileCount: archive.fileCount,
+        archivePath: archive.archivePath,
+        compressMs: archive.compressMs,
+        reserveMs,
+    };
+}
+async function saveCookCacheLegacy(opts) {
+    const { targetDir, exactKey, level, longWindow, debug, log } = opts;
+    if (!fs.existsSync(targetDir)) {
+        return { status: "skipped-missing-target" };
+    }
+    // Bail if the directory is effectively empty — cook should have produced
+    // *something*; an empty target dir indicates cook failed silently or the
+    // gate let us through when it shouldn't have.
+    let entryCount = 0;
+    try {
+        entryCount = (await fsp.readdir(targetDir)).length;
+    }
+    catch { /* */ }
+    if (entryCount === 0) {
+        return { status: "skipped-empty" };
+    }
+    // #268 Fix A: pre-compress key-existence probe. `@actions/cache`'s
+    // `restoreCache(paths, key, _, { lookupOnly: true })` issues a
+    // HEAD-like call that returns the matched key (if any) without
+    // downloading anything. When it returns truthy, a parallel job has
+    // already saved this exact key — we'd lose the reservation race
+    // after a 19-min `--zstd-level 19` compress anyway, so we skip the
+    // compress entirely and avoid the wasted wall-clock. Restore-side
+    // benefits because the sibling job's entry is now the durable
+    // record. (See zccache PR #480 — 19m 5s burned for this exact race.)
+    //
+    // `paths` must match what `saveCache([archivePath], exactKey)` will
+    // pass later — `cacheUtils.getCacheVersion` hashes the path list
+    // into the cache version, so a mismatch returns null even on hit.
+    // `compressCache` derives archivePath as `${cacheDir}.tar.zst`
+    // (cache-compress.ts:743), so we can predict it without compressing.
+    const probeArchivePath = `${targetDir}.tar.zst`;
+    try {
+        const existing = await cache.restoreCache([probeArchivePath], exactKey, [], { lookupOnly: true });
+        if (existing) {
+            log(`cook-cache: pre-compress probe found existing entry for key=${exactKey} — ` +
+                `skipping compress + save to avoid the reservation-race wall-clock waste ` +
+                `(setup-soldr#268 Fix A)`);
+            return { status: "skipped-race-precheck" };
+        }
+    }
+    catch (err) {
+        // Probe failure is non-fatal — proceed to the legacy compress+save
+        // path so we don't regress reliability.
+        if (debug) {
+            log(`cook-cache: pre-compress key probe threw (${err instanceof Error ? err.message : String(err)}) — falling back to compress+save`);
+        }
+    }
+    let archivePath = null;
+    let archiveBytes;
+    let inflatedBytes;
+    let fileCount;
+    // #268 Fix B: capture compress wall-clock so a race-loss after a long
+    // compress is loud, not silent. Operators reading the log shouldn't
+    // have to scroll to spot 19 wasted minutes.
+    const compressStart = Date.now();
+    try {
+        const compress = await (0, cache_compress_js_1.compressCache)({
+            cacheDir: targetDir,
+            codec: "zstd",
+            level,
+            longWindow,
+            debug,
+            log,
+            cacheKey: exactKey,
+        });
+        archivePath = compress.archivePath;
+        archiveBytes = compress.archiveBytes;
+        if (compress.inflatedBytes !== null)
+            inflatedBytes = compress.inflatedBytes;
+        if (compress.fileCount !== null)
+            fileCount = compress.fileCount;
+    }
+    catch (err) {
+        return { status: "failed", error: err instanceof Error ? err.message : String(err) };
+    }
+    if (!archivePath) {
+        return { status: "failed", error: "compressCache returned null archive (zstd unavailable?)" };
+    }
+    const compressMs = Date.now() - compressStart;
+    const uploadStart = Date.now();
+    try {
+        const id = await cache.saveCache([archivePath], exactKey);
+        const uploadMs = Date.now() - uploadStart;
+        if (id <= 0) {
+            // @actions/cache returns -1 when reserveCache fails — typically
+            // because the key already exists (parallel job got there first)
+            // or the cache budget is exhausted. Not an error: future runs
+            // will hit the entry the other job saved.
+            log(`cook-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +
+                `job already saved key=${exactKey} or repo cache budget is exhausted`);
+            // #268 Fix B: when the compress was meaningfully expensive
+            // (>30s) and we end up discarding the upload, surface a top-
+            // level warning so it shows up in the job's annotations panel.
+            // Fix A (reserve key BEFORE compressing) is the real fix but
+            // requires plumbing two-phase cache APIs; this raises the
+            // visibility of the symptom in the meantime.
+            const COMPRESS_WASTE_WARN_MS = 30_000;
+            if (compressMs >= COMPRESS_WASTE_WARN_MS) {
+                const seconds = (compressMs / 1000).toFixed(0);
+                const archiveDisplay = archiveBytes
+                    ? `${(archiveBytes / (1024 * 1024)).toFixed(1)} MiB`
+                    : "unknown size";
+                core.warning(`setup-soldr: cook-cache spent ${seconds}s compressing a ${archiveDisplay} ` +
+                    `archive then lost the cache reservation race for key=${exactKey}. ` +
+                    `That wall-clock was burned — see setup-soldr#268 for the fix-A (reserve ` +
+                    `key BEFORE compressing) tracking issue.`);
+            }
+            return {
+                status: "skipped-race",
+                cacheId: id,
+                archiveBytes,
+                inflatedBytes,
+                fileCount,
+                archivePath,
+                compressMs,
+                uploadMs,
+            };
+        }
+        log(`cook-cache: saved id=${id} key=${exactKey} archive=${archivePath}`);
+        return {
+            status: "saved",
+            cacheId: id,
+            archiveBytes,
+            inflatedBytes,
+            fileCount,
+            archivePath,
+            compressMs,
+            uploadMs,
+        };
+    }
+    catch (err) {
+        return {
+            status: "failed",
+            error: err instanceof Error ? err.message : String(err),
+            archivePath,
+        };
+    }
+}
+function saveReport(payload) {
+    return {
+        sourceFiles: numField(payload, "source_files"),
+        cacheFiles: numField(payload, "cache_files"),
+        deletedCacheFiles: numField(payload, "deleted_cache_files"),
+        archiveBytes: numField(payload, "archive_bytes"),
+    };
+}
+async function saveLayeredCookCache(opts) {
+    const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
+    if (!fs.existsSync(targetDir))
+        return { status: "skipped-missing-target" };
+    try {
+        if ((await fsp.readdir(targetDir)).length === 0)
+            return { status: "skipped-empty" };
+    }
+    catch {
+        return { status: "skipped-missing-target" };
+    }
+    if (layer === "delta" && (!opts.baseManifestPath || !fs.existsSync(opts.baseManifestPath))) {
+        return { status: "skipped-missing-manifest" };
+    }
+    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
+    await fsp.rm(archivePath, { force: true });
+    const args = ["save", "--cache-dir", targetDir, "--workspace", projectRoot, "--out", archivePath, "--zstd-level", zstdLevel, "--json"];
+    if (layer === "delta")
+        args.push("--delta-from-manifest", opts.baseManifestPath);
+    const reserveStart = Date.now();
+    const saveReserved = opts.saveReservedCache ?? two_phase_actions_cache_js_1.saveReservedCache;
+    const run = opts.runSoldrJson ?? runSoldrJson;
+    const result = await saveReserved({
+        paths: [archivePath],
+        key: exactKey,
+        log,
+        produce: async () => {
+            const compressStart = Date.now();
+            const soldrSave = await run(soldrBinary, args, projectRoot, log);
+            if (soldrSave.code !== 0)
+                throw new Error(`soldr save ${layer} exited ${soldrSave.code}`);
+            const report = saveReport(soldrSave.payload);
+            // A successful Soldr exit and a non-empty Actions-cache wrapper do not
+            // prove that the inner archive is usable. Validate the serialized file
+            // itself before upload so an immutable exact key cannot be poisoned.
+            let archiveBytes;
+            try {
+                archiveBytes = (await fsp.stat(archivePath)).size;
+            }
+            catch {
+                throw new Error(`cook-cache-${layer}: refusing to upload archive that does not exist for ` +
+                    `key=${exactKey} path=${archivePath}; immutable cache entries cannot be repaired in place`);
+            }
+            if (archiveBytes === 0) {
+                throw new Error(`cook-cache-${layer}: refusing to upload archive with zero bytes for ` +
+                    `key=${exactKey} path=${archivePath}; immutable cache entries cannot be repaired in place`);
+            }
+            return {
+                archivePath,
+                archiveBytes,
+                fileCount: report.cacheFiles ?? undefined,
+                sourceFiles: report.sourceFiles ?? undefined,
+                deletedCacheFiles: report.deletedCacheFiles ?? undefined,
+                compressMs: Date.now() - compressStart,
+            };
+        },
+    });
+    const reserveMs = Date.now() - reserveStart;
+    if ((0, two_phase_actions_cache_js_1.isReservationConflict)(result))
+        return { status: "skipped-race-precheck", archivePath, reserveMs };
+    if (result.status === "failed")
+        return { status: "failed", archivePath, error: result.error, reserveMs };
+    const archive = result.archive;
+    return {
+        status: "saved",
+        cacheId: result.cacheId,
+        archiveBytes: archive.archiveBytes,
+        fileCount: archive.fileCount,
+        sourceFiles: archive.sourceFiles,
+        deletedCacheFiles: archive.deletedCacheFiles,
+        archivePath,
+        compressMs: archive.compressMs,
+        reserveMs,
+    };
+}
+async function saveLayeredCookCacheLegacy(opts) {
+    const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
+    if (!fs.existsSync(targetDir)) {
+        return { status: "skipped-missing-target" };
+    }
+    let entryCount = 0;
+    try {
+        entryCount = (await fsp.readdir(targetDir)).length;
+    }
+    catch { /* */ }
+    if (entryCount === 0) {
+        return { status: "skipped-empty" };
+    }
+    if (layer === "delta") {
+        const manifest = opts.baseManifestPath ?? "";
+        if (!manifest || !fs.existsSync(manifest)) {
+            return { status: "skipped-missing-manifest" };
+        }
+    }
+    await fsp.mkdir(path.dirname(archivePath), { recursive: true });
+    await fsp.rm(archivePath, { force: true });
+    const args = [
+        "save",
+        "--cache-dir",
+        targetDir,
+        "--workspace",
+        projectRoot,
+        "--out",
+        archivePath,
+        "--zstd-level",
+        zstdLevel,
+        "--json",
+    ];
+    if (layer === "delta") {
+        args.push("--delta-from-manifest", opts.baseManifestPath);
+    }
+    // #268 Fix A: pre-compress probe — bail out if a sibling job already
+    // saved this exact key. The layered path uses `soldr save
+    // --zstd-level 19` which is the dominant 19-minute wall-clock burner
+    // on the cook-base archive (zccache PR #480). Probe is a HEAD-like
+    // call costing ~100-1000 ms; far cheaper than the full compress.
+    // `paths` must match the later `saveCache([archivePath], exactKey)`
+    // — the version hash includes the path list (cacheUtils.getCacheVersion).
+    try {
+        const existing = await cache.restoreCache([archivePath], exactKey, [], { lookupOnly: true });
+        if (existing) {
+            log(`cook-cache-${layer}: pre-compress probe found existing entry for key=${exactKey} ` +
+                `— skipping compress + save (setup-soldr#268 Fix A)`);
+            return { status: "skipped-race-precheck", archivePath };
+        }
+    }
+    catch (err) {
+        // Probe failure is non-fatal — fall through to legacy compress+save.
+        log(`cook-cache-${layer}: pre-compress key probe threw (${err instanceof Error ? err.message : String(err)}) — falling back to compress+save`);
+    }
+    // #268 Fix B: capture compress wall-clock so a race-loss after a long
+    // compress is loud, not silent (mirrors the non-layered path above).
+    const compressStart = Date.now();
+    const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
+    if (run.code !== 0) {
+        return {
+            status: "failed",
+            error: `soldr save ${layer} exited ${run.code}`,
+            archivePath,
+        };
+    }
+    const compressMs = Date.now() - compressStart;
+    const report = saveReport(run.payload);
+    const archiveBytes = report.archiveBytes ?? await archiveSize(archivePath);
+    const uploadStart = Date.now();
+    try {
+        const id = await cache.saveCache([archivePath], exactKey);
+        const uploadMs = Date.now() - uploadStart;
+        if (id <= 0) {
+            log(`cook-cache-${layer}: save did not reserve a new entry (id=${id}) ` +
+                `for key=${exactKey}`);
+            // #268 Fix B: same surface-as-warning treatment as the non-
+            // layered path. The layered path uses `soldr save --zstd-level
+            // 19` which is the dominant wall-clock burner (zccache PR #480
+            // observed 19m 5s before losing the race).
+            const COMPRESS_WASTE_WARN_MS = 30_000;
+            if (compressMs >= COMPRESS_WASTE_WARN_MS) {
+                const seconds = (compressMs / 1000).toFixed(0);
+                const archiveDisplay = archiveBytes
+                    ? `${(archiveBytes / (1024 * 1024)).toFixed(1)} MiB`
+                    : "unknown size";
+                core.warning(`setup-soldr: cook-cache-${layer} spent ${seconds}s compressing a ` +
+                    `${archiveDisplay} archive then lost the cache reservation race for ` +
+                    `key=${exactKey}. That wall-clock was burned — see setup-soldr#268 ` +
+                    `for the fix-A (reserve key BEFORE compressing) tracking issue.`);
+            }
+            return {
+                status: "skipped-race",
+                cacheId: id,
+                archiveBytes,
+                fileCount: report.cacheFiles ?? undefined,
+                sourceFiles: report.sourceFiles ?? undefined,
+                deletedCacheFiles: report.deletedCacheFiles ?? undefined,
+                archivePath,
+                compressMs,
+                uploadMs,
+            };
+        }
+        log(`cook-cache-${layer}: saved id=${id} key=${exactKey} archive=${archivePath}`);
+        return {
+            status: "saved",
+            cacheId: id,
+            archiveBytes,
+            fileCount: report.cacheFiles ?? undefined,
+            sourceFiles: report.sourceFiles ?? undefined,
+            deletedCacheFiles: report.deletedCacheFiles ?? undefined,
+            archivePath,
+            compressMs,
+            uploadMs,
+        };
+    }
+    catch (err) {
+        return {
+            status: "failed",
+            error: err instanceof Error ? err.message : String(err),
+            archiveBytes,
+            fileCount: report.cacheFiles ?? undefined,
+            sourceFiles: report.sourceFiles ?? undefined,
+            deletedCacheFiles: report.deletedCacheFiles ?? undefined,
+            archivePath,
+        };
+    }
+}
+/** Tokenize a free-form flags string into a flags array. Whitespace-split. */
+function parseCookFlags(raw) {
+    return raw
+        .trim()
+        .split(/\s+/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+}
+/**
+ * From a flags array, extract only the tokens that materially affect cook
+ * output structure for hashing. Excludes verbosity / colour flags.
+ *
+ * Conservative: keep anything that isn't on a known-cosmetic list. This
+ * over-keys (extra misses on cosmetic-only changes) rather than under-keys
+ * (serving stale cooked artifacts under a key that doesn't reflect them).
+ */
+function canonicalizeCookFlags(flags) {
+    const COSMETIC = new Set([
+        "--verbose", "-v", "-vv", "--quiet", "-q",
+        "--color=auto", "--color=always", "--color=never",
+        "--no-default-features", // affects output; KEEP — moved out below
+    ]);
+    COSMETIC.delete("--no-default-features"); // safety net for the comment above
+    const out = [];
+    for (let i = 0; i < flags.length; i++) {
+        const f = flags[i];
+        if (COSMETIC.has(f))
+            continue;
+        if (f === "--color" || f === "--message-format") {
+            i += 1; // skip the value
+            continue;
+        }
+        out.push(f);
+    }
+    return out;
+}
+
 
 /***/ }),
 
@@ -54467,10 +54484,10 @@ var import_logPolicy = __nccwpck_require__(71);
 var import_pipeline = __nccwpck_require__(235);
 var import_redirectPolicy = __nccwpck_require__(324);
 var import_userAgentPolicy = __nccwpck_require__(365);
-var import_multipartPolicy = __nccwpck_require__(262);
+var import_multipartPolicy = __nccwpck_require__(261);
 var import_decompressResponsePolicy = __nccwpck_require__(229);
 var import_defaultRetryPolicy = __nccwpck_require__(55);
-var import_formDataPolicy = __nccwpck_require__(259);
+var import_formDataPolicy = __nccwpck_require__(258);
 var import_core_util = __nccwpck_require__(13);
 var import_proxyPolicy = __nccwpck_require__(442);
 var import_setClientRequestIdPolicy = __nccwpck_require__(146);
@@ -55951,7 +55968,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.generateAccountSASQueryParameters = generateAccountSASQueryParameters;
 exports.generateAccountSASQueryParametersInternal = generateAccountSASQueryParametersInternal;
 const AccountSASPermissions_js_1 = __nccwpck_require__(58);
-const AccountSASResourceTypes_js_1 = __nccwpck_require__(2);
+const AccountSASResourceTypes_js_1 = __nccwpck_require__(3);
 const AccountSASServices_js_1 = __nccwpck_require__(356);
 const SasIPRange_js_1 = __nccwpck_require__(338);
 const SASQueryParameters_js_1 = __nccwpck_require__(490);
@@ -61173,7 +61190,7 @@ const {
 } = __nccwpck_require__(457)
 const util = __nccwpck_require__(69)
 const { kUrl, kInterceptors } = __nccwpck_require__(188)
-const buildConnector = __nccwpck_require__(257)
+const buildConnector = __nccwpck_require__(256)
 
 const kOptions = Symbol('options')
 const kConnections = Symbol('connections')
@@ -61483,11 +61500,11 @@ function redirectPolicy(options = {}) {
 
 const { kProxy, kClose, kDestroy, kInterceptors } = __nccwpck_require__(188)
 const { URL } = __nccwpck_require__(83)
-const Agent = __nccwpck_require__(5)
+const Agent = __nccwpck_require__(6)
 const Pool = __nccwpck_require__(321)
 const DispatcherBase = __nccwpck_require__(62)
 const { InvalidArgumentError, RequestAbortedError } = __nccwpck_require__(457)
-const buildConnector = __nccwpck_require__(257)
+const buildConnector = __nccwpck_require__(256)
 
 const kAgent = Symbol('proxy agent')
 const kClient = Symbol('proxy client')
@@ -65195,7 +65212,7 @@ module.exports = require("node:util");
 // this version number must be increased to avoid conflicts.
 const globalDispatcher = Symbol.for('undici.globalDispatcher.1')
 const { InvalidArgumentError } = __nccwpck_require__(457)
-const Agent = __nccwpck_require__(5)
+const Agent = __nccwpck_require__(6)
 
 if (getGlobalDispatcher() === undefined) {
   setGlobalDispatcher(new Agent())
@@ -65232,7 +65249,7 @@ module.exports = {
 
 
 const { kClients } = __nccwpck_require__(188)
-const Agent = __nccwpck_require__(5)
+const Agent = __nccwpck_require__(6)
 const {
   kAgent,
   kMockAgentSet,
@@ -67546,7 +67563,7 @@ const BatchUtils_js_1 = __nccwpck_require__(248);
 const BlobBatch_js_1 = __nccwpck_require__(318);
 const tracing_js_1 = __nccwpck_require__(31);
 const storage_common_1 = __nccwpck_require__(267);
-const StorageContextClient_js_1 = __nccwpck_require__(258);
+const StorageContextClient_js_1 = __nccwpck_require__(257);
 const Pipeline_js_1 = __nccwpck_require__(175);
 const utils_common_js_1 = __nccwpck_require__(150);
 /**
@@ -70728,7 +70745,7 @@ const path = __importStar(__nccwpck_require__(238));
 const patternHelper = __importStar(__nccwpck_require__(44));
 const internal_match_kind_1 = __nccwpck_require__(493);
 const internal_pattern_1 = __nccwpck_require__(470);
-const internal_search_state_1 = __nccwpck_require__(4);
+const internal_search_state_1 = __nccwpck_require__(5);
 const IS_WINDOWS = process.platform === 'win32';
 class DefaultGlobber {
     constructor(options) {
@@ -72344,7 +72361,7 @@ __export(restError_exports, {
 });
 module.exports = __toCommonJS(restError_exports);
 var import_error = __nccwpck_require__(149);
-var import_inspect = __nccwpck_require__(1);
+var import_inspect = __nccwpck_require__(2);
 var import_sanitizer = __nccwpck_require__(118);
 const errorSanitizer = new import_sanitizer.Sanitizer();
 class RestError extends Error {
@@ -72562,7 +72579,7 @@ tslib_1.__exportStar(__nccwpck_require__(177), exports);
 tslib_1.__exportStar(__nccwpck_require__(64), exports);
 tslib_1.__exportStar(__nccwpck_require__(197), exports);
 tslib_1.__exportStar(__nccwpck_require__(58), exports);
-tslib_1.__exportStar(__nccwpck_require__(2), exports);
+tslib_1.__exportStar(__nccwpck_require__(3), exports);
 tslib_1.__exportStar(__nccwpck_require__(356), exports);
 var AccountSASSignatureValues_js_1 = __nccwpck_require__(277);
 Object.defineProperty(exports, "generateAccountSASQueryParameters", ({ enumerable: true, get: function () { return AccountSASSignatureValues_js_1.generateAccountSASQueryParameters; } }));
@@ -72920,7 +72937,7 @@ var import_httpHeaders = __nccwpck_require__(454);
 var import_pipelineRequest = __nccwpck_require__(112);
 var import_clientHelpers = __nccwpck_require__(460);
 var import_typeGuards = __nccwpck_require__(465);
-var import_multipart = __nccwpck_require__(260);
+var import_multipart = __nccwpck_require__(259);
 async function sendRequest(method, url, pipeline, options = {}, customHttpClient) {
   const httpClient = customHttpClient ?? (0, import_clientHelpers.getCachedDefaultHttpsClient)();
   const request = buildPipelineRequest(method, url, options);
@@ -75505,7 +75522,7 @@ exports.lowerCamelCase = lowerCamelCase;
 // Licensed under the MIT License.
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StorageClient = void 0;
-const StorageContextClient_js_1 = __nccwpck_require__(258);
+const StorageContextClient_js_1 = __nccwpck_require__(257);
 const Pipeline_js_1 = __nccwpck_require__(175);
 const utils_common_js_1 = __nccwpck_require__(150);
 /**
@@ -82842,7 +82859,7 @@ var azureKeyCredential_js_1 = __nccwpck_require__(285);
 Object.defineProperty(exports, "AzureKeyCredential", ({ enumerable: true, get: function () { return azureKeyCredential_js_1.AzureKeyCredential; } }));
 var keyCredential_js_1 = __nccwpck_require__(39);
 Object.defineProperty(exports, "isKeyCredential", ({ enumerable: true, get: function () { return keyCredential_js_1.isKeyCredential; } }));
-var azureNamedKeyCredential_js_1 = __nccwpck_require__(6);
+var azureNamedKeyCredential_js_1 = __nccwpck_require__(7);
 Object.defineProperty(exports, "AzureNamedKeyCredential", ({ enumerable: true, get: function () { return azureNamedKeyCredential_js_1.AzureNamedKeyCredential; } }));
 Object.defineProperty(exports, "isNamedKeyCredential", ({ enumerable: true, get: function () { return azureNamedKeyCredential_js_1.isNamedKeyCredential; } }));
 var azureSASCredential_js_1 = __nccwpck_require__(33);
@@ -86120,7 +86137,7 @@ function makeBlobBeginCopyFromURLPollOperation(state) {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(255);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(1);
 /******/ 	module.exports = __webpack_exports__;
 /******/
 /******/ })()
