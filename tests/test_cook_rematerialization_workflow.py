@@ -30,6 +30,20 @@ def test_rematerialization_workflow_has_isolated_baseline_seed_delta_and_warm_jo
         assert checkout["with"]["submodules"] == "recursive"
 
 
+def test_staged_fixture_replaces_the_yanked_chacha20_lock_entry() -> None:
+    repair = REPO_ROOT / "scripts/repair-yanked-chacha20-lock.py"
+    assert repair.is_file()
+    script_source = repair.read_text(encoding="utf-8")
+    assert "chacha20 0.10.1" in script_source
+    assert 'version = "0.10.2"' in script_source
+    assert "expected at most one chacha20 0.10.1 or 0.10.2 lock entry" in script_source
+
+    workflow = _load()
+    for job in workflow["jobs"].values():
+        stage = _step(job, "Stage isolated fixture")
+        assert "scripts/repair-yanked-chacha20-lock.py" in stage["run"]
+
+
 def test_seed_and_warm_use_pinned_source_and_only_dependency_closure_caches() -> None:
     workflow = _load()
     for job_name in ("seed", "delta-seed", "warm"):

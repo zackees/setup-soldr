@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Ingest soldr `0.9.21`: retain the rolling `latest` default and extend the
+  hash-verified PyPI wheel fallback contract through `0.9.21`. The native
+  release archives, all eight published wheels, and the pinned cargo-chef
+  `0.1.73` support assets were verified before enabling the fallback. Cook
+  fixtures repair their isolated yanked `chacha20 0.10.1` lock entry to
+  `0.10.2` before cache seeding, so it cannot poison their dependency closure.
+  Inputs already at `0.10.2` or with no chacha20 entry are left untouched.
+  The Soldr cook self-test deliberately dirties one first-party source file
+  before its warm build, keeping its closure proof non-vacuous. Downstream
+  closure proofs likewise refresh first-party Rust source mtimes before their
+  warm build, requiring first-party work while leaving the dependency graph
+  unchanged.
+
 - Restore fresh Dylint setup after the published nightly-version map changed
   behind its stable URL. The `soldr-toolchain` catalogue now pins an immutable,
   content-addressed map URL whose bytes match its SHA-256, and a Linux + Intel
