@@ -15,6 +15,11 @@
   warm build, requiring first-party work while leaving the dependency graph
   unchanged.
 
+- Restore fresh Dylint setup after the published nightly-version map changed
+  behind its stable URL. The `soldr-toolchain` catalogue now pins an immutable,
+  content-addressed map URL whose bytes match its SHA-256, and a Linux + Intel
+  macOS action fixture verifies the fail-closed resolver against production.
+
 - Fix `setup-soldr failed: Error: downloaded archive did not contain soldr`
   when installing soldr `0.9.12+`. Since soldr `0.9.12`, releases publish a
   debug-symbol sidecar asset (`soldr-vX.Y.Z-<triple>-symbols.tar.zst`,
