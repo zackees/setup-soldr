@@ -44,6 +44,7 @@ jobs:
           fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
           rm -rf "$fixture"
           cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+          python3 "$GITHUB_WORKSPACE/scripts/repair-yanked-chacha20-lock.py" "$fixture/Cargo.lock"
 
       - name: Build pinned development Soldr without caches
         uses: ./
@@ -89,6 +90,7 @@ jobs:
           fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
           rm -rf "$fixture"
           cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+          python3 "$GITHUB_WORKSPACE/scripts/repair-yanked-chacha20-lock.py" "$fixture/Cargo.lock"
 
       - id: setup
         name: Seed dependency-rematerialization closure
@@ -139,6 +141,7 @@ jobs:
           fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
           rm -rf "$fixture"
           cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+          python3 "$GITHUB_WORKSPACE/scripts/repair-yanked-chacha20-lock.py" "$fixture/Cargo.lock"
 
       - id: setup
         name: Seed compatible cook delta
@@ -189,6 +192,7 @@ jobs:
           fixture="$RUNNER_TEMP/cook-rematerialization-fixture"
           rm -rf "$fixture"
           cp -a "$GITHUB_WORKSPACE/$FIXTURE_SOURCE" "$fixture"
+          python3 "$GITHUB_WORKSPACE/scripts/repair-yanked-chacha20-lock.py" "$fixture/Cargo.lock"
 
       - id: setup
         name: Restore dependency-rematerialization closure

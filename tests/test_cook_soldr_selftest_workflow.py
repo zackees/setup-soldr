@@ -35,6 +35,18 @@ def test_cold_cook_is_serialized_to_fit_hosted_runner_memory() -> None:
     assert workflow["env"]["SOLDR_JOBS"] == "1"
 
 
+def test_selftest_repairs_the_yanked_soldr_lock_before_setup() -> None:
+    workflow = _workflow()
+    for job_name in ("seed", "warm"):
+        repair = next(
+            step
+            for step in workflow["jobs"][job_name]["steps"]
+            if step.get("name") == "Repair yanked Soldr lock entry"
+        )
+        assert "scripts/repair-yanked-chacha20-lock.py" in repair["run"]
+        assert "_vender/soldr/Cargo.lock" in repair["run"]
+
+
 def test_the_selftest_pins_no_cook_inputs() -> None:
     workflow = _workflow()
     for job_name, job in workflow["jobs"].items():
@@ -69,4 +81,5 @@ def test_the_warm_job_refuses_to_assert_without_a_restore() -> None:
     build = next(s for s in warm["steps"] if s.get("id") == "build")
     assert "assert_no_external_rebuild.py" in build["run"]
     assert "cargo metadata --locked --format-version=1" in build["run"]
+    assert "touch crates/soldr-cli/src/main.rs" in build["run"]
     assert '"$RUNNER_TEMP/warm-metadata.json"' in build["run"]

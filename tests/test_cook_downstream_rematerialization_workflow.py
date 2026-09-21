@@ -38,6 +38,15 @@ def test_reusable_workflow_proves_a_clean_job_loaded_the_cook_base() -> None:
 
     seed_setup = next(step for step in jobs["seed"]["steps"] if step.get("id") == "setup")
     warm_setup = next(step for step in jobs["warm"]["steps"] if step.get("id") == "setup")
+    for job in (jobs["seed"], jobs["warm"]):
+        repair = next(
+            step
+            for step in job["steps"]
+            if step.get("name") == "Repair yanked consumer lock entry"
+        )
+        assert "scripts/repair-yanked-chacha20-lock.py" in repair["run"]
+        assert "consumer/Cargo.lock" in repair["run"]
+
     for setup in (seed_setup, warm_setup):
         inputs = setup["with"]
         assert "source-path" not in inputs
@@ -67,6 +76,7 @@ def test_reusable_workflow_proves_a_clean_job_loaded_the_cook_base() -> None:
     assert "soldr cargo build" in build["run"]
     assert "ZCCACHE_DISABLE" not in build["run"]
     assert "cargo metadata --locked --format-version=1" in build["run"]
+    assert "find . -path ./target -prune" in build["run"]
     assert '"$RUNNER_TEMP/${{ inputs.cache_key }}-metadata.json"' in build["run"]
     assert "assert_no_external_rebuild.py" in build["run"]
 

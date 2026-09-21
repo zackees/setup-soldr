@@ -48,6 +48,10 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
+      - name: Repair yanked consumer lock entry
+        shell: bash
+        run: python3 "$GITHUB_WORKSPACE/scripts/repair-yanked-chacha20-lock.py" "$GITHUB_WORKSPACE/consumer/Cargo.lock"
+
       - name: Require an initially empty consumer target
         shell: bash
         run: test ! -e "$GITHUB_WORKSPACE/consumer/target"
@@ -103,6 +107,10 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
+      - name: Repair yanked consumer lock entry
+        shell: bash
+        run: python3 "$GITHUB_WORKSPACE/scripts/repair-yanked-chacha20-lock.py" "$GITHUB_WORKSPACE/consumer/Cargo.lock"
+
       - name: Require an initially empty consumer target
         shell: bash
         run: test ! -e "$GITHUB_WORKSPACE/consumer/target"
@@ -157,6 +165,10 @@ jobs:
           MIN_EXTERNAL: ${{ inputs.min_external }}
         run: |
           set -euo pipefail
+          # A warm closure can hydrate every workspace artifact. Refresh only
+          # first-party Rust mtimes so this proof still observes a workspace
+          # build without changing the dependency graph it keeps fresh.
+          find . -path ./target -prune -o -type f -name '*.rs' -exec touch {} +
           read -r -a build_args <<< "$BUILD_ARGS"
           cargo metadata --locked --format-version=1 \
             > "$RUNNER_TEMP/${{ inputs.cache_key }}-metadata.json"

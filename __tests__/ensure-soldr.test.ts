@@ -255,6 +255,9 @@ test("PyPI fallback is restricted to the official soldr repository", () => {
   assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.9.4"), true);
   assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.9.5"), true);
   assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.9.6"), true);
+  for (let patch = 7; patch <= 21; patch += 1) {
+    assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", `0.9.${patch}`), true);
+  }
   assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.0"), false);
   assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.1"), false);
   assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.2"), false);
@@ -262,17 +265,19 @@ test("PyPI fallback is restricted to the official soldr repository", () => {
   assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.4"), false);
   assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.5"), false);
   assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", "0.9.6"), false);
+  for (let patch = 7; patch <= 21; patch += 1) {
+    assert.equal(_internal.canUseOfficialPypiFallback("fork/soldr", `0.9.${patch}`), false);
+  }
   assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.8.44"), false);
+  assert.equal(_internal.canUseOfficialPypiFallback("zackees/soldr", "0.9.22"), false);
 });
 
-test("soldr 0.9.0 through 0.9.6 wheel installs use their pinned cargo-chef support release", () => {
+test("soldr 0.9.0 through 0.9.21 wheel installs use their pinned cargo-chef support release", () => {
   assert.equal(_internal.bundledCargoChefVersionForSoldr("v0.9.0"), "0.1.73");
-  assert.equal(_internal.bundledCargoChefVersionForSoldr("v0.9.1"), "0.1.73");
-  assert.equal(_internal.bundledCargoChefVersionForSoldr("v0.9.2"), "0.1.73");
-  assert.equal(_internal.bundledCargoChefVersionForSoldr("0.9.3"), "0.1.73");
-  assert.equal(_internal.bundledCargoChefVersionForSoldr("0.9.4"), "0.1.73");
-  assert.equal(_internal.bundledCargoChefVersionForSoldr("0.9.5"), "0.1.73");
-  assert.equal(_internal.bundledCargoChefVersionForSoldr("0.9.6"), "0.1.73");
+  for (let patch = 1; patch <= 21; patch += 1) {
+    assert.equal(_internal.bundledCargoChefVersionForSoldr(`0.9.${patch}`), "0.1.73");
+  }
+  assert.equal(_internal.bundledCargoChefVersionForSoldr("v0.9.21"), "0.1.73");
 });
 
 test("selectToolchainSupportAsset matches the complete host platform", () => {

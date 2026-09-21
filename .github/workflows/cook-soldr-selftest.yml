@@ -68,6 +68,10 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Repair yanked Soldr lock entry
+        shell: bash
+        run: python3 "$GITHUB_WORKSPACE/scripts/repair-yanked-chacha20-lock.py" "$GITHUB_WORKSPACE/_vender/soldr/Cargo.lock"
+
       - id: setup
         name: Install soldr with shipped defaults
         uses: ./
@@ -123,6 +127,10 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Repair yanked Soldr lock entry
+        shell: bash
+        run: python3 "$GITHUB_WORKSPACE/scripts/repair-yanked-chacha20-lock.py" "$GITHUB_WORKSPACE/_vender/soldr/Cargo.lock"
+
       - id: setup
         name: Install soldr with shipped defaults
         uses: ./
@@ -152,6 +160,9 @@ jobs:
         working-directory: _vender/soldr
         run: |
           set -euo pipefail
+          # Force one first-party unit dirty. The closure itself must remain
+          # fresh; otherwise a zero-work Cargo invocation would prove nothing.
+          touch crates/soldr-cli/src/main.rs
           cargo metadata --locked --format-version=1 \
             > "$RUNNER_TEMP/warm-metadata.json"
           soldr cargo build -p soldr-cli --locked \
