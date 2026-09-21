@@ -1,0 +1,36 @@
+name: Dylint nightly-map smoke
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/dylint-map-smoke.yml
+      - src/lib/dylint-nightly.ts
+      - __tests__/dylint-nightly.test.ts
+      - dist/main.js
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    name: setup (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-15-intel
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve and install Dylint toolchain
+        uses: ./
+        with:
+          toolchain: 1.98.1
+          cache: false
+          dylint: true
+          prebuild-deps: none
+
