@@ -43,7 +43,7 @@ export const FOUNDATION_PREFIXES: readonly string[] = [
   // protection lets our controlled eviction skip these, while
   // GitHub's own LRU still evicts stale entries that no run
   // accesses for ~7 days.
-  "cook-base-v2-", // ~300 MB per platform, skips ~200 s cold cook
+  "cook-base-v3-", // ~300 MB per platform, skips ~200 s cold cook
   "setup-soldr-prepare-v1-",
   "setup-soldr-prepare-v2-",
   "setup-soldr-prepare-v3-", // cross compiler/SDK archives; avoids repeated LFS downloads

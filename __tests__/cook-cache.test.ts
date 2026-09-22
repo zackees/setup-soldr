@@ -21,6 +21,7 @@ import {
   canonicalizeCookFlags,
   layeredCookDeltaReady,
   loadLayeredCookCache,
+  measureDirInventory,
   parseCookFlags,
   restoreCookCache,
   restoreLayeredCookCacheArchives,
@@ -113,7 +114,7 @@ test("buildCookBaseCacheKey stays Cargo.lock-oriented and omits SHA", () => {
   };
   assert.equal(
     buildCookBaseCacheKey(parts),
-    "cook-base-v2-linux-x64-glibc-rustc1.84.1-fabc12345-ldeadbeef-soldr0.7.38",
+    "cook-base-v3-linux-x64-glibc-rustc1.84.1-fabc12345-ldeadbeef-soldr0.7.38",
   );
   assert.equal(buildCookBaseCacheKey(parts), buildCookBaseCacheKey(parts));
 });
@@ -153,7 +154,7 @@ test("buildCookDeltaCacheKey includes build shape and commit SHA", () => {
   const key = buildCookDeltaCacheKey(parts);
   assert.match(
     key,
-    /^cook-delta-v2-linux-x64-glibc-rustc1\.84\.1-fabc12345-ldeadbeef-soldr0\.7\.38-s[0-9a-f]{12}-g0123456789abcdef$/,
+    /^cook-delta-v3-linux-x64-glibc-rustc1\.84\.1-fabc12345-ldeadbeef-soldr0\.7\.38-s[0-9a-f]{12}-g0123456789abcdef$/,
   );
   assert.notEqual(
     key,
@@ -175,7 +176,7 @@ test("buildCookDeltaCacheRestorePrefix keeps same target shape and drops SHA", (
   const prefix = buildCookDeltaCacheRestorePrefix(parts);
   assert.match(
     prefix,
-    /^cook-delta-v2-linux-x64-glibc-rustc1\.84\.1-fabc12345-ldeadbeef-soldr0\.7\.38-s[0-9a-f]{12}-$/,
+    /^cook-delta-v3-linux-x64-glibc-rustc1\.84\.1-fabc12345-ldeadbeef-soldr0\.7\.38-s[0-9a-f]{12}-$/,
   );
   assert.ok(
     buildCookDeltaCacheKey({ ...parts, githubSha: "0123456789abcdef9999" }).startsWith(prefix),
@@ -191,13 +192,13 @@ test("layeredCookDeltaReady accepts loaded restore-key delta matches", () => {
       {
         base: {
           hit: true,
-          matchedKey: "cook-base-v2-linux-x64",
+          matchedKey: "cook-base-v3-linux-x64",
           archivePath: "base.tar.zst",
           archiveBytes: 1,
         },
         delta: {
           hit: false,
-          matchedKey: "cook-delta-v2-linux-x64-sabc-gparent",
+          matchedKey: "cook-delta-v3-linux-x64-sabc-gparent",
           archivePath: "delta.tar.zst",
           archiveBytes: 1,
         },
@@ -580,5 +581,113 @@ test("decideCookGate keeps cargo-chef as a compatibility alias", () => {
     assert.equal(g.enabled, true);
   } finally {
     fs.rmSync(lock, { recursive: true, force: true });
+  }
+});
+
+// ---- #513: cook-time inventory + upload ceiling ----
+
+test("measureDirInventory counts nested files and bytes, tolerates a missing root", async () => {
+  const root = mkTmp("cook-inventory-");
+  try {
+    assert.deepEqual(await measureDirInventory(path.join(root, "absent")), { fileCount: 0, bytes: 0 });
+    fs.mkdirSync(path.join(root, "target", "deps"), { recursive: true });
+    fs.mkdirSync(path.join(root, "target", "nested", "deeper"), { recursive: true });
+    fs.writeFileSync(path.join(root, "target", "deps", "lib.rlib"), "12345");
+    fs.writeFileSync(path.join(root, "target", "marker.json"), "abc");
+    fs.writeFileSync(path.join(root, "target", "nested", "deeper", "fingerprint"), "xy");
+    const inventory = await measureDirInventory(path.join(root, "target"));
+    assert.equal(inventory.fileCount, 3);
+    assert.equal(inventory.bytes, 5 + 3 + 2);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("#513 inventory ceiling refuses an oversized layered save before upload preparation", async () => {
+  const root = mkTmp("cook-inventory-ceiling-");
+  try {
+    const targetDir = path.join(root, "target");
+    const archivePath = path.join(root, "cook-base.tar.zst");
+    fs.mkdirSync(targetDir);
+    fs.writeFileSync(path.join(targetDir, "artifact"), "materialized");
+    let uploadPreparations = 0;
+    const result = await saveLayeredCookCache({
+      soldrBinary: "soldr",
+      projectRoot: root,
+      targetDir,
+      exactKey: "cook-base-v3-test-key",
+      archivePath,
+      layer: "base",
+      zstdLevel: "9",
+      maxFileCount: 10,
+      log: () => {},
+      runSoldrJson: async () => {
+        fs.writeFileSync(archivePath, "serialized archive");
+        // Post-cook mutation: 11 files where the inventory saw 10.
+        return { code: 0, stdout: "", stderr: "", payload: { archive_bytes: 17, cache_files: 11 } };
+      },
+      saveReservedCache: async (options: TwoPhaseCacheOptions) => {
+        try {
+          const archive = await options.produce();
+          uploadPreparations += 1;
+          return { status: "saved", cacheId: 1, archive };
+        } catch (error) {
+          return { status: "failed", error: error instanceof Error ? error.message : String(error) };
+        }
+      },
+    });
+    assert.equal(result.status, "failed");
+    assert.equal(uploadPreparations, 0, "the poisoned archive must not reach upload preparation");
+    assert.match(result.error ?? "", /exceeds the cook-time inventory ceiling of 10/);
+    assert.match(result.error ?? "", /#513/);
+    assert.match(result.error ?? "", /cook-base-v3-test-key/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("#513 inventory ceiling allows a save within tolerance and omits the guard when unset", async () => {
+  const root = mkTmp("cook-inventory-ok-");
+  try {
+    const targetDir = path.join(root, "target");
+    fs.mkdirSync(targetDir);
+    fs.writeFileSync(path.join(targetDir, "artifact"), "materialized");
+    const attempt = async (maxFileCount?: number) => {
+      const archivePath = path.join(root, `cook-${maxFileCount ?? "unset"}.tar.zst`);
+      let uploadPreparations = 0;
+      const result = await saveLayeredCookCache({
+        soldrBinary: "soldr",
+        projectRoot: root,
+        targetDir,
+        exactKey: "cook-base-v3-test-key",
+        archivePath,
+        layer: "base",
+        zstdLevel: "9",
+        maxFileCount,
+        log: () => {},
+        runSoldrJson: async () => {
+          fs.writeFileSync(archivePath, "serialized archive");
+          return { code: 0, stdout: "", stderr: "", payload: { archive_bytes: 17, cache_files: 9 } };
+        },
+        saveReservedCache: async (options: TwoPhaseCacheOptions) => {
+          try {
+            const archive = await options.produce();
+            uploadPreparations += 1;
+            return { status: "saved", cacheId: 1, archive };
+          } catch (error) {
+            return { status: "failed", error: error instanceof Error ? error.message : String(error) };
+          }
+        },
+      });
+      return { result, uploadPreparations };
+    };
+    const within = await attempt(10);
+    assert.equal(within.result.status, "saved");
+    assert.equal(within.uploadPreparations, 1);
+    const unguarded = await attempt(undefined);
+    assert.equal(unguarded.result.status, "saved");
+    assert.equal(unguarded.uploadPreparations, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });

@@ -128,6 +128,9 @@ EXPECTED_OUTPUTS = {
     "cook-cache-delta-hit",
     "cook-cache-status",
     "cook-cache-load-report-json",
+    # #513: cook-time inventory vs uploaded save report, written by the
+    # setup-phase capture so seed jobs can assert the ratio mid-job.
+    "cook-cache-save-report-json",
     "cargo-registry-cache-hit",
     "build-cache-hit",
     "build-cache-key",
