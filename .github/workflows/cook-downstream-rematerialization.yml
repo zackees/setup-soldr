@@ -15,6 +15,12 @@ on:
 
 permissions:
   contents: read
+  # Ceiling for the reusable consumer workflow's cleanup job (#513 P0):
+  # a called workflow can never grant more than its caller, so without
+  # actions: write here the run-scoped cache deleter can list but not
+  # delete. seed/warm keep their own narrower top-level grant inside the
+  # called workflow.
+  actions: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
