@@ -52277,19 +52277,36 @@ async function saveLayeredCookCache(opts) {
     if (layer === "delta")
         args.push("--delta-from-manifest", opts.baseManifestPath);
     const reserveStart = Date.now();
-    const result = await (0, two_phase_actions_cache_js_1.saveReservedCache)({
+    const saveReserved = opts.saveReservedCache ?? two_phase_actions_cache_js_1.saveReservedCache;
+    const run = opts.runSoldrJson ?? runSoldrJson;
+    const result = await saveReserved({
         paths: [archivePath],
         key: exactKey,
         log,
         produce: async () => {
             const compressStart = Date.now();
-            const run = await runSoldrJson(soldrBinary, args, projectRoot, log);
-            if (run.code !== 0)
-                throw new Error(`soldr save ${layer} exited ${run.code}`);
-            const report = saveReport(run.payload);
+            const soldrSave = await run(soldrBinary, args, projectRoot, log);
+            if (soldrSave.code !== 0)
+                throw new Error(`soldr save ${layer} exited ${soldrSave.code}`);
+            const report = saveReport(soldrSave.payload);
+            // A successful Soldr exit and a non-empty Actions-cache wrapper do not
+            // prove that the inner archive is usable. Validate the serialized file
+            // itself before upload so an immutable exact key cannot be poisoned.
+            let archiveBytes;
+            try {
+                archiveBytes = (await fsp.stat(archivePath)).size;
+            }
+            catch {
+                throw new Error(`cook-cache-${layer}: refusing to upload archive that does not exist for ` +
+                    `key=${exactKey} path=${archivePath}; immutable cache entries cannot be repaired in place`);
+            }
+            if (archiveBytes === 0) {
+                throw new Error(`cook-cache-${layer}: refusing to upload archive with zero bytes for ` +
+                    `key=${exactKey} path=${archivePath}; immutable cache entries cannot be repaired in place`);
+            }
             return {
                 archivePath,
-                archiveBytes: report.archiveBytes ?? await archiveSize(archivePath),
+                archiveBytes,
                 fileCount: report.cacheFiles ?? undefined,
                 sourceFiles: report.sourceFiles ?? undefined,
                 deletedCacheFiles: report.deletedCacheFiles ?? undefined,

@@ -24,8 +24,10 @@ import {
   parseCookFlags,
   restoreCookCache,
   restoreLayeredCookCacheArchives,
+  saveLayeredCookCache,
   supportsLayeredCookCache,
 } from "../src/lib/cook-cache.js";
+import type { TwoPhaseCacheOptions } from "../src/lib/two-phase-actions-cache.js";
 
 function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -341,6 +343,109 @@ test("#475 layered cook rejects a delta load that reports zero restored files", 
   assert.equal(loaded.baseLoaded, true);
   assert.equal(loaded.deltaLoaded, false);
   assert.ok(warnings.some((line) => line.includes("cook-cache-delta") && line.includes("=0")));
+});
+
+async function exerciseLayeredSave(output: "missing" | "empty"): Promise<{
+  result: Awaited<ReturnType<typeof saveLayeredCookCache>>;
+  uploadPreparations: number;
+}> {
+  const root = mkTmp(`cook-save-${output}-`);
+  const targetDir = path.join(root, "target");
+  const archivePath = path.join(root, "cook-base.tar.zst");
+  fs.mkdirSync(targetDir);
+  fs.writeFileSync(path.join(targetDir, "artifact"), "materialized");
+  let uploadPreparations = 0;
+  try {
+    const result = await saveLayeredCookCache({
+      soldrBinary: "soldr",
+      projectRoot: root,
+      targetDir,
+      exactKey: "cook-base-v2-test-key",
+      archivePath,
+      layer: "base",
+      zstdLevel: "9",
+      log: () => {},
+      runSoldrJson: async () => {
+        if (output === "empty") fs.writeFileSync(archivePath, "");
+        return {
+          code: 0,
+          stdout: "",
+          stderr: "",
+          payload: { archive_bytes: 0, cache_files: 0 },
+        };
+      },
+      saveReservedCache: async (options: TwoPhaseCacheOptions) => {
+        try {
+          const archive = await options.produce();
+          uploadPreparations += 1;
+          return { status: "saved", cacheId: 1, archive };
+        } catch (error) {
+          return { status: "failed", error: error instanceof Error ? error.message : String(error) };
+        }
+      },
+    });
+    return { result, uploadPreparations };
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
+test("#511 layered cook save refuses a missing archive before upload preparation", async () => {
+  const { result, uploadPreparations } = await exerciseLayeredSave("missing");
+  assert.equal(result.status, "failed");
+  assert.equal(uploadPreparations, 0);
+  assert.match(result.error ?? "", /base/);
+  assert.match(result.error ?? "", /cook-base-v2-test-key/);
+  assert.match(result.error ?? "", /does not exist/);
+});
+
+test("#511 layered cook save refuses a zero-byte archive before upload preparation", async () => {
+  const { result, uploadPreparations } = await exerciseLayeredSave("empty");
+  assert.equal(result.status, "failed");
+  assert.equal(uploadPreparations, 0);
+  assert.match(result.error ?? "", /base/);
+  assert.match(result.error ?? "", /cook-base-v2-test-key/);
+  assert.match(result.error ?? "", /zero bytes/);
+});
+
+test("#511 layered cook save preserves a non-empty serialized zero-file delta", async () => {
+  const root = mkTmp("cook-save-valid-delta-manifest-");
+  try {
+    // Zero logical files are acceptable when the serialized archive itself
+    // has content: this is the valid base-only delta representation.
+    const targetDir = path.join(root, "target");
+    const archivePath = path.join(root, "cook-delta.tar.zst");
+    const baseManifestPath = path.join(root, "base.pb");
+    fs.mkdirSync(targetDir);
+    fs.writeFileSync(path.join(targetDir, "artifact"), "materialized");
+    fs.writeFileSync(baseManifestPath, "manifest");
+    let uploadPreparations = 0;
+    const result = await saveLayeredCookCache({
+      soldrBinary: "soldr",
+      projectRoot: root,
+      targetDir,
+      exactKey: "cook-delta-v2-test-key",
+      archivePath,
+      layer: "delta",
+      zstdLevel: "9",
+      baseManifestPath,
+      log: () => {},
+      runSoldrJson: async () => {
+        fs.writeFileSync(archivePath, "valid serialized delta");
+        return { code: 0, stdout: "", stderr: "", payload: { archive_bytes: 22, cache_files: 0 } };
+      },
+      saveReservedCache: async (options: TwoPhaseCacheOptions) => {
+        const archive = await options.produce();
+        uploadPreparations += 1;
+        return { status: "saved", cacheId: 1, archive };
+      },
+    });
+    assert.equal(result.status, "saved");
+    assert.equal(result.fileCount, 0);
+    assert.equal(uploadPreparations, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("supportsLayeredCookCache gates soldr versions", () => {
