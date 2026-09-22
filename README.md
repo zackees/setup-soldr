@@ -585,10 +585,10 @@ When target setup must happen after the main setup-soldr step, use
 accepts the same `soldr cook` flags through its `flags` input.
 
 Base key shape:
-`cook-base-v2-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.
+`cook-base-v3-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.
 
 Delta key shape:
-`cook-delta-v2-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>-s<shape_hash>-g<sha>`.
+`cook-delta-v3-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>-s<shape_hash>-g<sha>`.
 
 Set `prebuild-deps-delta-cache: false` to use the legacy single archive:
 `cook-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.
