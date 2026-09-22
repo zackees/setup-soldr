@@ -17,17 +17,34 @@ def _step(job: dict, name: str) -> dict:
     return next(step for step in job["steps"] if step.get("name") == name)
 
 
+# The pipeline under test. `cleanup` (#513 P0) is a finalizer, not part of
+# the seed/warm proof, and is asserted separately below.
+PIPELINE_JOBS = ("baseline", "seed", "delta-seed", "warm")
+
+
 def test_rematerialization_workflow_has_isolated_baseline_seed_delta_and_warm_jobs() -> None:
     workflow = _load()
     jobs = workflow["jobs"]
-    assert set(jobs) == {"baseline", "seed", "delta-seed", "warm"}
+    assert set(jobs) == {*PIPELINE_JOBS, "cleanup"}
     assert jobs["delta-seed"]["needs"] == "seed"
     assert jobs["warm"]["needs"] == ["baseline", "delta-seed"]
     assert "github.run_attempt" in workflow["env"]["CACHE_GENERATION"]
-    for job in jobs.values():
-        checkout = job["steps"][0]
+    for job_name in PIPELINE_JOBS:
+        checkout = jobs[job_name]["steps"][0]
         assert checkout["uses"] == "actions/checkout@v4"
         assert checkout["with"]["submodules"] == "recursive"
+
+
+def test_cleanup_is_an_always_finalizer_with_cache_delete_access() -> None:
+    """#513 P0: run-scoped cache keys must be deleted on success, failure,
+    and cancellation, and the job needs actions: write to do it."""
+    workflow = _load()
+    cleanup = workflow["jobs"]["cleanup"]
+    assert cleanup["if"] == "${{ always() }}"
+    assert cleanup["needs"] == list(PIPELINE_JOBS)
+    assert cleanup["permissions"]["actions"] == "write"
+    deleter = _step(cleanup, "Delete this run's namespaced cache keys")
+    assert "delete-run-scoped-caches.mjs" in deleter["run"]
 
 
 def test_staged_fixture_replaces_the_yanked_chacha20_lock_entry() -> None:
@@ -39,8 +56,8 @@ def test_staged_fixture_replaces_the_yanked_chacha20_lock_entry() -> None:
     assert "expected at most one chacha20 0.10.1 or 0.10.2 lock entry" in script_source
 
     workflow = _load()
-    for job in workflow["jobs"].values():
-        stage = _step(job, "Stage isolated fixture")
+    for job_name in PIPELINE_JOBS:
+        stage = _step(workflow["jobs"][job_name], "Stage isolated fixture")
         assert "scripts/repair-yanked-chacha20-lock.py" in stage["run"]
 
 

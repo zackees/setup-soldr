@@ -18,6 +18,9 @@ def test_running_process_gates_other_consumers_at_immutable_revisions() -> None:
     workflow = _load(DRIVER)
     jobs = workflow["jobs"]
     assert list(jobs) == ["running-process", "zccache", "soldr", "fbuild"]
+    # #513 P0: a called workflow can never grant more than its caller, so
+    # this ceiling is what lets the reusable cleanup job delete caches.
+    assert workflow["permissions"]["actions"] == "write"
     assert "needs" not in jobs["running-process"]
     assert jobs["zccache"]["needs"] == "running-process"
     assert jobs["soldr"]["needs"] == "running-process"
@@ -33,8 +36,16 @@ def test_running_process_gates_other_consumers_at_immutable_revisions() -> None:
 def test_reusable_workflow_proves_a_clean_job_loaded_the_cook_base() -> None:
     workflow = _load(REUSABLE)
     jobs = workflow["jobs"]
-    assert list(jobs) == ["seed", "warm"]
+    assert list(jobs) == ["seed", "warm", "cleanup"]
     assert jobs["warm"]["needs"] == "seed"
+
+    # #513 P0: the finalizer must run after both jobs on any outcome and
+    # carries its own actions: write (the caller's ceiling is asserted in
+    # the driver test below).
+    cleanup = jobs["cleanup"]
+    assert cleanup["if"] == "${{ always() }}"
+    assert cleanup["needs"] == ["seed", "warm"]
+    assert cleanup["permissions"]["actions"] == "write"
 
     seed_setup = next(step for step in jobs["seed"]["steps"] if step.get("id") == "setup")
     warm_setup = next(step for step in jobs["warm"]["steps"] if step.get("id") == "setup")
