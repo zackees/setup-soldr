@@ -199,3 +199,31 @@ jobs:
             ${{ runner.temp }}/${{ inputs.cache_key }}-warm-messages.jsonl
             ${{ runner.temp }}/${{ inputs.cache_key }}-warm-stderr.log
             ${{ runner.temp }}/${{ inputs.cache_key }}-metadata.json
+
+  # #513 P0: every cache this instance saves is keyed under CACHE_GENERATION
+  # (cache_key + run_id + run_attempt), so it is unreachable the moment the
+  # run ends. Delete that exact namespace as the final job — on success,
+  # failure, and cancellation — so validation runs stop consuming the
+  # repository's cache quota forever. The namespace includes this
+  # instance's cache_key, so sibling consumer instances sharing one run_id
+  # can never delete each other's in-flight entries, and the deleter
+  # refuses any namespace that does not embed this run's id.
+  cleanup:
+    name: Delete run-scoped cache keys
+    needs: [seed, warm]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Check out setup-soldr
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Delete this run's namespaced cache keys
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node "$GITHUB_WORKSPACE/scripts/delete-run-scoped-caches.mjs"

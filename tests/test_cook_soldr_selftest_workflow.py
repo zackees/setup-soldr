@@ -62,9 +62,18 @@ def test_the_selftest_pins_no_cook_inputs() -> None:
 
 def test_both_jobs_default_to_linux_and_allow_dispatch_elsewhere() -> None:
     workflow = _workflow()
-    for job in workflow["jobs"].values():
+    for job_name in ("seed", "warm"):
+        job = workflow["jobs"][job_name]
         assert "ubuntu-24.04" in str(job["runs-on"])
         assert "inputs.runner" in str(job["runs-on"])
+
+    # The #513 cleanup finalizer only calls the cache API, so it stays on
+    # fixed Linux even when a workflow_dispatch targets windows/macos.
+    cleanup = workflow["jobs"]["cleanup"]
+    assert cleanup["runs-on"] == "ubuntu-24.04"
+    assert cleanup["if"] == "${{ always() }}"
+    assert cleanup["needs"] == ["seed", "warm"]
+    assert cleanup["permissions"]["actions"] == "write"
 
     # `on` is parsed by PyYAML as the boolean True.
     triggers = workflow.get("on", workflow.get(True))
