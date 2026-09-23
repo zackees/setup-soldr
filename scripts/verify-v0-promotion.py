@@ -62,10 +62,30 @@ def verify(target: str, canary_id: str) -> int:
     if (
         canary["id"] != int(canary_id)
         or canary["repository"]["full_name"].lower() != CANARY_REPO.lower()
+        or canary["event"] != "pull_request"
+        or canary["path"].lstrip("/") != ".github/workflows/ci-minimal.yml"
         or canary["status"] != "completed"
         or canary["conclusion"] != "success"
     ):
-        raise ValueError("downstream canary did not complete successfully in FastLED/fbuild")
+        raise ValueError("expected successful FastLED/fbuild ci-minimal pull-request canary")
+
+    required_jobs = {"CI selected coverage", "full / Full coverage"}
+    successful_jobs = set()
+    for page in range(1, 11):
+        result = api(
+            f"{CANARY_REPO}/actions/runs/{canary_id}/jobs"
+            f"?filter=latest&per_page=100&page={page}"
+        )
+        successful_jobs.update(
+            job["name"] for job in result["jobs"]
+            if job["status"] == "completed" and job["conclusion"] == "success"
+        )
+        if required_jobs <= successful_jobs:
+            break
+        if page * 100 >= result["total_count"]:
+            break
+    if not required_jobs <= successful_jobs:
+        raise ValueError("canary lacks successful selected and full coverage jobs")
 
     logs = api(f"{CANARY_REPO}/actions/runs/{canary_id}/logs", archive=True)
     if len(logs) > 100_000_000:

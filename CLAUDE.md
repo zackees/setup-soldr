@@ -10,7 +10,8 @@ Floating major tags (e.g. `v0`) are moved to point at the new `main` commit only
 
 The `v0` tag is moved only by manually dispatching
 `.github/workflows/update-v0-tag.yml` with the full current `main` SHA and a
-successful FastLED/fbuild canary run ID. The canary logs must prove the runner
+successful FastLED/fbuild `ci-minimal.yml` pull-request canary run ID. Its
+selected and full coverage jobs must pass, and its logs must prove the runner
 downloaded and executed `zackees/setup-soldr@<that exact SHA>`. The workflow
 checks an exact-SHA successful `Setup Soldr Contract` run, then repeats release
 readiness and a local-action install smoke before a compare-and-swap push.

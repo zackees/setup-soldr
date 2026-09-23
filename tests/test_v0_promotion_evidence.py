@@ -19,7 +19,10 @@ SPEC.loader.exec_module(promotion)
 SHA = "a" * 40
 
 
-def evidence(*, contract=True, canary_status="success", pinned_sha=SHA):
+def evidence(
+    *, contract=True, canary_status="success", pinned_sha=SHA,
+    canary_path=".github/workflows/ci-minimal.yml", full_job_status="success"
+):
     run = {
         "id": 42,
         "head_sha": SHA,
@@ -36,6 +39,8 @@ def evidence(*, contract=True, canary_status="success", pinned_sha=SHA):
         "repository": {"full_name": "FastLED/fbuild"},
         "status": "completed",
         "conclusion": canary_status,
+        "event": "pull_request",
+        "path": canary_path,
         "html_url": "https://github.com/FastLED/fbuild/actions/runs/43",
     }
     pin = f"zackees/setup-soldr@{pinned_sha}"
@@ -52,6 +57,14 @@ def evidence(*, contract=True, canary_status="success", pinned_sha=SHA):
             return {"object": {"sha": SHA}}
         if "/workflows/" in path:
             return {"workflow_runs": [run] if contract else []}
+        if "/jobs?" in path:
+            return {
+                "total_count": 2,
+                "jobs": [
+                    {"name": "CI selected coverage", "status": "completed", "conclusion": "success"},
+                    {"name": "full / Full coverage", "status": "completed", "conclusion": full_job_status},
+                ],
+            }
         if path.endswith("/logs"):
             return stream.getvalue()
         return canary
@@ -63,8 +76,10 @@ def evidence(*, contract=True, canary_status="success", pinned_sha=SHA):
     "api,error",
     [
         (evidence(contract=False), "no successful Setup Soldr Contract"),
-        (evidence(canary_status="failure"), "did not complete successfully"),
-        (evidence(canary_status="cancelled"), "did not complete successfully"),
+        (evidence(canary_status="failure"), "expected successful"),
+        (evidence(canary_status="cancelled"), "expected successful"),
+        (evidence(canary_path=".github/workflows/trivial.yml"), "expected successful"),
+        (evidence(full_job_status="skipped"), "lacks successful"),
         (evidence(pinned_sha="b" * 40), "do not prove"),
     ],
 )
