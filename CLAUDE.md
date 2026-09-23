@@ -8,13 +8,16 @@ Floating major tags (e.g. `v0`) are moved to point at the new `main` commit only
 
 ### Default-release rollout gate
 
-The `v0` tag is moved only by `.github/workflows/update-v0-tag.yml` after the
-exact `main` SHA has passed `Setup Soldr Contract`. That contract checks the
-`action.yml` default against the published GitHub release and every supported
-runner asset. Promotion repeats both that readiness check and a real local-action
-install smoke before force-updating `v0`. For manual recovery, dispatch the
-workflow with the exact validated main SHA; never move `v0` to an unvalidated
-commit. Explicit `version` inputs remain exact and fail closed.
+The `v0` tag is moved only by manually dispatching
+`.github/workflows/update-v0-tag.yml` with the full current `main` SHA and a
+successful FastLED/fbuild `ci-minimal.yml` pull-request canary run ID. Its
+selected and full coverage jobs must pass, and its logs must prove the runner
+downloaded and executed `zackees/setup-soldr@<that exact SHA>`. The workflow
+checks an exact-SHA successful `Setup Soldr Contract` run, then repeats release
+readiness and a local-action install smoke before a compare-and-swap push.
+Its default dry run reports evidence and refs without writing. Contract success
+alone never promotes `v0`; immutable version tags remain unchanged. Explicit
+`version` inputs remain exact and fail closed.
 
 ## Test infrastructure
 

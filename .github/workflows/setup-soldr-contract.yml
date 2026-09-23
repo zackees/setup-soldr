@@ -28,6 +28,7 @@ on:
       - .github/workflows/release-lane-smoke.yml
       - .github/workflows/cook-rematerialization.yml
       - .github/workflows/setup-soldr-contract.yml
+      - .github/workflows/update-v0-tag.yml
   pull_request:
     paths:
       - README.md
@@ -53,6 +54,7 @@ on:
       - .github/workflows/release-lane-smoke.yml
       - .github/workflows/cook-rematerialization.yml
       - .github/workflows/setup-soldr-contract.yml
+      - .github/workflows/update-v0-tag.yml
   workflow_dispatch:
 
 # One live run per workflow per ref: a new push to a branch or PR cancels the
@@ -157,6 +159,7 @@ jobs:
             tests/test_cook_rematerialization_workflow.py \
             tests/test_rust_ci_workflow.py \
             tests/test_release_rollout_contract.py \
+            tests/test_v0_promotion_evidence.py \
             tests/test_release_lane_workflow.py
 
   release-readiness:

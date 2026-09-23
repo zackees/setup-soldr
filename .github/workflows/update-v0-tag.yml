@@ -1,19 +1,24 @@
 name: Update v0 tag
 
-# v0 is a public floating action tag. Move it only after the exact main SHA
-# passed the full Setup Soldr Contract, including a network check that the
-# action.yml default release exists with every supported platform asset.
+# Manual promotion only. A successful local contract cannot move v0 until a
+# downstream run proves it executed this action at the exact candidate SHA.
 
 on:
-  workflow_run:
-    workflows: ["Setup Soldr Contract"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       target_sha:
-        description: Exact validated main SHA to promote after repeating the readiness and install gates.
+        description: Full current main SHA to promote.
         required: true
         type: string
+      canary_run_id:
+        description: Successful FastLED/fbuild exact-pin canary run ID.
+        required: true
+        type: string
+      dry_run:
+        description: Report evidence and refs without moving v0.
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -24,26 +29,20 @@ concurrency:
 
 jobs:
   bump:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve the validated commit
-        id: target
-        env:
-          TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.target_sha }}
-        run: |
-          set -euo pipefail
-          test -n "${TARGET_SHA}"
-          echo "sha=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout the validated commit
+      - name: Checkout candidate
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.target.outputs.sha }}
+          ref: ${{ inputs.target_sha }}
           fetch-depth: 0
-          persist-credentials: true
+
+      - name: Verify exact-main contract and downstream canary
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          CANARY_RUN_ID: ${{ inputs.canary_run_id }}
+        run: python3 scripts/verify-v0-promotion.py
 
       - name: Verify the default release is ready
         run: node scripts/check-default-release-readiness.mjs
@@ -54,13 +53,19 @@ jobs:
           cache: false
           prebuild-deps: none
 
-      - name: Force-update v0 tag to the validated commit
+      - name: Report decision and compare-and-swap v0
         env:
-          TARGET_SHA: ${{ steps.target.outputs.sha }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          CANARY_RUN_ID: ${{ inputs.canary_run_id }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          echo "Pointing v0 at ${TARGET_SHA}"
-          git tag -f v0 "${TARGET_SHA}"
-          git push origin "refs/tags/v0" --force
+          old_ref="$(git ls-remote origin refs/tags/v0 | cut -f1)"
+          test "${old_ref}" != ""
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "${TARGET_SHA}"
+          echo "Contract: https://github.com/zackees/setup-soldr/actions/runs/$(cat "$RUNNER_TEMP/v0-contract-run-id")"
+          echo "Canary: https://github.com/FastLED/fbuild/actions/runs/${CANARY_RUN_ID}"
+          echo "Decision: v0 ${old_ref} -> ${TARGET_SHA}; dry_run=${DRY_RUN}"
+          if [[ "${DRY_RUN}" == "true" ]]; then exit 0; fi
+          git push --force-with-lease="refs/tags/v0:${old_ref}" origin "${TARGET_SHA}:refs/tags/v0"
+          test "$(git ls-remote origin refs/tags/v0 | cut -f1)" = "${TARGET_SHA}"
