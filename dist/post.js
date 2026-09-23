@@ -57181,6 +57181,7 @@ exports.auditDependencyYanks = auditDependencyYanks;
 exports.writeYankAuditResult = writeYankAuditResult;
 exports.readYankAuditResult = readYankAuditResult;
 exports.waitForYankAuditResult = waitForYankAuditResult;
+exports.resolveYankAuditResult = resolveYankAuditResult;
 exports.runYankAuditWorker = runYankAuditWorker;
 const fs = __importStar(__nccwpck_require__(73024));
 const path = __importStar(__nccwpck_require__(76760));
@@ -57383,8 +57384,43 @@ async function waitForYankAuditResult(resultPath, options = {}) {
         joinTimedOut: true,
     };
 }
+/** Join an overlapped audit only until its own deadline, then recheck locally. */
+async function resolveYankAuditResult(resultPath, recheck, options = {}) {
+    const backgroundDeadlineMs = options.backgroundDeadlineMs ?? 50_000;
+    const fallbackDeadlineMs = options.fallbackDeadlineMs ?? 45_000;
+    const remaining = Math.max(0, backgroundDeadlineMs - (Date.now() - (options.startedAtMs ?? Date.now())));
+    const existing = readYankAuditResult(resultPath);
+    if (existing?.yanked?.length)
+        return { ...existing, status: "yanked" };
+    if (existing && (existing.status === "clean" || existing.status === "yanked"))
+        return existing;
+    if ((!existing || existing.status === "pending") && remaining > 0) {
+        const joined = await waitForYankAuditResult(resultPath, { timeoutMs: remaining });
+        if (joined.yanked?.length)
+            return { ...joined, status: "yanked" };
+        if (joined.status === "clean" || joined.status === "yanked")
+            return joined;
+    }
+    let timer;
+    try {
+        return await Promise.race([
+            recheck(),
+            new Promise((resolve) => {
+                timer = setTimeout(() => resolve({ status: "not-checked", errors: ["foreground recheck deadline exceeded"] }), fallbackDeadlineMs);
+            }),
+        ]);
+    }
+    catch (error) {
+        return { status: "not-checked", errors: [error instanceof Error ? error.message : String(error)] };
+    }
+    finally {
+        if (timer)
+            clearTimeout(timer);
+    }
+}
 async function runYankAuditWorker(configPath, resultPath) {
     try {
+        writeYankAuditResult(resultPath, { status: "pending", workerPid: process.pid });
         const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
         const result = await auditDependencyYanks(config.dependencies, {
             requestTimeoutMs: config.requestTimeoutMs,
@@ -58508,17 +58544,34 @@ async function run() {
             // The result below will still be surfaced as not checked if state was
             // damaged; never convert malformed state into a clean verdict.
         }
+        const configPath = core.getState("yankAuditConfigPath");
+        const startedAtMs = Number(core.getState("yankAuditStartedAtMs"));
         const audit = auditPath
-            ? await (0, yank_audit_js_1.waitForYankAuditResult)(auditPath, { timeoutMs: 60_000 })
+            ? await (0, yank_audit_js_1.resolveYankAuditResult)(auditPath, async () => {
+                if (!configPath)
+                    throw new Error("audit worker config path is missing");
+                const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+                const workerPid = (0, yank_audit_js_1.readYankAuditResult)(auditPath)?.workerPid;
+                log(`yank-audit: background result missing after its deadline (ready_pid=${workerPid ?? "not-reported"}); running bounded foreground recheck`);
+                return (0, yank_audit_js_1.auditDependencyYanks)(config.dependencies, {
+                    requestTimeoutMs: config.requestTimeoutMs,
+                    overallTimeoutMs: config.overallTimeoutMs,
+                });
+            }, { startedAtMs: Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : undefined })
             : { status: "not-checked", errors: ["audit result path is missing"] };
-        if (audit.status === "not-checked" && (audit.joinTimedOut || audit.auditTimedOut)) {
-            core.setFailed(`yank-audit: not checked because the audit deadline or post join timed out: ` +
-                `${(audit.errors ?? ["audit timed out"]).join("; ")}. ` +
-                `Refusing to save caches or report success without a complete audit.`);
+        if (audit.status === "not-checked") {
+            const stderrPath = core.getState("yankAuditStderrPath");
+            let workerStderr = "";
+            if (stderrPath) {
+                try {
+                    workerStderr = fs.readFileSync(stderrPath, "utf8").slice(-4_096).trim();
+                }
+                catch { /* no worker diagnostic */ }
+            }
+            core.setFailed(`yank-audit: not checked: ${(audit.errors ?? ["unknown registry error"]).join("; ")}. ` +
+                `${workerStderr ? `Worker stderr: ${workerStderr}. ` : ""}` +
+                `Refusing to save caches or report success without a completed audit.`);
             return;
-        }
-        else if (audit.status === "not-checked") {
-            core.warning(`yank-audit: not checked: ${(audit.errors ?? ["unknown registry error"]).join("; ")}`);
         }
         else if (audit.status === "clean") {
             log(`yank-audit: clean checked=${audit.checkedCount ?? 0}/${audit.dependencyCount ?? 0} ` +

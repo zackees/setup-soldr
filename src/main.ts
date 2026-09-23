@@ -1694,6 +1694,8 @@ export async function run(): Promise<void> {
       writeYankAuditResult(resultPath, { status: "pending" });
       core.saveState("yankAuditStarted", "true");
       core.saveState("yankAuditResultPath", resultPath);
+      core.saveState("yankAuditConfigPath", configPath);
+      core.saveState("yankAuditStartedAtMs", String(Date.now()));
       core.saveState("yankAuditCacheKeys", JSON.stringify(poisonedCandidates));
       if (dependencies.length === 0) {
         writeYankAuditResult(resultPath, {
@@ -1707,11 +1709,19 @@ export async function run(): Promise<void> {
       } else {
         const entrypoint = process.argv[1];
         if (!entrypoint) throw new Error("Node action entrypoint is unavailable");
-        const child = spawn(
-          process.execPath,
-          [entrypoint, YANK_AUDIT_WORKER_ARG, configPath, resultPath],
-          { detached: true, stdio: "ignore", windowsHide: true },
-        );
+        const stderrPath = path.join(path.dirname(resultPath), "worker-stderr.log");
+        const stderrFd = fs.openSync(stderrPath, "w");
+        let child;
+        try {
+          child = spawn(
+            process.execPath,
+            [entrypoint, YANK_AUDIT_WORKER_ARG, configPath, resultPath],
+            { detached: true, stdio: ["ignore", "ignore", stderrFd], windowsHide: true },
+          );
+        } finally {
+          fs.closeSync(stderrFd);
+        }
+        core.saveState("yankAuditStderrPath", stderrPath);
         child.unref();
         logger.log(
           `yank-audit: started pid=${child.pid ?? "unknown"} dependencies=${dependencies.length} ` +
@@ -1726,6 +1736,7 @@ export async function run(): Promise<void> {
       });
       core.saveState("yankAuditStarted", "true");
       core.saveState("yankAuditResultPath", resultPath);
+      core.saveState("yankAuditConfigPath", configPath);
       core.saveState("yankAuditCacheKeys", JSON.stringify(poisonedCandidates));
       logger.warning(
         `yank-audit: not checked: ${err instanceof Error ? err.message : String(err)}`,

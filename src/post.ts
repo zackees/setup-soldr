@@ -58,7 +58,7 @@ import {
   evictIfOverBudget,
   type CacheEvictionPolicy,
 } from "./lib/cache-eviction.js";
-import { waitForYankAuditResult } from "./lib/yank-audit.js";
+import { auditDependencyYanks, readYankAuditResult, resolveYankAuditResult, type YankAuditWorkerConfig } from "./lib/yank-audit.js";
 import {
   snapshotSourceMtimes,
   writeSnapshotFile,
@@ -1311,20 +1311,32 @@ export async function run(): Promise<void> {
       // The result below will still be surfaced as not checked if state was
       // damaged; never convert malformed state into a clean verdict.
     }
+    const configPath = core.getState("yankAuditConfigPath");
+    const startedAtMs = Number(core.getState("yankAuditStartedAtMs"));
     const audit = auditPath
-      ? await waitForYankAuditResult(auditPath, { timeoutMs: 60_000 })
+      ? await resolveYankAuditResult(auditPath, async () => {
+          if (!configPath) throw new Error("audit worker config path is missing");
+          const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as YankAuditWorkerConfig;
+          const workerPid = readYankAuditResult(auditPath)?.workerPid;
+          log(`yank-audit: background result missing after its deadline (ready_pid=${workerPid ?? "not-reported"}); running bounded foreground recheck`);
+          return auditDependencyYanks(config.dependencies, {
+            requestTimeoutMs: config.requestTimeoutMs,
+            overallTimeoutMs: config.overallTimeoutMs,
+          });
+        }, { startedAtMs: Number.isFinite(startedAtMs) && startedAtMs > 0 ? startedAtMs : undefined })
       : { status: "not-checked" as const, errors: ["audit result path is missing"] };
-    if (audit.status === "not-checked" && (audit.joinTimedOut || audit.auditTimedOut)) {
+    if (audit.status === "not-checked") {
+      const stderrPath = core.getState("yankAuditStderrPath");
+      let workerStderr = "";
+      if (stderrPath) {
+        try { workerStderr = fs.readFileSync(stderrPath, "utf8").slice(-4_096).trim(); } catch { /* no worker diagnostic */ }
+      }
       core.setFailed(
-        `yank-audit: not checked because the audit deadline or post join timed out: ` +
-          `${(audit.errors ?? ["audit timed out"]).join("; ")}. ` +
-          `Refusing to save caches or report success without a complete audit.`,
+        `yank-audit: not checked: ${(audit.errors ?? ["unknown registry error"]).join("; ")}. ` +
+          `${workerStderr ? `Worker stderr: ${workerStderr}. ` : ""}` +
+          `Refusing to save caches or report success without a completed audit.`,
       );
       return;
-    } else if (audit.status === "not-checked") {
-      core.warning(
-        `yank-audit: not checked: ${(audit.errors ?? ["unknown registry error"]).join("; ")}`,
-      );
     } else if (audit.status === "clean") {
       log(
         `yank-audit: clean checked=${audit.checkedCount ?? 0}/${audit.dependencyCount ?? 0} ` +
