@@ -23,6 +23,7 @@ export interface YankAuditResult {
   yanked?: YankedDependency[];
   errors?: string[];
   joinTimedOut?: boolean;
+  auditTimedOut?: boolean;
 }
 
 export interface YankAuditWorkerConfig {
@@ -133,7 +134,13 @@ export async function auditDependencyYanks(
   const concurrency = Math.max(1, options.concurrency ?? 12);
   const overallTimeoutMs = Math.max(1, options.overallTimeoutMs ?? 45_000);
   const overallController = new AbortController();
-  const overallTimeout = setTimeout(() => overallController.abort(), overallTimeoutMs);
+  let overallTimeout: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<"deadline">((resolve) => {
+    overallTimeout = setTimeout(() => {
+      overallController.abort();
+      resolve("deadline");
+    }, overallTimeoutMs);
+  });
   const errors: string[] = [];
   const yanked: YankedDependency[] = [];
   let checkedCount = 0;
@@ -181,10 +188,25 @@ export async function auditDependencyYanks(
       }
     }
   };
+  let outcome: "complete" | "deadline";
   try {
-    await Promise.all(Array.from({ length: Math.min(concurrency, work.length) }, () => worker()));
+    const completed = Promise.all(
+      Array.from({ length: Math.min(concurrency, work.length) }, () => worker()),
+    ).then(() => "complete" as const);
+    outcome = await Promise.race([completed, deadline]);
   } finally {
     clearTimeout(overallTimeout);
+  }
+  if (outcome === "deadline") {
+    return {
+      status: "not-checked",
+      checkedAt: new Date().toISOString(),
+      dependencyCount: dependencies.length,
+      checkedCount,
+      yanked: [...yanked],
+      errors: [`audit deadline exceeded after ${overallTimeoutMs}ms`],
+      auditTimedOut: true,
+    };
   }
   if (omittedErrors > 0) errors.push(`${omittedErrors} additional registry errors omitted`);
 

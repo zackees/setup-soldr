@@ -1314,11 +1314,11 @@ export async function run(): Promise<void> {
     const audit = auditPath
       ? await waitForYankAuditResult(auditPath, { timeoutMs: 60_000 })
       : { status: "not-checked" as const, errors: ["audit result path is missing"] };
-    if (audit.status === "not-checked" && audit.joinTimedOut) {
+    if (audit.status === "not-checked" && (audit.joinTimedOut || audit.auditTimedOut)) {
       core.setFailed(
-        `yank-audit: not checked because the background audit did not reach a terminal result: ` +
-          `${(audit.errors ?? ["join timed out"]).join("; ")}. ` +
-          `Refusing to save caches or report success while the audit may still be in flight.`,
+        `yank-audit: not checked because the audit deadline or post join timed out: ` +
+          `${(audit.errors ?? ["audit timed out"]).join("; ")}. ` +
+          `Refusing to save caches or report success without a complete audit.`,
       );
       return;
     } else if (audit.status === "not-checked") {

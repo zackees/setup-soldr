@@ -122,6 +122,19 @@ test("one global deadline aborts every stalled request wave before post joins", 
   assert.ok(result.errors?.some((error) => /aborted|deadline/.test(error)));
 });
 
+test("global deadline settles even when a fetch ignores its abort signal", async () => {
+  const neverSettles = (() => new Promise<Response>(() => {})) as typeof fetch;
+  const started = Date.now();
+  const result = await auditDependencyYanks([dependency("serde", "1.0.0")], {
+    fetchImpl: neverSettles,
+    requestTimeoutMs: 10,
+    overallTimeoutMs: 25,
+  });
+  assert.equal(result.status, "not-checked");
+  assert.equal(result.auditTimedOut, true);
+  assert.ok(Date.now() - started < 1_000);
+});
+
 test("post join waits for a pending worker result", async () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-yank-result-"));
   try {

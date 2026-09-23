@@ -57267,7 +57267,13 @@ async function auditDependencyYanks(dependencies, options = {}) {
     const concurrency = Math.max(1, options.concurrency ?? 12);
     const overallTimeoutMs = Math.max(1, options.overallTimeoutMs ?? 45_000);
     const overallController = new AbortController();
-    const overallTimeout = setTimeout(() => overallController.abort(), overallTimeoutMs);
+    let overallTimeout;
+    const deadline = new Promise((resolve) => {
+        overallTimeout = setTimeout(() => {
+            overallController.abort();
+            resolve("deadline");
+        }, overallTimeoutMs);
+    });
     const errors = [];
     const yanked = [];
     let checkedCount = 0;
@@ -57309,11 +57315,24 @@ async function auditDependencyYanks(dependencies, options = {}) {
             }
         }
     };
+    let outcome;
     try {
-        await Promise.all(Array.from({ length: Math.min(concurrency, work.length) }, () => worker()));
+        const completed = Promise.all(Array.from({ length: Math.min(concurrency, work.length) }, () => worker())).then(() => "complete");
+        outcome = await Promise.race([completed, deadline]);
     }
     finally {
         clearTimeout(overallTimeout);
+    }
+    if (outcome === "deadline") {
+        return {
+            status: "not-checked",
+            checkedAt: new Date().toISOString(),
+            dependencyCount: dependencies.length,
+            checkedCount,
+            yanked: [...yanked],
+            errors: [`audit deadline exceeded after ${overallTimeoutMs}ms`],
+            auditTimedOut: true,
+        };
     }
     if (omittedErrors > 0)
         errors.push(`${omittedErrors} additional registry errors omitted`);
@@ -58492,10 +58511,10 @@ async function run() {
         const audit = auditPath
             ? await (0, yank_audit_js_1.waitForYankAuditResult)(auditPath, { timeoutMs: 60_000 })
             : { status: "not-checked", errors: ["audit result path is missing"] };
-        if (audit.status === "not-checked" && audit.joinTimedOut) {
-            core.setFailed(`yank-audit: not checked because the background audit did not reach a terminal result: ` +
-                `${(audit.errors ?? ["join timed out"]).join("; ")}. ` +
-                `Refusing to save caches or report success while the audit may still be in flight.`);
+        if (audit.status === "not-checked" && (audit.joinTimedOut || audit.auditTimedOut)) {
+            core.setFailed(`yank-audit: not checked because the audit deadline or post join timed out: ` +
+                `${(audit.errors ?? ["audit timed out"]).join("; ")}. ` +
+                `Refusing to save caches or report success without a complete audit.`);
             return;
         }
         else if (audit.status === "not-checked") {
