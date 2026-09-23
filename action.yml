@@ -437,8 +437,8 @@ inputs:
   ci-tests:
     description: >
       Prepare the prescribed CI-test domain without running a hidden test
-      command. Defaults CARGO_BUILD_JOBS, SOLDR_JOBS, and
-      NEXTEST_TEST_THREADS to one unless the workflow already sets them.
+      command. CARGO_BUILD_JOBS and SOLDR_JOBS remain unset unless the workflow sets them.
+      Only NEXTEST_TEST_THREADS defaults to one unless the workflow sets it.
       Dylint remains an explicit separate-toolchain opt-in. Call the
       repository's explicit test command after this action.
 
