@@ -6,6 +6,7 @@ import * as path from "node:path";
 import {
   buildDeferredCookPlan,
   parseBooleanInput,
+  selectDeferredCookSaveLayer,
 } from "../src/lib/deferred-cook.js";
 
 function mkWorkspace(): string {
@@ -22,6 +23,26 @@ test("parseBooleanInput accepts GitHub-style booleans", () => {
   assert.equal(parseBooleanInput("cache", "false", true), false);
   assert.equal(parseBooleanInput("cache", "ON", false), true);
   assert.throws(() => parseBooleanInput("cache", "maybe", true), /invalid 'cache' input/);
+});
+
+test("cook save policy leaves restore enabled but skips durable writes when requested", async () => {
+  const workspace = mkWorkspace();
+  try {
+    const plan = await buildDeferredCookPlan({
+      workspace, runnerOs: "Linux", runnerArch: "X64", githubSha: "0123456789abcdef",
+      parentSha: "", targetDir: "target", lockfile: "", flags: "--release",
+      cache: true, deltaCache: true, rustcRelease: "1.94.1",
+      soldrVersion: "0.8.1", buildShape: "", env: {},
+    });
+    assert.equal(plan.enabled, true);
+    assert.ok(plan.baseKey);
+    assert.equal(selectDeferredCookSaveLayer(true, false, false), "none");
+    assert.equal(selectDeferredCookSaveLayer(true, false, true), "base");
+    assert.equal(selectDeferredCookSaveLayer(true, true, true), "delta");
+    assert.equal(selectDeferredCookSaveLayer(true, true, false), "none");
+  } finally {
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
 });
 
 test("deferred cook plan preserves target/profile-shaped flags for msvc cook", async () => {

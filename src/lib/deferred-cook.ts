@@ -64,6 +64,15 @@ export interface DeferredCookEnabledPlan {
 
 export type DeferredCookPlan = DeferredCookDisabledPlan | DeferredCookEnabledPlan;
 
+export function selectDeferredCookSaveLayer(
+  cookRan: boolean,
+  baseReady: boolean,
+  saveCache: boolean,
+): "base" | "delta" | "none" {
+  if (!cookRan || !saveCache) return "none";
+  return baseReady ? "delta" : "base";
+}
+
 export function parseBooleanInput(name: string, raw: string, defaultValue: boolean): boolean {
   const value = raw.trim().toLowerCase();
   if (!value) return defaultValue;
