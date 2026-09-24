@@ -18,6 +18,10 @@ async function main(): Promise<void> {
     core.info("cook-cache: post-step disabled - skipping save");
     return;
   }
+  if (!stateBool("SaveCache")) {
+    core.info("cook-cache: save-cache is false - skipping save");
+    return;
+  }
   const ran = stateBool("Ran");
   const targetDir = state("TargetDir");
   const failOnError = stateBool("FailOnError");

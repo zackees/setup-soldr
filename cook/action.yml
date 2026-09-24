@@ -36,6 +36,10 @@ inputs:
     description: "Set false to skip cook restore/run/save."
     required: false
     default: "true"
+  save-cache:
+    description: "Set false to restore cook archives and run cook on misses without writing a durable cache."
+    required: false
+    default: "true"
   delta-cache:
     description: "Enable layered base+delta cook archives when the soldr version supports them."
     required: false

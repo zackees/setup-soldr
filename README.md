@@ -583,6 +583,9 @@ When target setup must happen after the main setup-soldr step, use
 `zackees/setup-soldr/cook@v0` instead of the main action's early
 `prebuild-deps: soldr-cook`. The sub-action runs later in the workflow and
 accepts the same `soldr cook` flags through its `flags` input.
+Set its `save-cache: false` input on jobs that should restore shared cook
+archives and run `soldr cook` on a miss without uploading a new archive.
+The default remains `true`; `cache: false` disables restore and cook as well.
 
 Base key shape:
 `cook-base-v2-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.

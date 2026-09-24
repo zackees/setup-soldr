@@ -14,6 +14,7 @@ import {
 import {
   buildDeferredCookPlan,
   parseBooleanInput,
+  selectDeferredCookSaveLayer,
 } from "./lib/deferred-cook.js";
 import { parseVersionJsonOutput } from "./lib/verify-soldr.js";
 
@@ -95,6 +96,7 @@ async function main(): Promise<void> {
   const runnerTemp = env["RUNNER_TEMP"]?.trim() || path.join(os.tmpdir(), "setup-soldr-runner");
   const soldrPath = core.getInput("soldr-path").trim() || env["SOLDR_BINARY"]?.trim() || "soldr";
   const cache = parseBooleanInput("cache", core.getInput("cache"), true);
+  const saveCache = parseBooleanInput("save-cache", core.getInput("save-cache"), true);
   const deltaCache = parseBooleanInput("delta-cache", core.getInput("delta-cache"), true);
   const failOnError = parseBooleanInput("fail-on-error", core.getInput("fail-on-error"), false);
   const debug = parseBooleanInput("debug", core.getInput("debug"), false);
@@ -171,7 +173,7 @@ async function main(): Promise<void> {
     } else {
       core.info("cook: base+delta cache hit - skipping cook run");
     }
-    saveLayer = cookRan ? (baseReady ? "delta" : "base") : "none";
+    saveLayer = selectDeferredCookSaveLayer(cookRan, baseReady, saveCache);
     saveCookState("Layered", true);
     saveCookState("BaseExactKey", plan.baseKey);
     saveCookState("DeltaExactKey", plan.deltaKey);
@@ -214,6 +216,7 @@ async function main(): Promise<void> {
   }
 
   saveCookState("Enabled", true);
+  saveCookState("SaveCache", saveCache);
   saveCookState("Ran", cookRan);
   saveCookState("Hit", cacheHit);
   saveCookState("TargetDir", plan.targetDir);
