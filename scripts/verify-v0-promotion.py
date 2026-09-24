@@ -1,14 +1,16 @@
 """Fail-closed evidence check for the manually dispatched v0 promotion."""
 
+import http.client
 import io
 import json
 import os
 import re
 import subprocess
+import time
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
-
 
 SETUP_REPO = "zackees/setup-soldr"
 CANARY_REPO = "FastLED/fbuild"
@@ -25,8 +27,17 @@ def api(path: str, *, archive: bool = False):
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        data = response.read()
+    for attempt in range(4 if archive else 1):
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                data = response.read()
+            break
+        except (http.client.IncompleteRead, ConnectionError, TimeoutError, urllib.error.URLError) as exc:
+            if isinstance(exc, urllib.error.HTTPError):
+                raise
+            if not archive or attempt == 3:
+                raise
+            time.sleep(2 ** attempt)
     return data if archive else json.loads(data)
 
 
