@@ -1,14 +1,15 @@
 """The promotion verifier refuses absent, failed, and wrong-SHA evidence."""
 
+import http.client
 import importlib.util
 import io
 import tempfile
+import urllib.error
 import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -99,3 +100,83 @@ def test_exact_sha_success_returns_contract_run():
         ), patch.dict(promotion.os.environ, {"RUNNER_TEMP": runner_temp}):
             assert promotion.verify(SHA, "43") == 42
             assert Path(runner_temp, "v0-contract-run-id").read_text() == "42"
+
+
+def test_incomplete_archive_read_retries_with_bounded_backoff():
+    class Response:
+        def __init__(self, result):
+            self.result = result
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self):
+            if isinstance(self.result, Exception):
+                raise self.result
+            return self.result
+
+    results = iter([http.client.IncompleteRead(b"partial"), http.client.IncompleteRead(b"partial"), b"zip"])
+    with patch.dict(promotion.os.environ, {"GH_TOKEN": "test"}), patch.object(
+        promotion.urllib.request, "urlopen", side_effect=lambda *_args, **_kwargs: Response(next(results))
+    ) as urlopen, patch.object(promotion.time, "sleep") as sleep:
+        assert promotion.api("FastLED/fbuild/actions/runs/43/logs", archive=True) == b"zip"
+    assert urlopen.call_count == 3
+    assert [call.args[0] for call in sleep.call_args_list] == [1, 2]
+
+
+def test_archive_retry_exhaustion_and_metadata_read_fail_closed():
+    class BrokenResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self):
+            raise http.client.IncompleteRead(b"partial")
+
+    with patch.dict(promotion.os.environ, {"GH_TOKEN": "test"}), patch.object(
+        promotion.urllib.request, "urlopen", return_value=BrokenResponse()
+    ) as urlopen, patch.object(promotion.time, "sleep") as sleep:
+        with pytest.raises(http.client.IncompleteRead):
+            promotion.api("FastLED/fbuild/actions/runs/43/logs", archive=True)
+        assert urlopen.call_count == 4
+        assert [call.args[0] for call in sleep.call_args_list] == [1, 2, 4]
+        urlopen.reset_mock()
+        sleep.reset_mock()
+        with pytest.raises(http.client.IncompleteRead):
+            promotion.api("zackees/setup-soldr/git/ref/heads/main")
+        assert urlopen.call_count == 1
+        sleep.assert_not_called()
+
+
+def test_archive_transport_error_retries_but_http_error_does_not():
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self):
+            return b"complete"
+
+    with patch.dict(promotion.os.environ, {"GH_TOKEN": "test"}), patch.object(
+        promotion.urllib.request, "urlopen",
+        side_effect=[urllib.error.URLError("connection dropped"), Response()],
+    ) as urlopen, patch.object(promotion.time, "sleep") as sleep:
+        assert promotion.api("FastLED/fbuild/actions/runs/43/logs", archive=True) == b"complete"
+        assert urlopen.call_count == 2
+        sleep.assert_called_once_with(1)
+
+    error = urllib.error.HTTPError("https://example.com", 404, "missing", {}, None)
+    with patch.dict(promotion.os.environ, {"GH_TOKEN": "test"}), patch.object(
+        promotion.urllib.request, "urlopen", side_effect=error,
+    ) as urlopen, patch.object(promotion.time, "sleep") as sleep:
+        with pytest.raises(urllib.error.HTTPError):
+            promotion.api("FastLED/fbuild/actions/runs/43/logs", archive=True)
+        assert urlopen.call_count == 1
+        sleep.assert_not_called()
