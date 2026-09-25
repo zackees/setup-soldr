@@ -46,7 +46,8 @@ inputs:
       go: setup-cache (soldr binary + rustup state including
       `~/.rustup/update-hashes/` for fast `rustup update` no-ops, see
       setup-soldr#102), build-cache (zccache compilation cache),
-      target-cache (Rust target/ artifacts), and cargo-registry-cache.
+      target-cache (Rust target/ artifacts), cargo-registry-cache, and
+      solo-toolchain-cache.
       Also exports `SOLDR_BUILD_CACHE_MODE=off` / `SOLDR_TARGET_CACHE_MODE=off`
       so soldr skips its zccache wrapping entirely — the daemon won't be
       invoked and no per-session stats are written. Use this when you
@@ -649,19 +650,27 @@ inputs:
     default: "false"
   solo-toolchain-cache:
     description: >
-      Maintain a long-lived, small, per-platform cache that holds
-      only what setup-soldr added to `$RUSTUP_HOME/toolchains/` and
-      `$CARGO_HOME/bin/` on top of the runner image. On warm runs,
-      the toolchain is restored from cache (~3-5 s) instead of
-      installed via rustup (~7-11 s). Save layer short-circuits
-      when the install delta is empty (the common case on hosted
-      runners that already ship rustup + stable).
+      Maintain a long-lived, small, per-platform cache of the one Rust
+      toolchain setup-soldr installs. The key is os/arch/libc + the
+      exact rustc release + a components hash + a targets hash; the
+      soldr version is not part of it, so soldr releases do not mint
+      new entries (#525). One stat of
+      `$RUSTUP_HOME/toolchains/<channel>-<host>` decides whether the
+      runner image or setup-cache already provides that toolchain; if
+      it does, nothing is looked up or saved. An exact, verified hit
+      restores the toolchain (~3-5 s) and skips both the rustup
+      install (~7-11 s) and the save. On a miss, setup-soldr archives
+      that one toolchain directory plus the rustup proxies the install
+      added in `$CARGO_HOME/bin/`, right after install and before any
+      job step runs, so a later `rustup target add` or build-time
+      `rust-std` download is never captured. The archive uploads in
+      the background; the post step only waits for it. Restore
+      validates the standard library of every target rustup lists as
+      installed, not only the declared ones (#473, #507).
       Default "true" (validated end-to-end on Linux/macOS/Windows;
       see #305/#316/#321/#324/#326/#328/#331/#335/#343). Pass
-      "false" to opt out — useful when the workflow installs
-      components AFTER setup-soldr (the snapshot won't include
-      them) or when the warm-cycle win isn't worth the ~12 s
-      first cold-save.
+      "false" (or `cache: false`) to opt out entirely: no directory
+      scans, no cache lookup and no save.
       If a restored entry fails validation, setup-soldr repairs the requested
       toolchain and targets, deletes the poisoned entry, and uploads the
       verified replacement. Automatic deletion requires `actions: write` on
@@ -677,7 +686,7 @@ inputs:
       bandwidth-bound at ~70 MB/s either way — the extra MB only
       adds ~0.5 s per restore. Saves the win only after ≥ ~180
       restores at the same key, which is rare in practice (every
-      rustc release / soldr version bump invalidates). Users with
+      rustc release invalidates). Users with
       truly long-lived workflows can override to "19" or "22".
     required: false
     default: "9"

@@ -1,0 +1,636 @@
+name: Solo toolchain probe
+
+# End-to-end gate for the solo toolchain cache sealed at install time (#525,
+# checks E1-E7; also #507).
+#
+# Matrix: env {hosted, container} x toolchain {current pin, previous pin} x
+# solo-toolchain-cache {true, false}. The container image already holds
+# stable and nightly with rust-docs under RUSTUP_HOME=/usr/local/rustup
+# (~135k entries). That is where the old snapshot scans cost 25-30s per
+# job.
+#
+#   cold   first pass. Seals toolchains/<release>-<host> during the main step
+#          and uploads it in the background. The post step waits for the
+#          upload, so the entry exists before warm starts.
+#   warm   second pass with a different soldr version (E6), so it must hit
+#          the same key.
+#   assert compares warm timings across envs (E2) and checks the run's cache
+#          entries (E6/E7).
+#
+# Checks:
+#   E1  no snapshot_pre/base/post sub-phase in any cell.
+#   E2  warm container toolchain phase <= warm hosted + 2s.
+#   E3  cold: upload spawned during the main step, before the first job step.
+#   E4  archive = exactly toolchains/<release>-<host> + the rustup proxies.
+#   E5  a `rustup target add` after setup (poison) is not captured. On warm,
+#       `soldr cargo check --target aarch64-unknown-linux-gnu` must not fail
+#       with E0463.
+#   E6  a soldr version change reuses the key: one solo entry per release.
+#   E7  solo-toolchain-cache: false -> no scans, no lookup, no solo entries.
+#
+# #513 P0: every key this run writes is run-scoped. The solo keys carry
+# ns<CACHE_GENERATION> through SETUP_SOLDR_SOLO_TOOLCHAIN_KEY_NAMESPACE, and
+# every other layer carries it through cache-key-suffix. The cleanup job
+# deletes all four namespaces on success, failure and cancellation.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'action.yml'
+      - 'src/**'
+      - 'dist/**'
+      - '.github/workflows/solo-toolchain-probe.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'action.yml'
+      - 'src/**'
+      - 'dist/**'
+      - '.github/workflows/solo-toolchain-probe.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  cold:
+    name: Cold ${{ matrix.env }} ${{ matrix.toolchain }} solo=${{ matrix.solo }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [hosted, container]
+        toolchain: ["1.98.1", "1.97.1"]
+        # "false" is the E7 column: no scans, no lookup, no save.
+        solo: ["true", "false"]
+    # wild's CI image: RUSTUP_HOME=/usr/local/rustup already populated with
+    # stable + nightly (incl. rust-docs). Fallback if it becomes unavailable:
+    # `rust:1-bookworm` plus a pre-step
+    # `rustup toolchain install stable nightly --profile default`.
+    container: ${{ matrix.env == 'container' && 'ghcr.io/wild-linker/wild/ci-ubuntu-amd64:sha-fc8fa6975269300dacfc3c8fff06b3ba2f96721b' || '' }}
+    env:
+      CACHE_GENERATION: solo-probe-${{ matrix.env }}-${{ matrix.solo == 'true' && 'on' || 'off' }}-${{ github.run_id }}-${{ github.run_attempt }}
+      SETUP_SOLDR_SOLO_TOOLCHAIN_KEY_NAMESPACE: solo-probe-${{ matrix.env }}-${{ matrix.solo == 'true' && 'on' || 'off' }}-${{ github.run_id }}-${{ github.run_attempt }}
+      PROBE_ENV: ${{ matrix.env }}
+      PROBE_TOOLCHAIN: ${{ matrix.toolchain }}
+      PROBE_SOLO: ${{ matrix.solo }}
+    steps:
+      - name: Install container prerequisites
+        if: ${{ matrix.env == 'container' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Runs before setup-soldr, so it is outside the measured phase.
+          # python3 runs the assertions below.
+          need=""
+          command -v zstd >/dev/null || need="$need zstd"
+          command -v python3 >/dev/null || need="$need python3"
+          if [ -n "$need" ]; then
+            apt-get update && apt-get install -y --no-install-recommends $need
+          fi
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Write probe crate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p probe/src
+          printf '[toolchain]\nchannel = "%s"\nprofile = "minimal"\n' "$PROBE_TOOLCHAIN" > probe/rust-toolchain.toml
+          cat > probe/Cargo.toml <<'EOF'
+          [package]
+          name = "solo-probe"
+          version = "0.1.0"
+          edition = "2021"
+          publish = false
+
+          [workspace]
+          EOF
+          printf 'pub fn probe() -> u32 {\n    1\n}\n' > probe/src/lib.rs
+          cat probe/rust-toolchain.toml
+
+      - id: setup
+        name: Install soldr (cold, 0.9.21)
+        uses: ./
+        with:
+          version: 0.9.21
+          cache: true
+          solo-toolchain-cache: ${{ matrix.solo }}
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: false
+          prebuild-deps: none
+          soldr-mini-cache: false
+          toolchain-file: probe/rust-toolchain.toml
+          debug: true
+
+      - name: Record first job step
+        shell: bash
+        run: |
+          FIRST_STEP_MS=$(date +%s%3N)
+          export FIRST_STEP_MS
+          set -uo pipefail
+          rc=0
+          python3 - <<'PY' || rc=$?
+          import json
+          import os
+          import sys
+          import time
+          from pathlib import Path
+
+          env = os.environ
+          errors = []
+
+          def fail(msg):
+              errors.append(msg)
+              print(f"::error::{msg}")
+
+          first_ms = int(env["FIRST_STEP_MS"])
+          temp = Path(env["RUNNER_TEMP"])
+          solo_on = env["PROBE_SOLO"] == "true"
+          summary_path = temp / "setup-soldr-solo-toolchain-summary.json"
+          if not summary_path.is_file():
+              print(f"::error::setup-soldr did not write {summary_path}")
+              sys.exit(1)
+          summary = json.loads(summary_path.read_text())
+          print(json.dumps(summary, indent=2))
+
+          SUB = "SETUP_SOLDR_PHASE_TOOLCHAIN_SUB_"
+          subs = {k: env[k] for k in sorted(env) if k.startswith(SUB) and k.endswith("_MS")}
+          print("toolchain sub-phases:", json.dumps(subs))
+
+          def sub_ms(name):
+              raw = env.get(f"{SUB}{name}_MS", "").strip()
+              return float(raw) if raw else 0.0
+
+          # E1: the snapshot scans are gone.
+          for name in ("SNAPSHOT_PRE", "SNAPSHOT_BASE", "SNAPSHOT_POST"):
+              if sub_ms(name) != 0:
+                  fail(f"E1: {SUB}{name}_MS={env[SUB + name + '_MS']} (expected unset or 0)")
+
+          start = env.get("SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS", "").strip()
+          end = env.get("SETUP_SOLDR_PHASE_INSTALL_START_MS", "").strip()
+          toolchain_ms = None
+          if start and end:
+              toolchain_ms = int(end) - int(start)
+              print(f"toolchain phase: {toolchain_ms} ms")
+          else:
+              fail("phase markers SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS / _INSTALL_START_MS missing")
+
+          outcome = summary.get("outcome")
+          if solo_on:
+              if outcome not in ("sealed", "image-provided"):
+                  fail(f"cold solo-on outcome={outcome!r} (expected sealed or image-provided)")
+              if outcome == "sealed":
+                  # E3: the upload was spawned during the main step.
+                  upload = summary.get("upload") or {}
+                  spawned = upload.get("spawnedAtMs")
+                  if not isinstance(spawned, (int, float)) or spawned >= first_ms:
+                      fail(f"E3: upload.spawnedAtMs={spawned!r} is not before the first job step ({first_ms})")
+                  result_path = upload.get("resultPath")
+                  if not result_path or not Path(result_path).is_file():
+                      fail(f"E3: upload result file {result_path!r} does not exist")
+                  else:
+                      status = None
+                      # The detached worker may be rewriting the file right now.
+                      for _ in range(5):
+                          try:
+                              status = json.loads(Path(result_path).read_text()).get("status")
+                              break
+                          except json.JSONDecodeError:
+                              time.sleep(0.2)
+                      print(f"upload worker status: {status!r}")
+                      if status not in ("pending", "uploading", "saved", "race-precheck-skipped"):
+                          fail(f"E3: upload worker status={status!r}")
+
+                  # E4: the archive is exactly toolchains/<release>-<host> + proxies.
+                  sealed = summary.get("sealed") or {}
+                  toolchain_path = summary.get("toolchainPath") or ""
+                  files = symlinks = 0
+                  for root, dirs, names in os.walk(toolchain_path, followlinks=False):
+                      for d in dirs:
+                          if os.path.islink(os.path.join(root, d)):
+                              symlinks += 1
+                      for n in names:
+                          if os.path.islink(os.path.join(root, n)):
+                              symlinks += 1
+                          else:
+                              files += 1
+                  sealed_entries = int(sealed.get("files", -1)) + int(sealed.get("symlinks", 0))
+                  print(f"E4: live {toolchain_path}: files={files} symlinks={symlinks}; sealed={json.dumps(sealed)}")
+                  if files + symlinks != sealed_entries:
+                      fail(f"E4: live toolchain has {files + symlinks} files+symlinks, sealed archive has {sealed_entries}")
+                  proxy_names = summary.get("proxyNames") or []
+                  if sealed.get("proxies") != len(proxy_names):
+                      fail(f"E4: sealed.proxies={sealed.get('proxies')!r} != len(proxyNames)={len(proxy_names)}")
+                  staged = temp / "setup-soldr-solo-cache" / "staged" / "rustup-toolchains"
+                  listing = sorted(os.listdir(staged)) if staged.is_dir() else None
+                  print(f"E4: staged toolchains: {listing}")
+                  if listing != [summary.get("toolchainDir")]:
+                      fail(f"E4: staged toolchains {listing!r} != [{summary.get('toolchainDir')!r}]")
+          else:
+              # E7: disabled means no lookup and no scans.
+              if outcome != "disabled":
+                  fail(f"E7: solo-off outcome={outcome!r} (expected disabled)")
+              for key in subs:
+                  if key.startswith(SUB + "SOLO_") or key.startswith(SUB + "SNAPSHOT_"):
+                      fail(f"E7: {key}={subs[key]} is set with solo-toolchain-cache off")
+
+          result = {
+              "phase": "cold",
+              "env": env["PROBE_ENV"],
+              "toolchain": env["PROBE_TOOLCHAIN"],
+              "solo": env["PROBE_SOLO"],
+              "namespace": env["CACHE_GENERATION"],
+              "toolchain_ms": toolchain_ms,
+              "outcome": outcome,
+              "key": summary.get("key"),
+              "sub_phases": subs,
+          }
+          (temp / "probe-result.json").write_text(json.dumps(result, indent=2))
+          print(json.dumps(result, indent=2))
+          sys.exit(1 if errors else 0)
+          PY
+          # upload-artifact needs a workspace path; runner.temp is a host path
+          # inside container jobs.
+          mkdir -p probe-out
+          cp "$RUNNER_TEMP/probe-result.json" probe-out/ 2>/dev/null || true
+          cp "$RUNNER_TEMP/setup-soldr-solo-toolchain-summary.json" probe-out/ 2>/dev/null || true
+          exit "$rc"
+
+      - name: Poison the toolchain after setup (E5)
+        if: ${{ matrix.solo == 'true' }}
+        shell: bash
+        working-directory: probe
+        run: |
+          set -euo pipefail
+          # A sealed archive must not pick this up. The #507 post-time
+          # capture did.
+          rustup target add --toolchain "$PROBE_TOOLCHAIN" aarch64-unknown-linux-gnu
+
+      - name: soldr cargo check
+        shell: bash
+        working-directory: probe
+        run: soldr cargo check
+
+      - name: Upload cold probe result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: probe-cold-${{ matrix.env }}-${{ matrix.toolchain }}-${{ matrix.solo }}
+          path: probe-out/
+          if-no-files-found: warn
+          retention-days: 7
+
+  warm:
+    name: Warm ${{ matrix.env }} ${{ matrix.toolchain }} solo=${{ matrix.solo }}
+    needs: cold
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [hosted, container]
+        toolchain: ["1.98.1", "1.97.1"]
+        solo: ["true", "false"]
+    # Same image as cold. Fallback: `rust:1-bookworm` plus
+    # `rustup toolchain install stable nightly --profile default`.
+    container: ${{ matrix.env == 'container' && 'ghcr.io/wild-linker/wild/ci-ubuntu-amd64:sha-fc8fa6975269300dacfc3c8fff06b3ba2f96721b' || '' }}
+    env:
+      CACHE_GENERATION: solo-probe-${{ matrix.env }}-${{ matrix.solo == 'true' && 'on' || 'off' }}-${{ github.run_id }}-${{ github.run_attempt }}
+      SETUP_SOLDR_SOLO_TOOLCHAIN_KEY_NAMESPACE: solo-probe-${{ matrix.env }}-${{ matrix.solo == 'true' && 'on' || 'off' }}-${{ github.run_id }}-${{ github.run_attempt }}
+      PROBE_ENV: ${{ matrix.env }}
+      PROBE_TOOLCHAIN: ${{ matrix.toolchain }}
+      PROBE_SOLO: ${{ matrix.solo }}
+    steps:
+      - name: Install container prerequisites
+        if: ${{ matrix.env == 'container' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          need=""
+          command -v zstd >/dev/null || need="$need zstd"
+          command -v python3 >/dev/null || need="$need python3"
+          if [ -n "$need" ]; then
+            apt-get update && apt-get install -y --no-install-recommends $need
+          fi
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Download matching cold result
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: probe-cold-${{ matrix.env }}-${{ matrix.toolchain }}-${{ matrix.solo }}
+          path: cold-result
+
+      - name: Write probe crate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p probe/src
+          printf '[toolchain]\nchannel = "%s"\nprofile = "minimal"\n' "$PROBE_TOOLCHAIN" > probe/rust-toolchain.toml
+          cat > probe/Cargo.toml <<'EOF'
+          [package]
+          name = "solo-probe"
+          version = "0.1.0"
+          edition = "2021"
+          publish = false
+
+          [workspace]
+          EOF
+          printf 'pub fn probe() -> u32 {\n    1\n}\n' > probe/src/lib.rs
+          cat probe/rust-toolchain.toml
+
+      - id: setup
+        name: Install soldr (warm, 0.9.22)
+        uses: ./
+        with:
+          # E6: a different soldr version from cold must reuse the same key.
+          version: 0.9.22
+          cache: true
+          solo-toolchain-cache: ${{ matrix.solo }}
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
+          build-cache: false
+          target-cache: false
+          cargo-registry-cache: false
+          prebuild-deps: none
+          soldr-mini-cache: false
+          toolchain-file: probe/rust-toolchain.toml
+          debug: true
+
+      - name: Record first job step
+        shell: bash
+        run: |
+          FIRST_STEP_MS=$(date +%s%3N)
+          export FIRST_STEP_MS
+          set -uo pipefail
+          rc=0
+          python3 - <<'PY' || rc=$?
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          env = os.environ
+          errors = []
+
+          def fail(msg):
+              errors.append(msg)
+              print(f"::error::{msg}")
+
+          temp = Path(env["RUNNER_TEMP"])
+          solo_on = env["PROBE_SOLO"] == "true"
+          summary_path = temp / "setup-soldr-solo-toolchain-summary.json"
+          if not summary_path.is_file():
+              print(f"::error::setup-soldr did not write {summary_path}")
+              sys.exit(1)
+          summary = json.loads(summary_path.read_text())
+          print(json.dumps(summary, indent=2))
+
+          SUB = "SETUP_SOLDR_PHASE_TOOLCHAIN_SUB_"
+          subs = {k: env[k] for k in sorted(env) if k.startswith(SUB) and k.endswith("_MS")}
+          print("toolchain sub-phases:", json.dumps(subs))
+
+          def sub_ms(name):
+              raw = env.get(f"{SUB}{name}_MS", "").strip()
+              return float(raw) if raw else 0.0
+
+          # E1: the snapshot scans are gone.
+          for name in ("SNAPSHOT_PRE", "SNAPSHOT_BASE", "SNAPSHOT_POST"):
+              if sub_ms(name) != 0:
+                  fail(f"E1: {SUB}{name}_MS={env[SUB + name + '_MS']} (expected unset or 0)")
+
+          start = env.get("SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS", "").strip()
+          end = env.get("SETUP_SOLDR_PHASE_INSTALL_START_MS", "").strip()
+          toolchain_ms = None
+          if start and end:
+              toolchain_ms = int(end) - int(start)
+              print(f"toolchain phase: {toolchain_ms} ms")
+          else:
+              fail("phase markers SETUP_SOLDR_PHASE_TOOLCHAIN_START_MS / _INSTALL_START_MS missing")
+
+          outcome = summary.get("outcome")
+          if solo_on:
+              cold = json.loads(Path("cold-result/probe-result.json").read_text())
+              print("cold result:", json.dumps(cold))
+              expected = "exact-hit" if cold.get("outcome") == "sealed" else "image-provided"
+              if outcome != expected:
+                  fail(f"warm outcome={outcome!r}, expected {expected!r} (cold was {cold.get('outcome')!r})")
+              if summary.get("upload") is not None:
+                  fail(f"warm spawned an upload: {json.dumps(summary.get('upload'))}")
+              # E6: soldr 0.9.21 -> 0.9.22 must not change the key.
+              if summary.get("key") != cold.get("key"):
+                  fail(f"E6: warm key {summary.get('key')!r} != cold key {cold.get('key')!r}")
+              # T4 in CI: an exact hit installs nothing.
+              if outcome == "exact-hit" and sub_ms("RUSTUP_INSTALL") != 0:
+                  fail(f"T4: {SUB}RUSTUP_INSTALL_MS={env[SUB + 'RUSTUP_INSTALL_MS']} on an exact hit")
+          else:
+              # E7: disabled means no lookup and no scans.
+              if outcome != "disabled":
+                  fail(f"E7: solo-off outcome={outcome!r} (expected disabled)")
+              for key in subs:
+                  if key.startswith(SUB + "SOLO_") or key.startswith(SUB + "SNAPSHOT_"):
+                      fail(f"E7: {key}={subs[key]} is set with solo-toolchain-cache off")
+
+          result = {
+              "phase": "warm",
+              "env": env["PROBE_ENV"],
+              "toolchain": env["PROBE_TOOLCHAIN"],
+              "solo": env["PROBE_SOLO"],
+              "namespace": env["CACHE_GENERATION"],
+              "toolchain_ms": toolchain_ms,
+              "outcome": outcome,
+              "key": summary.get("key"),
+              "sub_phases": subs,
+          }
+          (temp / "probe-result.json").write_text(json.dumps(result, indent=2))
+          print(json.dumps(result, indent=2))
+          sys.exit(1 if errors else 0)
+          PY
+          mkdir -p probe-out
+          cp "$RUNNER_TEMP/probe-result.json" probe-out/ 2>/dev/null || true
+          cp "$RUNNER_TEMP/setup-soldr-solo-toolchain-summary.json" probe-out/ 2>/dev/null || true
+          exit "$rc"
+
+      - name: Check the poisoned target installs for real (E5)
+        shell: bash
+        working-directory: probe
+        run: |
+          set -euo pipefail
+          # rustup skips `target add` when the components file already lists
+          # the target. A poisoned entry (#507) lists it without the rlibs,
+          # so the check below fails with E0463.
+          rustup target add --toolchain "$PROBE_TOOLCHAIN" aarch64-unknown-linux-gnu
+          log="$RUNNER_TEMP/e5-check.log"
+          rc=0
+          soldr cargo check --target aarch64-unknown-linux-gnu 2>&1 | tee "$log" || rc=$?
+          if grep -q 'E0463' "$log"; then
+            echo "::error::E5: cargo check --target aarch64-unknown-linux-gnu failed with E0463. The restored toolchain claims a target it has no libraries for (#507 poisoning)."
+            exit 1
+          fi
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::E5: soldr cargo check --target aarch64-unknown-linux-gnu exited $rc"
+            exit "$rc"
+          fi
+
+      - name: soldr cargo check
+        shell: bash
+        working-directory: probe
+        run: soldr cargo check
+
+      - name: Upload warm probe result
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: probe-warm-${{ matrix.env }}-${{ matrix.toolchain }}-${{ matrix.solo }}
+          path: probe-out/
+          if-no-files-found: warn
+          retention-days: 7
+
+  assert:
+    name: Assert timings and cache footprint (E2, E6, E7)
+    needs: warm
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Download probe results
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: probe-*
+          path: probe-artifacts
+          merge-multiple: false
+
+      - name: Assert E2, E6, E7
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import collections
+          import json
+          import os
+          import re
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          errors = []
+
+          def fail(msg):
+              errors.append(msg)
+              print(f"::error::{msg}")
+
+          run_id = os.environ["RUN_ID"]
+          attempt = os.environ["RUN_ATTEMPT"]
+
+          results = {}
+          for path in sorted(Path("probe-artifacts").glob("probe-*/probe-result.json")):
+              r = json.loads(path.read_text())
+              results[(r["phase"], r["env"], r["toolchain"], r["solo"])] = r
+              print(f"{path.parent.name}: outcome={r['outcome']} toolchain_ms={r['toolchain_ms']} key={r['key']}")
+
+          toolchains = sorted({k[2] for k in results})
+          if not toolchains:
+              print("::error::no probe results downloaded")
+              sys.exit(1)
+
+          # E2: a populated RUSTUP_HOME costs no more than 2s over hosted.
+          for tc in toolchains:
+              c = results.get(("warm", "container", tc, "true"))
+              h = results.get(("warm", "hosted", tc, "true"))
+              if not c or not h or c["toolchain_ms"] is None or h["toolchain_ms"] is None:
+                  fail(f"E2: missing warm solo-on timing for {tc} (container={c and c['toolchain_ms']}, hosted={h and h['toolchain_ms']})")
+                  continue
+              print(f"E2 {tc}: warm container toolchain={c['toolchain_ms']} ms, warm hosted toolchain={h['toolchain_ms']} ms")
+              if c["toolchain_ms"] > h["toolchain_ms"] + 2000:
+                  fail(f"E2 {tc}: container warm toolchain phase {c['toolchain_ms']} ms > hosted {h['toolchain_ms']} ms + 2000 ms")
+
+          # E6/E7: the run's solo-toolchain cache entries.
+          listed = json.loads(subprocess.run(
+              ["gh", "cache", "list", "--repo", os.environ["GITHUB_REPOSITORY"],
+               "--limit", "1000", "--json", "key,ref"],
+              check=True, capture_output=True, text=True,
+          ).stdout)
+          keys = [e["key"] for e in listed
+                  if e["key"].startswith("solo-toolchain-v4-") and f"-{run_id}-" in e["key"]]
+          print("run-scoped solo keys:")
+          for k in sorted(keys):
+              print(f"  {k}")
+
+          for key, n in collections.Counter(keys).items():
+              if n != 1:
+                  fail(f"E6: key {key} appears {n} times")
+          for key in set(keys):
+              if "soldr" in key.lower():
+                  fail(f"E6: key {key} contains the soldr version")
+              if re.search(rf"solo-probe-[a-z]+-off-{run_id}-", key):
+                  fail(f"E7: solo-toolchain-cache off wrote {key}")
+
+          for env_name in ("hosted", "container"):
+              ns = f"solo-probe-{env_name}-on-{run_id}-{attempt}-"
+              per_release = collections.defaultdict(set)
+              for key in set(keys):
+                  if ns in key:
+                      m = re.search(r"-rustc([^-]+)-", key)
+                      per_release[m.group(1) if m else "?"].add(key)
+              for tc in toolchains:
+                  found = sorted(per_release.get(tc, ()))
+                  cold = results.get(("cold", env_name, tc, "true"))
+                  expected = 1 if cold and cold.get("outcome") == "sealed" else 0
+                  print(f"E6 {env_name} {tc}: {len(found)} key(s), expected {expected} (cold outcome={cold and cold.get('outcome')})")
+                  if len(found) > 1 or len(found) != expected:
+                      fail(f"E6: {env_name} {tc} has {len(found)} solo key(s) {found}, expected {expected}")
+              stray = sorted(k for r, ks in per_release.items() if r not in toolchains for k in ks)
+              if stray:
+                  fail(f"E6: {env_name} has keys for unexpected releases: {stray}")
+
+          sys.exit(1 if errors else 0)
+          PY
+
+  # #513 P0: delete every key this run wrote, whatever the outcome. The
+  # deleter matches key.includes("solo-probe-<g>-<run_id>-"). That covers the
+  # solo toolchain entries (ns<CACHE_GENERATION>) and the suffix-scoped
+  # setup-soldr entries. It refuses any namespace without this run's id.
+  cleanup:
+    name: Delete run-scoped cache keys
+    needs: [cold, warm, assert]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Delete this run's namespaced cache keys
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          rc=0
+          for g in hosted-on hosted-off container-on container-off; do
+            echo "::group::solo-probe-$g"
+            CACHE_GENERATION="solo-probe-$g-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+              node "$GITHUB_WORKSPACE/scripts/delete-run-scoped-caches.mjs" || rc=1
+            echo "::endgroup::"
+          done
+          exit "$rc"

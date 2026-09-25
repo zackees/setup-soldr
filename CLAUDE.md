@@ -58,7 +58,7 @@ Before saving a cache, snapshot what the runner image already provides; cache on
 
 - GitHub-hosted runners ship rustup + a current stable toolchain (`/usr/share/rust/` on Linux, user profile on macOS/Windows). Default-stable workflows should produce **zero cache writes**.
 - `ensureRustupAvailable` (`src/lib/ensure-rust-toolchain.ts:50`) already short-circuits on PATH-resident rustup. Extend the same discipline per-component, per-target, per-exact-release.
-- Snapshot `$RUSTUP_HOME/toolchains/` + `$CARGO_HOME/bin/` before our work; diff after; tar only the added paths. Wrong shape: snapshot the whole `RUSTUP_HOME` and pay for re-shipping what the runner already had.
+- Stat the exact toolchain directory setup-soldr will install (`$RUSTUP_HOME/toolchains/<channel>-<host>`). If it exists, the image (or setup-cache) provides it and nothing is written. Otherwise archive that whole directory, plus the rustup proxies the install added, immediately after install — sealed before any job step runs. Never snapshot or walk all of `$RUSTUP_HOME/toolchains`, and never read file contents at post time from a list fixed earlier: a later `rustup target add` or build-time `rust-std` download then saves rustup's records without the libraries they describe (#507, #525). Wrong shape: snapshot the whole `RUSTUP_HOME` and pay for re-shipping what the runner already had.
 
 ### Coarse keys, shared across workflows
 
@@ -83,10 +83,11 @@ After restoring, run `rustc --version` against the restored `$RUSTUP_HOME` and v
 
 A small toolchain delta should not force a full reinstall. Order fallbacks from most-specific to least, never dropping safety dimensions:
 
-1. exact: `prep-${os}-${arch}-${libc}-rustc${release}-c${cHash}-t${tHash}-soldr${sver}`
+1. exact: `solo-toolchain-v4-${os}-${arch}-${libc}-rustc${release}-c${cHash}-t${tHash}`
 2. drop targets: restore + `rustup target add <missing>` (~seconds per target)
 3. drop components: restore + `rustup component add <missing>` (~seconds per component)
-4. drop soldr: restore + re-fetch soldr binary (~2 s)
+
+The soldr version is not a solo-toolchain key input: the toolchain does not depend on it, and keying on it minted a new entry on every soldr release (#525).
 
 **Never** drop `release`, `arch`, `os`, or `libc` from the key. A wrong-host toolchain is silent breakage, not a slow build.
 
@@ -209,7 +210,7 @@ Reference data measured on the zccache project on `ubuntu-24.04`, post the 0.7.3
 | cook-cache (deps target/) | ~214 MB → ~2.5 GB inflated | ~12 s (bg) / ~7 s (sequential alone) |
 | target-cache (rust-plan bundle, `once` mode) | **~1.5-1.6 GB** | ~30-80 s (varies with bundle content) |
 | soldr-mini-cache | ~2 MB | <1 s |
-| solo-toolchain-cache | typically empty diff | <1 s |
+| solo-toolchain-cache | one sealed `toolchains/<channel>-<host>` dir; nothing when the image ships the release | ~3-5 s |
 | Post Setup Soldr step (after #153, `journal-print-raw: false`) | — | ~5 s |
 | Post Setup Soldr step (debug:true + raw dump, pre-#153) | — | ~58 s |
 
@@ -245,8 +246,8 @@ A 60-second win that fires every run beats a 600-second win that fires once a we
 
 Cache code is famously easy to write and famously hard to validate. Before landing a new cache layer:
 
-1. Measure the **no-op case** (vanilla `ubuntu-latest`, `channel: stable`, no extras). The new layer should produce **zero cache writes**. If it doesn't, the snapshot/diff logic is wrong.
-2. Measure the **typical pinned case** (specific channel, one extra target). Confirm only the delta lands in the cache, not the runner's pre-existing toolchain.
+1. Measure the **no-op case** (vanilla `ubuntu-latest`, `channel: stable`, no extras). The new layer should produce **zero cache writes**. If it doesn't, the "already provided" detection is wrong.
+2. Measure the **typical pinned case** (specific channel, one extra target). Confirm only what setup-soldr installed lands in the cache, not the runner's pre-existing toolchains.
 3. **Cold restore smoke test**: untar the cache into a clean `$RUSTUP_HOME` and run `rustup show` + `rustc --version`. Catches "the cache restored but rustup can't see it" failures.
 4. **Stat the archive size** before and after `--long=27`, before and after `-19` — cache stats are diagnostic gold. Pipe through `statsCollector` (`src/lib/stats-collector.ts`) so warm runs surface size drift over time.
 

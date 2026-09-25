@@ -680,7 +680,7 @@ save cost, restore cost, and hit rate for the current workload.
 | `cargo-registry` | `default-off` | Opt-in companion layer (`cargo-registry-cache: true`). Gate keep/retire decisions on multi-run or real-cache data. | Should beat noise after save cost and should never stall without a bounded timeout artifact. |
 | `setup-cache` | `default-on` | Mechanics/install layer; part of the always-on `cache` umbrella switch. | Report save/restore mechanics separately from build warm speedup. |
 | `soldr-mini` | `default-on` | Mechanics/install layer (binary-only, keyed on version+platform). | Report save/restore mechanics separately from build warm speedup. |
-| `solo-toolchain` | `default-off` | Delta-only and opt-in. | Default stable on hosted runners should produce an empty or tiny delta. |
+| `solo-toolchain` | `default-on` | Whole resolved toolchain dir (`toolchains/<channel>-<host>` + the rustup proxies the install added) sealed at install time, before job steps; key omits the soldr version (#525). Disabled by `solo-toolchain-cache: false` or `cache: false` (no scans, lookup, or save). | Zero cache writes when the runner image already ships the resolved release. |
 | `all-on` benchmark mode | `opt-in-by-workload` | Benchmark-only mode, never a runtime default. Diagnostic only. | Must not archive hosted-runner Rust toolchains unless explicitly requested. |
 
 `bench-cache-modes.yml` labels synthetic local tar/zstd results in the CSV and

@@ -17,7 +17,6 @@ import {
   markPhase,
   finishPhase,
   setupPhaseSummaryOneLine,
-  timeSubPhase,
 } from "./lib/phase-timing.js";
 import { ensureRustToolchain } from "./lib/ensure-rust-toolchain.js";
 import { ensureSoldr } from "./lib/ensure-soldr.js";
@@ -32,21 +31,12 @@ import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { restoreCargoRegistryArchive } from "./lib/cargo-registry-archive.js";
 import { parseIsolatedSeedTargets, seedIsolatedBuildCache } from "./lib/seed-isolated-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
+import { detectLibc } from "./lib/solo-toolchain-cache.js";
+import { runSoloToolchainPhase, soloToolchainCacheEnabled } from "./lib/solo-toolchain-phase.js";
 import {
-  walkSnapshot,
-  diffSnapshots,
-  diffStats,
-  serializeManifest,
-} from "./lib/toolchain-snapshot.js";
-import {
-  buildSoloCacheKeys,
-  detectLibc,
-  hashStringArray,
-  restoreSoloCache,
-  soloCacheArchivePath,
-  verifyRestoredToolchain,
-  type RootMap as SoloRootMap,
-} from "./lib/solo-toolchain-cache.js";
+  SOLO_TOOLCHAIN_UPLOAD_WORKER_ARG,
+  runSoloToolchainUploadWorker,
+} from "./lib/solo-toolchain-upload.js";
 import {
   buildCookBaseCacheKey,
   buildCookCacheKey,
@@ -1009,218 +999,33 @@ export async function run(): Promise<void> {
   }
 
   // ---- toolchain ----
-  // Snapshot $RUSTUP_HOME/toolchains/ + $CARGO_HOME/bin/ around the
-  // toolchain install so we can see which inodes setup-soldr added on
-  // top of the runner image. When solo-toolchain-cache is opted in, a
-  // third snapshot is taken *before* the cache restore so the saved
-  // tarball captures the full above-runner state — not just the
-  // post-restore delta. See CLAUDE.md "Detect-then-cache" + "Cache-
-  // lifetime axis".
+  // #525: seal the resolved toolchain directory at install time. No scans of
+  // $RUSTUP_HOME/toolchains: one stat decides whether the image already ships
+  // the release; an exact hit skips install and save; a miss archives
+  // toolchains/<channel>-<host> right after install and uploads it from a
+  // detached worker while the job runs. cache: false disables this layer.
   await markPhase("toolchain");
-  const snapshotRoots = [
-    path.join(result.rustupHome, "toolchains"),
-    path.join(result.cargoHome, "bin"),
-  ];
-  const soloRootMap: SoloRootMap = {
-    "rustup-toolchains": snapshotRoots[0] as string,
-    "cargo-bin": snapshotRoots[1] as string,
-  };
-  const soloEnabled = isTruthy(inputs.soloToolchainCache);
-  // #310: default-changed from "19" → "9". Measured first-save cost
-  // dropped from ~104s → ~12s on 140 MB toolchain delta; restore stays
-  // bandwidth-bound either way.
-  const soloLevel = (inputs.soloToolchainCacheLevel.trim() || "9");
-  let soloKeys: ReturnType<typeof buildSoloCacheKeys> | null = null;
-  let soloMatchedKey = "";
-  let soloExactHit = false;
-  let forceToolchainRepair = false;
-  let soloRestoreInvalid = false;
-  let soloRestoredBytes = 0;
-  // Pre-restore snapshot — only needed when solo cache is enabled, so
-  // we can compute the full save-diff (post-install vs runner-image,
-  // not vs post-restore baseline). (#302: timed as sub-phase.)
-  const preRestoreSnapshot = soloEnabled
-    ? await timeSubPhase("toolchain", "snapshot-pre", () => walkSnapshot(snapshotRoots))
-    : null;
-  if (soloEnabled) {
-    soloKeys = buildSoloCacheKeys({
-      runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
-      runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
-      libc: detectLibc(),
-      rustcRelease: result.toolchain.cacheChannel.trim() || result.toolchain.channel.trim(),
-      componentsHash: hashStringArray(result.toolchain.components),
-      targetsHash: hashStringArray(result.toolchain.targets),
-      soldrVersion: result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim() || "unset",
-    });
-    logger.log(`solo-toolchain-cache: key=${soloKeys.exact}`);
-    const restoreT0 = Date.now();
-    const stagingDir = path.join(ctx.runnerTemp, "setup-soldr-solo-cache");
-    const restored = await timeSubPhase("toolchain", "solo-restore", () =>
-      restoreSoloCache({
-        keys: soloKeys!,
-        rootMap: soloRootMap,
-        stagingDir,
-        log: (msg) => logger.log(msg),
-        // #316 follow-up: pass canonical archive path explicitly so
-        // save and restore agree regardless of stagingDir layout.
-        cacheArchivePath: soloCacheArchivePath(ctx.runnerTemp),
-      }),
-    );
-    soloMatchedKey = restored.matchedKey;
-    soloRestoredBytes = restored.restoredBytes;
-    let verifiedMatch = true;
-    if (restored.verified && restored.matchedKey) {
-      const expected = result.toolchain.cacheChannel.trim();
-      // The rustup home is set up so `rustc` will resolve through the
-      // restored toolchain dir. Use `rustc` from PATH (rustup shim) or
-      // the cargo bin one.
-      const rustcCmd = process.platform === "win32" ? "rustc.exe" : "rustc";
-      const verify = await verifyRestoredToolchain({
-        expectedRelease: expected,
-        expectedTargets: result.toolchain.targets,
-        expectedComponents: result.toolchain.components,
-        channel: result.toolchain.channel,
-        rustupCommand: process.platform === "win32" ? "rustup.exe" : "rustup",
-        log: (msg) => logger.log(msg),
-      });
-      verifiedMatch = verify.match;
-    }
-    soloRestoreInvalid = Boolean(restored.matchedKey) && (!restored.verified || !verifiedMatch);
-    forceToolchainRepair = soloRestoreInvalid;
-    if (soloRestoreInvalid) {
-      core.warning(
-        `solo-toolchain-cache: restored entry failed validation; key=${restored.matchedKey} ` +
-          `archive=${restored.restoredBytes}B. The requested toolchain and targets will be repaired, ` +
-          `then the poisoned cache entry will be deleted and replaced (#473).`,
-      );
-    }
-    soloExactHit = restored.hit && restored.verified && verifiedMatch;
-    core.saveState("soloToolchainEnabled", "true");
-    core.saveState("soloToolchainExactKey", soloKeys.exact);
-    core.saveState("soloToolchainMatchedKey", soloMatchedKey);
-    core.saveState("soloToolchainExactHit", soloExactHit ? "true" : "false");
-    core.saveState("soloToolchainRestoreInvalid", soloRestoreInvalid ? "true" : "false");
-    core.saveState("soloToolchainInvalidMatchedKey", soloRestoreInvalid ? soloMatchedKey : "");
-    core.saveState("soloToolchainRestoredBytes", String(soloRestoredBytes));
-    core.saveState("soloToolchainLevel", soloLevel);
-    statsCollector.record({
-      label: "solo-toolchain-cache",
-      operation: "restore",
-      hit: soloExactHit,
-      key: soloKeys.exact,
-      matchedKey: soloMatchedKey,
-      restoreKeys: soloKeys.fallbacks,
-      archiveBytes: restored.restoredBytes || null,
-      inflatedBytes: null,
-      fileCount: null,
-      durationMs: Date.now() - restoreT0,
-      timestamp: new Date().toISOString(),
-    });
-  } else {
-    core.saveState("soloToolchainEnabled", "false");
-    core.saveState("soloToolchainRestoreInvalid", "false");
-  }
-  const baselineSnapshot = await timeSubPhase("toolchain", "snapshot-base", () =>
-    walkSnapshot(snapshotRoots),
-  );
-  // #323: when solo-cache exact-hit AND verifyRestoredToolchain
-  // passed, the requested toolchain is already on disk from the
-  // restore. `rustup toolchain install` would be a no-op but still
-  // costs ~8s on hosted runners (self-update check, metadata fetch,
-  // profile diff). Skip the install entirely on the verified
-  // exact-hit path. The snapshot still runs so cache-save logic
-  // downstream sees an unchanged tree (install-delta empty).
-  if (soloExactHit) {
-    logger.log(
-      "toolchain: solo-cache exact-hit + verified — skipping rustup install (#323)",
-    );
-    // The restored tree is already valid, but the skipped installer is also
-    // where ensureRustToolchain normally exports the selected channel. Keep
-    // cache-hit jobs explicit so rustup proxies used by later probes never
-    // depend on a runner-global default toolchain.
-    core.exportVariable("RUSTUP_TOOLCHAIN", result.toolchain.channel);
-    process.env["RUSTUP_TOOLCHAIN"] = result.toolchain.channel;
-  } else {
-    await timeSubPhase("toolchain", "rustup-install", () =>
-      ensureRustToolchain({
-        resolveResult: result,
-        setupCacheExactHit,
-        forceRepair: forceToolchainRepair,
-      }),
-    );
-    if (forceToolchainRepair) {
-      const repaired = await verifyRestoredToolchain({
-        expectedRelease: result.toolchain.cacheChannel.trim(),
-        expectedTargets: result.toolchain.targets,
-        expectedComponents: result.toolchain.components,
-        channel: result.toolchain.channel,
-        rustupCommand: process.platform === "win32" ? "rustup.exe" : "rustup",
-        log: (msg) => logger.log(msg),
-      });
-      if (!repaired.match) {
-        throw new Error(
-          `solo-toolchain-cache: repair did not restore the requested toolchain and targets for key=${soloMatchedKey}`,
-        );
-      }
-      logger.log(`solo-toolchain-cache: repaired toolchain and requested targets verified for key=${soloMatchedKey}`);
-    }
-  }
-  const postInstallSnapshot = await timeSubPhase("toolchain", "snapshot-post", () =>
-    walkSnapshot(snapshotRoots),
-  );
-  const toolchainDiff = diffSnapshots(baselineSnapshot, postInstallSnapshot);
-  const toolchainDiffStats = diffStats(toolchainDiff);
-  // When solo cache is enabled, also compute the save-diff (post-install
-  // vs pre-restore) so post.ts has the full above-runner manifest to tar.
-  if (soloEnabled && preRestoreSnapshot && ctx.runnerTemp) {
-    const saveDiff = diffSnapshots(preRestoreSnapshot, postInstallSnapshot);
-    const saveDiffStats = diffStats(saveDiff);
-    const saveDiffPath = path.join(ctx.runnerTemp, "setup-soldr-solo-save-diff.json");
-    try {
-      await fs.promises.writeFile(
-        saveDiffPath,
-        serializeManifest(saveDiff, saveDiffStats),
-        "utf8",
-      );
-      core.saveState("soloToolchainSaveDiffPath", saveDiffPath);
-      core.saveState("soloToolchainIncrementalEmpty", toolchainDiff.added.length === 0 ? "true" : "false");
-      logger.log(
-        `solo-toolchain-cache: save-diff added=${saveDiffStats.addedFiles} files (${
-          saveDiffStats.addedBytes < 1024 * 1024
-            ? `${(saveDiffStats.addedBytes / 1024).toFixed(1)}KB`
-            : `${(saveDiffStats.addedBytes / 1024 / 1024).toFixed(1)}MB`
-        }) ` +
-          `incremental-empty=${toolchainDiff.added.length === 0}`,
-      );
-    } catch (err) {
-      logger.log(
-        `solo-toolchain-cache: save-diff write failed: ${
-          err instanceof Error ? err.message : String(err)
-        }`,
-      );
-    }
-  }
-  const fmtMB = (bytes: number): string =>
-    bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)}KB` : `${(bytes / 1024 / 1024).toFixed(1)}MB`;
-  logger.log(
-    `toolchain-snapshot: added=${toolchainDiffStats.addedFiles} files (${fmtMB(toolchainDiffStats.addedBytes)}) ` +
-      `changed=${toolchainDiffStats.changedFiles} removed=${toolchainDiffStats.removedFiles}`,
-  );
-  if (ctx.runnerTemp) {
-    const manifestPath = path.join(ctx.runnerTemp, "setup-soldr-toolchain-diff.json");
-    try {
-      await fs.promises.writeFile(
-        manifestPath,
-        serializeManifest(toolchainDiff, toolchainDiffStats),
-        "utf8",
-      );
-      logger.log(`toolchain-snapshot: manifest at ${manifestPath}`);
-    } catch (err) {
-      logger.log(
-        `toolchain-snapshot: manifest write failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-  }
+  await runSoloToolchainPhase({
+    enabled: soloToolchainCacheEnabled({ soloToolchainCache: inputs.soloToolchainCache, cache: inputs.cache }),
+    rustupHome: result.rustupHome,
+    cargoHome: result.cargoHome,
+    runnerTemp: ctx.runnerTemp,
+    channel: result.toolchain.channel,
+    release: result.toolchain.cacheChannel.trim() || result.toolchain.channel.trim(),
+    components: result.toolchain.components,
+    targets: result.toolchain.targets,
+    runnerOs: ctx.runnerOs.toLowerCase() || process.platform,
+    runnerArch: ctx.runnerArch.toLowerCase() || process.arch,
+    level: inputs.soloToolchainCacheLevel.trim() || "9", // #310
+    debug: debugMode,
+    entrypoint: process.argv[1] ?? "",
+    deps: {
+      install: (forceRepair) => ensureRustToolchain({ resolveResult: result, setupCacheExactHit, forceRepair }),
+      log: (msg) => logger.log(msg),
+      warn: (msg) => core.warning(msg),
+      recordRestore: (op) => statsCollector.record(op),
+    },
+  });
   await finishPhase("toolchain");
 
   // ---- install soldr ----
@@ -1853,6 +1658,22 @@ if (
       runYankAuditWorker(configPath, resultPath).catch(() => {
         process.exitCode = 1;
       });
+    }
+  } else if (process.argv[2] === SOLO_TOOLCHAIN_UPLOAD_WORKER_ARG) {
+    // #525: detached solo toolchain upload started by the toolchain phase.
+    const configPath = process.argv[3];
+    const resultPath = process.argv[4];
+    if (!configPath || !resultPath) {
+      process.exitCode = 2;
+    } else {
+      runSoloToolchainUploadWorker(configPath, resultPath).then(
+        (r) => {
+          if (r.status === "failed") process.exitCode = 1;
+        },
+        () => {
+          process.exitCode = 1;
+        },
+      );
     }
   } else {
     run().catch((err: unknown) => {

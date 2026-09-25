@@ -54494,6 +54494,192 @@ exports._internal = {
 
 /***/ }),
 
+/***/ 23543:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Phase timing helpers. Owned by Agent 2.
+//
+// Port of .github/actions/setup-soldr/phase_timing.py.
+// Records SETUP_SOLDR_PHASE_<NAME>_START_MS in $GITHUB_ENV on `mark`, and on
+// `finish` computes elapsed seconds and writes them to $GITHUB_OUTPUT.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.markPhase = markPhase;
+exports.finishPhase = finishPhase;
+exports.setupPhaseSummaryOneLine = setupPhaseSummaryOneLine;
+exports.timeSubPhase = timeSubPhase;
+const core = __importStar(__nccwpck_require__(37484));
+function phaseEnvName(name) {
+    const cleaned = name.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase() || "PHASE";
+    return `SETUP_SOLDR_PHASE_${cleaned}_START_MS`;
+}
+function nowMs() {
+    return Date.now();
+}
+/**
+ * Record the start time of `phase` to $GITHUB_ENV. The orchestrator can read
+ * the env var back in a later step (via `process.env`) or via `finishPhase`.
+ */
+async function markPhase(phase) {
+    const name = phaseEnvName(phase);
+    const value = String(nowMs());
+    core.exportVariable(name, value);
+    // exportVariable updates process.env so finishPhase in the same JS process
+    // can read it. No-op when GITHUB_ENV is not set.
+}
+/**
+ * Compute the elapsed seconds for `phase` and write it to $GITHUB_OUTPUT
+ * as `seconds=<n>`. Returns the elapsed seconds value.
+ */
+async function finishPhase(phase) {
+    const name = phaseEnvName(phase);
+    const startRaw = (process.env[name] ?? "").trim();
+    let startMs = 0;
+    if (startRaw) {
+        const parsed = Number(startRaw);
+        if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
+            startMs = Math.floor(parsed);
+        }
+    }
+    const elapsedMs = startMs ? Math.max(0, nowMs() - startMs) : 0;
+    const seconds = elapsedMs / 1000;
+    const formatted = seconds.toFixed(3);
+    core.setOutput(`${phase}_seconds`, formatted);
+    core.setOutput(`${phase}_milliseconds`, String(elapsedMs));
+    return seconds;
+}
+/**
+ * Read every recorded SETUP_SOLDR_PHASE_*_START_MS env var (in the
+ * declared order) and produce a one-line aggregate of how long each
+ * phase took. Durations are computed as the delta between adjacent
+ * phase start times; the final phase's duration is `now - phase_start`.
+ *
+ * Mirrors the post-step `cache save totals:` line from
+ * `StatsCollector.saveSummaryOneLine()`. Surfaces the pre-build
+ * budget at a glance instead of requiring operators to read raw
+ * SETUP_SOLDR_PHASE_*_START_MS env vars or scroll the timeline.
+ *
+ * Returns "" when no phase start markers are present (e.g. test
+ * harness running without env var infrastructure). Phases whose env
+ * var isn't set are silently skipped (passthrough mode, partial
+ * runs, etc.).
+ */
+function setupPhaseSummaryOneLine(orderedPhases) {
+    const now = nowMs();
+    const records = [];
+    for (const phase of orderedPhases) {
+        const raw = (process.env[phaseEnvName(phase)] ?? "").trim();
+        if (!raw)
+            continue;
+        const parsed = Number(raw);
+        if (Number.isNaN(parsed) || !Number.isFinite(parsed))
+            continue;
+        records.push({ name: phase, startMs: Math.floor(parsed) });
+    }
+    if (records.length === 0)
+        return "";
+    // #302: include sub-phase breakdown inline `{sub=Xs sub=Ys}` when a
+    // parent phase has any recorded sub-phases. Threshold-gated below so
+    // skip-fast phases (zccache-seed=0.1s) don't add noise.
+    const SUBPHASE_DISPLAY_THRESHOLD_MS = 1_000;
+    const segments = [];
+    for (let i = 0; i < records.length; i += 1) {
+        const cur = records[i];
+        const endMs = i + 1 < records.length ? records[i + 1].startMs : now;
+        const durMs = Math.max(0, endMs - cur.startMs);
+        let seg = `${cur.name}=${(durMs / 1000).toFixed(1)}s`;
+        if (durMs >= SUBPHASE_DISPLAY_THRESHOLD_MS) {
+            const subs = readSubPhaseDurations(cur.name);
+            if (subs.length > 0) {
+                seg += ` {${subs.map(([n, ms]) => `${n}=${(ms / 1000).toFixed(1)}s`).join(" ")}}`;
+            }
+        }
+        segments.push(seg);
+    }
+    const totalMs = now - records[0].startMs;
+    return `setup phase totals: ${segments.join(" ")} total=${(totalMs / 1000).toFixed(1)}s`;
+}
+function subPhaseEnvName(parent, name) {
+    const cleanParent = parent.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase() || "PHASE";
+    const cleanName = name.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase() || "SUB";
+    return `SETUP_SOLDR_PHASE_${cleanParent}_SUB_${cleanName}_MS`;
+}
+/**
+ * Time the async/sync `body` as a sub-phase of `parent`. Records the
+ * duration into `SETUP_SOLDR_PHASE_<parent>_SUB_<name>_MS` and returns
+ * the body's result. Errors are propagated; the duration is still
+ * recorded so failed sub-phases show up in the summary. (#302)
+ */
+async function timeSubPhase(parent, name, body) {
+    const start = nowMs();
+    try {
+        return await body();
+    }
+    finally {
+        const ms = Math.max(0, nowMs() - start);
+        // Aggregate across multiple calls with the same name (e.g. when a
+        // sub-phase fires in a loop) by adding to the existing value.
+        const env = subPhaseEnvName(parent, name);
+        const prev = Number((process.env[env] ?? "").trim()) || 0;
+        core.exportVariable(env, String(prev + ms));
+    }
+}
+/** Read all SETUP_SOLDR_PHASE_<parent>_SUB_*_MS env vars for `parent`. */
+function readSubPhaseDurations(parent) {
+    const cleanParent = parent.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase() || "PHASE";
+    const prefix = `SETUP_SOLDR_PHASE_${cleanParent}_SUB_`;
+    const out = [];
+    for (const [key, raw] of Object.entries(process.env)) {
+        if (!key.startsWith(prefix) || !key.endsWith("_MS"))
+            continue;
+        const name = key.slice(prefix.length, -"_MS".length).toLowerCase();
+        const ms = Number((raw ?? "").trim());
+        if (!Number.isFinite(ms) || ms <= 0)
+            continue;
+        out.push([name, ms]);
+    }
+    // Stable order: largest first so the slowest sub-phase reads first.
+    out.sort((a, b) => b[1] - a[1]);
+    return out;
+}
+
+
+/***/ }),
+
 /***/ 52183:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -55479,18 +55665,27 @@ function isEligibleForMiniCache(opts) {
 "use strict";
 
 // Toolchain "solo" cache — long-lived, small, per-platform cache holding
-// only what setup-soldr added to $RUSTUP_HOME/toolchains/ and
-// $CARGO_HOME/bin/ on top of the runner image baseline.
+// exactly one sealed rustup toolchain directory
+// (`$RUSTUP_HOME/toolchains/<release>-<host>`) plus the rustup proxies in
+// `$CARGO_HOME/bin/` that setup-soldr installed for it.
 //
 // Foundation layer per CLAUDE.md "Cache-lifetime axis: build the
 // foundation first". Wraps `@actions/cache` with a staging-dir-based
-// save (so we tar only the diff inodes, not the whole RUSTUP_HOME) and
-// a verify-after-restore step (so a corrupt cache entry is treated as
-// a miss rather than booby-trapping the run).
+// save and a verify-after-restore step (so a corrupt cache entry is
+// treated as a miss rather than booby-trapping the run).
 //
-// Opt-in for v1 via the `solo-toolchain-cache` input. The save path
-// short-circuits when the snapshot diff is empty — which is the
-// dominant case on hosted runners that already ship rustup + stable.
+// #525: the toolchain is sealed (copied into the staging dir) at install
+// time, before any job step runs, so later in-place writes such as
+// `rustup target add` can never leak into the archive (#507). setup-soldr
+// already knows the exact directory it installs, so there are no
+// snapshot scans of `$RUSTUP_HOME/toolchains/` at all: "did the directory
+// exist before the install" (one stat, see `soloPathExists`) replaces
+// the old scan-and-diff. The key carries no soldr version, because the
+// rustc bytes do not depend on it; format changes bump
+// `SOLO_CACHE_SCHEMA_VERSION` instead (#328).
+//
+// Opt-in via the `solo-toolchain-cache` input. With the input off, none
+// of this module's filesystem or cache-API paths run.
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -55525,14 +55720,20 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.defaultSoloFs = exports.SOLO_KEY_NAMESPACE_ENV = exports.SOLO_CACHE_SCHEMA_VERSION = void 0;
 exports.soloCacheArchivePath = soloCacheArchivePath;
 exports.soloCacheEntryExistsForRef = soloCacheEntryExistsForRef;
 exports.deleteCorruptSoloCacheEntries = deleteCorruptSoloCacheEntries;
 exports.detectLibc = detectLibc;
 exports.hashStringArray = hashStringArray;
+exports.soloKeyNamespaceFromEnv = soloKeyNamespaceFromEnv;
 exports.buildSoloCacheKeys = buildSoloCacheKeys;
-exports.stageDiffForSave = stageDiffForSave;
-exports.applyStagedToLiveRoots = applyStagedToLiveRoots;
+exports.rustHostTriple = rustHostTriple;
+exports.toolchainDirName = toolchainDirName;
+exports.soloPathExists = soloPathExists;
+exports.sealToolchainForSave = sealToolchainForSave;
+exports.applySealedToolchain = applySealedToolchain;
+exports.verifyListedTargetStd = verifyListedTargetStd;
 exports.saveSoloCache = saveSoloCache;
 exports.restoreSoloCache = restoreSoloCache;
 exports.verifyRestoredToolchain = verifyRestoredToolchain;
@@ -55545,11 +55746,12 @@ const cache = __importStar(__nccwpck_require__(5116));
 const exec = __importStar(__nccwpck_require__(95236));
 const github = __importStar(__nccwpck_require__(93228));
 const cache_compress_js_1 = __nccwpck_require__(24978);
-/**
- * The two live roots whose deltas this cache layer tracks. The string keys
- * are also the directory names used inside the tarball staging layout.
- */
-const ROOT_TAGS = ["rustup-toolchains", "cargo-bin"];
+/** Staging-layout directory holding the sealed `toolchains/<dir>` tree. */
+const STAGED_TOOLCHAINS = "rustup-toolchains";
+/** Staging-layout directory holding the rustup proxies from `$CARGO_HOME/bin`. */
+const STAGED_CARGO_BIN = "cargo-bin";
+/** Staging-layout directory holding `$RUSTUP_HOME/update-hashes/<dir>`. */
+const STAGED_UPDATE_HASHES = "rustup-update-hashes";
 /**
  * Canonical archive path passed to `@actions/cache.saveCache` and
  * `restoreCache`. **MUST be identical on both sides.**
@@ -55710,133 +55912,412 @@ function hashStringArray(items) {
  */
 // v3 (#473) stages repaired `changed` files as well as newly `added` files,
 // invalidating the incomplete v2 entries that could contain only six files.
-const SOLO_CACHE_SCHEMA_VERSION = 3;
+// v4 (#525) whole-toolchain sealed archive, key drops the soldr version.
+exports.SOLO_CACHE_SCHEMA_VERSION = 4;
+/**
+ * Test-only knob: a namespace folded into every solo key so that the
+ * end-to-end probe (`.github/workflows/solo-toolchain-probe.yml`) can
+ * write run-scoped entries and delete them afterwards (#513). Consumers
+ * never set it; an unset or blank value leaves the key shape unchanged.
+ */
+exports.SOLO_KEY_NAMESPACE_ENV = "SETUP_SOLDR_SOLO_TOOLCHAIN_KEY_NAMESPACE";
+function sanitizeKeyNamespace(raw) {
+    return raw.trim().replace(/[^A-Za-z0-9._-]/g, "_");
+}
+/**
+ * Read the test-only key namespace from `SOLO_KEY_NAMESPACE_ENV`. Every
+ * character outside `[A-Za-z0-9._-]` becomes `_`; blank → "".
+ */
+function soloKeyNamespaceFromEnv(env = process.env) {
+    return sanitizeKeyNamespace(env[exports.SOLO_KEY_NAMESPACE_ENV] ?? "");
+}
 function buildSoloCacheKeys(parts) {
     const release = parts.rustcRelease.trim() || "unresolved";
-    const base = `solo-toolchain-v${SOLO_CACHE_SCHEMA_VERSION}-${parts.runnerOs}-${parts.runnerArch}-${parts.libc}-rustc${release}`;
-    const exact = `${base}-c${parts.componentsHash}-t${parts.targetsHash}-soldr${parts.soldrVersion}`;
+    const ns = sanitizeKeyNamespace(parts.namespace ?? "");
+    // The namespace lives in the base so every fallback prefix stays
+    // scoped to it; a probe run can never restore a consumer's entry.
+    const base = `solo-toolchain-v${exports.SOLO_CACHE_SCHEMA_VERSION}-` +
+        (ns ? `ns${ns}-` : "") +
+        `${parts.runnerOs}-${parts.runnerArch}-${parts.libc}-rustc${release}`;
+    const exact = `${base}-c${parts.componentsHash}-t${parts.targetsHash}`;
     return {
         exact,
         fallbacks: [
-            `${base}-c${parts.componentsHash}-t${parts.targetsHash}-soldr`,
-            `${base}-c${parts.componentsHash}-t-soldr`,
-            `${base}-c-t-soldr`,
+            // 1) drop targets, 2) also drop components. Never os/arch/libc/release.
+            `${base}-c${parts.componentsHash}-t`,
+            `${base}-c`,
         ],
     };
 }
-function findRootTag(absRoot, rootMap) {
-    for (const tag of ROOT_TAGS) {
-        if (rootMap[tag] === absRoot)
-            return tag;
+/**
+ * Map a runner platform/arch/libc to the rustup host triple, i.e. the
+ * suffix rustup appends to toolchain directory names. Accepts both
+ * Node (`linux`/`darwin`/`win32`, `x64`/`arm64`) and GitHub runner
+ * (`Linux`/`macOS`/`Windows`, `X64`/`ARM64`) spellings. Returns null for
+ * anything else so callers can disable the cache instead of guessing.
+ */
+function rustHostTriple(platform, arch, libc) {
+    const p = platform.trim().toLowerCase();
+    const a = arch.trim().toLowerCase();
+    let cpu;
+    if (a === "x64" || a === "amd64")
+        cpu = "x86_64";
+    else if (a === "arm64" || a === "aarch64")
+        cpu = "aarch64";
+    else
+        return null;
+    if (p === "linux") {
+        return `${cpu}-unknown-linux-${libc.trim().toLowerCase() === "musl" ? "musl" : "gnu"}`;
     }
+    if (p === "darwin" || p === "macos")
+        return `${cpu}-apple-darwin`;
+    if (p === "win32" || p === "windows")
+        return `${cpu}-pc-windows-msvc`;
     return null;
 }
-async function ensureDir(p) {
-    await fsp.mkdir(p, { recursive: true });
+/**
+ * rustup stores toolchains as `<spec>-<host>` (see
+ * `fsInstalledToolchains` in `./toolchain.ts`). A channel that already
+ * names this host (`stable-x86_64-unknown-linux-gnu`) is its own directory
+ * name; rustup does not append the host twice.
+ */
+function toolchainDirName(channel, hostTriple) {
+    const spec = channel.trim();
+    if (spec.endsWith(`-${hostTriple}`))
+        return spec;
+    return `${spec}-${hostTriple}`;
+}
+exports.defaultSoloFs = {
+    stat: (p) => fsp.stat(p),
+    lstat: (p) => fsp.lstat(p),
+    readdir: (p) => fsp.readdir(p, { withFileTypes: true }),
+    readFile: (p) => fsp.readFile(p, "utf8"),
+    readlink: (p) => fsp.readlink(p),
+    mkdir: async (p) => {
+        await fsp.mkdir(p, { recursive: true });
+    },
+    copyFile: (src, dst) => fsp.copyFile(src, dst, fs.constants.COPYFILE_FICLONE),
+    symlink: (target, p) => fsp.symlink(target, p),
+    link: (src, dst) => fsp.link(src, dst),
+    rename: (src, dst) => fsp.rename(src, dst),
+    rm: (p) => fsp.rm(p, { recursive: true, force: true }),
+};
+function errnoCode(err) {
+    return err?.code;
 }
 /**
- * Copy newly added and repaired/changed inodes into a flat staging directory
- * structured as `<stagingDir>/<root-tag>/<relpath>`. The staging dir
- * is what `compressCache` later tars + zstds. Returns the count of
- * actually-copied files (directories and symlinks are recreated rather
- * than copied byte-for-byte).
+ * Exactly one `stat`. Missing (ENOENT/ENOTDIR) → false; any other error
+ * is rethrown so callers never mistake an unreadable path for an absent
+ * one.
  */
-async function stageDiffForSave(diff, rootMap, stagingDir) {
-    await fsp.rm(stagingDir, { recursive: true, force: true });
-    await ensureDir(stagingDir);
-    let stagedFiles = 0;
-    let stagedSymlinks = 0;
-    let missingFiles = 0;
-    const entries = [...diff.added, ...diff.changed.map((change) => change.after)];
-    for (const entry of entries) {
-        const tag = findRootTag(entry.root, rootMap);
-        if (tag === null)
-            continue;
-        const src = path.join(entry.root, entry.relpath);
-        const dst = path.join(stagingDir, tag, entry.relpath);
-        await ensureDir(path.dirname(dst));
-        if (entry.kind === "directory") {
-            await ensureDir(dst);
-            continue;
+async function soloPathExists(p, sfs = exports.defaultSoloFs) {
+    try {
+        await sfs.stat(p);
+        return true;
+    }
+    catch (err) {
+        const code = errnoCode(err);
+        if (code === "ENOENT" || code === "ENOTDIR")
+            return false;
+        throw err;
+    }
+}
+/** One `lstat`: true when anything (including a dangling symlink) is at `p`. */
+async function soloEntryPresent(p, sfs) {
+    try {
+        await sfs.lstat(p);
+        return true;
+    }
+    catch (err) {
+        const code = errnoCode(err);
+        if (code === "ENOENT" || code === "ENOTDIR")
+            return false;
+        throw err;
+    }
+}
+/** Run `fn` over `items` with at most `limit` in flight. */
+async function forEachLimit(items, limit, fn) {
+    let next = 0;
+    const worker = async () => {
+        while (next < items.length) {
+            const item = items[next];
+            next += 1;
+            await fn(item);
         }
-        if (entry.kind === "symlink") {
-            const target = entry.linkTarget ?? "";
-            try {
-                await fsp.symlink(target, dst);
-                stagedSymlinks += 1;
+    };
+    const workers = [];
+    for (let i = 0; i < Math.min(limit, items.length); i += 1)
+        workers.push(worker());
+    await Promise.all(workers);
+}
+const SEAL_COPY_CONCURRENCY = 16;
+/**
+ * #525/#507: seal the freshly installed toolchain into `stagingDir` at
+ * install time. Walks ONLY `<rustupHome>/toolchains/<toolchainDir>`
+ * (never another toolchain, never following symlinks) and COPIES every
+ * file, so later job steps writing into the live toolchain (for example
+ * `rustup target add`) cannot change what is uploaded.
+ *
+ * Layout: `<stagingDir>/rustup-toolchains/<toolchainDir>/...`,
+ * `<stagingDir>/cargo-bin/<proxy>`,
+ * `<stagingDir>/rustup-update-hashes/<toolchainDir>`.
+ */
+async function sealToolchainForSave(opts) {
+    const sfs = opts.fs ?? exports.defaultSoloFs;
+    const { rustupHome, cargoHome, toolchainDir, stagingDir } = opts;
+    const srcRoot = path.join(rustupHome, "toolchains", toolchainDir);
+    // Wipe first so a failed seal can never leave a previous run's staged
+    // tree behind for the uploader.
+    await sfs.rm(stagingDir);
+    let rootStat;
+    try {
+        rootStat = await sfs.stat(srcRoot);
+    }
+    catch (err) {
+        throw new Error(`solo-toolchain-cache: toolchain dir missing: ${srcRoot} (${err instanceof Error ? err.message : String(err)})`);
+    }
+    if (!rootStat.isDirectory()) {
+        throw new Error(`solo-toolchain-cache: toolchain path is not a directory: ${srcRoot}`);
+    }
+    const result = {
+        files: 0,
+        symlinks: 0,
+        directories: 0,
+        bytes: 0,
+        proxies: 0,
+        updateHash: false,
+    };
+    const dstRoot = path.join(stagingDir, STAGED_TOOLCHAINS, toolchainDir);
+    await sfs.mkdir(dstRoot);
+    result.directories += 1;
+    // Iterative walk mirroring the dirent handling of the removed
+    // toolchain-snapshot walker: readdir withFileTypes, never follow
+    // symlinks (they are recreated verbatim from readlink).
+    const stack = [{ src: srcRoot, dst: dstRoot }];
+    while (stack.length > 0) {
+        const frame = stack.pop();
+        const dirents = await sfs.readdir(frame.src);
+        const leaves = [];
+        for (const dirent of dirents) {
+            if (dirent.isDirectory() && !dirent.isSymbolicLink()) {
+                const child = { src: path.join(frame.src, dirent.name), dst: path.join(frame.dst, dirent.name) };
+                await sfs.mkdir(child.dst);
+                result.directories += 1;
+                stack.push(child);
             }
-            catch {
-                missingFiles += 1;
+            else if (dirent.isSymbolicLink() || dirent.isFile()) {
+                leaves.push(dirent);
             }
-            continue;
+            // sockets/fifos/devices are never part of a toolchain; skip.
         }
+        await forEachLimit(leaves, SEAL_COPY_CONCURRENCY, async (dirent) => {
+            const src = path.join(frame.src, dirent.name);
+            const dst = path.join(frame.dst, dirent.name);
+            if (dirent.isSymbolicLink()) {
+                await sfs.symlink(await sfs.readlink(src), dst);
+                result.symlinks += 1;
+                return;
+            }
+            const size = (await sfs.lstat(src)).size;
+            await sfs.copyFile(src, dst);
+            result.files += 1;
+            result.bytes += size;
+        });
+    }
+    const binSrc = path.join(cargoHome, "bin");
+    const binDst = path.join(stagingDir, STAGED_CARGO_BIN);
+    let binDstReady = false;
+    for (const name of opts.proxies) {
+        const src = path.join(binSrc, name);
+        let st;
         try {
-            await fsp.copyFile(src, dst);
-            stagedFiles += 1;
+            st = await sfs.lstat(src);
+        }
+        catch (err) {
+            const code = errnoCode(err);
+            if (code === "ENOENT" || code === "ENOTDIR")
+                continue;
+            throw err;
+        }
+        if (!st.isSymbolicLink() && !st.isFile())
+            continue;
+        if (!binDstReady) {
+            await sfs.mkdir(binDst);
+            binDstReady = true;
+        }
+        const dst = path.join(binDst, name);
+        if (st.isSymbolicLink()) {
+            await sfs.symlink(await sfs.readlink(src), dst);
+        }
+        else {
+            await sfs.copyFile(src, dst);
+        }
+        result.proxies += 1;
+    }
+    if (opts.includeUpdateHash) {
+        const src = path.join(rustupHome, "update-hashes", toolchainDir);
+        if (await soloPathExists(src, sfs)) {
+            const dstDir = path.join(stagingDir, STAGED_UPDATE_HASHES);
+            await sfs.mkdir(dstDir);
+            await sfs.copyFile(src, path.join(dstDir, toolchainDir));
+            result.updateHash = true;
+        }
+    }
+    return result;
+}
+/**
+ * Apply one staged leaf (file or symlink) to a live destination that is
+ * known to be absent. Files are hardlinked when possible (constant time,
+ * #331) and copied otherwise. Returns false when the entry kind is not
+ * applicable.
+ */
+async function applyStagedLeaf(src, dst, sfs) {
+    const st = await sfs.lstat(src);
+    if (st.isSymbolicLink()) {
+        await sfs.symlink(await sfs.readlink(src), dst);
+        return true;
+    }
+    if (!st.isFile())
+        return false;
+    try {
+        await sfs.link(src, dst);
+    }
+    catch {
+        await sfs.copyFile(src, dst);
+    }
+    return true;
+}
+/**
+ * Move a sealed toolchain from a restored staging tree into place.
+ *
+ * The toolchain directory is renamed into `<rustupHome>/toolchains/`
+ * (constant time); an existing directory of the same name is replaced,
+ * because the cache key pins its exact content. Cross-device staging
+ * (EXDEV/EPERM) falls back to the hardlink-then-copy walk. Proxies and
+ * the update-hash file are applied ONLY when the live destination is
+ * missing: an existing rustup proxy is never overwritten.
+ */
+async function applySealedToolchain(opts) {
+    const sfs = opts.fs ?? exports.defaultSoloFs;
+    const { stagedRoot, rustupHome, cargoHome, toolchainDir } = opts;
+    const toolchainsDir = path.join(rustupHome, "toolchains");
+    await sfs.mkdir(toolchainsDir);
+    const src = path.join(stagedRoot, STAGED_TOOLCHAINS, toolchainDir);
+    const dest = path.join(toolchainsDir, toolchainDir);
+    if (await soloEntryPresent(dest, sfs))
+        await sfs.rm(dest);
+    let renamed = false;
+    try {
+        await sfs.rename(src, dest);
+        renamed = true;
+    }
+    catch (err) {
+        const code = errnoCode(err);
+        if (code !== "EXDEV" && code !== "EPERM")
+            throw err;
+        await sfs.mkdir(dest);
+        await walkAndApply(src, src, dest, sfs, () => { });
+    }
+    let proxiesApplied = 0;
+    const binSrc = path.join(stagedRoot, STAGED_CARGO_BIN);
+    let binEntries = [];
+    try {
+        binEntries = await sfs.readdir(binSrc);
+    }
+    catch {
+        binEntries = [];
+    }
+    if (binEntries.length > 0) {
+        const binDst = path.join(cargoHome, "bin");
+        await sfs.mkdir(binDst);
+        for (const entry of binEntries) {
+            const liveAbs = path.join(binDst, entry.name);
+            if (await soloEntryPresent(liveAbs, sfs))
+                continue;
+            if (await applyStagedLeaf(path.join(binSrc, entry.name), liveAbs, sfs))
+                proxiesApplied += 1;
+        }
+    }
+    let updateHashApplied = false;
+    const hashSrc = path.join(stagedRoot, STAGED_UPDATE_HASHES, toolchainDir);
+    if (await soloEntryPresent(hashSrc, sfs)) {
+        const hashDir = path.join(rustupHome, "update-hashes");
+        const hashDst = path.join(hashDir, toolchainDir);
+        if (!(await soloEntryPresent(hashDst, sfs))) {
+            await sfs.mkdir(hashDir);
+            updateHashApplied = await applyStagedLeaf(hashSrc, hashDst, sfs);
+        }
+    }
+    return { renamed, proxiesApplied, updateHashApplied };
+}
+/**
+ * #525 T6 / #507 item 3: every `rust-std-<target>` that rustup lists in
+ * `<toolchainPath>/lib/rustlib/components` must ship a
+ * `lib/rustlib/<target>/lib/libcore-*.rlib`. Covers targets that the
+ * caller never declared (a poisoned entry that claims a target without
+ * its std).
+ */
+async function verifyListedTargetStd(opts) {
+    const sfs = opts.fs ?? exports.defaultSoloFs;
+    const rustlib = path.join(opts.toolchainPath, "lib", "rustlib");
+    let text;
+    try {
+        text = await sfs.readFile(path.join(rustlib, "components"));
+    }
+    catch {
+        return { ok: false, listed: [], missing: ["lib/rustlib/components"] };
+    }
+    const listed = [];
+    for (const raw of text.split(/\r?\n/)) {
+        const line = raw.trim();
+        if (!line.startsWith("rust-std-"))
+            continue;
+        const target = line.slice("rust-std-".length);
+        if (target && !listed.includes(target))
+            listed.push(target);
+    }
+    const missing = [];
+    for (const target of listed) {
+        let names;
+        try {
+            names = (await sfs.readdir(path.join(rustlib, target, "lib"))).map((d) => d.name);
         }
         catch {
-            missingFiles += 1;
+            names = [];
         }
+        if (!names.some((name) => /^libcore-.*\.rlib$/.test(name)))
+            missing.push(target);
     }
-    return { stagedFiles, stagedSymlinks, missingFiles };
+    return { ok: missing.length === 0, listed, missing };
 }
 /**
- * Inverse of stageDiffForSave: copy files from a (just-restored)
- * staging dir back onto the live $RUSTUP_HOME/$CARGO_HOME roots.
- * Existing destination files are overwritten because the cache key
- * pins the exact content the caller wants.
+ * Hardlink-then-copy walk of a staged tree onto a live directory. Used
+ * only when `applySealedToolchain` cannot rename across devices.
  */
-async function applyStagedToLiveRoots(stagingDir, rootMap) {
-    let appliedFiles = 0;
-    let appliedSymlinks = 0;
-    // #338: track hardlink vs copyFile fallback. On macOS the
-    // observed solo_restore is 2-3× slower than Linux; if hardlinks
-    // are falling back to copies on most files, that explains it.
-    const counters = { hardlink: 0, copy: 0 };
-    for (const tag of ROOT_TAGS) {
-        const tagRoot = path.join(stagingDir, tag);
-        if (!fs.existsSync(tagRoot))
-            continue;
-        const liveRoot = rootMap[tag];
-        await ensureDir(liveRoot);
-        await walkAndApply(tagRoot, tagRoot, liveRoot, (kind) => {
-            if (kind === "file")
-                appliedFiles += 1;
-            if (kind === "symlink")
-                appliedSymlinks += 1;
-        }, counters);
-    }
-    return {
-        appliedFiles,
-        appliedSymlinks,
-        hardlinkSuccesses: counters.hardlink,
-        copyFallbacks: counters.copy,
-    };
-}
-async function walkAndApply(base, dir, liveBase, onApply, counters) {
-    const dirents = await fsp.readdir(dir, { withFileTypes: true });
+async function walkAndApply(base, dir, liveBase, sfs, onApply, counters) {
+    const dirents = await sfs.readdir(dir);
     for (const d of dirents) {
         const abs = path.join(dir, d.name);
         const rel = path.relative(base, abs);
         const liveAbs = path.join(liveBase, rel);
         if (d.isDirectory()) {
-            await ensureDir(liveAbs);
-            await walkAndApply(base, abs, liveBase, onApply, counters);
+            await sfs.mkdir(liveAbs);
+            await walkAndApply(base, abs, liveBase, sfs, onApply, counters);
         }
         else if (d.isSymbolicLink()) {
-            const target = await fsp.readlink(abs);
+            const target = await sfs.readlink(abs);
             try {
-                await fsp.rm(liveAbs, { force: true });
+                await sfs.rm(liveAbs);
             }
             catch { /* */ }
             try {
-                await fsp.symlink(target, liveAbs);
+                await sfs.symlink(target, liveAbs);
                 onApply("symlink");
             }
             catch { /* */ }
         }
         else if (d.isFile()) {
-            await ensureDir(path.dirname(liveAbs));
+            await sfs.mkdir(path.dirname(liveAbs));
             // #331: prefer hardlink over copyFile. On hosted runners the
             // staging dir and the live RUSTUP_HOME are on the same
             // filesystem; hardlink is constant-time (creates a new
@@ -55845,27 +56326,27 @@ async function walkAndApply(base, dir, liveBase, onApply, counters) {
             // Falls back to copyFile on cross-device (EXDEV) or
             // filesystems that don't allow hardlinks (EPERM).
             try {
-                await fsp.link(abs, liveAbs);
+                await sfs.link(abs, liveAbs);
                 if (counters)
                     counters.hardlink += 1;
             }
             catch (err) {
-                const code = err.code;
+                const code = errnoCode(err);
                 if (code === "EEXIST") {
-                    await fsp.unlink(liveAbs).catch(() => undefined);
+                    await sfs.rm(liveAbs).catch(() => undefined);
                     try {
-                        await fsp.link(abs, liveAbs);
+                        await sfs.link(abs, liveAbs);
                         if (counters)
                             counters.hardlink += 1;
                     }
                     catch {
-                        await fsp.copyFile(abs, liveAbs);
+                        await sfs.copyFile(abs, liveAbs);
                         if (counters)
                             counters.copy += 1;
                     }
                 }
                 else {
-                    await fsp.copyFile(abs, liveAbs);
+                    await sfs.copyFile(abs, liveAbs);
                     if (counters)
                         counters.copy += 1;
                 }
@@ -55876,7 +56357,7 @@ async function walkAndApply(base, dir, liveBase, onApply, counters) {
 }
 /**
  * Tar+zstd the staging directory and upload via `@actions/cache`.
- * Caller must have already populated `stagingDir` via stageDiffForSave.
+ * Caller must have already populated `stagingDir` via sealToolchainForSave.
  */
 async function saveSoloCache(opts) {
     const { stagingDir, key, level, debug, log } = opts;
@@ -56000,20 +56481,25 @@ async function saveSoloCache(opts) {
     }
 }
 /**
- * Try to restore the solo cache. Hits decompress + apply the staged
- * contents to live roots. Misses leave the runtime untouched and the
+ * Try to restore the solo cache. Hits decompress the archive and move
+ * the sealed toolchain directory into `<rustupHome>/toolchains/` (see
+ * `applySealedToolchain`). Misses leave the runtime untouched and the
  * normal ensure-rust-toolchain path proceeds.
  */
 async function restoreSoloCache(opts) {
-    const { keys, rootMap, stagingDir, log } = opts;
+    const { keys, rustupHome, cargoHome, toolchainDir, stagingDir, log } = opts;
+    const sfs = opts.fs ?? exports.defaultSoloFs;
+    const restoreCache = opts.restoreCache ??
+        ((paths, key, restoreKeys) => cache.restoreCache(paths, key, restoreKeys));
+    const decompress = opts.decompress ?? cache_compress_js_1.decompressCache;
     // #316: use the canonical archive path that saveSoloCache also uses.
     // Different paths → different cache version → permanent MISS.
     const archivePath = opts.cacheArchivePath ?? soloCacheArchivePath(path.dirname(stagingDir));
-    await ensureDir(path.dirname(archivePath));
-    await fsp.rm(archivePath, { force: true });
+    await sfs.mkdir(path.dirname(archivePath));
+    await sfs.rm(archivePath);
     let matched;
     try {
-        matched = await cache.restoreCache([archivePath], keys.exact, keys.fallbacks);
+        matched = await restoreCache([archivePath], keys.exact, keys.fallbacks);
     }
     catch (err) {
         log(`solo-toolchain-cache: restore failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -56025,7 +56511,7 @@ async function restoreSoloCache(opts) {
     }
     let archiveBytes = 0;
     try {
-        archiveBytes = (await fsp.stat(archivePath)).size;
+        archiveBytes = (await sfs.stat(archivePath)).size;
     }
     catch {
         // archive may not have actually landed; treat as miss
@@ -56039,28 +56525,40 @@ async function restoreSoloCache(opts) {
     }
     const stagingOut = path.join(stagingDir, "staged");
     try {
-        await fsp.rm(stagingOut, { recursive: true, force: true });
+        await sfs.rm(stagingOut);
         // matched is the actual key the restored entry was stored under, which
         // is what the encryption AAD was bound to on save.
-        await (0, cache_compress_js_1.decompressCache)({ archivePath, targetDir: stagingOut, cacheKey: matched });
+        await decompress({ archivePath, targetDir: stagingOut, cacheKey: matched });
     }
     catch (err) {
         log(`solo-toolchain-cache: decompress failed: ${err instanceof Error ? err.message : String(err)}`);
         return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false };
     }
     // decompressCache extracts to dirname(targetDir)/<basename>/, so the
-    // actual staged content lands under stagingOut. Verify by listing.
-    const innerDirs = await fsp.readdir(stagingOut).catch(() => []);
-    if (innerDirs.length === 0) {
-        log("solo-toolchain-cache: restored archive was empty");
+    // staged content lands under stagingOut. A v4 archive holds exactly the
+    // one sealed toolchain directory; anything else is a poisoned entry the
+    // caller repairs.
+    let toolchainNames;
+    try {
+        toolchainNames = (await sfs.readdir(path.join(stagingOut, STAGED_TOOLCHAINS))).map((d) => d.name);
+    }
+    catch {
+        toolchainNames = [];
+    }
+    if (toolchainNames.length !== 1 || toolchainNames[0] !== toolchainDir) {
+        log(`solo-toolchain-cache: archive does not hold exactly ${toolchainDir}`);
         return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false };
     }
     try {
-        const applied = await applyStagedToLiveRoots(stagingOut, rootMap);
+        const applied = await applySealedToolchain({
+            stagedRoot: stagingOut,
+            rustupHome,
+            cargoHome,
+            toolchainDir,
+            fs: sfs,
+        });
         log(`solo-toolchain-cache: restored matched=${matched} archive=${archiveBytes}B ` +
-            `applied files=${applied.appliedFiles} symlinks=${applied.appliedSymlinks} ` +
-            `hardlinks=${applied.hardlinkSuccesses} copy-fallbacks=${applied.copyFallbacks} ` +
-            `(#338 diagnostic)`);
+            `dir=${toolchainDir} renamed=${applied.renamed} proxies=${applied.proxiesApplied}`);
     }
     catch (err) {
         log(`solo-toolchain-cache: apply failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -56209,6 +56707,786 @@ async function verifyRestoredToolchain(opts) {
         }
     }
     return { match: releaseMatch && targetsMatch && componentsMatch, observedRelease };
+}
+
+
+/***/ }),
+
+/***/ 49580:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Main-step toolchain phase with the solo toolchain cache (#525).
+//
+// Replaces the snapshot-pre/base/post walks of $RUSTUP_HOME/toolchains and
+// $CARGO_HOME/bin. setup-soldr already knows the one directory it installs,
+// `toolchains/<channel>-<host>`, so:
+//
+//   1. disabled (`solo-toolchain-cache: false` or `cache: false`): install,
+//      nothing else — no stat, no lookup, no save (T7/T8).
+//   2. one stat of `toolchains/<channel>-<host>`: present before we did
+//      anything → the runner image or setup-cache provides it; install
+//      (a no-op top-up) and never look up or save (T5).
+//   3. restore by key; an exact, verified hit skips install and save (T4).
+//   4. otherwise install, then SEAL the toolchain directory (plus the rustup
+//      proxies the install added) into a private copy right away, before any
+//      job step runs, and start the background upload of that copy (#507).
+//
+// The post step only waits for that upload (`finalizeSoloToolchainSave`).
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SOLO_SUMMARY_FILENAME = exports.SOLO_STATE = void 0;
+exports.soloToolchainCacheEnabled = soloToolchainCacheEnabled;
+exports.runSoloToolchainPhase = runSoloToolchainPhase;
+const fs = __importStar(__nccwpck_require__(73024));
+const path = __importStar(__nccwpck_require__(76760));
+const core = __importStar(__nccwpck_require__(37484));
+const phase_timing_js_1 = __nccwpck_require__(23543);
+const solo_toolchain_cache_js_1 = __nccwpck_require__(67901);
+const solo_toolchain_upload_js_1 = __nccwpck_require__(58666);
+/** State keys shared between the main step (this file) and the post step. */
+exports.SOLO_STATE = {
+    enabled: "soloToolchainEnabled",
+    outcome: "soloToolchainOutcome",
+    exactKey: "soloToolchainExactKey",
+    matchedKey: "soloToolchainMatchedKey",
+    restoreInvalid: "soloToolchainRestoreInvalid",
+    invalidMatchedKey: "soloToolchainInvalidMatchedKey",
+    uploadResultPath: "soloToolchainUploadResultPath",
+    uploadConfigPath: "soloToolchainUploadConfigPath",
+    uploadLogPath: "soloToolchainUploadLogPath",
+};
+/** Written to RUNNER_TEMP; the probe workflow reads it for E3/E4/E7. */
+exports.SOLO_SUMMARY_FILENAME = "setup-soldr-solo-toolchain-summary.json";
+const TRUTHY = new Set(["1", "true", "yes", "on"]);
+const FALSY = new Set(["0", "false", "no", "off"]);
+function isTruthy(value) {
+    return TRUTHY.has((value ?? "").trim().toLowerCase());
+}
+function isFalsy(value) {
+    return FALSY.has((value ?? "").trim().toLowerCase());
+}
+/** `cache: false` is the master switch and disables this layer too (#507 item 4). */
+function soloToolchainCacheEnabled(inputs) {
+    return isTruthy(inputs.soloToolchainCache) && !isFalsy(inputs.cache.trim() || "true");
+}
+function errorMessage(err) {
+    return err instanceof Error ? err.message : String(err);
+}
+async function runSoloToolchainPhase(opts) {
+    const { deps, rustupHome, cargoHome, runnerTemp, channel, release, components, targets } = opts;
+    const timeSubPhase = deps.timeSubPhase ??
+        ((name, body) => (0, phase_timing_js_1.timeSubPhase)("toolchain", name, body));
+    const saveState = deps.saveState ?? ((k, v) => core.saveState(k, v));
+    const log = deps.log ?? ((m) => core.info(m));
+    const warn = deps.warn ?? ((m) => core.warning(m));
+    const recordRestore = deps.recordRestore ?? (() => undefined);
+    const exportToolchain = deps.exportToolchain ?? ((ch) => {
+        core.exportVariable("RUSTUP_TOOLCHAIN", ch);
+        process.env["RUSTUP_TOOLCHAIN"] = ch;
+    });
+    const writeSummary = (summary) => {
+        if (!runnerTemp)
+            return;
+        const summaryPath = path.join(runnerTemp, exports.SOLO_SUMMARY_FILENAME);
+        try {
+            fs.mkdirSync(runnerTemp, { recursive: true });
+            fs.writeFileSync(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf8");
+        }
+        catch (err) {
+            log(`solo-toolchain-cache: summary write failed: ${errorMessage(err)}`);
+        }
+    };
+    // 1. Disabled: the install is the whole phase. No filesystem probe of
+    //    $RUSTUP_HOME, no cache lookup, no save (T7/T8, E7).
+    if (!opts.enabled || !runnerTemp) {
+        await timeSubPhase("rustup-install", () => deps.install(false));
+        saveState(exports.SOLO_STATE.enabled, "false");
+        saveState(exports.SOLO_STATE.outcome, "disabled");
+        saveState(exports.SOLO_STATE.restoreInvalid, "false");
+        writeSummary({ schema: 1, enabled: false, outcome: "disabled" });
+        return { outcome: "disabled", key: "", matchedKey: "", toolchainDir: "", restoreInvalid: false };
+    }
+    const soloFs = deps.fs ?? solo_toolchain_cache_js_1.defaultSoloFs;
+    const platform = opts.platform ?? process.platform;
+    const libc = opts.libc ?? (0, solo_toolchain_cache_js_1.detectLibc)();
+    const namespace = opts.namespace ?? (0, solo_toolchain_cache_js_1.soloKeyNamespaceFromEnv)();
+    let outcome = "disabled";
+    let key = "";
+    let matchedKey = "";
+    let toolchainDir = "";
+    let toolchainPath = "";
+    let existedBefore = false;
+    let restoreInvalid = false;
+    let sealed = null;
+    let proxyNames = [];
+    let upload = null;
+    const finish = () => {
+        saveState(exports.SOLO_STATE.enabled, "true");
+        saveState(exports.SOLO_STATE.outcome, outcome);
+        saveState(exports.SOLO_STATE.exactKey, key);
+        saveState(exports.SOLO_STATE.matchedKey, matchedKey);
+        saveState(exports.SOLO_STATE.restoreInvalid, restoreInvalid ? "true" : "false");
+        saveState(exports.SOLO_STATE.invalidMatchedKey, restoreInvalid ? matchedKey : "");
+        if (upload) {
+            saveState(exports.SOLO_STATE.uploadResultPath, upload.resultPath);
+            saveState(exports.SOLO_STATE.uploadConfigPath, upload.configPath);
+            saveState(exports.SOLO_STATE.uploadLogPath, upload.logPath);
+        }
+        writeSummary({
+            schema: 1,
+            enabled: true,
+            outcome,
+            key,
+            matchedKey,
+            toolchainDir,
+            toolchainPath,
+            existedBefore,
+            restoreInvalid,
+            sealed: sealed
+                ? {
+                    files: sealed.files,
+                    symlinks: sealed.symlinks,
+                    directories: sealed.directories,
+                    bytes: sealed.bytes,
+                    proxies: sealed.proxies,
+                    updateHash: sealed.updateHash,
+                }
+                : null,
+            proxyNames,
+            upload: upload
+                ? { resultPath: upload.resultPath, logPath: upload.logPath, pid: upload.pid, spawnedAtMs: upload.spawnedAtMs }
+                : null,
+        });
+        return { outcome, key, matchedKey, toolchainDir, restoreInvalid };
+    };
+    // 2. No rustup host triple → the directory name is unknowable; never guess.
+    const host = (0, solo_toolchain_cache_js_1.rustHostTriple)(platform, opts.runnerArch, libc);
+    if (!host) {
+        log(`solo-toolchain-cache: no rustup host triple for platform=${platform} arch=${opts.runnerArch} libc=${libc}; ` +
+            `installing without the toolchain cache`);
+        await timeSubPhase("rustup-install", () => deps.install(false));
+        outcome = "unsupported-host";
+        return finish();
+    }
+    // 3. One stat decides "did it exist before?". Nothing else under
+    //    toolchains/ is ever read.
+    toolchainDir = (0, solo_toolchain_cache_js_1.toolchainDirName)(channel, host);
+    toolchainPath = path.join(rustupHome, "toolchains", toolchainDir);
+    const binDir = path.join(cargoHome, "bin");
+    const listProxies = async () => {
+        try {
+            return (await soloFs.readdir(binDir)).map((entry) => entry.name);
+        }
+        catch {
+            return [];
+        }
+    };
+    let proxiesBefore = [];
+    let updateHashBefore = false;
+    existedBefore = await timeSubPhase("solo-probe", async () => {
+        const existed = await (0, solo_toolchain_cache_js_1.soloPathExists)(toolchainPath, soloFs);
+        if (existed)
+            return true;
+        proxiesBefore = await listProxies();
+        updateHashBefore = await (0, solo_toolchain_cache_js_1.soloPathExists)(path.join(rustupHome, "update-hashes", toolchainDir), soloFs);
+        return false;
+    });
+    if (existedBefore) {
+        log(`solo-toolchain-cache: ${toolchainDir} already present (runner image or setup cache); no lookup and no save`);
+        await timeSubPhase("rustup-install", () => deps.install(false));
+        outcome = "image-provided";
+        return finish();
+    }
+    // 4. Restore by key.
+    const platformRustup = platform === "win32" ? "rustup.exe" : "rustup";
+    const verifyRustup = deps.verifyRustup ?? (async () => (await (0, solo_toolchain_cache_js_1.verifyRestoredToolchain)({
+        expectedRelease: release,
+        expectedTargets: targets,
+        expectedComponents: components,
+        channel,
+        rustupCommand: platformRustup,
+        log,
+    })).match);
+    const keys = (0, solo_toolchain_cache_js_1.buildSoloCacheKeys)({
+        runnerOs: opts.runnerOs,
+        runnerArch: opts.runnerArch,
+        libc,
+        rustcRelease: release,
+        componentsHash: (0, solo_toolchain_cache_js_1.hashStringArray)(components),
+        targetsHash: (0, solo_toolchain_cache_js_1.hashStringArray)(targets),
+        namespace,
+    });
+    key = keys.exact;
+    log(`solo-toolchain-cache: key=${keys.exact}`);
+    const restoreT0 = Date.now();
+    const restored = await timeSubPhase("solo-restore", () => (deps.restore ?? solo_toolchain_cache_js_1.restoreSoloCache)({
+        keys,
+        rustupHome,
+        cargoHome,
+        toolchainDir,
+        stagingDir: path.join(runnerTemp, "setup-soldr-solo-cache"),
+        cacheArchivePath: (0, solo_toolchain_cache_js_1.soloCacheArchivePath)(runnerTemp),
+        log,
+        fs: soloFs,
+    }));
+    matchedKey = restored.matchedKey;
+    let valid = false;
+    if (restored.matchedKey && restored.verified) {
+        valid = await verifyRustup();
+        if (valid) {
+            // T6: every target rustup lists must ship its std, declared or not.
+            const listed = await (0, solo_toolchain_cache_js_1.verifyListedTargetStd)({ toolchainPath, fs: soloFs });
+            if (!listed.ok) {
+                log(`solo-toolchain-cache: restored toolchain lists targets without std: ${listed.missing.join(",")}`);
+            }
+            valid = listed.ok;
+        }
+    }
+    restoreInvalid = Boolean(restored.matchedKey) && !(restored.verified && valid);
+    const exactHit = restored.hit && restored.verified && valid;
+    recordRestore({
+        label: "solo-toolchain-cache",
+        operation: "restore",
+        hit: exactHit,
+        key: keys.exact,
+        matchedKey,
+        restoreKeys: keys.fallbacks,
+        archiveBytes: restored.restoredBytes || null,
+        inflatedBytes: null,
+        fileCount: null,
+        durationMs: Date.now() - restoreT0,
+        timestamp: new Date().toISOString(),
+    });
+    if (restoreInvalid) {
+        warn(`solo-toolchain-cache: restored entry failed validation; key=${restored.matchedKey} ` +
+            `archive=${restored.restoredBytes}B. The requested toolchain and targets will be repaired, ` +
+            `then the poisoned cache entry will be deleted and replaced (#473).`);
+    }
+    // 5. Exact, verified hit: no install, no seal, no upload (#323, T4).
+    if (exactHit) {
+        log("toolchain: solo-cache exact-hit + verified — skipping rustup install (#323)");
+        // The skipped installer is also where ensureRustToolchain normally
+        // exports the selected channel. Keep cache-hit jobs explicit so rustup
+        // proxies used by later probes never depend on a runner-global default.
+        exportToolchain(channel);
+        outcome = "exact-hit";
+        return finish();
+    }
+    // 6. Install (or repair), then seal right away and start the upload.
+    await timeSubPhase("rustup-install", () => deps.install(restoreInvalid));
+    if (restoreInvalid) {
+        const repaired = await verifyRustup() && (await (0, solo_toolchain_cache_js_1.verifyListedTargetStd)({ toolchainPath, fs: soloFs })).ok;
+        if (!repaired) {
+            throw new Error(`solo-toolchain-cache: repair did not restore the requested toolchain and targets for key=${matchedKey}`);
+        }
+        log(`solo-toolchain-cache: repaired toolchain and requested targets verified for key=${matchedKey}`);
+    }
+    const before = new Set(proxiesBefore);
+    proxyNames = (await listProxies()).filter((name) => !before.has(name)).sort();
+    try {
+        await timeSubPhase("solo-seal", async () => {
+            const stagingDir = path.join(runnerTemp, "setup-soldr-solo-cache", "staged");
+            sealed = await (deps.seal ?? solo_toolchain_cache_js_1.sealToolchainForSave)({
+                rustupHome,
+                cargoHome,
+                toolchainDir,
+                proxies: proxyNames,
+                includeUpdateHash: !updateHashBefore,
+                stagingDir,
+                fs: soloFs,
+            });
+            const config = {
+                stagingDir,
+                key: keys.exact,
+                level: opts.level,
+                cacheArchivePath: (0, solo_toolchain_cache_js_1.soloCacheArchivePath)(runnerTemp),
+                debug: opts.debug,
+                ...(restoreInvalid ? { repairPoisonedKey: matchedKey } : {}),
+            };
+            const startUpload = deps.startUpload ?? ((cfg) => (0, solo_toolchain_upload_js_1.startSoloToolchainUpload)({
+                config: cfg,
+                workDir: path.join(runnerTemp, "setup-soldr-solo-upload"),
+                entrypoint: opts.entrypoint || process.argv[1] || "",
+            }));
+            upload = await startUpload(config);
+        });
+        const s = sealed;
+        const u = upload;
+        log(`solo-toolchain-cache: sealed dir=${toolchainDir} files=${s?.files ?? 0} symlinks=${s?.symlinks ?? 0} ` +
+            `proxies=${s?.proxies ?? 0} bytes=${s?.bytes ?? 0}; background upload started pid=${u?.pid ?? "unknown"} (#525)`);
+        outcome = "sealed";
+    }
+    catch (err) {
+        warn(`solo-toolchain-cache: could not seal ${toolchainDir} for upload: ${errorMessage(err)}`);
+        upload = null;
+        outcome = "seal-failed";
+    }
+    return finish();
+}
+
+
+/***/ }),
+
+/***/ 58666:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// Background upload of the sealed solo toolchain archive (#525).
+//
+// The main step seals `toolchains/<channel>-<host>` (plus the rustup proxies
+// the install added) into a private directory right after install, before any
+// job step can run `rustup target add` or download a build-time `rust-std`
+// (#507). This module compresses and uploads that sealed directory from a
+// detached worker so the ~17 s upload stays off the job's critical path, and
+// gives the post step one entry point (`finalizeSoloToolchainSave`) that only
+// waits for the result. Mirrors the yank-audit detached worker (#476): config
+// and result live as JSON files under RUNNER_TEMP; the token is never written
+// to disk — the worker reads it from its inherited environment.
+//
+// The worker only ever reads the sealed directory. It never reads the live
+// $RUSTUP_HOME or $CARGO_HOME, so nothing a job step does can leak into the
+// archive.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SOLO_TOOLCHAIN_UPLOAD_WORKER_ARG = void 0;
+exports.writeSoloUploadResult = writeSoloUploadResult;
+exports.readSoloUploadResult = readSoloUploadResult;
+exports.startSoloToolchainUpload = startSoloToolchainUpload;
+exports.runSoloToolchainUploadWorker = runSoloToolchainUploadWorker;
+exports.isZombieProcess = isZombieProcess;
+exports.awaitSoloToolchainUpload = awaitSoloToolchainUpload;
+exports.finalizeSoloToolchainSave = finalizeSoloToolchainSave;
+const fs = __importStar(__nccwpck_require__(73024));
+const fsp = __importStar(__nccwpck_require__(51455));
+const path = __importStar(__nccwpck_require__(76760));
+const node_child_process_1 = __nccwpck_require__(31421);
+const solo_toolchain_cache_js_1 = __nccwpck_require__(67901);
+const solo_toolchain_phase_js_1 = __nccwpck_require__(49580);
+exports.SOLO_TOOLCHAIN_UPLOAD_WORKER_ARG = "--setup-soldr-solo-toolchain-upload-worker";
+const UPLOAD_STATUSES = [
+    "pending",
+    "uploading",
+    "saved",
+    "race-precheck-skipped",
+    "failed",
+    "worker-died",
+    "timeout",
+];
+const TERMINAL_STATUSES = [
+    "saved",
+    "race-precheck-skipped",
+    "failed",
+    "worker-died",
+    "timeout",
+];
+function isTerminal(status) {
+    return TERMINAL_STATUSES.includes(status);
+}
+function errorMessage(err) {
+    return err instanceof Error ? err.message : String(err);
+}
+/** Atomic write: temp file in the same directory, then rename over the target. */
+function writeSoloUploadResult(resultPath, result) {
+    fs.mkdirSync(path.dirname(resultPath), { recursive: true });
+    const temporaryPath = `${resultPath}.${process.pid}.tmp`;
+    fs.writeFileSync(temporaryPath, `${JSON.stringify(result)}\n`, "utf8");
+    fs.renameSync(temporaryPath, resultPath);
+}
+function readSoloUploadResult(resultPath) {
+    try {
+        const parsed = JSON.parse(fs.readFileSync(resultPath, "utf8"));
+        if (!parsed || typeof parsed !== "object")
+            return null;
+        if (typeof parsed.status !== "string" || !UPLOAD_STATUSES.includes(parsed.status))
+            return null;
+        const spawnedAtMs = typeof parsed.spawnedAtMs === "number" && Number.isFinite(parsed.spawnedAtMs)
+            ? parsed.spawnedAtMs
+            : 0;
+        return { ...parsed, status: parsed.status, spawnedAtMs };
+    }
+    catch {
+        return null;
+    }
+}
+/**
+ * Write the worker config + a `pending` result, then spawn this action's own
+ * entrypoint as a detached worker (`SOLO_TOOLCHAIN_UPLOAD_WORKER_ARG`). The
+ * worker's stdout and stderr both go to `worker.log` next to the result so the
+ * post step can surface a tail on failure.
+ */
+async function startSoloToolchainUpload(opts) {
+    const { config, workDir, entrypoint } = opts;
+    const now = opts.now ?? Date.now;
+    const spawnImpl = opts.spawnImpl ?? node_child_process_1.spawn;
+    if (!entrypoint)
+        throw new Error("Node action entrypoint is unavailable");
+    await fsp.mkdir(workDir, { recursive: true });
+    const configPath = path.join(workDir, "config.json");
+    const resultPath = path.join(workDir, "result.json");
+    const logPath = path.join(workDir, "worker.log");
+    await fsp.writeFile(configPath, `${JSON.stringify(config)}\n`, "utf8");
+    const spawnedAtMs = now();
+    writeSoloUploadResult(resultPath, { status: "pending", spawnedAtMs });
+    const logFd = fs.openSync(logPath, "w");
+    let child;
+    try {
+        child = spawnImpl(process.execPath, [entrypoint, exports.SOLO_TOOLCHAIN_UPLOAD_WORKER_ARG, configPath, resultPath], { detached: true, stdio: ["ignore", logFd, logFd], windowsHide: true });
+    }
+    finally {
+        fs.closeSync(logFd);
+    }
+    // A failed spawn reports asynchronously; record it instead of letting an
+    // unhandled 'error' event crash the main step. The post step then sees a
+    // terminal `failed` result rather than waiting on a pid that never existed.
+    if (typeof child.on === "function") {
+        child.on("error", (err) => {
+            try {
+                writeSoloUploadResult(resultPath, {
+                    status: "failed",
+                    spawnedAtMs,
+                    pid: null,
+                    finishedAtMs: now(),
+                    error: `worker spawn failed: ${errorMessage(err)}`,
+                });
+            }
+            catch {
+                // Best effort; the post step's liveness check covers this case.
+            }
+        });
+    }
+    child.unref();
+    const pid = typeof child.pid === "number" ? child.pid : null;
+    // The worker records its own progress; only fill in the pid while the
+    // result still says pending so a fast worker's `uploading` is not clobbered.
+    const current = readSoloUploadResult(resultPath);
+    if (!current || current.status === "pending") {
+        const pending = current ?? { status: "pending", spawnedAtMs };
+        writeSoloUploadResult(resultPath, { ...pending, pid });
+    }
+    return { configPath, resultPath, logPath, pid, spawnedAtMs };
+}
+/**
+ * Compress + upload the sealed directory named in `configPath`, recording
+ * progress and the terminal outcome in `resultPath`. Runs in the detached
+ * worker, or in-process from the post step when the worker died. Never throws.
+ */
+async function runSoloToolchainUploadWorker(configPath, resultPath, deps = {}) {
+    const now = deps.now ?? Date.now;
+    const env = deps.env ?? process.env;
+    const log = deps.log ?? ((m) => { console.log(m); });
+    const existing = readSoloUploadResult(resultPath);
+    const startedAtMs = now();
+    const base = {
+        status: "uploading",
+        spawnedAtMs: existing?.spawnedAtMs || startedAtMs,
+        pid: existing?.pid ?? process.pid,
+        startedAtMs,
+    };
+    let result;
+    try {
+        writeSoloUploadResult(resultPath, base);
+        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+        if (!config.stagingDir || !config.key || !config.cacheArchivePath) {
+            throw new Error(`upload config ${configPath} is missing stagingDir, key, or cacheArchivePath`);
+        }
+        const stagingDir = config.stagingDir;
+        const key = config.key;
+        const repairKey = (config.repairPoisonedKey ?? "").trim();
+        const [owner = "", repo = ""] = (env["GITHUB_REPOSITORY"] ?? "").trim().split("/");
+        const token = (env["GITHUB_TOKEN"] ?? "").trim() || (env["INPUT_TOKEN"] ?? "").trim();
+        const ref = (env["GITHUB_REF"] ?? "").trim();
+        log(`solo-toolchain-cache: upload worker key=${key} level=${config.level ?? "9"} repair=${repairKey || "none"}`);
+        let repairDeletion;
+        let repairDeletionComplete = false;
+        if (repairKey) {
+            const deletion = await (deps.deleteCorrupt ?? solo_toolchain_cache_js_1.deleteCorruptSoloCacheEntries)({
+                owner,
+                repo,
+                token,
+                key: repairKey,
+                ref,
+                log,
+            });
+            repairDeletion = { found: deletion.found, deleted: deletion.deleted, failed: deletion.failed };
+            repairDeletionComplete = deletion.failed === 0 && deletion.deleted === deletion.found;
+            if (!repairDeletionComplete) {
+                log(`solo-toolchain-cache: could not fully delete poisoned key=${repairKey}; ` +
+                    `found=${deletion.found} deleted=${deletion.deleted} failed=${deletion.failed}`);
+            }
+        }
+        const entryExists = deps.entryExists ?? solo_toolchain_cache_js_1.soloCacheEntryExistsForRef;
+        const save = await (deps.saveSoloCache ?? solo_toolchain_cache_js_1.saveSoloCache)({
+            stagingDir,
+            key,
+            level: config.level || "9",
+            debug: Boolean(config.debug),
+            log,
+            cacheArchivePath: config.cacheArchivePath,
+            // A validated-bad entry was just deleted; a stale listing must not
+            // suppress the verified replacement (#473).
+            skipExistingProbe: Boolean(repairKey),
+            lookupExactKey: repairKey && repairDeletionComplete
+                ? async () => (await entryExists({ owner, repo, token, key, ref, log })) ? key : undefined
+                : undefined,
+            compress: deps.compress,
+            saveCache: deps.saveCache,
+        });
+        const finishedAtMs = now();
+        if (save.status === "saved" || save.status === "race-precheck-skipped") {
+            result = {
+                ...base,
+                status: save.status,
+                finishedAtMs,
+                ...(save.cacheId !== undefined ? { cacheId: save.cacheId } : {}),
+                ...(save.archiveBytes !== undefined ? { archiveBytes: save.archiveBytes } : {}),
+                ...(save.inflatedBytes !== undefined ? { inflatedBytes: save.inflatedBytes } : {}),
+                ...(save.fileCount !== undefined ? { fileCount: save.fileCount } : {}),
+                ...(repairDeletion ? { repairDeletion } : {}),
+            };
+        }
+        else {
+            result = {
+                ...base,
+                status: "failed",
+                finishedAtMs,
+                error: `${save.status}${save.error ? `: ${save.error}` : ""}`,
+                ...(repairDeletion ? { repairDeletion } : {}),
+            };
+        }
+    }
+    catch (err) {
+        result = { ...base, status: "failed", finishedAtMs: now(), error: errorMessage(err) };
+    }
+    log(`solo-toolchain-cache: upload worker finished status=${result.status}${result.error ? ` error=${result.error}` : ""}`);
+    try {
+        writeSoloUploadResult(resultPath, result);
+    }
+    catch (err) {
+        log(`solo-toolchain-cache: failed to record upload result: ${errorMessage(err)}`);
+    }
+    return result;
+}
+/**
+ * True when `/proc/<pid>/stat` reports a zombie (or dead) process. A detached
+ * worker in a container job is reparented to the container's PID 1, which on
+ * GitHub's `tail -f /dev/null` entrypoint never reaps it: `kill(pid, 0)` keeps
+ * succeeding after the worker has exited. Linux only; elsewhere returns false.
+ */
+function isZombieProcess(pid, readStat) {
+    if (!readStat && process.platform !== "linux")
+        return false;
+    try {
+        const stat = (readStat ?? ((p) => fs.readFileSync(p, "utf8")))(`/proc/${pid}/stat`);
+        // Format: `<pid> (<comm>) <state> ...`; comm may contain spaces or `)`.
+        const close = stat.lastIndexOf(")");
+        if (close < 0)
+            return false;
+        const state = stat.slice(close + 1).trim().charAt(0);
+        return state === "Z" || state === "X";
+    }
+    catch {
+        return false;
+    }
+}
+function defaultIsAlive(pid) {
+    try {
+        process.kill(pid, 0);
+    }
+    catch (err) {
+        // EPERM: the process exists but belongs to someone else.
+        return err.code === "EPERM";
+    }
+    return !isZombieProcess(pid);
+}
+/**
+ * Wait for the background upload to reach a terminal status. When the worker
+ * is gone while the result still says pending/uploading (two consecutive
+ * dead polls), run the upload in-process from the SAME sealed directory — the
+ * live toolchain roots are never re-read.
+ */
+async function awaitSoloToolchainUpload(opts) {
+    const { resultPath, configPath } = opts;
+    const timeoutMs = opts.timeoutMs ?? 15 * 60_000;
+    const pollMs = opts.pollMs ?? 500;
+    const isAlive = opts.isAlive ?? defaultIsAlive;
+    const runInProcess = opts.runInProcess ?? (() => runSoloToolchainUploadWorker(configPath, resultPath));
+    const sleep = opts.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+    const now = opts.now ?? Date.now;
+    const log = opts.log ?? (() => undefined);
+    const deadline = now() + timeoutMs;
+    let last = null;
+    let deadPolls = 0;
+    while (true) {
+        const current = readSoloUploadResult(resultPath);
+        if (current)
+            last = current;
+        if (current && isTerminal(current.status))
+            return current;
+        const pid = current?.pid;
+        const alive = typeof pid === "number" && pid > 0 && isAlive(pid);
+        deadPolls = alive ? 0 : deadPolls + 1;
+        if (deadPolls >= 2) {
+            log(`solo-toolchain-cache: upload worker pid=${pid ?? "unknown"} is gone with status=${current?.status ?? "missing"}; ` +
+                `uploading the sealed toolchain in-process`);
+            try {
+                return await runInProcess();
+            }
+            catch (err) {
+                return {
+                    ...(last ?? { spawnedAtMs: 0 }),
+                    status: "worker-died",
+                    finishedAtMs: now(),
+                    error: errorMessage(err),
+                };
+            }
+        }
+        if (now() >= deadline) {
+            return { ...(last ?? { spawnedAtMs: 0 }), status: "timeout" };
+        }
+        await sleep(pollMs);
+    }
+}
+/**
+ * The only solo-toolchain logic the post step runs: wait for the upload that
+ * the main step started from the install-time seal, record it, and enforce
+ * the #473 repair contract. Never touches live toolchain directories.
+ */
+async function finalizeSoloToolchainSave(opts) {
+    const { getState, log, warn, setFailed, record } = opts;
+    if (getState(solo_toolchain_phase_js_1.SOLO_STATE.enabled) !== "true")
+        return { status: "disabled" };
+    const outcome = getState(solo_toolchain_phase_js_1.SOLO_STATE.outcome) || "unknown";
+    const restoreInvalid = getState(solo_toolchain_phase_js_1.SOLO_STATE.restoreInvalid) === "true";
+    const invalidMatchedKey = getState(solo_toolchain_phase_js_1.SOLO_STATE.invalidMatchedKey);
+    const resultPath = getState(solo_toolchain_phase_js_1.SOLO_STATE.uploadResultPath);
+    if (outcome !== "sealed" || !resultPath) {
+        log(`solo-toolchain-cache: outcome=${outcome}; nothing to upload`);
+        if (restoreInvalid) {
+            setFailed("solo-toolchain-cache: repaired a poisoned restore but sealed no replacement (#473)");
+        }
+        return { status: `skipped-${outcome}` };
+    }
+    const key = getState(solo_toolchain_phase_js_1.SOLO_STATE.exactKey);
+    const matchedKey = getState(solo_toolchain_phase_js_1.SOLO_STATE.matchedKey);
+    const configPath = getState(solo_toolchain_phase_js_1.SOLO_STATE.uploadConfigPath);
+    const logPath = getState(solo_toolchain_phase_js_1.SOLO_STATE.uploadLogPath);
+    const upload = await (opts.awaitUpload ?? awaitSoloToolchainUpload)({ resultPath, configPath, log });
+    const saved = upload.status === "saved";
+    record({
+        label: "solo-toolchain-cache",
+        operation: "save",
+        status: upload.status,
+        hit: false,
+        key,
+        matchedKey,
+        restoreKeys: [],
+        archiveBytes: saved ? (upload.archiveBytes ?? null) : null,
+        inflatedBytes: saved ? (upload.inflatedBytes ?? null) : null,
+        fileCount: saved ? (upload.fileCount ?? null) : null,
+        durationMs: typeof upload.finishedAtMs === "number" && typeof upload.startedAtMs === "number"
+            ? Math.max(0, upload.finishedAtMs - upload.startedAtMs)
+            : 0,
+        timestamp: new Date().toISOString(),
+    });
+    log(`solo-toolchain-cache: background upload status=${upload.status} key=${key} (sealed at install time, #525)` +
+        `${upload.error ? ` error=${upload.error}` : ""}`);
+    if (upload.status === "failed" || upload.status === "timeout" || upload.status === "worker-died") {
+        if (logPath) {
+            try {
+                const text = (opts.readLog ?? ((p) => fs.readFileSync(p, "utf8")))(logPath);
+                const tail = text.split(/\r?\n/).filter((line) => line.length > 0).slice(-40).join("\n");
+                if (tail)
+                    log(`solo-toolchain-cache: upload worker log tail (${logPath}):\n${tail}`);
+            }
+            catch {
+                // No worker diagnostic available.
+            }
+        }
+    }
+    const deletion = upload.repairDeletion;
+    const repairDeletionComplete = deletion
+        ? deletion.failed === 0 && deletion.deleted === deletion.found
+        : false;
+    if (restoreInvalid) {
+        if (deletion && !repairDeletionComplete) {
+            warn(`solo-toolchain-cache: could not fully delete poisoned key=${invalidMatchedKey}; ` +
+                `found=${deletion.found} deleted=${deletion.deleted} failed=${deletion.failed}. ` +
+                `The workflow token needs actions: write permission for automatic repair (#473).`);
+        }
+        const repairRaceWonElsewhere = upload.status === "race-precheck-skipped" && repairDeletionComplete;
+        if (!saved && !repairRaceWonElsewhere) {
+            setFailed(`solo-toolchain-cache: failed to publish repaired replacement for poisoned key=${invalidMatchedKey}: ` +
+                `${upload.status}${upload.error ? ` (${upload.error})` : ""}`);
+        }
+    }
+    return { status: upload.status };
 }
 
 
@@ -57502,7 +58780,7 @@ const node_child_process_1 = __nccwpck_require__(31421);
 const core = __importStar(__nccwpck_require__(37484));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
-const solo_toolchain_cache_js_1 = __nccwpck_require__(67901);
+const solo_toolchain_upload_js_1 = __nccwpck_require__(58666);
 const cook_cache_js_1 = __nccwpck_require__(504);
 const soldr_mini_cache_js_1 = __nccwpck_require__(83756);
 // Static import — the dynamic `await import("./lib/soldr-load-shim.js")`
@@ -58971,188 +60249,16 @@ async function run() {
             timestamp: new Date().toISOString(),
         });
     }
-    // Solo toolchain cache save. Opt-in via the `solo-toolchain-cache`
-    // input. Skip the save when the install delta is empty (the common
-    // case on hosted runners that already provide the requested
-    // toolchain) — per CLAUDE.md "Default-stable workflows should
-    // produce zero cache writes."
-    const soloEnabled = core.getState("soloToolchainEnabled") === "true";
-    if (soloEnabled) {
-        const soloExactKey = core.getState("soloToolchainExactKey");
-        const soloMatchedKey = core.getState("soloToolchainMatchedKey");
-        const soloExactHit = core.getState("soloToolchainExactHit") === "true";
-        const soloIncrementalEmpty = core.getState("soloToolchainIncrementalEmpty") === "true";
-        const soloRestoreInvalid = core.getState("soloToolchainRestoreInvalid") === "true";
-        const soloInvalidMatchedKey = core.getState("soloToolchainInvalidMatchedKey");
-        const soloSaveDiffPath = core.getState("soloToolchainSaveDiffPath");
-        const soloLevel = core.getState("soloToolchainLevel") || "9"; // #310
-        log(`solo-toolchain-cache: post-step exactKey=${soloExactKey} matched=${soloMatchedKey} ` +
-            `exactHit=${soloExactHit} restoreInvalid=${soloRestoreInvalid} ` +
-            `incrementalEmpty=${soloIncrementalEmpty} saveDiffPath=${soloSaveDiffPath}`);
-        const [soloRepoOwner, soloRepoName] = (process.env["GITHUB_REPOSITORY"] ?? "").trim().split("/");
-        const soloCacheToken = (process.env["GITHUB_TOKEN"] ?? "").trim() ||
-            (process.env["INPUT_TOKEN"] ?? "").trim();
-        const soloCacheRef = (process.env["GITHUB_REF"] ?? "").trim();
-        let repairDeletionComplete = false;
-        if (soloRestoreInvalid) {
-            const deletion = await (0, solo_toolchain_cache_js_1.deleteCorruptSoloCacheEntries)({
-                owner: soloRepoOwner ?? "",
-                repo: soloRepoName ?? "",
-                token: soloCacheToken,
-                key: soloInvalidMatchedKey,
-                ref: soloCacheRef,
-                log,
-            });
-            repairDeletionComplete = deletion.failed === 0 && deletion.deleted === deletion.found;
-            if (deletion.failed > 0 || deletion.deleted < deletion.found) {
-                core.warning(`solo-toolchain-cache: could not fully delete poisoned key=${soloInvalidMatchedKey}; ` +
-                    `found=${deletion.found} deleted=${deletion.deleted} failed=${deletion.failed}. ` +
-                    `The workflow token needs actions: write permission for automatic repair (#473).`);
-            }
-        }
-        // #313: pre-save lookupOnly probe. When several parallel jobs in
-        // the same workflow all enable solo-toolchain-cache with the SAME
-        // key (rustc × components × targets × soldr-version), each one
-        // compresses + uploads ~140-175 MB only for GitHub Actions Cache
-        // to reject all-but-one with id=-1. The wasted uploads dominate
-        // the post-step (~100 s × N parallel jobs).
-        let raceSkipped = false;
-        if (!soloRestoreInvalid && !(soloExactHit && soloIncrementalEmpty) && soloSaveDiffPath && fs.existsSync(soloSaveDiffPath)) {
-            try {
-                const probeStart = Date.now();
-                // #316: probe MUST use the same paths array that the actual
-                // save/restore use — @actions/cache hashes paths into the
-                // cache version. The canonical archive path is provided by
-                // soloCacheArchivePath. The file does not need to exist for
-                // lookupOnly (the library only hashes the path string).
-                const probeArchivePath = (0, solo_toolchain_cache_js_1.soloCacheArchivePath)(runnerTemp);
-                const existing = await cache.restoreCache([probeArchivePath], soloExactKey, [], { lookupOnly: true });
-                if (existing) {
-                    raceSkipped = true;
-                    log(`solo-toolchain-cache: pre-save lookupOnly probe found existing key=${existing} ` +
-                        `(probe ${Date.now() - probeStart}ms) — skipping stage+compress+upload (#313)`);
-                    postCollector.record({
-                        label: "solo-toolchain-cache",
-                        operation: "save",
-                        status: "race-precheck-skipped",
-                        hit: false,
-                        key: soloExactKey,
-                        matchedKey: soloMatchedKey,
-                        restoreKeys: [],
-                        archiveBytes: null,
-                        inflatedBytes: null,
-                        fileCount: null,
-                        durationMs: Date.now() - probeStart,
-                        timestamp: new Date().toISOString(),
-                    });
-                }
-            }
-            catch (err) {
-                log(`solo-toolchain-cache: lookupOnly probe failed (will attempt save anyway): ${err instanceof Error ? err.message : String(err)}`);
-            }
-        }
-        if (raceSkipped) {
-            // probe found an existing entry; nothing more to do for this layer
-        }
-        else if (soloExactHit && soloIncrementalEmpty) {
-            log("solo-toolchain-cache: exact hit and no install delta — skipping save");
-        }
-        else if (!soloSaveDiffPath || !fs.existsSync(soloSaveDiffPath)) {
-            log("solo-toolchain-cache: no save-diff manifest available, skipping save");
-            if (soloRestoreInvalid) {
-                core.setFailed("solo-toolchain-cache: repaired a poisoned restore but has no replacement manifest (#473)");
-            }
-        }
-        else {
-            try {
-                const manifest = JSON.parse(fs.readFileSync(soloSaveDiffPath, "utf8"));
-                const added = Array.isArray(manifest.added) ? manifest.added : [];
-                const changed = Array.isArray(manifest.changed) ? manifest.changed : [];
-                if (added.length === 0 && changed.length === 0) {
-                    log("solo-toolchain-cache: empty save-diff manifest, skipping save");
-                    if (soloRestoreInvalid) {
-                        core.setFailed("solo-toolchain-cache: repaired a poisoned restore but replacement manifest is empty (#473)");
-                    }
-                }
-                else {
-                    const soloRootMap = {
-                        "rustup-toolchains": path.join(result.rustupHome, "toolchains"),
-                        "cargo-bin": path.join(result.cargoHome, "bin"),
-                    };
-                    // #316 follow-up: the tar archive's top-level directory is
-                    // `basename(stagingDir)`. restoreSoloCache extracts into
-                    // `<stagingOut-parent>/` expecting the top-level entry name
-                    // to match the basename it uses (`staged`). Save MUST use
-                    // the same basename, or restore's `readdir(staged/)` returns
-                    // empty and the cache hit looks like a miss.
-                    const stagingDir = path.join(runnerTemp, "setup-soldr-solo-cache", "staged");
-                    const soloSaveStart = Date.now();
-                    const staged = await (0, solo_toolchain_cache_js_1.stageDiffForSave)({ added, removed: [], changed }, soloRootMap, stagingDir);
-                    log(`solo-toolchain-cache: staged ${staged.stagedFiles} files and ${staged.stagedSymlinks} symlinks (missing=${staged.missingFiles})`);
-                    if (soloRestoreInvalid && (staged.missingFiles > 0 || staged.stagedFiles + staged.stagedSymlinks === 0)) {
-                        core.setFailed(`solo-toolchain-cache: refusing incomplete repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
-                            `files=${staged.stagedFiles} symlinks=${staged.stagedSymlinks} missing=${staged.missingFiles}`);
-                        throw new Error("repaired solo-toolchain staging was incomplete");
-                    }
-                    const saveResult = await (0, solo_toolchain_cache_js_1.saveSoloCache)({
-                        stagingDir,
-                        key: soloExactKey,
-                        level: soloLevel,
-                        debug: debugMode,
-                        log,
-                        // #316 follow-up: canonical archive path MUST match restore.
-                        // soloCacheArchivePath(runnerTemp) returns the same path
-                        // restoreSoloCache uses, ensuring @actions/cache version
-                        // hash agrees and restore can find the entry.
-                        cacheArchivePath: (0, solo_toolchain_cache_js_1.soloCacheArchivePath)(runnerTemp),
-                        skipExistingProbe: soloRestoreInvalid,
-                        lookupExactKey: soloRestoreInvalid && repairDeletionComplete
-                            ? async () => (await (0, solo_toolchain_cache_js_1.soloCacheEntryExistsForRef)({
-                                owner: soloRepoOwner ?? "",
-                                repo: soloRepoName ?? "",
-                                token: soloCacheToken,
-                                key: soloExactKey,
-                                ref: soloCacheRef,
-                                log,
-                            })) ? soloExactKey : undefined
-                            : undefined,
-                    });
-                    // #269: always record so the post-step save table shows
-                    // skipped/race-precheck/etc layers too, not just saved ones.
-                    postCollector.record({
-                        label: "solo-toolchain-cache",
-                        operation: "save",
-                        status: saveResult.status,
-                        hit: false,
-                        key: soloExactKey,
-                        matchedKey: soloMatchedKey,
-                        restoreKeys: [],
-                        archiveBytes: saveResult.status === "saved" ? (saveResult.archiveBytes ?? null) : null,
-                        inflatedBytes: saveResult.status === "saved" ? (saveResult.inflatedBytes ?? null) : null,
-                        fileCount: saveResult.status === "saved" ? (saveResult.fileCount ?? null) : null,
-                        durationMs: Date.now() - soloSaveStart,
-                        timestamp: new Date().toISOString(),
-                    });
-                    const repairRaceWonElsewhere = soloRestoreInvalid &&
-                        saveResult.status === "race-precheck-skipped" && repairDeletionComplete;
-                    if (saveResult.status !== "saved" && !repairRaceWonElsewhere) {
-                        log(`solo-toolchain-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
-                        if (soloRestoreInvalid) {
-                            core.setFailed(`solo-toolchain-cache: failed to publish repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
-                                `${saveResult.status}${saveResult.error ? ` (${saveResult.error})` : ""}`);
-                        }
-                    }
-                }
-            }
-            catch (err) {
-                log(`solo-toolchain-cache: save failed: ${err instanceof Error ? err.message : String(err)}`);
-                if (soloRestoreInvalid) {
-                    core.setFailed(`solo-toolchain-cache: failed to publish repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
-                        `${err instanceof Error ? err.message : String(err)}`);
-                }
-            }
-        }
-    }
+    // #525: the solo toolchain archive was sealed during the main step and is
+    // uploading from a detached worker. Post only waits for it; it never
+    // re-stages live files (that was #507).
+    await (0, solo_toolchain_upload_js_1.finalizeSoloToolchainSave)({
+        getState: (k) => core.getState(k),
+        log,
+        warn: (m) => core.warning(m),
+        setFailed: (m) => core.setFailed(m),
+        record: (op) => postCollector.record(op),
+    });
     // Cook cache save. Default-on layer; skipped when cook didn't run
     // (cache hit, gate disabled, or run failed). zstd-19 + --long=27 per
     // CLAUDE.md "Compression" + the cook simulation findings.

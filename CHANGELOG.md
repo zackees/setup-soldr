@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+- fix(solo-toolchain-cache): seal the toolchain at install time (#525, fixes
+  #507).
+  - The cache key moves to schema v4 and no longer includes the soldr
+    version: `solo-toolchain-v4-<os>-<arch>-<libc>-rustc<release>-c<hash>-t<hash>`.
+    Soldr releases no longer mint new entries.
+  - No snapshot scans. This removes the three full walks of
+    `$RUSTUP_HOME/toolchains` and `$CARGO_HOME/bin`, which cost 25-30 s in
+    containers with a populated `RUSTUP_HOME`. One stat of
+    `toolchains/<channel>-<host>` decides whether the runner image or
+    setup-cache already provides the toolchain; if so, nothing is looked up or
+    saved.
+  - The archive is `toolchains/<channel>-<host>` plus the rustup proxies the
+    install added, sealed right after install and before any job step runs,
+    so a later `rustup target add` or build-time `rust-std` download can no
+    longer save rustup's records without the libraries they describe. A
+    detached worker uploads it; the post step only waits.
+  - Restore validates the standard library of every target rustup lists as
+    installed, not only the declared targets, and repairs poisoned entries
+    through the #473 path.
+  - `cache: false` and `solo-toolchain-cache: false` now do zero scans, no
+    lookup, and no save for this layer.
+  - New `.github/workflows/solo-toolchain-probe.yml` end-to-end probe (E1-E7)
+    uses run-scoped cache keys and deletes them afterwards (#513).
+  - New test-only `SETUP_SOLDR_SOLO_TOOLCHAIN_KEY_NAMESPACE` env knob isolates
+    probe keys from production entries.
+  - The `toolchain-snapshot:` diagnostic line and the
+    `setup-soldr-toolchain-diff.json` file are removed.
+  - BEHAVIOR CHANGE: existing `solo-toolchain-v3-*` entries are no longer
+    read. The first miss on each key saves a fresh v4 entry.
+
 - Ingest soldr `0.9.22`: retain the rolling `latest` default and extend the
   hash-verified PyPI wheel fallback contract through `0.9.22`. The 23 GitHub
   release assets, all eight published wheels, and the pinned cargo-chef
