@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Ingest soldr `0.9.22`: retain the rolling `latest` default and extend the
+  hash-verified PyPI wheel fallback contract through `0.9.22`. The 23 GitHub
+  release assets, all eight published wheels, and the pinned cargo-chef
+  `0.1.73` support release were verified before enabling the fallback. 0.9.22
+  carries the fix for zackees/soldr#3350: restored build scripts are no
+  longer handed to cargo while a forked child still holds them open for
+  writing (`Text file busy`).
 - Ingest soldr `0.9.21`: retain the rolling `latest` default and extend the
   hash-verified PyPI wheel fallback contract through `0.9.21`. The native
   release archives, all eight published wheels, and the pinned cargo-chef
