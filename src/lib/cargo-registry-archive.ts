@@ -2,7 +2,6 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { createHash } from "node:crypto";
-import { spawn } from "node:child_process";
 import * as io from "@actions/io";
 import * as tc from "@actions/tool-cache";
 
@@ -12,6 +11,7 @@ import type {
   CargoRegistryArchivePlan,
 } from "./types.js";
 import { decompressCache } from "./cache-compress.js";
+import { runPipe } from "./run-pipe.js";
 import {
   MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
   saveViaSoldr,
@@ -77,29 +77,6 @@ export async function cargoRegistryPayloadPaths(cargoHome: string): Promise<{
     if (await exists(candidate)) extras.push(candidate);
   }
   return { registry, extras };
-}
-
-function runPipe(
-  producer: [string, string[]],
-  consumer: [string, string[]],
-): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const prod = spawn(producer[0], producer[1], { stdio: ["ignore", "pipe", "inherit"] });
-    const cons = spawn(consumer[0], consumer[1], { stdio: ["pipe", "inherit", "inherit"] });
-    prod.once("error", reject);
-    cons.once("error", reject);
-    prod.stdout?.pipe(cons.stdin!);
-    let producerExit: number | null = null;
-    let consumerExit: number | null = null;
-    const done = (): void => {
-      if (producerExit === null || consumerExit === null) return;
-      if (producerExit !== 0) reject(new Error(`${producer[0]} exited with code ${producerExit}`));
-      else if (consumerExit !== 0) reject(new Error(`${consumer[0]} exited with code ${consumerExit}`));
-      else resolve();
-    };
-    prod.once("close", (code) => { producerExit = code ?? 0; done(); });
-    cons.once("close", (code) => { consumerExit = code ?? 0; done(); });
-  });
 }
 
 const CARGO_REGISTRY_ZSTD_VERSION = "1.5.7";

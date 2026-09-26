@@ -48565,6 +48565,7 @@ const core = __importStar(__nccwpck_require__(37484));
 const exec = __importStar(__nccwpck_require__(95236));
 const io = __importStar(__nccwpck_require__(94994));
 const cache_encrypt_js_1 = __nccwpck_require__(67173);
+const run_pipe_js_1 = __nccwpck_require__(35791);
 /**
  * Resolve the encryption config for a cache call. Callers pass `encryption`
  * explicitly for tests; in production they pass `cacheKey` and let the
@@ -49141,7 +49142,7 @@ async function decompressInner(opts) {
         else {
             if (debug)
                 log(`[debug] decompress cmd: zstd -d -T0 ${longFlag.join(" ")} -c ${archivePath} | tar -xf - -C ${extractRoot}`);
-            await runPipe([zstdPath, ["-d", ...threadsFlag, ...longFlag, "-c", archivePath]], ["tar", ["-xf", "-", "-C", extractRoot]]);
+            await (0, run_pipe_js_1.runPipe)([zstdPath, ["-d", ...threadsFlag, ...longFlag, "-c", archivePath]], ["tar", ["-xf", "-", "-C", extractRoot]]);
         }
     }
     else {
@@ -49266,7 +49267,7 @@ async function compressCache(opts) {
                     `zstd -T0 ${levelFlag}${longFlag.length ? ` --long=${longWindow}` : ""}` +
                     `${ultraFlag.length ? " --ultra" : ""} -o ${archivePath}`);
             }
-            await runPipe(["tar", paxTarCreateArgs(parent, manifestPath)], [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]]);
+            await (0, run_pipe_js_1.runPipe)(["tar", paxTarCreateArgs(parent, manifestPath)], [zstdPath, ["-T0", levelFlag, ...longFlag, ...ultraFlag, "-o", archivePath]]);
         }
         finally {
             await fs.rm(manifestDir, { recursive: true, force: true }).catch(() => undefined);
@@ -49342,47 +49343,6 @@ function parseLevel(value) {
         return 3;
     const clamped = Math.max(1, Math.min(22, Math.floor(parsed)));
     return clamped;
-}
-/**
- * Run two processes piped together: producer.stdout -> consumer.stdin.
- * Bubbles non-zero exit codes from either side.
- */
-async function runPipe(producer, consumer) {
-    const { spawn } = await Promise.resolve(/* import() */).then(__nccwpck_require__.t.bind(__nccwpck_require__, 31421, 23));
-    const [pCmd, pArgs] = producer;
-    const [cCmd, cArgs] = consumer;
-    await new Promise((resolve, reject) => {
-        const prod = spawn(pCmd, pArgs, { stdio: ["ignore", "pipe", "inherit"] });
-        const cons = spawn(cCmd, cArgs, { stdio: ["pipe", "inherit", "inherit"] });
-        prod.on("error", (err) => reject(err));
-        cons.on("error", (err) => reject(err));
-        if (prod.stdout && cons.stdin) {
-            prod.stdout.pipe(cons.stdin);
-        }
-        let prodExit = null;
-        let consExit = null;
-        const maybeDone = () => {
-            if (prodExit !== null && consExit !== null) {
-                if (prodExit !== 0) {
-                    reject(new Error(`${pCmd} exited with code ${prodExit}`));
-                }
-                else if (consExit !== 0) {
-                    reject(new Error(`${cCmd} exited with code ${consExit}`));
-                }
-                else {
-                    resolve();
-                }
-            }
-        };
-        prod.on("close", (code) => {
-            prodExit = code ?? 0;
-            maybeDone();
-        });
-        cons.on("close", (code) => {
-            consExit = code ?? 0;
-            maybeDone();
-        });
-    });
 }
 
 
@@ -50186,10 +50146,10 @@ const fs = __importStar(__nccwpck_require__(51455));
 const os = __importStar(__nccwpck_require__(48161));
 const path = __importStar(__nccwpck_require__(76760));
 const node_crypto_1 = __nccwpck_require__(77598);
-const node_child_process_1 = __nccwpck_require__(31421);
 const io = __importStar(__nccwpck_require__(94994));
 const tc = __importStar(__nccwpck_require__(33472));
 const cache_compress_js_1 = __nccwpck_require__(24978);
+const run_pipe_js_1 = __nccwpck_require__(35791);
 const soldr_load_shim_js_1 = __nccwpck_require__(18084);
 const OPTIONAL_EXTRA_BASENAMES = [".global-cache", "git"];
 function cargoRegistryArchiveFormat(input) {
@@ -50235,29 +50195,6 @@ async function cargoRegistryPayloadPaths(cargoHome) {
             extras.push(candidate);
     }
     return { registry, extras };
-}
-function runPipe(producer, consumer) {
-    return new Promise((resolve, reject) => {
-        const prod = (0, node_child_process_1.spawn)(producer[0], producer[1], { stdio: ["ignore", "pipe", "inherit"] });
-        const cons = (0, node_child_process_1.spawn)(consumer[0], consumer[1], { stdio: ["pipe", "inherit", "inherit"] });
-        prod.once("error", reject);
-        cons.once("error", reject);
-        prod.stdout?.pipe(cons.stdin);
-        let producerExit = null;
-        let consumerExit = null;
-        const done = () => {
-            if (producerExit === null || consumerExit === null)
-                return;
-            if (producerExit !== 0)
-                reject(new Error(`${producer[0]} exited with code ${producerExit}`));
-            else if (consumerExit !== 0)
-                reject(new Error(`${consumer[0]} exited with code ${consumerExit}`));
-            else
-                resolve();
-        };
-        prod.once("close", (code) => { producerExit = code ?? 0; done(); });
-        cons.once("close", (code) => { consumerExit = code ?? 0; done(); });
-    });
 }
 const CARGO_REGISTRY_ZSTD_VERSION = "1.5.7";
 const CARGO_REGISTRY_ZSTD_WIN64_SHA256 = "acb4e8111511749dc7a3ebedca9b04190e37a17afeb73f55d4425dbf0b90fad9";
@@ -50319,7 +50256,7 @@ async function writeCargoRegistryExtrasArchive(cargoHome, extras, archivePath) {
         const basenames = extras.map((entry) => path.basename(entry));
         await fs.writeFile(manifestPath, basenames.map((entry) => `${entry}\n`).join(""), "utf8");
         const zstd = await resolveCargoRegistryZstd();
-        await runPipe(["tar", ["-cf", "-", "-C", cargoHome, "-T", manifestPath]], [zstd, ["-T0", "-3", "-f", "-o", archivePath]]);
+        await (0, run_pipe_js_1.runPipe)(["tar", ["-cf", "-", "-C", cargoHome, "-T", manifestPath]], [zstd, ["-T0", "-3", "-f", "-o", archivePath]]);
     }
     finally {
         await fs.rm(manifestRoot, { recursive: true, force: true }).catch(() => undefined);
@@ -50328,7 +50265,7 @@ async function writeCargoRegistryExtrasArchive(cargoHome, extras, archivePath) {
 async function extractCargoRegistryExtrasArchive(cargoHome, archivePath) {
     const zstd = await resolveCargoRegistryZstd();
     await fs.mkdir(cargoHome, { recursive: true });
-    await runPipe([zstd, ["-d", "-T0", "-c", archivePath]], ["tar", ["-xf", "-", "-C", cargoHome]]);
+    await (0, run_pipe_js_1.runPipe)([zstd, ["-d", "-T0", "-c", archivePath]], ["tar", ["-xf", "-", "-C", cargoHome]]);
 }
 async function cargoRegistryPayloadCensus(cargoHome, topN) {
     const payload = await cargoRegistryPayloadPaths(cargoHome);
@@ -54721,6 +54658,82 @@ async function retryReleaseRequest(request, options = {}) {
     }
     const detail = lastError instanceof Error ? lastError.message : String(lastError);
     throw new Error(`release request failed after ${attempts} attempts: ${detail}`);
+}
+
+
+/***/ }),
+
+/***/ 35791:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.runPipe = runPipe;
+const node_child_process_1 = __nccwpck_require__(31421);
+/**
+ * Run two processes piped together: producer.stdout -> consumer.stdin.
+ * Success is decided by the two exit codes alone.
+ *
+ * A consumer may exit before reading all of its input: bsdtar (macOS
+ * `tar`) stops at the end-of-archive marker and leaves the pax record
+ * padding unread. The next write to its stdin then fails with EPIPE. That
+ * is not a failure by itself — the consumer's exit code says whether it
+ * got what it needed — so the rest of the producer's output is drained and
+ * discarded. Without a listener the EPIPE is an unhandled 'error' event
+ * that kills the action (#531), and without the drain the producer would
+ * block forever on a full pipe.
+ */
+function runPipe(producer, consumer) {
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        const fail = (err) => {
+            if (settled)
+                return;
+            settled = true;
+            reject(err);
+        };
+        const prod = (0, node_child_process_1.spawn)(producer[0], producer[1], { stdio: ["ignore", "pipe", "inherit"] });
+        const cons = (0, node_child_process_1.spawn)(consumer[0], consumer[1], { stdio: ["pipe", "inherit", "inherit"] });
+        prod.once("error", fail);
+        cons.once("error", fail);
+        const output = prod.stdout;
+        const input = cons.stdin;
+        input.on("error", (err) => {
+            if (err.code !== "EPIPE") {
+                fail(err);
+                return;
+            }
+            output.unpipe(input);
+            output.resume();
+        });
+        output.on("error", fail);
+        output.pipe(input);
+        let producerExit = null;
+        let consumerExit = null;
+        const done = () => {
+            if (producerExit === null || consumerExit === null)
+                return;
+            if (producerExit !== "0")
+                fail(new Error(`${producer[0]} exited with ${producerExit}`));
+            else if (consumerExit !== "0")
+                fail(new Error(`${consumer[0]} exited with ${consumerExit}`));
+            else if (!settled) {
+                settled = true;
+                resolve();
+            }
+        };
+        // A signal death has no exit code; it is never a success.
+        const describe = (code, signal) => code === null ? `signal ${signal ?? "unknown"}` : code === 0 ? "0" : `code ${code}`;
+        prod.once("close", (code, signal) => {
+            producerExit = describe(code, signal);
+            done();
+        });
+        cons.once("close", (code, signal) => {
+            consumerExit = describe(code, signal);
+            done();
+        });
+    });
 }
 
 

@@ -28,6 +28,7 @@ import {
   isEncryptedArchive,
   type EncryptionConfig,
 } from "./cache-encrypt.js";
+import { runPipe } from "./run-pipe.js";
 
 /**
  * Resolve the encryption config for a cache call. Callers pass `encryption`
@@ -1029,47 +1030,4 @@ function parseLevel(value: string): number {
   if (Number.isNaN(parsed) || !Number.isFinite(parsed)) return 3;
   const clamped = Math.max(1, Math.min(22, Math.floor(parsed)));
   return clamped;
-}
-
-/**
- * Run two processes piped together: producer.stdout -> consumer.stdin.
- * Bubbles non-zero exit codes from either side.
- */
-async function runPipe(
-  producer: [string, string[]],
-  consumer: [string, string[]],
-): Promise<void> {
-  const { spawn } = await import("node:child_process");
-  const [pCmd, pArgs] = producer;
-  const [cCmd, cArgs] = consumer;
-  await new Promise<void>((resolve, reject) => {
-    const prod = spawn(pCmd, pArgs, { stdio: ["ignore", "pipe", "inherit"] });
-    const cons = spawn(cCmd, cArgs, { stdio: ["pipe", "inherit", "inherit"] });
-    prod.on("error", (err) => reject(err));
-    cons.on("error", (err) => reject(err));
-    if (prod.stdout && cons.stdin) {
-      prod.stdout.pipe(cons.stdin);
-    }
-    let prodExit: number | null = null;
-    let consExit: number | null = null;
-    const maybeDone = (): void => {
-      if (prodExit !== null && consExit !== null) {
-        if (prodExit !== 0) {
-          reject(new Error(`${pCmd} exited with code ${prodExit}`));
-        } else if (consExit !== 0) {
-          reject(new Error(`${cCmd} exited with code ${consExit}`));
-        } else {
-          resolve();
-        }
-      }
-    };
-    prod.on("close", (code) => {
-      prodExit = code ?? 0;
-      maybeDone();
-    });
-    cons.on("close", (code) => {
-      consExit = code ?? 0;
-      maybeDone();
-    });
-  });
 }
