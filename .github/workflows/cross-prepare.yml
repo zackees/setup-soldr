@@ -9,6 +9,7 @@ on:
       - __tests__/**
       - tests/fixtures/target-smoke/**
       - .github/workflows/cross-prepare.yml
+      - scripts/delete-run-scoped-caches.mjs
   workflow_dispatch:
 
 # One live run per workflow per ref: a new push to a branch or PR cancels the
@@ -20,6 +21,11 @@ concurrency:
 
 permissions:
   contents: read
+
+env:
+  # #513: the seed->hit pair saves under a run-scoped namespace that the
+  # always() cleanup job deletes once the run finishes.
+  CACHE_GENERATION: cross-prepare-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
   target-contract:
@@ -346,6 +352,7 @@ jobs:
         uses: ./
         with:
           save-cache: "true"  # seed->warm jobs in one PR run must persist (#527)
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
           cross-targets: x86_64-pc-windows-msvc
           cache: true
           build-cache: false
@@ -365,6 +372,11 @@ jobs:
             setup-soldr-prepare-v3-linux-x64-x86_64-pc-windows-msvc-r*-s*) ;;
             *) echo "unexpected prepared-cache key: $CACHE_KEY" >&2; exit 1 ;;
           esac
+          # #513: the seed lives in this run's deletable namespace.
+          case "$CACHE_KEY" in
+            *"-x${CACHE_GENERATION}") ;;
+            *) echo "prepared-cache key is not run-scoped: $CACHE_KEY" >&2; exit 1 ;;
+          esac
 
   cache-hit:
     name: x86_64-pc-windows-msvc prepared cache exact hit
@@ -379,6 +391,7 @@ jobs:
         uses: ./
         with:
           save-cache: "true"  # seed->warm jobs in one PR run must persist (#527)
+          cache-key-suffix: ${{ env.CACHE_GENERATION }}
           cross-targets: x86_64-pc-windows-msvc
           cache: true
           build-cache: false
@@ -397,3 +410,25 @@ jobs:
           set -euo pipefail
           test "$CACHE_HIT" = "true"
           test -n "$CACHE_KEY"
+
+  # #513 P0: the prepared-cache seed is keyed under CACHE_GENERATION and is
+  # unreachable once this run ends. Delete exactly this run's namespace on
+  # this run's ref, on success, failure, or cancellation.
+  cleanup:
+    name: Delete run-scoped cache keys
+    needs: [target-contract, cold-warm, cache-seed, cache-hit]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Delete this run's namespaced cache keys
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node "$GITHUB_WORKSPACE/scripts/delete-run-scoped-caches.mjs"

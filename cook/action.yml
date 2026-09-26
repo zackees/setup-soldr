@@ -48,6 +48,13 @@ inputs:
     description: "Enable layered base+delta cook archives when the soldr version supports them."
     required: false
     default: "true"
+  cook-delta:
+    description: >
+      true | false (default "false"). With "false" only the layered base
+      archive is restored and saved; no `cook-delta-v2-*` delta layer is
+      restored or saved. "true" restores the pre-#528 base+delta behavior.
+    required: false
+    default: "false"
   rustc-release:
     description: "Optional rustc release key fragment. Defaults to probing `rustc --version`."
     required: false

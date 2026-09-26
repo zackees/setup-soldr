@@ -460,6 +460,7 @@ preferred for new workflows.
 | `prebuild-deps` | Dependency prebuild mode. Default `soldr-cook` runs `soldr cook` and restores/saves a long-enduring dependency cache; its required Cargo registry/git source closure is paired automatically unless `cargo-registry-cache: false` is explicit. Set to `none` to skip. `cargo-chef` is accepted as a legacy alias. |
 | `prebuild-deps-flags` | Flags forwarded to `soldr cook`; default `--release`. Material flags are hashed into the cook cache key. |
 | `prebuild-deps-delta-cache` | Default `true`. With soldr `>=0.7.38`, restore/save the cook cache as a protobuf-backed base layer plus a smaller commit/build-shape delta layer. Set to `false` to use the legacy single cook archive. |
+| `cook-delta` | Default `false` (#528). Controls only the `cook-delta-v2-*` layer stacked on the base. With `false`, the `cook-base-v2-*` archive is still restored and saved (per `save-cache`), but no delta is restored or saved. Set `true` for the previous base+delta behavior. Also accepted by the `cook/` sub-action. |
 | `target-dir` | Cargo target directory used by soldr when constructing the Rust artifact cache plan. |
 | `target-cache-profile` | Thin-slice pruning policy for the `target/` cache when `target-cache: true` is enabled. `thin-v1` (default) keeps `.rlib`/`.rmeta`/proc-macro outputs. `thin-v2` is the aggressive prune that keeps fingerprints + dep-info + final outputs only and relies on the zccache compilation cache to repopulate library bytes. See "Target cache profile" below before opting in. |
 | `target-cache-strip-debuginfo` | Forward-compatible pass-through. When `true`, requests that soldr strip debug-info-bearing artifacts from the target-cache before saving. Requires soldr#237 to take effect; current soldr releases ignore the flag. Default unset (soldr default applies). See "Forward-compatible target-cache pruning inputs" below. |
@@ -596,6 +597,11 @@ Base key shape:
 
 Delta key shape:
 `cook-delta-v2-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>-s<shape_hash>-g<sha>`.
+
+The delta layer is off by default (`cook-delta: false`, #528): only the base
+archive is restored and saved, and a base hit that re-runs `soldr cook` saves
+nothing new. Set `cook-delta: true` to restore and save a delta on top of the
+base as before.
 
 Set `prebuild-deps-delta-cache: false` to use the legacy single archive:
 `cook-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.

@@ -36,10 +36,15 @@ test("cook save policy leaves restore enabled but skips durable writes when requ
     });
     assert.equal(plan.enabled, true);
     assert.ok(plan.baseKey);
-    assert.equal(selectDeferredCookSaveLayer(true, false, false), "none");
-    assert.equal(selectDeferredCookSaveLayer(true, false, true), "base");
-    assert.equal(selectDeferredCookSaveLayer(true, true, true), "delta");
-    assert.equal(selectDeferredCookSaveLayer(true, true, false), "none");
+    assert.equal(selectDeferredCookSaveLayer(true, false, false, true), "none");
+    assert.equal(selectDeferredCookSaveLayer(true, false, true, true), "base");
+    assert.equal(selectDeferredCookSaveLayer(true, true, true, true), "delta");
+    assert.equal(selectDeferredCookSaveLayer(true, true, false, true), "none");
+    // #528: with the delta layer off (the default) a base hit saves nothing,
+    // while a base miss still saves the base.
+    assert.equal(selectDeferredCookSaveLayer(true, true, true, false), "none");
+    assert.equal(selectDeferredCookSaveLayer(true, false, true, false), "base");
+    assert.equal(selectDeferredCookSaveLayer(true, false, false, false), "none");
   } finally {
     fs.rmSync(workspace, { recursive: true, force: true });
   }

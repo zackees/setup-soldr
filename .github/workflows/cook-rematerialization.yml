@@ -109,6 +109,7 @@ jobs:
           soldr-mini-cache: false
           prebuild-deps: soldr-cook
           prebuild-deps-delta-cache: true
+          cook-delta: true  # this lane validates the delta layer (#528)
           target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
           lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
           linker: platform-default
@@ -161,6 +162,7 @@ jobs:
           soldr-mini-cache: false
           prebuild-deps: soldr-cook
           prebuild-deps-delta-cache: true
+          cook-delta: true  # this lane validates the delta layer (#528)
           target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
           lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
           linker: platform-default
@@ -213,6 +215,7 @@ jobs:
           soldr-mini-cache: false
           prebuild-deps: soldr-cook
           prebuild-deps-delta-cache: true
+          cook-delta: true  # this lane validates the delta layer (#528)
           target-dir: ${{ runner.temp }}/cook-rematerialization-fixture/target
           lockfile: ${{ runner.temp }}/cook-rematerialization-fixture/Cargo.lock
           linker: platform-default

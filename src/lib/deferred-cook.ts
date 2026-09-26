@@ -10,6 +10,7 @@ import {
   hashCookBuildShape,
   hashCookFlags,
   parseCookFlags,
+  selectCookSaveLayer,
   supportsLayeredCookCache,
 } from "./cook-cache.js";
 import {
@@ -68,9 +69,10 @@ export function selectDeferredCookSaveLayer(
   cookRan: boolean,
   baseReady: boolean,
   saveCache: boolean,
+  deltaEnabled: boolean,
 ): "base" | "delta" | "none" {
-  if (!cookRan || !saveCache) return "none";
-  return baseReady ? "delta" : "base";
+  if (!saveCache) return "none";
+  return selectCookSaveLayer(cookRan, baseReady, deltaEnabled);
 }
 
 export function parseBooleanInput(name: string, raw: string, defaultValue: boolean): boolean {

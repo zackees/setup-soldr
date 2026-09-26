@@ -76,6 +76,8 @@ def test_seed_and_warm_use_pinned_source_and_only_dependency_closure_caches() ->
         assert inputs["soldr-mini-cache"] is False
         assert inputs["prebuild-deps"] == "soldr-cook"
         assert inputs["prebuild-deps-delta-cache"] is True
+        # #528: this lane validates the delta layer, which is opt-in.
+        assert inputs["cook-delta"] is True
         assert inputs["lockfile"].endswith("/Cargo.lock")
 
 

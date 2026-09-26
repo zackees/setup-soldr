@@ -51492,6 +51492,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LAYERED_COOK_MIN_SOLDR_VERSION = void 0;
 exports.layeredCookBaseReady = layeredCookBaseReady;
 exports.layeredCookDeltaReady = layeredCookDeltaReady;
+exports.selectCookSaveLayer = selectCookSaveLayer;
 exports.hashCookFlags = hashCookFlags;
 exports.buildCookCacheKey = buildCookCacheKey;
 exports.buildCookBaseCacheKey = buildCookBaseCacheKey;
@@ -51527,6 +51528,20 @@ function layeredCookDeltaReady(restore, loaded) {
     return layeredCookBaseReady(restore, loaded) &&
         Boolean(restore.delta.matchedKey) &&
         loaded.deltaLoaded;
+}
+/**
+ * Picks which layered cook archive the post step saves (#528).
+ *
+ * - cook did not run: nothing new to save.
+ * - base missed: save the long-lived base layer.
+ * - base hit: save a delta on top only when the delta layer is enabled.
+ */
+function selectCookSaveLayer(cookRan, baseReady, deltaEnabled) {
+    if (!cookRan)
+        return "none";
+    if (!baseReady)
+        return "base";
+    return deltaEnabled ? "delta" : "none";
 }
 const COOK_KEY_PREFIX = "cook";
 const COOK_BASE_KEY_PREFIX = "cook-base-v2";
@@ -51832,6 +51847,17 @@ async function restoreLayeredCookCacheArchives(opts) {
     // and bounded by the larger restore. Saves up to ~11s in the
     // typical warm-cache case (zackees/setup-soldr#295 measurement on
     // Integration v0.9.30 rerun).
+    const deltaMiss = {
+        hit: false,
+        matchedKey: "",
+        archivePath: opts.deltaArchivePath,
+        archiveBytes: 0,
+    };
+    if (opts.deltaEnabled === false) {
+        opts.log("cook-cache-delta: disabled (cook-delta=false); restoring base layer only");
+        const base = await restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log, warn, restore);
+        return { base, delta: deltaMiss };
+    }
     const [base, delta] = await Promise.all([
         restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log, warn, restore),
         restoreOneLayer("cook-cache-delta", opts.deltaKey, opts.deltaArchivePath, opts.deltaRestoreKeys ?? [], opts.log, warn, restore),
@@ -54512,6 +54538,7 @@ function readRawInputs(env) {
         prebuildDeps: get("prebuild-deps"),
         prebuildDepsFlags: get("prebuild-deps-flags"),
         prebuildDepsDeltaCache: get("prebuild-deps-delta-cache"),
+        cookDelta: get("cook-delta"),
         soldrMiniCache: get("soldr-mini-cache"),
         ciTests: get("ci-tests"),
         dylint: get("dylint"),

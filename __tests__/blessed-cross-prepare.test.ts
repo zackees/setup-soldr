@@ -149,3 +149,23 @@ test("#475 blessed-prepare requires every universal2 archive to be non-empty", (
   assert.equal(result.archiveBytes, 42);
   assert.equal(result.archivesUsable, false);
 });
+
+test("#513 cache-key-suffix namespaces the prepared cache key without cross-namespace fallback", () => {
+  const common = {
+    enabled: true,
+    cacheEnabled: true,
+    ref: "",
+    runnerTemp: "temp",
+    runnerOs: "Linux",
+    runnerArch: "X64",
+    target: "x86_64-pc-windows-msvc",
+    soldrRepo: "zackees/soldr",
+    soldrVersion: "0.9.21",
+  };
+  const plain = planBlessedPrepareCache(common);
+  const scoped = planBlessedPrepareCache({ ...common, keySuffix: "cross-prepare-123-1" });
+  assert.equal(scoped.key, `${plain.key}-xcross-prepare-123-1`);
+  assert.deepEqual(scoped.restoreKeys, []);
+  assert.equal(plain.restoreKeys.length, 1);
+  assert.equal(planBlessedPrepareCache({ ...common, keySuffix: "  " }).key, plain.key);
+});

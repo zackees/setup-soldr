@@ -76,6 +76,7 @@ EXPECTED_INPUTS = {
     "prebuild-deps",
     "prebuild-deps-flags",
     "prebuild-deps-delta-cache",
+    "cook-delta",
     "soldr-mini-cache",
     "dylint",
     "ci-tests",

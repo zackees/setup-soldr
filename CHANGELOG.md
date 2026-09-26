@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+- The cook delta layer is now off by default (#528). New input `cook-delta`
+  (default `false`) on the main action and the `cook/` sub-action. With the
+  default, the `cook-base-v2-*` archive is still restored and saved (on
+  non-PR events, per `save-cache`), but no `cook-delta-v2-*` entry is
+  restored or saved: a base hit re-runs `soldr cook` and uploads nothing. Set
+  `cook-delta: true` to get the previous base+delta behavior.
+  `prebuild-deps: soldr-cook` stays the default and is otherwise unchanged.
+
+- Self-test workflows now delete the run-scoped caches they create (#513).
+  `cross-prepare` joins `cook-soldr-selftest`, `cook-rematerialization` and
+  `_cook-consumer-rematerialization`: its seed saves under a
+  `cross-prepare-<run_id>-<run_attempt>` namespace, and an `always()`
+  cleanup job with `actions: write` deletes it. The deleter
+  (`scripts/delete-run-scoped-caches.mjs`) now lists only the run's own ref
+  (`GITHUB_REF`) and also filters by ref on the client, so it cannot delete
+  another ref's entries. `cache-key-suffix` now also applies to the blessed
+  prepare cache key (`...-s<hash>-x<suffix>`); a suffixed key does not fall
+  back to entries from other namespaces. A contract test requires every
+  workflow that saves run-scoped keys to have this cleanup, and every
+  `pull_request` workflow that forces `save-cache: "true"` to be run-scoped.
+
 - Fix an intermittent crash while extracting a cache archive on macOS
   (#531). `zstd -d | tar -xf -` runs through `runPipe`, and bsdtar exits as
   soon as it reads the end-of-archive marker, leaving the pax record padding

@@ -62,6 +62,7 @@ import {
   parseCookFlags,
   restoreCookCache,
   restoreLayeredCookCacheArchives,
+  selectCookSaveLayer,
   runCook,
   supportsLayeredCookCache,
 } from "./lib/cook-cache.js";
@@ -893,6 +894,7 @@ export async function run(): Promise<void> {
   let cookDeltaArchive = "";
   let cookBaseManifest = "";
   let cookLayered = false;
+  let cookDeltaEnabled = false;
   core.setOutput("cook-cache-hit", "false");
   core.setOutput("cook-cache-base-hit", "false");
   core.setOutput("cook-cache-delta-hit", "false");
@@ -944,6 +946,8 @@ export async function run(): Promise<void> {
     const soldrVersionForCook =
       result.soldrVersionResolved.trim() || result.soldrVersionRequested.trim();
     cookLayered = deltaRequested && supportsLayeredCookCache(soldrVersionForCook);
+    // #528: the delta layer is opt-in; the base layer is unaffected.
+    cookDeltaEnabled = isTruthy(inputs.cookDelta.trim() || "false");
     if (cookLayered) {
       const shapeHash = hashCookBuildShape(result.targetCache.restoreKeyLock || result.targetCache.key);
       cookBaseKey = buildCookBaseCacheKey(cookKeyParts);
@@ -973,6 +977,7 @@ export async function run(): Promise<void> {
         `cook: layered keys base=${cookBaseKey} delta=${cookDeltaKey}` +
           (cookDeltaParentKey ? ` delta-fallback=${cookDeltaParentKey}` : ` (no parent-fallback — parentSha unavailable, #365)`) +
           ` delta-prefix=${cookDeltaRestoreKeys.at(-1)}` +
+          ` cook-delta=${cookDeltaEnabled ? "true" : "false"}` +
           ` starting archive restore concurrent with install`,
       );
       cookLayeredRestorePromise = restoreLayeredCookCacheArchives({
@@ -981,6 +986,7 @@ export async function run(): Promise<void> {
         deltaRestoreKeys: cookDeltaRestoreKeys,
         baseArchivePath: cookBaseArchive,
         deltaArchivePath: cookDeltaArchive,
+        deltaEnabled: cookDeltaEnabled,
         log: (msg) => logger.log(msg),
         warn: (msg) => logger.warning(msg),
       });
@@ -1560,7 +1566,7 @@ export async function run(): Promise<void> {
       durationMs: Date.now() - cookRestoreT0,
       timestamp: new Date().toISOString(),
     });
-    statsCollector.record({
+    if (cookDeltaEnabled) statsCollector.record({
       label: "cook-cache-delta",
       operation: "restore",
       hit: deltaReady,
@@ -1585,7 +1591,7 @@ export async function run(): Promise<void> {
     } else {
       logger.log("cook: base+delta cache hit - skipping cook run, target/deps already warm");
     }
-    const cookSaveLayer = cookRan ? (baseReady ? "delta" : "base") : "none";
+    const cookSaveLayer = selectCookSaveLayer(cookRan, baseReady, cookDeltaEnabled);
     core.saveState("cookEnabled", "true");
     core.saveState("cookLayered", "true");
     core.saveState("cookBaseExactKey", cookBaseKey);
