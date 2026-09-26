@@ -58487,6 +58487,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.YANK_AUDIT_WORKER_ARG = void 0;
 exports.readRegistryDependencies = readRegistryDependencies;
+exports.planYankAudit = planYankAudit;
 exports.cratesIoSparsePath = cratesIoSparsePath;
 exports.auditDependencyYanks = auditDependencyYanks;
 exports.writeYankAuditResult = writeYankAuditResult;
@@ -58520,6 +58521,42 @@ function readRegistryDependencies(lockfilePath) {
         dependencies.push({ name: pkg.name, version: pkg.version, source: pkg.source });
     }
     return dependencies;
+}
+/**
+ * Decide whether restored dependency caches need a registry yank audit.
+ *
+ * A missing Cargo.lock means nothing pinned the restored closure: cargo
+ * resolves fresh on this run and never selects a yanked version, so there is
+ * no pinned closure that a later yank could poison (#526: a "-no-lock"
+ * build-cache hit used to start an audit whose post join then failed on the
+ * never-written worker config). Any other read or parse failure throws so the
+ * caller keeps failing closed.
+ */
+function planYankAudit(opts) {
+    const cacheKeys = opts.cacheKeys.filter(Boolean);
+    if (cacheKeys.length === 0) {
+        return { action: "skip", reason: "no dependency-bearing cache was restored" };
+    }
+    if (!opts.lockfilePath) {
+        throw new Error("restored dependency cache has no Cargo.lock path");
+    }
+    const lockfilePath = path.isAbsolute(opts.lockfilePath)
+        ? opts.lockfilePath
+        : path.resolve(opts.workspace, opts.lockfilePath);
+    let dependencies;
+    try {
+        dependencies = readRegistryDependencies(lockfilePath);
+    }
+    catch (err) {
+        if (err?.code === "ENOENT") {
+            return {
+                action: "skip",
+                reason: `no Cargo.lock at ${lockfilePath}; cargo resolves the dependency closure fresh`,
+            };
+        }
+        throw err;
+    }
+    return { action: "audit", lockfilePath, dependencies };
 }
 function cratesIoSparsePath(crateName) {
     const name = crateName.toLowerCase();
@@ -59859,8 +59896,15 @@ async function run() {
         const startedAtMs = Number(core.getState("yankAuditStartedAtMs"));
         const audit = auditPath
             ? await (0, yank_audit_js_1.resolveYankAuditResult)(auditPath, async () => {
-                if (!configPath)
+                if (!configPath || !fs.existsSync(configPath)) {
+                    // main never reached the worker launch (it recorded a terminal
+                    // not-checked result instead). Surface that original error
+                    // rather than masking it behind a missing-config ENOENT.
+                    const recorded = (0, yank_audit_js_1.readYankAuditResult)(auditPath);
+                    if (recorded?.status === "not-checked")
+                        return recorded;
                     throw new Error("audit worker config path is missing");
+                }
                 const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
                 const workerPid = (0, yank_audit_js_1.readYankAuditResult)(auditPath)?.workerPid;
                 log(`yank-audit: background result missing after its deadline (ready_pid=${workerPid ?? "not-reported"}); running bounded foreground recheck`);

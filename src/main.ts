@@ -89,7 +89,7 @@ import type {
 } from "./lib/types.js";
 import {
   YANK_AUDIT_WORKER_ARG,
-  readRegistryDependencies,
+  planYankAudit,
   runYankAuditWorker,
   writeYankAuditResult,
   type YankAuditWorkerConfig,
@@ -1480,58 +1480,61 @@ export async function run(): Promise<void> {
     const resultPath = path.join(ctx.runnerTemp, "setup-soldr-yank-audit", "result.json");
     const configPath = path.join(ctx.runnerTemp, "setup-soldr-yank-audit", "config.json");
     try {
-      if (!result.targetCache.lockfilePath) {
-        throw new Error("restored dependency cache has no Cargo.lock path");
-      }
-      const lockfilePath = path.isAbsolute(result.targetCache.lockfilePath)
-        ? result.targetCache.lockfilePath
-        : path.resolve(ctx.workspace, result.targetCache.lockfilePath);
-      const dependencies = readRegistryDependencies(lockfilePath);
-      const config: YankAuditWorkerConfig = {
-        dependencies,
-        requestTimeoutMs: 30_000,
-        // Finish before post's 60s join ceiling even if every registry
-        // request stalls. The worker aborts all in-flight requests together.
-        overallTimeoutMs: 45_000,
-      };
-      fs.mkdirSync(path.dirname(configPath), { recursive: true });
-      fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`, "utf8");
-      writeYankAuditResult(resultPath, { status: "pending" });
-      core.saveState("yankAuditStarted", "true");
-      core.saveState("yankAuditResultPath", resultPath);
-      core.saveState("yankAuditConfigPath", configPath);
-      core.saveState("yankAuditStartedAtMs", String(Date.now()));
-      core.saveState("yankAuditCacheKeys", JSON.stringify(poisonedCandidates));
-      if (dependencies.length === 0) {
-        writeYankAuditResult(resultPath, {
-          status: "clean",
-          checkedAt: new Date().toISOString(),
-          dependencyCount: 0,
-          checkedCount: 0,
-          yanked: [],
-          errors: [],
-        });
+      const plan = planYankAudit({
+        cacheKeys: poisonedCandidates,
+        lockfilePath: result.targetCache.lockfilePath,
+        workspace: ctx.workspace,
+      });
+      if (plan.action === "skip") {
+        logger.log(`yank-audit: skipped: ${plan.reason}`);
       } else {
-        const entrypoint = process.argv[1];
-        if (!entrypoint) throw new Error("Node action entrypoint is unavailable");
-        const stderrPath = path.join(path.dirname(resultPath), "worker-stderr.log");
-        const stderrFd = fs.openSync(stderrPath, "w");
-        let child;
-        try {
-          child = spawn(
-            process.execPath,
-            [entrypoint, YANK_AUDIT_WORKER_ARG, configPath, resultPath],
-            { detached: true, stdio: ["ignore", "ignore", stderrFd], windowsHide: true },
+        const dependencies = plan.dependencies;
+        const config: YankAuditWorkerConfig = {
+          dependencies,
+          requestTimeoutMs: 30_000,
+          // Finish before post's 60s join ceiling even if every registry
+          // request stalls. The worker aborts all in-flight requests together.
+          overallTimeoutMs: 45_000,
+        };
+        fs.mkdirSync(path.dirname(configPath), { recursive: true });
+        fs.writeFileSync(configPath, `${JSON.stringify(config)}\n`, "utf8");
+        writeYankAuditResult(resultPath, { status: "pending" });
+        core.saveState("yankAuditStarted", "true");
+        core.saveState("yankAuditResultPath", resultPath);
+        core.saveState("yankAuditConfigPath", configPath);
+        core.saveState("yankAuditStartedAtMs", String(Date.now()));
+        core.saveState("yankAuditCacheKeys", JSON.stringify(poisonedCandidates));
+        if (dependencies.length === 0) {
+          writeYankAuditResult(resultPath, {
+            status: "clean",
+            checkedAt: new Date().toISOString(),
+            dependencyCount: 0,
+            checkedCount: 0,
+            yanked: [],
+            errors: [],
+          });
+        } else {
+          const entrypoint = process.argv[1];
+          if (!entrypoint) throw new Error("Node action entrypoint is unavailable");
+          const stderrPath = path.join(path.dirname(resultPath), "worker-stderr.log");
+          const stderrFd = fs.openSync(stderrPath, "w");
+          let child;
+          try {
+            child = spawn(
+              process.execPath,
+              [entrypoint, YANK_AUDIT_WORKER_ARG, configPath, resultPath],
+              { detached: true, stdio: ["ignore", "ignore", stderrFd], windowsHide: true },
+            );
+          } finally {
+            fs.closeSync(stderrFd);
+          }
+          core.saveState("yankAuditStderrPath", stderrPath);
+          child.unref();
+          logger.log(
+            `yank-audit: started pid=${child.pid ?? "unknown"} dependencies=${dependencies.length} ` +
+              `cache_keys=${poisonedCandidates.length}`,
           );
-        } finally {
-          fs.closeSync(stderrFd);
         }
-        core.saveState("yankAuditStderrPath", stderrPath);
-        child.unref();
-        logger.log(
-          `yank-audit: started pid=${child.pid ?? "unknown"} dependencies=${dependencies.length} ` +
-            `cache_keys=${poisonedCandidates.length}`,
-        );
       }
     } catch (err) {
       writeYankAuditResult(resultPath, {

@@ -1307,7 +1307,14 @@ export async function run(): Promise<void> {
     const startedAtMs = Number(core.getState("yankAuditStartedAtMs"));
     const audit = auditPath
       ? await resolveYankAuditResult(auditPath, async () => {
-          if (!configPath) throw new Error("audit worker config path is missing");
+          if (!configPath || !fs.existsSync(configPath)) {
+            // main never reached the worker launch (it recorded a terminal
+            // not-checked result instead). Surface that original error
+            // rather than masking it behind a missing-config ENOENT.
+            const recorded = readYankAuditResult(auditPath);
+            if (recorded?.status === "not-checked") return recorded;
+            throw new Error("audit worker config path is missing");
+          }
           const config = JSON.parse(fs.readFileSync(configPath, "utf8")) as YankAuditWorkerConfig;
           const workerPid = readYankAuditResult(auditPath)?.workerPid;
           log(`yank-audit: background result missing after its deadline (ready_pid=${workerPid ?? "not-reported"}); running bounded foreground recheck`);

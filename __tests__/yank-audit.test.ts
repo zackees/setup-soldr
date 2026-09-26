@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 import {
   auditDependencyYanks,
   cratesIoSparsePath,
+  planYankAudit,
   readRegistryDependencies,
   waitForYankAuditResult,
   writeYankAuditResult,
@@ -62,6 +63,49 @@ version = "2.0.0"
 source = "git+https://example.invalid/repo"
 `, "utf8");
     assert.deepEqual(readRegistryDependencies(lockfile), [dependency("serde", "1.0.0")]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("no-lock build-cache restore skips the audit instead of failing post (#526)", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-yank-nolock-"));
+  try {
+    // A "-no-lock" build-cache hit in a workspace without Cargo.lock: the
+    // restored closure is unpinned, so there is nothing a yank can poison.
+    const plan = planYankAudit({
+      cacheKeys: ["setup-soldr-buildcache-v2-linux-x64-d72a2740033354d9-no-lock"],
+      lockfilePath: "Cargo.lock",
+      workspace: root,
+    });
+    assert.equal(plan.action, "skip");
+    assert.match(plan.action === "skip" ? plan.reason : "", /no Cargo\.lock/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("yank audit plan audits a present lockfile and fails closed on unreadable ones", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "setup-soldr-yank-plan-"));
+  try {
+    assert.deepEqual(
+      planYankAudit({ cacheKeys: [], lockfilePath: "Cargo.lock", workspace: root }).action,
+      "skip",
+    );
+    fs.writeFileSync(path.join(root, "Cargo.lock"), `
+version = 4
+
+[[package]]
+name = "serde"
+version = "1.0.0"
+source = "${CRATES_IO}"
+`, "utf8");
+    const plan = planYankAudit({ cacheKeys: ["k"], lockfilePath: "Cargo.lock", workspace: root });
+    assert.equal(plan.action, "audit");
+    assert.deepEqual(plan.action === "audit" ? plan.dependencies : [], [dependency("serde", "1.0.0")]);
+    assert.throws(() => planYankAudit({ cacheKeys: ["k"], lockfilePath: "", workspace: root }), /no Cargo\.lock path/);
+    fs.writeFileSync(path.join(root, "Cargo.lock"), "not = [valid toml", "utf8");
+    assert.throws(() => planYankAudit({ cacheKeys: ["k"], lockfilePath: "Cargo.lock", workspace: root }));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

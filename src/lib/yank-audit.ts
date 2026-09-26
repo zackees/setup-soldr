@@ -68,6 +68,50 @@ export function readRegistryDependencies(lockfilePath: string): YankAuditDepende
   return dependencies;
 }
 
+export type YankAuditPlan =
+  | { action: "skip"; reason: string }
+  | { action: "audit"; lockfilePath: string; dependencies: YankAuditDependency[] };
+
+/**
+ * Decide whether restored dependency caches need a registry yank audit.
+ *
+ * A missing Cargo.lock means nothing pinned the restored closure: cargo
+ * resolves fresh on this run and never selects a yanked version, so there is
+ * no pinned closure that a later yank could poison (#526: a "-no-lock"
+ * build-cache hit used to start an audit whose post join then failed on the
+ * never-written worker config). Any other read or parse failure throws so the
+ * caller keeps failing closed.
+ */
+export function planYankAudit(opts: {
+  cacheKeys: readonly string[];
+  lockfilePath: string | undefined;
+  workspace: string;
+}): YankAuditPlan {
+  const cacheKeys = opts.cacheKeys.filter(Boolean);
+  if (cacheKeys.length === 0) {
+    return { action: "skip", reason: "no dependency-bearing cache was restored" };
+  }
+  if (!opts.lockfilePath) {
+    throw new Error("restored dependency cache has no Cargo.lock path");
+  }
+  const lockfilePath = path.isAbsolute(opts.lockfilePath)
+    ? opts.lockfilePath
+    : path.resolve(opts.workspace, opts.lockfilePath);
+  let dependencies: YankAuditDependency[];
+  try {
+    dependencies = readRegistryDependencies(lockfilePath);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException | null)?.code === "ENOENT") {
+      return {
+        action: "skip",
+        reason: `no Cargo.lock at ${lockfilePath}; cargo resolves the dependency closure fresh`,
+      };
+    }
+    throw err;
+  }
+  return { action: "audit", lockfilePath, dependencies };
+}
+
 export function cratesIoSparsePath(crateName: string): string {
   const name = crateName.toLowerCase();
   if (name.length === 1) return `1/${name}`;
