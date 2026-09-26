@@ -5,6 +5,7 @@ import * as cacheHttpClient from "@actions/cache/lib/internal/cacheHttpClient.js
 import * as cacheUtils from "@actions/cache/lib/internal/cacheUtils.js";
 import * as twirp from "@actions/cache/lib/internal/shared/cacheTwirpClient.js";
 import * as cacheTar from "@actions/cache/lib/internal/tar.js";
+import { allowCacheSave } from "./save-policy.js";
 
 type CompressionMethod = Awaited<ReturnType<typeof cacheUtils.getCompressionMethod>>;
 
@@ -25,7 +26,7 @@ export interface ActionsCacheArchive {
 }
 
 export interface TwoPhaseCacheResult {
-  status: "saved" | "skipped-reservation" | "failed";
+  status: "saved" | "skipped-reservation" | "policy-skip" | "failed";
   cacheId?: number;
   archive?: ReservedCacheArchive;
   error?: string;
@@ -34,6 +35,8 @@ export interface TwoPhaseCacheResult {
 export interface TwoPhaseCacheOptions {
   paths: string[];
   key: string;
+  /** Layer name used in the save-policy skip line (#527). */
+  layer?: string;
   enableCrossOsArchive?: boolean;
   log?: (message: string) => void;
   produce: () => Promise<ReservedCacheArchive>;
@@ -135,6 +138,10 @@ async function reserve(options: TwoPhaseCacheOptions): Promise<Reservation | nul
  * property missing from the public saveCache convenience API.
  */
 export async function saveReservedCache(options: TwoPhaseCacheOptions): Promise<TwoPhaseCacheResult> {
+  // #527: shared save policy. No reservation, no archive, no upload.
+  if (!allowCacheSave(options.layer ?? "actions-cache", (m) => options.log?.(m))) {
+    return { status: "policy-skip" };
+  }
   let reservation: Reservation | null;
   try {
     reservation = options.reserve ? await options.reserve() : await reserve(options);

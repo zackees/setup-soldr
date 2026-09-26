@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Stop saving durable caches from pull-request runs by default (#527). The
+  main action gains `save-cache: auto | true | false` (default `auto`), and
+  every durable upload (cook base/delta, build-cache, target-cache,
+  solo-toolchain, cargo-registry, soldr-mini, blessed prepare, Dylint caches)
+  goes through one shared save-policy gate (`src/lib/save-policy.ts`). `auto`
+  skips uploads when `GITHUB_EVENT_NAME` is `pull_request`: those entries are
+  scoped to `refs/pull/N/merge`, unreachable by other runs, and were filling
+  consumers' 10 GB budget. Restores and cook-on-miss still run on PRs, and
+  each skipped layer logs `save skipped: pull_request event (save-cache=auto)`.
+  The `cook/` sub-action uses the same policy; its `save-cache` now accepts
+  `auto` and defaults to it (was `true`), so `true`/`false` keep their
+  meaning. A contract test fails if a new save call site bypasses the gate.
+
 - Ingest soldr `0.9.22`: retain the rolling `latest` default and extend the
   hash-verified PyPI wheel fallback contract through `0.9.22`. The 23 GitHub
   release assets, all eight published wheels, and the pinned cargo-chef

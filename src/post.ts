@@ -53,6 +53,7 @@ import {
 } from "./lib/compile-cache-stats.js";
 import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
+import { allowCacheSave, gatedSaveCache } from "./lib/save-policy.js";
 import {
   deleteCacheEntriesByKeys,
   evictIfOverBudget,
@@ -81,6 +82,7 @@ type SaveStatus =
   | "oversize-skip"
   | "race-skip"
   | "tiny-delta-skip"
+  | "policy-skip"
   | "saved"
   | "failed";
 
@@ -400,6 +402,10 @@ async function saveOne(opts: {
       fileCount: null,
       payload: null,
     });
+  // #527: shared save policy (save-cache input / pull_request event).
+  if (!allowCacheSave(label, (m) => core.info(m))) {
+    return withStats({ status: "policy-skip", cache_dir: cacheDir });
+  }
   if (!dirExists(cacheDir)) {
     log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
     return withStats({ status: "missing-dir-skip", cache_dir: cacheDir });
@@ -470,7 +476,7 @@ async function saveOne(opts: {
   const pathsToSave = archivePath ? [archivePath] : [cacheDir];
   try {
     const uploadStart = Date.now();
-    const id = await cache.saveCache(pathsToSave, key);
+    const id = await gatedSaveCache(label, pathsToSave, key, (m) => core.info(m));
     uploadMs = Date.now() - uploadStart;
     log(
       `${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"} ` +
@@ -797,6 +803,8 @@ function saveText(save: CacheSaveResult): string {
       return "skipped cache reservation race";
     case "tiny-delta-skip":
       return save.skip_reason ? `skipped tiny delta (${save.skip_reason})` : "skipped tiny delta";
+    case "policy-skip":
+      return "skipped by save-cache policy";
     case "failed":
       return save.error ? `failed: ${save.error}` : "failed";
     case "disabled":
@@ -1514,6 +1522,11 @@ export async function run(): Promise<void> {
         { status: "missing-dir-skip" as const, cache_dir: "(no paths)" },
         { archiveBytes: null as number | null },
       );
+    } else if (!allowCacheSave("target-cache", log)) {
+      targetCacheSave = Object.assign(
+        { status: "policy-skip" as const, cache_dir: targetPaths.join(",") },
+        { archiveBytes: null as number | null },
+      );
     } else if (restoreState.targetCacheExactHit) {
       log(`target-cache: exact cache hit on ${targetKey}, skipping save`);
       targetCacheSave = Object.assign(
@@ -1559,7 +1572,7 @@ export async function run(): Promise<void> {
         } else {
         const targetSaveStart = Date.now();
         try {
-          const id = await cache.saveCache(existingPaths, targetKey);
+          const id = await gatedSaveCache("target-cache", existingPaths, targetKey, log);
           if (id <= 0) {
             log(
               `target-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +
@@ -1628,7 +1641,12 @@ export async function run(): Promise<void> {
   });
   if (result.cargoRegistryCache.enabled) {
     const regSaveStart = Date.now();
-    if (registryMatched === result.cargoRegistryCache.key) {
+    if (!allowCacheSave("cargo-registry-cache", log)) {
+      cargoRegistrySave = Object.assign(
+        { status: "policy-skip" as const, cache_dir: result.cargoRegistryCache.path },
+        { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null },
+      );
+    } else if (registryMatched === result.cargoRegistryCache.key) {
       cargoRegistrySave = Object.assign(
         { status: "exact-hit-skip" as const, cache_dir: result.cargoRegistryCache.path },
         { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null },
@@ -1685,9 +1703,11 @@ export async function run(): Promise<void> {
           const compressMs = Date.now() - compressStart;
           const uploadStart = Date.now();
           try {
-            const id = await cache.saveCache(
+            const id = await gatedSaveCache(
+              "cargo-registry-cache",
               result.cargoRegistryCache.archive.restorePaths,
               result.cargoRegistryCache.key,
+              log,
             );
             const uploadMs = Date.now() - uploadStart;
             const status = await classifyCacheSaveReservation(
@@ -1984,7 +2004,9 @@ export async function run(): Promise<void> {
           });
           const repairRaceWonElsewhere = soloRestoreInvalid &&
             saveResult.status === "race-precheck-skipped" && repairDeletionComplete;
-          if (saveResult.status !== "saved" && !repairRaceWonElsewhere) {
+          if (saveResult.status === "policy-skip") {
+            // #527: skip line already logged by the save-policy gate.
+          } else if (saveResult.status !== "saved" && !repairRaceWonElsewhere) {
             log(`solo-toolchain-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
             if (soloRestoreInvalid) {
               core.setFailed(
@@ -2234,7 +2256,7 @@ export async function run(): Promise<void> {
         }
         const t0 = Date.now();
         try {
-          const id = await cache.saveCache(existing, lane.key);
+          const id = await gatedSaveCache(`cross-tool-cache:${lane.target}`, existing, lane.key, log);
           if (id > 0) {
             log(`cross-tool-cache: lane=${lane.target} saved id=${id} key=${lane.key}`);
             postCollector.record({
@@ -2277,10 +2299,12 @@ export async function run(): Promise<void> {
     const plan = result.blessedPrepareCache;
     const archivesReady = plan.archivePaths.length > 0
       && plan.archivePaths.every((archivePath) => fs.existsSync(archivePath) && fs.statSync(archivePath).size > 0);
-    if (planRaw === "true" && !exactHit && complete && archivesReady) {
+    if (planRaw === "true" && !allowCacheSave("blessed-prepare-cache", log)) {
+      // #527: skip line logged by the save-policy gate.
+    } else if (planRaw === "true" && !exactHit && complete && archivesReady) {
       const t0 = Date.now();
       try {
-        const id = await cache.saveCache(plan.archivePaths, plan.key);
+        const id = await gatedSaveCache("blessed-prepare-cache", plan.archivePaths, plan.key, log);
         log(`blessed-prepare-cache: ${id > 0 ? "saved" : "save skipped"} key=${plan.key}`);
         postCollector.record({ label: "blessed-prepare-cache", operation: "save", hit: false, key: plan.key, matchedKey: "", restoreKeys: [], archiveBytes: null, inflatedBytes: null, fileCount: null, durationMs: Date.now() - t0, timestamp: new Date().toISOString() });
       } catch (err) {
@@ -2300,7 +2324,9 @@ export async function run(): Promise<void> {
   try {
     if (result.dylintCache.enabled && result.dylintCache.paths.length > 0) {
       const exactHit = core.getState("dylintCacheExactHit") === "true";
-      if (exactHit) {
+      if (!allowCacheSave("dylint-cache", log)) {
+        // #527: skip line logged by the save-policy gate.
+      } else if (exactHit) {
         log("dylint-cache: exact hit - skipping save");
       } else {
         const markerValid =
@@ -2325,7 +2351,7 @@ export async function run(): Promise<void> {
         } else {
           const t0 = Date.now();
           try {
-            const id = await cache.saveCache(result.dylintCache.paths, result.dylintCache.key);
+            const id = await gatedSaveCache("dylint-cache", result.dylintCache.paths, result.dylintCache.key, log);
             if (id > 0) {
               log(`dylint-cache: saved id=${id} key=${result.dylintCache.key}`);
               postCollector.record({
@@ -2364,7 +2390,9 @@ export async function run(): Promise<void> {
       result.dylintCache.outputPaths.length > 0
     ) {
       const exactHit = core.getState("dylintOutputCacheExactHit") === "true";
-      if (exactHit) {
+      if (!allowCacheSave("dylint-output-cache", log)) {
+        // #527: skip line logged by the save-policy gate.
+      } else if (exactHit) {
         log("dylint-output-cache: exact hit - skipping save");
       } else {
         let markerValid = false;
@@ -2383,9 +2411,11 @@ export async function run(): Promise<void> {
         } else {
           const t0 = Date.now();
           try {
-            const id = await cache.saveCache(
+            const id = await gatedSaveCache(
+              "dylint-output-cache",
               result.dylintCache.outputPaths,
               result.dylintCache.outputKey,
+              log,
             );
             if (id > 0) {
               log(

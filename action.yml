@@ -55,6 +55,21 @@ inputs:
       flip individual layer inputs.
     required: false
     default: "true"
+  save-cache:
+    description: >
+      Governs every durable Actions-cache save this action performs
+      (cook base/delta, build-cache, target-cache, solo-toolchain,
+      cargo-registry, soldr-mini, blessed prepare, dylint caches).
+      "auto" (default) saves unless the triggering event is
+      `pull_request`: GitHub scopes such entries to `refs/pull/N/merge`,
+      so no other run can restore them, yet they count against the
+      repository's 10 GB budget. "true" always saves; "false" never
+      saves. Restores and cooking on a miss happen regardless; only
+      uploads are skipped. Trade-off: a PR that changes the dependency
+      closure cooks cold and does not persist the result. See
+      setup-soldr#527.
+    required: false
+    default: "auto"
   cache-dir:
     description: Override the runner-local cache/state root used for the installed soldr binary and any managed rustup state rehydrated by this action.
     required: false

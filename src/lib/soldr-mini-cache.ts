@@ -25,6 +25,7 @@ import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 import * as cache from "@actions/cache";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
+import { allowCacheSave, gatedSaveCache } from "./save-policy.js";
 import { installedSoldrReleaseIsUsable } from "./ensure-soldr.js";
 
 export interface MiniCacheKeyParts {
@@ -67,7 +68,7 @@ export interface MiniCacheSaveOpts {
 }
 
 export interface MiniCacheSaveResult {
-  status: "saved" | "skipped-race" | "skipped-empty" | "skipped-missing-dir" | "failed";
+  status: "saved" | "skipped-race" | "skipped-empty" | "skipped-missing-dir" | "policy-skip" | "failed";
   cacheId?: number;
   archiveBytes?: number;
   inflatedBytes?: number;
@@ -199,6 +200,7 @@ export async function restoreMiniCache(opts: MiniCacheRestoreOpts): Promise<Mini
  */
 export async function saveMiniCache(opts: MiniCacheSaveOpts): Promise<MiniCacheSaveResult> {
   const { installDir, archivePath, exactKey, level, longWindow, debug, log } = opts;
+  if (!allowCacheSave("soldr-mini-cache", log)) return { status: "policy-skip" };
   if (!fs.existsSync(installDir)) {
     return { status: "skipped-missing-dir" };
   }
@@ -245,7 +247,7 @@ export async function saveMiniCache(opts: MiniCacheSaveOpts): Promise<MiniCacheS
     );
   }
   try {
-    const id = await cache.saveCache([outputArchivePath], exactKey);
+    const id = await gatedSaveCache("soldr-mini-cache", [outputArchivePath], exactKey, log);
     if (id <= 0) {
       log(
         `soldr-mini-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +

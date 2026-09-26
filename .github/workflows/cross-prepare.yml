@@ -345,6 +345,7 @@ jobs:
         id: setup
         uses: ./
         with:
+          save-cache: "true"  # seed->warm jobs in one PR run must persist (#527)
           cross-targets: x86_64-pc-windows-msvc
           cache: true
           build-cache: false
@@ -377,6 +378,7 @@ jobs:
         id: setup
         uses: ./
         with:
+          save-cache: "true"  # seed->warm jobs in one PR run must persist (#527)
           cross-targets: x86_64-pc-windows-msvc
           cache: true
           build-cache: false

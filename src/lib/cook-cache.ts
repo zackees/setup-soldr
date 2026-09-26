@@ -23,6 +23,7 @@ import * as cache from "@actions/cache";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
 import { formatLogLine } from "./log-utils.js";
 import { isReservationConflict, saveReservedCache } from "./two-phase-actions-cache.js";
+import { allowCacheSave, gatedSaveCache } from "./save-policy.js";
 
 export interface CookCacheKeyParts {
   runnerOs: string;
@@ -179,6 +180,8 @@ export interface CookSaveResult {
     | "skipped-missing-target"
     | "skipped-missing-manifest"
     | "skipped-empty"
+    /** #527: the shared save policy (save-cache input / event) forbade the upload. */
+    | "policy-skip"
     | "failed";
   cacheId?: number;
   archiveBytes?: number;
@@ -745,6 +748,7 @@ export async function loadLayeredCookCache(
  */
 export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult> {
   const { targetDir, exactKey, level, longWindow, debug, log } = opts;
+  if (!allowCacheSave("cook-cache", log)) return { status: "policy-skip" };
   if (!fs.existsSync(targetDir)) return { status: "skipped-missing-target" };
   try {
     if ((await fsp.readdir(targetDir)).length === 0) return { status: "skipped-empty" };
@@ -756,6 +760,7 @@ export async function saveCookCache(opts: CookSaveOpts): Promise<CookSaveResult>
   const result = await saveReservedCache({
     paths: [archivePath],
     key: exactKey,
+    layer: "cook-cache",
     log,
     produce: async () => {
       const compressStart = Date.now();
@@ -880,7 +885,7 @@ async function saveCookCacheLegacy(opts: CookSaveOpts): Promise<CookSaveResult> 
   const compressMs = Date.now() - compressStart;
   const uploadStart = Date.now();
   try {
-    const id = await cache.saveCache([archivePath], exactKey);
+    const id = await gatedSaveCache("cook-cache", [archivePath], exactKey, log);
     const uploadMs = Date.now() - uploadStart;
     if (id <= 0) {
       // @actions/cache returns -1 when reserveCache fails — typically
@@ -957,6 +962,7 @@ function saveReport(payload: Record<string, unknown> | null): {
 
 export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<CookSaveResult> {
   const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
+  if (!allowCacheSave(`cook-cache-${layer}`, log)) return { status: "policy-skip" };
   if (!fs.existsSync(targetDir)) return { status: "skipped-missing-target" };
   try {
     if ((await fsp.readdir(targetDir)).length === 0) return { status: "skipped-empty" };
@@ -976,6 +982,7 @@ export async function saveLayeredCookCache(opts: CookLayeredSaveOpts): Promise<C
   const result = await saveReserved({
     paths: [archivePath],
     key: exactKey,
+    layer: `cook-cache-${layer}`,
     log,
     produce: async () => {
       const compressStart = Date.now();
@@ -1110,7 +1117,7 @@ async function saveLayeredCookCacheLegacy(opts: CookLayeredSaveOpts): Promise<Co
   const archiveBytes = report.archiveBytes ?? await archiveSize(archivePath);
   const uploadStart = Date.now();
   try {
-    const id = await cache.saveCache([archivePath], exactKey);
+    const id = await gatedSaveCache(`cook-cache-${layer}`, [archivePath], exactKey, log);
     const uploadMs = Date.now() - uploadStart;
     if (id <= 0) {
       log(

@@ -440,6 +440,7 @@ preferred for new workflows.
 | `cross-targets` | One canonical target per job for Soldr blessed preparation; use a matrix for multiple targets. |
 | `token` | GitHub token used for authenticated release metadata and asset download requests. Defaults to `${{ github.token }}`. |
 | `cache` | Restore and save the action-managed cache/state root. |
+| `save-cache` | `auto` (default), `true` or `false`. Governs every durable Actions-cache upload this action makes: cook base/delta, build-cache, target-cache, solo-toolchain, cargo-registry, soldr-mini, blessed prepare and Dylint caches. `auto` saves unless `github.event_name` is `pull_request`, because GitHub scopes those entries to `refs/pull/N/merge` where no other run can restore them, yet they count against the 10 GB budget. `true` always saves, `false` never saves. Restores and cooking on a miss still run; each skipped layer logs `<layer>: save skipped: pull_request event (save-cache=auto)`. Trade-off: a PR that changes the dependency closure cooks cold and does not persist its result. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
 | `cache-key-suffix` | Optional escape hatch appended to the cache key. |
 | `toolchain` | Explicit Rust toolchain channel override. |
@@ -583,9 +584,12 @@ When target setup must happen after the main setup-soldr step, use
 `zackees/setup-soldr/cook@v0` instead of the main action's early
 `prebuild-deps: soldr-cook`. The sub-action runs later in the workflow and
 accepts the same `soldr cook` flags through its `flags` input.
-Set its `save-cache: false` input on jobs that should restore shared cook
-archives and run `soldr cook` on a miss without uploading a new archive.
-The default remains `true`; `cache: false` disables restore and cook as well.
+Its `save-cache` input shares the main action's policy: `auto` (the default)
+uploads the cook archive except on `pull_request` events, `false` restores
+shared cook archives and runs `soldr cook` on a miss without uploading, and
+`true` always uploads. The default moved from `true` to `auto` (#527) because a
+PR-scoped cook entry cannot be restored by any other ref; set `true` to keep
+per-PR warm reruns. `cache: false` disables restore and cook as well.
 
 Base key shape:
 `cook-base-v2-<os>-<arch>-<libc>-rustc<release>-f<flags_hash>-l<lock_hash>-soldr<version>`.

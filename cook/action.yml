@@ -37,9 +37,13 @@ inputs:
     required: false
     default: "true"
   save-cache:
-    description: "Set false to restore cook archives and run cook on misses without writing a durable cache."
+    description: >
+      auto | true | false. "auto" (default) writes the durable cook
+      archive except on `pull_request` events, whose entries no other
+      ref can restore (setup-soldr#527). "true" always saves; "false"
+      restores and cooks on misses without writing a durable cache.
     required: false
-    default: "true"
+    default: "auto"
   delta-cache:
     description: "Enable layered base+delta cook archives when the soldr version supports them."
     required: false

@@ -21,6 +21,7 @@ import * as cache from "@actions/cache";
 import * as exec from "@actions/exec";
 import * as github from "@actions/github";
 import { compressCache, decompressCache, detectCompressMagic } from "./cache-compress.js";
+import { allowCacheSave, gatedSaveCache } from "./save-policy.js";
 import type { SnapshotDiff, SnapshotEntry } from "./toolchain-snapshot.js";
 
 /**
@@ -89,6 +90,8 @@ export interface SoloRestoreResult {
 export interface SoloSaveResult {
   status:
     | "saved"
+    /** #527: the shared save policy (save-cache input / event) forbade the upload. */
+    | "policy-skip"
     | "skipped-empty"
     | "skipped-exact-hit"
     | "skipped-disabled"
@@ -468,6 +471,7 @@ export async function saveSoloCache(opts: {
   compress?: typeof compressCache;
 }): Promise<SoloSaveResult> {
   const { stagingDir, key, level, debug, log } = opts;
+  if (!allowCacheSave("solo-toolchain-cache", log)) return { status: "policy-skip" };
   const cacheArchive = opts.cacheArchivePath ?? soloCacheArchivePath(path.dirname(stagingDir));
   if (!fs.existsSync(stagingDir)) {
     return { status: "failed", error: `staging dir missing: ${stagingDir}` };
@@ -545,7 +549,9 @@ export async function saveSoloCache(opts: {
   }
 
   try {
-    const id = await (opts.saveCache ?? cache.saveCache)([archivePath], key);
+    const id = opts.saveCache
+      ? await opts.saveCache([archivePath], key)
+      : await gatedSaveCache("solo-toolchain-cache", [archivePath], key, log);
     if (id <= 0) {
       if (opts.lookupExactKey) {
         const lookup = opts.lookupExactKey;

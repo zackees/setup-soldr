@@ -17,6 +17,7 @@ import {
   selectDeferredCookSaveLayer,
 } from "./lib/deferred-cook.js";
 import { parseVersionJsonOutput } from "./lib/verify-soldr.js";
+import { decideCacheSave, parseSaveCacheMode } from "./lib/save-policy.js";
 
 async function capture(
   command: string,
@@ -96,7 +97,14 @@ async function main(): Promise<void> {
   const runnerTemp = env["RUNNER_TEMP"]?.trim() || path.join(os.tmpdir(), "setup-soldr-runner");
   const soldrPath = core.getInput("soldr-path").trim() || env["SOLDR_BINARY"]?.trim() || "soldr";
   const cache = parseBooleanInput("cache", core.getInput("cache"), true);
-  const saveCache = parseBooleanInput("save-cache", core.getInput("save-cache"), true);
+  // #527: same save policy as the main action. `auto` (default) skips the
+  // durable upload on pull_request events; `true`/`false` override.
+  const saveDecision = decideCacheSave(
+    parseSaveCacheMode(core.getInput("save-cache"), "auto"),
+    env["GITHUB_EVENT_NAME"],
+  );
+  const saveCache = saveDecision.save;
+  if (!saveCache) core.info(`cook-cache: save skipped: ${saveDecision.reason}`);
   const deltaCache = parseBooleanInput("delta-cache", core.getInput("delta-cache"), true);
   const failOnError = parseBooleanInput("fail-on-error", core.getInput("fail-on-error"), false);
   const debug = parseBooleanInput("debug", core.getInput("debug"), false);
