@@ -87,7 +87,7 @@ def test_post_v2_save_owns_both_archive_paths_without_generic_compression() -> N
     block = source[start:end]
     assert "saveCargoRegistryArchive" in block
     assert "cargoRegistryCache.archive.restorePaths" in block
-    assert "cache.saveCache" in block
+    assert "gatedSaveCache(" in block  # #527: policy-gated upload
     assert "compressCache" not in block
     helper = (ROOT / "src" / "lib" / "cargo-registry-archive.ts").read_text(
         encoding="utf-8"

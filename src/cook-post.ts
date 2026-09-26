@@ -19,7 +19,7 @@ async function main(): Promise<void> {
     return;
   }
   if (!stateBool("SaveCache")) {
-    core.info("cook-cache: save-cache is false - skipping save");
+    core.info("cook-cache: save disabled by save-cache policy - skipping save");
     return;
   }
   const ran = stateBool("Ran");

@@ -76,6 +76,7 @@ jobs:
         name: Install soldr with shipped defaults
         uses: ./
         with:
+          save-cache: "true"  # seed->warm jobs in one PR run must persist (#527)
           # Deliberately no prebuild-deps / prebuild-deps-delta-cache here.
           # The shipped defaults are the subject of this test.
           #
@@ -135,6 +136,7 @@ jobs:
         name: Install soldr with shipped defaults
         uses: ./
         with:
+          save-cache: "true"  # seed->warm jobs in one PR run must persist (#527)
           lockfile: _vender/soldr/Cargo.lock
           target-dir: _vender/soldr/target
           toolchain: 1.95.0

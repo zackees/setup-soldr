@@ -155,6 +155,7 @@ jobs:
       - id: setup
         uses: ./
         with:
+          save-cache: "true"  # seed->warm jobs in one PR run must persist (#527)
           cache: true
           build-cache: true
           target-cache: true

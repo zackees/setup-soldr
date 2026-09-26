@@ -30,6 +30,7 @@ EXPECTED_INPUTS = {
     "source-path",
     "token",
     "cache",
+    "save-cache",
     "cache-dir",
     "cache-key-suffix",
     "cache-preset",

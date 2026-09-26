@@ -51582,6 +51582,7 @@ const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
 const log_utils_js_1 = __nccwpck_require__(28129);
 const two_phase_actions_cache_js_1 = __nccwpck_require__(27190);
+const save_policy_js_1 = __nccwpck_require__(98097);
 function layeredCookBaseReady(restore, loaded) {
     return restore.base.hit && loaded.baseLoaded;
 }
@@ -52056,6 +52057,8 @@ async function loadLayeredCookCache(opts) {
  */
 async function saveCookCache(opts) {
     const { targetDir, exactKey, level, longWindow, debug, log } = opts;
+    if (!(0, save_policy_js_1.allowCacheSave)("cook-cache", log))
+        return { status: "policy-skip" };
     if (!fs.existsSync(targetDir))
         return { status: "skipped-missing-target" };
     try {
@@ -52070,6 +52073,7 @@ async function saveCookCache(opts) {
     const result = await (0, two_phase_actions_cache_js_1.saveReservedCache)({
         paths: [archivePath],
         key: exactKey,
+        layer: "cook-cache",
         log,
         produce: async () => {
             const compressStart = Date.now();
@@ -52192,7 +52196,7 @@ async function saveCookCacheLegacy(opts) {
     const compressMs = Date.now() - compressStart;
     const uploadStart = Date.now();
     try {
-        const id = await cache.saveCache([archivePath], exactKey);
+        const id = await (0, save_policy_js_1.gatedSaveCache)("cook-cache", [archivePath], exactKey, log);
         const uploadMs = Date.now() - uploadStart;
         if (id <= 0) {
             // @actions/cache returns -1 when reserveCache fails — typically
@@ -52259,6 +52263,8 @@ function saveReport(payload) {
 }
 async function saveLayeredCookCache(opts) {
     const { soldrBinary, projectRoot, targetDir, exactKey, archivePath, layer, zstdLevel, log } = opts;
+    if (!(0, save_policy_js_1.allowCacheSave)(`cook-cache-${layer}`, log))
+        return { status: "policy-skip" };
     if (!fs.existsSync(targetDir))
         return { status: "skipped-missing-target" };
     try {
@@ -52282,6 +52288,7 @@ async function saveLayeredCookCache(opts) {
     const result = await saveReserved({
         paths: [archivePath],
         key: exactKey,
+        layer: `cook-cache-${layer}`,
         log,
         produce: async () => {
             const compressStart = Date.now();
@@ -52403,7 +52410,7 @@ async function saveLayeredCookCacheLegacy(opts) {
     const archiveBytes = report.archiveBytes ?? await archiveSize(archivePath);
     const uploadStart = Date.now();
     try {
-        const id = await cache.saveCache([archivePath], exactKey);
+        const id = await (0, save_policy_js_1.gatedSaveCache)(`cook-cache-${layer}`, [archivePath], exactKey, log);
         const uploadMs = Date.now() - uploadStart;
         if (id <= 0) {
             log(`cook-cache-${layer}: save did not reserve a new entry (id=${id}) ` +
@@ -54719,6 +54726,158 @@ async function retryReleaseRequest(request, options = {}) {
 
 /***/ }),
 
+/***/ 98097:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.POLICY_SKIP_STATUS = void 0;
+exports.parseSaveCacheMode = parseSaveCacheMode;
+exports.decideCacheSave = decideCacheSave;
+exports.currentSaveDecision = currentSaveDecision;
+exports.resetSavePolicyLogForTest = resetSavePolicyLogForTest;
+exports.allowCacheSave = allowCacheSave;
+exports.setSaveCacheBackendForTest = setSaveCacheBackendForTest;
+exports.gatedSaveCache = gatedSaveCache;
+/**
+ * Shared durable-cache save policy (setup-soldr#527).
+ *
+ * GitHub scopes a cache entry saved from a `pull_request` run to
+ * `refs/pull/N/merge`: no other ref can restore it, yet it counts against
+ * the repository's 10 GB budget and evicts the default branch's entries.
+ * Every durable Actions-cache write in `src/` therefore goes through this
+ * module, which decides from the `save-cache` input (`auto | true | false`)
+ * and `GITHUB_EVENT_NAME` whether an upload may happen.
+ *
+ * - `auto` (default): save unless the triggering event is `pull_request`.
+ * - `true`: always save (subject to each layer's own gates).
+ * - `false`: never save.
+ *
+ * Restores and cooking are never gated here; only uploads are.
+ *
+ * `__tests__/save-policy.test.ts` enumerates every raw save call site in
+ * `src/` and fails when one bypasses this gate.
+ */
+const cache = __importStar(__nccwpck_require__(5116));
+/** Status string layers report when the policy suppressed an upload. */
+exports.POLICY_SKIP_STATUS = "policy-skip";
+/**
+ * Parse a `save-cache` input value. Empty means `defaultMode`; boolean
+ * aliases keep the cook action's historical `true`/`false` spelling valid.
+ */
+function parseSaveCacheMode(raw, defaultMode = "auto") {
+    const value = (raw ?? "").trim().toLowerCase();
+    if (!value)
+        return defaultMode;
+    if (value === "auto")
+        return "auto";
+    if (["1", "true", "yes", "on"].includes(value))
+        return "true";
+    if (["0", "false", "no", "off"].includes(value))
+        return "false";
+    throw new Error(`save-cache must be one of auto, true, false (got '${raw}')`);
+}
+/** Pure decision: no I/O, platform independent (RUNNER_OS is irrelevant). */
+function decideCacheSave(mode, eventName) {
+    if (mode === "true")
+        return { save: true, mode, reason: "save-cache=true" };
+    if (mode === "false")
+        return { save: false, mode, reason: "save-cache=false" };
+    const event = (eventName ?? "").trim();
+    if (event === "pull_request") {
+        return { save: false, mode, reason: "pull_request event (save-cache=auto)" };
+    }
+    return { save: true, mode, reason: `${event || "unknown"} event (save-cache=auto)` };
+}
+/**
+ * Resolve the policy from the process environment. Both the main action
+ * and the `cook/` action expose the input as `save-cache`, which the runner
+ * passes to main and post steps as `INPUT_SAVE-CACHE`.
+ */
+function currentSaveDecision(env = process.env) {
+    let mode;
+    try {
+        mode = parseSaveCacheMode(env["INPUT_SAVE-CACHE"], "auto");
+    }
+    catch {
+        mode = "auto";
+    }
+    return decideCacheSave(mode, env["GITHUB_EVENT_NAME"]);
+}
+const loggedSkips = new Set();
+/** Test hook: forget which layers already logged a skip line. */
+function resetSavePolicyLogForTest() {
+    loggedSkips.clear();
+}
+/**
+ * THE save gate. Returns true when `layer` may upload. When it may not,
+ * logs one line per layer: `<layer>: save skipped: <reason>`.
+ */
+function allowCacheSave(layer, log = console.log) {
+    const decision = currentSaveDecision();
+    if (decision.save)
+        return true;
+    if (!loggedSkips.has(layer)) {
+        loggedSkips.add(layer);
+        log(`${layer}: save skipped: ${decision.reason}`);
+    }
+    return false;
+}
+let saveBackend = (paths, key) => cache.saveCache(paths, key);
+/** Test hook: replace the `@actions/cache.saveCache` backend. */
+function setSaveCacheBackendForTest(fn) {
+    saveBackend = fn ?? ((paths, key) => cache.saveCache(paths, key));
+}
+/**
+ * Policy-gated replacement for `@actions/cache.saveCache`. Returns -1
+ * (the same "not saved" sentinel @actions/cache uses) when the policy
+ * forbids the upload. Callers should still gate early with
+ * `allowCacheSave` so they skip archive production and report a clean
+ * `policy-skip` status; this is the backstop.
+ */
+async function gatedSaveCache(layer, paths, key, log, backend) {
+    if (!allowCacheSave(layer, log))
+        return -1;
+    return (backend ?? saveBackend)(paths, key);
+}
+
+
+/***/ }),
+
 /***/ 35326:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -55263,6 +55422,7 @@ const fsp = __importStar(__nccwpck_require__(51455));
 const path = __importStar(__nccwpck_require__(76760));
 const cache = __importStar(__nccwpck_require__(5116));
 const cache_compress_js_1 = __nccwpck_require__(24978);
+const save_policy_js_1 = __nccwpck_require__(98097);
 const ensure_soldr_js_1 = __nccwpck_require__(49252);
 // Schema segment `v2` (still inside the `soldr-mini-` eviction namespace):
 // v1 entries were archived by setup-soldr <= v0.9.64, whose bundled-payload
@@ -55373,6 +55533,8 @@ async function restoreMiniCache(opts) {
  */
 async function saveMiniCache(opts) {
     const { installDir, archivePath, exactKey, level, longWindow, debug, log } = opts;
+    if (!(0, save_policy_js_1.allowCacheSave)("soldr-mini-cache", log))
+        return { status: "policy-skip" };
     if (!fs.existsSync(installDir)) {
         return { status: "skipped-missing-dir" };
     }
@@ -55421,7 +55583,7 @@ async function saveMiniCache(opts) {
             `expected ${archivePath}. Future restore may miss due to paths-version hash.`);
     }
     try {
-        const id = await cache.saveCache([outputArchivePath], exactKey);
+        const id = await (0, save_policy_js_1.gatedSaveCache)("soldr-mini-cache", [outputArchivePath], exactKey, log);
         if (id <= 0) {
             log(`soldr-mini-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +
                 `job already saved key=${exactKey}`);
@@ -55545,6 +55707,7 @@ const cache = __importStar(__nccwpck_require__(5116));
 const exec = __importStar(__nccwpck_require__(95236));
 const github = __importStar(__nccwpck_require__(93228));
 const cache_compress_js_1 = __nccwpck_require__(24978);
+const save_policy_js_1 = __nccwpck_require__(98097);
 /**
  * The two live roots whose deltas this cache layer tracks. The string keys
  * are also the directory names used inside the tarball staging layout.
@@ -55880,6 +56043,8 @@ async function walkAndApply(base, dir, liveBase, onApply, counters) {
  */
 async function saveSoloCache(opts) {
     const { stagingDir, key, level, debug, log } = opts;
+    if (!(0, save_policy_js_1.allowCacheSave)("solo-toolchain-cache", log))
+        return { status: "policy-skip" };
     const cacheArchive = opts.cacheArchivePath ?? soloCacheArchivePath(path.dirname(stagingDir));
     if (!fs.existsSync(stagingDir)) {
         return { status: "failed", error: `staging dir missing: ${stagingDir}` };
@@ -55959,7 +56124,9 @@ async function saveSoloCache(opts) {
         }
     }
     try {
-        const id = await (opts.saveCache ?? cache.saveCache)([archivePath], key);
+        const id = opts.saveCache
+            ? await opts.saveCache([archivePath], key)
+            : await (0, save_policy_js_1.gatedSaveCache)("solo-toolchain-cache", [archivePath], key, log);
         if (id <= 0) {
             if (opts.lookupExactKey) {
                 const lookup = opts.lookupExactKey;
@@ -56808,6 +56975,7 @@ const cacheHttpClient = __importStar(__nccwpck_require__(73171));
 const cacheUtils = __importStar(__nccwpck_require__(98299));
 const twirp = __importStar(__nccwpck_require__(96819));
 const cacheTar = __importStar(__nccwpck_require__(95321));
+const save_policy_js_1 = __nccwpck_require__(98097);
 const defaultArchiveTools = {
     resolvePaths: cacheUtils.resolvePaths,
     createTempDirectory: cacheUtils.createTempDirectory,
@@ -56870,6 +57038,10 @@ async function reserve(options) {
  * property missing from the public saveCache convenience API.
  */
 async function saveReservedCache(options) {
+    // #527: shared save policy. No reservation, no archive, no upload.
+    if (!(0, save_policy_js_1.allowCacheSave)(options.layer ?? "actions-cache", (m) => options.log?.(m))) {
+        return { status: "policy-skip" };
+    }
     let reservation;
     try {
         reservation = options.reserve ? await options.reserve() : await reserve(options);
@@ -57519,6 +57691,7 @@ const stats_collector_js_1 = __nccwpck_require__(51002);
 const compile_cache_stats_js_1 = __nccwpck_require__(63355);
 const diagnostics_js_1 = __nccwpck_require__(92587);
 const raw_inputs_js_1 = __nccwpck_require__(52183);
+const save_policy_js_1 = __nccwpck_require__(98097);
 const cache_eviction_js_1 = __nccwpck_require__(15795);
 const yank_audit_js_1 = __nccwpck_require__(23140);
 const source_mtime_snapshot_js_1 = __nccwpck_require__(38502);
@@ -57704,6 +57877,10 @@ async function saveOne(opts) {
         fileCount: null,
         payload: null,
     });
+    // #527: shared save policy (save-cache input / pull_request event).
+    if (!(0, save_policy_js_1.allowCacheSave)(label, (m) => core.info(m))) {
+        return withStats({ status: "policy-skip", cache_dir: cacheDir });
+    }
     if (!dirExists(cacheDir)) {
         log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
         return withStats({ status: "missing-dir-skip", cache_dir: cacheDir });
@@ -57773,7 +57950,7 @@ async function saveOne(opts) {
     const pathsToSave = archivePath ? [archivePath] : [cacheDir];
     try {
         const uploadStart = Date.now();
-        const id = await cache.saveCache(pathsToSave, key);
+        const id = await (0, save_policy_js_1.gatedSaveCache)(label, pathsToSave, key, (m) => core.info(m));
         uploadMs = Date.now() - uploadStart;
         log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"} ` +
             `(compress=${compressMs}ms upload=${uploadMs}ms)`);
@@ -58069,6 +58246,8 @@ function saveText(save) {
             return "skipped cache reservation race";
         case "tiny-delta-skip":
             return save.skip_reason ? `skipped tiny delta (${save.skip_reason})` : "skipped tiny delta";
+        case "policy-skip":
+            return "skipped by save-cache policy";
         case "failed":
             return save.error ? `failed: ${save.error}` : "failed";
         case "disabled":
@@ -58735,6 +58914,9 @@ async function run() {
             log("target-cache: no paths configured, skipping save");
             targetCacheSave = Object.assign({ status: "missing-dir-skip", cache_dir: "(no paths)" }, { archiveBytes: null });
         }
+        else if (!(0, save_policy_js_1.allowCacheSave)("target-cache", log)) {
+            targetCacheSave = Object.assign({ status: "policy-skip", cache_dir: targetPaths.join(",") }, { archiveBytes: null });
+        }
         else if (restoreState.targetCacheExactHit) {
             log(`target-cache: exact cache hit on ${targetKey}, skipping save`);
             targetCacheSave = Object.assign({ status: "exact-hit-skip", cache_dir: targetPaths.join(",") }, { archiveBytes: null });
@@ -58772,7 +58954,7 @@ async function run() {
                 else {
                     const targetSaveStart = Date.now();
                     try {
-                        const id = await cache.saveCache(existingPaths, targetKey);
+                        const id = await (0, save_policy_js_1.gatedSaveCache)("target-cache", existingPaths, targetKey, log);
                         if (id <= 0) {
                             log(`target-cache: save did not reserve a new entry (id=${id}) — likely a parallel ` +
                                 `job already saved key=${targetKey}`);
@@ -58831,7 +59013,10 @@ async function run() {
     });
     if (result.cargoRegistryCache.enabled) {
         const regSaveStart = Date.now();
-        if (registryMatched === result.cargoRegistryCache.key) {
+        if (!(0, save_policy_js_1.allowCacheSave)("cargo-registry-cache", log)) {
+            cargoRegistrySave = Object.assign({ status: "policy-skip", cache_dir: result.cargoRegistryCache.path }, { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null });
+        }
+        else if (registryMatched === result.cargoRegistryCache.key) {
             cargoRegistrySave = Object.assign({ status: "exact-hit-skip", cache_dir: result.cargoRegistryCache.path }, { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null });
         }
         else if (result.cargoRegistryCache.archive.format === "soldr-v2") {
@@ -58878,7 +59063,7 @@ async function run() {
                     const compressMs = Date.now() - compressStart;
                     const uploadStart = Date.now();
                     try {
-                        const id = await cache.saveCache(result.cargoRegistryCache.archive.restorePaths, result.cargoRegistryCache.key);
+                        const id = await (0, save_policy_js_1.gatedSaveCache)("cargo-registry-cache", result.cargoRegistryCache.archive.restorePaths, result.cargoRegistryCache.key, log);
                         const uploadMs = Date.now() - uploadStart;
                         const status = await classifyCacheSaveReservation(id, result.cargoRegistryCache.key, () => cache.restoreCache(result.cargoRegistryCache.archive.restorePaths, result.cargoRegistryCache.key, [], { lookupOnly: true }));
                         if (status === "race-skip") {
@@ -59135,7 +59320,10 @@ async function run() {
                     });
                     const repairRaceWonElsewhere = soloRestoreInvalid &&
                         saveResult.status === "race-precheck-skipped" && repairDeletionComplete;
-                    if (saveResult.status !== "saved" && !repairRaceWonElsewhere) {
+                    if (saveResult.status === "policy-skip") {
+                        // #527: skip line already logged by the save-policy gate.
+                    }
+                    else if (saveResult.status !== "saved" && !repairRaceWonElsewhere) {
                         log(`solo-toolchain-cache: save status=${saveResult.status} error=${saveResult.error ?? "none"}`);
                         if (soloRestoreInvalid) {
                             core.setFailed(`solo-toolchain-cache: failed to publish repaired replacement for poisoned key=${soloInvalidMatchedKey}: ` +
@@ -59380,7 +59568,7 @@ async function run() {
           }
           const t0 = Date.now();
           try {
-            const id = await cache.saveCache(existing, lane.key);
+            const id = await gatedSaveCache(`cross-tool-cache:${lane.target}`, existing, lane.key, log);
             if (id > 0) {
               log(`cross-tool-cache: lane=${lane.target} saved id=${id} key=${lane.key}`);
               postCollector.record({
@@ -59423,10 +59611,13 @@ async function run() {
         const plan = result.blessedPrepareCache;
         const archivesReady = plan.archivePaths.length > 0
             && plan.archivePaths.every((archivePath) => fs.existsSync(archivePath) && fs.statSync(archivePath).size > 0);
-        if (planRaw === "true" && !exactHit && complete && archivesReady) {
+        if (planRaw === "true" && !(0, save_policy_js_1.allowCacheSave)("blessed-prepare-cache", log)) {
+            // #527: skip line logged by the save-policy gate.
+        }
+        else if (planRaw === "true" && !exactHit && complete && archivesReady) {
             const t0 = Date.now();
             try {
-                const id = await cache.saveCache(plan.archivePaths, plan.key);
+                const id = await (0, save_policy_js_1.gatedSaveCache)("blessed-prepare-cache", plan.archivePaths, plan.key, log);
                 log(`blessed-prepare-cache: ${id > 0 ? "saved" : "save skipped"} key=${plan.key}`);
                 postCollector.record({ label: "blessed-prepare-cache", operation: "save", hit: false, key: plan.key, matchedKey: "", restoreKeys: [], archiveBytes: null, inflatedBytes: null, fileCount: null, durationMs: Date.now() - t0, timestamp: new Date().toISOString() });
             }
@@ -59448,7 +59639,10 @@ async function run() {
     try {
         if (result.dylintCache.enabled && result.dylintCache.paths.length > 0) {
             const exactHit = core.getState("dylintCacheExactHit") === "true";
-            if (exactHit) {
+            if (!(0, save_policy_js_1.allowCacheSave)("dylint-cache", log)) {
+                // #527: skip line logged by the save-policy gate.
+            }
+            else if (exactHit) {
                 log("dylint-cache: exact hit - skipping save");
             }
             else {
@@ -59472,7 +59666,7 @@ async function run() {
                 else {
                     const t0 = Date.now();
                     try {
-                        const id = await cache.saveCache(result.dylintCache.paths, result.dylintCache.key);
+                        const id = await (0, save_policy_js_1.gatedSaveCache)("dylint-cache", result.dylintCache.paths, result.dylintCache.key, log);
                         if (id > 0) {
                             log(`dylint-cache: saved id=${id} key=${result.dylintCache.key}`);
                             postCollector.record({
@@ -59511,7 +59705,10 @@ async function run() {
         if (result.dylintCache.outputCacheEnabled &&
             result.dylintCache.outputPaths.length > 0) {
             const exactHit = core.getState("dylintOutputCacheExactHit") === "true";
-            if (exactHit) {
+            if (!(0, save_policy_js_1.allowCacheSave)("dylint-output-cache", log)) {
+                // #527: skip line logged by the save-policy gate.
+            }
+            else if (exactHit) {
                 log("dylint-output-cache: exact hit - skipping save");
             }
             else {
@@ -59534,7 +59731,7 @@ async function run() {
                 else {
                     const t0 = Date.now();
                     try {
-                        const id = await cache.saveCache(result.dylintCache.outputPaths, result.dylintCache.outputKey);
+                        const id = await (0, save_policy_js_1.gatedSaveCache)("dylint-output-cache", result.dylintCache.outputPaths, result.dylintCache.outputKey, log);
                         if (id > 0) {
                             log(`dylint-output-cache: saved id=${id} key=${result.dylintCache.outputKey}`);
                             postCollector.record({
