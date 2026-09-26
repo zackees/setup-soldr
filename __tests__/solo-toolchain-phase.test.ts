@@ -173,6 +173,7 @@ function hitRestore(h: Harness, materialize: () => void): NonNullable<PhaseDeps[
       restoredBytes: 1234,
       archivePath: o.cacheArchivePath ?? null,
       verified: true,
+      downloadMs: 321,
     };
   };
 }
@@ -394,6 +395,8 @@ test("T4: an exact hit does no install, seal or upload, and the post step logs n
   assert.equal(h.uploads.length, 0);
   assert.equal(h.subPhases.includes("solo-seal"), false);
   assert.equal(h.subPhases.includes("rustup-install"), false);
+  // E2: the probe subtracts the network download from the phase time.
+  assert.equal(readSummary(h)["restoreDownloadMs"], 321);
 
   const postLogs: string[] = [];
   const failures: string[] = [];

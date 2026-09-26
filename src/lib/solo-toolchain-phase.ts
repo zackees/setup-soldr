@@ -174,6 +174,7 @@ export async function runSoloToolchainPhase(opts: {
   let toolchainDir = "";
   let toolchainPath = "";
   let existedBefore = false;
+  let restoreDownloadMs: number | null = null;
   let restoreInvalid = false;
   let sealed: SealToolchainResult | null = null;
   let proxyNames: string[] = [];
@@ -208,6 +209,7 @@ export async function runSoloToolchainPhase(opts: {
       toolchainPath,
       existedBefore,
       restoreInvalid,
+      restoreDownloadMs,
       sealed: sealed
         ? {
           files: sealed.files,
@@ -303,6 +305,7 @@ export async function runSoloToolchainPhase(opts: {
     }),
   );
   matchedKey = restored.matchedKey;
+  restoreDownloadMs = typeof restored.downloadMs === "number" ? restored.downloadMs : null;
   let valid = false;
   if (restored.matchedKey && restored.verified) {
     valid = await verifyRustup();

@@ -19,7 +19,10 @@ name: Solo toolchain probe
 #
 # Checks:
 #   E1  no snapshot_pre/base/post sub-phase in any cell.
-#   E2  warm container toolchain phase <= warm hosted + 2s.
+#   E2  warm container toolchain phase <= warm hosted + 2s, both measured
+#       without the cache download (restoreDownloadMs). The download is
+#       network time and varies per runner; E2 is about what a populated
+#       RUSTUP_HOME costs locally.
 #   E3  cold: upload spawned during the main step, before the first job step.
 #   E4  archive = exactly toolchains/<release>-<host> + the rustup proxies.
 #   E5  a `rustup target add` after setup (poison) is not captured. On warm,
@@ -251,6 +254,7 @@ jobs:
               "solo": env["PROBE_SOLO"],
               "namespace": env["CACHE_GENERATION"],
               "toolchain_ms": toolchain_ms,
+              "restore_download_ms": summary.get("restoreDownloadMs"),
               "outcome": outcome,
               "key": summary.get("key"),
               "sub_phases": subs,
@@ -449,6 +453,7 @@ jobs:
               "solo": env["PROBE_SOLO"],
               "namespace": env["CACHE_GENERATION"],
               "toolchain_ms": toolchain_ms,
+              "restore_download_ms": summary.get("restoreDownloadMs"),
               "outcome": outcome,
               "key": summary.get("key"),
               "sub_phases": subs,
@@ -551,15 +556,28 @@ jobs:
               sys.exit(1)
 
           # E2: a populated RUSTUP_HOME costs no more than 2s over hosted.
+          # Both sides drop the cache download (lookup + archive transfer),
+          # which is network time that swings several seconds between
+          # runners and says nothing about RUSTUP_HOME. What remains is the
+          # local cost: extract, rename into toolchains/, verify.
+          def local_ms(r):
+              total, dl = r.get("toolchain_ms"), r.get("restore_download_ms")
+              if total is None or not isinstance(dl, int):
+                  return None
+              return total - dl
+
           for tc in toolchains:
               c = results.get(("warm", "container", tc, "true"))
               h = results.get(("warm", "hosted", tc, "true"))
-              if not c or not h or c["toolchain_ms"] is None or h["toolchain_ms"] is None:
-                  fail(f"E2: missing warm solo-on timing for {tc} (container={c and c['toolchain_ms']}, hosted={h and h['toolchain_ms']})")
+              c_local = local_ms(c) if c else None
+              h_local = local_ms(h) if h else None
+              if c_local is None or h_local is None:
+                  fail(f"E2: missing warm solo-on timing for {tc} (container={c}, hosted={h})")
                   continue
-              print(f"E2 {tc}: warm container toolchain={c['toolchain_ms']} ms, warm hosted toolchain={h['toolchain_ms']} ms")
-              if c["toolchain_ms"] > h["toolchain_ms"] + 2000:
-                  fail(f"E2 {tc}: container warm toolchain phase {c['toolchain_ms']} ms > hosted {h['toolchain_ms']} ms + 2000 ms")
+              print(f"E2 {tc}: warm container toolchain={c['toolchain_ms']} ms (download {c['restore_download_ms']} ms, local {c_local} ms), "
+                    f"warm hosted toolchain={h['toolchain_ms']} ms (download {h['restore_download_ms']} ms, local {h_local} ms)")
+              if c_local > h_local + 2000:
+                  fail(f"E2 {tc}: container warm toolchain phase without download {c_local} ms > hosted {h_local} ms + 2000 ms")
 
           # E6/E7: the run's solo-toolchain cache entries.
           listed = json.loads(subprocess.run(

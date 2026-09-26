@@ -56499,6 +56499,7 @@ async function saveSoloCache(opts) {
  */
 async function restoreSoloCache(opts) {
     const { keys, rustupHome, cargoHome, toolchainDir, stagingDir, log } = opts;
+    const now = opts.now ?? Date.now;
     const sfs = opts.fs ?? exports.defaultSoloFs;
     const restoreCache = opts.restoreCache ??
         ((paths, key, restoreKeys) => cache.restoreCache(paths, key, restoreKeys));
@@ -56509,16 +56510,25 @@ async function restoreSoloCache(opts) {
     await sfs.mkdir(path.dirname(archivePath));
     await sfs.rm(archivePath);
     let matched;
+    const downloadT0 = now();
     try {
         matched = await restoreCache([archivePath], keys.exact, keys.fallbacks);
     }
     catch (err) {
         log(`solo-toolchain-cache: restore failed: ${err instanceof Error ? err.message : String(err)}`);
-        return { hit: false, matchedKey: "", restoredBytes: 0, archivePath: null, verified: false };
+        return {
+            hit: false,
+            matchedKey: "",
+            restoredBytes: 0,
+            archivePath: null,
+            verified: false,
+            downloadMs: Math.max(0, now() - downloadT0),
+        };
     }
+    const downloadMs = Math.max(0, now() - downloadT0);
     if (!matched) {
         log("solo-toolchain-cache: no cache entry matched any key");
-        return { hit: false, matchedKey: "", restoredBytes: 0, archivePath: null, verified: false };
+        return { hit: false, matchedKey: "", restoredBytes: 0, archivePath: null, verified: false, downloadMs };
     }
     let archiveBytes = 0;
     try {
@@ -56526,17 +56536,18 @@ async function restoreSoloCache(opts) {
     }
     catch {
         // archive may not have actually landed; treat as miss
-        return { hit: false, matchedKey: matched, restoredBytes: 0, archivePath: null, verified: false };
+        return { hit: false, matchedKey: matched, restoredBytes: 0, archivePath: null, verified: false, downloadMs };
     }
+    log(`solo-toolchain-cache: downloaded archive=${archiveBytes}B in ${downloadMs}ms`);
     const magic = await (0, cache_compress_js_1.detectCompressMagic)(archivePath);
     const haveEncryptKey = (process.env["SETUP_SOLDR_CACHE_ENCRYPT_KEY"] ?? "").trim().length > 0;
     if (magic !== "zstd" && magic !== "gzip" && !haveEncryptKey) {
         log(`solo-toolchain-cache: restored archive has unknown codec, treating as miss`);
-        return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false };
+        return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false, downloadMs };
     }
     const extractRoot = path.join(rustupHome, exports.SOLO_RESTORE_EXTRACT_DIR);
     try {
-        return await extractAndApplySoloArchive({
+        const applied = await extractAndApplySoloArchive({
             archivePath,
             archiveBytes,
             matched,
@@ -56549,6 +56560,7 @@ async function restoreSoloCache(opts) {
             sfs,
             decompress,
         });
+        return { ...applied, downloadMs };
     }
     finally {
         await sfs.rm(extractRoot).catch(() => undefined);
@@ -56882,6 +56894,7 @@ async function runSoloToolchainPhase(opts) {
     let toolchainDir = "";
     let toolchainPath = "";
     let existedBefore = false;
+    let restoreDownloadMs = null;
     let restoreInvalid = false;
     let sealed = null;
     let proxyNames = [];
@@ -56908,6 +56921,7 @@ async function runSoloToolchainPhase(opts) {
             toolchainPath,
             existedBefore,
             restoreInvalid,
+            restoreDownloadMs,
             sealed: sealed
                 ? {
                     files: sealed.files,
@@ -56996,6 +57010,7 @@ async function runSoloToolchainPhase(opts) {
         fs: soloFs,
     }));
     matchedKey = restored.matchedKey;
+    restoreDownloadMs = typeof restored.downloadMs === "number" ? restored.downloadMs : null;
     let valid = false;
     if (restored.matchedKey && restored.verified) {
         valid = await verifyRustup();

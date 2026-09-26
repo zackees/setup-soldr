@@ -738,6 +738,58 @@ test("#525 restoreSoloCache moves the sealed toolchain into place on an exact hi
   }
 });
 
+test("#525 E2: restoreSoloCache reports the download time apart from the local restore", async () => {
+  const root = mkTmp("solo-restore-download-ms-");
+  try {
+    const keys = buildSoloCacheKeys(BASE_KEY_PARTS);
+    const logs: string[] = [];
+    // The clock advances 4000 ms inside the download and 700 ms inside the
+    // extraction; only the download counts toward downloadMs.
+    let clock = 1_000;
+    const result = await restoreSoloCache({
+      keys,
+      rustupHome: path.join(root, "rustup"),
+      cargoHome: path.join(root, "cargo"),
+      toolchainDir: TOOLCHAIN_DIR,
+      stagingDir: path.join(root, "setup-soldr-solo-cache"),
+      log: (msg) => logs.push(msg),
+      now: () => clock,
+      restoreCache: async (paths, key) => {
+        clock += 4_000;
+        fs.writeFileSync(paths[0] as string, ZSTD_MAGIC);
+        return key;
+      },
+      decompress: async ({ targetDir }) => {
+        clock += 700;
+        writeFile(targetDir, `rustup-toolchains/${TOOLCHAIN_DIR}/bin/rustc`, "x");
+        return { archiveBytes: 0, inflatedBytes: 0, fileCount: 0 };
+      },
+    });
+    assert.equal(result.hit, true);
+    assert.equal(result.verified, true);
+    assert.equal(result.downloadMs, 4_000);
+    assert.ok(logs.some((line) => line.includes("in 4000ms")), logs.join("\n"));
+
+    const miss = await restoreSoloCache({
+      keys,
+      rustupHome: path.join(root, "rustup-miss"),
+      cargoHome: path.join(root, "cargo-miss"),
+      toolchainDir: TOOLCHAIN_DIR,
+      stagingDir: path.join(root, "setup-soldr-solo-cache-miss"),
+      log: () => undefined,
+      now: () => clock,
+      restoreCache: async () => {
+        clock += 250;
+        return undefined;
+      },
+    });
+    assert.equal(miss.hit, false);
+    assert.equal(miss.downloadMs, 250);
+  } finally {
+    rmDir(root);
+  }
+});
+
 test("#525 restoreSoloCache rejects an archive that holds another toolchain", async () => {
   const root = mkTmp("solo-restore-poison-");
   try {
