@@ -762,6 +762,18 @@ inputs:
       automatically use the legacy cook cache path.
     required: false
     default: "true"
+  cook-delta:
+    description: >
+      true | false (default "false"). Controls only the commit/build-shape
+      delta layer (`cook-delta-v2-*`) that the layered cook cache stacks on
+      top of the base archive. With "false" the base cook archive
+      (`cook-base-v2-*`) is still restored, and saved per `save-cache`,
+      but no delta is restored or saved. Set "true" to restore the pre-#528
+      behavior of restoring and saving a delta on top of the base. Has no
+      effect when `prebuild-deps-delta-cache: false` selects the legacy
+      single cook archive.
+    required: false
+    default: "false"
   cross-targets:
     description: >
       Optional one canonical Rust target triple for the `soldr prepare`

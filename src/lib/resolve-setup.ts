@@ -1593,6 +1593,7 @@ export async function resolveSetup(
     target: crossTarget,
     soldrRepo,
     soldrVersion: soldrSourceIdentity || soldrVersionResolved || soldrVersionRequested,
+    keySuffix: inputs.cacheKeySuffix,
   });
   for (const archivePath of blessedPrepareCache.archivePaths) makeDirs(path.dirname(archivePath));
 

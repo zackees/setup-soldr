@@ -102,6 +102,12 @@ export interface CookLayeredRestoreOpts {
   deltaArchivePath: string;
   log: (msg: string) => void;
   warn?: (msg: string) => void;
+  /**
+   * #528: when false, only the base layer is restored; the delta layer is
+   * never looked up. Defaults to true for library callers; the actions pass
+   * their `cook-delta` input (default false).
+   */
+  deltaEnabled?: boolean;
   /** Test seam for exercising corrupted cache payloads without the cache service. */
   restoreCache?: typeof cache.restoreCache;
 }
@@ -155,6 +161,23 @@ export function layeredCookDeltaReady(
   return layeredCookBaseReady(restore, loaded) &&
     Boolean(restore.delta.matchedKey) &&
     loaded.deltaLoaded;
+}
+
+/**
+ * Picks which layered cook archive the post step saves (#528).
+ *
+ * - cook did not run: nothing new to save.
+ * - base missed: save the long-lived base layer.
+ * - base hit: save a delta on top only when the delta layer is enabled.
+ */
+export function selectCookSaveLayer(
+  cookRan: boolean,
+  baseReady: boolean,
+  deltaEnabled: boolean,
+): "base" | "delta" | "none" {
+  if (!cookRan) return "none";
+  if (!baseReady) return "base";
+  return deltaEnabled ? "delta" : "none";
 }
 
 export interface CookSaveOpts {
@@ -548,6 +571,19 @@ export async function restoreLayeredCookCacheArchives(
   // and bounded by the larger restore. Saves up to ~11s in the
   // typical warm-cache case (zackees/setup-soldr#295 measurement on
   // Integration v0.9.30 rerun).
+  const deltaMiss: CookLayerRestoreInfo = {
+    hit: false,
+    matchedKey: "",
+    archivePath: opts.deltaArchivePath,
+    archiveBytes: 0,
+  };
+  if (opts.deltaEnabled === false) {
+    opts.log("cook-cache-delta: disabled (cook-delta=false); restoring base layer only");
+    const base = await restoreOneLayer(
+      "cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log, warn, restore,
+    );
+    return { base, delta: deltaMiss };
+  }
   const [base, delta] = await Promise.all([
     restoreOneLayer("cook-cache-base", opts.baseKey, opts.baseArchivePath, [], opts.log, warn, restore),
     restoreOneLayer(

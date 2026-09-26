@@ -234,9 +234,9 @@ test("#527 skip line is logged once per layer", () => {
 
 test("#527 cook action: deferred cook save layer honors the shared policy", () => {
   setEnv("pull_request", undefined);
-  assert.equal(selectDeferredCookSaveLayer(true, false, currentSaveDecision().save), "none");
+  assert.equal(selectDeferredCookSaveLayer(true, false, currentSaveDecision().save, false), "none");
   setEnv("push", undefined);
-  assert.equal(selectDeferredCookSaveLayer(true, false, currentSaveDecision().save), "base");
+  assert.equal(selectDeferredCookSaveLayer(true, false, currentSaveDecision().save, false), "base");
 });
 
 test("#527 action.yml files declare save-cache with auto default", () => {

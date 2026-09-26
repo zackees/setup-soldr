@@ -1,5 +1,5 @@
 import { strict as assert } from "node:assert";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { before, test } from "node:test";
 
 // Non-literal specifier: the .mjs script is plain ESM outside the TS graph.
@@ -119,6 +119,7 @@ test("matchesNamespace rejects other runs, sibling namespaces, and shared layers
 interface FakeCacheEntry {
   id: number;
   key: string;
+  ref?: string;
 }
 
 function response(status: number, body: unknown = {}) {
@@ -159,7 +160,10 @@ function fakeCacheServer(
     listUrls.push(url);
     if (opts.listStatus) return response(opts.listStatus);
     const page = Number(new URL(url).searchParams.get("page") ?? "1");
-    const aliveEntries = entries.filter((entry) => alive.has(entry.id));
+    const refFilter = new URL(url).searchParams.get("ref");
+    const aliveEntries = entries.filter(
+      (entry) => alive.has(entry.id) && (!refFilter || entry.ref === refFilter),
+    );
     const start = (page - 1) * 100;
     return response(200, { actions_caches: aliveEntries.slice(start, start + 100) });
   };
@@ -195,6 +199,43 @@ test("deleteRunScopedCaches deletes exactly this run's entries and verifies them
   assert.deepEqual(result.leftover, []);
   assert.equal(result.permissionDenied, false);
   assert.deepEqual(server.deletedIds.sort((a, b) => a - b), [1, 2]);
+});
+
+test("#513 deleteRunScopedCaches never deletes another ref's entries", async () => {
+  const entries: FakeCacheEntry[] = [
+    { id: 1, key: LIVE_KEYS.selftestCookBase, ref: "refs/pull/524/merge" },
+    // Same namespace text on a different ref must survive.
+    { id: 2, key: LIVE_KEYS.selftestBuildCache, ref: "refs/pull/526/merge" },
+    { id: 3, key: LIVE_KEYS.sharedSoloToolchain, ref: "refs/pull/524/merge" },
+  ];
+  const server = fakeCacheServer(entries);
+  const result = await script.deleteRunScopedCaches({
+    ...BASE_DEPS,
+    ref: "refs/pull/524/merge",
+    fetchImpl: server.fetchImpl,
+  });
+  assert.deepEqual(server.deletedIds, [1]);
+  assert.ok(server.listUrls.every((url) => new URL(url).searchParams.get("ref") === "refs/pull/524/merge"));
+  assert.deepEqual(result.leftover, []);
+});
+
+// A server that ignores the ref query parameter still cannot widen the scope.
+test("#513 deleteRunScopedCaches filters by ref client-side too", async () => {
+  const entries = [
+    { id: 1, key: LIVE_KEYS.selftestCookBase, ref: "refs/pull/524/merge" },
+    { id: 2, key: LIVE_KEYS.selftestBuildCache, ref: "refs/pull/526/merge" },
+  ];
+  const deleted: number[] = [];
+  const fetchImpl = async (url: string, init: { method?: string } = {}) => {
+    if (init.method === "DELETE") {
+      const id = Number(url.split("/").pop());
+      deleted.push(id);
+      return response(204);
+    }
+    return response(200, { actions_caches: entries.filter((e) => !deleted.includes(e.id)) });
+  };
+  await script.deleteRunScopedCaches({ ...BASE_DEPS, ref: "refs/pull/524/merge", fetchImpl });
+  assert.deepEqual(deleted, [1]);
 });
 
 test("deleteRunScopedCaches paginates the cache listing", async () => {
@@ -327,4 +368,67 @@ test("the reusable consumer workflow's caller grants the actions: write ceiling"
     permissionsBlock.includes("actions: write"),
     "caller must grant actions: write or the called cleanup job is capped at read",
   );
+});
+
+// #513 contract: any workflow that saves run-scoped keys (a cache-key-suffix
+// or CACHE_GENERATION built from github.run_id) must own an always()
+// cleanup job with actions: write that runs the deleter after every other
+// job. A pull_request workflow that forces save-cache: "true" must be run-
+// scoped, or its entries pile up on refs/pull/*/merge forever.
+function workflowFiles(): string[] {
+  return readdirSync(".github/workflows")
+    .filter((name) => name.endsWith(".yml") || name.endsWith(".yaml"))
+    .sort();
+}
+
+function topLevelJobs(text: string): string[] {
+  const jobsIdx = text.indexOf("\njobs:\n");
+  assert.notEqual(jobsIdx, -1);
+  return [...text.slice(jobsIdx).matchAll(/^  ([A-Za-z0-9_-]+):\s*$/gm)].map((m) => m[1]!);
+}
+
+function savesRunScopedKeys(text: string): boolean {
+  const generation = /^\s*CACHE_GENERATION:.*github\.run_id/m.test(text);
+  const suffixes = [...text.matchAll(/^\s*cache-key-suffix:(.*)$/gm)].map((m) => m[1]!);
+  return suffixes.some((v) => v.includes("github.run_id") || (generation && v.includes("CACHE_GENERATION")));
+}
+
+test("#513 every workflow saving run-scoped keys has an always() cleanup of exactly that run", () => {
+  const scoped = workflowFiles().filter((name) =>
+    savesRunScopedKeys(readFileSync(`.github/workflows/${name}`, "utf8")),
+  );
+  for (const expected of [
+    "cook-soldr-selftest.yml",
+    "cook-rematerialization.yml",
+    "_cook-consumer-rematerialization.yml",
+    "cross-prepare.yml",
+  ]) {
+    assert.ok(scoped.includes(expected), `${expected} is expected to save run-scoped keys`);
+  }
+  for (const name of scoped) {
+    const text = readFileSync(`.github/workflows/${name}`, "utf8");
+    const section = cleanupSection(name);
+    assert.ok(section.includes("if: ${{ always() }}"), `${name}: cleanup must be if: always()`);
+    assert.ok(section.includes("actions: write"), `${name}: cleanup needs actions: write`);
+    assert.ok(section.includes("delete-run-scoped-caches.mjs"), `${name}: cleanup must run the deleter`);
+    const needsLine = /\n    needs: \[([^\]]*)\]/.exec(section);
+    assert.ok(needsLine, `${name}: cleanup must declare needs`);
+    const needs = needsLine[1]!.split(",").map((v) => v.trim());
+    for (const job of topLevelJobs(text).filter((j) => j !== "cleanup")) {
+      assert.ok(needs.includes(job), `${name}: cleanup must need ${job} so it runs last`);
+    }
+    // The deleter derives its namespace from CACHE_GENERATION, which must
+    // embed both run_id and run_attempt.
+    assert.match(text, /CACHE_GENERATION:.*\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/);
+  }
+});
+
+test("#513 pull_request workflows that force save-cache must use a run-scoped namespace", () => {
+  for (const name of workflowFiles()) {
+    const text = readFileSync(`.github/workflows/${name}`, "utf8");
+    const onPullRequest = /^\s{2}pull_request:/m.test(text);
+    const forcesSave = /^\s*save-cache:\s*["']?true/m.test(text);
+    if (!onPullRequest || !forcesSave) continue;
+    assert.ok(savesRunScopedKeys(text), `${name}: forces save-cache on pull_request without a run-scoped cache-key-suffix`);
+  }
 });

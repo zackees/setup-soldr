@@ -69,10 +69,14 @@ export function blessedPrepareCacheKey(input: {
   target: string;
   soldrRepo: string;
   soldrVersion: string;
+  keySuffix?: string;
 }): string {
   const base = blessedPrepareCacheBase(input);
   const soldrHash = shortJsonHash({ soldr_version: input.soldrVersion.trim() });
-  return `${base}-s${soldrHash}`;
+  // #513: honor `cache-key-suffix` like the other cache families so a
+  // run-scoped namespace can be found and deleted by its owner.
+  const suffix = input.keySuffix?.trim() ?? "";
+  return suffix ? `${base}-s${soldrHash}-x${sanitizeFragment(suffix)}` : `${base}-s${soldrHash}`;
 }
 
 function blessedPrepareCacheBase(input: {
@@ -95,6 +99,7 @@ export function planBlessedPrepareCache(input: {
   target: string | null;
   soldrRepo: string;
   soldrVersion: string;
+  keySuffix?: string;
 }): BlessedPrepareCachePlan {
   const target = input.target ?? "";
   const enabled = input.enabled && input.cacheEnabled && !input.ref.trim() && Boolean(target);
@@ -106,7 +111,11 @@ export function planBlessedPrepareCache(input: {
   const archivePaths = target === "universal2-apple-darwin"
     ? prepareTargetsFor(target).map((realTarget) => path.join(archiveRoot, `${sanitizeFragment(realTarget)}.tar.zst`))
     : target ? [path.join(archiveRoot, "prepared.tar.zst")] : [];
-  const restoreKeys = enabled ? [`${blessedPrepareCacheBase({ ...input, target })}-`] : [];
+  // A suffixed (namespaced) key never falls back to another namespace's
+  // entry: the namespace is the isolation boundary (#513).
+  const restoreKeys = enabled && !input.keySuffix?.trim()
+    ? [`${blessedPrepareCacheBase({ ...input, target })}-`]
+    : [];
   return {
     enabled,
     schemaVersion: 3,

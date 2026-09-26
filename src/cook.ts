@@ -106,6 +106,9 @@ async function main(): Promise<void> {
   const saveCache = saveDecision.save;
   if (!saveCache) core.info(`cook-cache: save skipped: ${saveDecision.reason}`);
   const deltaCache = parseBooleanInput("delta-cache", core.getInput("delta-cache"), true);
+  // #528: the delta layer on top of the base is off by default. The base
+  // cook archive is still restored and saved; only the delta is skipped.
+  const cookDelta = parseBooleanInput("cook-delta", core.getInput("cook-delta"), false);
   const failOnError = parseBooleanInput("fail-on-error", core.getInput("fail-on-error"), false);
   const debug = parseBooleanInput("debug", core.getInput("debug"), false);
   const githubSha = env["GITHUB_SHA"]?.trim() || "nosha";
@@ -138,7 +141,7 @@ async function main(): Promise<void> {
   }
 
   fs.mkdirSync(plan.targetDir, { recursive: true });
-  core.info(`cook: target=${plan.targetDir} layered=${plan.layered ? "true" : "false"}`);
+  core.info(`cook: target=${plan.targetDir} layered=${plan.layered ? "true" : "false"} cook-delta=${cookDelta ? "true" : "false"}`);
   let cookRan = false;
   let cacheHit = false;
   let saveLayer = "none";
@@ -150,6 +153,7 @@ async function main(): Promise<void> {
       deltaRestoreKeys: plan.deltaRestoreKeys,
       baseArchivePath: plan.baseArchivePath,
       deltaArchivePath: plan.deltaArchivePath,
+      deltaEnabled: cookDelta,
       log: (msg) => core.info(msg),
       warn: (msg) => core.warning(msg),
     });
@@ -181,7 +185,7 @@ async function main(): Promise<void> {
     } else {
       core.info("cook: base+delta cache hit - skipping cook run");
     }
-    saveLayer = selectDeferredCookSaveLayer(cookRan, baseReady, saveCache);
+    saveLayer = selectDeferredCookSaveLayer(cookRan, baseReady, saveCache, cookDelta);
     saveCookState("Layered", true);
     saveCookState("BaseExactKey", plan.baseKey);
     saveCookState("DeltaExactKey", plan.deltaKey);

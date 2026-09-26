@@ -92,10 +92,11 @@ export function matchesNamespace(key, prefix) {
   return typeof key === "string" && key.includes(prefix);
 }
 
-async function listAllCaches({ fetchImpl, apiBase, repo, token }) {
+async function listAllCaches({ fetchImpl, apiBase, repo, token, ref }) {
   const all = [];
+  const refParam = ref ? `&ref=${encodeURIComponent(ref)}` : "";
   for (let page = 1; ; page += 1) {
-    const url = `${apiBase}/repos/${repo}/actions/caches?per_page=${API_PAGE_SIZE}&page=${page}`;
+    const url = `${apiBase}/repos/${repo}/actions/caches?per_page=${API_PAGE_SIZE}&page=${page}${refParam}`;
     const res = await fetchImpl(url, { headers: apiHeaders(token) });
     if (!res.ok) {
       const err = new Error(`listing Actions caches failed: HTTP ${res.status}`);
@@ -104,7 +105,9 @@ async function listAllCaches({ fetchImpl, apiBase, repo, token }) {
     }
     const body = await res.json();
     const items = Array.isArray(body.actions_caches) ? body.actions_caches : [];
-    all.push(...items);
+    // Belt and braces for the server-side ref filter: never act on an
+    // entry that belongs to another ref (#513).
+    all.push(...(ref ? items.filter((entry) => !entry.ref || entry.ref === ref) : items));
     if (items.length < API_PAGE_SIZE) break;
   }
   return all;
@@ -120,6 +123,7 @@ export async function deleteRunScopedCaches(deps) {
     cacheGeneration,
     repo,
     token,
+    ref = "",
     fetchImpl = globalThis.fetch,
     apiBase = process.env.GITHUB_API_URL || "https://api.github.com",
     sleepImpl = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
@@ -131,7 +135,7 @@ export async function deleteRunScopedCaches(deps) {
 
   let caches;
   try {
-    caches = await listAllCaches({ fetchImpl, apiBase, repo, token });
+    caches = await listAllCaches({ fetchImpl, apiBase, repo, token, ref });
   } catch (err) {
     if (isPermissionStatus(err.status)) {
       return { prefix, matched: [], deleted: 0, gone: 0, failed: [], leftover: [], permissionDenied: true };
@@ -168,7 +172,7 @@ export async function deleteRunScopedCaches(deps) {
   if (matched.length > 0 && !permissionDenied && failed.length === 0) {
     for (let attempt = 0; attempt < VERIFY_ATTEMPTS; attempt += 1) {
       if (attempt > 0) await sleepImpl(VERIFY_RETRY_MS);
-      const after = await listAllCaches({ fetchImpl, apiBase, repo, token });
+      const after = await listAllCaches({ fetchImpl, apiBase, repo, token, ref });
       leftover = after.filter((entry) => matchesNamespace(entry.key, prefix));
       if (leftover.length === 0) break;
     }
@@ -192,10 +196,12 @@ async function main() {
     cacheGeneration: env.CACHE_GENERATION,
     repo: env.GITHUB_REPOSITORY,
     token: env.GH_TOKEN || env.GITHUB_TOKEN,
+    // Only this run's ref: a run can only have saved entries on its own ref.
+    ref: env.GITHUB_REF || "",
   });
 
   console.log(
-    `delete-run-scoped-caches: prefix=${JSON.stringify(result.prefix)} ` +
+    `delete-run-scoped-caches: prefix=${JSON.stringify(result.prefix)} ref=${JSON.stringify(process.env.GITHUB_REF || "")} ` +
       `matched=${result.matched.length} deleted=${result.deleted} ` +
       `gone=${result.gone} failed=${result.failed.length} leftover=${result.leftover.length}`,
   );
