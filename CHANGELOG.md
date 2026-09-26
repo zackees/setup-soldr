@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Fix an intermittent crash while extracting a cache archive on macOS
+  (#531). `zstd -d | tar -xf -` runs through `runPipe`, and bsdtar exits as
+  soon as it reads the end-of-archive marker, leaving the pax record padding
+  unread. When Node was still writing that padding, the write failed with
+  EPIPE. Nothing listened for `'error'` on tar's stdin, so the action died
+  with `Error: write EPIPE` (seen right after the solo-toolchain restore).
+  `runPipe` is now one shared module (`src/lib/run-pipe.ts`), used by both
+  `cache-compress` and `cargo-registry-archive`. On EPIPE it drains and
+  discards the rest of the producer's output, and success is decided by the
+  two exit codes. A process killed by a signal now counts as a failure
+  instead of exit code 0.
+
 - With `solo-toolchain-cache: false`, the toolchain phase no longer walks
   `$RUSTUP_HOME/toolchains` and `$CARGO_HOME/bin` (#525, T8/E7). The
   `snapshot-base` and `snapshot-post` walks and the
