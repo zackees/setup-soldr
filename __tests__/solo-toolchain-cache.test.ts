@@ -20,6 +20,7 @@ import {
   hashStringArray,
   deleteCorruptSoloCacheEntries,
   restoreSoloCache,
+  SOLO_RESTORE_EXTRACT_DIR,
   rustHostTriple,
   saveSoloCache,
   sealToolchainForSave,
@@ -694,6 +695,7 @@ test("#525 restoreSoloCache moves the sealed toolchain into place on an exact hi
     const rustupHome = path.join(root, "rustup");
     const cargoHome = path.join(root, "cargo");
     const logs: string[] = [];
+    let extractedTo = "";
     const result = await restoreSoloCache({
       keys,
       rustupHome,
@@ -706,6 +708,7 @@ test("#525 restoreSoloCache moves the sealed toolchain into place on an exact hi
         return key;
       },
       decompress: async ({ targetDir }) => {
+        extractedTo = targetDir;
         fs.cpSync(fixtureStaged, targetDir, { recursive: true, verbatimSymlinks: true });
         return { archiveBytes: ZSTD_MAGIC.length, inflatedBytes: 0, fileCount: 0 };
       },
@@ -722,6 +725,14 @@ test("#525 restoreSoloCache moves the sealed toolchain into place on an exact hi
       logs.some((line) => line.includes(`dir=${TOOLCHAIN_DIR}`) && line.includes("renamed=true")),
       logs.join("\n"),
     );
+    // E2: the archive is extracted on RUSTUP_HOME's filesystem, never under
+    // RUNNER_TEMP, so the move into toolchains/ is a rename even when
+    // RUNNER_TEMP is a separate mount (job containers). The extraction
+    // root is removed afterwards.
+    const extractRoot = path.join(rustupHome, SOLO_RESTORE_EXTRACT_DIR);
+    assert.equal(extractedTo, path.join(extractRoot, "staged"));
+    assert.equal(fs.existsSync(extractRoot), false);
+    assert.deepEqual(fs.readdirSync(rustupHome).sort(), ["toolchains"]);
   } finally {
     rmDir(root);
   }
@@ -755,6 +766,7 @@ test("#525 restoreSoloCache rejects an archive that holds another toolchain", as
     assert.equal(result.matchedKey, keys.fallbacks[0]);
     assert.ok(logs.some((line) => line.includes(`archive does not hold exactly ${TOOLCHAIN_DIR}`)));
     assert.equal(fs.existsSync(path.join(rustupHome, "toolchains", TOOLCHAIN_DIR)), false);
+    assert.equal(fs.existsSync(path.join(rustupHome, SOLO_RESTORE_EXTRACT_DIR)), false);
   } finally {
     rmDir(root);
   }

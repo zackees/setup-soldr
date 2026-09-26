@@ -21,6 +21,11 @@
   - Restore validates the standard library of every target rustup lists as
     installed, not only the declared targets, and repairs poisoned entries
     through the #473 path.
+  - Restore extracts the archive inside `$RUSTUP_HOME`
+    (`.setup-soldr-solo-restore/`, removed afterwards), so the toolchain moves
+    into `toolchains/` by rename. In job containers `RUNNER_TEMP` is a
+    separate mount, and extracting there forced a per-file copy that added
+    about 1.5 s to every warm hit.
   - `cache: false` and `solo-toolchain-cache: false` now do zero scans, no
     lookup, and no save for this layer.
   - New `.github/workflows/solo-toolchain-probe.yml` end-to-end probe (E1-E7)

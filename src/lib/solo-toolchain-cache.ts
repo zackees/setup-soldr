@@ -37,6 +37,15 @@ const STAGED_TOOLCHAINS = "rustup-toolchains";
 const STAGED_CARGO_BIN = "cargo-bin";
 /** Staging-layout directory holding `$RUSTUP_HOME/update-hashes/<dir>`. */
 const STAGED_UPDATE_HASHES = "rustup-update-hashes";
+/**
+ * Restore-side extraction root, created inside RUSTUP_HOME so the sealed
+ * toolchain directory is renamed into `toolchains/` on the same
+ * filesystem. Extracting under RUNNER_TEMP instead forces a per-file copy
+ * in job containers, where RUNNER_TEMP is a bind mount and RUSTUP_HOME
+ * lives in the image (EXDEV, ~1.5s for a ~580 MB toolchain; #525 E2).
+ * Removed after every restore attempt.
+ */
+export const SOLO_RESTORE_EXTRACT_DIR = ".setup-soldr-solo-restore";
 
 /**
  * Canonical archive path passed to `@actions/cache.saveCache` and
@@ -927,10 +936,12 @@ export async function saveSoloCache(opts: {
 }
 
 /**
- * Try to restore the solo cache. Hits decompress the archive and move
- * the sealed toolchain directory into `<rustupHome>/toolchains/` (see
- * `applySealedToolchain`). Misses leave the runtime untouched and the
- * normal ensure-rust-toolchain path proceeds.
+ * Try to restore the solo cache. Hits decompress the archive into
+ * `<rustupHome>/.setup-soldr-solo-restore/` and move the sealed toolchain
+ * directory into `<rustupHome>/toolchains/` (see `applySealedToolchain`);
+ * extracting on RUSTUP_HOME's filesystem keeps that move a rename even
+ * when RUNNER_TEMP is a separate mount (job containers). Misses leave the
+ * runtime untouched and the normal ensure-rust-toolchain path proceeds.
  */
 export async function restoreSoloCache(opts: {
   keys: SoloCacheKeys;
@@ -988,7 +999,41 @@ export async function restoreSoloCache(opts: {
     log(`solo-toolchain-cache: restored archive has unknown codec, treating as miss`);
     return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false };
   }
-  const stagingOut = path.join(stagingDir, "staged");
+  const extractRoot = path.join(rustupHome, SOLO_RESTORE_EXTRACT_DIR);
+  try {
+    return await extractAndApplySoloArchive({
+      archivePath,
+      archiveBytes,
+      matched,
+      exactKey: keys.exact,
+      stagingOut: path.join(extractRoot, "staged"),
+      rustupHome,
+      cargoHome,
+      toolchainDir,
+      log,
+      sfs,
+      decompress,
+    });
+  } finally {
+    await sfs.rm(extractRoot).catch(() => undefined);
+  }
+}
+
+async function extractAndApplySoloArchive(opts: {
+  archivePath: string;
+  archiveBytes: number;
+  matched: string;
+  exactKey: string;
+  stagingOut: string;
+  rustupHome: string;
+  cargoHome: string;
+  toolchainDir: string;
+  log: (msg: string) => void;
+  sfs: SoloFs;
+  decompress: typeof decompressCache;
+}): Promise<SoloRestoreResult> {
+  const { archivePath, archiveBytes, matched, stagingOut, rustupHome, cargoHome, toolchainDir, log, sfs, decompress } =
+    opts;
   try {
     await sfs.rm(stagingOut);
     // matched is the actual key the restored entry was stored under, which
@@ -1029,7 +1074,7 @@ export async function restoreSoloCache(opts: {
     return { hit: false, matchedKey: matched, restoredBytes: archiveBytes, archivePath, verified: false };
   }
   return {
-    hit: matched === keys.exact,
+    hit: matched === opts.exactKey,
     matchedKey: matched,
     restoredBytes: archiveBytes,
     archivePath,
