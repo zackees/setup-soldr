@@ -1009,13 +1009,15 @@ export async function run(): Promise<void> {
   }
 
   // ---- toolchain ----
-  // Snapshot $RUSTUP_HOME/toolchains/ + $CARGO_HOME/bin/ around the
-  // toolchain install so we can see which inodes setup-soldr added on
-  // top of the runner image. When solo-toolchain-cache is opted in, a
-  // third snapshot is taken *before* the cache restore so the saved
-  // tarball captures the full above-runner state — not just the
-  // post-restore delta. See CLAUDE.md "Detect-then-cache" + "Cache-
-  // lifetime axis".
+  // When solo-toolchain-cache is on, snapshot $RUSTUP_HOME/toolchains/ +
+  // $CARGO_HOME/bin/ around the toolchain install so we can see which
+  // inodes setup-soldr added on top of the runner image. A third
+  // snapshot is taken *before* the cache restore so the saved tarball
+  // captures the full above-runner state — not just the post-restore
+  // delta. See CLAUDE.md "Detect-then-cache" + "Cache-lifetime axis".
+  // With the cache off nothing reads the snapshots, so none are taken
+  // and nothing is written: on images with a populated RUSTUP_HOME each
+  // walk costs 5-16 s (#525 T8/E7).
   await markPhase("toolchain");
   const snapshotRoots = [
     path.join(result.rustupHome, "toolchains"),
@@ -1120,9 +1122,9 @@ export async function run(): Promise<void> {
     core.saveState("soloToolchainEnabled", "false");
     core.saveState("soloToolchainRestoreInvalid", "false");
   }
-  const baselineSnapshot = await timeSubPhase("toolchain", "snapshot-base", () =>
-    walkSnapshot(snapshotRoots),
-  );
+  const baselineSnapshot = soloEnabled
+    ? await timeSubPhase("toolchain", "snapshot-base", () => walkSnapshot(snapshotRoots))
+    : null;
   // #323: when solo-cache exact-hit AND verifyRestoredToolchain
   // passed, the requested toolchain is already on disk from the
   // restore. `rustup toolchain install` would be a no-op but still
@@ -1165,61 +1167,65 @@ export async function run(): Promise<void> {
       logger.log(`solo-toolchain-cache: repaired toolchain and requested targets verified for key=${soloMatchedKey}`);
     }
   }
-  const postInstallSnapshot = await timeSubPhase("toolchain", "snapshot-post", () =>
-    walkSnapshot(snapshotRoots),
-  );
-  const toolchainDiff = diffSnapshots(baselineSnapshot, postInstallSnapshot);
-  const toolchainDiffStats = diffStats(toolchainDiff);
-  // When solo cache is enabled, also compute the save-diff (post-install
-  // vs pre-restore) so post.ts has the full above-runner manifest to tar.
-  if (soloEnabled && preRestoreSnapshot && ctx.runnerTemp) {
-    const saveDiff = diffSnapshots(preRestoreSnapshot, postInstallSnapshot);
-    const saveDiffStats = diffStats(saveDiff);
-    const saveDiffPath = path.join(ctx.runnerTemp, "setup-soldr-solo-save-diff.json");
-    try {
-      await fs.promises.writeFile(
-        saveDiffPath,
-        serializeManifest(saveDiff, saveDiffStats),
-        "utf8",
-      );
-      core.saveState("soloToolchainSaveDiffPath", saveDiffPath);
-      core.saveState("soloToolchainIncrementalEmpty", toolchainDiff.added.length === 0 ? "true" : "false");
-      logger.log(
-        `solo-toolchain-cache: save-diff added=${saveDiffStats.addedFiles} files (${
-          saveDiffStats.addedBytes < 1024 * 1024
-            ? `${(saveDiffStats.addedBytes / 1024).toFixed(1)}KB`
-            : `${(saveDiffStats.addedBytes / 1024 / 1024).toFixed(1)}MB`
-        }) ` +
-          `incremental-empty=${toolchainDiff.added.length === 0}`,
-      );
-    } catch (err) {
-      logger.log(
-        `solo-toolchain-cache: save-diff write failed: ${
-          err instanceof Error ? err.message : String(err)
-        }`,
-      );
+  if (soloEnabled && preRestoreSnapshot && baselineSnapshot) {
+    const postInstallSnapshot = await timeSubPhase("toolchain", "snapshot-post", () =>
+      walkSnapshot(snapshotRoots),
+    );
+    const toolchainDiff = diffSnapshots(baselineSnapshot, postInstallSnapshot);
+    const toolchainDiffStats = diffStats(toolchainDiff);
+    // Also compute the save-diff (post-install vs pre-restore) so post.ts
+    // has the full above-runner manifest to tar.
+    if (ctx.runnerTemp) {
+      const saveDiff = diffSnapshots(preRestoreSnapshot, postInstallSnapshot);
+      const saveDiffStats = diffStats(saveDiff);
+      const saveDiffPath = path.join(ctx.runnerTemp, "setup-soldr-solo-save-diff.json");
+      try {
+        await fs.promises.writeFile(
+          saveDiffPath,
+          serializeManifest(saveDiff, saveDiffStats),
+          "utf8",
+        );
+        core.saveState("soloToolchainSaveDiffPath", saveDiffPath);
+        core.saveState("soloToolchainIncrementalEmpty", toolchainDiff.added.length === 0 ? "true" : "false");
+        logger.log(
+          `solo-toolchain-cache: save-diff added=${saveDiffStats.addedFiles} files (${
+            saveDiffStats.addedBytes < 1024 * 1024
+              ? `${(saveDiffStats.addedBytes / 1024).toFixed(1)}KB`
+              : `${(saveDiffStats.addedBytes / 1024 / 1024).toFixed(1)}MB`
+          }) ` +
+            `incremental-empty=${toolchainDiff.added.length === 0}`,
+        );
+      } catch (err) {
+        logger.log(
+          `solo-toolchain-cache: save-diff write failed: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
     }
-  }
-  const fmtMB = (bytes: number): string =>
-    bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)}KB` : `${(bytes / 1024 / 1024).toFixed(1)}MB`;
-  logger.log(
-    `toolchain-snapshot: added=${toolchainDiffStats.addedFiles} files (${fmtMB(toolchainDiffStats.addedBytes)}) ` +
-      `changed=${toolchainDiffStats.changedFiles} removed=${toolchainDiffStats.removedFiles}`,
-  );
-  if (ctx.runnerTemp) {
-    const manifestPath = path.join(ctx.runnerTemp, "setup-soldr-toolchain-diff.json");
-    try {
-      await fs.promises.writeFile(
-        manifestPath,
-        serializeManifest(toolchainDiff, toolchainDiffStats),
-        "utf8",
-      );
-      logger.log(`toolchain-snapshot: manifest at ${manifestPath}`);
-    } catch (err) {
-      logger.log(
-        `toolchain-snapshot: manifest write failed: ${err instanceof Error ? err.message : String(err)}`,
-      );
+    const fmtMB = (bytes: number): string =>
+      bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)}KB` : `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+    logger.log(
+      `toolchain-snapshot: added=${toolchainDiffStats.addedFiles} files (${fmtMB(toolchainDiffStats.addedBytes)}) ` +
+        `changed=${toolchainDiffStats.changedFiles} removed=${toolchainDiffStats.removedFiles}`,
+    );
+    if (ctx.runnerTemp) {
+      const manifestPath = path.join(ctx.runnerTemp, "setup-soldr-toolchain-diff.json");
+      try {
+        await fs.promises.writeFile(
+          manifestPath,
+          serializeManifest(toolchainDiff, toolchainDiffStats),
+          "utf8",
+        );
+        logger.log(`toolchain-snapshot: manifest at ${manifestPath}`);
+      } catch (err) {
+        logger.log(
+          `toolchain-snapshot: manifest write failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
+  } else {
+    logger.log("toolchain: solo-toolchain-cache off — skipping toolchain snapshots (#525)");
   }
   await finishPhase("toolchain");
 

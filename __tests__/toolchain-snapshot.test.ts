@@ -198,3 +198,18 @@ test("symlink retargeting registers as a change, not an add+remove", async () =>
     rmDir(root);
   }
 });
+
+test("#525 main.ts takes no toolchain snapshot when solo-toolchain-cache is off", () => {
+  // Every walk must sit behind `soloEnabled`: with the cache off nothing
+  // reads the snapshots, and each walk of a populated RUSTUP_HOME costs
+  // seconds and shows up as a snapshot_* sub-phase.
+  const src = fs.readFileSync(path.resolve(process.cwd(), "src", "main.ts"), "utf8");
+  const walks = [...src.matchAll(/timeSubPhase\("toolchain", "(snapshot-[a-z]+)"/g)];
+  assert.deepEqual(walks.map((m) => m[1]), ["snapshot-pre", "snapshot-base", "snapshot-post"]);
+  for (const m of walks) {
+    const before = src.slice(0, m.index);
+    const guard = before.slice(before.lastIndexOf(";") + 1);
+    assert.match(guard, /soloEnabled/, `${m[1]} is guarded by soloEnabled`);
+  }
+  assert.match(src, /solo-toolchain-cache off — skipping toolchain snapshots/);
+});

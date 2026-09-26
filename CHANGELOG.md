@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- With `solo-toolchain-cache: false`, the toolchain phase no longer walks
+  `$RUSTUP_HOME/toolchains` and `$CARGO_HOME/bin` (#525, T8/E7). The
+  `snapshot-base` and `snapshot-post` walks and the
+  `setup-soldr-toolchain-diff.json` manifest only served the solo cache's
+  save-diff, yet ran on every job. In containers whose image pre-populates
+  `RUSTUP_HOME` (135k files in wild's CI image) they cost 5-16 s per job.
+  Cache-off jobs now report no `snapshot_*` sub-phases and log
+  `toolchain: solo-toolchain-cache off — skipping toolchain snapshots (#525)`.
+  Jobs with the cache on are unchanged.
+
 - Stop saving durable caches from pull-request runs by default (#527). The
   main action gains `save-cache: auto | true | false` (default `auto`), and
   every durable upload (cook base/delta, build-cache, target-cache,
