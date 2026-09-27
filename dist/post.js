@@ -52947,6 +52947,8 @@ const CARGO_CHEF_VERSION_BY_SOLDR = {
     "0.9.20": "0.1.73",
     "0.9.21": "0.1.73",
     "0.9.22": "0.1.73",
+    "0.9.23": "0.1.73",
+    "0.9.24": "0.1.73",
 };
 function detectTarget() {
     const machine = process.arch;

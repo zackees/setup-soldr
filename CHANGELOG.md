@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Ingest Soldr `0.9.23` and `0.9.24`: keep the rolling `latest` default and
+  extend the hash-verified PyPI wheel fallback contract through `0.9.24`.
+  Verified both GitHub releases have all six native target archives, all eight
+  PyPI wheels, and the pinned cargo-chef `0.1.73` support assets before enabling
+  the fallback. `0.9.24` includes zccache `1.14.14` and Soldr's `--zccache-mode`
+  configuration surface.
+
 - The cook delta layer is now off by default (#528). New input `cook-delta`
   (default `false`) on the main action and the `cook/` sub-action. With the
   default, the `cook-base-v2-*` archive is still restored and saved (on
