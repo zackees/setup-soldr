@@ -57703,6 +57703,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.dylintMarkerIdentityMatches = dylintMarkerIdentityMatches;
 exports.resolveJournalPrintRaw = resolveJournalPrintRaw;
 exports.applyCachePayloadOversizeAction = applyCachePayloadOversizeAction;
 exports.classifyCacheSaveReservation = classifyCacheSaveReservation;
@@ -57767,6 +57768,42 @@ function cachePathExists(p) {
     catch {
         return false;
     }
+}
+/**
+ * setup-soldr#538: the success marker written by `soldr dylint`/
+ * `soldr cargo dylint` (crates/soldr-cli/src/dylint_toolchain.rs
+ * `write_success_marker`) always records the channel Soldr's own
+ * `prepare_resolved` -> `qualify_toolchain_name` resolved it to, which is the
+ * host-qualified rustup toolchain directory name
+ * (`<channel>-<host-triple>`, e.g. `nightly-2026-05-28-x86_64-unknown-linux-gnu`)
+ * -- not the short requested channel. `resolve-setup.ts`'s `dylintCacheIdentity`
+ * is always built from the short channel (the same value it exports as
+ * `SOLDR_DYLINT_CONFIGURED_TOOLCHAIN`), so a bare string comparison against
+ * the marker never matches and every successful Dylint run skips both
+ * `dylint-cache` and `dylint-output-cache` saves.
+ *
+ * Accept either spelling of the channel segment (bare or host-qualified);
+ * the compiler release and full 40-char commit hash must still match
+ * exactly, since those two alone already pin the exact compiler that ran.
+ */
+function dylintMarkerIdentityMatches(markerContent, cacheIdentity, hostTriple) {
+    const marker = markerContent.trim();
+    const expected = cacheIdentity.trim();
+    if (marker.length === 0 || expected.length === 0)
+        return false;
+    if (marker === expected)
+        return true;
+    const markerParts = marker.split("|");
+    const expectedParts = expected.split("|");
+    if (markerParts.length !== 3 || expectedParts.length !== 3)
+        return false;
+    const [markerChannel, markerRelease, markerCommit] = markerParts;
+    const [expectedChannel, expectedRelease, expectedCommit] = expectedParts;
+    if (markerRelease !== expectedRelease || markerCommit !== expectedCommit)
+        return false;
+    if (!hostTriple)
+        return false;
+    return markerChannel === `${expectedChannel}-${hostTriple}`;
 }
 function stateBool(name, fallback = false) {
     const value = core.getState(name).trim().toLowerCase();
@@ -59692,8 +59729,7 @@ async function run() {
                 const markerValid = !result.dylintCache.successMarker ||
                     (() => {
                         try {
-                            return (fs.readFileSync(result.dylintCache.successMarker, "utf8").trim() ===
-                                result.dylintCache.cacheIdentity);
+                            return dylintMarkerIdentityMatches(fs.readFileSync(result.dylintCache.successMarker, "utf8"), result.dylintCache.cacheIdentity, result.dylintCache.hostTriple);
                         }
                         catch {
                             return false;
@@ -59757,9 +59793,7 @@ async function run() {
             else {
                 let markerValid = false;
                 try {
-                    markerValid =
-                        fs.readFileSync(result.dylintCache.successMarker, "utf8").trim() ===
-                            result.dylintCache.cacheIdentity;
+                    markerValid = dylintMarkerIdentityMatches(fs.readFileSync(result.dylintCache.successMarker, "utf8"), result.dylintCache.cacheIdentity, result.dylintCache.hostTriple);
                 }
                 catch {
                     markerValid = false;
