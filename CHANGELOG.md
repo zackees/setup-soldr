@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Ingest Soldr `0.9.25`: extend the hash-verified PyPI wheel fallback and
+  pinned cargo-chef `0.1.73` support mapping. The rolling `latest` default now
+  resolves to the release with cross-target Dylint nightly `rust-std` setup.
+
 - Ingest Soldr `0.9.23` and `0.9.24`: keep the rolling `latest` default and
   extend the hash-verified PyPI wheel fallback contract through `0.9.24`.
   Verified both GitHub releases have all six native target archives, all eight
