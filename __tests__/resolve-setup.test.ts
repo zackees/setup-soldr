@@ -467,6 +467,22 @@ test("dylint mode resolves newest nightly identity and keys the foundation cache
   assert.equal(result.dylintCache.outputCacheEnabled, true);
   assert.match(result.dylintCache.outputKey, /^setup-soldr-dylint-output-v1-/);
   assert.equal(result.dylintCache.outputPaths.length, 2);
+  // setup-soldr#538: cargo-dylint checks against (and writes its
+  // check-shaped target state under) the HOST-QUALIFIED toolchain
+  // directory name, not the short requested channel -- confirmed on
+  // zackees/template-python-rust-cmd run 36497556959. outputPaths must
+  // name the qualified directory or dylint-output-cache never finds
+  // anything to save.
+  assert.ok(
+    result.dylintCache.outputPaths.every((p) =>
+      p.includes(`nightly-2026-01-18-${result.dylintCache.hostTriple}`),
+    ),
+    `outputPaths must be host-qualified: ${JSON.stringify(result.dylintCache.outputPaths)}`,
+  );
+  assert.ok(
+    result.dylintCache.outputPaths.every((p) => !p.includes(path.sep + "nightly-2026-01-18" + path.sep)),
+    "outputPaths must not use the bare (unqualified) channel as a path segment",
+  );
   assert.equal(result.dylintCache.toolchain, "nightly-2026-01-18");
   assert.equal(result.dylintCache.rustcRelease, "1.94.0-nightly");
   assert.equal(result.dylintCache.rustcCommitHash.length, 40);
