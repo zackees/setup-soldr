@@ -41,6 +41,74 @@ test("post payload fail policy marks failure and cache reservation races require
   );
 });
 
+test("#538 dylintMarkerIdentityMatches accepts the host-qualified channel Soldr actually writes", async () => {
+  const mod = (await import("../src/post.js")) as {
+    dylintMarkerIdentityMatches: (
+      markerContent: string,
+      cacheIdentity: string,
+      hostTriple: string,
+    ) => boolean;
+  };
+  const release = "1.98.0-nightly";
+  const commit = "57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8";
+  const cacheIdentity = `nightly-2026-05-28|${release}|${commit}`;
+  const hostTriple = "x86_64-unknown-linux-gnu";
+  // What `soldr dylint`/`soldr cargo dylint` actually writes to the marker
+  // (crates/soldr-cli/src/dylint_toolchain.rs `qualify_toolchain_name`),
+  // captured verbatim from zackees/template-python-rust-cmd run 36496358860,
+  // job 109176814466.
+  const markerContent = `nightly-2026-05-28-x86_64-unknown-linux-gnu|${release}|${commit}\n`;
+  assert.equal(mod.dylintMarkerIdentityMatches(markerContent, cacheIdentity, hostTriple), true);
+});
+
+test("#538 dylintMarkerIdentityMatches still matches an exact (unqualified) marker", async () => {
+  const mod = (await import("../src/post.js")) as {
+    dylintMarkerIdentityMatches: (
+      markerContent: string,
+      cacheIdentity: string,
+      hostTriple: string,
+    ) => boolean;
+  };
+  const identity = "nightly-2026-05-28|1.98.0-nightly|57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8";
+  assert.equal(
+    mod.dylintMarkerIdentityMatches(`${identity}\n`, identity, "x86_64-unknown-linux-gnu"),
+    true,
+  );
+});
+
+test("#538 dylintMarkerIdentityMatches rejects a genuinely different compiler identity", async () => {
+  const mod = (await import("../src/post.js")) as {
+    dylintMarkerIdentityMatches: (
+      markerContent: string,
+      cacheIdentity: string,
+      hostTriple: string,
+    ) => boolean;
+  };
+  const cacheIdentity = "nightly-2026-05-28|1.98.0-nightly|57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8";
+  const hostTriple = "x86_64-unknown-linux-gnu";
+  // Different commit hash: must NOT match even with host-qualification.
+  assert.equal(
+    mod.dylintMarkerIdentityMatches(
+      "nightly-2026-05-28-x86_64-unknown-linux-gnu|1.98.0-nightly|deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+      cacheIdentity,
+      hostTriple,
+    ),
+    false,
+  );
+  // Different host triple qualifying the channel: must NOT match.
+  assert.equal(
+    mod.dylintMarkerIdentityMatches(
+      "nightly-2026-05-28-aarch64-apple-darwin|1.98.0-nightly|57d06900fd7d9ee06d3a7f323bb77f17ab3cfaf8",
+      cacheIdentity,
+      hostTriple,
+    ),
+    false,
+  );
+  // Empty marker/identity: must NOT match.
+  assert.equal(mod.dylintMarkerIdentityMatches("", cacheIdentity, hostTriple), false);
+  assert.equal(mod.dylintMarkerIdentityMatches("garbage", cacheIdentity, hostTriple), false);
+});
+
 function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }

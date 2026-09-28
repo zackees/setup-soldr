@@ -1187,9 +1187,22 @@ export async function resolveSetup(
   if (suffix) {
     dylintCacheKey = `${dylintCacheKey}-${sanitizedSuffix}`;
   }
+  // setup-soldr#538: cargo-dylint checks (and writes its check-shaped target
+  // state) against the host-qualified rustup toolchain name -- the same
+  // qualification `crates/soldr-cli/src/dylint_toolchain.rs`'s
+  // `qualify_toolchain_name` applies before Soldr's Dylint plan reaches
+  // `apply_to_command`/`write_success_marker` (see `dylintSuccessMarker`
+  // above). `dylintToolchain` here is always the short requested channel, so
+  // building these paths from it pointed at a directory cargo-dylint never
+  // writes (confirmed on zackees/template-python-rust-cmd run 36497556959:
+  // the real tree is `target/dylint/{libraries,target}/<dylintToolchain>-<dylintHostTriple>/...`),
+  // and `dylint-output-cache` always skipped its save with "no Dylint output
+  // paths exist". Match the actual on-disk qualified directory, the same way
+  // `dylintToolchainPath`/`dylintUpdateHashPath` above already do.
+  const dylintQualifiedToolchain = `${dylintToolchain}-${dylintHostTriple}`;
   const dylintOutputPaths = [
-    path.join(targetCachePath, "dylint", "libraries", dylintToolchain, "release"),
-    path.join(targetCachePath, "dylint", "target", dylintToolchain),
+    path.join(targetCachePath, "dylint", "libraries", dylintQualifiedToolchain, "release"),
+    path.join(targetCachePath, "dylint", "target", dylintQualifiedToolchain),
   ];
   const dylintOutputHash = shortJsonHash({
     compiler_identity: dylintCacheIdentity,
