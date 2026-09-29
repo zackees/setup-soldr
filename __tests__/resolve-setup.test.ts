@@ -465,7 +465,7 @@ test("dylint mode resolves newest nightly identity and keys the foundation cache
   assert.equal(requested, "1.94.1");
   assert.equal(result.dylintCache.enabled, true);
   assert.equal(result.dylintCache.outputCacheEnabled, true);
-  assert.match(result.dylintCache.outputKey, /^setup-soldr-dylint-output-v1-/);
+  assert.match(result.dylintCache.outputKey, /^setup-soldr-dylint-output-v2-/);
   assert.equal(result.dylintCache.outputPaths.length, 2);
   // setup-soldr#538: cargo-dylint checks against (and writes its
   // check-shaped target state under) the HOST-QUALIFIED toolchain
@@ -531,6 +531,145 @@ test("dylint mode keeps preparation pins when caching is disabled", async () => 
   assert.notEqual(result.dylintCache.cacheIdentity, "");
   assert.equal(result.dylintCache.cargoDylintVersion, "6.0.3");
   assert.equal(result.dylintCache.dylintLinkVersion, "6.0.3");
+});
+
+// --- dylint-output-cache reused across commits (setup-soldr#540, ci.yml#1) ---
+//
+// The output cache used to be keyed on GITHUB_SHA, so every new commit was an
+// exact-key miss even when the toolchain, lint libraries, Cargo.lock and
+// target/flags shape were all unchanged. These tests pin the corrected
+// contract: the exact key is a pure function of (toolchain identity, driver
+// revision, cargo config, workspace/lint-library manifests, target shape,
+// Cargo.lock) — never the commit — and restore-keys fall back across a
+// Cargo.lock change only, never across a toolchain or manifest change.
+
+const DYLINT_OUTPUT_NIGHTLY_A = async (): Promise<{
+  channel: string;
+  rustVersion: string;
+  rustcRelease: string;
+  rustcCommitHash: string;
+}> => ({
+  channel: "nightly-2026-01-18",
+  rustVersion: "1.94",
+  rustcRelease: "1.94.0-nightly",
+  rustcCommitHash: "1111111111111111111111111111111111111111",
+});
+
+const DYLINT_OUTPUT_NIGHTLY_B = async (): Promise<{
+  channel: string;
+  rustVersion: string;
+  rustcRelease: string;
+  rustcCommitHash: string;
+}> => ({
+  channel: "nightly-2026-02-01",
+  rustVersion: "1.95",
+  rustcRelease: "1.95.0-nightly",
+  rustcCommitHash: "2222222222222222222222222222222222222222",
+});
+
+// Unlike `run()`, these tests hold the workspace (and therefore its
+// absolute target-dir path, which feeds `target_shape`) FIXED across both
+// resolveSetup() calls, mutating only the one input under test — mirroring
+// real CI, where GITHUB_WORKSPACE is the same path on every commit of the
+// same job and only file contents (Cargo.lock, manifests) or env
+// (GITHUB_SHA, the resolved nightly) change between runs.
+async function resolveDylintOutputCache(
+  ctxRoot: { root: string; workspace: string; runnerTemp: string },
+  extraEnv: Record<string, string>,
+  resolveNightly: () => Promise<{
+    channel: string;
+    rustVersion: string;
+    rustcRelease: string;
+    rustcCommitHash: string;
+  }>,
+): Promise<ResolveResult> {
+  const ctx = makeContext(ctxRoot.root, ctxRoot.workspace, ctxRoot.runnerTemp);
+  ctx.env = withInputs(ctx.env, extraEnv);
+  const inputs: RawInputs = readRawInputs(ctx.env);
+  return resolveSetup(ctx, inputs, {
+    fetchReleaseTag: async () => "v0.7.11",
+    systemRustupOverride: async () => false,
+    resolveDylintNightly: resolveNightly,
+  });
+}
+
+test("dylint-output-cache exact key is stable across commits given the same real inputs", async () => {
+  const ctxRoot = makeWorkspace({ lockfileContents: "# lockfile A\n" });
+  const extraEnv = { INPUT_DYLINT: "true", INPUT_TOOLCHAIN: "1.94.1" };
+  const commitOne = await resolveDylintOutputCache(
+    ctxRoot,
+    { ...extraEnv, GITHUB_SHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+    DYLINT_OUTPUT_NIGHTLY_A,
+  );
+  const commitTwo = await resolveDylintOutputCache(
+    ctxRoot,
+    { ...extraEnv, GITHUB_SHA: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+    DYLINT_OUTPUT_NIGHTLY_A,
+  );
+  assert.equal(
+    commitOne.dylintCache.outputKey,
+    commitTwo.dylintCache.outputKey,
+    "ci.yml#1: the dylint-output-cache exact key must not depend on GITHUB_SHA",
+  );
+});
+
+test("dylint-output-cache key changes on a Cargo.lock change, but its restore-keys prefix does not", async () => {
+  const ctxRoot = makeWorkspace({ lockfileContents: "# lockfile A\n" });
+  const extraEnv = { INPUT_DYLINT: "true", INPUT_TOOLCHAIN: "1.94.1" };
+  const lockA = await resolveDylintOutputCache(ctxRoot, extraEnv, DYLINT_OUTPUT_NIGHTLY_A);
+  fs.writeFileSync(
+    path.join(ctxRoot.workspace, "Cargo.lock"),
+    "# lockfile B (dependency bump)\n",
+    "utf8",
+  );
+  const lockB = await resolveDylintOutputCache(ctxRoot, extraEnv, DYLINT_OUTPUT_NIGHTLY_A);
+  assert.notEqual(
+    lockA.dylintCache.outputKey,
+    lockB.dylintCache.outputKey,
+    "a Cargo.lock change must invalidate the exact dylint-output-cache key",
+  );
+  assert.equal(lockA.dylintCache.outputRestoreKeys.length, 1);
+  assert.deepEqual(
+    lockA.dylintCache.outputRestoreKeys,
+    lockB.dylintCache.outputRestoreKeys,
+    "restore-keys must drop ONLY the Cargo.lock component",
+  );
+  assert.ok(lockA.dylintCache.outputKey.startsWith(lockA.dylintCache.outputRestoreKeys[0]!));
+  assert.ok(lockB.dylintCache.outputKey.startsWith(lockB.dylintCache.outputRestoreKeys[0]!));
+});
+
+test("dylint-output-cache key and restore-keys change when the dylint toolchain identity changes", async () => {
+  const ctxRoot = makeWorkspace({ lockfileContents: "# lockfile A\n" });
+  const extraEnv = { INPUT_DYLINT: "true", INPUT_TOOLCHAIN: "1.94.1" };
+  const toolchainA = await resolveDylintOutputCache(ctxRoot, extraEnv, DYLINT_OUTPUT_NIGHTLY_A);
+  const toolchainB = await resolveDylintOutputCache(ctxRoot, extraEnv, DYLINT_OUTPUT_NIGHTLY_B);
+  assert.notEqual(toolchainA.dylintCache.outputKey, toolchainB.dylintCache.outputKey);
+  assert.notEqual(
+    toolchainA.dylintCache.outputRestoreKeys[0]!,
+    toolchainB.dylintCache.outputRestoreKeys[0]!,
+    "restore-keys must never cross a toolchain-identity change",
+  );
+});
+
+test("dylint-output-cache key and restore-keys change when workspace/lint-library manifests change", async () => {
+  const ctxRoot = makeWorkspace({
+    lockfileContents: "# lockfile A\n",
+    files: { "Cargo.toml": "[workspace]\nmembers = [\"a\"]\n" },
+  });
+  const extraEnv = { INPUT_DYLINT: "true", INPUT_TOOLCHAIN: "1.94.1" };
+  const manifestA = await resolveDylintOutputCache(ctxRoot, extraEnv, DYLINT_OUTPUT_NIGHTLY_A);
+  fs.writeFileSync(
+    path.join(ctxRoot.workspace, "Cargo.toml"),
+    "[workspace]\nmembers = [\"a\", \"dylints/platform_boundary\"]\n",
+    "utf8",
+  );
+  const manifestB = await resolveDylintOutputCache(ctxRoot, extraEnv, DYLINT_OUTPUT_NIGHTLY_A);
+  assert.notEqual(manifestA.dylintCache.outputKey, manifestB.dylintCache.outputKey);
+  assert.notEqual(
+    manifestA.dylintCache.outputRestoreKeys[0]!,
+    manifestB.dylintCache.outputRestoreKeys[0]!,
+    "restore-keys must never cross a workspace/lint-library manifest change",
+  );
 });
 
 test("cargo-chef local dir is exported only after its bundled binary is installed", async () => {

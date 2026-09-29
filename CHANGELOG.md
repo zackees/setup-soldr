@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Fix `dylint-output-cache` being keyed to the source commit (#540, fixes
+  ci.yml#1), so every new commit was an exact-key miss even when the
+  toolchain, lint libraries, Cargo.lock and target/flags shape were all
+  unchanged. The exact key is now a pure function of the real inputs
+  (toolchain+driver identity, workspace/lint-library manifests, target
+  shape, Cargo.lock) with the commit dropped entirely — same fix shape as
+  #237's build-cache and #371's cargo-registry key — plus a `restore-keys`
+  fallback that drops ONLY the Cargo.lock component, so a dependency bump
+  still restores the newest prior generation instead of cooking fully cold.
+  Saves only happen on a genuine exact-key miss (one generation per
+  lockfile, never one per commit — #533).
+
 - Ingest Soldr `0.9.25`: extend the hash-verified PyPI wheel fallback and
   pinned cargo-chef `0.1.73` support mapping. The rolling `latest` default now
   resolves to the release with cross-target Dylint nightly `rust-std` setup.

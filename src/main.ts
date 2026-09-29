@@ -775,10 +775,17 @@ export async function run(): Promise<void> {
       return;
     }
     const t0 = Date.now();
+    // setup-soldr#540 / ci.yml#1: restore via the exact (per-Cargo.lock-
+    // generation) key first, falling back to `outputRestoreKeys` (same
+    // toolchain + lint-library identity, any prior Cargo.lock generation)
+    // on a miss. `restore.hit` is only true on an EXACT match (see
+    // `restoreCacheSafe`), so a restore-keys fallback still leaves
+    // `dylintOutputCacheExactHit=false` and the post step still saves a
+    // fresh entry under the new exact key.
     const restore = await restoreCacheSafe(
       result.dylintCache.outputPaths,
       result.dylintCache.outputKey,
-      [],
+      result.dylintCache.outputRestoreKeys,
       logger,
     );
     core.setOutput("dylint-output-cache-hit", restore.hit ? "true" : "false");
@@ -794,7 +801,7 @@ export async function run(): Promise<void> {
       hit: restore.hit,
       key: result.dylintCache.outputKey,
       matchedKey: restore.matchedKey,
-      restoreKeys: [],
+      restoreKeys: result.dylintCache.outputRestoreKeys,
       archiveBytes: null,
       inflatedBytes: null,
       fileCount: null,

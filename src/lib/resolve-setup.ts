@@ -1204,17 +1204,55 @@ export async function resolveSetup(
     path.join(targetCachePath, "dylint", "libraries", dylintQualifiedToolchain, "release"),
     path.join(targetCachePath, "dylint", "target", dylintQualifiedToolchain),
   ];
-  const dylintOutputHash = shortJsonHash({
+  // setup-soldr#540, ci.yml#1: this key used to include `source_revision:
+  // githubSha`, so it was an exact-key miss on every new commit even when
+  // every real input (toolchain identity, driver revision, cargo config,
+  // workspace/lint-library manifests, target/flags shape, Cargo.lock) was
+  // unchanged. Measured on zackees/template-python-rust-cmd: a same-commit
+  // rerun of run 36501247176 hit both `dylint-cache` and
+  // `dylint-output-cache`, but a new-commit PR run (36501659725, 125s) still
+  // MISSED `dylint-output-cache` — the foundation `dylint-cache` (668 MB,
+  // keyed only on toolchain/driver identity, fixed by #539) already survived
+  // across commits; the output cache (~75 MB of compiled lint libraries +
+  // checked target state) did not.
+  //
+  // Fix (same shape as #237's build-cache and #371's cargo-registry key):
+  // drop the commit from the exact key entirely, so the key is a pure
+  // function of the inputs that actually change what a Dylint check produces
+  // and never changes on a no-op commit. Split the hash so restore-keys can
+  // drop ONLY the Cargo.lock component (`dylintOutputRestoreKeys`, wired to
+  // `actions/cache`'s `restore-keys` prefix match) — a dependency bump still
+  // restores the newest prior generation instead of cooking fully cold, but
+  // never crosses a toolchain or lint-library/manifest boundary, and the
+  // exact key (with `cargo_lock` back in) still gets a fresh entry per
+  // lockfile generation so a save only happens on a genuine exact-key miss:
+  // one generation per lockfile, never one per commit (setup-soldr#533).
+  //
+  // This is correct, not just faster, because cargo's own fingerprinting
+  // does the real invalidation work once the tree is restored: cargo
+  // rechecks any workspace unit whose source changed since the restored
+  // tree was built (restored files are strictly older than a freshly
+  // checked-out commit's sources), reuses on-disk check artifacts for units
+  // it did not touch, and replays cached diagnostics for units it did
+  // recheck but found unchanged. A crate that hit a Dylint `deny` lint never
+  // produced a check-pass artifact to restore, so a prior failure can never
+  // be replayed as a pass by a warm cache.
+  const dylintOutputNonLockInputs = {
     compiler_identity: dylintCacheIdentity,
     driver_revision: dylintDriverRev,
     cargo_config: cargoConfigHashValue,
-    cargo_lock: cargoLockHash,
     manifests: wsManifestHash,
     target_shape: targetShapeHash,
-    source_revision: githubSha,
     cache_suffix: sanitizedSuffix,
-  });
-  const dylintOutputKey = `setup-soldr-dylint-output-v1-${runnerOs}-${runnerArch}-${dylintOutputHash}`;
+  };
+  const dylintOutputNonLockHash = shortJsonHash(dylintOutputNonLockInputs);
+  const dylintOutputKeyPrefix = `setup-soldr-dylint-output-v2-${runnerOs}-${runnerArch}-${dylintOutputNonLockHash}`;
+  // Prefix-only fallback: drops ONLY the Cargo.lock component. GitHub's
+  // restore-keys semantics are a prefix match against the most recently
+  // created matching entry, so this can only ever resolve to a previous
+  // generation that shares every other input.
+  const dylintOutputRestoreKeys = [`${dylintOutputKeyPrefix}-`];
+  const dylintOutputKey = `${dylintOutputKeyPrefix}-${cargoLockHash}`;
   if (dylintCacheEnabled) {
     makeDirs(dylintDriverPath);
   }
@@ -1532,6 +1570,10 @@ export async function resolveSetup(
     log(`dylint-cache driver-rev=${dylintDriverRev}`);
     log(`dylint-cache driver-path=${dylintDriverPath}`);
   }
+  if (dylintOutputCacheEnabled) {
+    log(`dylint-output-cache key=${dylintOutputKey}`);
+    log(`dylint-output-cache restore-key=${dylintOutputRestoreKeys[0]}`);
+  }
 
   // ---- assemble plans ----
   const setupCache: SetupCachePlan = {
@@ -1581,6 +1623,7 @@ export async function resolveSetup(
     enabled: dylintCacheEnabled,
     outputCacheEnabled: dylintOutputCacheEnabled,
     outputKey: dylintOutputCacheEnabled ? dylintOutputKey : "",
+    outputRestoreKeys: dylintOutputCacheEnabled ? dylintOutputRestoreKeys : [],
     outputPaths: dylintOutputCacheEnabled ? dylintOutputPaths : [],
     key: dylintCacheEnabled ? dylintCacheKey : "",
     paths: dylintCacheEnabled ? dylintCachePaths : [],
