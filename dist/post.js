@@ -53022,7 +53022,40 @@ function releaseUrl(repo, version) {
     }
     return `https://api.github.com/repos/${repo}/releases/latest`;
 }
-async function fetchRelease(repo, version, githubToken) {
+/**
+ * Build a release payload for an exact tag without the REST API by probing
+ * the conventional asset names on the plain `releases/download` URL (not
+ * counted against the anonymous API quota). Returns null when no candidate
+ * exists so the caller can fall back to the REST API.
+ */
+async function probeReleaseWithoutApi(repo, version, target) {
+    if (!version || !target)
+        return null;
+    const tag = version.startsWith("v") ? version : `v${version}`;
+    for (const ext of ["tar.zst", "tar.gz", "zip"]) {
+        const name = `soldr-${tag}-${target}.${ext}`;
+        const url = `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${name}`;
+        try {
+            const response = await fetch(url, {
+                method: "HEAD",
+                headers: { "User-Agent": "setup-soldr-action" },
+            });
+            if (response.ok) {
+                return { tag_name: tag, assets: [{ name, browser_download_url: url }] };
+            }
+        }
+        catch {
+            // try the next candidate / fall back to the API
+        }
+    }
+    return null;
+}
+async function fetchRelease(repo, version, githubToken, target = "") {
+    if (!githubToken.trim()) {
+        const probed = await probeReleaseWithoutApi(repo, version, target);
+        if (probed)
+            return probed;
+    }
     const url = releaseUrl(repo, version);
     try {
         return await (0, release_readiness_js_1.retryReleaseRequest)(() => fetchJson(url, githubToken), {
@@ -53809,7 +53842,7 @@ async function ensureSoldr(opts) {
         }
     }
     log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
-    const release = await fetchRelease(repo, resolvedVersion, githubToken);
+    const release = await fetchRelease(repo, resolvedVersion, githubToken, target);
     const tagName = typeof release["tag_name"] === "string" ? release["tag_name"] : resolvedVersion;
     let asset = selectReleaseAsset(release, target);
     if (!asset) {
@@ -53890,6 +53923,8 @@ async function ensureSoldr(opts) {
     core.setOutput("installed_version", tagName);
 }
 exports._internal = {
+    fetchRelease,
+    probeReleaseWithoutApi,
     bundledReleasePayloadNames,
     bundledZccacheBinaryNames,
     bundledCargoChefVersionForSoldr,
