@@ -57763,6 +57763,7 @@ exports.dylintMarkerIdentityMatches = dylintMarkerIdentityMatches;
 exports.resolveJournalPrintRaw = resolveJournalPrintRaw;
 exports.applyCachePayloadOversizeAction = applyCachePayloadOversizeAction;
 exports.classifyCacheSaveReservation = classifyCacheSaveReservation;
+exports.computeJobNewCompiles = computeJobNewCompiles;
 exports.resolveZccacheSessionJournalPath = resolveZccacheSessionJournalPath;
 exports.buildFinalCacheSummary = buildFinalCacheSummary;
 exports.formatFinalCacheSummaryMarkdown = formatFinalCacheSummaryMarkdown;
@@ -58240,6 +58241,32 @@ function readZccacheSessionSummary(buildCachePath) {
             error: err instanceof Error ? err.message : String(err),
         };
     }
+}
+/**
+ * Job-wide new-compile count for the delta-aware save gates (#230/#214,
+ * fix for setup-soldr#543). A job with multiple cargo invocations
+ * (build+test, workspace splits, …) runs one zccache session per
+ * invocation; `shutdownCacheDaemons`'s `--archive-logs` files each
+ * session's stats under `<build-cache>/logs/archive/<session-id>/` as it
+ * ends, INCLUDING the final session. `readZccacheSessionSummary` only
+ * resolves a single most-recent-mtime file, so on a multi-session job it
+ * reported just the last invocation's misses — undercounting a large
+ * fresh compile that happened in an earlier step and making the gate
+ * skip a save it should have made (setup-soldr#543: a run that compiled
+ * ~130 crates was reported as "0 new compile(s)").
+ *
+ * Sums `misses` across every archived session for this job when any were
+ * archived, and falls back to the single most-recent session's misses
+ * only when the archive is empty (older soldr without `--archive-logs`
+ * support, or archiving unavailable) so single-invocation jobs keep
+ * working unchanged.
+ */
+function computeJobNewCompiles(buildCachePath) {
+    const archiveDir = path.join(buildCachePath, "logs", "archive");
+    const rollup = (0, compile_cache_stats_js_1.aggregateSessions)((0, compile_cache_stats_js_1.collectArchivedSessionStats)(archiveDir));
+    if (rollup.sessionCount > 0)
+        return rollup.totalMisses;
+    return numberStat(readZccacheSessionSummary(buildCachePath).stats, "misses") ?? null;
 }
 /**
  * Resolve a per-session zccache log file (e.g. `last-session-stats.json` or
@@ -58957,7 +58984,7 @@ async function run() {
     const buildSaveStart = Date.now();
     const buildCacheRestored = buildCacheMatched.trim().length > 0;
     const buildDeltaMisses = restoreState.buildCacheEnabled
-        ? numberStat(readZccacheSessionSummary(result.buildCache.path).stats, "misses") ?? null
+        ? computeJobNewCompiles(result.buildCache.path)
         : null;
     const buildSaveGate = (0, compile_cache_stats_js_1.decideBuildCacheSave)({
         restored: buildCacheRestored,
