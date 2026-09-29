@@ -113,6 +113,71 @@ function mkTmp(prefix: string): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }
 
+test("#543 computeJobNewCompiles sums misses across every archived session, not just the newest", async () => {
+  const mod = (await import("../src/post.js")) as {
+    computeJobNewCompiles: (buildCachePath: string) => number | null;
+  };
+  const root = mkTmp("job-new-compiles-");
+  try {
+    const cache = path.join(root, "zccache");
+    const archiveDir = path.join(cache, "logs", "archive");
+    // Reproduces setup-soldr#543 / zackees/template-python-rust-cmd run
+    // 36514690030: a job that ran multiple cargo invocations (e.g. build
+    // then test), each its own zccache session archived by
+    // `shutdownCacheDaemons`'s `--archive-logs`. The first session did a
+    // heavy, genuinely-new compile (130 misses); the LAST session (the one
+    // a single most-recent-mtime lookup would pick) compiled almost
+    // nothing (1 miss) because it reused what the first session just
+    // built. The job-wide new-compile count must be the sum, not the last
+    // session alone.
+    const session1 = path.join(archiveDir, "session-1");
+    fs.mkdirSync(session1, { recursive: true });
+    fs.writeFileSync(
+      path.join(session1, "last-session-stats.json"),
+      JSON.stringify({ status: "ok", session_id: "session-1", hits: 5, misses: 130 }),
+    );
+    // Second session written slightly later so a naive mtime-based
+    // "most recent session" pick lands here.
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const session2 = path.join(archiveDir, "session-2");
+    fs.mkdirSync(session2, { recursive: true });
+    fs.writeFileSync(
+      path.join(session2, "last-session-stats.json"),
+      JSON.stringify({ status: "ok", session_id: "session-2", hits: 40, misses: 1 }),
+    );
+
+    const total = mod.computeJobNewCompiles(cache);
+    // Before the fix this returned 1 (the last session's misses alone),
+    // which is `< build-cache-save-min-compiles=1`'s complement — actually
+    // NOT below the default threshold of 1, so assert the real regression
+    // shape: threshold 2 would wrongly skip on "1" but must not skip once
+    // the true 131-compile delta is counted.
+    assert.equal(total, 131, "must sum misses across all archived sessions for this job");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("#543 computeJobNewCompiles falls back to the single-session summary when no sessions were archived", async () => {
+  const mod = (await import("../src/post.js")) as {
+    computeJobNewCompiles: (buildCachePath: string) => number | null;
+  };
+  const root = mkTmp("job-new-compiles-fallback-");
+  try {
+    const cache = path.join(root, "zccache");
+    const logs = path.join(cache, "logs");
+    fs.mkdirSync(logs, { recursive: true });
+    fs.writeFileSync(
+      path.join(logs, "last-session-stats.json"),
+      JSON.stringify({ status: "ok", hits: 2, misses: 7 }),
+    );
+    // No logs/archive dir at all — older soldr, or archiving unavailable.
+    assert.equal(mod.computeJobNewCompiles(cache), 7);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("src/post.ts imports cleanly and exposes `run`", async () => {
   const mod = (await import("../src/post.js")) as { run?: () => Promise<void> };
   assert.equal(typeof mod.run, "function");
