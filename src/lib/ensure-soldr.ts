@@ -15,6 +15,7 @@ import * as fzstd from "fzstd";
 import { createLogger, streamExec } from "./log-utils.js";
 import { isSymbolsSidecar, pypiWheelHasTarget, retryReleaseRequest } from "./release-readiness.js";
 import type { ResolveResult } from "./types.js";
+import { githubApiUrl } from "./github-api.js";
 import { parseVersionJsonOutput } from "./verify-soldr.js";
 
 type ArchiveExt = "tar.zst" | "tar.gz" | "zip" | "whl";
@@ -134,9 +135,9 @@ async function fetchJson(url: string, githubToken: string): Promise<Record<strin
 function releaseUrl(repo: string, version: string): string {
   if (version) {
     const tag = version.startsWith("v") ? version : `v${version}`;
-    return `https://api.github.com/repos/${repo}/releases/tags/${tag}`;
+    return githubApiUrl(`repos/${repo}/releases/tags/${tag}`);
   }
-  return `https://api.github.com/repos/${repo}/releases/latest`;
+  return githubApiUrl(`repos/${repo}/releases/latest`);
 }
 
 /**
@@ -218,7 +219,7 @@ function bundledCargoChefVersionForSoldr(version: string): string | null {
 }
 
 async function resolveRefCommitSha(repo: string, ref: string, githubToken: string): Promise<string> {
-  const url = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`;
+  const url = githubApiUrl(`repos/${repo}/commits/${encodeURIComponent(ref)}`);
   const payload = await fetchJson(url, githubToken);
   const sha = payload["sha"];
   if (typeof sha !== "string" || !sha) {
@@ -808,7 +809,7 @@ async function buildFromSource(opts: {
     const archivePath = path.join(tmp, "source.zip");
     const sourceRoot = path.join(tmp, "source");
     log(`Downloading soldr source from ${repo}@${ref} (${commitSha})`);
-    const archiveUrl = `https://api.github.com/repos/${repo}/zipball/${commitSha}`;
+    const archiveUrl = githubApiUrl(`repos/${repo}/zipball/${commitSha}`);
     await downloadWithHeaders(archiveUrl, archivePath, requestHeaders(githubToken));
     fs.mkdirSync(sourceRoot, { recursive: true });
     await tc.extractZip(archivePath, sourceRoot);
@@ -1182,6 +1183,7 @@ export async function ensureSoldr(opts: {
 
 export const _internal = {
   fetchRelease,
+  resolveRefCommitSha,
   probeReleaseWithoutApi,
   bundledReleasePayloadNames,
   bundledZccacheBinaryNames,

@@ -7,6 +7,7 @@ import type { SystemRustupProbeDeps } from "./toolchain.js";
 import type { ToolchainSpec } from "./types.js";
 import type { DylintNightlyIdentity } from "./dylint-nightly.js";
 import { DEFAULT_SOLDR_VERSION } from "./default-soldr-version.js";
+import { githubApiUrl } from "./github-api.js";
 
 /**
  * Optional injectable dependencies for tests. Production code uses defaults.
@@ -71,7 +72,7 @@ export async function fetchReleaseTagDefault(
       // fall through to the REST API
     }
   }
-  const url = `https://api.github.com/repos/${repo}/releases/latest`;
+  const url = githubApiUrl(`repos/${repo}/releases/latest`, { ...process.env, ...env });
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
