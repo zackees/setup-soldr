@@ -6,6 +6,8 @@
 import type { SystemRustupProbeDeps } from "./toolchain.js";
 import type { ToolchainSpec } from "./types.js";
 import type { DylintNightlyIdentity } from "./dylint-nightly.js";
+import { DEFAULT_SOLDR_VERSION } from "./default-soldr-version.js";
+import { githubApiUrl } from "./github-api.js";
 
 /**
  * Optional injectable dependencies for tests. Production code uses defaults.
@@ -24,6 +26,34 @@ export interface ResolveSetupDeps {
   ) => Promise<DylintNightlyIdentity>;
 }
 
+/**
+ * Resolve a repo's latest release tag from the plain web redirect
+ * `https://github.com/<repo>/releases/latest` -> `.../releases/tag/<tag>`.
+ * That endpoint is not part of the REST API, so it does not consume the
+ * 60 req/hr anonymous `core` quota (local `act` runs have no token).
+ */
+export async function resolveLatestTagViaRedirect(repo: string): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const response = await fetch(`https://github.com/${repo}/releases/latest`, {
+      method: "HEAD",
+      redirect: "manual",
+      headers: { "User-Agent": "setup-soldr-action" },
+      signal: controller.signal,
+    });
+    const location = response.headers.get("location") ?? "";
+    const match = /\/releases\/tag\/([^/?#]+)\/?(?:[?#].*)?$/.exec(location);
+    const tag = match ? decodeURIComponent(match[1]!).trim() : "";
+    if (response.status < 300 || response.status >= 400 || !tag) {
+      throw new Error(`releases/latest redirect for ${repo} returned HTTP ${response.status} (location ${location || "none"})`);
+    }
+    return tag;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function fetchReleaseTagDefault(
   repo: string,
   version: string,
@@ -33,13 +63,21 @@ export async function fetchReleaseTagDefault(
     // For explicit (non-latest) versions, return as-is. Caller normalizes.
     return "";
   }
-  const url = `https://api.github.com/repos/${repo}/releases/latest`;
+  const token = (env["GITHUB_TOKEN"] ?? "").trim() || (env["INPUT_TOKEN"] ?? "").trim();
+  if (!token) {
+    // Anonymous: avoid the REST API quota; fall back to it only on failure.
+    try {
+      return await resolveLatestTagViaRedirect(repo);
+    } catch {
+      // fall through to the REST API
+    }
+  }
+  const url = githubApiUrl(`repos/${repo}/releases/latest`, { ...process.env, ...env });
   const headers: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
     "User-Agent": "setup-soldr-action",
   };
-  const token = (env["GITHUB_TOKEN"] ?? "").trim() || (env["INPUT_TOKEN"] ?? "").trim();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -75,8 +113,12 @@ export async function resolveSoldrReleaseVersion(
   if (ref.trim()) {
     return "";
   }
-  const requested = version.trim();
-  if (requested && requested.toLowerCase() !== "latest") {
+  let requested = version.trim();
+  if (!requested || requested.toLowerCase() === "default") {
+    // Vendor-locked default: no network lookup at all.
+    requested = DEFAULT_SOLDR_VERSION;
+  }
+  if (requested.toLowerCase() !== "latest") {
     return requested.startsWith("v") ? requested : `v${requested}`;
   }
   const fetcher = deps?.fetchReleaseTag ?? fetchReleaseTagDefault;

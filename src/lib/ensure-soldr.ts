@@ -15,6 +15,7 @@ import * as fzstd from "fzstd";
 import { createLogger, streamExec } from "./log-utils.js";
 import { isSymbolsSidecar, pypiWheelHasTarget, retryReleaseRequest } from "./release-readiness.js";
 import type { ResolveResult } from "./types.js";
+import { githubApiUrl } from "./github-api.js";
 import { parseVersionJsonOutput } from "./verify-soldr.js";
 
 type ArchiveExt = "tar.zst" | "tar.gz" | "zip" | "whl";
@@ -134,12 +135,52 @@ async function fetchJson(url: string, githubToken: string): Promise<Record<strin
 function releaseUrl(repo: string, version: string): string {
   if (version) {
     const tag = version.startsWith("v") ? version : `v${version}`;
-    return `https://api.github.com/repos/${repo}/releases/tags/${tag}`;
+    return githubApiUrl(`repos/${repo}/releases/tags/${tag}`);
   }
-  return `https://api.github.com/repos/${repo}/releases/latest`;
+  return githubApiUrl(`repos/${repo}/releases/latest`);
 }
 
-async function fetchRelease(repo: string, version: string, githubToken: string): Promise<Record<string, unknown>> {
+/**
+ * Build a release payload for an exact tag without the REST API by probing
+ * the conventional asset names on the plain `releases/download` URL (not
+ * counted against the anonymous API quota). Returns null when no candidate
+ * exists so the caller can fall back to the REST API.
+ */
+async function probeReleaseWithoutApi(
+  repo: string,
+  version: string,
+  target: string,
+): Promise<Record<string, unknown> | null> {
+  if (!version || !target) return null;
+  const tag = version.startsWith("v") ? version : `v${version}`;
+  for (const ext of ["tar.zst", "tar.gz", "zip"]) {
+    const name = `soldr-${tag}-${target}.${ext}`;
+    const url = `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${name}`;
+    try {
+      const response = await fetch(url, {
+        method: "HEAD",
+        headers: { "User-Agent": "setup-soldr-action" },
+      });
+      if (response.ok) {
+        return { tag_name: tag, assets: [{ name, browser_download_url: url }] };
+      }
+    } catch {
+      // try the next candidate / fall back to the API
+    }
+  }
+  return null;
+}
+
+async function fetchRelease(
+  repo: string,
+  version: string,
+  githubToken: string,
+  target = "",
+): Promise<Record<string, unknown>> {
+  if (!githubToken.trim()) {
+    const probed = await probeReleaseWithoutApi(repo, version, target);
+    if (probed) return probed;
+  }
   const url = releaseUrl(repo, version);
   try {
     return await retryReleaseRequest(() => fetchJson(url, githubToken), {
@@ -178,7 +219,7 @@ function bundledCargoChefVersionForSoldr(version: string): string | null {
 }
 
 async function resolveRefCommitSha(repo: string, ref: string, githubToken: string): Promise<string> {
-  const url = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`;
+  const url = githubApiUrl(`repos/${repo}/commits/${encodeURIComponent(ref)}`);
   const payload = await fetchJson(url, githubToken);
   const sha = payload["sha"];
   if (typeof sha !== "string" || !sha) {
@@ -768,7 +809,7 @@ async function buildFromSource(opts: {
     const archivePath = path.join(tmp, "source.zip");
     const sourceRoot = path.join(tmp, "source");
     log(`Downloading soldr source from ${repo}@${ref} (${commitSha})`);
-    const archiveUrl = `https://api.github.com/repos/${repo}/zipball/${commitSha}`;
+    const archiveUrl = githubApiUrl(`repos/${repo}/zipball/${commitSha}`);
     await downloadWithHeaders(archiveUrl, archivePath, requestHeaders(githubToken));
     fs.mkdirSync(sourceRoot, { recursive: true });
     await tc.extractZip(archivePath, sourceRoot);
@@ -1055,7 +1096,7 @@ export async function ensureSoldr(opts: {
   }
 
   log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
-  const release = await fetchRelease(repo, resolvedVersion, githubToken);
+  const release = await fetchRelease(repo, resolvedVersion, githubToken, target);
   const tagName = typeof release["tag_name"] === "string" ? (release["tag_name"] as string) : resolvedVersion;
   let asset = selectReleaseAsset(release, target);
   if (!asset) {
@@ -1141,6 +1182,9 @@ export async function ensureSoldr(opts: {
 }
 
 export const _internal = {
+  fetchRelease,
+  resolveRefCommitSha,
+  probeReleaseWithoutApi,
   bundledReleasePayloadNames,
   bundledZccacheBinaryNames,
   bundledCargoChefVersionForSoldr,

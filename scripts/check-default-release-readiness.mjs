@@ -42,9 +42,10 @@ if (!requestedVersion) throw new Error("could not read inputs.version default fr
 const headers = { Accept: "application/vnd.github+json", "User-Agent": "setup-soldr-release-readiness" };
 const token = process.env.GITHUB_TOKEN?.trim();
 if (token) headers.Authorization = `Bearer ${token}`;
+const apiBase = (process.env.GITHUB_API_URL?.trim() || "https://api.github.com").replace(/\/+$/, "");
 const releaseEndpoint = requestedVersion.toLowerCase() === "latest"
-  ? "https://api.github.com/repos/zackees/soldr/releases/latest"
-  : `https://api.github.com/repos/zackees/soldr/releases/tags/${requestedVersion.startsWith("v") ? requestedVersion : `v${requestedVersion}`}`;
+  ? `${apiBase}/repos/zackees/soldr/releases/latest`
+  : `${apiBase}/repos/zackees/soldr/releases/tags/${requestedVersion.startsWith("v") ? requestedVersion : `v${requestedVersion}`}`;
 const response = await fetch(releaseEndpoint, { headers });
 if (!response.ok) throw new Error(`default release ${requestedVersion} returned HTTP ${response.status}`);
 const release = await response.json();

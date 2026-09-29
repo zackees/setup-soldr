@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Vendor-lock the default soldr: an omitted `version` now installs the release
+  baked into `DEFAULT_SOLDR_VERSION` (`0.9.25`) with no version lookup;
+  `ingest-soldr-release.yml` opens the bump PR on each soldr release. Explicit
+  `version: latest` still floats. Anonymous runs resolve `latest` via the
+  `releases/latest` web redirect and exact assets via `releases/download`,
+  falling back to the REST API only on failure (authenticated runs unchanged).
+
 - Fix `dylint-output-cache` being keyed to the source commit (#540, fixes
   ci.yml#1), so every new commit was an exact-key miss even when the
   toolchain, lint libraries, Cargo.lock and target/flags shape were all

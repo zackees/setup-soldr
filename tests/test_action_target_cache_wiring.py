@@ -182,7 +182,7 @@ EXPECTED_OUTPUTS = {
     "compile-cache-verification",
 }
 
-EXPECTED_SOLDR_DEFAULT_VERSION = "latest"
+EXPECTED_SOLDR_DEFAULT_VERSION = "0.9.25"
 
 
 def _load_action() -> dict:
@@ -205,11 +205,12 @@ def test_action_preserves_all_original_inputs() -> None:
     assert "release-cache" not in manifest["inputs"]
 
 
-def test_action_default_soldr_version_is_rolling_latest() -> None:
+def test_action_default_soldr_version_is_vendor_locked() -> None:
     manifest = _load_action()
     version_input = manifest["inputs"]["version"]
     assert version_input["default"] == EXPECTED_SOLDR_DEFAULT_VERSION
-    assert EXPECTED_SOLDR_DEFAULT_VERSION in version_input["description"]
+    assert "vendor-locked" in version_input["description"]
+    assert "latest" in version_input["description"]
 
 
 def test_action_preserves_all_original_outputs() -> None:

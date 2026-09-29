@@ -52922,6 +52922,7 @@ const tc = __importStar(__nccwpck_require__(33472));
 const fzstd = __importStar(__nccwpck_require__(27437));
 const log_utils_js_1 = __nccwpck_require__(28129);
 const release_readiness_js_1 = __nccwpck_require__(4375);
+const github_api_js_1 = __nccwpck_require__(33757);
 const verify_soldr_js_1 = __nccwpck_require__(82947);
 const CARGO_CHEF_VERSION_BY_SOLDR = {
     "0.9.0": "0.1.73",
@@ -53018,11 +53019,44 @@ async function fetchJson(url, githubToken) {
 function releaseUrl(repo, version) {
     if (version) {
         const tag = version.startsWith("v") ? version : `v${version}`;
-        return `https://api.github.com/repos/${repo}/releases/tags/${tag}`;
+        return (0, github_api_js_1.githubApiUrl)(`repos/${repo}/releases/tags/${tag}`);
     }
-    return `https://api.github.com/repos/${repo}/releases/latest`;
+    return (0, github_api_js_1.githubApiUrl)(`repos/${repo}/releases/latest`);
 }
-async function fetchRelease(repo, version, githubToken) {
+/**
+ * Build a release payload for an exact tag without the REST API by probing
+ * the conventional asset names on the plain `releases/download` URL (not
+ * counted against the anonymous API quota). Returns null when no candidate
+ * exists so the caller can fall back to the REST API.
+ */
+async function probeReleaseWithoutApi(repo, version, target) {
+    if (!version || !target)
+        return null;
+    const tag = version.startsWith("v") ? version : `v${version}`;
+    for (const ext of ["tar.zst", "tar.gz", "zip"]) {
+        const name = `soldr-${tag}-${target}.${ext}`;
+        const url = `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}/${name}`;
+        try {
+            const response = await fetch(url, {
+                method: "HEAD",
+                headers: { "User-Agent": "setup-soldr-action" },
+            });
+            if (response.ok) {
+                return { tag_name: tag, assets: [{ name, browser_download_url: url }] };
+            }
+        }
+        catch {
+            // try the next candidate / fall back to the API
+        }
+    }
+    return null;
+}
+async function fetchRelease(repo, version, githubToken, target = "") {
+    if (!githubToken.trim()) {
+        const probed = await probeReleaseWithoutApi(repo, version, target);
+        if (probed)
+            return probed;
+    }
     const url = releaseUrl(repo, version);
     try {
         return await (0, release_readiness_js_1.retryReleaseRequest)(() => fetchJson(url, githubToken), {
@@ -53058,7 +53092,7 @@ function bundledCargoChefVersionForSoldr(version) {
     return CARGO_CHEF_VERSION_BY_SOLDR[normalizeVersion(version)] ?? null;
 }
 async function resolveRefCommitSha(repo, ref, githubToken) {
-    const url = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`;
+    const url = (0, github_api_js_1.githubApiUrl)(`repos/${repo}/commits/${encodeURIComponent(ref)}`);
     const payload = await fetchJson(url, githubToken);
     const sha = payload["sha"];
     if (typeof sha !== "string" || !sha) {
@@ -53566,7 +53600,7 @@ async function buildFromSource(opts) {
         const archivePath = path.join(tmp, "source.zip");
         const sourceRoot = path.join(tmp, "source");
         log(`Downloading soldr source from ${repo}@${ref} (${commitSha})`);
-        const archiveUrl = `https://api.github.com/repos/${repo}/zipball/${commitSha}`;
+        const archiveUrl = (0, github_api_js_1.githubApiUrl)(`repos/${repo}/zipball/${commitSha}`);
         await downloadWithHeaders(archiveUrl, archivePath, requestHeaders(githubToken));
         fs.mkdirSync(sourceRoot, { recursive: true });
         await tc.extractZip(archivePath, sourceRoot);
@@ -53809,7 +53843,7 @@ async function ensureSoldr(opts) {
         }
     }
     log(`Resolving soldr release ${resolvedVersion || "(latest)"} from ${repo}`);
-    const release = await fetchRelease(repo, resolvedVersion, githubToken);
+    const release = await fetchRelease(repo, resolvedVersion, githubToken, target);
     const tagName = typeof release["tag_name"] === "string" ? release["tag_name"] : resolvedVersion;
     let asset = selectReleaseAsset(release, target);
     if (!asset) {
@@ -53890,6 +53924,9 @@ async function ensureSoldr(opts) {
     core.setOutput("installed_version", tagName);
 }
 exports._internal = {
+    fetchRelease,
+    resolveRefCommitSha,
+    probeReleaseWithoutApi,
     bundledReleasePayloadNames,
     bundledZccacheBinaryNames,
     bundledCargoChefVersionForSoldr,
@@ -53912,6 +53949,25 @@ exports._internal = {
     verifyDownloadedAsset,
     versionAtLeast,
 };
+
+
+/***/ }),
+
+/***/ 33757:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.githubApiUrl = githubApiUrl;
+// Base URL for GitHub REST calls. Honors GITHUB_API_URL (set by GitHub
+// Actions, GHES, act, and bosn's read-only API proxy, which may carry a path
+// prefix such as http://127.0.0.1:<port>/<secret-path>). The path is joined
+// onto the base rather than assuming the base is a bare origin.
+function githubApiUrl(apiPath, env = process.env) {
+    const base = ((env["GITHUB_API_URL"] ?? "").trim() || "https://api.github.com").replace(/\/+$/, "");
+    return `${base}/${apiPath.replace(/^\/+/, "")}`;
+}
 
 
 /***/ }),
