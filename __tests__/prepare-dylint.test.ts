@@ -22,6 +22,49 @@ test("disabled Dylint mode performs no preparation", async () => {
   assert.deepEqual(paths, []);
 });
 
+test("declared dylint-targets each get their own soldr dylint prepare --target call before tool materialization", async () => {
+  const calls: string[][] = [];
+  await prepareDylint({
+    enabled: true,
+    soldrPath: "/tools/soldr",
+    soldrRoot: "/cache/soldr",
+    workspace: "/workspace",
+    cargoDylintVersion: "6.0.3",
+    dylintLinkVersion: "6.0.3",
+    crossTargets: ["x86_64-pc-windows-msvc", "aarch64-apple-darwin"],
+    execCommand: async (command, args) => {
+      calls.push(args);
+      return 0;
+    },
+    exists: () => true,
+    addPath: () => undefined,
+  });
+
+  assert.deepEqual(calls, [
+    ["dylint", "prepare"],
+    ["dylint", "prepare", "--target", "x86_64-pc-windows-msvc"],
+    ["dylint", "prepare", "--target", "aarch64-apple-darwin"],
+  ]);
+});
+
+test("a failing cross-target prepare throws with the target name and does not fall through to tool checks", async () => {
+  await assert.rejects(
+    prepareDylint({
+      enabled: true,
+      soldrPath: "/tools/soldr",
+      soldrRoot: "/cache/soldr",
+      workspace: "/workspace",
+      cargoDylintVersion: "6.0.3",
+      dylintLinkVersion: "6.0.3",
+      crossTargets: ["x86_64-pc-windows-msvc"],
+      execCommand: async (_command, args) => (args.includes("--target") ? 1 : 0),
+      exists: () => true,
+      addPath: () => undefined,
+    }),
+    /soldr dylint prepare --target x86_64-pc-windows-msvc failed/,
+  );
+});
+
 test("Dylint mode delegates preparation to Soldr and exports managed tool directories", async () => {
   const added: string[] = [];
   let invocation:

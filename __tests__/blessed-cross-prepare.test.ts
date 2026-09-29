@@ -10,7 +10,21 @@ import {
   decideBlessedPrepareCacheUse,
   assertMinimumSoldrVersion,
   validateBlessedPrepareRestore,
+  parseDylintTargets,
 } from "../src/lib/blessed-cross-prepare.js";
+
+test("dylint-targets accepts a matrix of canonical triples, deduped and sorted", () => {
+  assert.deepEqual(
+    parseDylintTargets(" x86_64-pc-windows-msvc, aarch64-apple-darwin ,x86_64-pc-windows-msvc"),
+    ["aarch64-apple-darwin", "x86_64-pc-windows-msvc"],
+  );
+  assert.deepEqual(parseDylintTargets(""), []);
+});
+
+test("dylint-targets rejects aliases the same way cross-targets does", () => {
+  assert.throws(() => parseDylintTargets("macos-arm"), /canonical Rust target triple.*aliases.*not accepted/);
+  assert.throws(() => parseDylintTargets("all"), /canonical Rust target triple.*aliases.*not accepted/);
+});
 
 test("one canonical target is normalized and merged before cache planning", () => {
   const target = parseSingleCrossTarget(" X86_64-PC-WINDOWS-GNU ");

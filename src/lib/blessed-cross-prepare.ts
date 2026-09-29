@@ -52,6 +52,25 @@ export function parseSingleCrossTarget(raw: string): string | null {
   return target;
 }
 
+/**
+ * Dylint's `dylint-targets` input, unlike `cross-targets`, legitimately wants
+ * a matrix: one Dylint job type-checks the workspace against several target
+ * triples in a single pass (ci.yml#9). Validate and normalize the whole set;
+ * caller folds it into the Dylint cache identity so each declared target set
+ * gets its own cache generation.
+ */
+export function parseDylintTargets(raw: string): string[] {
+  const values = [...new Set(raw.split(/[\s,]+/).map((v) => v.trim().toLowerCase()).filter(Boolean))].sort();
+  for (const target of values) {
+    if (target === "all" || !TRIPLE.test(target) || target.split("-").length < 3) {
+      throw new Error(
+        `dylint-targets requires canonical Rust target triples (for example x86_64-pc-windows-msvc); aliases such as '${target}' are not accepted`,
+      );
+    }
+  }
+  return values;
+}
+
 export function prepareTargetsFor(crossTarget: string | null): string[] {
   return crossTarget === "universal2-apple-darwin"
     ? ["x86_64-apple-darwin", "aarch64-apple-darwin"]

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- New `dylint-targets` input (ci.yml#9): comma/whitespace-separated canonical
+  Rust target triples for cross-platform Dylint check-only passes, in
+  addition to the host, with no per-repository cache plumbing. `soldr dylint
+  prepare --target <t>` now runs for every declared target ahead of the
+  check pass, and the resolved target set (host + declared targets) is
+  folded into the Dylint foundation and output cache-key hashes, so a
+  target-set change gets its own cache generation (`foundation-v3`) instead
+  of colliding with a host-only or differently-shaped run. New
+  `dylint-targets` output reports the resolved set.
+
 - Vendor-lock the default soldr: an omitted `version` now installs the release
   baked into `DEFAULT_SOLDR_VERSION` (`0.9.25`) with no version lookup;
   `ingest-soldr-release.yml` opens the bump PR on each soldr release. Explicit

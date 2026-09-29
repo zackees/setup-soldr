@@ -515,6 +515,18 @@ inputs:
       Included in the Dylint cache key.
     required: false
     default: ""
+  dylint-targets:
+    description: >
+      Comma- or whitespace-separated canonical Rust target triples (for
+      example x86_64-pc-windows-msvc, aarch64-apple-darwin) for cross-platform
+      Dylint check-only passes, in addition to the host. When set, setup-soldr
+      prepares rust-std for every listed target alongside the host and folds
+      the full target set into the Dylint foundation/output cache identity, so
+      each declared target set gets its own warm cache generation (ci.yml#9).
+      Empty runs Dylint on the host target only. Aliases are rejected the same
+      way cross-targets rejects them.
+    required: false
+    default: ""
   dylint-driver-rev:
     description: >
       Git revision or version identity for the compatible Dylint driver source.
@@ -958,6 +970,12 @@ outputs:
     description: Full mapped compiler commit for the selected Dylint nightly.
   dylint-cache-identity:
     description: Nightly channel, compiler release, and full commit cache identity.
+  dylint-targets:
+    description: >
+      Comma-separated resolved target set (host + declared dylint-targets,
+      deduped and sorted) folded into the Dylint foundation/output cache
+      identity. Compare across runs to confirm a target-set change produced a
+      new cache generation instead of colliding with an unrelated one.
   dylint-output-cache-hit:
     description: Whether the isolated Dylint project-output cache restored an exact key.
   dylint-output-cache-key:
