@@ -250,6 +250,15 @@ export interface DylintCachePlan {
   enabled: boolean;
   outputCacheEnabled: boolean;
   outputKey: string;
+  /**
+   * setup-soldr#540 / ci.yml#1: `actions/cache` restore-keys fallback for
+   * `outputKey`, dropping ONLY the Cargo.lock component so a dependency
+   * bump still restores the newest prior generation (same toolchain +
+   * lint-library identity) instead of cooking fully cold. Never crosses a
+   * toolchain or workspace/lint-library manifest change. Empty when the
+   * output cache is disabled.
+   */
+  outputRestoreKeys: string[];
   outputPaths: string[];
   key: string;
   paths: string[];
