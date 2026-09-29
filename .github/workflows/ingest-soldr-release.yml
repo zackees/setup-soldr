@@ -75,7 +75,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "${branch}"
-          git add -A src/lib/default-soldr-version.ts action.yml dist
+          git add -A src/lib/default-soldr-version.ts action.yml README.md tests/test_action_target_cache_wiring.py dist
           git commit -m "chore: default soldr ${VERSION}"
           git push origin "${branch}"
           gh pr create --base main --head "${branch}" \

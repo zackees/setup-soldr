@@ -1,6 +1,8 @@
 // Bump the vendor-locked default soldr release in lockstep:
 //   src/lib/default-soldr-version.ts  (DEFAULT_SOLDR_VERSION, compiled into dist/)
 //   action.yml                        (inputs.version.default)
+//   README.md                         ("The default Soldr version is `X`.")
+//   tests/test_action_target_cache_wiring.py (EXPECTED_SOLDR_DEFAULT_VERSION)
 // Usage: node scripts/bump-default-soldr.mjs 0.9.26
 // Prints "unchanged" or "bumped <old> -> <new>". Rebuild dist/ afterwards.
 import { readFileSync, writeFileSync } from "node:fs";
@@ -33,4 +35,15 @@ const action = readFileSync(actionPath, "utf8");
 const defaultRe = /(^  version:\r?\n[\s\S]*?^    default:\s*)["']?[^"'\r\n]+["']?([ \t]*)$/m;
 if (!defaultRe.test(action)) throw new Error("inputs.version.default not found in action.yml");
 writeFileSync(actionPath, action.replace(defaultRe, `$1"${next}"$2`));
+const replaceIn = (file, re, replacement) => {
+  const text = readFileSync(file, "utf8");
+  if (!re.test(text)) throw new Error(`pattern ${re} not found in ${file}`);
+  writeFileSync(file, text.replace(re, replacement));
+};
+replaceIn("README.md", /The default Soldr version is `[^`]+`\./, `The default Soldr version is \`${next}\`.`);
+replaceIn(
+  "tests/test_action_target_cache_wiring.py",
+  /EXPECTED_SOLDR_DEFAULT_VERSION = "[^"]+"/,
+  `EXPECTED_SOLDR_DEFAULT_VERSION = "${next}"`,
+);
 console.log(`bumped ${current} -> ${next}`);

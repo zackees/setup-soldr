@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
@@ -35,7 +36,7 @@ def test_cross_target_action_description_has_only_blessed_contract() -> None:
 def test_readme_recommends_only_target_driven_cross_compilation() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
 
-    assert "The default Soldr version is `latest`." in readme
+    assert re.search(r"The default Soldr version is `\d+\.\d+\.\d+`\.", readme)
     assert "### Legacy cross-compile auto-bootstrap" not in readme
     assert "soldr cargo zigbuild" not in readme
     assert "cross-tool:" not in readme
@@ -50,7 +51,9 @@ def test_default_soldr_version_is_one_public_constant() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
     contract = CONTRACT_PATH.read_text(encoding="utf-8")
 
-    assert version == "latest"
+    assert re.fullmatch(r"\d+\.\d+\.\d+", version)
+    baked = (ACTION_PATH.parent / "src" / "lib" / "default-soldr-version.ts").read_text(encoding="utf-8")
+    assert f'export const DEFAULT_SOLDR_VERSION = "{version}";' in baked
     assert f"The default Soldr version is `{version}`." in readme
     assert f'EXPECTED_SOLDR_DEFAULT_VERSION = "{version}"' in contract
 
