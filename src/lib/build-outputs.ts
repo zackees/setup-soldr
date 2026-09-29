@@ -54,6 +54,7 @@ export function buildOutputs(result: ResolveResult): Record<string, string> {
     "dylint-rustc-release": result.dylintCache.rustcRelease,
     "dylint-rustc-commit-hash": result.dylintCache.rustcCommitHash,
     "dylint-cache-identity": result.dylintCache.cacheIdentity,
+    "dylint-targets": result.dylintCache.allTargets.join(","),
     "dylint-output-cache-key": result.dylintCache.outputKey,
     "dylint-output-cache-paths": result.dylintCache.outputPaths.join("\n"),
     "shims-dir": result.shimsDir,

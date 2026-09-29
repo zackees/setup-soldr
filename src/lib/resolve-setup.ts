@@ -30,7 +30,7 @@ import {
   targetEnvHash,
   workspaceManifestHash,
 } from "./cache-keys.js";
-import { parseSingleCrossTarget, mergeToolchainTargets, planBlessedPrepareCache } from "./blessed-cross-prepare.js";
+import { parseSingleCrossTarget, mergeToolchainTargets, planBlessedPrepareCache, parseDylintTargets } from "./blessed-cross-prepare.js";
 import { createLogger } from "./log-utils.js";
 import { parseEncryptionKey } from "./cache-encrypt.js";
 import { resolveDylintNightly } from "./dylint-nightly.js";
@@ -1115,7 +1115,13 @@ export async function resolveSetup(
   const dylintRustcCommitHash = nightlyIdentity?.rustcCommitHash || "unmapped";
   const dylintCacheIdentity = `${dylintToolchain}|${dylintRustcRelease}|${dylintRustcCommitHash}`;
   const dylintRequiredComponents = ["rustc-dev", "rust-src", "llvm-tools-preview"];
-  const dylintFoundationRevision = "foundation-v2";
+  // ci.yml#9: cross-platform Dylint targets, in addition to the host. Folded
+  // into the foundation/output cache identity below so each declared target
+  // set gets its own generation instead of colliding with host-only runs or
+  // with a different target combination.
+  const dylintCrossTargets = dylintModeEnabled ? parseDylintTargets(inputs.dylintTargets) : [];
+  const dylintAllTargets = [...new Set([dylintHostTriple, ...dylintCrossTargets])].sort();
+  const dylintFoundationRevision = dylintCrossTargets.length > 0 ? "foundation-v3" : "foundation-v2";
   const dylintRunScope =
     [
       env["GITHUB_RUN_ID"],
@@ -1132,6 +1138,7 @@ export async function resolveSetup(
       identity: dylintCacheIdentity,
       components: dylintRequiredComponents,
       revision: dylintFoundationRevision,
+      targets: dylintAllTargets,
       runScope: dylintRunScope,
     }),
     "success.txt",
@@ -1170,6 +1177,7 @@ export async function resolveSetup(
         dylint_driver_rev: dylintDriverRev,
         required_components: dylintRequiredComponents,
         foundation_revision: dylintFoundationRevision,
+        dylint_targets: dylintAllTargets,
       })
     : shortJsonHash({
         host_triple: dylintHostTriple,
@@ -1244,6 +1252,7 @@ export async function resolveSetup(
     manifests: wsManifestHash,
     target_shape: targetShapeHash,
     cache_suffix: sanitizedSuffix,
+    dylint_targets: dylintAllTargets,
   };
   const dylintOutputNonLockHash = shortJsonHash(dylintOutputNonLockInputs);
   const dylintOutputKeyPrefix = `setup-soldr-dylint-output-v2-${runnerOs}-${runnerArch}-${dylintOutputNonLockHash}`;
@@ -1637,6 +1646,8 @@ export async function resolveSetup(
     driverRev: dylintCacheEnabled ? dylintDriverRev : "",
     cargoDylintVersion: dylintModeEnabled || dylintCacheEnabled ? cargoDylintVersion : "",
     dylintLinkVersion: dylintModeEnabled || dylintCacheEnabled ? dylintLinkVersion : "",
+    crossTargets: dylintModeEnabled ? dylintCrossTargets : [],
+    allTargets: dylintModeEnabled ? dylintAllTargets : [],
   };
 
   const blessedPrepareCache = planBlessedPrepareCache({

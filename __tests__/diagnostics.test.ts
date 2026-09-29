@@ -84,6 +84,7 @@ function fixtureRawInputs(): RawInputs {
     cargoDylintVersion: "",
     dylintLinkVersion: "",
     dylintCachePaths: "",
+    dylintTargets: "",
     journalPrintRaw: "",
     crossTargets: "",
     verifyCompileCache: "off",

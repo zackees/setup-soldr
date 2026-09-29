@@ -137,6 +137,7 @@ export interface RawInputs {
   cargoDylintVersion: string;
   dylintLinkVersion: string;
   dylintCachePaths: string;
+  dylintTargets: string;
   journalPrintRaw: string;
   crossTargets: string;
   verifyCompileCache: string;
@@ -272,6 +273,10 @@ export interface DylintCachePlan {
   driverRev: string;
   cargoDylintVersion: string;
   dylintLinkVersion: string;
+  /** ci.yml#9: additional cross targets prepared/checked alongside the host. */
+  crossTargets: string[];
+  /** hostTriple + crossTargets, deduped and sorted; drives the cache identity. */
+  allTargets: string[];
 }
 
 /**

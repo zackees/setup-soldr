@@ -80,6 +80,7 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     cargoDylintVersion: get("cargo-dylint-version"),
     dylintLinkVersion: get("dylint-link-version"),
     dylintCachePaths: get("dylint-cache-paths"),
+    dylintTargets: get("dylint-targets"),
     journalPrintRaw: get("journal-print-raw"),
     crossTargets: get("cross-targets"),
     verifyCompileCache: get("verify-compile-cache"),

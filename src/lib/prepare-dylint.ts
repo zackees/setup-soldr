@@ -15,6 +15,13 @@ export interface PrepareDylintOptions {
   workspace: string;
   cargoDylintVersion: string;
   dylintLinkVersion: string;
+  /**
+   * ci.yml#9: additional cross targets to prepare rust-std for, so a
+   * declared Dylint target set never falls back to a tier-2 (downloaded)
+   * sysroot on a warm run. The host target is always prepared and does not
+   * belong in this list.
+   */
+  crossTargets?: string[];
   execCommand?: ExecCommand;
   exists?: (candidate: string) => boolean;
   addPath?: (directory: string) => void;
@@ -54,6 +61,23 @@ export async function prepareDylint(options: PrepareDylintOptions): Promise<stri
   });
   if (code !== 0) {
     throw new Error(`soldr dylint prepare failed with exit code ${code}`);
+  }
+
+  for (const target of options.crossTargets ?? []) {
+    const crossCode = await run(options.soldrPath, ["dylint", "prepare", "--target", target], {
+      cwd: options.workspace,
+      env: {
+        ...processEnvironment(),
+        SOLDR_FORCE_MANAGED_CARGO_SUBCOMMANDS: "1",
+      },
+      ignoreReturnCode: true,
+    });
+    if (crossCode !== 0) {
+      throw new Error(
+        `soldr dylint prepare --target ${target} failed with exit code ${crossCode}; ` +
+          "declared dylint-targets must be installable rust-std components for the pinned Dylint nightly",
+      );
+    }
   }
 
   const tools = [

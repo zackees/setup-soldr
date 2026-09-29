@@ -1365,6 +1365,7 @@ export async function run(): Promise<void> {
     workspace: result.workspace,
     cargoDylintVersion: result.dylintCache.cargoDylintVersion,
     dylintLinkVersion: result.dylintCache.dylintLinkVersion,
+    crossTargets: result.dylintCache.crossTargets,
     addPath: (directory) => core.addPath(directory),
   });
   await finishPhase("dylint-prepare");
