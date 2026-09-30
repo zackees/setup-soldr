@@ -62,6 +62,8 @@ const CARGO_CHEF_VERSION_BY_SOLDR: Readonly<Record<string, string>> = {
   "0.9.23": "0.1.73",
   "0.9.24": "0.1.73",
   "0.9.25": "0.1.73",
+  "0.9.26": "0.1.73",
+  "0.9.27": "0.1.73",
 };
 
 interface TargetInfo {
