@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "label_aliases": {},
+  "minimal_jobs": [
+    "js-build",
+    "contract-tests",
+    "vendor-prose"
+  ],
+  "docs_jobs": [
+    "js-build",
+    "contract-tests",
+    "vendor-prose"
+  ],
+  "test_jobs": [
+    "release-readiness",
+    "action-install"
+  ],
+  "shared_policy_sha": "aa7cb6a7fc17c25eb4514611689df020eb86bda9",
+  "pin_status": "provisional-reviewed-merged"
+}
