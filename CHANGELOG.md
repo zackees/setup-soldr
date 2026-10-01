@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Ingest Soldr `0.9.27` (default `0.9.25` -> `0.9.27`, skipping `0.9.26`,
+  whose bot ingest PR was never opened): it embeds zccache `1.15.0`, whose
+  Unix cache blobs are sealed `r--rw-r--`, so a build after `soldr cook` can
+  rebuild a host build-dependency restored from the cache instead of failing
+  `output file ... is not writeable` (mimalloc-pprof#590, zccache#1791).
+  Extends the hash-verified PyPI wheel fallback and cargo-chef `0.1.73`
+  mapping through `0.9.27`.
+
 - New `dylint-targets` input (ci.yml#9): comma/whitespace-separated canonical
   Rust target triples for cross-platform Dylint check-only passes, in
   addition to the host, with no per-repository cache plumbing. `soldr dylint
