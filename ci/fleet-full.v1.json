@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "required_jobs": [
+    "wheel-fallback-smoke",
+    "dylint",
+    "release-smoke",
+    "cook-rematerialization",
+    "cook-consumers",
+    "cook-selftest",
+    "cross-prepare"
+  ],
+  "targets": [
+    {
+      "triple": "x86_64-unknown-linux-gnu",
+      "ci": {
+        "build_job": "wheel-fallback-smoke",
+        "run_job": "wheel-fallback-smoke"
+      }
+    },
+    {
+      "triple": "aarch64-unknown-linux-gnu",
+      "ci": {
+        "build_job": "wheel-fallback-smoke",
+        "run_job": "wheel-fallback-smoke"
+      }
+    },
+    {
+      "triple": "x86_64-apple-darwin",
+      "ci": {
+        "build_job": "wheel-fallback-smoke",
+        "run_job": "wheel-fallback-smoke"
+      }
+    },
+    {
+      "triple": "aarch64-pc-windows-msvc",
+      "ci": {
+        "build_job": "wheel-fallback-smoke",
+        "run_job": "wheel-fallback-smoke"
+      }
+    },
+    {
+      "triple": "aarch64-apple-darwin",
+      "ci": {
+        "build_job": "wheel-fallback-smoke",
+        "run_job": "wheel-fallback-smoke"
+      }
+    },
+    {
+      "triple": "x86_64-pc-windows-msvc",
+      "ci": {
+        "build_job": "wheel-fallback-smoke",
+        "run_job": "wheel-fallback-smoke"
+      }
+    },
+    {
+      "triple": "x86_64-unknown-linux-musl",
+      "ci": {
+        "build_job": "release-smoke",
+        "run_job": "release-smoke"
+      }
+    },
+    {
+      "triple": "aarch64-unknown-linux-musl",
+      "ci": {
+        "build_job": "cross-prepare"
+      },
+      "status": "blocked-required-native-execution",
+      "next_action": "Implement mandatory ARM musl fixture build and execution on ubuntu-24.04-arm; capability skip cannot satisfy this cell."
+    }
+  ],
+  "scope": "Supported action target variants. Full acceptance is intentionally blocked until required ARM musl execution is implemented; existing capability probe is insufficient."
+}
