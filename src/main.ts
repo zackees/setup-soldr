@@ -31,6 +31,11 @@ import { seedZccache } from "./lib/zccache-seed.js";
 import { detectCompressMagic, decompressCache } from "./lib/cache-compress.js";
 import { restoreCargoRegistryArchive } from "./lib/cargo-registry-archive.js";
 import { parseIsolatedSeedTargets, seedIsolatedBuildCache } from "./lib/seed-isolated-cache.js";
+import {
+  decideSyslibToolCache,
+  linkSyslibToolCache,
+  SYSLIB_STORE_ENV,
+} from "./lib/syslib-tool-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import {
   walkSnapshot,
@@ -826,6 +831,37 @@ export async function run(): Promise<void> {
     dylintOutputRestorePromise,
   ]);
   await finishPhase("parallel-restore");
+
+  // ---- syslib store in RUNNER_TOOL_CACHE (#553) ----
+  // After setup-cache restore (which may bring back a real bin/syslib dir,
+  // kept as-is) and before any soldr spawn that could install a syslib.
+  if (result.enabled) {
+    const syslibDecision = decideSyslibToolCache({
+      env: process.env,
+      platform: process.platform,
+      arch: process.arch,
+      crossPrepareTarget: result.blessedPrepareCache.target,
+    });
+    if (syslibDecision.enabled) {
+      try {
+        const linked = linkSyslibToolCache({
+          soldrBinDir: result.soldrBinCachePath,
+          store: syslibDecision.store,
+        });
+        if (linked.status !== "kept-existing-dir") {
+          core.exportVariable(SYSLIB_STORE_ENV, linked.store);
+        }
+        logger.log(
+          `syslib-tool-cache: ${linked.status} ${linked.syslibDir} -> ${linked.store} (${syslibDecision.reason})`,
+        );
+      } catch (err) {
+        // Best-effort: without the link soldr downloads into RUNNER_TEMP as before.
+        core.warning(`syslib-tool-cache: could not link ${syslibDecision.store}: ${(err as Error).message}`);
+      }
+    } else if (debugMode) {
+      debugLog(`[debug] syslib-tool-cache: off (${syslibDecision.reason})`);
+    }
+  }
 
   // ---- target-tree-cache (full mode) ----
   // The bundle path is included in target-cache restore paths above when full

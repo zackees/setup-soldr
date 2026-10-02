@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Keep Soldr's syslib/toolchain store in `RUNNER_TOOL_CACHE` on runners whose
+  tool cache outlives the job (#553). Under act (`ACT=true`, e.g. `bosn ci`)
+  and on self-hosted runners, `$SOLDR_CACHE_DIR/bin/syslib` becomes a link to
+  `$RUNNER_TOOL_CACHE/soldr-syslib/<platform>-<arch>`, so a warm run reuses the
+  zstd/sqlite/zlib-ng/lzma/bzip2/cmake/ninja/GCC installs instead of
+  re-downloading them on every `soldr prepare` (35-77 s on clud's
+  `build-linux-x64`). Soldr sha256-verifies each bundle before extracting it,
+  promotes installs atomically behind a `.complete` stamp, and locks
+  concurrent installs, so the shared store is safe. Off on GitHub-hosted
+  runners (setup-cache already carries `bin/syslib`), Windows, and
+  `cross-targets` lanes; `SETUP_SOLDR_SYSLIB_TOOL_CACHE=0|1` overrides.
+  The store path is exported as `SETUP_SOLDR_SYSLIB_STORE`.
+
 - Ingest Soldr `0.9.27` (default `0.9.25` -> `0.9.27`, skipping `0.9.26`,
   whose bot ingest PR was never opened): it embeds zccache `1.15.0`, whose
   Unix cache blobs are sealed `r--rw-r--`, so a build after `soldr cook` can
