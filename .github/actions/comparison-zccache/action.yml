@@ -7,7 +7,6 @@ inputs:
   cache-cargo-registry:
     description: >
       Cache cargo registry index, downloaded crate files, and git dependencies.
-      Replaces Swatinem/rust-cache registry caching.
     required: false
     default: "true"
   cache-compilation:

@@ -2,7 +2,7 @@
 title = "soldr rendered benchmarks"
 default_threshold_ratio = 10.0
 default_target = "x86_64-unknown-linux-gnu"
-base_competitor = "swatinem"
+base_competitor = "target-cache"
 soldr_note = "soldr uses managed zccache internally."
 
 [phase1]
@@ -77,9 +77,13 @@ label = "soldr"
 backend = "zccache"
 show = true
 
-[competitors.swatinem]
-label = "swatinem"
-backend = "swatinem"
+# The baseline: a key-based target/ + cargo-dir cache (the shape
+# actions/cache gives), simulated in-job by keeping target/ warm. Swatinem
+# is no longer a baseline: CACHE-025 bans it with no exceptions
+# (zackees/ci.yml, maintainer decision 2026-10-02).
+[competitors.target-cache]
+label = "target-cache"
+backend = "target-cache"
 show = true
 
 [[profiles]]

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The comparison benchmark no longer uses `Swatinem/rust-cache` anywhere
+  (CACHE-025 now has no exceptions, zackees/ci.yml maintainer decision
+  2026-10-02; reverts the #556 baseline carve-out). The baseline competitor
+  is renamed `swatinem` -> `target-cache` (a key-based `target/` + cargo-dir
+  cache, simulated in-job as before), the soldr-under-test build step runs
+  uncached, and the unused `swatinem` backend of `_comparison-build.yml` is
+  gone.
 - A job that failed or was cancelled no longer saves its build outputs
   (#559). The post step runs on failure (for the daemon shutdown) and saved
   the build-cache store regardless, so a failed build (disk full under
