@@ -48503,6 +48503,177 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 45701:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// setup-soldr#557: keep soldr's stamped tool bundles in RUNNER_TOOL_CACHE.
+//
+// soldr installs managed tool bundles as `$SOLDR_CACHE_DIR/bin/<name>/` with
+// a `.complete` stamp written last (LLVM `llvm-<v>`, zig, xwin, ...). The
+// LLVM one is fetched by the first `soldr cargo` call -- setup-soldr's own
+// verify step -- so under act every warm job spent 9-10 s re-fetching it.
+//
+// Unlike syslib (#553), soldr extracts these bundles in place with no lock,
+// so the store is never written through: the main step links stamped store
+// entries into `bin/`, and the post step publishes bundles this job
+// installed, copying each into a staging dir in the store and renaming it
+// into place. Readers only ever see whole entries.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.decideBundleToolCache = decideBundleToolCache;
+exports.adoptBundles = adoptBundles;
+exports.publishBundles = publishBundles;
+exports.adoptBundleToolCache = adoptBundleToolCache;
+exports.publishBundleToolCache = publishBundleToolCache;
+const fs = __importStar(__nccwpck_require__(73024));
+const path = __importStar(__nccwpck_require__(76760));
+const tool_cache_store_js_1 = __nccwpck_require__(30);
+/** syslib is a store of its own (#553), linked wholesale. */
+const NOT_A_BUNDLE = new Set(["syslib"]);
+function decideBundleToolCache(input) {
+    const decision = (0, tool_cache_store_js_1.decideToolCacheStore)({
+        env: input.env,
+        platform: input.platform,
+        // The cross-targets prepare archive carries `bin/` for that lane, and
+        // soldr's restore refuses to unpack through a link leaving its root.
+        layerOff: input.crossPrepareTarget.trim() ? "cross-targets prepare cache already persists this lane's bin" : "",
+    });
+    const store = decision.toolCache
+        ? (0, tool_cache_store_js_1.toolCacheStorePath)(decision.toolCache, "bundles", input.platform, input.arch)
+        : "";
+    return { ...decision, store };
+}
+function stampedEntries(dir) {
+    if (!fs.existsSync(dir))
+        return [];
+    return fs
+        .readdirSync(dir)
+        .filter((name) => !NOT_A_BUNDLE.has(name) && !name.includes(".tmp-"))
+        .filter((name) => (0, tool_cache_store_js_1.isStampedRealDir)(path.join(dir, name)))
+        .sort();
+}
+/**
+ * Link every stamped store entry into `soldrBinDir`, so soldr finds the
+ * install and skips its fetch. Links into the store whose target is gone
+ * (a pruned tool cache) are dropped, so soldr fetches afresh.
+ */
+function adoptBundles(input) {
+    const { soldrBinDir, store } = input;
+    const linked = [];
+    const kept = [];
+    const dropped = [];
+    fs.mkdirSync(soldrBinDir, { recursive: true });
+    for (const name of fs.readdirSync(soldrBinDir).sort()) {
+        const p = path.join(soldrBinDir, name);
+        if (!fs.lstatSync(p).isSymbolicLink())
+            continue;
+        const target = fs.readlinkSync(p);
+        if (path.dirname(target) === store && !fs.existsSync(target)) {
+            fs.unlinkSync(p);
+            dropped.push(name);
+        }
+    }
+    for (const name of stampedEntries(store)) {
+        const status = (0, tool_cache_store_js_1.linkDir)({ linkPath: path.join(soldrBinDir, name), target: path.join(store, name) });
+        if (status === "linked")
+            linked.push(name);
+        else if (status === "kept-existing-dir")
+            kept.push(name);
+    }
+    return { linked, kept, dropped };
+}
+/** Publish every stamped bundle this job installed (real dirs, not links). */
+function publishBundles(input) {
+    const published = [];
+    const present = [];
+    for (const name of stampedEntries(input.soldrBinDir)) {
+        const src = path.join(input.soldrBinDir, name);
+        const status = (0, tool_cache_store_js_1.publishEntry)({ dest: path.join(input.store, name), populate: (staging) => (0, tool_cache_store_js_1.copyTree)(src, staging) });
+        (status === "published" ? published : present).push(name);
+    }
+    return { published, present };
+}
+function decideForStep(input) {
+    return decideBundleToolCache({
+        env: input.env,
+        platform: process.platform,
+        arch: process.arch,
+        crossPrepareTarget: input.crossPrepareTarget,
+    });
+}
+/** Main step: link stored bundles into `bin/` before any soldr spawn. Best-effort. */
+function adoptBundleToolCache(input) {
+    const decision = decideForStep(input);
+    if (!decision.enabled) {
+        input.logger.debug(`bundle-tool-cache: off (${decision.reason})`);
+        return decision;
+    }
+    try {
+        const r = adoptBundles({ soldrBinDir: input.soldrBinDir, store: decision.store });
+        input.logger.log(`bundle-tool-cache: store=${decision.store} linked=[${r.linked.join(",")}] kept=[${r.kept.join(",")}] ` +
+            `dropped=[${r.dropped.join(",")}] (${decision.reason})`);
+    }
+    catch (err) {
+        // Without the links soldr fetches into RUNNER_TEMP as before.
+        input.logger.warn(`bundle-tool-cache: could not adopt ${decision.store}: ${err.message}`);
+    }
+    return decision;
+}
+/** Post step: publish the bundles this job installed. Best-effort. */
+function publishBundleToolCache(input) {
+    const decision = decideForStep(input);
+    if (!decision.enabled)
+        return;
+    const t0 = Date.now();
+    try {
+        const r = publishBundles({ soldrBinDir: input.soldrBinDir, store: decision.store });
+        if (r.published.length > 0 || r.present.length > 0) {
+            input.logger.log(`bundle-tool-cache: published=[${r.published.join(",")}] already-present=[${r.present.join(",")}] ` +
+                `in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+        }
+    }
+    catch (err) {
+        input.logger.warn(`bundle-tool-cache: could not publish to ${decision.store}: ${err.message}`);
+    }
+}
+
+
+/***/ }),
+
 /***/ 24978:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -57028,6 +57199,187 @@ exports.StatsCollector = StatsCollector;
 
 /***/ }),
 
+/***/ 30:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+// setup-soldr#553/#557: shared plumbing for the stores setup-soldr keeps in
+// RUNNER_TOOL_CACHE on runners whose tool cache outlives the job.
+//
+// Under act (`bosn ci`, which persists /opt/hostedtoolcache across runs) and
+// on self-hosted runners, RUNNER_TEMP is empty in every new job but the tool
+// cache is not. Each layer -- soldr's syslib store (#553), its stamped tool
+// bundles such as LLVM, and the managed Rust toolchain (#557) -- keeps its
+// content under `$RUNNER_TOOL_CACHE/soldr-<layer>/<platform>-<arch>` so a
+// warm run finds it instead of downloading it again.
+//
+// Off by default on GitHub-hosted runners (their tool cache dies with the VM
+// and setup-cache carries these paths there) and on Windows (a link would
+// need a junction, and soldr's Windows extractors special-case reparse
+// points, soldr#2300). `SETUP_SOLDR_TOOL_CACHE=0|1` overrides the runner
+// default for every layer.
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TOOL_CACHE_ENV = void 0;
+exports.decideToolCacheStore = decideToolCacheStore;
+exports.toolCacheStorePath = toolCacheStorePath;
+exports.linkDir = linkDir;
+exports.isStampedRealDir = isStampedRealDir;
+exports.copyTree = copyTree;
+exports.publishEntry = publishEntry;
+const node_child_process_1 = __nccwpck_require__(31421);
+const crypto = __importStar(__nccwpck_require__(77598));
+const fs = __importStar(__nccwpck_require__(73024));
+const path = __importStar(__nccwpck_require__(76760));
+exports.TOOL_CACHE_ENV = "SETUP_SOLDR_TOOL_CACHE";
+const TRUTHY = new Set(["1", "true", "yes", "on"]);
+const FALSY = new Set(["0", "false", "no", "off"]);
+/**
+ * Decide whether a layer may keep its store in RUNNER_TOOL_CACHE.
+ * `layerOff`, when non-empty, is the layer's own reason to stay off; it
+ * outranks a forcing override but not a disabling one.
+ */
+function decideToolCacheStore(input) {
+    const toolCache = (input.env["RUNNER_TOOL_CACHE"] ?? "").trim();
+    const off = (reason) => ({ enabled: false, toolCache, reason });
+    const on = (reason) => ({ enabled: true, toolCache, reason });
+    const override = (input.env[exports.TOOL_CACHE_ENV] ?? "").trim().toLowerCase();
+    if (FALSY.has(override))
+        return off(`${exports.TOOL_CACHE_ENV}=${override}`);
+    if (!toolCache)
+        return off("RUNNER_TOOL_CACHE is unset");
+    if (input.platform === "win32")
+        return off("not enabled on Windows");
+    const layerOff = (input.layerOff ?? "").trim();
+    if (layerOff)
+        return off(layerOff);
+    if (TRUTHY.has(override))
+        return on(`${exports.TOOL_CACHE_ENV}=${override}`);
+    if (TRUTHY.has((input.env["ACT"] ?? "").trim().toLowerCase())) {
+        return on("act runner (tool cache persists across runs)");
+    }
+    if ((input.env["RUNNER_ENVIRONMENT"] ?? "").trim() === "self-hosted") {
+        return on("self-hosted runner (tool cache persists across runs)");
+    }
+    return off("GitHub-hosted tool cache is per-VM; setup-cache carries this layer");
+}
+function toolCacheStorePath(toolCache, layer, platform, arch) {
+    return path.join(toolCache, `soldr-${layer}`, `${platform}-${arch}`);
+}
+function lstatOrNull(p) {
+    try {
+        return fs.lstatSync(p);
+    }
+    catch (err) {
+        if (err.code === "ENOENT")
+            return null;
+        throw err;
+    }
+}
+/**
+ * Make `linkPath` a symlink to `target`. A non-empty real directory (for
+ * example one setup-cache just restored) is left alone: it already holds the
+ * content, and replacing it would discard it. An empty directory, a file, or
+ * a link elsewhere is replaced.
+ */
+function linkDir(input) {
+    const { linkPath, target } = input;
+    fs.mkdirSync(target, { recursive: true });
+    fs.mkdirSync(path.dirname(linkPath), { recursive: true });
+    const existing = lstatOrNull(linkPath);
+    if (existing?.isSymbolicLink()) {
+        if (fs.readlinkSync(linkPath) === target)
+            return "already-linked";
+        fs.unlinkSync(linkPath);
+    }
+    else if (existing?.isDirectory()) {
+        if (fs.readdirSync(linkPath).length > 0)
+            return "kept-existing-dir";
+        fs.rmdirSync(linkPath);
+    }
+    else if (existing) {
+        fs.unlinkSync(linkPath);
+    }
+    fs.symlinkSync(target, linkPath, "dir");
+    return "linked";
+}
+/** True when `p` is a real directory (not a link) holding a `.complete` stamp. */
+function isStampedRealDir(p) {
+    const st = lstatOrNull(p);
+    return Boolean(st?.isDirectory()) && fs.existsSync(path.join(p, ".complete"));
+}
+/** Copy a tree, preserving hardlinks, symlinks, modes and times. */
+function copyTree(src, dest) {
+    // `cp -a` keeps hardlinks within the copied set; LLVM's `hardlinked/`
+    // tree is 579 MB linked against 1.8 GB as independent copies.
+    (0, node_child_process_1.execFileSync)("cp", ["-a", src, dest], { stdio: ["ignore", "ignore", "pipe"] });
+}
+/**
+ * Publish a store entry atomically: `populate` fills a staging directory
+ * beside `dest` (same filesystem), which is then renamed into place. The
+ * first publisher wins; a concurrent or later one discards its copy, so
+ * readers only ever see a complete entry.
+ */
+function publishEntry(input) {
+    const { dest } = input;
+    if (fs.existsSync(dest))
+        return "already-present";
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    const staging = `${dest}.tmp-${process.pid}-${crypto.randomBytes(4).toString("hex")}`;
+    try {
+        input.populate(staging);
+        try {
+            fs.renameSync(staging, dest);
+        }
+        catch (err) {
+            const code = err.code;
+            if ((code === "EEXIST" || code === "ENOTEMPTY") && fs.existsSync(dest))
+                return "already-present";
+            throw err;
+        }
+        return "published";
+    }
+    finally {
+        fs.rmSync(staging, { recursive: true, force: true });
+    }
+}
+
+
+/***/ }),
+
 /***/ 27190:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -57799,6 +58151,7 @@ const save_policy_js_1 = __nccwpck_require__(98097);
 const cache_eviction_js_1 = __nccwpck_require__(15795);
 const yank_audit_js_1 = __nccwpck_require__(23140);
 const source_mtime_snapshot_js_1 = __nccwpck_require__(38502);
+const bundle_tool_cache_js_1 = __nccwpck_require__(45701);
 function dirExists(p) {
     try {
         return fs.statSync(p).isDirectory();
@@ -58842,6 +59195,16 @@ async function run() {
     catch (err) {
         log(`post: failed to parse resolve state: ${err instanceof Error ? err.message : String(err)}`);
         return;
+    }
+    // #557: publish soldr tool bundles (LLVM, ...) this job installed to
+    // RUNNER_TOOL_CACHE, so the next run on this runner links them instead.
+    if (result.enabled) {
+        (0, bundle_tool_cache_js_1.publishBundleToolCache)({
+            env: process.env,
+            soldrBinDir: result.soldrBinCachePath,
+            crossPrepareTarget: result.blessedPrepareCache.target,
+            logger: { log, warn: (msg) => core.warning(msg), debug: () => undefined },
+        });
     }
     const buildCacheMatched = core.getState("buildCacheMatchedKey");
     const registryMatched = core.getState("cargoRegistryCacheMatchedKey");
