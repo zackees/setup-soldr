@@ -94,6 +94,8 @@ EXPECTED_INPUTS = {
     "verify-compile-cache",
     "seed-isolated-build-cache",
     "build-cache-save-min-compiles",
+    "job-status",
+    "save-on-failure",
     "target-cache-save-min-compiles",
 }
 

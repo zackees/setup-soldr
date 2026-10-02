@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- A job that failed or was cancelled no longer saves its build outputs
+  (#559). The post step runs on failure (for the daemon shutdown) and saved
+  the build-cache store regardless, so a failed build (disk full under
+  `bosn ci`, a compile error, a cancel) saved a partial store under the run's
+  key; the next run got an exact hit on it and, being an exact hit, never
+  re-saved it. build-cache and target-cache now skip the save, logged as
+  `failed-job-skip`, when the new `job-status` input (default
+  `${{ job.status }}`, re-evaluated by the runner for the post step) is
+  `failure` or `cancelled`. Toolchain, registry and tool layers still save.
+  `save-on-failure: true` restores the old behaviour.
+
 - Keep the managed Rust toolchain and Soldr's stamped tool bundles in
   `RUNNER_TOOL_CACHE` on act/self-hosted runners too (#557), the way #553
   keeps the syslib store:

@@ -143,6 +143,10 @@ export interface RawInputs {
   verifyCompileCache: string;
   seedIsolatedBuildCache: string;
   buildCacheSaveMinCompiles: string;
+  /** `${{ job.status }}` by default; re-evaluated for the post step (#559). */
+  jobStatus: string;
+  /** "true" saves build outputs even when the job failed (#559). */
+  saveOnFailure: string;
   targetCacheSaveMinCompiles: string;
 }
 

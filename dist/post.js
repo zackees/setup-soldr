@@ -54126,6 +54126,60 @@ exports._internal = {
 
 /***/ }),
 
+/***/ 48188:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// setup-soldr#559: a job that did not succeed does not save its build outputs.
+//
+// The post step runs on failure too (`post-if: always()`, for the daemon
+// shutdown). It used to save the build-cache store regardless, so a failed
+// build -- disk full under `bosn ci`, a compile error, a cancel -- saved a
+// partial store under the run's key. The next run got an exact hit on it and,
+// being an exact hit, never re-saved: the key stayed poisoned until it
+// changed. Like `actions/cache` (`post-if: success()`), a job that failed or
+// was cancelled now skips the build-output layers (build-cache and
+// target-cache). Toolchain and registry layers are unaffected: their content
+// is a verified install, not a half-finished build.
+//
+// The job status comes from the `job-status` input, whose default is
+// `${{ job.status }}`. The runner re-evaluates a step's inputs for its post
+// step, so the post step sees the job's status at the end of its steps. An
+// empty status (a caller blanking the input) keeps the old always-save
+// behaviour, as does `save-on-failure: true`.
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FAILED_JOB_SKIP_STATUS = void 0;
+exports.decideBuildOutputSave = decideBuildOutputSave;
+exports.readBuildOutputSaveGate = readBuildOutputSaveGate;
+const raw_inputs_js_1 = __nccwpck_require__(52183);
+/** Save status recorded when a failed or cancelled job skips the save. */
+exports.FAILED_JOB_SKIP_STATUS = "failed-job-skip";
+const TRUTHY = new Set(["1", "true", "yes", "on"]);
+const FALSY = new Set(["", "0", "false", "no", "off"]);
+const NOT_SUCCEEDED = new Set(["failure", "cancelled"]);
+function decideBuildOutputSave(input) {
+    const status = input.jobStatus.trim().toLowerCase();
+    const raw = input.saveOnFailure.trim().toLowerCase();
+    if (!TRUTHY.has(raw) && !FALSY.has(raw)) {
+        throw new Error(`save-on-failure must be true or false (got '${input.saveOnFailure}')`);
+    }
+    if (!NOT_SUCCEEDED.has(status)) {
+        return { save: true, reason: `job status ${status || "unknown"}` };
+    }
+    if (TRUTHY.has(raw))
+        return { save: true, reason: `job status ${status}, save-on-failure=true` };
+    return { save: false, reason: `job status ${status} (set save-on-failure: true to save anyway)` };
+}
+/** The gate as the post step sees it, from its re-evaluated inputs. */
+function readBuildOutputSaveGate(env) {
+    const raw = (0, raw_inputs_js_1.readRawInputs)(env);
+    return decideBuildOutputSave({ jobStatus: raw.jobStatus, saveOnFailure: raw.saveOnFailure });
+}
+
+
+/***/ }),
+
 /***/ 33757:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -54789,6 +54843,8 @@ function readRawInputs(env) {
         seedIsolatedBuildCache: get("seed-isolated-build-cache"),
         buildCacheSaveMinCompiles: get("build-cache-save-min-compiles"),
         targetCacheSaveMinCompiles: get("target-cache-save-min-compiles"),
+        jobStatus: get("job-status"),
+        saveOnFailure: get("save-on-failure"),
     };
 }
 
@@ -58152,6 +58208,7 @@ const cache_eviction_js_1 = __nccwpck_require__(15795);
 const yank_audit_js_1 = __nccwpck_require__(23140);
 const source_mtime_snapshot_js_1 = __nccwpck_require__(38502);
 const bundle_tool_cache_js_1 = __nccwpck_require__(45701);
+const failed_job_save_js_1 = __nccwpck_require__(48188);
 function dirExists(p) {
     try {
         return fs.statSync(p).isDirectory();
@@ -58767,6 +58824,8 @@ function saveText(save) {
             return save.skip_reason ? `skipped tiny delta (${save.skip_reason})` : "skipped tiny delta";
         case "policy-skip":
             return "skipped by save-cache policy";
+        case failed_job_save_js_1.FAILED_JOB_SKIP_STATUS:
+            return save.skip_reason ? `skipped: ${save.skip_reason}` : "skipped: the job did not succeed";
         case "failed":
             return save.error ? `failed: ${save.error}` : "failed";
         case "disabled":
@@ -59347,6 +59406,9 @@ async function run() {
     // archive+upload when the session compiled nothing new AND a cache was
     // already restored — the restored entry already holds everything, so
     // re-saving under a fallback key just uploads a duplicate multi-GiB payload.
+    // #559: a job that failed or was cancelled saves no build outputs; its
+    // store may be partial, and an exact-hit key is never re-saved.
+    const buildOutputGate = (0, failed_job_save_js_1.readBuildOutputSaveGate)(process.env);
     const buildSaveStart = Date.now();
     const buildCacheRestored = buildCacheMatched.trim().length > 0;
     const buildDeltaMisses = restoreState.buildCacheEnabled
@@ -59365,6 +59427,14 @@ async function run() {
             fileCount: null,
             payload: null,
         });
+    }
+    else if (!buildOutputGate.save) {
+        log(`build-cache: skipping save — ${buildOutputGate.reason}`);
+        buildSave = Object.assign({
+            status: failed_job_save_js_1.FAILED_JOB_SKIP_STATUS,
+            cache_dir: result.buildCache.path,
+            skip_reason: buildOutputGate.reason,
+        }, { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null });
     }
     else if (buildSaveGate.skip) {
         log(`build-cache: skipping save — ${buildSaveGate.reason} (set build-cache-save-min-compiles: 0 to force-save)`);
@@ -59442,6 +59512,14 @@ async function run() {
         if (targetPaths.length === 0) {
             log("target-cache: no paths configured, skipping save");
             targetCacheSave = Object.assign({ status: "missing-dir-skip", cache_dir: "(no paths)" }, { archiveBytes: null });
+        }
+        else if (!buildOutputGate.save) {
+            log(`target-cache: skipping save — ${buildOutputGate.reason}`);
+            targetCacheSave = Object.assign({
+                status: failed_job_save_js_1.FAILED_JOB_SKIP_STATUS,
+                cache_dir: targetPaths.join(","),
+                skip_reason: buildOutputGate.reason,
+            }, { archiveBytes: null });
         }
         else if (!(0, save_policy_js_1.allowCacheSave)("target-cache", log)) {
             targetCacheSave = Object.assign({ status: "policy-skip", cache_dir: targetPaths.join(",") }, { archiveBytes: null });
