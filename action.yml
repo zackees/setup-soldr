@@ -188,7 +188,7 @@ inputs:
     default: "1"
   job-status:
     description: >
-      Pass `job-status: ${{ job.status }}`. The runner re-evaluates a step's
+      Set it to the `job.status` expression in the workflow (README shows the line). The runner re-evaluates a step's
       `with:` inputs for its post step, so the post step then sees the job's
       status at the end of its steps. (An action's own input default cannot
       read the `job` context, so this must come from the workflow.) When it

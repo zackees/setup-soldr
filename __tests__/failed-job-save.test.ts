@@ -55,11 +55,13 @@ test("#559 action.yml: job-status comes from the workflow, save-on-failure defau
     const next = yml.slice(start + 1).search(/\n  [a-z0-9-]+:\n/);
     return yml.slice(start, start + 1 + next);
   };
-  // An action input default cannot read the `job` context ("Unrecognized
-  // named-value: 'job'"), so the workflow passes `${{ job.status }}`.
-  assert.doesNotMatch(block("job-status"), /default: \$\{\{/);
+  // The runner evaluates `${{ }}` anywhere in action.yml, descriptions
+  // included, and an action cannot read the `job` context ("Unrecognized
+  // named-value: 'job'"), so the workflow passes it and the block names it
+  // without expression syntax.
+  assert.doesNotMatch(block("job-status"), /\$\{\{/);
   assert.match(block("job-status"), /default: ""/);
-  assert.match(block("job-status"), /job-status: \$\{\{ job\.status \}\}/);
+  assert.match(block("job-status"), /`job\.status`/);
   assert.match(block("save-on-failure"), /default: "false"/);
 });
 
