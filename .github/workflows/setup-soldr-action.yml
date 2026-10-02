@@ -42,6 +42,8 @@ jobs:
         uses: ./setup-soldr
         with:
           cache: true
+          # #559: the post step skips build-output saves when the job failed.
+          job-status: ${{ job.status }}
 
       - name: Show action outputs
         shell: pwsh

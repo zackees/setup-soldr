@@ -91,6 +91,8 @@ function fixtureRawInputs(): RawInputs {
     seedIsolatedBuildCache: "",
     buildCacheSaveMinCompiles: "1",
     targetCacheSaveMinCompiles: "1",
+    jobStatus: "",
+    saveOnFailure: "",
   };
 }
 

@@ -73,6 +73,7 @@ import type {
   StatsMode,
 } from "./lib/types.js";
 import { publishBundleToolCache } from "./lib/bundle-tool-cache.js";
+import { FAILED_JOB_SKIP_STATUS, readBuildOutputSaveGate } from "./lib/failed-job-save.js";
 
 type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
 type SaveStatus =
@@ -84,6 +85,7 @@ type SaveStatus =
   | "race-skip"
   | "tiny-delta-skip"
   | "policy-skip"
+  | typeof FAILED_JOB_SKIP_STATUS
   | "saved"
   | "failed";
 
@@ -872,6 +874,8 @@ function saveText(save: CacheSaveResult): string {
       return save.skip_reason ? `skipped tiny delta (${save.skip_reason})` : "skipped tiny delta";
     case "policy-skip":
       return "skipped by save-cache policy";
+    case FAILED_JOB_SKIP_STATUS:
+      return save.skip_reason ? `skipped: ${save.skip_reason}` : "skipped: the job did not succeed";
     case "failed":
       return save.error ? `failed: ${save.error}` : "failed";
     case "disabled":
@@ -1497,6 +1501,9 @@ export async function run(): Promise<void> {
   // archive+upload when the session compiled nothing new AND a cache was
   // already restored — the restored entry already holds everything, so
   // re-saving under a fallback key just uploads a duplicate multi-GiB payload.
+  // #559: a job that failed or was cancelled saves no build outputs; its
+  // store may be partial, and an exact-hit key is never re-saved.
+  const buildOutputGate = readBuildOutputSaveGate(process.env);
   const buildSaveStart = Date.now();
   const buildCacheRestored = buildCacheMatched.trim().length > 0;
   const buildDeltaMisses = restoreState.buildCacheEnabled
@@ -1515,6 +1522,16 @@ export async function run(): Promise<void> {
       fileCount: null,
       payload: null,
     });
+  } else if (!buildOutputGate.save) {
+    log(`build-cache: skipping save — ${buildOutputGate.reason}`);
+    buildSave = Object.assign(
+      {
+        status: FAILED_JOB_SKIP_STATUS,
+        cache_dir: result.buildCache.path,
+        skip_reason: buildOutputGate.reason,
+      },
+      { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null },
+    );
   } else if (buildSaveGate.skip) {
     log(`build-cache: skipping save — ${buildSaveGate.reason} (set build-cache-save-min-compiles: 0 to force-save)`);
     buildSave = Object.assign(
@@ -1598,6 +1615,16 @@ export async function run(): Promise<void> {
       log("target-cache: no paths configured, skipping save");
       targetCacheSave = Object.assign(
         { status: "missing-dir-skip" as const, cache_dir: "(no paths)" },
+        { archiveBytes: null as number | null },
+      );
+    } else if (!buildOutputGate.save) {
+      log(`target-cache: skipping save — ${buildOutputGate.reason}`);
+      targetCacheSave = Object.assign(
+        {
+          status: FAILED_JOB_SKIP_STATUS,
+          cache_dir: targetPaths.join(","),
+          skip_reason: buildOutputGate.reason,
+        },
         { archiveBytes: null as number | null },
       );
     } else if (!allowCacheSave("target-cache", log)) {

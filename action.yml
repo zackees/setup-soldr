@@ -186,6 +186,24 @@ inputs:
       Per-phase save timings (compress vs upload) are logged regardless.
     required: false
     default: "1"
+  job-status:
+    description: >
+      Set it to the `job.status` expression in the workflow (README shows the line). The runner re-evaluates a step's
+      `with:` inputs for its post step, so the post step then sees the job's
+      status at the end of its steps. (An action's own input default cannot
+      read the `job` context, so this must come from the workflow.) When it
+      is `failure` or `cancelled`, the post step saves no build outputs
+      (build-cache and target-cache): a failed build's store may be partial,
+      and an exact-hit key is never re-saved, so saving it poisons the key
+      (#559). Empty (the default) keeps the old always-save behaviour.
+    required: false
+    default: ""
+  save-on-failure:
+    description: >
+      "true" saves build-cache and target-cache even when the job failed or
+      was cancelled (the behaviour before #559). Default "false".
+    required: false
+    default: "false"
   target-cache-save-min-compiles:
     description: >
       Delta-aware target-cache save gate (#255). Mirror of
