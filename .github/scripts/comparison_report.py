@@ -116,10 +116,10 @@ def _compute_cross_pr_speedup(
 def _compute_cache_ratio_pct(
     comparison_rows: list[dict[str, Any]], base_competitor_id: str
 ) -> float | None:
-    """Median soldr cache size / swatinem cache size across successful rows.
+    """Median soldr cache size / target-cache cache size across successful rows.
 
     Issue #639. Headline-level summary: if soldr's cache is consistently
-    smaller than swatinem's across the configured cells, the published
+    smaller than target-cache's across the configured cells, the published
     page should say so. Median (not mean) so a single outlier row from
     a profile mismatch doesn't drag the number.
     """
@@ -379,24 +379,24 @@ def _build_report(
         if row["soldr_vs_base_warm_percent"] is not None
     ]
     soldr_wins = sum(1 for value in comparison_values if value > 0)
-    headline = "No successful soldr vs swatinem comparisons yet."
+    headline = "No successful soldr vs target-cache comparisons yet."
     if comparison_values:
         average = sum(comparison_values) / len(comparison_values)
         trend = "faster" if average >= 0 else "slower"
         # Issue #639: same-job-seed warm timing is almost-tied; the real
         # advantage soldr ships in CI is a substantially smaller on-disk
-        # cache (~half swatinem's in this workspace, since #640 wired the
+        # cache (~half target-cache's in this workspace, since #640 wired the
         # measurement). Surface that ratio in the headline so the rendered
         # page doesn't read like "soldr is X% slower" without context.
         cache_ratio_pct = _compute_cache_ratio_pct(comparison_rows, base_competitor_id)
         cache_clause = ""
         if cache_ratio_pct is not None and cache_ratio_pct < 95:
             cache_clause = (
-                f"; soldr's cache is {cache_ratio_pct:.0f}% the size of swatinem's"
+                f"; soldr's cache is {cache_ratio_pct:.0f}% the size of target-cache's"
             )
         # Issue #650: when the operator dispatches the workflow with
         # `include_cross_pr=true`, the per-row `cross_pr_build_seconds`
-        # values carry the structural-advantage story — swatinem cannot
+        # values carry the structural-advantage story — target-cache cannot
         # share artifacts between two PRs that touch different files,
         # soldr's content-addressed cache can. Surface the overall
         # speedup (sum/sum across rows where both backends produced a
@@ -416,11 +416,11 @@ def _build_report(
             cross_pr_clause = (
                 f"; in the cross-PR cache-sharing scenario, soldr is "
                 f"{cross_pr_speedup['min']:.1f}×-{cross_pr_speedup['max']:.1f}× "
-                f"faster than swatinem (mean {cross_pr_speedup['mean']:.2f}×)"
+                f"faster than target-cache (mean {cross_pr_speedup['mean']:.2f}×)"
             )
         headline = (
             f"Across {len(comparison_values)} configured comparisons, soldr is "
-            f"{abs(average):.2f}% {trend} on warm time than swatinem and leads "
+            f"{abs(average):.2f}% {trend} on warm time than target-cache and leads "
             f"{soldr_wins} rows{cache_clause}{cross_pr_clause}."
         )
 
@@ -497,7 +497,7 @@ def _build_table_rows(report: dict[str, Any]) -> str:
     rows: list[str] = []
     for row in report["comparisons"]:
         soldr = _comparison_result(row, "soldr") or {}
-        swatinem = _comparison_result(row, report["site"]["base_competitor"]) or {}
+        baseline = _comparison_result(row, report["site"]["base_competitor"]) or {}
         rows.append(
             "<tr>"
             f"<td>{escape(row['profile_label'])}</td>"
@@ -506,10 +506,10 @@ def _build_table_rows(report: dict[str, Any]) -> str:
             f"<td>{_format_seconds(soldr.get('warm_seconds'))}</td>"
             f"<td>{_format_ratio(soldr.get('speedup_ratio'))}</td>"
             f"<td>{_format_bytes(soldr.get('cache_dir_bytes'))}</td>"
-            f"<td>{_format_seconds(swatinem.get('cold_seconds'))}</td>"
-            f"<td>{_format_seconds(swatinem.get('warm_seconds'))}</td>"
-            f"<td>{_format_ratio(swatinem.get('speedup_ratio'))}</td>"
-            f"<td>{_format_bytes(swatinem.get('cache_dir_bytes'))}</td>"
+            f"<td>{_format_seconds(baseline.get('cold_seconds'))}</td>"
+            f"<td>{_format_seconds(baseline.get('warm_seconds'))}</td>"
+            f"<td>{_format_ratio(baseline.get('speedup_ratio'))}</td>"
+            f"<td>{_format_bytes(baseline.get('cache_dir_bytes'))}</td>"
             f"<td>{_format_percent(row['soldr_vs_base_warm_percent'])}</td>"
             "</tr>"
         )
@@ -554,7 +554,7 @@ def _build_native_sqlite_table_rows(report: dict[str, Any]) -> str:
 
 
 def _restore_phase_rows(report: dict[str, Any]) -> list[tuple[dict[str, Any], dict[str, Any], dict[str, Any]]]:
-    """Yield (row, soldr_result, swatinem_result) when restore-phase data exists.
+    """Yield (row, soldr_result, baseline_result) when restore-phase data exists.
 
     Issue #639: PR #644 added `archive_*` / `restore_*` / `restored_warm_*`
     fields per row when the operator dispatches the workflow with
@@ -616,10 +616,10 @@ def _build_restore_phase_section(report: dict[str, Any]) -> str:
               <th>soldr tar</th>
               <th>soldr untar</th>
               <th>soldr warm</th>
-              <th>swatinem archive</th>
-              <th>swatinem tar</th>
-              <th>swatinem untar</th>
-              <th>swatinem warm</th>
+              <th>target-cache archive</th>
+              <th>target-cache tar</th>
+              <th>target-cache untar</th>
+              <th>target-cache warm</th>
             </tr>
           </thead>
           <tbody>
@@ -631,7 +631,7 @@ def _build_restore_phase_section(report: dict[str, Any]) -> str:
 
 
 def _cross_pr_rows(report: dict[str, Any]) -> list[tuple[dict[str, Any], dict[str, Any], dict[str, Any]]]:
-    """Yield (row, soldr_result, swatinem_result) when cross-PR data exists.
+    """Yield (row, soldr_result, baseline_result) when cross-PR data exists.
 
     Issue #650: only renders when at least one row has the cross-PR fields
     populated, so scheduled runs are unaffected.
@@ -684,7 +684,7 @@ def _build_cross_pr_section(report: dict[str, Any]) -> str:
         <code>crates/soldr-cli/src/fetch/github.rs</code>), switches to
         mutation B (touch <code>crates/soldr-cli/src/core/git.rs</code>,
         a deep module in a different subtree), wipes <code>target/</code>
-        so cargo invokes rustc per unit, and times the rebuild. swatinem
+        so cargo invokes rustc per unit, and times the rebuild. target-cache
         has no cross-PR cache share so this is effectively a cold rebuild
         for it; soldr's content-addressed cache serves hits for every
         unit whose inputs are unchanged across mutations. Tracking under
@@ -698,9 +698,9 @@ def _build_cross_pr_section(report: dict[str, Any]) -> str:
               <th>Change</th>
               <th>soldr seed (A)</th>
               <th>soldr build (B)</th>
-              <th>swatinem seed (A)</th>
-              <th>swatinem build (B)</th>
-              <th>soldr speedup vs swatinem</th>
+              <th>target-cache seed (A)</th>
+              <th>target-cache build (B)</th>
+              <th>soldr speedup vs target-cache</th>
             </tr>
           </thead>
           <tbody>
@@ -856,7 +856,7 @@ def _build_html_page(report: dict[str, Any]) -> str:
       <p class="note">
         <strong>What "warm" measures here:</strong> every cell runs cold &rarr;
         warm inside the same CI job, so the warm pass already has a hot
-        <code>target/</code> from the cold seed. swatinem's strength
+        <code>target/</code> from the cold seed. target-cache's strength
         (multi-GB <code>target/</code> restore from a prior job) and soldr's
         strength (on-demand artifact fetch from a shared
         <a href="https://github.com/zackees/zccache">zccache</a>) are
@@ -876,11 +876,11 @@ def _build_html_page(report: dict[str, Any]) -> str:
               <th>soldr warm</th>
               <th>soldr speedup</th>
               <th>soldr cache</th>
-              <th>swatinem cold</th>
-              <th>swatinem warm</th>
-              <th>swatinem speedup</th>
-              <th>swatinem cache</th>
-              <th>soldr vs swatinem</th>
+              <th>target-cache cold</th>
+              <th>target-cache warm</th>
+              <th>target-cache speedup</th>
+              <th>target-cache cache</th>
+              <th>soldr vs target-cache</th>
             </tr>
           </thead>
           <tbody>
@@ -1118,17 +1118,17 @@ def _build_summary_lines(report: dict[str, Any]) -> list[str]:
         "",
         "### Warm Comparison",
         "",
-        "| profile | change | soldr warm | swatinem warm | soldr vs swatinem |",
+        "| profile | change | soldr warm | target-cache warm | soldr vs target-cache |",
         "| --- | --- | ---: | ---: | ---: |",
     ]
 
     for row in report["comparisons"]:
         soldr = _comparison_result(row, "soldr") or {}
-        swatinem = _comparison_result(row, report["site"]["base_competitor"]) or {}
+        baseline = _comparison_result(row, report["site"]["base_competitor"]) or {}
         lines.append(
             f"| `{row['profile_label']}` | `{row['mutation_label']}` | "
             f"`{_format_seconds(soldr.get('warm_seconds'))}` | "
-            f"`{_format_seconds(swatinem.get('warm_seconds'))}` | "
+            f"`{_format_seconds(baseline.get('warm_seconds'))}` | "
             f"`{_format_percent(row['soldr_vs_base_warm_percent'])}` |"
         )
 

@@ -1,6 +1,6 @@
 name: Comparison cluster
 
-# Third-party comparison (soldr vs Swatinem/rust-cache vs ...) benchmark
+# Third-party comparison (soldr vs a key-based target/ cache vs ...) benchmark
 # suite. Origin is soldr's `cache-benchmark.yml` family plus the
 # `comparison_report.py` renderer; per soldr#674 Phase 1 the comparison
 # surface moved to setup-soldr because it belongs with the action, not
@@ -57,7 +57,7 @@ on:
         description: >
           Also measure the cross-PR sharing scenario (#650): seed cache with
           mutation A, switch to mutation B (different file), wipe target/,
-          rebuild. swatinem has no cross-PR cache share so it pays a full
+          rebuild. target-cache has no cross-PR cache share so it pays a full
           cold-rebuild; soldr's content-addressed cache serves hits for
           unchanged units. Adds ~3-5 min per cell so it stays opt-in.
         required: false
@@ -493,12 +493,9 @@ jobs:
           toolchain: 1.94.1
           targets: ${{ steps.config.outputs.target }}
 
-      - name: Cache cargo registry and target
-        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2  # ci-lint: allow CACHE-025 benchmark: Swatinem is the comparison baseline under test
-        with:
-          shared-key: cache-benchmark-${{ steps.config.outputs.target }}
-          workspaces: soldr -> target
-
+      # No build cache here: CACHE-025 bans Swatinem/rust-cache with no
+      # exceptions (zackees/ci.yml, maintainer decision 2026-10-02), and this
+      # dispatch-only job builds the soldr under test from source.
       - name: Build soldr
         shell: bash
         working-directory: soldr
@@ -644,28 +641,28 @@ jobs:
               return total
 
           # Issue #645: both backends pay the same cargo baseline.
-          # `Swatinem/rust-cache` persists exactly these three subdirs of
-          # `$CARGO_HOME` plus each workspace's `target/`. The cache-benchmark
+          # A key-based target/ cache (the target-cache baseline) persists
+          # exactly these three subdirs of `$CARGO_HOME` plus `target/`. The cache-benchmark
           # zccache shim defaults `cache-cargo-registry: true`, so soldr-managed
           # CI cycles persist the same three baseline subdirs plus
           # `$ZCCACHE_CACHE_DIR`. The shared baseline cancels in the headline
           # ratio; only the backend-specific delta (`target/` vs zccache dir)
           # drives the structural advantage. Pre-#645 the measurement walked
-          # the full `$CARGO_HOME` for swatinem and only the zccache dir for
+          # the full `$CARGO_HOME` for target-cache and only the zccache dir for
           # soldr, biasing both directions.
           CARGO_CACHE_SUBDIRS = ("registry", "git", "bin")
 
           def _backend_cache_roots(backend):
               """Directories the backend would archive for cross-job restore.
 
-              See the `Swatinem/rust-cache` `cachePaths` definition and the
-              repo-local `comparison-zccache` shim defaults; the lists
+              The target-cache baseline is cargo's three cache subdirs plus
+              `target/`; see the repo-local `comparison-zccache` shim defaults; the lists
               are deliberately the same for the common (cargo) bits and
               differ only on the backend-specific tail.
               """
               cargo_home = Path(os.environ.get("CARGO_HOME") or Path.home() / ".cargo")
               roots = [cargo_home / sub for sub in CARGO_CACHE_SUBDIRS]
-              if backend == "swatinem":
+              if backend == "target-cache":
                   roots.append(repo_root / "target")
               elif backend == "zccache":
                   zdir = os.environ.get("ZCCACHE_CACHE_DIR")
@@ -768,9 +765,9 @@ jobs:
           # `soldr-cli` crate's compilation but neither invalidates the dep
           # graph upstream, so a content-addressed cache populated by
           # branch-A serves hits for every dep when branch-B then builds.
-          # swatinem caches by-key per the PR's commit SHA, so the branch-B
+          # target-cache caches by-key per the PR's commit SHA, so the branch-B
           # job in real CI has no cache to restore from branch-A — we
-          # simulate that by NOT restoring any backend cache for swatinem.
+          # simulate that by NOT restoring any backend cache for target-cache.
           CROSS_PR_BRANCH_A_PATH = "crates/soldr-cli/src/fetch/github.rs"
           CROSS_PR_BRANCH_B_PATH = "crates/soldr-cli/src/core/git.rs"
 
@@ -785,7 +782,7 @@ jobs:
               For soldr the zccache content store is retained between the
               branch-A seed and the branch-B build (target/ is wiped to
               force cargo to invoke rustc per unit so the cache is
-              actually consulted). swatinem has no cross-PR mechanism, so
+              actually consulted). target-cache has no cross-PR mechanism, so
               its branch-B build is effectively cold (cache + target wiped).
 
               Returns `{branch_a_seed_seconds, branch_b_seconds}`.
@@ -811,7 +808,7 @@ jobs:
               # Switch to branch B: revert the workspace (drops branch-A's
               # marker), wipe target/ so cargo re-invokes rustc per unit.
               # For zccache: KEEP the cache (content store), so unchanged
-              # crates serve from cache. For swatinem (no wrapper): there's
+              # crates serve from cache. For target-cache (no wrapper): there's
               # no out-of-band cache so the cargo clean is the only state
               # change — the build is effectively cold.
               clean_workspace()
