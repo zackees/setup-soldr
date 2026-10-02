@@ -8,7 +8,12 @@
  * module, which decides from the `save-cache` input (`auto | true | false`)
  * and `GITHUB_EVENT_NAME` whether an upload may happen.
  *
- * - `auto` (default): save unless the triggering event is `pull_request`.
+ * - `auto` (default): save unless the triggering event is `pull_request` on
+ *   GitHub. On a local runner (act or act2, which always export `ACT=true`,
+ *   e.g. under bosn) `auto` saves fully: act's cache server has no ref scoping
+ *   and no repository budget, and local runs are `pull_request` on purpose so
+ *   PR labels select jobs, so skipping there left every local run cold
+ *   (setup-soldr#537, zackees/ci.yml#216).
  * - `true`: always save (subject to each layer's own gates).
  * - `false`: never save.
  *
@@ -44,11 +49,25 @@ export function parseSaveCacheMode(raw: string | undefined, defaultMode: SaveCac
   throw new Error(`save-cache must be one of auto, true, false (got '${raw}')`);
 }
 
+const TRUTHY = new Set(["1", "true", "yes", "on"]);
+
+/** True on a local runner: act and act2 always export `ACT=true`. */
+export function isLocalRunner(env: Record<string, string | undefined>): boolean {
+  return TRUTHY.has((env["ACT"] ?? "").trim().toLowerCase());
+}
+
 /** Pure decision: no I/O, platform independent (RUNNER_OS is irrelevant). */
-export function decideCacheSave(mode: SaveCacheMode, eventName: string | undefined): SaveDecision {
+export function decideCacheSave(
+  mode: SaveCacheMode,
+  eventName: string | undefined,
+  localRunner = false,
+): SaveDecision {
   if (mode === "true") return { save: true, mode, reason: "save-cache=true" };
   if (mode === "false") return { save: false, mode, reason: "save-cache=false" };
   const event = (eventName ?? "").trim();
+  if (localRunner) {
+    return { save: true, mode, reason: `local runner (act): no ref scoping (save-cache=auto)` };
+  }
   if (event === "pull_request") {
     return { save: false, mode, reason: "pull_request event (save-cache=auto)" };
   }
@@ -67,7 +86,7 @@ export function currentSaveDecision(env: NodeJS.ProcessEnv = process.env): SaveD
   } catch {
     mode = "auto";
   }
-  return decideCacheSave(mode, env["GITHUB_EVENT_NAME"]);
+  return decideCacheSave(mode, env["GITHUB_EVENT_NAME"], isLocalRunner(env));
 }
 
 const loggedSkips = new Set<string>();

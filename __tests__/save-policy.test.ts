@@ -29,20 +29,29 @@ import { selectDeferredCookSaveLayer } from "../src/lib/deferred-cook.js";
 // Tests run from the repository root (package.json `test` script).
 const srcRoot = path.resolve(process.cwd(), "src");
 
-const savedEnv = { event: process.env["GITHUB_EVENT_NAME"], input: process.env["INPUT_SAVE-CACHE"], os: process.env["RUNNER_OS"] };
+const savedEnv = {
+  event: process.env["GITHUB_EVENT_NAME"],
+  input: process.env["INPUT_SAVE-CACHE"],
+  os: process.env["RUNNER_OS"],
+  act: process.env["ACT"],
+};
 
-function setEnv(event: string | undefined, input: string | undefined, runnerOs?: string): void {
+// `act` is explicit so the suite gives the same answers when it runs under
+// act itself (#537): `undefined` means "not a local runner".
+function setEnv(event: string | undefined, input: string | undefined, runnerOs?: string, act?: string): void {
   if (event === undefined) delete process.env["GITHUB_EVENT_NAME"];
   else process.env["GITHUB_EVENT_NAME"] = event;
   if (input === undefined) delete process.env["INPUT_SAVE-CACHE"];
   else process.env["INPUT_SAVE-CACHE"] = input;
   if (runnerOs !== undefined) process.env["RUNNER_OS"] = runnerOs;
+  if (act === undefined) delete process.env["ACT"];
+  else process.env["ACT"] = act;
 }
 
 beforeEach(() => resetSavePolicyLogForTest());
 afterEach(() => {
   setSaveCacheBackendForTest(null);
-  setEnv(savedEnv.event, savedEnv.input);
+  setEnv(savedEnv.event, savedEnv.input, undefined, savedEnv.act);
   if (savedEnv.os === undefined) delete process.env["RUNNER_OS"];
   else process.env["RUNNER_OS"] = savedEnv.os;
 });
@@ -209,6 +218,36 @@ test("#527 push + default: eligible layers save", async () => {
 
 test("#527 explicit save-cache=true saves on pull_request", async () => {
   setEnv("pull_request", "true");
+  const r = await exerciseAllLayers();
+  for (const [layer, status] of Object.entries(r.statuses)) assert.equal(status, "saved", layer);
+});
+
+test("#537 decision matrix: auto saves on a local runner whatever the event; true/false still win", () => {
+  const local = decideCacheSave("auto", "pull_request", true);
+  assert.equal(local.save, true);
+  assert.equal(local.reason, "local runner (act): no ref scoping (save-cache=auto)");
+  for (const ev of ["pull_request", "push", ""]) {
+    assert.equal(decideCacheSave("auto", ev, true).save, true, ev);
+  }
+  assert.equal(decideCacheSave("false", "pull_request", true).save, false);
+  assert.equal(decideCacheSave("true", "pull_request", true).save, true);
+  // GitHub (not a local runner) keeps #527's behaviour.
+  assert.equal(decideCacheSave("auto", "pull_request", false).save, false);
+});
+
+test("#537 ACT=true makes auto save on a pull_request event; ACT unset or false does not", () => {
+  setEnv("pull_request", undefined, "Linux", "true");
+  assert.equal(currentSaveDecision().save, true);
+  setEnv("pull_request", undefined, "Linux", "false");
+  assert.equal(currentSaveDecision().save, false);
+  setEnv("pull_request", undefined, "Linux", undefined);
+  assert.equal(currentSaveDecision().save, false);
+  setEnv("pull_request", "false", "Linux", "true");
+  assert.equal(currentSaveDecision().save, false, "explicit false wins under act");
+});
+
+test("#537 pull_request + default under act: every layer saves", async () => {
+  setEnv("pull_request", undefined, "Linux", "true");
   const r = await exerciseAllLayers();
   for (const [layer, status] of Object.entries(r.statuses)) assert.equal(status, "saved", layer);
 });

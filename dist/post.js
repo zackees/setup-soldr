@@ -55097,6 +55097,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.POLICY_SKIP_STATUS = void 0;
 exports.parseSaveCacheMode = parseSaveCacheMode;
+exports.isLocalRunner = isLocalRunner;
 exports.decideCacheSave = decideCacheSave;
 exports.currentSaveDecision = currentSaveDecision;
 exports.resetSavePolicyLogForTest = resetSavePolicyLogForTest;
@@ -55113,7 +55114,12 @@ exports.gatedSaveCache = gatedSaveCache;
  * module, which decides from the `save-cache` input (`auto | true | false`)
  * and `GITHUB_EVENT_NAME` whether an upload may happen.
  *
- * - `auto` (default): save unless the triggering event is `pull_request`.
+ * - `auto` (default): save unless the triggering event is `pull_request` on
+ *   GitHub. On a local runner (act or act2, which always export `ACT=true`,
+ *   e.g. under bosn) `auto` saves fully: act's cache server has no ref scoping
+ *   and no repository budget, and local runs are `pull_request` on purpose so
+ *   PR labels select jobs, so skipping there left every local run cold
+ *   (setup-soldr#537, zackees/ci.yml#216).
  * - `true`: always save (subject to each layer's own gates).
  * - `false`: never save.
  *
@@ -55141,13 +55147,21 @@ function parseSaveCacheMode(raw, defaultMode = "auto") {
         return "false";
     throw new Error(`save-cache must be one of auto, true, false (got '${raw}')`);
 }
+const TRUTHY = new Set(["1", "true", "yes", "on"]);
+/** True on a local runner: act and act2 always export `ACT=true`. */
+function isLocalRunner(env) {
+    return TRUTHY.has((env["ACT"] ?? "").trim().toLowerCase());
+}
 /** Pure decision: no I/O, platform independent (RUNNER_OS is irrelevant). */
-function decideCacheSave(mode, eventName) {
+function decideCacheSave(mode, eventName, localRunner = false) {
     if (mode === "true")
         return { save: true, mode, reason: "save-cache=true" };
     if (mode === "false")
         return { save: false, mode, reason: "save-cache=false" };
     const event = (eventName ?? "").trim();
+    if (localRunner) {
+        return { save: true, mode, reason: `local runner (act): no ref scoping (save-cache=auto)` };
+    }
     if (event === "pull_request") {
         return { save: false, mode, reason: "pull_request event (save-cache=auto)" };
     }
@@ -55166,7 +55180,7 @@ function currentSaveDecision(env = process.env) {
     catch {
         mode = "auto";
     }
-    return decideCacheSave(mode, env["GITHUB_EVENT_NAME"]);
+    return decideCacheSave(mode, env["GITHUB_EVENT_NAME"], isLocalRunner(env));
 }
 const loggedSkips = new Set();
 /** Test hook: forget which layers already logged a skip line. */
