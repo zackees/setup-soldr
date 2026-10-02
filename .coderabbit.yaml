@@ -1,17 +1,25 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# GATE-012 (zackees/ci.yml#206, docs/policy-general.md "Remote-only checks
+# never gate a PR"): CodeRabbit is a GitHub App that cannot run under
+# bosn -> act, so it never gates, delays, or second-guesses a PR. No
+# automatic review, no commit status, no auto-approve; nothing may wait on
+# it. An on-demand `@coderabbitai review` still works as advisory review.
 language: "en-US"
 early_access: false
 reviews:
   profile: "chill"
   request_changes_workflow: false
+  commit_status: false
+  fail_commit_status: false
   high_level_summary: true
   poem: false
   review_status: true
   auto_review:
-    enabled: true
+    enabled: false
     drafts: false
   path_filters:
     - "!soldr/**"
     - "!zccache/**"
 chat:
-  auto_reply: true
+  auto_reply: false
