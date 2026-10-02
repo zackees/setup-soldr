@@ -36,6 +36,8 @@ import {
   linkSyslibToolCache,
   SYSLIB_STORE_ENV,
 } from "./lib/syslib-tool-cache.js";
+import { adoptBundleToolCache } from "./lib/bundle-tool-cache.js";
+import { adoptRustupToolCache, publishRustupToolCache, rustupStoreOffReason } from "./lib/rustup-tool-cache.js";
 import { StatsCollector } from "./lib/stats-collector.js";
 import {
   walkSnapshot,
@@ -863,6 +865,24 @@ export async function run(): Promise<void> {
     }
   }
 
+  // ---- soldr tool bundles in RUNNER_TOOL_CACHE (#557) ----
+  // Link stamped installs (LLVM, ...) a previous run published, before the
+  // verify step's first `soldr cargo` would fetch LLVM again. post.ts
+  // publishes what this job installed.
+  const storeLogger = {
+    log: (msg: string) => logger.log(msg),
+    warn: (msg: string) => core.warning(msg),
+    debug: (msg: string) => debugLog(`[debug] ${msg}`),
+  };
+  if (result.enabled) {
+    adoptBundleToolCache({
+      env: process.env,
+      soldrBinDir: result.soldrBinCachePath,
+      crossPrepareTarget: result.blessedPrepareCache.target,
+      logger: storeLogger,
+    });
+  }
+
   // ---- target-tree-cache (full mode) ----
   // The bundle path is included in target-cache restore paths above when full
   // mode is requested, so there's no separate restore here. We keep the phase
@@ -1192,6 +1212,25 @@ export async function run(): Promise<void> {
     core.exportVariable("RUSTUP_TOOLCHAIN", result.toolchain.channel);
     process.env["RUSTUP_TOOLCHAIN"] = result.toolchain.channel;
   } else {
+    // #557: on act/self-hosted runners, reuse the toolchain a previous run
+    // kept in RUNNER_TOOL_CACHE instead of reinstalling it every job.
+    const rustupStore = adoptRustupToolCache({
+      env: process.env,
+      rustupHome: result.rustupHome,
+      request: {
+        channel: result.toolchain.channel.trim(),
+        profile: result.toolchain.profile.trim() || "minimal",
+        components: result.toolchain.components,
+        targets: result.toolchain.targets,
+      },
+      offReason: rustupStoreOffReason({
+        strategy: result.rustupStrategy,
+        soloToolchainCache: soloEnabled,
+        dylint: result.dylintCache.cacheIdentity !== "",
+        channel: result.toolchain.channel,
+      }),
+      logger: storeLogger,
+    });
     await timeSubPhase("toolchain", "rustup-install", () =>
       ensureRustToolchain({
         resolveResult: result,
@@ -1199,6 +1238,7 @@ export async function run(): Promise<void> {
         forceRepair: forceToolchainRepair,
       }),
     );
+    if (rustupStore) publishRustupToolCache({ rustupHome: result.rustupHome, plan: rustupStore, logger: storeLogger });
     if (forceToolchainRepair) {
       const repaired = await verifyRestoredToolchain({
         expectedRelease: result.toolchain.cacheChannel.trim(),

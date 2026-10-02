@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+- Keep the managed Rust toolchain and Soldr's stamped tool bundles in
+  `RUNNER_TOOL_CACHE` on act/self-hosted runners too (#557), the way #553
+  keeps the syslib store:
+  - **Rust toolchain.** With the managed rustup strategy, a pinned channel
+    and `solo-toolchain-cache` off, `RUSTUP_HOME/{toolchains,update-hashes}`
+    link to `$RUNNER_TOOL_CACHE/soldr-rustup/<platform>-<arch>/<channel>-<hash>`
+    (keyed by channel, profile, components and targets). A cold job installs
+    into its own `RUSTUP_HOME` and publishes a copy (staged, then renamed into
+    place); a warm job finds everything installed instead of spending
+    14-17 s in `rustup toolchain install` (zccache's jobs). `settings.toml`
+    stays per job. Off for rolling channels, Dylint mode, and a system or
+    explicit `RUSTUP_HOME`.
+  - **Tool bundles.** The verify step's first `soldr cargo` fetched LLVM
+    into `RUNNER_TEMP` on every warm job (`verify` 9-10 s on clud's jobs).
+    The post step now publishes stamped `$SOLDR_CACHE_DIR/bin/<bundle>`
+    installs (LLVM, zig, ...) to `$RUNNER_TOOL_CACHE/soldr-bundles/<platform>-<arch>`,
+    hardlinks preserved, and the next main step links them back before soldr
+    runs. Soldr extracts these in place without a lock, so the store is
+    never written through.
+  - The `SETUP_SOLDR_SYSLIB_TOOL_CACHE` override from #553 (unreleased) is
+    now `SETUP_SOLDR_TOOL_CACHE` and covers every layer.
+
 - Keep Soldr's syslib/toolchain store in `RUNNER_TOOL_CACHE` on runners whose
   tool cache outlives the job (#553). Under act (`ACT=true`, e.g. `bosn ci`)
   and on self-hosted runners, `$SOLDR_CACHE_DIR/bin/syslib` becomes a link to
@@ -12,7 +34,7 @@
   promotes installs atomically behind a `.complete` stamp, and locks
   concurrent installs, so the shared store is safe. Off on GitHub-hosted
   runners (setup-cache already carries `bin/syslib`), Windows, and
-  `cross-targets` lanes; `SETUP_SOLDR_SYSLIB_TOOL_CACHE=0|1` overrides.
+  `cross-targets` lanes; `SETUP_SOLDR_TOOL_CACHE=0|1` overrides.
   The store path is exported as `SETUP_SOLDR_SYSLIB_STORE`.
 
 - Ingest Soldr `0.9.27` (default `0.9.25` -> `0.9.27`, skipping `0.9.26`,

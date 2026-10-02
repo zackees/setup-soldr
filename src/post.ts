@@ -72,6 +72,7 @@ import type {
   ResolveResult,
   StatsMode,
 } from "./lib/types.js";
+import { publishBundleToolCache } from "./lib/bundle-tool-cache.js";
 
 type RestoreStatus = "disabled" | "exact-hit" | "restore-key-hit" | "miss";
 type SaveStatus =
@@ -1335,6 +1336,17 @@ export async function run(): Promise<void> {
   } catch (err) {
     log(`post: failed to parse resolve state: ${err instanceof Error ? err.message : String(err)}`);
     return;
+  }
+
+  // #557: publish soldr tool bundles (LLVM, ...) this job installed to
+  // RUNNER_TOOL_CACHE, so the next run on this runner links them instead.
+  if (result.enabled) {
+    publishBundleToolCache({
+      env: process.env,
+      soldrBinDir: result.soldrBinCachePath,
+      crossPrepareTarget: result.blessedPrepareCache.target,
+      logger: { log, warn: (msg) => core.warning(msg), debug: () => undefined },
+    });
   }
 
   const buildCacheMatched = core.getState("buildCacheMatchedKey");

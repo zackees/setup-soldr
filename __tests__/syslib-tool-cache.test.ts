@@ -71,12 +71,12 @@ test("#553 decide: github-hosted, Windows, cross-targets, no tool cache stay off
   assert.equal(noToolCache.enabled, false);
 });
 
-test("#553 decide: SETUP_SOLDR_SYSLIB_TOOL_CACHE overrides the runner default", () => {
+test("#553 decide: SETUP_SOLDR_TOOL_CACHE overrides the runner default", () => {
   const forcedOn = decideSyslibToolCache({
     env: {
       RUNNER_TOOL_CACHE: "/opt/hostedtoolcache",
       RUNNER_ENVIRONMENT: "github-hosted",
-      SETUP_SOLDR_SYSLIB_TOOL_CACHE: "1",
+      SETUP_SOLDR_TOOL_CACHE: "1",
     },
     ...linux,
     crossPrepareTarget: "",
@@ -84,7 +84,7 @@ test("#553 decide: SETUP_SOLDR_SYSLIB_TOOL_CACHE overrides the runner default", 
   assert.equal(forcedOn.enabled, true);
 
   const forcedOff = decideSyslibToolCache({
-    env: { RUNNER_TOOL_CACHE: "/opt/hostedtoolcache", ACT: "true", SETUP_SOLDR_SYSLIB_TOOL_CACHE: "0" },
+    env: { RUNNER_TOOL_CACHE: "/opt/hostedtoolcache", ACT: "true", SETUP_SOLDR_TOOL_CACHE: "0" },
     ...linux,
     crossPrepareTarget: "",
   });
