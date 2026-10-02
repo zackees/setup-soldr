@@ -14,6 +14,12 @@ import * as exec from "@actions/exec";
 import { createLogger } from "./lib/log-utils.js";
 import { readRawInputs, resolveSetup, applyResolveResult } from "./lib/resolve-setup.js";
 import {
+  cacheProfileDefault,
+  describeCacheProfile,
+  isLocalRunner,
+  resolveCacheProfileInput,
+} from "./lib/local-profile.js";
+import {
   markPhase,
   finishPhase,
   setupPhaseSummaryOneLine,
@@ -402,6 +408,20 @@ export async function run(): Promise<void> {
   const result = await resolveSetup(ctx, inputs);
   await applyResolveResult(result);
   await finishPhase("resolve");
+
+  // zackees/ci.yml#227: ACT=true selects the local-runner cache profile
+  // (no payload cap, fast zstd). One line so users can see which applied.
+  {
+    const localRunner = isLocalRunner(process.env);
+    logger.log(describeCacheProfile(localRunner, {
+      payloadMaxBytes: resolveCacheProfileInput("cache-payload-max-bytes", inputs.cachePayloadMaxBytes, localRunner),
+      zstdLevels: {
+        target: result.targetCacheCompressLevel,
+        toolchain: resolveCacheProfileInput("solo-toolchain-cache-level", inputs.soloToolchainCacheLevel, localRunner),
+        cook: cacheProfileDefault("cook-base-zstd-level", localRunner),
+      },
+    }));
+  }
 
   // Always emit the cache-keys manifest right after resolve so workflow
   // steps that run between main and post (e.g. actions/upload-artifact)
@@ -1100,7 +1120,12 @@ export async function run(): Promise<void> {
   // #310: default-changed from "19" → "9". Measured first-save cost
   // dropped from ~104s → ~12s on 140 MB toolchain delta; restore stays
   // bandwidth-bound either way.
-  const soloLevel = (inputs.soloToolchainCacheLevel.trim() || "9");
+  // Empty input -> runner profile default (GitHub 9, local/ACT 1).
+  const soloLevel = resolveCacheProfileInput(
+    "solo-toolchain-cache-level",
+    inputs.soloToolchainCacheLevel,
+    isLocalRunner(process.env),
+  );
   let soloKeys: ReturnType<typeof buildSoloCacheKeys> | null = null;
   let soloMatchedKey = "";
   let soloExactHit = false;
@@ -1703,8 +1728,11 @@ export async function run(): Promise<void> {
     // save. zstd decompression speed is level-independent, so warm
     // restores are unaffected. Net: ~125s win per save-attempt, big
     // multiplier on race-loss scenarios.
-    core.saveState("cookCompressLevel", "9");
-    core.saveState("cookDeltaCompressLevel", "3");
+    //
+    // zackees/ci.yml#227: those are the GitHub levels; a local runner
+    // (ACT=true) has no cache budget and compresses at -1.
+    core.saveState("cookCompressLevel", cacheProfileDefault("cook-base-zstd-level", isLocalRunner(process.env)));
+    core.saveState("cookDeltaCompressLevel", cacheProfileDefault("cook-delta-zstd-level", isLocalRunner(process.env)));
   } else if (cookActive && cookRestorePromise) {
     const restore = await cookRestorePromise;
     core.setOutput("cook-cache-hit", restore.hit ? "true" : "false");
@@ -1743,10 +1771,11 @@ export async function run(): Promise<void> {
     core.saveState("cookRan", cookRan ? "true" : "false");
     core.saveState("cookTargetDir", cookTargetDir);
     core.saveState("cookLongWindow", "27");
-    // #268/#358: see saveState("cookCompressLevel", "9") above for
+    // #268/#358: see the layered cookCompressLevel saveState above for
     // rationale on lowering from -19. Same logic applies to the
-    // non-layered path.
-    core.saveState("cookCompressLevel", "9");
+    // non-layered path, including the local-runner -1. --long=27 is kept
+    // at every level because restore needs the window.
+    core.saveState("cookCompressLevel", cacheProfileDefault("cook-base-zstd-level", isLocalRunner(process.env)));
   } else if (cookSkippedDueToTargetHit) {
     core.setOutput("cook-cache-status", "covered-by-target-cache");
     logger.log(

@@ -23,6 +23,10 @@
  * `src/` and fails when one bypasses this gate.
  */
 import * as cache from "@actions/cache";
+// The local-runner signal lives with the cache profile it also drives;
+// re-exported so existing callers keep importing it from here.
+import { isLocalRunner } from "./local-profile.js";
+export { isLocalRunner };
 
 export type SaveCacheMode = "auto" | "true" | "false";
 
@@ -47,13 +51,6 @@ export function parseSaveCacheMode(raw: string | undefined, defaultMode: SaveCac
   if (["1", "true", "yes", "on"].includes(value)) return "true";
   if (["0", "false", "no", "off"].includes(value)) return "false";
   throw new Error(`save-cache must be one of auto, true, false (got '${raw}')`);
-}
-
-const TRUTHY = new Set(["1", "true", "yes", "on"]);
-
-/** True on a local runner: act and act2 always export `ACT=true`. */
-export function isLocalRunner(env: Record<string, string | undefined>): boolean {
-  return TRUTHY.has((env["ACT"] ?? "").trim().toLowerCase());
 }
 
 /** Pure decision: no I/O, platform independent (RUNNER_OS is irrelevant). */

@@ -343,23 +343,32 @@ inputs:
   target-cache-compress-level:
     description: >
       Compression level used when target-cache-compress is "zstd" (or "auto"
-      and soldr selects zstd). Accepts integers 1-22; zstd's default is 3.
+      and soldr selects zstd). Accepts integers 1-22. Empty (the default)
+      picks the runner profile: "3" on GitHub-hosted runners, "1" on a local
+      runner (ACT=true, e.g. act/act2 under bosn), which has no cache budget
+      and a fast disk. An explicit value always wins on both.
       Forward-compatible: requires a soldr release that consumes
       SOLDR_TARGET_CACHE_COMPRESS_LEVEL.
     required: false
-    default: "3"
+    default: ""
   cache-payload-warn-bytes:
     description: >
       Soft notice threshold for tar-backed cache saves, measured before
       compression. Accepts bytes or KiB/MiB/GiB/TiB suffixes. When exceeded,
       setup-soldr emits a notice with the largest files so oversized payloads
-      such as multi-GiB zccache archives are visible in CI. Default 512MiB.
+      such as multi-GiB zccache archives are visible in CI. Empty (the
+      default) picks the runner profile: 512MiB on GitHub-hosted runners,
+      4GiB on a local runner (ACT=true, e.g. act/act2 under bosn). An explicit
+      value always wins on both.
     required: false
-    default: "512MiB"
+    default: ""
   cache-payload-max-bytes:
     description: >
       Hard limit for tar-backed cache saves, measured before compression.
-      Default 6GiB matches the realistic zccache footprint for a
+      Empty (the default) picks the runner profile: 6GiB on GitHub-hosted
+      runners, 0 (no cap) on a local runner (ACT=true, e.g. act/act2 under
+      bosn), which has no Actions-cache budget. An explicit value always wins
+      on both. The GitHub 6GiB matches the realistic zccache footprint for a
       medium-large Rust workspace (zccache CI itself was running at
       4-5 GiB and chronically hitting the previous 2GiB cap →
       build-cache became enabled-but-inert, see setup-soldr#279). Set
@@ -369,12 +378,13 @@ inputs:
       service caps individual entries at ~10 GiB and per-repo total
       at 10 GiB; 6GiB sits comfortably below both.
     required: false
-    default: "6GiB"
+    default: ""
   cache-payload-oversize-action:
     description: >
       Behavior when cache-payload-max-bytes is exceeded. "skip" logs a warning
       and does not upload the cache entry. "fail" treats the oversized payload
-      as a cache packaging error. Ignored when cache-payload-max-bytes is empty.
+      as a cache packaging error. Ignored when no payload cap applies
+      (cache-payload-max-bytes is 0, or empty on a local runner).
     required: false
     default: "skip"
   cache-encrypt-key:
@@ -720,7 +730,10 @@ inputs:
   solo-toolchain-cache-level:
     description: >
       zstd compression level for the solo-toolchain-cache archive.
-      Default "9" — measured save = ~12 s on a 140 MB delta vs
+      Empty (the default) picks the runner profile: "9" on GitHub-hosted
+      runners, "1" on a local runner (ACT=true, e.g. act/act2 under bosn).
+      An explicit value always wins on both.
+      GitHub "9" — measured save = ~12 s on a 140 MB delta vs
       "19" which measured at ~104 s (zccache CI v0.9.35, see #310).
       The archive grows ~25% at -9 (140 MB → 175 MB), restore stays
       bandwidth-bound at ~70 MB/s either way — the extra MB only
@@ -729,7 +742,7 @@ inputs:
       rustc release / soldr version bump invalidates). Users with
       truly long-lived workflows can override to "19" or "22".
     required: false
-    default: "9"
+    default: ""
   cache-eviction-policy:
     description: >
       Repo-level Actions Cache eviction policy run in the post-step

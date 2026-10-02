@@ -42,6 +42,7 @@ import {
 } from "./detect-musl-cc.js";
 import { buildOutputs } from "./build-outputs.js";
 import { readRawInputs } from "./raw-inputs.js";
+import { isLocalRunner, resolveCacheProfileInput } from "./local-profile.js";
 import { timeSubPhase } from "./phase-timing.js";
 import {
   detectUserLinkerEnv,
@@ -1408,8 +1409,9 @@ export async function resolveSetup(
     setEnv("SOLDR_TARGET_CACHE_INCLUDE_BUILD_SCRIPT_BINARIES", includeBuildScripts);
   }
   const targetCacheCompress = normalizeTargetCacheCompress(inputs.targetCacheCompress);
+  // Empty input -> runner profile default (GitHub 3, local/ACT 1).
   const targetCacheCompressLevel = normalizeTargetCacheCompressLevel(
-    inputs.targetCacheCompressLevel,
+    resolveCacheProfileInput("target-cache-compress-level", inputs.targetCacheCompressLevel, isLocalRunner(env)),
   );
   setEnv("SOLDR_TARGET_CACHE_COMPRESS", targetCacheCompress);
   setEnv("SOLDR_TARGET_CACHE_COMPRESS_LEVEL", targetCacheCompressLevel);

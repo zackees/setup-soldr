@@ -12,6 +12,7 @@ import type {
 } from "./types.js";
 import { decompressCache } from "./cache-compress.js";
 import { runPipe } from "./run-pipe.js";
+import { cacheProfileDefault, isLocalRunner } from "./local-profile.js";
 import {
   MIN_SOLDR_VERSION_FOR_SAVE_ROUNDTRIP,
   saveViaSoldr,
@@ -138,6 +139,8 @@ export async function writeCargoRegistryExtrasArchive(
   cargoHome: string,
   extras: string[],
   archivePath: string,
+  // Runner profile: GitHub -3, local runner (ACT) -1.
+  level: string = cacheProfileDefault("cargo-registry-extras-zstd-level", isLocalRunner(process.env)),
 ): Promise<void> {
   await fs.mkdir(path.dirname(archivePath), { recursive: true });
   const manifestRoot = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-cargo-extras-"));
@@ -148,7 +151,7 @@ export async function writeCargoRegistryExtrasArchive(
     const zstd = await resolveCargoRegistryZstd();
     await runPipe(
       ["tar", ["-cf", "-", "-C", cargoHome, "-T", manifestPath]],
-      [zstd, ["-T0", "-3", "-f", "-o", archivePath]],
+      [zstd, ["-T0", `-${level}`, "-f", "-o", archivePath]],
     );
   } finally {
     await fs.rm(manifestRoot, { recursive: true, force: true }).catch(() => undefined);

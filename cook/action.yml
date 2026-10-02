@@ -75,13 +75,19 @@ inputs:
     required: false
     default: ""
   zstd-level:
-    description: "Base/legacy archive zstd compression level."
+    description: >
+      Base/legacy archive zstd compression level. Empty (the default) picks
+      the runner profile: "9" on GitHub-hosted runners, "1" on a local runner
+      (ACT=true, e.g. act/act2 under bosn). An explicit value always wins.
     required: false
-    default: "9"
+    default: ""
   delta-zstd-level:
-    description: "Delta archive zstd compression level."
+    description: >
+      Delta archive zstd compression level. Empty (the default) picks the
+      runner profile: "3" on GitHub-hosted runners, "1" on a local runner
+      (ACT=true, e.g. act/act2 under bosn). An explicit value always wins.
     required: false
-    default: "3"
+    default: ""
   fail-on-error:
     description: "Fail the action when cook or cook-cache save fails."
     required: false
