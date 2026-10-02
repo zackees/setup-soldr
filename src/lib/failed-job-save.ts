@@ -10,11 +10,12 @@
 // target-cache). Toolchain and registry layers are unaffected: their content
 // is a verified install, not a half-finished build.
 //
-// The job status comes from the `job-status` input, whose default is
-// `${{ job.status }}`. The runner re-evaluates a step's inputs for its post
-// step, so the post step sees the job's status at the end of its steps. An
-// empty status (a caller blanking the input) keeps the old always-save
-// behaviour, as does `save-on-failure: true`.
+// The job status comes from the `job-status` input, which the workflow sets
+// to `${{ job.status }}` (an action's own input default cannot read the `job`
+// context). The runner re-evaluates a step's `with:` inputs for its post step,
+// so the post step sees the job's status at the end of its steps. An empty
+// status (the default) keeps the old always-save behaviour, as does
+// `save-on-failure: true`.
 
 import { readRawInputs } from "./raw-inputs.js";
 

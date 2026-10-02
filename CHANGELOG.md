@@ -8,9 +8,10 @@
   `bosn ci`, a compile error, a cancel) saved a partial store under the run's
   key; the next run got an exact hit on it and, being an exact hit, never
   re-saved it. build-cache and target-cache now skip the save, logged as
-  `failed-job-skip`, when the new `job-status` input (default
-  `${{ job.status }}`, re-evaluated by the runner for the post step) is
-  `failure` or `cancelled`. Toolchain, registry and tool layers still save.
+  `failed-job-skip`, when the new `job-status` input is `failure` or
+  `cancelled`. Pass `job-status: ${{ job.status }}` (the runner re-evaluates
+  `with:` inputs for the post step; an action's own default cannot read the
+  `job` context); empty, the default, keeps the old behaviour. Toolchain, registry and tool layers still save.
   `save-on-failure: true` restores the old behaviour.
 
 - Keep the managed Rust toolchain and Soldr's stamped tool bundles in

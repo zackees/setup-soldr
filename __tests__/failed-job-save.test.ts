@@ -47,7 +47,7 @@ test("#559 the post step reads job-status and save-on-failure from its re-evalua
   assert.equal(readBuildOutputSaveGate({ "INPUT_JOB-STATUS": "success" }).save, true);
 });
 
-test("#559 action.yml defaults job-status to the live job status and save-on-failure to false", () => {
+test("#559 action.yml: job-status comes from the workflow, save-on-failure defaults to false", () => {
   const yml = fs.readFileSync(path.join(ROOT, "action.yml"), "utf8");
   const block = (name: string): string => {
     const start = yml.indexOf(`\n  ${name}:\n`);
@@ -55,7 +55,11 @@ test("#559 action.yml defaults job-status to the live job status and save-on-fai
     const next = yml.slice(start + 1).search(/\n  [a-z0-9-]+:\n/);
     return yml.slice(start, start + 1 + next);
   };
-  assert.match(block("job-status"), /default: \$\{\{ job\.status \}\}/);
+  // An action input default cannot read the `job` context ("Unrecognized
+  // named-value: 'job'"), so the workflow passes `${{ job.status }}`.
+  assert.doesNotMatch(block("job-status"), /default: \$\{\{/);
+  assert.match(block("job-status"), /default: ""/);
+  assert.match(block("job-status"), /job-status: \$\{\{ job\.status \}\}/);
   assert.match(block("save-on-failure"), /default: "false"/);
 });
 
