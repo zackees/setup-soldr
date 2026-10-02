@@ -494,7 +494,7 @@ jobs:
           targets: ${{ steps.config.outputs.target }}
 
       - name: Cache cargo registry and target
-        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2  # ci-lint: allow CACHE-025 benchmark: Swatinem is the comparison baseline under test
         with:
           shared-key: cache-benchmark-${{ steps.config.outputs.target }}
           workspaces: soldr -> target

@@ -80,7 +80,7 @@ jobs:
       - name: Restore Swatinem rust-cache
         id: rust_cache
         if: ${{ inputs.cache_backend == 'swatinem' }}
-        uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2
+        uses: Swatinem/rust-cache@42dc69e1aa15d09112580998cf2ef0119e2e91ae # v2  # ci-lint: allow CACHE-025 benchmark: Swatinem is the comparison baseline under test
         with:
           shared-key: ${{ inputs.cache_shared_key }}
           add-job-id-key: "false"
