@@ -22,7 +22,7 @@ def test_tier_contract_has_real_extension_and_reviewed_helper_identity():
         assert adapter[key] and len(adapter[key]) == len(set(adapter[key]))
 
 
-def test_all_supported_targets_and_unimplemented_arm_musl_remain_declared():
+def test_all_supported_targets_require_declared_execution():
     contract = json.loads((ROOT / "ci/fleet-full.v1.json").read_text())
     assert contract["schema_version"] == 1
     targets = {target["triple"]: target for target in contract["targets"]}
@@ -41,9 +41,7 @@ def test_all_supported_targets_and_unimplemented_arm_musl_remain_declared():
     assert len(required) == len(contract["required_jobs"]) == 7
     for triple, target in targets.items():
         assert target["ci"]["build_job"] in required
+        assert target["ci"]["run_job"] in required
         if triple == "aarch64-unknown-linux-musl":
-            assert target["status"] == "blocked-required-native-execution"
-            assert "run_job" not in target["ci"]
-            assert target["next_action"]
-        else:
-            assert target["ci"]["run_job"] in required
+            assert target["ci"]["run_job"] == "cross-prepare"
+            assert "status" not in target

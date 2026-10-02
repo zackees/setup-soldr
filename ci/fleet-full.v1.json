@@ -62,11 +62,10 @@
     {
       "triple": "aarch64-unknown-linux-musl",
       "ci": {
-        "build_job": "cross-prepare"
-      },
-      "status": "blocked-required-native-execution",
-      "next_action": "Implement mandatory ARM musl fixture build and execution on ubuntu-24.04-arm; capability skip cannot satisfy this cell."
+        "build_job": "cross-prepare",
+        "run_job": "cross-prepare"
+      }
     }
   ],
-  "scope": "Supported action target variants. Full acceptance is intentionally blocked until required ARM musl execution is implemented; existing capability probe is insufficient."
+  "scope": "Supported action target variants. All declared targets require execution; native ARM musl execution evidence and reviewed workflow activation remain pending."
 }

@@ -12,10 +12,18 @@ fall back when trusted files are missing. The separate Soldr helper SHA remains
 provisional pending serial acceptance.
 
 Full retains eight supported platform/ABI targets and seven extended job groups.
-ARM Linux musl has no mandatory native execution and remains explicitly blocked;
-full coverage must refuse that missing cell. This bootstrap does not prove job
-connection, matrix execution, native compatibility, security/protection, Bosn or
-whole-event cost. Later activation needs its own review and live evidence.
+This policy update requires ARM Linux musl build and native execution through
+cross-prepare. The separate activation source must run that required fixture
+on ubuntu-24.04-arm without capability skipping. Existing default workflows do
+not consume these contracts; this data-only update does not activate that source.
+After review, existing CI success and merge, activation must pin the exact merge
+SHA before using the revised requirement. The prior d1c0009 bootstrap still
+refuses ARM musl because it lacks run_job.
+
+A manifest requirement is not execution evidence. Real hosted ARM musl build,
+native fixture output, matrix completeness, security/protection, Bosn and
+whole-event cost proof remain pending. Do not claim fleet acceptance or promote
+v0 based on this update.
 
 Local gate:
 
