@@ -104,6 +104,7 @@ async function main(): Promise<void> {
     parseSaveCacheMode(core.getInput("save-cache"), "auto"),
     env["GITHUB_EVENT_NAME"],
     isLocalRunner(env),
+    parseSaveCacheMode(core.getInput("save-cache-remote"), "auto"),
   );
   const saveCache = saveDecision.save;
   if (!saveCache) core.info(`cook-cache: save skipped: ${saveDecision.reason}`);

@@ -55247,11 +55247,16 @@ function parseSaveCacheMode(raw, defaultMode = "auto") {
     throw new Error(`save-cache must be one of auto, true, false (got '${raw}')`);
 }
 /** Pure decision: no I/O, platform independent (RUNNER_OS is irrelevant). */
-function decideCacheSave(mode, eventName, localRunner = false) {
-    if (mode === "true")
-        return { save: true, mode, reason: "save-cache=true" };
+function decideCacheSave(mode, eventName, localRunner = false, remoteMode = "auto") {
     if (mode === "false")
         return { save: false, mode, reason: "save-cache=false" };
+    // A planner's remote write permission is not a local cache disable.
+    // Explicit save-cache=false above still disables every backend.
+    if (!localRunner && remoteMode !== "auto") {
+        return { save: remoteMode === "true", mode, reason: `save-cache-remote=${remoteMode}` };
+    }
+    if (mode === "true")
+        return { save: true, mode, reason: "save-cache=true" };
     const event = (eventName ?? "").trim();
     if (localRunner) {
         return { save: true, mode, reason: `local runner (act): no ref scoping (save-cache=auto)` };
@@ -55274,7 +55279,14 @@ function currentSaveDecision(env = process.env) {
     catch {
         mode = "auto";
     }
-    return decideCacheSave(mode, env["GITHUB_EVENT_NAME"], (0, local_profile_js_1.isLocalRunner)(env));
+    let remoteMode;
+    try {
+        remoteMode = parseSaveCacheMode(env["INPUT_SAVE-CACHE-REMOTE"], "auto");
+    }
+    catch {
+        return { save: false, mode, reason: "invalid save-cache-remote" };
+    }
+    return decideCacheSave(mode, env["GITHUB_EVENT_NAME"], (0, local_profile_js_1.isLocalRunner)(env), remoteMode);
 }
 const loggedSkips = new Set();
 /** Test hook: forget which layers already logged a skip line. */

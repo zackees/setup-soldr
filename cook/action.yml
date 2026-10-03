@@ -36,6 +36,14 @@ inputs:
     description: "Set false to skip cook restore/run/save."
     required: false
     default: "true"
+  save-cache-remote:
+    description: >
+      auto | true | false. Remote-only durable cook cache write policy,
+      such as the ci-lint plan's cache_save output. auto preserves the
+      event-based default; true or false sets the remote decision. Ignored
+      under act/act2. save-cache=false disables every save everywhere.
+    required: false
+    default: "auto"
   save-cache:
     description: >
       auto | true | false. "auto" (default) writes the durable cook

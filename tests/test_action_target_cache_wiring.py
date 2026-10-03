@@ -31,6 +31,7 @@ EXPECTED_INPUTS = {
     "token",
     "cache",
     "save-cache",
+    "save-cache-remote",
     "cache-dir",
     "cache-key-suffix",
     "cache-preset",

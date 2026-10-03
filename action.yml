@@ -59,6 +59,16 @@ inputs:
       flip individual layer inputs.
     required: false
     default: "true"
+  save-cache-remote:
+    description: >
+      auto | true | false. Remote-only durable cache write policy, for
+      example the ci-lint plan's cache_save output. With auto (default),
+      save-cache and the triggering event decide as before. true or false
+      sets the remote write decision; ignored under act/act2 so local
+      automatic saves remain warm. save-cache=false always disables saves
+      everywhere, including local runners. Restores are unaffected.
+    required: false
+    default: "auto"
   save-cache:
     description: >
       Governs every durable Actions-cache save this action performs
