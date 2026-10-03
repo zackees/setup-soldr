@@ -116,6 +116,20 @@ on:
         default: "6.0.3"
   workflow_dispatch:
     inputs:
+      ancestor-pilot:
+        description: Explicit bounded mechanics experiment; off preserves normal Rust CI.
+        type: choice
+        default: "off"
+        options:
+          - "off"
+          - seed-legacy
+          - seed-auto
+          - legacy
+          - auto
+      ancestor-trusted-writers:
+        description: Reviewed immutable main writer policy for the auto comparison only.
+        type: string
+        default: ""
       os:
         description: Runner label.
         type: string
@@ -198,6 +212,7 @@ on:
 
 jobs:
   warm:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.ancestor-pilot || inputs.ancestor-pilot == 'off' }}
     name: warm (build)
     runs-on: ${{ inputs.os }}
     outputs:
@@ -604,3 +619,66 @@ jobs:
         shell: bash
         working-directory: ${{ inputs.working-directory }}
         run: soldr cargo dylint --all --workspace
+
+  ancestor-pilot:
+    name: ancestor mechanics (native Linux)
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.ancestor-pilot && inputs.ancestor-pilot != 'off' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    env:
+      PILOT_MODE: ${{ inputs.ancestor-pilot }}
+      PILOT_TRUSTED_WRITERS: ${{ inputs.ancestor-trusted-writers }}
+    steps:
+      - name: Checkout immutable experiment source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 200
+          persist-credentials: false
+      - name: Prepare declared action runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+      - name: Validate pilot source and save policy
+        id: pilot
+        run: python3 scripts/ancestor_cache_pilot.py validate
+      - name: Setup pilot cache
+        id: cache
+        uses: zackees/setup-soldr@246b70a65b61e5c6bf415e01afc90a9a2983bdbb
+        with:
+          version: "0.9.28"
+          toolchain: "1.98.1"
+          cache: "true"
+          build-cache: "true"
+          build-cache-mode: full
+          target-cache: "false"
+          prebuild-deps: none
+          cache-key-suffix: ${{ steps.pilot.outputs.namespace }}
+          key: ${{ steps.pilot.outputs.key }}
+          auto-key-trusted-writers: ${{ inputs.ancestor-trusted-writers }}
+          save-cache: ${{ steps.pilot.outputs.save }}
+          job-status: ${{ job.status }}
+          save-on-failure: "false"
+          build-cache-save-min-compiles: "0"
+          cache-payload-max-bytes: "209715200"
+          cache-payload-oversize-action: skip
+          lockfile: scripts/bench-workloads/demo-small/Cargo.lock
+          target-dir: scripts/bench-workloads/demo-small/target
+      - name: Measure actual build and usable restore
+        env:
+          PILOT_WRITE_KEY: ${{ steps.cache.outputs.build-cache-key }}
+          PILOT_MATCHED_KEY: ${{ steps.cache.outputs.build-cache-matched-key }}
+          PILOT_ANCESTOR_JSON: ${{ steps.cache.outputs.build-cache-ancestor-json }}
+          PILOT_BUILD_CACHE_PATH: ${{ steps.cache.outputs.build-cache-path }}
+        run: python3 scripts/ancestor_cache_pilot.py measure
+      - name: Preserve bounded experiment report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ancestor-pilot-${{ inputs.ancestor-pilot }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ancestor-pilot/
+          if-no-files-found: ignore
+          retention-days: 14

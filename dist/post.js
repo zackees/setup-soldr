@@ -48548,6 +48548,7 @@ exports.planAncestorRestore = planAncestorRestore;
 const node_child_process_1 = __nccwpck_require__(31421);
 const github = __importStar(__nccwpck_require__(93228));
 const ancestor_cache_trust_js_1 = __nccwpck_require__(42286);
+const ancestor_cache_telemetry_js_1 = __nccwpck_require__(3167);
 const ancestor_cache_js_1 = __nccwpck_require__(7853);
 exports.CLEAN_SAVE_MARKER = "setup-soldr-ancestor-clean-save-v1 ";
 function hasCleanSaveProof(log, entry, key, writer, jobId) {
@@ -48605,16 +48606,30 @@ async function planAncestorRestore(options) {
         // Bootstrap can publish a normal gated seed, but its public record is
         // not eligible until the caller explicitly reviews this writer job.
         // No candidate/log API calls are needed without writer authority.
-        return { writeKey, writer, ref, elapsedMs: Date.now() - start, requests: 0,
+        return { writeKey, writer, ref, elapsedMs: Date.now() - start, requests: 0, apiMs: 0, rateLimitRemaining: null,
             selection: { entry: null, distance: null,
                 reason: "legacy-fallback: no reviewed immutable writer", inspected: 0 } };
     }
     const octokit = github.getOctokit(token, { request: { timeout: 15_000 } });
     let requests = 0;
-    function requestBudget() {
-        if (Date.now() - start > 45_000 || ++requests > 24) {
-            throw new Error("ancestor lookup exceeded time/request budget");
+    let apiMs = 0;
+    let requestStarted = 0;
+    let rateLimitRemaining = null;
+    octokit.hook.before("request", () => { requestStarted = Date.now(); });
+    octokit.hook.after("request", response => {
+        apiMs += Date.now() - requestStarted;
+        const header = response.headers["x-ratelimit-remaining"];
+        const remaining = Number(header);
+        if (header !== undefined && Number.isSafeInteger(remaining) && remaining >= 0) {
+            rateLimitRemaining = rateLimitRemaining === null ? remaining : Math.min(rateLimitRemaining, remaining);
         }
+    });
+    octokit.hook.error("request", error => {
+        apiMs += Date.now() - requestStarted;
+        throw error;
+    });
+    function requestBudget() {
+        requests = (0, ancestor_cache_telemetry_js_1.admitAncestorRequest)(requests, Date.now() - start);
     }
     const eventRepository = github.context.payload.repository;
     const defaultBranch = eventRepository?.default_branch;
@@ -48734,7 +48749,49 @@ async function planAncestorRestore(options) {
     });
     if (selection.entry && selection.distance === 0)
         writeKey = selection.entry.key;
-    return { writeKey, selection, writer, ref, elapsedMs: Date.now() - start, requests };
+    return { writeKey, selection, writer, ref, elapsedMs: Date.now() - start, requests, apiMs, rateLimitRemaining };
+}
+
+
+/***/ }),
+
+/***/ 3167:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.admitAncestorRequest = admitAncestorRequest;
+exports.ancestorTelemetry = ancestorTelemetry;
+exports.publishBuildCachePlan = publishBuildCachePlan;
+/** Count an API operation only after admitting it. A rejected 25th lookup
+ * must not be reported as a GET that was actually attempted. */
+function admitAncestorRequest(count, elapsedMs) {
+    if (elapsedMs > 45_000 || count >= 24)
+        throw new Error("ancestor lookup exceeded time/request budget");
+    return count + 1;
+}
+function ancestorTelemetry(identity, plan) {
+    return {
+        selected_cache_id: plan.selection.entry?.id ?? null,
+        selected_key: plan.selection.entry?.key ?? "",
+        write_key: plan.writeKey,
+        identity,
+        distance: plan.selection.distance,
+        source_sha: plan.writer.sha,
+        reason: plan.selection.reason,
+        scan_ms: plan.elapsedMs,
+        api_ms: plan.apiMs,
+        requests: plan.requests,
+        rate_limit_remaining: plan.rateLimitRemaining,
+    };
+}
+/** Resolve emits a legacy key before auto/explicit selection. Re-publish the
+ * actual write key after selection, together with structured donor telemetry.
+ * Selection is prospective: matched-key output proves actual usable restore. */
+function publishBuildCachePlan(writeKey, telemetry, emit) {
+    emit("build-cache-key", writeKey);
+    emit("build-cache-ancestor-json", telemetry ? JSON.stringify(telemetry) : "");
 }
 
 

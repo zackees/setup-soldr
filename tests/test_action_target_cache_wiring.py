@@ -140,6 +140,8 @@ EXPECTED_OUTPUTS = {
     "cargo-registry-cache-hit",
     "build-cache-hit",
     "build-cache-key",
+    "build-cache-matched-key",
+    "build-cache-ancestor-json",
     "build-cache-path",
     "build-cache-mode",
     "build-cache-restore-status",

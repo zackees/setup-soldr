@@ -13,6 +13,7 @@ import * as cache from "@actions/cache";
 import * as exec from "@actions/exec";
 import { createLogger } from "./lib/log-utils.js";
 import { autoKeyEnabled } from "./lib/ancestor-cache.js";
+import { ancestorTelemetry, publishBuildCachePlan, type AncestorTelemetry } from "./lib/ancestor-cache-telemetry.js";
 import { planAncestorRestore } from "./lib/ancestor-cache-github.js";
 import { cargoConfigHash, shortJsonHash, targetEnvHash, workspaceManifestHash } from "./lib/cache-keys.js";
 import { readRawInputs, resolveSetup, applyResolveResult } from "./lib/resolve-setup.js";
@@ -593,6 +594,7 @@ export async function run(): Promise<void> {
     }
     const legacyKey = result.buildCache.key;
     let selectedKey = "";
+    let selectionTelemetry: AncestorTelemetry | null = null;
     if (autoKeyEnabled(inputs.key, inputs.autoKey)) {
       try {
         const identity = shortJsonHash({
@@ -605,10 +607,11 @@ export async function run(): Promise<void> {
         const plan = await planAncestorRestore({ workspace: result.workspace, identity,
           token: ctx.githubToken, env: process.env, trustedWriters: inputs.autoKeyTrustedWriters });
         selectedKey = plan.selection.entry?.key ?? "";
+        selectionTelemetry = ancestorTelemetry(identity, plan);
         result.buildCache.key = plan.writeKey;
         core.saveState("resolveResult", JSON.stringify(result));
         core.saveState("ancestorBuildWriter", JSON.stringify({ ...plan.writer, ref: plan.ref }));
-        logger.log(`build-cache ancestor: ${plan.selection.reason} key=${selectedKey || "legacy"} distance=${plan.selection.distance ?? "unknown"} scan_ms=${plan.elapsedMs} requests=${plan.requests}`);
+        logger.log(`build-cache ancestor: ${plan.selection.reason} key=${selectedKey || "legacy"} cache_id=${plan.selection.entry?.id ?? "none"} identity=${identity} distance=${plan.selection.distance ?? "unknown"} scan_ms=${plan.elapsedMs} api_ms=${plan.apiMs} requests=${plan.requests} rate_limit_remaining=${plan.rateLimitRemaining ?? "unknown"}`);
         await core.summary.addHeading("Build-cache ancestor pilot", 3).addTable([
           ["Choice", "Distance", "Scan ms", "GET requests"],
           [selectedKey || plan.selection.reason, String(plan.selection.distance ?? "unknown"), String(plan.elapsedMs), String(plan.requests)],
@@ -617,6 +620,7 @@ export async function run(): Promise<void> {
         logger.warning(`build-cache ancestor: legacy fallback: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
+    publishBuildCachePlan(result.buildCache.key, selectionTelemetry, core.setOutput);
     const t0 = Date.now();
     // @actions/cache hashes the `paths` array into a "version" key — save and
     // restore MUST pass the same array or the lookup misses even when the
@@ -693,6 +697,7 @@ export async function run(): Promise<void> {
     core.setOutput("build-cache-restore-status", deriveRestoreStatus(restore.hit, restore.matchedKey));
     core.setOutput("build_cache_hit", restore.hit ? "true" : "false");
     core.setOutput("build_cache_matched_key", restore.matchedKey);
+    core.setOutput("build-cache-matched-key", restore.matchedKey);
     core.saveState("buildCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("buildCacheMatchedKey", restore.matchedKey);
     if (restore.matchedKey) dependencyCacheMatchedKeys.push(restore.matchedKey);
