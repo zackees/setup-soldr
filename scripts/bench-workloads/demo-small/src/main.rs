@@ -1,3 +1,4 @@
+// Ancestor mechanics consumer: source changes with fixed dependency identity.
 // Trivial body — the bench measures *build* time, not runtime. Keep this
 // minimal so any compile delta we observe is dominated by dep crates, not
 // by code edits to this file.
