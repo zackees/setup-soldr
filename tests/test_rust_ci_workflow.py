@@ -150,3 +150,103 @@ def test_readme_documents_cross_default_native_opt_in_and_manual_trigger() -> No
     assert "`rust-toolchain.rust-ci.toml`" in readme
     assert "`toolchain-file`" in readme
     assert DEFAULT_CROSS_TARGET in readme
+
+
+# The dispatch experiment must not widen reusable caller permissions or alter
+# ordinary coverage; only explicit experimental modes select the isolated job.
+def test_ancestor_pilot_is_explicit_scoped_and_readonly_for_comparisons() -> None:
+    workflow = _load_workflow()
+    triggers = _triggers(workflow)
+    assert "ancestor-pilot" not in triggers["workflow_call"]["inputs"]
+    dispatch = triggers["workflow_dispatch"]["inputs"]
+    assert dispatch["ancestor-pilot"]["default"] == "off"
+    assert dispatch["ancestor-pilot"]["options"] == ["off", "seed-legacy", "seed-auto", "legacy", "auto"]
+    job = workflow["jobs"]["ancestor-pilot"]
+    assert job["permissions"] == {"contents": "read", "actions": "read"}
+    assert job["timeout-minutes"] == 15
+    assert "workflow_dispatch" in job["if"] and "!= 'off'" in job["if"]
+    assert "ancestor-pilot" in workflow["jobs"]["warm"]["if"]
+    setup = _step_named(job, "Setup pilot cache")
+    assert setup["uses"] == "zackees/setup-soldr@246b70a65b61e5c6bf415e01afc90a9a2983bdbb"
+    assert setup["with"]["save-cache"] == "${{ steps.pilot.outputs.save }}"
+    assert setup["with"]["cache-payload-max-bytes"] == "209715200"
+    assert setup["with"]["cache-payload-oversize-action"] == "skip"
+    assert setup["with"]["target-cache"] == "false"
+    assert setup["with"]["prebuild-deps"] == "none"
+    for name in ("fmt", "lint", "clippy", "test", "dylint"):
+        assert workflow["jobs"][name]["needs"] == "warm"
+
+
+def test_pilot_seed_rejects_branch_scope_and_checkout_spoof(tmp_path: Path) -> None:
+    import pytest
+    from scripts.ancestor_cache_pilot import WORKLOAD, configuration
+
+    lock = tmp_path / WORKLOAD / "Cargo.lock"
+    lock.parent.mkdir(parents=True)
+    lock.write_text("locked fixture\n", encoding="utf-8")
+    sha = "a" * 40
+    env: dict[str, str] = {"PILOT_MODE": "seed-auto", "GITHUB_EVENT_NAME": "workflow_dispatch",
+                           "GITHUB_REPOSITORY": "zackees/setup-soldr", "GITHUB_SHA": sha,
+                           "GITHUB_REF": "refs/heads/experiment"}
+    with pytest.raises(ValueError, match="main cache scope"):
+        configuration(env, tmp_path, sha)
+    env["GITHUB_REF"] = "refs/heads/main"
+    with pytest.raises(ValueError, match="actual checkout"):
+        configuration(env, tmp_path, "b" * 40)
+    assert configuration(env, tmp_path, sha).source_sha == sha
+    env["PILOT_MODE"] = "auto"
+    with pytest.raises(ValueError, match="reviewed immutable writer"):
+        configuration(env, tmp_path, sha)
+
+
+def test_pilot_comparisons_disable_writes(tmp_path: Path) -> None:
+    from scripts.ancestor_cache_pilot import PilotConfiguration, PilotMode, write_configuration
+
+    for mode in PilotMode:
+        output = tmp_path / mode.value
+        write_configuration(PilotConfiguration(mode, "a" * 40, "fixture", "lock"), output)
+        lines = output.read_text(encoding="utf-8").splitlines()
+        seed = mode in (PilotMode.SEED_AUTO, PilotMode.SEED_LEGACY)
+        assert f"save={'true' if seed else 'false'}" in lines
+        assert f"key={'auto' if mode in (PilotMode.SEED_AUTO, PilotMode.AUTO) else ''}" in lines
+
+
+def test_pilot_candidate_does_not_prove_usable_restore() -> None:
+    import json
+    import pytest
+    from scripts.ancestor_cache_pilot import JsonValue, parse_telemetry, selected_donor_restored
+
+    sha = "a" * 40
+    document: dict[str, JsonValue] = {"selected_cache_id": 42, "selected_key": "donor",
+        "write_key": "write", "identity": "identity", "distance": 1, "source_sha": sha,
+        "scan_ms": 20, "api_ms": 10, "requests": 2, "rate_limit_remaining": None, "reason": "selected"}
+    telemetry = parse_telemetry(json.dumps(document), sha, "write")
+    assert not selected_donor_restored(telemetry, "")
+    assert not selected_donor_restored(telemetry, "legacy-fallback")
+    assert selected_donor_restored(telemetry, "donor")
+    assert telemetry.rate_limit_remaining is None
+    with pytest.raises(ValueError, match="actual checkout"):
+        parse_telemetry(json.dumps(document), "b" * 40, "write")
+    document["selected_cache_id"] = 0
+    with pytest.raises(ValueError, match="positive"):
+        parse_telemetry(json.dumps(document), sha, "write")
+
+
+def test_pilot_ignores_restored_stale_compile_statistics(tmp_path: Path) -> None:
+    import os
+    from scripts.ancestor_cache_pilot import compilation_statistics
+
+    stats = tmp_path / "logs" / "archive" / "first" / "last-session-stats.json"
+    stats.parent.mkdir(parents=True)
+    stats.write_text('{"hits": 123, "misses": 0}', encoding="utf-8")
+    os.utime(stats, ns=(100, 100))
+    assert compilation_statistics(tmp_path, 200).hits is None
+    os.utime(stats, ns=(300, 300))
+    assert compilation_statistics(tmp_path, 200).hits == 123
+    second = stats.parent.parent / "second" / "last-session-stats.json"
+    second.parent.mkdir()
+    second.write_text('{"hits": 2, "misses": 3}', encoding="utf-8")
+    assert compilation_statistics(tmp_path, 200).hits == 125
+    assert compilation_statistics(tmp_path, 200).misses == 3
+    stats.write_text('{"hits": true, "misses": -1}', encoding="utf-8")
+    assert compilation_statistics(tmp_path, 200).hits is None

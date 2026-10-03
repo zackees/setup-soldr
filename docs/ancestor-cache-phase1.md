@@ -108,3 +108,43 @@ the final auto-ancestor/default requirement.
 Do not enable another layer, add a manifest, promote PR payloads, or make auto
 the default from these unit tests. Report measured results to both issues;
 Phases 2–4 require their own decisions and eventual second-repository evidence.
+
+## Bounded mechanics dispatch
+
+The existing `rust-ci.yml` workflow has an explicit `ancestor-pilot` dispatch
+choice, defaulting to `off`. Normal reusable callers retain their warm/fan-out
+coverage and permissions. The experiment runs the real `demo-small` Rust fixture
+with its committed lock, released Soldr 0.9.28, Rust 1.98.1 and the reviewed action
+commit 246b70a65b61e5c6bf415e01afc90a9a2983bdbb. It does not select the repository's
+self-hosting Soldr source build or measure that build's production benefit.
+
+Run `seed-legacy` and then `seed-auto` on actual `main`. Validation checks the
+checkout against the authenticated workflow SHA and rejects seed dispatches on
+other refs. Each seed uses the normal post/save guards and a 200 MiB payload cap;
+an oversize payload is skipped. A successful build/report alone does not prove a
+cache was uploaded. After completion, review the pinned action and every executable
+step in the exact workflow source, authenticate the run/attempt/job metadata, and
+verify the positive cache ID, exact key, source SHA and normal post gates in the
+completed job log. Authorize only that immutable auto writer using the documented
+`auto-key-trusted-writers` format.
+
+Use a source-only descendant that leaves manifests, lock, flags and toolchain
+unchanged, then dispatch `legacy` and `auto` on that same descendant. Pass the
+reviewed policy through `ancestor-trusted-writers` for `auto`. Both comparison
+modes set `save-cache: false` for every durable family; their jobs have only
+`contents: read` and `actions: read`. The report records selection identity,
+ancestor distance, candidate ID, actual usable matched key, logical API request
+count, API wall time, scan wall time and minimum observed rate-limit remainder.
+The matched key must equal the selected donor key before the report identifies a
+restored auto donor. The legacy control must actually restore its seed.
+
+Uploaded reports include timed locked-build output and current compile statistics
+when available; restored old statistics are excluded. Missing telemetry remains
+unknown. Setup/extraction time comes from the completed job's step timing and is
+not included in the reported build time. Read the completed post logs separately
+to establish writer saves or comparison write suppression. Recheck the live cache
+budget before dispatching seeds and retain the exact run/job/cache evidence.
+
+This experiment proves main-scoped ancestor mechanics only. It does not complete
+automatic writer trust, default enablement, real Soldr caller measurement, either
+physical PR payload handoff strategy, or a second repository rollout.
