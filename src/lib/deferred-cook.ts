@@ -21,6 +21,7 @@ import {
   workspaceManifestHash,
 } from "./cache-keys.js";
 import { detectLibc } from "./solo-toolchain-cache.js";
+import { cacheProfileDefault, isLocalRunner } from "./local-profile.js";
 
 export interface DeferredCookInputs {
   workspace: string;
@@ -189,7 +190,8 @@ export async function buildDeferredCookPlan(
     baseArchivePath: `${targetDir}.soldr-base.tar.zst`,
     deltaArchivePath: `${targetDir}.soldr-delta.tar.zst`,
     baseManifestPath: `${targetDir}.soldr-base-manifest.pb`,
-    baseZstdLevel: "9",
-    deltaZstdLevel: "3",
+    // Runner profile: GitHub 9/3, local runner (ACT) 1/1.
+    baseZstdLevel: cacheProfileDefault("cook-base-zstd-level", isLocalRunner(inputs.env)),
+    deltaZstdLevel: cacheProfileDefault("cook-delta-zstd-level", isLocalRunner(inputs.env)),
   };
 }

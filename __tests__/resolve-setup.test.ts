@@ -182,6 +182,19 @@ test("default compression level is 3", async () => {
   assert.equal(outputs["target_cache_compress_level"], "3");
 });
 
+test("local runner (ACT=true) defaults the compression level to 1", async () => {
+  const { result, outputs } = await run({}, { ACT: "true" });
+  assert.equal(result.envExports["SOLDR_TARGET_CACHE_COMPRESS_LEVEL"], "1");
+  assert.equal(outputs["target_cache_compress_level"], "1");
+});
+
+test("explicit compression level wins under ACT=true and on GitHub", async () => {
+  for (const extra of [{}, { ACT: "true" }] as Array<Record<string, string>>) {
+    const { result } = await run({}, { ...extra, INPUT_TARGET_CACHE_COMPRESS_LEVEL: "7" });
+    assert.equal(result.envExports["SOLDR_TARGET_CACHE_COMPRESS_LEVEL"], "7");
+  }
+});
+
 test("explicit codec propagates", async () => {
   for (const codec of ["auto", "zstd", "none"]) {
     const { outputs } = await run({}, { INPUT_TARGET_CACHE_COMPRESS: codec });

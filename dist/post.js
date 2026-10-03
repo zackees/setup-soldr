@@ -50321,6 +50321,7 @@ const io = __importStar(__nccwpck_require__(94994));
 const tc = __importStar(__nccwpck_require__(33472));
 const cache_compress_js_1 = __nccwpck_require__(24978);
 const run_pipe_js_1 = __nccwpck_require__(35791);
+const local_profile_js_1 = __nccwpck_require__(29720);
 const soldr_load_shim_js_1 = __nccwpck_require__(18084);
 const OPTIONAL_EXTRA_BASENAMES = [".global-cache", "git"];
 function cargoRegistryArchiveFormat(input) {
@@ -50419,7 +50420,9 @@ async function resolveCargoRegistryZstd() {
         throw new Error("downloaded zstd archive did not contain zstd.exe");
     return downloaded;
 }
-async function writeCargoRegistryExtrasArchive(cargoHome, extras, archivePath) {
+async function writeCargoRegistryExtrasArchive(cargoHome, extras, archivePath,
+// Runner profile: GitHub -3, local runner (ACT) -1.
+level = (0, local_profile_js_1.cacheProfileDefault)("cargo-registry-extras-zstd-level", (0, local_profile_js_1.isLocalRunner)(process.env))) {
     await fs.mkdir(path.dirname(archivePath), { recursive: true });
     const manifestRoot = await fs.mkdtemp(path.join(os.tmpdir(), "setup-soldr-cargo-extras-"));
     const manifestPath = path.join(manifestRoot, "manifest.txt");
@@ -50427,7 +50430,7 @@ async function writeCargoRegistryExtrasArchive(cargoHome, extras, archivePath) {
         const basenames = extras.map((entry) => path.basename(entry));
         await fs.writeFile(manifestPath, basenames.map((entry) => `${entry}\n`).join(""), "utf8");
         const zstd = await resolveCargoRegistryZstd();
-        await (0, run_pipe_js_1.runPipe)(["tar", ["-cf", "-", "-C", cargoHome, "-T", manifestPath]], [zstd, ["-T0", "-3", "-f", "-o", archivePath]]);
+        await (0, run_pipe_js_1.runPipe)(["tar", ["-cf", "-", "-C", cargoHome, "-T", manifestPath]], [zstd, ["-T0", `-${level}`, "-f", "-o", archivePath]]);
     }
     finally {
         await fs.rm(manifestRoot, { recursive: true, force: true }).catch(() => undefined);
@@ -54200,6 +54203,99 @@ function githubApiUrl(apiPath, env = process.env) {
 
 /***/ }),
 
+/***/ 29720:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+/**
+ * Runner-aware cache profile (zackees/ci.yml#227, zackees/clud#1740).
+ *
+ * A GitHub-hosted runner has a 10 GB, ref-scoped Actions-cache budget and a
+ * fast network, so small payloads and high zstd levels pay off there. A local
+ * runner (act / act2, e.g. under bosn) has no budget, a slow refetch over the
+ * developer's network and a fast disk, so it wants larger payloads and fast,
+ * low compression.
+ *
+ * Fleet policy ("Two signals, two jobs"): `RUNNER_ENVIRONMENT` stays
+ * `github-hosted` under act2 for parity, and `ACT=true` is THE local-runner
+ * signal. Actions read `ACT` themselves; workflows must not. The same signal
+ * drives the save policy (`save-policy.ts`, setup-soldr#537).
+ *
+ * The profile only supplies DEFAULTS. Each profile input's `action.yml`
+ * default is `""`, so an empty value means "not set" and resolves here; an
+ * explicit input always wins on both runner kinds. GitHub defaults are the
+ * values the action used before this module existed, so GitHub behaviour is
+ * byte-identical. Archives compressed at any level restore the same way, and
+ * every `--long` window is kept, so a local runner can still restore an
+ * archive written on GitHub and vice versa.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CACHE_PROFILE_KNOBS = void 0;
+exports.isLocalRunner = isLocalRunner;
+exports.cacheProfileDefault = cacheProfileDefault;
+exports.resolveCacheProfileInput = resolveCacheProfileInput;
+exports.describeCacheProfile = describeCacheProfile;
+const TRUTHY = new Set(["1", "true", "yes", "on"]);
+/** True on a local runner: act and act2 always export `ACT=true`. */
+function isLocalRunner(env) {
+    return TRUTHY.has((env["ACT"] ?? "").trim().toLowerCase());
+}
+const GITHUB_DEFAULTS = {
+    "cache-payload-max-bytes": "6GiB",
+    "cache-payload-warn-bytes": "512MiB",
+    "target-cache-compress-level": "3",
+    "solo-toolchain-cache-level": "9",
+    "cook-base-zstd-level": "9",
+    "cook-delta-zstd-level": "3",
+    "soldr-mini-zstd-level": "19",
+    "cargo-registry-extras-zstd-level": "3",
+};
+// "0" means no payload cap (`parseByteCount` treats 0 as disabled). The
+// notice threshold stays on so a multi-GiB payload is still visible.
+const LOCAL_DEFAULTS = {
+    "cache-payload-max-bytes": "0",
+    "cache-payload-warn-bytes": "4GiB",
+    "target-cache-compress-level": "1",
+    "solo-toolchain-cache-level": "1",
+    "cook-base-zstd-level": "1",
+    "cook-delta-zstd-level": "1",
+    "soldr-mini-zstd-level": "1",
+    "cargo-registry-extras-zstd-level": "1",
+};
+exports.CACHE_PROFILE_KNOBS = Object.keys(GITHUB_DEFAULTS);
+/** The profile default for `knob` on a GitHub (`local=false`) or local runner. */
+function cacheProfileDefault(knob, local) {
+    return (local ? LOCAL_DEFAULTS : GITHUB_DEFAULTS)[knob];
+}
+/** Effective value: the trimmed explicit input, else the profile default. */
+function resolveCacheProfileInput(knob, raw, local) {
+    const value = (raw ?? "").trim();
+    return value || cacheProfileDefault(knob, local);
+}
+function isNoCap(value) {
+    const v = value.trim();
+    return v === "" || /^0+(\.0+)?\s*([kmgt]?i?b?)?$/i.test(v);
+}
+/**
+ * The one log line the main step prints so users can see which profile
+ * applied, e.g. `setup-soldr: local runner (ACT) cache profile: no payload
+ * cap, zstd -1`. It reports EFFECTIVE values, so explicit inputs show up.
+ */
+function describeCacheProfile(local, summary) {
+    const label = local ? "local runner (ACT)" : "GitHub-hosted";
+    const cap = isNoCap(summary.payloadMaxBytes) ? "no payload cap" : `payload cap ${summary.payloadMaxBytes.trim()}`;
+    const entries = Object.entries(summary.zstdLevels);
+    const distinct = new Set(entries.map(([, level]) => level));
+    const zstd = distinct.size === 1
+        ? `zstd -${entries[0]?.[1] ?? ""}`
+        : `zstd ${entries.map(([name, level]) => `${name} -${level}`).join(", ")}`;
+    return `setup-soldr: ${label} cache profile: ${cap}, ${zstd}`;
+}
+
+
+/***/ }),
+
 /***/ 28129:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -55095,9 +55191,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.POLICY_SKIP_STATUS = void 0;
+exports.POLICY_SKIP_STATUS = exports.isLocalRunner = void 0;
 exports.parseSaveCacheMode = parseSaveCacheMode;
-exports.isLocalRunner = isLocalRunner;
 exports.decideCacheSave = decideCacheSave;
 exports.currentSaveDecision = currentSaveDecision;
 exports.resetSavePolicyLogForTest = resetSavePolicyLogForTest;
@@ -55129,6 +55224,10 @@ exports.gatedSaveCache = gatedSaveCache;
  * `src/` and fails when one bypasses this gate.
  */
 const cache = __importStar(__nccwpck_require__(5116));
+// The local-runner signal lives with the cache profile it also drives;
+// re-exported so existing callers keep importing it from here.
+const local_profile_js_1 = __nccwpck_require__(29720);
+Object.defineProperty(exports, "isLocalRunner", ({ enumerable: true, get: function () { return local_profile_js_1.isLocalRunner; } }));
 /** Status string layers report when the policy suppressed an upload. */
 exports.POLICY_SKIP_STATUS = "policy-skip";
 /**
@@ -55146,11 +55245,6 @@ function parseSaveCacheMode(raw, defaultMode = "auto") {
     if (["0", "false", "no", "off"].includes(value))
         return "false";
     throw new Error(`save-cache must be one of auto, true, false (got '${raw}')`);
-}
-const TRUTHY = new Set(["1", "true", "yes", "on"]);
-/** True on a local runner: act and act2 always export `ACT=true`. */
-function isLocalRunner(env) {
-    return TRUTHY.has((env["ACT"] ?? "").trim().toLowerCase());
 }
 /** Pure decision: no I/O, platform independent (RUNNER_OS is irrelevant). */
 function decideCacheSave(mode, eventName, localRunner = false) {
@@ -55180,7 +55274,7 @@ function currentSaveDecision(env = process.env) {
     catch {
         mode = "auto";
     }
-    return decideCacheSave(mode, env["GITHUB_EVENT_NAME"], isLocalRunner(env));
+    return decideCacheSave(mode, env["GITHUB_EVENT_NAME"], (0, local_profile_js_1.isLocalRunner)(env));
 }
 const loggedSkips = new Set();
 /** Test hook: forget which layers already logged a skip line. */
@@ -58187,6 +58281,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.dylintMarkerIdentityMatches = dylintMarkerIdentityMatches;
 exports.resolveJournalPrintRaw = resolveJournalPrintRaw;
+exports.resolveCachePayloadPolicy = resolveCachePayloadPolicy;
 exports.applyCachePayloadOversizeAction = applyCachePayloadOversizeAction;
 exports.classifyCacheSaveReservation = classifyCacheSaveReservation;
 exports.computeJobNewCompiles = computeJobNewCompiles;
@@ -58218,6 +58313,7 @@ const stats_collector_js_1 = __nccwpck_require__(51002);
 const compile_cache_stats_js_1 = __nccwpck_require__(63355);
 const diagnostics_js_1 = __nccwpck_require__(92587);
 const raw_inputs_js_1 = __nccwpck_require__(52183);
+const local_profile_js_1 = __nccwpck_require__(29720);
 const save_policy_js_1 = __nccwpck_require__(98097);
 const cache_eviction_js_1 = __nccwpck_require__(15795);
 const yank_audit_js_1 = __nccwpck_require__(23140);
@@ -58401,7 +58497,10 @@ function parseTopN(raw, log) {
     log(`cache-payload-policy: cache-payload-top-n=${topN}`);
     return topN;
 }
-function resolveCachePayloadPolicy(inputs, log) {
+function resolveCachePayloadPolicy(inputs, log, env = process.env) {
+    // Empty input -> runner profile default (zackees/ci.yml#227): GitHub
+    // 512MiB notice / 6GiB cap, local runner (ACT) 4GiB notice / no cap.
+    const localRunner = (0, local_profile_js_1.isLocalRunner)(env);
     const action = (inputs.cachePayloadOversizeAction || "skip").trim().toLowerCase();
     let oversizeAction = "skip";
     if (action === "fail") {
@@ -58411,8 +58510,8 @@ function resolveCachePayloadPolicy(inputs, log) {
         core.warning(`setup-soldr: ignoring invalid cache-payload-oversize-action value '${inputs.cachePayloadOversizeAction}'`);
     }
     return {
-        warnBytes: parseByteCount(inputs.cachePayloadWarnBytes || "512MiB", "cache-payload-warn-bytes", log),
-        maxBytes: parseByteCount(inputs.cachePayloadMaxBytes, "cache-payload-max-bytes", log),
+        warnBytes: parseByteCount((0, local_profile_js_1.resolveCacheProfileInput)("cache-payload-warn-bytes", inputs.cachePayloadWarnBytes, localRunner), "cache-payload-warn-bytes", log),
+        maxBytes: parseByteCount((0, local_profile_js_1.resolveCacheProfileInput)("cache-payload-max-bytes", inputs.cachePayloadMaxBytes, localRunner), "cache-payload-max-bytes", log),
         oversizeAction,
         topN: parseTopN(inputs.cachePayloadTopN, log),
     };
@@ -59964,8 +60063,10 @@ async function run() {
         }
     }
     // Cook cache save. Default-on layer; skipped when cook didn't run
-    // (cache hit, gate disabled, or run failed). zstd-19 + --long=27 per
-    // CLAUDE.md "Compression" + the cook simulation findings.
+    // (cache hit, gate disabled, or run failed). --long=27 per CLAUDE.md
+    // "Compression" + the cook simulation findings; the level (GitHub -9,
+    // local runner -1, see #268/#358 and zackees/ci.yml#227) comes from the
+    // state main saved.
     const cookEnabled = core.getState("cookEnabled") === "true";
     if (cookEnabled) {
         const cookLayered = core.getState("cookLayered") === "true";
@@ -60116,7 +60217,9 @@ async function run() {
                     installDir: miniInstallDir,
                     archivePath: miniArchive,
                     exactKey: miniExactKey,
-                    level: "19",
+                    // Runner profile: GitHub -19, local runner (ACT) -1. Keep
+                    // --long=27 at every level: restore needs the window.
+                    level: (0, local_profile_js_1.cacheProfileDefault)("soldr-mini-zstd-level", (0, local_profile_js_1.isLocalRunner)(process.env)),
                     longWindow: 27,
                     debug: debugMode,
                     log,

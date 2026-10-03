@@ -53,6 +53,7 @@ import {
 } from "./lib/compile-cache-stats.js";
 import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
+import { cacheProfileDefault, isLocalRunner, resolveCacheProfileInput } from "./lib/local-profile.js";
 import { allowCacheSave, gatedSaveCache } from "./lib/save-policy.js";
 import {
   deleteCacheEntriesByKeys,
@@ -369,7 +370,14 @@ function parseTopN(raw: string, log: (msg: string) => void): number {
   return topN;
 }
 
-function resolveCachePayloadPolicy(inputs: RawInputs, log: (msg: string) => void): CachePayloadPolicy {
+export function resolveCachePayloadPolicy(
+  inputs: RawInputs,
+  log: (msg: string) => void,
+  env: Record<string, string | undefined> = process.env,
+): CachePayloadPolicy {
+  // Empty input -> runner profile default (zackees/ci.yml#227): GitHub
+  // 512MiB notice / 6GiB cap, local runner (ACT) 4GiB notice / no cap.
+  const localRunner = isLocalRunner(env);
   const action = (inputs.cachePayloadOversizeAction || "skip").trim().toLowerCase();
   let oversizeAction: "skip" | "fail" = "skip";
   if (action === "fail") {
@@ -380,8 +388,16 @@ function resolveCachePayloadPolicy(inputs: RawInputs, log: (msg: string) => void
     );
   }
   return {
-    warnBytes: parseByteCount(inputs.cachePayloadWarnBytes || "512MiB", "cache-payload-warn-bytes", log),
-    maxBytes: parseByteCount(inputs.cachePayloadMaxBytes, "cache-payload-max-bytes", log),
+    warnBytes: parseByteCount(
+      resolveCacheProfileInput("cache-payload-warn-bytes", inputs.cachePayloadWarnBytes, localRunner),
+      "cache-payload-warn-bytes",
+      log,
+    ),
+    maxBytes: parseByteCount(
+      resolveCacheProfileInput("cache-payload-max-bytes", inputs.cachePayloadMaxBytes, localRunner),
+      "cache-payload-max-bytes",
+      log,
+    ),
     oversizeAction,
     topN: parseTopN(inputs.cachePayloadTopN, log),
   };
@@ -2136,8 +2152,10 @@ export async function run(): Promise<void> {
   }
 
   // Cook cache save. Default-on layer; skipped when cook didn't run
-  // (cache hit, gate disabled, or run failed). zstd-19 + --long=27 per
-  // CLAUDE.md "Compression" + the cook simulation findings.
+  // (cache hit, gate disabled, or run failed). --long=27 per CLAUDE.md
+  // "Compression" + the cook simulation findings; the level (GitHub -9,
+  // local runner -1, see #268/#358 and zackees/ci.yml#227) comes from the
+  // state main saved.
   const cookEnabled = core.getState("cookEnabled") === "true";
   if (cookEnabled) {
     const cookLayered = core.getState("cookLayered") === "true";
@@ -2285,7 +2303,9 @@ export async function run(): Promise<void> {
           installDir: miniInstallDir,
           archivePath: miniArchive,
           exactKey: miniExactKey,
-          level: "19",
+          // Runner profile: GitHub -19, local runner (ACT) -1. Keep
+          // --long=27 at every level: restore needs the window.
+          level: cacheProfileDefault("soldr-mini-zstd-level", isLocalRunner(process.env)),
           longWindow: 27,
           debug: debugMode,
           log,
