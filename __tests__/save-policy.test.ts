@@ -34,11 +34,12 @@ const savedEnv = {
   input: process.env["INPUT_SAVE-CACHE"],
   os: process.env["RUNNER_OS"],
   act: process.env["ACT"],
+  remote: process.env["INPUT_SAVE-CACHE-REMOTE"],
 };
 
 // `act` is explicit so the suite gives the same answers when it runs under
 // act itself (#537): `undefined` means "not a local runner".
-function setEnv(event: string | undefined, input: string | undefined, runnerOs?: string, act?: string): void {
+function setEnv(event: string | undefined, input: string | undefined, runnerOs?: string, act?: string, remote?: string): void {
   if (event === undefined) delete process.env["GITHUB_EVENT_NAME"];
   else process.env["GITHUB_EVENT_NAME"] = event;
   if (input === undefined) delete process.env["INPUT_SAVE-CACHE"];
@@ -46,12 +47,14 @@ function setEnv(event: string | undefined, input: string | undefined, runnerOs?:
   if (runnerOs !== undefined) process.env["RUNNER_OS"] = runnerOs;
   if (act === undefined) delete process.env["ACT"];
   else process.env["ACT"] = act;
+  if (remote === undefined) delete process.env["INPUT_SAVE-CACHE-REMOTE"];
+  else process.env["INPUT_SAVE-CACHE-REMOTE"] = remote;
 }
 
 beforeEach(() => resetSavePolicyLogForTest());
 afterEach(() => {
   setSaveCacheBackendForTest(null);
-  setEnv(savedEnv.event, savedEnv.input, undefined, savedEnv.act);
+  setEnv(savedEnv.event, savedEnv.input, undefined, savedEnv.act, savedEnv.remote);
   if (savedEnv.os === undefined) delete process.env["RUNNER_OS"];
   else process.env["RUNNER_OS"] = savedEnv.os;
 });
@@ -164,6 +167,41 @@ test("#527 decision matrix: auto skips only pull_request; true/false override", 
   }
   assert.equal(decideCacheSave("true", "pull_request").save, true);
   assert.equal(decideCacheSave("false", "push").save, false);
+});
+
+test("remote write policy does not disable local automatic saves", () => {
+  assert.equal(decideCacheSave("auto", "workflow_dispatch", false, "false").save, false);
+  assert.equal(decideCacheSave("auto", "pull_request", true, "false").save, true);
+  assert.equal(decideCacheSave("auto", "pull_request", false, "true").save, true);
+  assert.equal(decideCacheSave("true", "push", false, "false").save, false);
+  assert.equal(decideCacheSave("false", "push", true, "true").save, false);
+});
+
+test("remote write policy is read by main and post save gates", () => {
+  assert.equal(currentSaveDecision({
+    GITHUB_EVENT_NAME: "workflow_dispatch",
+    "INPUT_SAVE-CACHE-REMOTE": "false",
+  }).save, false);
+  assert.equal(currentSaveDecision({
+    GITHUB_EVENT_NAME: "pull_request",
+    ACT: "true",
+    "INPUT_SAVE-CACHE-REMOTE": "false",
+  }).save, true);
+  assert.equal(currentSaveDecision({
+    GITHUB_EVENT_NAME: "push",
+    "INPUT_SAVE-CACHE-REMOTE": "invalid",
+  }).save, false);
+});
+
+test("remote read-only policy gates all layers and local automatic saves still persist", async () => {
+  setEnv("workflow_dispatch", "auto", undefined, undefined, "false");
+  const remote = await exerciseAllLayers();
+  assert.equal(remote.saveCalls, 0);
+  assert.equal(remote.reserveCalls, 0);
+  setEnv("pull_request", "auto", undefined, "true", "false");
+  const local = await exerciseAllLayers();
+  assert.ok(local.saveCalls > 0);
+  assert.ok(local.reserveCalls > 0);
 });
 
 for (const runnerOs of ["Linux", "Windows", "macOS"]) {
@@ -284,6 +322,9 @@ test("#527 action.yml files declare save-cache with auto default", () => {
     const m = text.match(/\n {2}save-cache:\n(?: {4}.*\n)+/);
     assert.ok(m, `${file} declares save-cache`);
     assert.match(m![0], /default: "auto"/, file);
+    const remote = text.match(/\n {2}save-cache-remote:\n(?: {4}.*\n)+/);
+    assert.ok(remote, `${file} declares save-cache-remote`);
+    assert.match(remote![0], /default: "auto"/, file);
   }
 });
 
