@@ -446,6 +446,7 @@ preferred for new workflows.
 | `cache-key-suffix` | Optional escape hatch appended to the cache key. |
 | `key` | Build-cache override only. `auto` opts into the Phase 1 nearest clean ancestor pilot; any other nonempty value is an explicit build-cache key. Other families keep their identity keys. |
 | `auto-key` | Default `false`. When `true`, an omitted `key` enables the same build-cache pilot. Requires `actions: read`; lookup errors keep legacy restore. Saves still obey `save-cache`, failed-job and poison guards. |
+| `auto-key-trusted-writers` | Phase 1 pilot trust policy: one `owner/repo/.github/workflows/file.yml@FULL_SOURCE_SHA:RUN_ID:ATTEMPT:JOB_ID` per line, after reviewing that immutable writer job, its pinned post action and transitive executable source. Unlisted writers retain legacy restore. This temporary pilot policy is not the final automatic writer-authentication design. |
 | `toolchain` | Explicit Rust toolchain channel override. |
 | `toolchain-file` | Alternate toolchain file path when `toolchain` is empty; `components` and `targets` in the file are provisioned during setup. |
 | `trust-mode` | Optional `SOLDR_TRUST_MODE` value. |

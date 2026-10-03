@@ -34,10 +34,29 @@ API, with at most 199 commits plus the candidate base, and the same parent-edge
 ranking. `ahead_by` is insufficient for merge DAG distance. Equal distances
 prefer the newest creation time, then cache ID.
 
-Entry presence and a SHA in its key are insufficient save provenance. Up to
-20 ranked candidates require a completed, successful GitHub workflow attempt
-and a matching positive cache ID/key/ref/SHA/run/attempt record in a successful
-job's logs. Normal post-phase upload emits that record only after existing
+Entry presence, a SHA in its key, a successful workflow and even an exactly
+matching stdout record are insufficient writer authority. Arbitrary workflow
+steps can print public-known JSON and upload a cache outside the post gates.
+The bounded Phase 1 pilot therefore requires `auto-key-trusted-writers`, an
+explicit policy of reviewed immutable writer jobs, each pinning repository,
+workflow path, complete source SHA, run ID, attempt and job ID. The caller must
+review the pinned post action and the complete transitive executable source;
+pinning an unchanged YAML file alone cannot authenticate changed scripts or
+build.rs. This is a trust grant to that particular execution, not a log-based
+claim that an arbitrary action origin has been authenticated.
+
+GitHub's authenticated run metadata must match the policy's repository,
+head repository, workflow, full source SHA, run and attempt, and the job API
+must identify the exact approved successful job. Unknown/unlisted writers
+fail closed for automatic selection and use legacy restore. A forged marker
+from another successful workflow, source, run, attempt or job cannot qualify.
+Without an approved writer the pilot performs no donor API scan. It may still
+publish a seed under the ordinary upload gates; its save record becomes
+eligible only after explicit immutable-writer review, avoiding a bootstrap
+dependency on approving a job that has not run yet.
+Within that trusted writer execution, up to 20 ranked candidates also require
+a matching positive cache ID/key/ref/SHA/run/attempt save record. Normal
+post-phase upload emits that record only after existing
 failed-job, delta, dependency-yank and payload/save-policy gates permit a real
 positive-ID save. A restored dependency closure with an incomplete or failed
 yank audit exits before upload. A cache timestamp must fall inside that job.
@@ -63,13 +82,22 @@ Proposed first pilot: a narrowly selected soldr Linux unit-test caller that
 actually compiles source, with its existing toolchain floor and required test
 coverage preserved. Enable generic `build-cache: true` and `key: auto` on that
 caller only; retain the existing save policy and janitor/budget controls.
-Confirm new successful default-branch saves first, then collect at least 20
+Confirm new successful default-branch saves first, review and explicitly pin
+the immutable main-seed writer jobs in the reader policy, then collect at least 20
 executed PR jobs. Record absent jobs separately, and compare identity-compatible
 legacy restore versus chosen donor, actual checkout ancestry/distance, cold
 compiles, restore/decompress/build wall time, scan time, GET count/rate-limit
 headers, save outcome and total cache bytes. A warm restore alone does not
 prove avoided compilation. Compare against a matching explicit-key baseline;
 Phase 0's disabled generic build-cache observations are not a baseline hit rate.
+
+The immutable job policy is temporary pilot scaffolding. It deliberately does
+not authorize every future writer automatically. Final rollout still requires
+an automatically authenticated trusted writer boundary, such as a separately
+isolated trusted writer with a reviewed immutable executable surface. Do not
+infer authenticated post-action origin from a marker, or make the final design
+depend on reviewing every future run manually. These changes do not complete
+the final auto-ancestor/default requirement.
 
 Do not enable another layer, add a manifest, promote PR payloads, or make auto
 the default from these unit tests. Report measured results to both issues;

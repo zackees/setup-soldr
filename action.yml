@@ -100,6 +100,14 @@ inputs:
     description: 'Treat an omitted key as "auto" for the source-dependent build-cache pilot. Requires actions: read. Default remains disabled.'
     required: false
     default: "false"
+  auto-key-trusted-writers:
+    description: >
+      Phase 1 pilot only: newline-separated explicitly reviewed immutable writer jobs,
+      owner/repo/.github/workflows/file.yml@FULL_SOURCE_SHA:RUN_ID:ATTEMPT:JOB_ID.
+      Review the pinned post action and complete transitive executable source before authorizing a writer.
+      Unknown writers use legacy restore; matching stdout alone never authorizes a donor.
+    required: false
+    default: ""
   cache-preset:
     description: >
       One-line cache policy umbrella. Fills any cache-affecting input that

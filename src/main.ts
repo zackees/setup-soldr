@@ -603,7 +603,7 @@ export async function run(): Promise<void> {
           targetEnv: targetEnvHash(process.env),
         });
         const plan = await planAncestorRestore({ workspace: result.workspace, identity,
-          token: ctx.githubToken, env: process.env });
+          token: ctx.githubToken, env: process.env, trustedWriters: inputs.autoKeyTrustedWriters });
         selectedKey = plan.selection.entry?.key ?? "";
         result.buildCache.key = plan.writeKey;
         core.saveState("resolveResult", JSON.stringify(result));

@@ -36,6 +36,7 @@ EXPECTED_INPUTS = {
     "cache-key-suffix",
     "key",
     "auto-key",
+    "auto-key-trusted-writers",
     "cache-preset",
     "cache-payload-warn-bytes",
     "cache-payload-max-bytes",

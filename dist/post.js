@@ -48547,9 +48547,15 @@ exports.hasCleanSaveProof = hasCleanSaveProof;
 exports.planAncestorRestore = planAncestorRestore;
 const node_child_process_1 = __nccwpck_require__(31421);
 const github = __importStar(__nccwpck_require__(93228));
+const ancestor_cache_trust_js_1 = __nccwpck_require__(42286);
 const ancestor_cache_js_1 = __nccwpck_require__(7853);
 exports.CLEAN_SAVE_MARKER = "setup-soldr-ancestor-clean-save-v1 ";
-function hasCleanSaveProof(log, entry, key) {
+function hasCleanSaveProof(log, entry, key, writer, jobId) {
+    // Matching public JSON is only a save record. A separately authenticated,
+    // explicitly reviewed writer execution must authorize reading it.
+    if (!writer || writer.runId !== key.runId || writer.attempt !== key.attempt ||
+        writer.sha !== key.sha || writer.jobId !== jobId)
+        return false;
     for (const line of log.split("\n")) {
         const position = line.indexOf(exports.CLEAN_SAVE_MARKER);
         if (position < 0)
@@ -48581,6 +48587,7 @@ function parseParents(text) {
 async function planAncestorRestore(options) {
     const start = Date.now();
     const { workspace, identity, token, env } = options;
+    const trustedWriters = (0, ancestor_cache_trust_js_1.parseTrustedWriters)(options.trustedWriters);
     if (!token)
         throw new Error("ancestor lookup requires an actions: read token");
     const [owner, repo, extra] = (env["GITHUB_REPOSITORY"] ?? "").split("/");
@@ -48594,6 +48601,14 @@ async function planAncestorRestore(options) {
     const writer = { identity, sha, runId: Number(env["GITHUB_RUN_ID"]),
         attempt: Number(env["GITHUB_RUN_ATTEMPT"]), pr: pr ? Number(pr[1]) : null };
     let writeKey = (0, ancestor_cache_js_1.makeAncestorKey)(writer);
+    if (trustedWriters.length === 0) {
+        // Bootstrap can publish a normal gated seed, but its public record is
+        // not eligible until the caller explicitly reviews this writer job.
+        // No candidate/log API calls are needed without writer authority.
+        return { writeKey, writer, ref, elapsedMs: Date.now() - start, requests: 0,
+            selection: { entry: null, distance: null,
+                reason: "legacy-fallback: no reviewed immutable writer", inspected: 0 } };
+    }
     const octokit = github.getOctokit(token, { request: { timeout: 15_000 } });
     let requests = 0;
     function requestBudget() {
@@ -48678,7 +48693,14 @@ async function planAncestorRestore(options) {
             requestBudget();
             const run = await octokit.rest.actions.getWorkflowRunAttempt({ owner, repo,
                 run_id: key.runId, attempt_number: key.attempt });
-            if (run.data.status !== "completed" || run.data.conclusion !== "success")
+            const trustedWriter = (0, ancestor_cache_trust_js_1.trustedWriterForRun)(trustedWriters, {
+                repository: run.data.repository.full_name,
+                headRepository: run.data.head_repository.full_name,
+                workflow: (0, ancestor_cache_trust_js_1.normalizeWorkflowPath)(run.data.path, `${owner}/${repo}`),
+                sha: run.data.head_sha, runId: run.data.id, attempt: run.data.run_attempt ?? 0,
+                status: run.data.status, conclusion: run.data.conclusion,
+            });
+            if (!trustedWriter || trustedWriter.sha !== key.sha || trustedWriter.repository !== `${owner}/${repo}`)
                 return false;
             requestBudget();
             const jobs = await octokit.rest.actions.listJobsForWorkflowRunAttempt({ owner, repo,
@@ -48686,7 +48708,7 @@ async function planAncestorRestore(options) {
             if (jobs.data.total_count > 100)
                 throw new Error("donor job scan exceeds bound");
             for (const job of jobs.data.jobs) {
-                if (job.conclusion !== "success")
+                if (job.id !== trustedWriter.jobId || job.conclusion !== "success")
                     continue;
                 const created = Date.parse(entry.createdAt);
                 const started = Date.parse(job.started_at ?? "");
@@ -48700,7 +48722,7 @@ async function planAncestorRestore(options) {
                 const log = download.data;
                 if (typeof log !== "string" || Buffer.byteLength(log) > 32 * 1024 * 1024)
                     throw new Error("donor log unavailable or oversized");
-                if (hasCleanSaveProof(log, entry, key))
+                if (hasCleanSaveProof(log, entry, key, trustedWriter, job.id))
                     return true;
             }
             return false;
@@ -48709,6 +48731,54 @@ async function planAncestorRestore(options) {
     if (selection.entry && selection.distance === 0)
         writeKey = selection.entry.key;
     return { writeKey, selection, writer, ref, elapsedMs: Date.now() - start, requests };
+}
+
+
+/***/ }),
+
+/***/ 42286:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseTrustedWriters = parseTrustedWriters;
+exports.trustedWriterForRun = trustedWriterForRun;
+exports.normalizeWorkflowPath = normalizeWorkflowPath;
+/** One line per writer:
+ * owner/repo/.github/workflows/file.yml@FULL_SHA:RUN_ID:ATTEMPT:JOB_ID
+ * The caller reviews the complete immutable writer execution, including the
+ * pinned action/post code and transitive scripts, before authorizing it. */
+function parseTrustedWriters(input) {
+    const lines = (input ?? "").split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    if (lines.length > 32)
+        throw new Error("trusted writer list exceeds 32 entries");
+    return lines.map(line => {
+        const match = /^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/(\.github\/workflows\/[A-Za-z0-9_.-]+\.ya?ml)@([0-9a-f]{40}|[0-9a-f]{64}):([1-9][0-9]*):([1-9][0-9]*):([1-9][0-9]*)$/.exec(line);
+        if (!match)
+            throw new Error("trusted writer must pin repository, workflow, source SHA, run, attempt and job");
+        const writer = { repository: match[1], workflow: match[2], sha: match[3],
+            runId: Number(match[4]), attempt: Number(match[5]), jobId: Number(match[6]) };
+        if (![writer.runId, writer.attempt, writer.jobId].every(Number.isSafeInteger)) {
+            throw new Error("invalid trusted writer identifier");
+        }
+        return writer;
+    });
+}
+function trustedWriterForRun(writers, metadata) {
+    if (metadata.status !== "completed" || metadata.conclusion !== "success" ||
+        metadata.repository !== metadata.headRepository)
+        return null;
+    return writers.find(writer => writer.repository === metadata.repository &&
+        writer.workflow === metadata.workflow && writer.sha === metadata.sha &&
+        writer.runId === metadata.runId && writer.attempt === metadata.attempt) ?? null;
+}
+function normalizeWorkflowPath(path, repository) {
+    // GitHub reports either a repository-relative file or the qualified
+    // owner/repo/path@ref form. Neither stdout nor candidate keys supply it.
+    const prefix = `${repository}/`;
+    const relative = path.startsWith(prefix) ? path.slice(prefix.length) : path;
+    return relative.split("@")[0];
 }
 
 
@@ -55196,6 +55266,7 @@ function readRawInputs(env) {
         cacheKeySuffix: get("cache-key-suffix"),
         key: get("key"),
         autoKey: get("auto-key"),
+        autoKeyTrustedWriters: get("auto-key-trusted-writers"),
         cachePreset: get("cache-preset"),
         toolchain: get("toolchain"),
         toolchainFile: get("toolchain-file"),
