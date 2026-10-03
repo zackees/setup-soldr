@@ -143,6 +143,24 @@ test("bootstrap writes a normal gated seed but performs no untrusted donor API s
   assert.equal(parseAncestorKey(plan.writeKey)?.runId, 123);
 });
 
+test("a second approved job in the same immutable run can qualify its own cache", () => {
+  const authorized = parseTrustedWriters([
+    `owner/repo/.github/workflows/ci.yml@${near}:1:1:12`,
+    `owner/repo/.github/workflows/ci.yml@${near}:1:1:13`,
+  ].join("\n"));
+  const metadata: WriterRunMetadata = { repository: "owner/repo", headRepository: "owner/repo",
+    workflow: ".github/workflows/ci.yml", sha: near, runId: 1, attempt: 1,
+    status: "completed", conclusion: "success" };
+  const candidate = entry(near, 1);
+  const key = parseAncestorKey(candidate.key)!;
+  const marker = `${CLEAN_SAVE_MARKER}${JSON.stringify({ cacheId: 1, key: candidate.key,
+    ref, sha: near, runId: 1, attempt: 1, clean: true })}`;
+  const secondWriter = trustedWriterForRun(authorized, metadata, 13);
+  assert.equal(secondWriter?.jobId, 13);
+  assert.equal(hasCleanSaveProof(marker, candidate, key, secondWriter, 13), true);
+  assert.equal(trustedWriterForRun(authorized, metadata, 14), null);
+});
+
 test("action inputs retain explicit opt-in and omitted defaults", () => {
   assert.equal(readRawInputs({ "INPUT_AUTO-KEY": "true", INPUT_KEY: "auto" }).autoKey, "true");
   assert.equal(readRawInputs({ INPUT_AUTO_KEY: "true", INPUT_KEY: "fixed" }).key, "fixed");

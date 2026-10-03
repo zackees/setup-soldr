@@ -43,12 +43,14 @@ export function parseTrustedWriters(input: string | undefined): readonly Trusted
 
 export function trustedWriterForRun(
   writers: readonly TrustedWriter[], metadata: WriterRunMetadata,
+  jobId?: number,
 ): TrustedWriter | null {
   if (metadata.status !== "completed" || metadata.conclusion !== "success" ||
       metadata.repository !== metadata.headRepository) return null;
   return writers.find(writer => writer.repository === metadata.repository &&
     writer.workflow === metadata.workflow && writer.sha === metadata.sha &&
-    writer.runId === metadata.runId && writer.attempt === metadata.attempt) ?? null;
+    writer.runId === metadata.runId && writer.attempt === metadata.attempt &&
+    (jobId === undefined || writer.jobId === jobId)) ?? null;
 }
 
 export function normalizeWorkflowPath(path: string, repository: string): string {

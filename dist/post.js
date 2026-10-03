@@ -48693,13 +48693,14 @@ async function planAncestorRestore(options) {
             requestBudget();
             const run = await octokit.rest.actions.getWorkflowRunAttempt({ owner, repo,
                 run_id: key.runId, attempt_number: key.attempt });
-            const trustedWriter = (0, ancestor_cache_trust_js_1.trustedWriterForRun)(trustedWriters, {
+            const runMetadata = {
                 repository: run.data.repository.full_name,
                 headRepository: run.data.head_repository.full_name,
                 workflow: (0, ancestor_cache_trust_js_1.normalizeWorkflowPath)(run.data.path, `${owner}/${repo}`),
                 sha: run.data.head_sha, runId: run.data.id, attempt: run.data.run_attempt ?? 0,
                 status: run.data.status, conclusion: run.data.conclusion,
-            });
+            };
+            const trustedWriter = (0, ancestor_cache_trust_js_1.trustedWriterForRun)(trustedWriters, runMetadata);
             if (!trustedWriter || trustedWriter.sha !== key.sha || trustedWriter.repository !== `${owner}/${repo}`)
                 return false;
             requestBudget();
@@ -48708,7 +48709,10 @@ async function planAncestorRestore(options) {
             if (jobs.data.total_count > 100)
                 throw new Error("donor job scan exceeds bound");
             for (const job of jobs.data.jobs) {
-                if (job.id !== trustedWriter.jobId || job.conclusion !== "success")
+                // Run eligibility cannot choose a representative job for a matrix.
+                // Each API job must match its own immutable writer policy entry.
+                const jobWriter = (0, ancestor_cache_trust_js_1.trustedWriterForRun)(trustedWriters, runMetadata, job.id);
+                if (!jobWriter || job.conclusion !== "success")
                     continue;
                 const created = Date.parse(entry.createdAt);
                 const started = Date.parse(job.started_at ?? "");
@@ -48722,7 +48726,7 @@ async function planAncestorRestore(options) {
                 const log = download.data;
                 if (typeof log !== "string" || Buffer.byteLength(log) > 32 * 1024 * 1024)
                     throw new Error("donor log unavailable or oversized");
-                if (hasCleanSaveProof(log, entry, key, trustedWriter, job.id))
+                if (hasCleanSaveProof(log, entry, key, jobWriter, job.id))
                     return true;
             }
             return false;
@@ -48765,13 +48769,14 @@ function parseTrustedWriters(input) {
         return writer;
     });
 }
-function trustedWriterForRun(writers, metadata) {
+function trustedWriterForRun(writers, metadata, jobId) {
     if (metadata.status !== "completed" || metadata.conclusion !== "success" ||
         metadata.repository !== metadata.headRepository)
         return null;
     return writers.find(writer => writer.repository === metadata.repository &&
         writer.workflow === metadata.workflow && writer.sha === metadata.sha &&
-        writer.runId === metadata.runId && writer.attempt === metadata.attempt) ?? null;
+        writer.runId === metadata.runId && writer.attempt === metadata.attempt &&
+        (jobId === undefined || writer.jobId === jobId)) ?? null;
 }
 function normalizeWorkflowPath(path, repository) {
     // GitHub reports either a repository-relative file or the qualified
