@@ -48503,6 +48503,64 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 8376:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.BoundedGitHistory = void 0;
+const ancestor_cache_js_1 = __nccwpck_require__(7853);
+function parseParents(text) {
+    return text.split("\n").filter(Boolean).map(line => {
+        const [sha, ...parents] = line.split(" ");
+        if (!sha || ![sha, ...parents].every(value => /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(value))) {
+            throw new Error("invalid Git DAG output");
+        }
+        return { sha, parents };
+    });
+}
+/** Local history is bounded to 200 nodes. Missing candidates stay unknown so
+ * the caller can use its existing bounded authenticated compare fallback. */
+class BoundedGitHistory {
+    distances = null;
+    shallow = false;
+    fetched = false;
+    sha;
+    run;
+    constructor(sha, run) {
+        this.sha = sha;
+        this.run = run;
+    }
+    async load() {
+        const shallow = await this.run(["rev-parse", "--is-shallow-repository"]) === "true";
+        const nodes = parseParents(await this.run(["rev-list", "--max-count=200", "--parents", this.sha]));
+        this.distances = (0, ancestor_cache_js_1.dagDistances)(this.sha, nodes);
+        this.shallow = shallow;
+    }
+    async distance(candidate) {
+        if (!this.distances)
+            await this.load();
+        if (!this.distances.has(candidate) && this.shallow && !this.fetched) {
+            this.fetched = true;
+            try {
+                await this.run(["fetch", "--no-tags", "--depth=200", "origin", this.sha]);
+                await this.load();
+            }
+            catch { /* Existing local history remains usable; unknown uses compare. */ }
+        }
+        const distance = this.distances.get(candidate);
+        if (distance === undefined)
+            return null;
+        await this.run(["merge-base", "--is-ancestor", candidate, this.sha]);
+        return distance;
+    }
+}
+exports.BoundedGitHistory = BoundedGitHistory;
+
+
+/***/ }),
+
 /***/ 457:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -48546,6 +48604,7 @@ exports.CLEAN_SAVE_MARKER = void 0;
 exports.hasCleanSaveProof = hasCleanSaveProof;
 exports.planAncestorRestore = planAncestorRestore;
 const node_child_process_1 = __nccwpck_require__(31421);
+const ancestor_cache_git_js_1 = __nccwpck_require__(8376);
 const github = __importStar(__nccwpck_require__(93228));
 const ancestor_cache_trust_js_1 = __nccwpck_require__(42286);
 const ancestor_cache_telemetry_js_1 = __nccwpck_require__(3167);
@@ -48573,15 +48632,6 @@ function hasCleanSaveProof(log, entry, key, writer, jobId) {
 }
 async function git(workspace, args) {
     return new Promise((resolve, reject) => (0, node_child_process_1.execFile)("git", args, { cwd: workspace, timeout: 30_000, maxBuffer: 2 * 1024 * 1024, encoding: "utf8" }, (error, stdout) => error ? reject(error) : resolve(stdout.trim())));
-}
-function parseParents(text) {
-    return text.split("\n").filter(Boolean).map(line => {
-        const [sha, ...parents] = line.split(" ");
-        if (!sha || ![sha, ...parents].every(value => /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(value))) {
-            throw new Error("invalid Git DAG output");
-        }
-        return { sha, parents };
-    });
 }
 /** All remote calls are GETs. There is no manifest, payload promotion, or
  * remote cache mutation here. Normal post-phase save gates own publication. */
@@ -48637,24 +48687,7 @@ async function planAncestorRestore(options) {
             ...(env["GITHUB_BASE_REF"] ? [`refs/heads/${env["GITHUB_BASE_REF"]}`] : []),
             ...(defaultBranch ? [`refs/heads/${defaultBranch}`] : []),
         ])];
-    let distances = null;
-    let shallow = false;
-    async function localDistances() {
-        if (distances)
-            return distances;
-        shallow = await git(workspace, ["rev-parse", "--is-shallow-repository"]) === "true";
-        if (shallow) {
-            // A bounded fetch improves the local path without changing checkout or
-            // persistent Git configuration. Failure uses the compare fallback.
-            try {
-                await git(workspace, ["fetch", "--no-tags", "--depth=200", "origin", sha]);
-            }
-            catch { /* compare below */ }
-        }
-        const nodes = parseParents(await git(workspace, ["rev-list", "--max-count=200", "--parents", sha]));
-        distances = (0, ancestor_cache_js_1.dagDistances)(sha, nodes);
-        return distances;
-    }
+    const history = new ancestor_cache_git_js_1.BoundedGitHistory(sha, args => git(workspace, [...args]));
     const selection = await (0, ancestor_cache_js_1.selectAncestorCache)(identity, refs, {
         list: async () => {
             const entries = [];
@@ -48679,11 +48712,9 @@ async function planAncestorRestore(options) {
         distance: async (candidate) => {
             if (Date.now() - start > 45_000)
                 throw new Error("ancestor lookup exceeded time budget");
-            const local = await localDistances();
-            if (local.has(candidate)) {
-                await git(workspace, ["merge-base", "--is-ancestor", candidate, sha]);
-                return local.get(candidate);
-            }
+            const localDistance = await history.distance(candidate);
+            if (localDistance !== null)
+                return localDistance;
             // A candidate outside the bounded local graph may still be a near
             // ancestor across a wide merge. Compare its bounded DAG instead of
             // silently treating unknown distance as divergence.
