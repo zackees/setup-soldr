@@ -970,6 +970,10 @@ outputs:
       is explicitly disabled.
   build-cache-key:
     description: Primary key used for the Soldr-owned zccache compilation cache.
+  build-cache-matched-key:
+    description: Actual usable build-cache entry restored, or empty on a miss.
+  build-cache-ancestor-json:
+    description: Opt-in ancestor selection telemetry (candidate ID/key, identity, distance, write key, scan/API time, request count and rate limit); empty for legacy selection. Candidate selection alone does not prove a usable restore.
   build-cache-path:
     description: Soldr-owned zccache compilation cache path.
   build-cache-mode:

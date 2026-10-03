@@ -75,6 +75,12 @@ Cargo fingerprints continue to decide rebuilds.
 Donor logs avoid introducing Phase 2's manifest or another remote writer.
 Their lookup/download cost is a deliberate Phase 1 experiment. The job
 summary reports the selected key, distance, total scan time and GET count.
+`build-cache-ancestor-json` additionally exposes candidate ID, strict identity,
+actual source SHA, total API duration and the minimum reported rate-limit
+remaining value (unknown when headers are absent). `build-cache-key` is the
+final write key, including auto or explicit overrides. The separate
+`build-cache-matched-key` names an actual usable restore; a selected candidate
+alone does not prove successful extraction.
 Missing or oversized (>32 MiB) logs fail open. There are no payload transfers
 between PR scope and main, no promotion, and no default enablement.
 

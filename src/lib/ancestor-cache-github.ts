@@ -1,9 +1,10 @@
 import { execFile } from "node:child_process";
 import * as github from "@actions/github";
 import { normalizeWorkflowPath, parseTrustedWriters, trustedWriterForRun, type TrustedWriter } from "./ancestor-cache-trust.js";
+import { admitAncestorRequest, type AncestorRestorePlan } from "./ancestor-cache-telemetry.js";
 import {
   ancestorKeyPrefix, dagDistances, makeAncestorKey, selectAncestorCache,
-  type AncestorCacheEntry, type AncestorKey, type AncestorSelection, type GitParentNode,
+  type AncestorCacheEntry, type AncestorKey, type GitParentNode,
 } from "./ancestor-cache.js";
 
 export const CLEAN_SAVE_MARKER = "setup-soldr-ancestor-clean-save-v1 ";
@@ -45,15 +46,6 @@ function parseParents(text: string): GitParentNode[] {
   });
 }
 
-export interface AncestorRestorePlan {
-  writeKey: string;
-  selection: AncestorSelection;
-  writer: AncestorKey;
-  ref: string;
-  elapsedMs: number;
-  requests: number;
-}
-
 /** All remote calls are GETs. There is no manifest, payload promotion, or
  * remote cache mutation here. Normal post-phase save gates own publication. */
 export async function planAncestorRestore(options: {
@@ -78,16 +70,30 @@ export async function planAncestorRestore(options: {
     // Bootstrap can publish a normal gated seed, but its public record is
     // not eligible until the caller explicitly reviews this writer job.
     // No candidate/log API calls are needed without writer authority.
-    return { writeKey, writer, ref, elapsedMs: Date.now() - start, requests: 0,
+    return { writeKey, writer, ref, elapsedMs: Date.now() - start, requests: 0, apiMs: 0, rateLimitRemaining: null,
       selection: { entry: null, distance: null,
         reason: "legacy-fallback: no reviewed immutable writer", inspected: 0 } };
   }
   const octokit = github.getOctokit(token, { request: { timeout: 15_000 } });
   let requests = 0;
-  function requestBudget(): void {
-    if (Date.now() - start > 45_000 || ++requests > 24) {
-      throw new Error("ancestor lookup exceeded time/request budget");
+  let apiMs = 0;
+  let requestStarted = 0;
+  let rateLimitRemaining: number | null = null;
+  octokit.hook.before("request", () => { requestStarted = Date.now(); });
+  octokit.hook.after("request", response => {
+    apiMs += Date.now() - requestStarted;
+    const header = response.headers["x-ratelimit-remaining"];
+    const remaining = Number(header);
+    if (header !== undefined && Number.isSafeInteger(remaining) && remaining >= 0) {
+      rateLimitRemaining = rateLimitRemaining === null ? remaining : Math.min(rateLimitRemaining, remaining);
     }
+  });
+  octokit.hook.error("request", error => {
+    apiMs += Date.now() - requestStarted;
+    throw error;
+  });
+  function requestBudget(): void {
+    requests = admitAncestorRequest(requests, Date.now() - start);
   }
   const eventRepository = github.context.payload.repository;
   const defaultBranch = eventRepository?.default_branch;
@@ -191,5 +197,5 @@ export async function planAncestorRestore(options: {
     },
   });
   if (selection.entry && selection.distance === 0) writeKey = selection.entry.key;
-  return { writeKey, selection, writer, ref, elapsedMs: Date.now() - start, requests };
+  return { writeKey, selection, writer, ref, elapsedMs: Date.now() - start, requests, apiMs, rateLimitRemaining };
 }

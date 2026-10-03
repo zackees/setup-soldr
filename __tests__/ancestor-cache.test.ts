@@ -7,6 +7,7 @@ import {
 import { CLEAN_SAVE_MARKER, hasCleanSaveProof, planAncestorRestore } from "../src/lib/ancestor-cache-github.js";
 import { readRawInputs } from "../src/lib/raw-inputs.js";
 import { normalizeWorkflowPath, parseTrustedWriters, trustedWriterForRun, type WriterRunMetadata } from "../src/lib/ancestor-cache-trust.js";
+import { admitAncestorRequest, ancestorTelemetry, publishBuildCachePlan } from "../src/lib/ancestor-cache-telemetry.js";
 
 const identity = "a".repeat(16);
 const head = "1".repeat(40);
@@ -159,6 +160,48 @@ test("a second approved job in the same immutable run can qualify its own cache"
   assert.equal(secondWriter?.jobId, 13);
   assert.equal(hasCleanSaveProof(marker, candidate, key, secondWriter, 13), true);
   assert.equal(trustedWriterForRun(authorized, metadata, 14), null);
+});
+
+test("final write-key publication replaces stale resolve outputs for explicit and auto plans", () => {
+  for (const finalKey of ["explicit-custom-key", makeAncestorKey({ identity, sha: head, runId: 9, attempt: 1, pr: null })]) {
+    const outputs = new Map<string, string>([["build-cache-key", "legacy-key-from-resolve"]]);
+    publishBuildCachePlan(finalKey, null, (name, value) => { outputs.set(name, value); });
+    assert.equal(outputs.get("build-cache-key"), finalKey);
+    assert.equal(outputs.get("build-cache-ancestor-json"), "");
+  }
+});
+
+test("selection telemetry exposes candidate identity/cost without claiming usable extraction", () => {
+  const candidate = entry(near, 1);
+  const writer = { identity, sha: head, runId: 9, attempt: 1, pr: null };
+  const telemetry = ancestorTelemetry(identity, {
+    writeKey: makeAncestorKey(writer), writer, ref,
+    selection: { entry: candidate, distance: 1, reason: "nearest-clean-ancestor", inspected: 2 },
+    elapsedMs: 321, apiMs: 123, requests: 4, rateLimitRemaining: 4996,
+  });
+  assert.equal(telemetry.selected_cache_id, candidate.id);
+  assert.equal(telemetry.identity, identity);
+  assert.equal(telemetry.source_sha, head);
+  assert.equal(telemetry.distance, 1);
+  assert.equal(telemetry.scan_ms, 321);
+  assert.equal(telemetry.api_ms, 123);
+  assert.equal(telemetry.rate_limit_remaining, 4996);
+  const outputs = new Map<string, string>();
+  publishBuildCachePlan(telemetry.write_key, telemetry, (name, value) => { outputs.set(name, value); });
+  assert.equal(outputs.get("build-cache-key"), telemetry.write_key);
+  assert.equal(outputs.get("build-cache-ancestor-json"), JSON.stringify(telemetry));
+  assert.equal(outputs.has("build-cache-matched-key"), false);
+});
+
+test("API request reporting excludes operations rejected by the scan budget", () => {
+  let requests = 23;
+  requests = admitAncestorRequest(requests, 1000);
+  assert.equal(requests, 24);
+  assert.throws(() => { requests = admitAncestorRequest(requests, 1000); });
+  assert.equal(requests, 24);
+  requests = 0;
+  assert.throws(() => { requests = admitAncestorRequest(requests, 45_001); });
+  assert.equal(requests, 0);
 });
 
 test("action inputs retain explicit opt-in and omitted defaults", () => {
