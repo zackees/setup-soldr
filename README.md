@@ -444,6 +444,8 @@ preferred for new workflows.
 | `save-cache-remote` | `auto` (default), `true` or `false`. With `auto`, the existing `save-cache` and event policy decide. `true` or `false` sets the remote write decision (for example, pass ci-lint's `cache_save` output here). act/act2 ignores this remote-only policy and retains local automatic saves. `save-cache=false` still disables every save everywhere. Invalid values fail closed. Also accepted by `cook/`. |
 | `cache-dir` | Override the runner-local cache/state root used for the installed `soldr` binary and any managed rustup state this action rehydrates. |
 | `cache-key-suffix` | Optional escape hatch appended to the cache key. |
+| `key` | Build-cache override only. `auto` opts into the Phase 1 nearest clean ancestor pilot; any other nonempty value is an explicit build-cache key. Other families keep their identity keys. |
+| `auto-key` | Default `false`. When `true`, an omitted `key` enables the same build-cache pilot. Requires `actions: read`; lookup errors keep legacy restore. Saves still obey `save-cache`, failed-job and poison guards. |
 | `toolchain` | Explicit Rust toolchain channel override. |
 | `toolchain-file` | Alternate toolchain file path when `toolchain` is empty; `components` and `targets` in the file are provisioned during setup. |
 | `trust-mode` | Optional `SOLDR_TRUST_MODE` value. |

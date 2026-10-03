@@ -53,6 +53,8 @@ import {
 } from "./lib/compile-cache-stats.js";
 import { captureProcessSnapshot, dumpDiagnostics, loggingEnabled } from "./lib/diagnostics.js";
 import { readRawInputs } from "./lib/raw-inputs.js";
+import { CLEAN_SAVE_MARKER, type CleanSaveProof } from "./lib/ancestor-cache-github.js";
+import { parseAncestorKey } from "./lib/ancestor-cache.js";
 import { cacheProfileDefault, isLocalRunner, resolveCacheProfileInput } from "./lib/local-profile.js";
 import { allowCacheSave, gatedSaveCache } from "./lib/save-policy.js";
 import {
@@ -1571,6 +1573,23 @@ export async function run(): Promise<void> {
       payloadProfile: "zccache-build-cache",
       payloadPolicy,
     });
+  }
+  // Publish provenance only after the real upload has a positive cache ID
+  // and the existing failed-job, dependency-yank, and payload gates passed.
+  // The next run also requires GitHub's completed successful donor attempt.
+  const ancestorWriterState = core.getState("ancestorBuildWriter");
+  const ancestorKey = parseAncestorKey(result.buildCache.key);
+  if (ancestorWriterState && ancestorKey && buildOutputGate.save &&
+      buildSave.status === "saved" && (buildSave.cache_id ?? 0) > 0) {
+    try {
+      const writer = JSON.parse(ancestorWriterState) as { sha?: string; runId?: number; attempt?: number; ref?: string };
+      if (writer.sha === ancestorKey.sha && writer.runId === ancestorKey.runId &&
+          writer.attempt === ancestorKey.attempt && typeof writer.ref === "string") {
+        const proof: CleanSaveProof = { cacheId: buildSave.cache_id!, key: result.buildCache.key,
+          ref: writer.ref, sha: ancestorKey.sha, runId: ancestorKey.runId, attempt: ancestorKey.attempt, clean: true };
+        log(`${CLEAN_SAVE_MARKER}${JSON.stringify(proof)}`);
+      }
+    } catch { /* Malformed state never creates save provenance. */ }
   }
   // #287 follow-up: record EVERY outcome (incl. tiny-delta-skip,
   // exact-hit-skip, missing-dir-skip, failed) so the post-step save

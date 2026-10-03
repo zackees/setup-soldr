@@ -25,6 +25,8 @@ export function readRawInputs(env: Record<string, string | undefined>): RawInput
     cache: get("cache"),
     cacheDir: get("cache-dir"),
     cacheKeySuffix: get("cache-key-suffix"),
+    key: get("key"),
+    autoKey: get("auto-key"),
     cachePreset: get("cache-preset"),
     toolchain: get("toolchain"),
     toolchainFile: get("toolchain-file"),

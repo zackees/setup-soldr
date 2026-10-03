@@ -34,6 +34,8 @@ EXPECTED_INPUTS = {
     "save-cache-remote",
     "cache-dir",
     "cache-key-suffix",
+    "key",
+    "auto-key",
     "cache-preset",
     "cache-payload-warn-bytes",
     "cache-payload-max-bytes",

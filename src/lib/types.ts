@@ -82,6 +82,8 @@ export interface RawInputs {
   cache: string;
   cacheDir: string;
   cacheKeySuffix: string;
+  key?: string;
+  autoKey?: string;
   cachePreset: string;
   toolchain: string;
   toolchainFile: string;
