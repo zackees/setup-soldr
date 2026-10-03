@@ -12,6 +12,9 @@ import * as core from "@actions/core";
 import * as cache from "@actions/cache";
 import * as exec from "@actions/exec";
 import { createLogger } from "./lib/log-utils.js";
+import { autoKeyEnabled } from "./lib/ancestor-cache.js";
+import { planAncestorRestore } from "./lib/ancestor-cache-github.js";
+import { cargoConfigHash, shortJsonHash, targetEnvHash, workspaceManifestHash } from "./lib/cache-keys.js";
 import { readRawInputs, resolveSetup, applyResolveResult } from "./lib/resolve-setup.js";
 import {
   cacheProfileDefault,
@@ -581,6 +584,39 @@ export async function run(): Promise<void> {
     if (result.buildCache.restoreKeyParent) restoreKeys.push(result.buildCache.restoreKeyParent);
     if (result.buildCache.restoreKeyToolchain) restoreKeys.push(result.buildCache.restoreKeyToolchain);
     if (result.buildCache.restoreKeyOsArch) restoreKeys.push(result.buildCache.restoreKeyOsArch);
+    const explicitKey = (inputs.key ?? "").trim();
+    if (explicitKey && explicitKey !== "auto") {
+      if (explicitKey.length > 512 || explicitKey.includes(",")) throw new Error("invalid build-cache key override");
+      result.buildCache.key = explicitKey;
+      restoreKeys.length = 0;
+      core.saveState("resolveResult", JSON.stringify(result));
+    }
+    const legacyKey = result.buildCache.key;
+    let selectedKey = "";
+    if (autoKeyEnabled(inputs.key, inputs.autoKey)) {
+      try {
+        const identity = shortJsonHash({
+          legacyKey, mode: result.buildCache.mode,
+          profile: result.targetCache.profile, lock: result.targetCache.lockfileHash,
+          config: await cargoConfigHash(result.workspace),
+          manifests: await workspaceManifestHash(result.workspace),
+          targetEnv: targetEnvHash(process.env),
+        });
+        const plan = await planAncestorRestore({ workspace: result.workspace, identity,
+          token: ctx.githubToken, env: process.env, trustedWriters: inputs.autoKeyTrustedWriters });
+        selectedKey = plan.selection.entry?.key ?? "";
+        result.buildCache.key = plan.writeKey;
+        core.saveState("resolveResult", JSON.stringify(result));
+        core.saveState("ancestorBuildWriter", JSON.stringify({ ...plan.writer, ref: plan.ref }));
+        logger.log(`build-cache ancestor: ${plan.selection.reason} key=${selectedKey || "legacy"} distance=${plan.selection.distance ?? "unknown"} scan_ms=${plan.elapsedMs} requests=${plan.requests}`);
+        await core.summary.addHeading("Build-cache ancestor pilot", 3).addTable([
+          ["Choice", "Distance", "Scan ms", "GET requests"],
+          [selectedKey || plan.selection.reason, String(plan.selection.distance ?? "unknown"), String(plan.elapsedMs), String(plan.requests)],
+        ]).write();
+      } catch (error) {
+        logger.warning(`build-cache ancestor: legacy fallback: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
     const t0 = Date.now();
     // @actions/cache hashes the `paths` array into a "version" key — save and
     // restore MUST pass the same array or the lookup misses even when the
@@ -589,10 +625,16 @@ export async function run(): Promise<void> {
     // unpacks archivePath → buildCachePath afterwards.
     let restore = await restoreCacheSafe(
       [archivePath],
-      result.buildCache.key,
-      restoreKeys,
+      selectedKey || legacyKey,
+      selectedKey ? [] : restoreKeys,
       logger,
     );
+    if (selectedKey && restore.matchedKey !== selectedKey) {
+      restore = await restoreCacheSafe([archivePath], legacyKey, restoreKeys, logger);
+    }
+    // A donor hit is a starting point; only this source's exact write key may
+    // suppress a post-phase save under the existing delta/CACHE-008 gates.
+    restore.hit = restore.matchedKey === result.buildCache.key;
     let buildArchiveBytes: number | null = null;
     let buildInflatedBytes: number | null = null;
     let buildFileCount: number | null = null;
