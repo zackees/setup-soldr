@@ -771,3 +771,29 @@ test("private data save normalizes the SDK path without bypassing save policy", 
     else process.env["INPUT_SAVE-CACHE"] = previous;
   }
 });
+
+test("data archive decoding enforces bounds and never replaces private host files", async () => {
+  const { decodeDataArchive } = await import("../src/lib/data-cache-decode.js");
+  const { compressCache } = await import("../src/lib/cache-compress.js");
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "data-decoder-"));
+  const cache = path.join(parent, "build-cache");
+  fs.mkdirSync(cache);
+  fs.writeFileSync(path.join(cache, "artifact"), "compiled data".repeat(100));
+  const compressed = await compressCache({ cacheDir: cache, codec: "zstd", level: "1", debug: false, log: () => undefined });
+  assert.ok(compressed.archivePath);
+  const decoded = path.join(parent, "decoded.tar");
+  const result = await decodeDataArchive(compressed.archivePath, decoded);
+  assert.equal(result.compressedBytes, fs.statSync(compressed.archivePath).size);
+  assert.equal(result.inflatedBytes, fs.statSync(decoded).size);
+  assert.ok(result.inflatedBytes > 0);
+  await assert.rejects(decodeDataArchive(compressed.archivePath, path.join(parent, "limited.tar"), 1), /inflation bound/);
+  const privateFile = path.join(parent, "publisher-state");
+  fs.writeFileSync(privateFile, "host-only");
+  const outputLink = path.join(parent, "output-link");
+  fs.symlinkSync(privateFile, outputLink);
+  await assert.rejects(decodeDataArchive(compressed.archivePath, outputLink), /EEXIST/);
+  assert.equal(fs.readFileSync(privateFile, "utf8"), "host-only");
+  const inputLink = path.join(parent, "input-link");
+  fs.symlinkSync(compressed.archivePath, inputLink);
+  await assert.rejects(decodeDataArchive(inputLink, path.join(parent, "linked.tar")), /regular file/);
+});

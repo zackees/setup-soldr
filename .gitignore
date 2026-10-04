@@ -9,6 +9,7 @@ dist-post/
 dist-cleanup/
 dist-cook/
 dist-cook-post/
+dist-data-cache-decode/
 dist-tsc/
 *.tsbuildinfo
 licenses.txt
