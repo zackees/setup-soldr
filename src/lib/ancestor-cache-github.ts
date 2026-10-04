@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { BoundedGitHistory } from "./ancestor-cache-git.js";
 import * as github from "@actions/github";
 import { normalizeWorkflowPath, parseTrustedWriters, trustedWriterForRun, type TrustedWriter } from "./ancestor-cache-trust.js";
 import { admitAncestorRequest, type AncestorRestorePlan } from "./ancestor-cache-telemetry.js";
@@ -34,16 +35,6 @@ async function git(workspace: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => execFile("git", args,
     { cwd: workspace, timeout: 30_000, maxBuffer: 2 * 1024 * 1024, encoding: "utf8" },
     (error, stdout) => error ? reject(error) : resolve(stdout.trim())));
-}
-
-function parseParents(text: string): GitParentNode[] {
-  return text.split("\n").filter(Boolean).map(line => {
-    const [sha, ...parents] = line.split(" ");
-    if (!sha || ![sha, ...parents].every(value => /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(value))) {
-      throw new Error("invalid Git DAG output");
-    }
-    return { sha, parents };
-  });
 }
 
 /** All remote calls are GETs. There is no manifest, payload promotion, or
@@ -101,20 +92,7 @@ export async function planAncestorRestore(options: {
     ...(env["GITHUB_BASE_REF"] ? [`refs/heads/${env["GITHUB_BASE_REF"]}`] : []),
     ...(defaultBranch ? [`refs/heads/${defaultBranch}`] : []),
   ])];
-  let distances: ReadonlyMap<string, number> | null = null;
-  let shallow = false;
-  async function localDistances(): Promise<ReadonlyMap<string, number>> {
-    if (distances) return distances;
-    shallow = await git(workspace, ["rev-parse", "--is-shallow-repository"]) === "true";
-    if (shallow) {
-      // A bounded fetch improves the local path without changing checkout or
-      // persistent Git configuration. Failure uses the compare fallback.
-      try { await git(workspace, ["fetch", "--no-tags", "--depth=200", "origin", sha]); } catch { /* compare below */ }
-    }
-    const nodes = parseParents(await git(workspace, ["rev-list", "--max-count=200", "--parents", sha]));
-    distances = dagDistances(sha, nodes);
-    return distances;
-  }
+  const history = new BoundedGitHistory(sha, args => git(workspace, [...args]));
   const selection = await selectAncestorCache(identity, refs, {
     list: async () => {
       const entries: AncestorCacheEntry[] = [];
@@ -136,11 +114,8 @@ export async function planAncestorRestore(options: {
     },
     distance: async candidate => {
       if (Date.now() - start > 45_000) throw new Error("ancestor lookup exceeded time budget");
-      const local = await localDistances();
-      if (local.has(candidate)) {
-        await git(workspace, ["merge-base", "--is-ancestor", candidate, sha]);
-        return local.get(candidate)!;
-      }
+      const localDistance = await history.distance(candidate);
+      if (localDistance !== null) return localDistance;
       // A candidate outside the bounded local graph may still be a near
       // ancestor across a wide merge. Compare its bounded DAG instead of
       // silently treating unknown distance as divergence.

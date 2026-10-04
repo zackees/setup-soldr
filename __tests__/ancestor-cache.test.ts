@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { BoundedGitHistory } from "../src/lib/ancestor-cache-git.js";
 import assert from "node:assert/strict";
 import {
   autoKeyEnabled, dagDistances, makeAncestorKey, parseAncestorKey, selectAncestorCache,
@@ -208,4 +209,61 @@ test("action inputs retain explicit opt-in and omitted defaults", () => {
   assert.equal(readRawInputs({ "INPUT_AUTO-KEY": "true", INPUT_KEY: "auto" }).autoKey, "true");
   assert.equal(readRawInputs({ INPUT_AUTO_KEY: "true", INPUT_KEY: "fixed" }).key, "fixed");
   assert.equal(autoKeyEnabled(readRawInputs({}).key, readRawInputs({}).autoKey), false);
+});
+
+
+test("a present shallow-checkout ancestor needs no redundant network fetch", async () => {
+  const calls: string[][] = [];
+  const history = new BoundedGitHistory(head, async args => {
+    calls.push([...args]);
+    if (args[0] === "rev-parse") return "true";
+    if (args[0] === "rev-list") return `${head} ${near}\n${near}`;
+    return "";
+  });
+  assert.equal(await history.distance(near), 1);
+  assert.equal(calls.filter(args => args[0] === "fetch").length, 0);
+  assert.ok(calls.some(args => args.join(" ") === `merge-base --is-ancestor ${near} ${head}`));
+});
+
+test("missing shallow history is fetched once within the existing depth bound", async () => {
+  let fetched = false;
+  let fetches = 0;
+  const history = new BoundedGitHistory(head, async args => {
+    if (args[0] === "rev-parse") return "true";
+    if (args[0] === "rev-list") return fetched ? `${head} ${near}\n${near} ${far}\n${far}` : `${head} ${near}\n${near}`;
+    if (args[0] === "fetch") {
+      assert.deepEqual(args, ["fetch", "--no-tags", "--depth=200", "origin", head]);
+      fetched = true;
+      fetches++;
+    }
+    return "";
+  });
+  assert.equal(await history.distance(far), 2);
+  assert.equal(await history.distance(diverged), null);
+  assert.equal(fetches, 1);
+});
+
+test("failed bounded fetch leaves missing ancestry unknown and preserves known parents", async () => {
+  let fetches = 0;
+  const history = new BoundedGitHistory(head, async args => {
+    if (args[0] === "rev-parse") return "true";
+    if (args[0] === "rev-list") return `${head} ${near}\n${near}`;
+    if (args[0] === "fetch") { fetches++; throw new Error("unavailable fetch"); }
+    return "";
+  });
+  assert.equal(await history.distance(far), null);
+  assert.equal(await history.distance(near), 1);
+  assert.equal(await history.distance(diverged), null);
+  assert.equal(fetches, 1);
+});
+
+test("local ancestry still requires merge-base verification", async () => {
+  const history = new BoundedGitHistory(head, async args => {
+    if (args[0] === "rev-parse") return "false";
+    if (args[0] === "rev-list") return `${head} ${near}\n${near}`;
+    if (args[0] === "merge-base") throw new Error("not an ancestor");
+    if (args[0] === "fetch") assert.fail("full history must not fetch");
+    return "";
+  });
+  await assert.rejects(history.distance(near), /not an ancestor/);
 });
