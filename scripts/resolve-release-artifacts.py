@@ -27,7 +27,7 @@ def contained(path: Path, root: Path, label: str) -> None:
         raise SystemExit(f"{label} escapes its allowed directory: {path}") from error
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901 - measured baseline, zackees/ci.yml#229
     workspace = Path(required("GITHUB_WORKSPACE")).resolve()
     root = (workspace / required("WORKING_DIRECTORY")).resolve()
     contained(root, workspace, "working-directory")

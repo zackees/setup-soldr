@@ -1,0 +1,5 @@
+[lint]
+select = ["C901", "RUF100"]
+
+[lint.mccabe]
+max-complexity = 10

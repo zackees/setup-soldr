@@ -147,7 +147,10 @@ jobs:
           set -euo pipefail
           python --version
           python -m pip install --upgrade pip
-          python -m pip install pytest pyyaml
+          python -m pip install pytest pyyaml ruff==0.12.10
+
+      - name: Ratchet Python function complexity
+        run: python -m ruff check .
 
       - name: Run setup-soldr contract tests
         shell: bash

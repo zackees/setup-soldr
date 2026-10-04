@@ -56,7 +56,7 @@ def path_dependent_external_ids(
     }
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901 - measured baseline, zackees/ci.yml#229
     messages_path = Path(sys.argv[1])
     report_path = Path(sys.argv[2])
     min_external = int(sys.argv[3]) if len(sys.argv) > 3 else 50

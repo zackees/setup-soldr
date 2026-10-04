@@ -41,7 +41,7 @@ def api(path: str, *, archive: bool = False):
     return data if archive else json.loads(data)
 
 
-def verify(target: str, canary_id: str) -> int:
+def verify(target: str, canary_id: str) -> int:  # noqa: C901 - measured baseline, zackees/ci.yml#229
     if not SHA_PATTERN.fullmatch(target):
         raise ValueError("target_sha must be a full lowercase 40-character commit SHA")
     if not canary_id.isdecimal() or int(canary_id) <= 0:
