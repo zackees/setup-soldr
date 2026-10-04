@@ -155,3 +155,36 @@ def source_build_command(paths: BuilderPaths, uid: int, gid: int) -> tuple[str, 
         'mkdir -p "$CARGO_HOME"; ln -s /registry "$CARGO_HOME/registry"; exec "$@"',
         "builder", "soldr", "cargo", "build", "--workspace", "--all-targets", "--locked", "--offline",
     )
+
+
+def dependency_fetch_command(staged: Path, registry: Path, tools: Path, uid: int, gid: int) -> tuple[str, ...]:
+    """Network is allowed only for a source-free, configuration-free stub.
+
+    The caller must use a newly owned empty registry and freshly verified
+    released tools. Never call this with a registry writable by prior source.
+    """
+    if type(uid) is not int or type(gid) is not int or uid <= 0 or gid <= 0:
+        raise ValueError("dependency prefetch requires a non-root numeric identity")
+    for path in (staged, registry, tools):
+        if any(character in str(path) for character in (",", "\n", "\r")) or not path.is_dir():
+            raise ValueError("unsafe dependency prefetch mount")
+    if any(registry.iterdir()):
+        raise ValueError("dependency prefetch registry must be newly owned and empty")
+    expected = {"Cargo.toml", "Cargo.lock", "src"}
+    if {item.name for item in staged.iterdir()} != expected or (staged / "src/main.rs").read_text(encoding="utf-8") != "fn main() {}\n":
+        raise ValueError("dependency prefetch accepts only trusted staged declarations and stub")
+    return (
+        "docker", "run", "--rm", "--platform=linux/amd64", "--network=bridge", "--read-only",
+        "--cap-drop=ALL", "--security-opt=no-new-privileges", f"--user={uid}:{gid}",
+        "--tmpfs=/tmp:rw,nosuid,nodev,size=1073741824,mode=1777",
+        f"--tmpfs=/home/builder:rw,nosuid,nodev,size=67108864,uid={uid},gid={gid}",
+        "--mount", f"type=bind,source={staged.resolve()},target=/staged,readonly",
+        "--mount", f"type=bind,source={registry.resolve()},target=/registry",
+        "--mount", f"type=bind,source={tools.resolve()},target=/tools,readonly",
+        "--workdir=/staged", "--env=HOME=/home/builder", "--env=CARGO_HOME=/home/builder/cargo",
+        "--env=RUSTUP_HOME=/usr/local/rustup", "--env=RUSTUP_TOOLCHAIN=1.98.1",
+        "--env=PATH=/tools:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "--entrypoint=/bin/sh", BUILDER_IMAGE, "-ec",
+        'mkdir -p "$CARGO_HOME"; ln -s /registry "$CARGO_HOME/registry"; exec "$@"',
+        "builder", "soldr", "cargo", "fetch", "--locked", "--manifest-path=/staged/Cargo.toml",
+    )

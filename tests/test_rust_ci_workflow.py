@@ -325,3 +325,23 @@ def test_dependency_fetch_rejects_network_executable_and_git_inputs(tmp_path: Pa
     lock.write_text('version=4\n[[package]]\nname="evil"\nversion="1"\nsource="git+https://example.test/evil"\n', encoding="utf-8")
     with pytest.raises(ValueError, match="registry"):
         stage_dependency_fixture(source, tmp_path / "staged")
+
+
+def test_network_prefetch_mounts_only_trusted_stubs_and_fresh_registry(tmp_path: Path) -> None:
+    from scripts.credential_free_builder import dependency_fetch_command
+
+    staged = tmp_path / "staged"
+    registry = tmp_path / "registry"
+    tools = tmp_path / "tools"
+    for path in (staged, registry, tools):
+        path.mkdir()
+    (staged / "src").mkdir()
+    (staged / "src/main.rs").write_text("fn main() {}\n", encoding="utf-8")
+    (staged / "Cargo.toml").write_text('[package]\nname="fixture"\nversion="0.1.0"\n', encoding="utf-8")
+    (staged / "Cargo.lock").write_text('version=4\n', encoding="utf-8")
+    command = dependency_fetch_command(staged, registry, tools, 1000, 1000)
+    assert "--network=bridge" in command
+    mounts = [command[index + 1] for index, argument in enumerate(command) if argument == "--mount"]
+    assert len(mounts) == 3
+    assert all("target=/source" not in mount and "target=/cache" not in mount for mount in mounts)
+    assert command[-5:] == ("soldr", "cargo", "fetch", "--locked", "--manifest-path=/staged/Cargo.toml")
