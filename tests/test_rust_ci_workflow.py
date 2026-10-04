@@ -250,3 +250,37 @@ def test_pilot_ignores_restored_stale_compile_statistics(tmp_path: Path) -> None
     assert compilation_statistics(tmp_path, 200).misses == 3
     stats.write_text('{"hits": true, "misses": -1}', encoding="utf-8")
     assert compilation_statistics(tmp_path, 200).hits is None
+
+
+def test_offline_builder_cannot_reach_host_publisher_credentials(tmp_path: Path) -> None:
+    from scripts.credential_free_builder import BuilderPaths, source_build_command
+
+    paths = BuilderPaths(*(tmp_path / name for name in ("source", "registry", "tools", "cache", "target")))
+    for path in (paths.source, paths.registry, paths.tools, paths.cache, paths.target):
+        path.mkdir()
+    command = source_build_command(paths, 1000, 1000)
+    assert "--network=none" in command
+    assert "--read-only" in command
+    assert "--cap-drop=ALL" in command
+    assert "--security-opt=no-new-privileges" in command
+    assert "--user=1000:1000" in command
+    assert not any("GITHUB" in argument or "ACTIONS" in argument or "docker.sock" in argument for argument in command)
+    mounts = [command[index + 1] for index, argument in enumerate(command) if argument == "--mount"]
+    assert len(mounts) == 5
+    assert all("readonly" in mount for mount in mounts if any(f"target={name}" in mount for name in ("/source", "/registry", "/tools")))
+    assert command[-7:] == ("soldr", "cargo", "build", "--workspace", "--all-targets", "--locked", "--offline")
+
+
+def test_offline_builder_rejects_aliases_and_mount_injection(tmp_path: Path) -> None:
+    import pytest
+    from scripts.credential_free_builder import BuilderPaths, source_build_command
+
+    source = tmp_path / "source"
+    source.mkdir()
+    alias = tmp_path / "alias"
+    alias.symlink_to(source, target_is_directory=True)
+    with pytest.raises(ValueError, match="separate"):
+        source_build_command(BuilderPaths(source, alias, source, source, source), 1000, 1000)
+    injected = tmp_path / "cache,target=/var/run/docker.sock"
+    with pytest.raises(ValueError, match="mount"):
+        source_build_command(BuilderPaths(source, injected, source, source, source), 1000, 1000)
