@@ -8,7 +8,15 @@ prefetch and tool verification are prerequisites, not performed by this module.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
+import re
+import tomllib
+from typing import TypeAlias
+
+
+TomlValue: TypeAlias = str | int | float | bool | list["TomlValue"] | dict[str, "TomlValue"]
+REGISTRY_SOURCE = "registry+https://github.com/rust-lang/crates.io-index"
 
 
 BUILDER_IMAGE = (
@@ -24,6 +32,85 @@ class BuilderPaths:
     tools: Path
     cache: Path
     target: Path
+
+
+def dependency_value(value: TomlValue) -> str:
+    if isinstance(value, str):
+        return json.dumps(value)
+    if not isinstance(value, dict):
+        raise ValueError("unsupported dependency declaration")
+    allowed = {"version", "package", "features", "default-features", "optional"}
+    if not value.keys() <= allowed or not isinstance(value.get("version"), str):
+        raise ValueError("dependency must use the default registry and an explicit version")
+    rendered: list[str] = []
+    for key, item in value.items():
+        if key in ("default-features", "optional"):
+            if type(item) is not bool:
+                raise ValueError("dependency flag must be boolean")
+        elif key == "features":
+            if not isinstance(item, list) or not all(isinstance(feature, str) for feature in item):
+                raise ValueError("dependency features must be strings")
+        elif not isinstance(item, str):
+            raise ValueError("dependency name/version must be strings")
+        rendered.append(f"{key} = {json.dumps(item)}")
+    return "{ " + ", ".join(rendered) + " }"
+
+
+def dependency_manifest(document: dict[str, TomlValue]) -> str:
+    if not document.keys() <= {"package", "dependencies", "dev-dependencies", "build-dependencies", "bin", "lib"}:
+        raise ValueError("pilot prefetch supports only a single registry-dependency package")
+    package = document.get("package")
+    if not isinstance(package, dict):
+        raise ValueError("pilot prefetch requires a package")
+    lines = ["[package]"]
+    for key in ("name", "version", "edition"):
+        value = package.get(key, "2021" if key == "edition" else None)
+        if not isinstance(value, str):
+            raise ValueError("pilot package identity must use literal strings")
+        lines.append(f"{key} = {json.dumps(value)}")
+    lines.extend(("build = false", "autobins = false", '[[bin]]', 'name = "prefetch-stub"', 'path = "src/main.rs"'))
+    for section in ("dependencies", "dev-dependencies", "build-dependencies"):
+        dependencies = document.get(section, {})
+        if not isinstance(dependencies, dict):
+            raise ValueError("invalid dependency table")
+        lines.append(f"[{section}]")
+        for name, declaration in dependencies.items():
+            lines.append(f"{json.dumps(name)} = {dependency_value(declaration)}")
+    return "\n".join(lines) + "\n"
+
+
+def validate_registry_lock(document: dict[str, TomlValue]) -> None:
+    packages = document.get("package", [])
+    if not isinstance(packages, list):
+        raise ValueError("invalid registry lockfile packages")
+    for package in packages:
+        if not isinstance(package, dict):
+            raise ValueError("invalid registry package record")
+        source = package.get("source")
+        if source is None:
+            continue
+        checksum = package.get("checksum")
+        if source != REGISTRY_SOURCE or not isinstance(checksum, str) or not re.fullmatch(r"[0-9a-f]{64}", checksum):
+            raise ValueError("prefetch requires checksum-pinned default registry packages")
+
+
+def stage_dependency_fixture(source: Path, destination: Path) -> None:
+    """Stage declarations and a trusted stub only, never config or source.
+
+    This deliberately supports the single-package mechanics fixture first.
+    Workspace/path/git/custom registry graphs fail closed pending a reviewed
+    declarative closure implementation; this does not claim production Soldr.
+    """
+    manifest: dict[str, TomlValue] = tomllib.loads((source / "Cargo.toml").read_text(encoding="utf-8"))
+    lock_bytes = (source / "Cargo.lock").read_bytes()
+    lock: dict[str, TomlValue] = tomllib.loads(lock_bytes.decode("utf-8"))
+    rendered = dependency_manifest(manifest)
+    validate_registry_lock(lock)
+    destination.mkdir(mode=0o700)
+    (destination / "src").mkdir()
+    (destination / "Cargo.toml").write_text(rendered, encoding="utf-8")
+    (destination / "Cargo.lock").write_bytes(lock_bytes)
+    (destination / "src/main.rs").write_text("fn main() {}\n", encoding="utf-8")
 
 
 def validated_paths(paths: BuilderPaths) -> BuilderPaths:

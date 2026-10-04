@@ -284,3 +284,44 @@ def test_offline_builder_rejects_aliases_and_mount_injection(tmp_path: Path) -> 
     injected = tmp_path / "cache,target=/var/run/docker.sock"
     with pytest.raises(ValueError, match="mount"):
         source_build_command(BuilderPaths(source, injected, source, source, source), 1000, 1000)
+
+
+def test_dependency_fetch_stages_declarations_without_source_hooks(tmp_path: Path) -> None:
+    from scripts.credential_free_builder import stage_dependency_fixture
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "Cargo.toml").write_text('[package]\nname="fixture"\nversion="0.1.0"\nedition="2021"\nbuild="evil.rs"\n[dependencies]\nserde={version="1",features=["derive"]}\n', encoding="utf-8")
+    (source / "Cargo.lock").write_text('version=4\n[[package]]\nname="fixture"\nversion="0.1.0"\n', encoding="utf-8")
+    (source / "evil.rs").write_text('panic!("untrusted");', encoding="utf-8")
+    config = source / ".cargo"
+    config.mkdir()
+    (config / "config.toml").write_text('credential-provider=["evil"]', encoding="utf-8")
+    destination = tmp_path / "staged"
+    stage_dependency_fixture(source, destination)
+    assert not (destination / "evil.rs").exists()
+    assert not (destination / ".cargo").exists()
+    manifest = (destination / "Cargo.toml").read_text(encoding="utf-8")
+    assert 'build = false' in manifest
+    assert 'features = ["derive"]' in manifest
+    assert (destination / "src/main.rs").read_text(encoding="utf-8") == "fn main() {}\n"
+    assert (destination / "Cargo.lock").read_bytes() == (source / "Cargo.lock").read_bytes()
+
+
+def test_dependency_fetch_rejects_network_executable_and_git_inputs(tmp_path: Path) -> None:
+    import pytest
+    from scripts.credential_free_builder import stage_dependency_fixture
+
+    source = tmp_path / "source"
+    source.mkdir()
+    manifest = source / "Cargo.toml"
+    manifest.write_text('[package]\nname="fixture"\nversion="0.1.0"\n[dependencies]\nevil={git="https://example.test/evil"}\n', encoding="utf-8")
+    lock = source / "Cargo.lock"
+    lock.write_text('version=4\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="dependency"):
+        stage_dependency_fixture(source, tmp_path / "staged")
+    assert not (tmp_path / "staged").exists()
+    manifest.write_text('[package]\nname="fixture"\nversion="0.1.0"\n', encoding="utf-8")
+    lock.write_text('version=4\n[[package]]\nname="evil"\nversion="1"\nsource="git+https://example.test/evil"\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="registry"):
+        stage_dependency_fixture(source, tmp_path / "staged")
