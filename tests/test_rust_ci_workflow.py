@@ -406,3 +406,42 @@ def test_source_stdout_cannot_become_workflow_commands(tmp_path: Path, capsys) -
     assert measured.return_code == 0
     assert "::save-state" in log.read_text(encoding="utf-8")
     assert capsys.readouterr().out == ""
+
+
+def test_release_archive_authentication_precedes_decoder_execution(tmp_path: Path) -> None:
+    import sys
+    import pytest
+    from scripts.credential_free_builder import stage_released_tools
+
+    archive = tmp_path / "forged-release.zst"
+    archive.write_bytes(b"public marker cannot authenticate a release")
+    invoked = tmp_path / "decoder-invoked"
+    decoder = tmp_path / "decoder"
+    decoder.write_text(f'#!{sys.executable}\nfrom pathlib import Path\nPath({str(invoked)!r}).write_text("executed")\n', encoding="utf-8")
+    decoder.chmod(0o755)
+    with pytest.raises(ValueError, match="digest mismatch"):
+        stage_released_tools(archive, tmp_path / "tools", decoder)
+    assert not invoked.exists()
+    assert not (tmp_path / "tools").exists()
+
+
+def test_release_staging_never_follows_archive_links_or_paths(tmp_path: Path) -> None:
+    import io
+    import tarfile
+    import pytest
+    from scripts.credential_free_builder import stage_release_members
+
+    for name in ("../credential", "/credential", "subdir/soldr", "soldr"):
+        encoded = io.BytesIO()
+        with tarfile.open(fileobj=encoded, mode="w") as archive:
+            member = tarfile.TarInfo(name)
+            member.type = tarfile.SYMTYPE
+            member.linkname = "../credential"
+            archive.addfile(member)
+        encoded.seek(0)
+        destination = tmp_path / f"stage-{len(tuple(tmp_path.iterdir()))}"
+        destination.mkdir()
+        with tarfile.open(fileobj=encoded, mode="r:") as archive, pytest.raises(ValueError, match="unexpected|regular"):
+            stage_release_members(archive, destination)
+        assert not any(destination.iterdir())
+    assert not (tmp_path / "credential").exists()

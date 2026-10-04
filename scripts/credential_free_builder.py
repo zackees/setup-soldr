@@ -1,8 +1,8 @@
 """Offline source execution plan; publisher integration remains separate.
 
 Only the trusted host may construct this command. Source-controlled scripts
-must never receive the Docker socket or the host action environment. Registry
-prefetch and tool verification are prerequisites, not performed by this module.
+must never receive the Docker socket or the host action environment. The module authenticates tool staging and constructs separate source-free
+prefetch and offline execution plans; host publisher integration is pending.
 """
 
 from __future__ import annotations
@@ -14,6 +14,8 @@ from pathlib import Path
 import re
 import stat
 import subprocess
+import tarfile
+import tempfile
 import time
 import tomllib
 from typing import TypeAlias
@@ -22,6 +24,7 @@ from typing import TypeAlias
 TomlValue: TypeAlias = str | int | float | bool | list["TomlValue"] | dict[str, "TomlValue"]
 REGISTRY_SOURCE = "registry+https://github.com/rust-lang/crates.io-index"
 LLVM_ARCHIVE_SHA256 = "4021cc49d70472122761709e7376835dfc857b5ec77183fa969b5f61d0f13a2f"
+RELEASE_ARCHIVE_SHA256 = "00c33d9f0447c3762868f244bad5e6af78a4f9ab848069069450991a743b107f"
 SOURCE_CACHE = "/home/builder/.soldr/cache/zccache"
 TOOL_DIGESTS: dict[str, str] = {
     "soldr": "70b530c5e0ae6ee9c2fff317874a5e09a430a98eb29e6cb107e0c07b105a2dc2",
@@ -118,6 +121,60 @@ def execute_container(command: tuple[str, ...], client: DockerClient, log: Path)
             stdout=output, stderr=subprocess.STDOUT, check=False,
         )
     return ContainerMeasurement(result.returncode, time.perf_counter() - started, str(log))
+
+
+def stage_released_tools(archive: Path, destination: Path, zstd: Path) -> tuple[FileFingerprint, ...]:
+    """Authenticate the fixed release before decoding any archive metadata.
+
+    Only a fresh private directory receives the four independently pinned
+    executables. Nothing from this release is executed on the publisher host.
+    The source container cannot mount the archive or this staging operation.
+    """
+    if archive.is_symlink() or not archive.is_file() or archive.stat().st_size > 32 * 1024 * 1024:
+        raise ValueError("release archive must be a bounded regular file")
+    decoder = zstd.resolve(strict=True)
+    if not decoder.is_file():
+        raise ValueError("release decoder must be an explicit trusted executable")
+    with archive.open("rb") as compressed, tempfile.TemporaryFile() as decoded, tempfile.TemporaryFile() as diagnostics:
+        if hashlib.file_digest(compressed, "sha256").hexdigest() != RELEASE_ARCHIVE_SHA256:
+            raise ValueError("release archive digest mismatch")
+        compressed.seek(0)
+        result = subprocess.run(
+            (str(decoder), "-d", "-c"), stdin=compressed, stdout=decoded,
+            stderr=diagnostics, env={"PATH": str(decoder.parent)}, check=False, timeout=30,
+        )
+        if result.returncode:
+            diagnostics.seek(0)
+            raise ValueError("release decoding failed: " + diagnostics.read(8192).decode("utf-8", errors="replace"))
+        if decoded.tell() > 128 * 1024 * 1024:
+            raise ValueError("decoded release archive exceeds size limit")
+        decoded.seek(0)
+        destination.mkdir(mode=0o700)
+        with tarfile.open(fileobj=decoded, mode="r:") as released:
+            stage_release_members(released, destination)
+    return verify_released_tools(destination)
+
+
+def stage_release_members(released: tarfile.TarFile, destination: Path) -> None:
+    """No generic extraction: flat regular members with exact names only."""
+    seen: set[str] = set()
+    for member in released:
+        if member.name not in (*TOOL_DIGESTS, "manifest.json") or member.name in seen:
+            raise ValueError("unexpected or duplicate release member")
+        if not member.isfile() or member.size < 0 or member.size > 64 * 1024 * 1024:
+            raise ValueError("release members must be bounded regular files")
+        seen.add(member.name)
+        if member.name == "manifest.json":
+            continue
+        reader = released.extractfile(member)
+        if reader is None:
+            raise ValueError("release member has no content")
+        with reader, (destination / member.name).open("xb") as output:
+            while chunk := reader.read(1024 * 1024):
+                output.write(chunk)
+        (destination / member.name).chmod(0o755)
+    if seen != {*TOOL_DIGESTS, "manifest.json"}:
+        raise ValueError("release member inventory is incomplete")
 
 
 def verify_released_tools(root: Path) -> tuple[FileFingerprint, ...]:
