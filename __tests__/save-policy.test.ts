@@ -402,7 +402,7 @@ test("#527 contract: every save call site in src/ passes the save-policy gate", 
     ["lib/cook-cache.ts", "saveLayeredCookCache"],
     ["lib/solo-toolchain-cache.ts", "saveSoloCache"],
     ["lib/soldr-mini-cache.ts", "saveMiniCache"],
-    ["post.ts", "saveOne"],
+    ["lib/data-cache-save.ts", "saveDataCache"],
   ];
   for (const [rel, name] of wrapperDefs) {
     const text = fs.readFileSync(path.join(srcRoot, rel), "utf8");

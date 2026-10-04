@@ -53123,6 +53123,188 @@ function canonicalizeCookFlags(flags) {
 
 /***/ }),
 
+/***/ 79484:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.applyCachePayloadOversizeAction = applyCachePayloadOversizeAction;
+exports.saveDataCache = saveDataCache;
+// Shared data-cache publication. This module never installs or invokes Soldr,
+// restored toolchains, source scripts, or compiler outputs. Callers must enforce
+// job-success, dependency-yank and new-compilation gates before publication.
+const fs = __importStar(__nccwpck_require__(73024));
+const core = __importStar(__nccwpck_require__(37484));
+const cache_compress_js_1 = __nccwpck_require__(24978);
+const save_policy_js_1 = __nccwpck_require__(98097);
+function dirExists(directory) {
+    try {
+        return fs.statSync(directory).isDirectory();
+    }
+    catch {
+        return false;
+    }
+}
+function applyCachePayloadOversizeAction(action, message, setFailed = core.setFailed) {
+    if (action === "fail") {
+        setFailed(message);
+        return "failed";
+    }
+    return "oversize-skip";
+}
+async function saveDataCache(opts) {
+    const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadProfile, payloadPolicy } = opts;
+    const withStats = (r) => Object.assign(r, {
+        archiveBytes: null,
+        inflatedBytes: null,
+        fileCount: null,
+        payload: null,
+    });
+    // #527: shared save policy (save-cache input / pull_request event).
+    if (!(0, save_policy_js_1.allowCacheSave)(label, (m) => core.info(m))) {
+        return withStats({ status: "policy-skip", cache_dir: cacheDir });
+    }
+    if (!dirExists(cacheDir)) {
+        log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
+        return withStats({ status: "missing-dir-skip", cache_dir: cacheDir });
+    }
+    if (matchedKey === key) {
+        log(`${label}: exact cache hit on ${key}, skipping save`);
+        return withStats({ status: "exact-hit-skip", cache_dir: cacheDir });
+    }
+    let archiveBytes = null;
+    let archivePath = null;
+    let inflatedBytes = null;
+    let fileCount = null;
+    let payload = null;
+    // Per-phase save timing (#214): separate the archive+compress phase from the
+    // cache reservation+upload phase so a slow Windows post step is diagnosable.
+    let compressMs = 0;
+    let uploadMs = 0;
+    const compressStart = Date.now();
+    let skippedReason;
+    try {
+        if (archivePath === null) {
+            const result = await (0, cache_compress_js_1.compressCache)({
+                cacheDir,
+                codec,
+                level,
+                debug,
+                log,
+                extraBasenames,
+                payloadWarnBytes: payloadPolicy.warnBytes,
+                payloadMaxBytes: payloadPolicy.maxBytes,
+                payloadOversizeAction: payloadPolicy.oversizeAction,
+                payloadTopN: payloadPolicy.topN,
+                payloadProfile,
+                label,
+                cacheKey: key,
+            });
+            archivePath = result.archivePath;
+            archiveBytes = result.archiveBytes || null;
+            inflatedBytes = result.inflatedBytes;
+            fileCount = result.fileCount;
+            payload = result.payload;
+            skippedReason = result.skippedReason;
+            compressMs = Date.now() - compressStart;
+        }
+        if (skippedReason === "payload-too-large") {
+            log(`${label}: payload exceeded cache-payload-max-bytes, skipping save`);
+            return {
+                status: "oversize-skip",
+                cache_dir: cacheDir,
+                archiveBytes,
+                inflatedBytes,
+                fileCount,
+                payload,
+                phaseTimings: { compressMs },
+            };
+        }
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (payloadPolicy.oversizeAction === "fail" &&
+            message.includes("exceeding cache-payload-max-bytes")) {
+            applyCachePayloadOversizeAction("fail", message);
+        }
+        log(`${label}: compression failed: ${message}`);
+        return withStats({ status: "failed", cache_dir: cacheDir, error: message });
+    }
+    const pathsToSave = archivePath ? [archivePath] : [cacheDir];
+    try {
+        const uploadStart = Date.now();
+        const id = await (0, save_policy_js_1.gatedSaveCache)(label, pathsToSave, key, (m) => core.info(m));
+        uploadMs = Date.now() - uploadStart;
+        log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"} ` +
+            `(compress=${compressMs}ms upload=${uploadMs}ms)`);
+        return {
+            status: "saved",
+            cache_dir: cacheDir,
+            archive_path: archivePath ?? undefined,
+            saved_paths: pathsToSave,
+            cache_id: id,
+            archiveBytes,
+            inflatedBytes,
+            fileCount,
+            payload,
+            phaseTimings: { compressMs, uploadMs },
+        };
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        log(`${label}: save failed: ${message}`);
+        return {
+            status: "failed",
+            cache_dir: cacheDir,
+            archive_path: archivePath ?? undefined,
+            saved_paths: pathsToSave,
+            error: message,
+            archiveBytes,
+            inflatedBytes,
+            fileCount,
+            payload,
+            phaseTimings: { compressMs, uploadMs },
+        };
+    }
+}
+
+
+/***/ }),
+
 /***/ 92587:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -58773,10 +58955,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.applyCachePayloadOversizeAction = void 0;
 exports.dylintMarkerIdentityMatches = dylintMarkerIdentityMatches;
 exports.resolveJournalPrintRaw = resolveJournalPrintRaw;
 exports.resolveCachePayloadPolicy = resolveCachePayloadPolicy;
-exports.applyCachePayloadOversizeAction = applyCachePayloadOversizeAction;
 exports.classifyCacheSaveReservation = classifyCacheSaveReservation;
 exports.computeJobNewCompiles = computeJobNewCompiles;
 exports.resolveZccacheSessionJournalPath = resolveZccacheSessionJournalPath;
@@ -58789,7 +58971,9 @@ const path = __importStar(__nccwpck_require__(76760));
 const node_child_process_1 = __nccwpck_require__(31421);
 const core = __importStar(__nccwpck_require__(37484));
 const cache = __importStar(__nccwpck_require__(5116));
-const cache_compress_js_1 = __nccwpck_require__(24978);
+const data_cache_save_js_1 = __nccwpck_require__(79484);
+var data_cache_save_js_2 = __nccwpck_require__(79484);
+Object.defineProperty(exports, "applyCachePayloadOversizeAction", ({ enumerable: true, get: function () { return data_cache_save_js_2.applyCachePayloadOversizeAction; } }));
 const solo_toolchain_cache_js_1 = __nccwpck_require__(67901);
 const cook_cache_js_1 = __nccwpck_require__(504);
 const soldr_mini_cache_js_1 = __nccwpck_require__(83756);
@@ -59012,13 +59196,6 @@ function resolveCachePayloadPolicy(inputs, log, env = process.env) {
         topN: parseTopN(inputs.cachePayloadTopN, log),
     };
 }
-function applyCachePayloadOversizeAction(action, message, setFailed = core.setFailed) {
-    if (action === "fail") {
-        setFailed(message);
-        return "failed";
-    }
-    return "oversize-skip";
-}
 async function classifyCacheSaveReservation(id, key, probeExactKey) {
     if (id > 0)
         return "saved";
@@ -59027,121 +59204,6 @@ async function classifyCacheSaveReservation(id, key, probeExactKey) {
     }
     catch {
         return "failed";
-    }
-}
-async function saveOne(opts) {
-    const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadProfile, payloadPolicy } = opts;
-    const withStats = (r) => Object.assign(r, {
-        archiveBytes: null,
-        inflatedBytes: null,
-        fileCount: null,
-        payload: null,
-    });
-    // #527: shared save policy (save-cache input / pull_request event).
-    if (!(0, save_policy_js_1.allowCacheSave)(label, (m) => core.info(m))) {
-        return withStats({ status: "policy-skip", cache_dir: cacheDir });
-    }
-    if (!dirExists(cacheDir)) {
-        log(`${label}: cache dir ${cacheDir} does not exist, skipping save`);
-        return withStats({ status: "missing-dir-skip", cache_dir: cacheDir });
-    }
-    if (matchedKey === key) {
-        log(`${label}: exact cache hit on ${key}, skipping save`);
-        return withStats({ status: "exact-hit-skip", cache_dir: cacheDir });
-    }
-    let archiveBytes = null;
-    let archivePath = null;
-    let inflatedBytes = null;
-    let fileCount = null;
-    let payload = null;
-    // Per-phase save timing (#214): separate the archive+compress phase from the
-    // cache reservation+upload phase so a slow Windows post step is diagnosable.
-    let compressMs = 0;
-    let uploadMs = 0;
-    const compressStart = Date.now();
-    let skippedReason;
-    try {
-        if (archivePath === null) {
-            const result = await (0, cache_compress_js_1.compressCache)({
-                cacheDir,
-                codec,
-                level,
-                debug,
-                log,
-                extraBasenames,
-                payloadWarnBytes: payloadPolicy.warnBytes,
-                payloadMaxBytes: payloadPolicy.maxBytes,
-                payloadOversizeAction: payloadPolicy.oversizeAction,
-                payloadTopN: payloadPolicy.topN,
-                payloadProfile,
-                label,
-                cacheKey: key,
-            });
-            archivePath = result.archivePath;
-            archiveBytes = result.archiveBytes || null;
-            inflatedBytes = result.inflatedBytes;
-            fileCount = result.fileCount;
-            payload = result.payload;
-            skippedReason = result.skippedReason;
-            compressMs = Date.now() - compressStart;
-        }
-        if (skippedReason === "payload-too-large") {
-            log(`${label}: payload exceeded cache-payload-max-bytes, skipping save`);
-            return {
-                status: "oversize-skip",
-                cache_dir: cacheDir,
-                archiveBytes,
-                inflatedBytes,
-                fileCount,
-                payload,
-                phaseTimings: { compressMs },
-            };
-        }
-    }
-    catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        if (payloadPolicy.oversizeAction === "fail" &&
-            message.includes("exceeding cache-payload-max-bytes")) {
-            applyCachePayloadOversizeAction("fail", message);
-        }
-        log(`${label}: compression failed: ${message}`);
-        return withStats({ status: "failed", cache_dir: cacheDir, error: message });
-    }
-    const pathsToSave = archivePath ? [archivePath] : [cacheDir];
-    try {
-        const uploadStart = Date.now();
-        const id = await (0, save_policy_js_1.gatedSaveCache)(label, pathsToSave, key, (m) => core.info(m));
-        uploadMs = Date.now() - uploadStart;
-        log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"} ` +
-            `(compress=${compressMs}ms upload=${uploadMs}ms)`);
-        return {
-            status: "saved",
-            cache_dir: cacheDir,
-            archive_path: archivePath ?? undefined,
-            saved_paths: pathsToSave,
-            cache_id: id,
-            archiveBytes,
-            inflatedBytes,
-            fileCount,
-            payload,
-            phaseTimings: { compressMs, uploadMs },
-        };
-    }
-    catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        log(`${label}: save failed: ${message}`);
-        return {
-            status: "failed",
-            cache_dir: cacheDir,
-            archive_path: archivePath ?? undefined,
-            saved_paths: pathsToSave,
-            error: message,
-            archiveBytes,
-            inflatedBytes,
-            fileCount,
-            payload,
-            phaseTimings: { compressMs, uploadMs },
-        };
     }
 }
 function cacheLayerSummary(opts) {
@@ -60055,7 +60117,7 @@ async function run() {
         }, { archiveBytes: null, inflatedBytes: null, fileCount: null, payload: null });
     }
     else {
-        buildSave = await saveOne({
+        buildSave = await (0, data_cache_save_js_1.saveDataCache)({
             cacheDir: result.buildCache.path,
             codec: result.targetCacheCompress,
             level: result.targetCacheCompressLevel,
@@ -60268,7 +60330,7 @@ async function run() {
             if (payloadPolicy.maxBytes !== null && payload.bytes > payloadPolicy.maxBytes) {
                 const message = `setup-soldr: cargo-registry-cache payload is ${fmtBytes(payload.bytes)} before compression, ` +
                     `exceeding cache-payload-max-bytes=${fmtBytes(payloadPolicy.maxBytes)}`;
-                const status = applyCachePayloadOversizeAction(payloadPolicy.oversizeAction, message);
+                const status = (0, data_cache_save_js_1.applyCachePayloadOversizeAction)(payloadPolicy.oversizeAction, message);
                 log(`${message}; ${status === "failed" ? "failing" : "skipping"} v2 save`);
                 cargoRegistrySave = Object.assign({
                     status,
@@ -60362,7 +60424,7 @@ async function run() {
             }
         }
         else {
-            cargoRegistrySave = await saveOne({
+            cargoRegistrySave = await (0, data_cache_save_js_1.saveDataCache)({
                 cacheDir: result.cargoRegistryCache.path,
                 codec: result.targetCacheCompress,
                 level: result.targetCacheCompressLevel,
