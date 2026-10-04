@@ -378,3 +378,31 @@ def test_network_stage_rejects_host_symlink_aliases(tmp_path: Path) -> None:
     (source / "Cargo.lock").write_text('version=4\n', encoding="utf-8")
     with pytest.raises(ValueError, match="symlink"):
         stage_dependency_fixture(source, tmp_path / "rejected-staged")
+
+
+def test_docker_client_does_not_inherit_action_or_registry_credentials(tmp_path: Path, monkeypatch) -> None:
+    from scripts.credential_free_builder import DockerClient, client_environment
+
+    monkeypatch.setenv("GITHUB_TOKEN", "host-sentinel")
+    monkeypatch.setenv("ACTIONS_RUNTIME_TOKEN", "host-sentinel")
+    monkeypatch.setenv("DOCKER_HOST", "tcp://untrusted-publisher:2375")
+    client = DockerClient(Path("/usr/bin/docker"), Path("/var/run/docker.sock"), tmp_path / "home", tmp_path / "config")
+    env = client_environment(client)
+    assert env["DOCKER_HOST"] == "unix:///var/run/docker.sock"
+    assert env["DOCKER_CONFIG"] == str(tmp_path / "config")
+    assert not any("TOKEN" in name or name.startswith("ACTIONS_") or name.startswith("GITHUB_") for name in env)
+
+
+def test_source_stdout_cannot_become_workflow_commands(tmp_path: Path, capsys) -> None:
+    import sys
+    from scripts.credential_free_builder import DockerClient, execute_container
+
+    client_binary = tmp_path / "fake-docker"
+    client_binary.write_text(f'#!{sys.executable}\nprint("::save-state name=clean::true")\nprint("setup-soldr-ancestor-clean-save-v1 {{}}")\n', encoding="utf-8")
+    client_binary.chmod(0o755)
+    client = DockerClient(client_binary, Path("/var/run/docker.sock"), tmp_path / "home", tmp_path / "config")
+    log = tmp_path / "source.log"
+    measured = execute_container(("docker", "run"), client, log)
+    assert measured.return_code == 0
+    assert "::save-state" in log.read_text(encoding="utf-8")
+    assert capsys.readouterr().out == ""

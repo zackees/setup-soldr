@@ -13,6 +13,8 @@ import hashlib
 from pathlib import Path
 import re
 import stat
+import subprocess
+import time
 import tomllib
 from typing import TypeAlias
 
@@ -74,6 +76,48 @@ class PreparedToolchain:
     llvm_archive: FileFingerprint
     llvm_tree: DirectoryFootprint
     registry_tree: DirectoryFootprint
+
+
+@dataclass(frozen=True)
+class DockerClient:
+    binary: Path
+    socket: Path
+    home: Path
+    config: Path
+
+
+@dataclass(frozen=True)
+class ContainerMeasurement:
+    return_code: int
+    seconds: float
+    log_file: str
+
+
+def client_environment(client: DockerClient) -> dict[str, str]:
+    """A fresh client home/config prevents ambient credential helpers too."""
+    return {
+        "PATH": f"{client.binary.parent}:/usr/bin:/bin",
+        "HOME": str(client.home),
+        "DOCKER_CONFIG": str(client.config),
+        "DOCKER_HOST": f"unix://{client.socket}",
+    }
+
+
+def execute_container(command: tuple[str, ...], client: DockerClient, log: Path) -> ContainerMeasurement:
+    """Keep source stdout in an artifact, never in the workflow control stream.
+
+    The image's timeout owns termination of the workload and its namespace;
+    host observation is not used to cancel an unrelated Docker resource.
+    """
+    if command[:2] != ("docker", "run"):
+        raise ValueError("container execution requires the reviewed Docker run plan")
+    started = time.perf_counter()
+    with log.open("w", encoding="utf-8") as output:
+        result = subprocess.run(
+            (str(client.binary), *command[1:]), env=client_environment(client),
+            stdout=output, stderr=subprocess.STDOUT, check=False,
+        )
+    return ContainerMeasurement(result.returncode, time.perf_counter() - started, str(log))
 
 
 def verify_released_tools(root: Path) -> tuple[FileFingerprint, ...]:
@@ -260,7 +304,7 @@ def source_build_command(paths: BuilderPaths, uid: int, gid: int) -> tuple[str, 
         "--env=SOLDR_MANIFEST_DISABLE=1",
         "--env=CARGO_TARGET_DIR=/target", f"--env=ZCCACHE_CACHE_DIR={SOURCE_CACHE}",
         "--env=PATH=/tools:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "--entrypoint=/bin/sh", BUILDER_IMAGE, "-ec",
+        "--entrypoint=/usr/bin/timeout", BUILDER_IMAGE, "--kill-after=5s", "600s", "/bin/sh", "-ec",
         'mkdir -p "$CARGO_HOME"; ln -s /registry "$CARGO_HOME/registry"; exec "$@"',
         "builder", "soldr", "cargo", "build", "--workspace", "--all-targets", "--locked", "--offline",
     )
@@ -293,7 +337,7 @@ def dependency_fetch_command(paths: PrefetchPaths, uid: int, gid: int) -> tuple[
         "--workdir=/staged", "--env=HOME=/home/builder", "--env=CARGO_HOME=/home/builder/cargo",
         "--env=RUSTUP_HOME=/usr/local/rustup", "--env=RUSTUP_TOOLCHAIN=1.98.1",
         "--env=PATH=/tools:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "--entrypoint=/bin/sh", BUILDER_IMAGE, "-ec",
+        "--entrypoint=/usr/bin/timeout", BUILDER_IMAGE, "--kill-after=5s", "600s", "/bin/sh", "-ec",
         'mkdir -p "$CARGO_HOME"; ln -s /registry "$CARGO_HOME/registry"; exec "$@"',
         "builder", "soldr", "cargo", "fetch", "--locked", "--manifest-path=/staged/Cargo.toml",
     )

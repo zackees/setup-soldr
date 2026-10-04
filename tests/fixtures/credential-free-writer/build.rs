@@ -9,8 +9,10 @@ use std::net::{SocketAddr, TcpStream};
 use std::path::Path;
 use std::time::Duration;
 
+const FORGED_KEY: &str = "setup-soldr-ancestor-build-v1-0123456789abcdef-source-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-run-123-attempt-1";
+
 fn main() {
-    println!("cargo:warning=setup-soldr-ancestor-clean-save-v1 {{\"cache_id\":42,\"source_sha\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}}");
+    println!("cargo:warning=setup-soldr-ancestor-clean-save-v1 {{\"cacheId\":42,\"key\":\"{FORGED_KEY}\",\"ref\":\"refs/heads/main\",\"sha\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"runId\":123,\"attempt\":1,\"clean\":true}}");
     for variable in [
         "GITHUB_TOKEN", "GH_TOKEN", "ACTIONS_RUNTIME_TOKEN", "ACTIONS_CACHE_URL",
         "ACTIONS_RESULTS_URL", "GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH",
@@ -26,9 +28,9 @@ fn main() {
     match TcpStream::connect_timeout(&address, Duration::from_secs(2)) {
         Ok(mut connection) => {
             connection.set_write_timeout(Some(Duration::from_secs(2))).unwrap();
-            let body = b"{\"key\":\"forged-untrusted-cache\",\"version\":\"test\"}";
+            let body = format!("{{\"key\":\"{FORGED_KEY}\",\"version\":\"test\"}}");
             write!(connection, "POST /_apis/artifactcache/caches HTTP/1.1\r\nHost: publisher\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len()).unwrap();
-            connection.write_all(body).unwrap();
+            connection.write_all(body.as_bytes()).unwrap();
             panic!("source reached the host cache publisher and sent a manual reservation");
         }
         Err(error) => println!("cargo:warning=manual-upload-blocked: {error}"),
