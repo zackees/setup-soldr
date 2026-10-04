@@ -2,6 +2,7 @@
 // restored toolchains, source scripts, or compiler outputs. Callers must enforce
 // job-success, dependency-yank and new-compilation gates before publication.
 import * as fs from "node:fs";
+import * as path from "node:path";
 import * as core from "@actions/core";
 import { compressCache, type CachePayloadProfile } from "./cache-compress.js";
 import { allowCacheSave, gatedSaveCache } from "./save-policy.js";
@@ -93,6 +94,8 @@ export async function saveDataCache(opts: {
   extraBasenames?: string[];
   payloadProfile?: CachePayloadProfile;
   payloadPolicy: CachePayloadPolicy;
+  /** Stable SDK path, resolving to the exact compressed archive in private cwd. */
+  archiveCachePath?: string;
 }): Promise<CacheSaveResultWithStats> {
   const { cacheDir, codec, level, key, matchedKey, label, debug, log, extraBasenames, payloadProfile, payloadPolicy } = opts;
   const withStats = (r: CacheSaveResult): CacheSaveResultWithStats =>
@@ -174,9 +177,16 @@ export async function saveDataCache(opts: {
     return withStats({ status: "failed", cache_dir: cacheDir, error: message });
   }
   const pathsToSave = archivePath ? [archivePath] : [cacheDir];
+  let sdkPaths = pathsToSave;
   try {
+    if (opts.archiveCachePath !== undefined) {
+      if (!archivePath || path.resolve(opts.archiveCachePath) !== path.resolve(archivePath)) {
+        throw new Error("SDK archive path must identify the compressed payload");
+      }
+      sdkPaths = [opts.archiveCachePath];
+    }
     const uploadStart = Date.now();
-    const id = await gatedSaveCache(label, pathsToSave, key, (m) => core.info(m));
+    const id = await gatedSaveCache(label, sdkPaths, key, (m) => core.info(m));
     uploadMs = Date.now() - uploadStart;
     log(
       `${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"} ` +
@@ -186,7 +196,7 @@ export async function saveDataCache(opts: {
       status: "saved",
       cache_dir: cacheDir,
       archive_path: archivePath ?? undefined,
-      saved_paths: pathsToSave,
+      saved_paths: sdkPaths,
       cache_id: id,
       archiveBytes,
       inflatedBytes,
@@ -201,7 +211,7 @@ export async function saveDataCache(opts: {
       status: "failed",
       cache_dir: cacheDir,
       archive_path: archivePath ?? undefined,
-      saved_paths: pathsToSave,
+      saved_paths: sdkPaths,
       error: message,
       archiveBytes,
       inflatedBytes,

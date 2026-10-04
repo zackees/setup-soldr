@@ -653,3 +653,121 @@ test("resolveJournalPrintRaw: unrecognized falls back to debugMode", async () =>
   assert.equal(mod.resolveJournalPrintRaw("maybe", true), true);
   assert.equal(mod.resolveJournalPrintRaw("???", false), false);
 });
+
+test("data transport uses stable SDK versions across fresh private roots", async () => {
+  const mod = await import("../src/lib/data-cache-workspace.js");
+  const sdk = await import("@actions/cache/lib/internal/cacheUtils.js");
+  const { CompressionMethod } = await import("@actions/cache/lib/internal/constants.js");
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "data-workspace-"));
+  const source = path.join(parent, "source");
+  const temporary = path.join(parent, "temporary");
+  fs.mkdirSync(source); fs.mkdirSync(temporary);
+  const first = await mod.createDataWorkspace(temporary, source);
+  const second = await mod.createDataWorkspace(temporary, source);
+  const originalDirectory = process.cwd();
+  const originalWorkspace = process.env["GITHUB_WORKSPACE"];
+  const versions: string[] = [];
+  for (const workspace of [first, second]) {
+    await mod.withDataArchiveWorkspace(workspace, async (paths) => {
+      assert.equal(process.cwd(), workspace.root);
+      assert.equal(process.env["GITHUB_WORKSPACE"], workspace.root);
+      assert.deepEqual(paths, [mod.DATA_ARCHIVE_BASENAME]);
+      versions.push(sdk.getCacheVersion(paths, CompressionMethod.Gzip));
+    });
+    assert.equal(process.cwd(), originalDirectory);
+    assert.equal(process.env["GITHUB_WORKSPACE"], originalWorkspace);
+  }
+  assert.notEqual(first.root, second.root);
+  assert.equal(versions[0], versions[1]);
+  assert.notEqual(
+    sdk.getCacheVersion([first.archive], CompressionMethod.Gzip),
+    sdk.getCacheVersion([second.archive], CompressionMethod.Gzip),
+    "absolute per-run path control must produce different SDK versions",
+  );
+});
+
+test("data workspace rejects source overlap and restores process scope on failure", async () => {
+  const mod = await import("../src/lib/data-cache-workspace.js");
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "data-workspace-"));
+  const source = path.join(parent, "source");
+  const temporary = path.join(parent, "temporary");
+  fs.mkdirSync(source); fs.mkdirSync(temporary);
+  await assert.rejects(mod.createDataWorkspace(source, source), /separate/);
+  const workspace = await mod.createDataWorkspace(temporary, source);
+  const originalDirectory = process.cwd();
+  const originalWorkspace = process.env["GITHUB_WORKSPACE"];
+  await assert.rejects(mod.withDataArchiveWorkspace(workspace, async () => {
+    await assert.rejects(mod.withDataArchiveWorkspace(workspace, async () => undefined), /serial/);
+    throw new Error("restore failed");
+  }), /restore failed/);
+  assert.equal(process.cwd(), originalDirectory);
+  assert.equal(process.env["GITHUB_WORKSPACE"], originalWorkspace);
+  await mod.withDataArchiveWorkspace(workspace, async () => undefined);
+});
+
+test("data archive validation rejects credential links and oversized payloads", async () => {
+  const mod = await import("../src/lib/data-cache-workspace.js");
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "data-workspace-"));
+  const source = path.join(parent, "source");
+  const temporary = path.join(parent, "temporary");
+  fs.mkdirSync(source); fs.mkdirSync(temporary);
+  const workspace = await mod.createDataWorkspace(temporary, source);
+  const privateFile = path.join(parent, "credential");
+  fs.writeFileSync(privateFile, "host-only");
+  fs.symlinkSync(privateFile, workspace.archive);
+  await assert.rejects(mod.validateDataArchive(workspace), /regular/);
+  const second = await mod.createDataWorkspace(temporary, source);
+  fs.writeFileSync(second.archive, "data");
+  assert.equal(await mod.validateDataArchive(second), 4);
+  fs.truncateSync(second.archive, mod.DATA_ARCHIVE_MAX_BYTES + 1);
+  await assert.rejects(mod.validateDataArchive(second), /bounded/);
+});
+
+test("private data save normalizes the SDK path without bypassing save policy", async () => {
+  const workspaceMod = await import("../src/lib/data-cache-workspace.js");
+  const { saveDataCache } = await import("../src/lib/data-cache-save.js");
+  const policy = await import("../src/lib/save-policy.js");
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "data-workspace-"));
+  const source = path.join(parent, "source");
+  const temporary = path.join(parent, "temporary");
+  fs.mkdirSync(source); fs.mkdirSync(temporary);
+  const workspace = await workspaceMod.createDataWorkspace(temporary, source);
+  fs.writeFileSync(path.join(workspace.cache, "artifact"), "compiled data");
+  const previous = process.env["INPUT_SAVE-CACHE"];
+  let uploads = 0;
+  policy.setSaveCacheBackendForTest(async (paths, key) => {
+    uploads++;
+    assert.deepEqual(paths, [workspaceMod.DATA_ARCHIVE_BASENAME]);
+    assert.equal(key, "reviewed-data-key");
+    assert.equal(process.env["GITHUB_WORKSPACE"], workspace.root);
+    assert.ok(fs.statSync(paths[0]!).isFile());
+    return 42;
+  });
+  try {
+    await workspaceMod.withDataArchiveWorkspace(workspace, async () => {
+      const options = {
+        cacheDir: workspace.cache, codec: "zstd" as const, level: "1",
+        key: "reviewed-data-key", matchedKey: "", label: "build-cache", debug: false,
+        log: (_message: string): void => undefined,
+        payloadPolicy: { warnBytes: null, maxBytes: workspaceMod.DATA_ARCHIVE_MAX_BYTES, oversizeAction: "skip" as const, topN: 0 },
+        archiveCachePath: workspaceMod.DATA_ARCHIVE_BASENAME,
+      };
+      process.env["INPUT_SAVE-CACHE"] = "false";
+      assert.equal((await saveDataCache(options)).status, "policy-skip");
+      assert.equal(uploads, 0);
+      process.env["INPUT_SAVE-CACHE"] = "true";
+      const saved = await saveDataCache(options);
+      assert.equal(saved.status, "saved");
+      assert.equal(saved.cache_id, 42);
+      assert.equal(uploads, 1);
+      const rejected = await saveDataCache({ ...options, archiveCachePath: "../../credential" });
+      assert.equal(rejected.status, "failed");
+      assert.match(rejected.error!, /compressed payload/);
+      assert.equal(uploads, 1);
+    });
+  } finally {
+    policy.setSaveCacheBackendForTest(null);
+    if (previous === undefined) delete process.env["INPUT_SAVE-CACHE"];
+    else process.env["INPUT_SAVE-CACHE"] = previous;
+  }
+});

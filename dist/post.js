@@ -53168,6 +53168,7 @@ exports.saveDataCache = saveDataCache;
 // restored toolchains, source scripts, or compiler outputs. Callers must enforce
 // job-success, dependency-yank and new-compilation gates before publication.
 const fs = __importStar(__nccwpck_require__(73024));
+const path = __importStar(__nccwpck_require__(76760));
 const core = __importStar(__nccwpck_require__(37484));
 const cache_compress_js_1 = __nccwpck_require__(24978);
 const save_policy_js_1 = __nccwpck_require__(98097);
@@ -53265,9 +53266,16 @@ async function saveDataCache(opts) {
         return withStats({ status: "failed", cache_dir: cacheDir, error: message });
     }
     const pathsToSave = archivePath ? [archivePath] : [cacheDir];
+    let sdkPaths = pathsToSave;
     try {
+        if (opts.archiveCachePath !== undefined) {
+            if (!archivePath || path.resolve(opts.archiveCachePath) !== path.resolve(archivePath)) {
+                throw new Error("SDK archive path must identify the compressed payload");
+            }
+            sdkPaths = [opts.archiveCachePath];
+        }
         const uploadStart = Date.now();
-        const id = await (0, save_policy_js_1.gatedSaveCache)(label, pathsToSave, key, (m) => core.info(m));
+        const id = await (0, save_policy_js_1.gatedSaveCache)(label, sdkPaths, key, (m) => core.info(m));
         uploadMs = Date.now() - uploadStart;
         log(`${label}: saved cache id=${id} key=${key} via ${archivePath ? "tar.zst" : "default"} ` +
             `(compress=${compressMs}ms upload=${uploadMs}ms)`);
@@ -53275,7 +53283,7 @@ async function saveDataCache(opts) {
             status: "saved",
             cache_dir: cacheDir,
             archive_path: archivePath ?? undefined,
-            saved_paths: pathsToSave,
+            saved_paths: sdkPaths,
             cache_id: id,
             archiveBytes,
             inflatedBytes,
@@ -53291,7 +53299,7 @@ async function saveDataCache(opts) {
             status: "failed",
             cache_dir: cacheDir,
             archive_path: archivePath ?? undefined,
-            saved_paths: pathsToSave,
+            saved_paths: sdkPaths,
             error: message,
             archiveBytes,
             inflatedBytes,
