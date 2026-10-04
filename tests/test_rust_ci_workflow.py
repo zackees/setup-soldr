@@ -167,7 +167,7 @@ def test_ancestor_pilot_is_explicit_scoped_and_readonly_for_comparisons() -> Non
     assert "workflow_dispatch" in job["if"] and "!= 'off'" in job["if"]
     assert "ancestor-pilot" in workflow["jobs"]["warm"]["if"]
     setup = _step_named(job, "Setup pilot cache")
-    assert setup["uses"] == "zackees/setup-soldr@246b70a65b61e5c6bf415e01afc90a9a2983bdbb"
+    assert setup["uses"] == "zackees/setup-soldr@f737b734d69e7f009f1c611320a053447943616e"
     assert setup["with"]["save-cache"] == "${{ steps.pilot.outputs.save }}"
     assert setup["with"]["cache-payload-max-bytes"] == "209715200"
     assert setup["with"]["cache-payload-oversize-action"] == "skip"
