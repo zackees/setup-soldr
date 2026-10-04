@@ -647,7 +647,7 @@ jobs:
         run: python3 scripts/ancestor_cache_pilot.py validate
       - name: Setup pilot cache
         id: cache
-        uses: zackees/setup-soldr@246b70a65b61e5c6bf415e01afc90a9a2983bdbb
+        uses: zackees/setup-soldr@f737b734d69e7f009f1c611320a053447943616e
         with:
           version: "0.9.28"
           toolchain: "1.98.1"
