@@ -255,8 +255,8 @@ def test_pilot_ignores_restored_stale_compile_statistics(tmp_path: Path) -> None
 def test_offline_builder_cannot_reach_host_publisher_credentials(tmp_path: Path) -> None:
     from scripts.credential_free_builder import BuilderPaths, source_build_command
 
-    paths = BuilderPaths(*(tmp_path / name for name in ("source", "registry", "tools", "cache", "target")))
-    for path in (paths.source, paths.registry, paths.tools, paths.cache, paths.target):
+    paths = BuilderPaths(*(tmp_path / name for name in ("source", "registry", "tools", "cache", "target", "llvm")))
+    for path in (paths.source, paths.registry, paths.tools, paths.cache, paths.target, paths.llvm):
         path.mkdir()
     command = source_build_command(paths, 1000, 1000)
     assert "--network=none" in command
@@ -266,8 +266,8 @@ def test_offline_builder_cannot_reach_host_publisher_credentials(tmp_path: Path)
     assert "--user=1000:1000" in command
     assert not any("GITHUB" in argument or "ACTIONS" in argument or "docker.sock" in argument for argument in command)
     mounts = [command[index + 1] for index, argument in enumerate(command) if argument == "--mount"]
-    assert len(mounts) == 5
-    assert all("readonly" in mount for mount in mounts if any(f"target={name}" in mount for name in ("/source", "/registry", "/tools")))
+    assert len(mounts) == 6
+    assert all("readonly" in mount for mount in mounts if any(f"target={name}" in mount for name in ("/source", "/registry", "/tools", "/llvm")))
     assert command[-7:] == ("soldr", "cargo", "build", "--workspace", "--all-targets", "--locked", "--offline")
 
 
@@ -280,10 +280,10 @@ def test_offline_builder_rejects_aliases_and_mount_injection(tmp_path: Path) -> 
     alias = tmp_path / "alias"
     alias.symlink_to(source, target_is_directory=True)
     with pytest.raises(ValueError, match="separate"):
-        source_build_command(BuilderPaths(source, alias, source, source, source), 1000, 1000)
+        source_build_command(BuilderPaths(source, alias, source, source, source, source), 1000, 1000)
     injected = tmp_path / "cache,target=/var/run/docker.sock"
     with pytest.raises(ValueError, match="mount"):
-        source_build_command(BuilderPaths(source, injected, source, source, source), 1000, 1000)
+        source_build_command(BuilderPaths(source, injected, source, source, source, source), 1000, 1000)
 
 
 def test_dependency_fetch_stages_declarations_without_source_hooks(tmp_path: Path) -> None:
@@ -328,20 +328,53 @@ def test_dependency_fetch_rejects_network_executable_and_git_inputs(tmp_path: Pa
 
 
 def test_network_prefetch_mounts_only_trusted_stubs_and_fresh_registry(tmp_path: Path) -> None:
-    from scripts.credential_free_builder import dependency_fetch_command
+    from scripts.credential_free_builder import PrefetchPaths, dependency_fetch_command
 
     staged = tmp_path / "staged"
     registry = tmp_path / "registry"
     tools = tmp_path / "tools"
-    for path in (staged, registry, tools):
+    home = tmp_path / "owned-tool-home"
+    for path in (staged, registry, tools, home):
         path.mkdir()
     (staged / "src").mkdir()
     (staged / "src/main.rs").write_text("fn main() {}\n", encoding="utf-8")
     (staged / "Cargo.toml").write_text('[package]\nname="fixture"\nversion="0.1.0"\n', encoding="utf-8")
     (staged / "Cargo.lock").write_text('version=4\n', encoding="utf-8")
-    command = dependency_fetch_command(staged, registry, tools, 1000, 1000)
+    command = dependency_fetch_command(PrefetchPaths(staged, registry, tools, home), 1000, 1000)
     assert "--network=bridge" in command
     mounts = [command[index + 1] for index, argument in enumerate(command) if argument == "--mount"]
-    assert len(mounts) == 3
+    assert len(mounts) == 4
     assert all("target=/source" not in mount and "target=/cache" not in mount for mount in mounts)
     assert command[-5:] == ("soldr", "cargo", "fetch", "--locked", "--manifest-path=/staged/Cargo.toml")
+
+
+def test_prepared_tools_reject_path_shadowing_and_metadata_escapes(tmp_path: Path) -> None:
+    import pytest
+    from scripts.credential_free_builder import bounded_footprint, verify_released_tools
+
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    (tools / "rustc").write_text("attacker executable", encoding="utf-8")
+    with pytest.raises(ValueError, match="unexpected"):
+        verify_released_tools(tools)
+    with pytest.raises(ValueError, match="bounds"):
+        bounded_footprint(tools, max_bytes=1)
+    outside = tmp_path / "credential"
+    outside.write_text("host-only", encoding="utf-8")
+    (tools / "escape").symlink_to(outside)
+    with pytest.raises(ValueError, match="escapes"):
+        bounded_footprint(tools)
+
+
+def test_network_stage_rejects_host_symlink_aliases(tmp_path: Path) -> None:
+    import pytest
+    from scripts.credential_free_builder import stage_dependency_fixture
+
+    source = tmp_path / "source"
+    source.mkdir()
+    manifest = tmp_path / "private-manifest"
+    manifest.write_text('[package]\nname="fixture"\nversion="0.1.0"\n', encoding="utf-8")
+    (source / "Cargo.toml").symlink_to(manifest)
+    (source / "Cargo.lock").write_text('version=4\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="symlink"):
+        stage_dependency_fixture(source, tmp_path / "rejected-staged")
