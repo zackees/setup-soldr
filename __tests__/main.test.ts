@@ -12,19 +12,19 @@ test("src/main.ts imports cleanly and exposes `run`", async () => {
 
 test("main.run is callable and returns a Promise", async () => {
   const mod = (await import("../src/main.js")) as { run: () => Promise<void> };
-  // We don't drive it through to completion (it'd need a configured workspace,
-  // network, etc). We just verify the entry point shape.
-  const p = (() => {
-    try {
-      return mod.run();
-    } catch (err) {
-      // run is async but if it throws synchronously, swallow for the test.
-      return Promise.reject(err);
-    }
-  })();
-  assert.ok(p instanceof Promise);
-  // Detach so unhandled rejection doesn't taint the test process.
-  p.catch(() => undefined);
+  // Exercise the Promise contract to completion without provisioning tools.
+  // A detached real run otherwise keeps this worker alive while installing
+  // a toolchain and can continue mutating state after the test has passed.
+  const previous = process.env["SETUP_SOLDR_DRY_RUN"];
+  process.env["SETUP_SOLDR_DRY_RUN"] = "1";
+  try {
+    const result = mod.run();
+    assert.ok(result instanceof Promise);
+    await result;
+  } finally {
+    if (previous === undefined) delete process.env["SETUP_SOLDR_DRY_RUN"];
+    else process.env["SETUP_SOLDR_DRY_RUN"] = previous;
+  }
 });
 
 test("cargo-registry encryption failures honor skip only for legacy-v1", async () => {
