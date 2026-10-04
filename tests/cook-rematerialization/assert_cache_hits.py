@@ -49,7 +49,7 @@ def package_name(package_id: str) -> str:
     return tail
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901 - measured baseline, zackees/ci.yml#229
     messages_path, stderr_path, report_path = (Path(a) for a in sys.argv[1:4])
 
     workspace_pkgs: set[str] = set()
