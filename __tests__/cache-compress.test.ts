@@ -270,6 +270,36 @@ test("planTarPayload preserves compiler stdout/stderr replay metadata inside art
   }
 });
 
+test("planTarPayload preserves generation-scoped daemon artifact replay payload (ci.yml#362)", async () => {
+  const root = mkTmp("payload-daemon-artifacts-");
+  try {
+    const generation = path.join(root, "zccache", "daemon-state", "embedded-v1", "v1.15.0");
+    const artifacts = path.join(generation, "artifacts", ".staged-v2", "unit");
+    fs.mkdirSync(artifacts, { recursive: true });
+    fs.mkdirSync(path.join(generation, "logs"), { recursive: true });
+    fs.writeFileSync(path.join(artifacts, "compiler.stderr"), Buffer.alloc(3));
+    fs.writeFileSync(path.join(artifacts, "compiler.stdout"), Buffer.alloc(5));
+    fs.writeFileSync(path.join(artifacts, "libunit.rlib"), Buffer.alloc(7));
+    fs.writeFileSync(path.join(generation, "index.bin"), Buffer.alloc(11));
+    fs.writeFileSync(path.join(generation, "daemon.stderr"), Buffer.alloc(13));
+    fs.writeFileSync(path.join(generation, "logs", "compile_journal.jsonl"), Buffer.alloc(17));
+    const plan = await planTarPayload({
+      parent: root, inputBasenames: ["zccache"], profile: "zccache-build-cache",
+    });
+    assert.deepEqual(plan.manifestEntries.sort(), [
+      "zccache/daemon-state/embedded-v1/v1.15.0/artifacts/.staged-v2/unit/compiler.stderr",
+      "zccache/daemon-state/embedded-v1/v1.15.0/artifacts/.staged-v2/unit/compiler.stdout",
+      "zccache/daemon-state/embedded-v1/v1.15.0/artifacts/.staged-v2/unit/libunit.rlib",
+      "zccache/daemon-state/embedded-v1/v1.15.0/index.bin",
+    ]);
+    const skipped = new Map(plan.skipped.map((entry) => [entry.reason, entry]));
+    assert.equal(skipped.get("diagnostic-log-file")?.count, 1);
+    assert.equal(skipped.get("diagnostic-log-dir")?.count, 1);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("planTarPayload archives symlink entries without following external targets", async () => {
   const root = mkTmp("payload-symlink-");
   try {

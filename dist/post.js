@@ -49315,7 +49315,8 @@ const TRANSIENT_SUFFIXES = [
 // sidecars into the cache (or, worse, start dropping reusable artifacts):
 //
 //   ALLOW (always kept): anything under a zccache *artifacts* directory —
-//     `zccache/artifacts/**` and `zccache/private/<session>/artifacts/**`.
+//     `zccache/artifacts/**`, `zccache/private/<session>/artifacts/**`,
+//     and namespaced `zccache/daemon-state/<namespace>/**/artifacts/**`.
 //     These hold the reusable compiled artifacts AND the compiler
 //     stdout/stderr replay metadata zccache stores alongside them, so a
 //     `.stderr`/`.out`/`.txt` *inside* an artifacts dir is replay data, not a
@@ -49342,7 +49343,9 @@ exports.BUILD_CACHE_DENIED_DIAGNOSTIC_SUFFIXES = [
  * True when a build-cache tar path is inside a zccache artifacts directory —
  * the allowlist that preserves reusable artifacts and their in-place compiler
  * stdout/stderr replay metadata. Matches `zccache/artifacts/**` and
- * `zccache/private/<session>/artifacts/**`. Pure; tar path uses "/" separators.
+ * `zccache/private/<session>/artifacts/**` and daemon-state namespace stores.
+ * Namespace/version names belong to zccache; no version is pinned here.
+ * Pure; tar path uses "/" separators.
  */
 function isZccacheArtifactPayloadPath(tarPath) {
     const parts = tarPath.split("/").map((part) => part.toLowerCase());
@@ -49351,6 +49354,8 @@ function isZccacheArtifactPayloadPath(tarPath) {
     if (parts[1] === "artifacts")
         return true;
     if (parts[1] === "private" && parts.length >= 4 && parts[3] === "artifacts")
+        return true;
+    if (parts[1] === "daemon-state" && parts[2] && parts.slice(3).includes("artifacts"))
         return true;
     return false;
 }
