@@ -287,6 +287,19 @@ test("#552 local runner writes a per-source key and restores newest same-identit
     assert.equal(plan.requests, 0);
     const fallback = await planLocalAncestorRestore({ workspace: repo, identity, env: {} });
     assert.equal(parseAncestorKey(fallback.writeKey)?.runId, 1);
+    assert.equal(plan.familyPrefix, undefined);
+    // setup-soldr#575: a lockfile-free family prefix is the second restore key.
+    const family = "b".repeat(16);
+    const familyIdentity = `${family}${"c".repeat(16)}`;
+    const familyPlan = await planLocalAncestorRestore({ workspace: repo, identity: familyIdentity, family, env: {} });
+    assert.equal(familyPlan.familyPrefix, `setup-soldr-ancestor-build-v1-${family}`);
+    assert.ok(familyPlan.writeKey.startsWith(familyPlan.familyPrefix!));
+    assert.ok(familyPlan.writeKey.startsWith(familyPlan.restorePrefix!));
+    const otherLock = makeAncestorKey({ identity: `${family}${"d".repeat(16)}`, sha, runId: 3, attempt: 1, pr: null });
+    assert.ok(otherLock.startsWith(familyPlan.familyPrefix!));
+    assert.ok(!otherLock.startsWith(familyPlan.restorePrefix!));
+    assert.equal(parseAncestorKey(familyPlan.writeKey)?.identity, familyIdentity);
+    await assert.rejects(planLocalAncestorRestore({ workspace: repo, identity, family, env: {} }));
   } finally {
     fs.rmSync(repo, { recursive: true, force: true });
   }

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- On a local runner, `key: auto` falls back to the newest store of the same
+  toolchain/job family when no entry shares the exact identity (#575). The
+  identity hashes Cargo.lock, so any lockfile change, even a workspace
+  version bump, used to restore nothing and compile cold. Local identities are
+  now `<family><fine>`, and restore tries `v1-<family><fine>-` and then
+  `v1-<family>`. zccache keys units by content, so the fallback is always safe.
+  GitHub-hosted selection is unchanged.
 - The build-cache save gate counts compiles made by a cargo nested inside
   another tool (#573). A job whose build runs through uv -> a PEP 517 backend
   -> `soldr cargo build` (zackees/bosn's `./install`) left those sessions out

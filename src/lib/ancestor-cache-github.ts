@@ -4,7 +4,7 @@ import * as github from "@actions/github";
 import { normalizeWorkflowPath, parseTrustedWriters, trustedWriterForRun, type TrustedWriter } from "./ancestor-cache-trust.js";
 import { admitAncestorRequest, type AncestorRestorePlan } from "./ancestor-cache-telemetry.js";
 import {
-  ancestorKeyPrefix, dagDistances, makeAncestorKey, selectAncestorCache,
+  ancestorFamilyPrefix, ancestorKeyPrefix, dagDistances, makeAncestorKey, selectAncestorCache,
   type AncestorCacheEntry, type AncestorKey, type GitParentNode,
 } from "./ancestor-cache.js";
 
@@ -185,11 +185,14 @@ export async function planAncestorRestore(options: {
  * zccache entries make the choice a speed question only.
  */
 export async function planLocalAncestorRestore(options: {
-  workspace: string; identity: string;
+  workspace: string; identity: string; family?: string;
   env: Readonly<Record<string, string | undefined>>;
 }): Promise<AncestorRestorePlan> {
   const start = Date.now();
-  const { workspace, identity, env } = options;
+  const { workspace, identity, family, env } = options;
+  if (family !== undefined && !identity.startsWith(family)) {
+    throw new Error("ancestor cache identity must start with its family");
+  }
   const positive = (raw: string | undefined): number => {
     const value = Number(raw);
     return Number.isSafeInteger(value) && value > 0 ? value : 1;
@@ -200,5 +203,6 @@ export async function planLocalAncestorRestore(options: {
   return { writeKey: makeAncestorKey(writer), writer, ref: env["GITHUB_REF"] ?? "",
     elapsedMs: Date.now() - start, requests: 0, apiMs: 0, rateLimitRemaining: null,
     restorePrefix: ancestorKeyPrefix(identity),
+    ...(family === undefined ? {} : { familyPrefix: ancestorFamilyPrefix(family) }),
     selection: { entry: null, distance: null, reason: "local-runner: newest same-identity entry", inspected: 0 } };
 }
