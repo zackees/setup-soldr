@@ -302,7 +302,10 @@ function strField(stats: Record<string, unknown>, key: string): string | undefin
  * entries are silently skipped so one corrupt file doesn't poison the
  * whole roll-up. Non-object payloads are also skipped.
  */
-export function collectArchivedSessionStats(archiveDir: string): Array<Record<string, unknown>> {
+export function collectArchivedSessionStats(
+  archiveDir: string,
+  accept: (statsPath: string) => boolean = () => true,
+): Array<Record<string, unknown>> {
   if (!archiveDir) return [];
   let entries: fs.Dirent[];
   try {
@@ -316,6 +319,7 @@ export function collectArchivedSessionStats(archiveDir: string): Array<Record<st
   for (const ent of entries) {
     if (!ent.isDirectory()) continue;
     const statsPath = path.join(archiveDir, ent.name, "last-session-stats.json");
+    if (!accept(statsPath)) continue;
     let raw: string;
     try {
       raw = fs.readFileSync(statsPath, "utf8");

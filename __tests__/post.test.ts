@@ -158,6 +158,36 @@ test("#543 computeJobNewCompiles sums misses across every archived session, not 
   }
 });
 
+test("#573 computeJobNewCompiles counts nested front-door builds filed only in history", async () => {
+  const mod = (await import("../src/post.js")) as {
+    computeJobNewCompiles: (buildCachePath: string, sinceMs?: number) => number | null;
+  };
+  const root = mkTmp("job-new-compiles-history-");
+  try {
+    const cache = path.join(root, "zccache");
+    const writeStats = (dir: string, body: Record<string, unknown>, mtimeMs?: number): void => {
+      fs.mkdirSync(dir, { recursive: true });
+      const file = path.join(dir, "last-session-stats.json");
+      fs.writeFileSync(file, JSON.stringify(body));
+      if (mtimeMs !== undefined) fs.utimesSync(file, mtimeMs / 1000, mtimeMs / 1000);
+    };
+    // History restored with the cache keeps its old mtime and must not count.
+    writeStats(path.join(cache, "history", "1"), { status: "ok", session_id: "old", misses: 900 }, 1_000_000);
+    const baseline = Date.now() - 1_000;
+    // zackees/bosn#503: `./install` ran `soldr cargo build` under uv's PEP 517
+    // backend (6 misses); post's archive held only the final 0-miss session.
+    writeStats(path.join(cache, "history", "2"), { status: "ok", session_id: "nested", hits: 356, misses: 6 });
+    writeStats(path.join(cache, "history", "3"), { status: "ok", session_id: "last", hits: 3, misses: 0 });
+    writeStats(path.join(cache, "logs", "archive", "s-last"), { status: "ok", session_id: "last", hits: 3, misses: 0 });
+
+    assert.equal(mod.computeJobNewCompiles(cache, baseline), 6);
+    // No baseline: restored history is never mistaken for new work.
+    assert.equal(mod.computeJobNewCompiles(cache), 0);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("#543 computeJobNewCompiles falls back to the single-session summary when no sessions were archived", async () => {
   const mod = (await import("../src/post.js")) as {
     computeJobNewCompiles: (buildCachePath: string) => number | null;

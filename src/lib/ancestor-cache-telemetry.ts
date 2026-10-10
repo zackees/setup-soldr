@@ -9,6 +9,8 @@ export interface AncestorRestorePlan {
   requests: number;
   apiMs: number;
   rateLimitRemaining: number | null;
+  /** Local runner only: restore the newest same-identity entry by prefix. */
+  restorePrefix?: string;
 }
 
 export interface AncestorTelemetry {

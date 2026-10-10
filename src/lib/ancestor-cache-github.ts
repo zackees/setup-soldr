@@ -174,3 +174,31 @@ export async function planAncestorRestore(options: {
   if (selection.entry && selection.distance === 0) writeKey = selection.entry.key;
   return { writeKey, selection, writer, ref, elapsedMs: Date.now() - start, requests, apiMs, rateLimitRemaining };
 }
+
+/**
+ * setup-soldr#552 on a local runner (act/act2, `ACT=true`). There is no
+ * GitHub cache-list API and no foreign writer: the local cache server holds
+ * only this machine's saves, so the reviewed-writer gate does not apply. Write
+ * under this source's own key, so an exact hit of a stale legacy key can no
+ * longer block saving new workspace units, and restore the newest entry with
+ * the same identity (the action's restore-keys prefix rule). Content-addressed
+ * zccache entries make the choice a speed question only.
+ */
+export async function planLocalAncestorRestore(options: {
+  workspace: string; identity: string;
+  env: Readonly<Record<string, string | undefined>>;
+}): Promise<AncestorRestorePlan> {
+  const start = Date.now();
+  const { workspace, identity, env } = options;
+  const positive = (raw: string | undefined): number => {
+    const value = Number(raw);
+    return Number.isSafeInteger(value) && value > 0 ? value : 1;
+  };
+  const sha = await git(workspace, ["rev-parse", "HEAD"]);
+  const writer: AncestorKey = { identity, sha, runId: positive(env["GITHUB_RUN_ID"]),
+    attempt: positive(env["GITHUB_RUN_ATTEMPT"]), pr: null };
+  return { writeKey: makeAncestorKey(writer), writer, ref: env["GITHUB_REF"] ?? "",
+    elapsedMs: Date.now() - start, requests: 0, apiMs: 0, rateLimitRemaining: null,
+    restorePrefix: ancestorKeyPrefix(identity),
+    selection: { entry: null, distance: null, reason: "local-runner: newest same-identity entry", inspected: 0 } };
+}

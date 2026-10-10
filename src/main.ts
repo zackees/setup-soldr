@@ -14,7 +14,7 @@ import * as exec from "@actions/exec";
 import { createLogger } from "./lib/log-utils.js";
 import { autoKeyEnabled } from "./lib/ancestor-cache.js";
 import { ancestorTelemetry, publishBuildCachePlan, type AncestorTelemetry } from "./lib/ancestor-cache-telemetry.js";
-import { planAncestorRestore } from "./lib/ancestor-cache-github.js";
+import { planAncestorRestore, planLocalAncestorRestore } from "./lib/ancestor-cache-github.js";
 import { cargoConfigHash, shortJsonHash, targetEnvHash, workspaceManifestHash } from "./lib/cache-keys.js";
 import { readRawInputs, resolveSetup, applyResolveResult } from "./lib/resolve-setup.js";
 import {
@@ -594,6 +594,7 @@ export async function run(): Promise<void> {
     }
     const legacyKey = result.buildCache.key;
     let selectedKey = "";
+    let localAncestorKey = false;
     let selectionTelemetry: AncestorTelemetry | null = null;
     if (autoKeyEnabled(inputs.key, inputs.autoKey)) {
       try {
@@ -604,8 +605,14 @@ export async function run(): Promise<void> {
           manifests: await workspaceManifestHash(result.workspace),
           targetEnv: targetEnvHash(process.env),
         });
-        const plan = await planAncestorRestore({ workspace: result.workspace, identity,
-          token: ctx.githubToken, env: process.env, trustedWriters: inputs.autoKeyTrustedWriters });
+        const plan = isLocalRunner(process.env)
+          ? await planLocalAncestorRestore({ workspace: result.workspace, identity, env: process.env })
+          : await planAncestorRestore({ workspace: result.workspace, identity,
+            token: ctx.githubToken, env: process.env, trustedWriters: inputs.autoKeyTrustedWriters });
+        if (plan.restorePrefix) {
+          restoreKeys.unshift(plan.restorePrefix);
+          localAncestorKey = true;
+        }
         selectedKey = plan.selection.entry?.key ?? "";
         selectionTelemetry = ancestorTelemetry(identity, plan);
         result.buildCache.key = plan.writeKey;
@@ -629,7 +636,7 @@ export async function run(): Promise<void> {
     // unpacks archivePath → buildCachePath afterwards.
     let restore = await restoreCacheSafe(
       [archivePath],
-      selectedKey || legacyKey,
+      selectedKey || (localAncestorKey ? result.buildCache.key : legacyKey),
       selectedKey ? [] : restoreKeys,
       logger,
     );
@@ -700,6 +707,8 @@ export async function run(): Promise<void> {
     core.setOutput("build-cache-matched-key", restore.matchedKey);
     core.saveState("buildCacheExactHit", restore.hit ? "true" : "false");
     core.saveState("buildCacheMatchedKey", restore.matchedKey);
+    // setup-soldr#573: post counts front-door history written after this.
+    core.saveState("buildCacheBaselineMs", String(Date.now()));
     if (restore.matchedKey) dependencyCacheMatchedKeys.push(restore.matchedKey);
     // Source-mtime replay (preserve-source-mtimes opt-in). post.ts dropped
     // a `setup-soldr-source-mtimes.json` sidecar inside the build-cache

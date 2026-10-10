@@ -708,6 +708,14 @@ function readZccacheSessionSummary(buildCachePath: string): ZccacheSessionSummar
   }
 }
 
+/** Wall clock main recorded after the build-cache restore (setup-soldr#573). */
+function readBuildCacheBaselineMs(): number | undefined {
+  const raw = core.getState("buildCacheBaselineMs").trim();
+  if (raw === "") return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
+}
+
 /**
  * Job-wide new-compile count for the delta-aware save gates (#230/#214,
  * fix for setup-soldr#543). A job with multiple cargo invocations
@@ -727,11 +735,41 @@ function readZccacheSessionSummary(buildCachePath: string): ZccacheSessionSummar
  * support, or archiving unavailable) so single-invocation jobs keep
  * working unchanged.
  */
-export function computeJobNewCompiles(buildCachePath: string): number | null {
+export function computeJobNewCompiles(buildCachePath: string, sinceMs?: number): number | null {
   const archiveDir = path.join(buildCachePath, "logs", "archive");
   const rollup = aggregateSessions(collectArchivedSessionStats(archiveDir));
-  if (rollup.sessionCount > 0) return rollup.totalMisses;
+  const history = aggregateSessions(collectFreshHistorySessionStats(buildCachePath, sinceMs));
+  if (rollup.sessionCount > 0 || history.sessionCount > 0) {
+    // setup-soldr#573: the archive holds only the daemon sessions shut down
+    // by this action, so a cargo run nested in another tool (uv -> PEP 517
+    // backend -> `soldr cargo build`) is missing from it. Every soldr front
+    // door also files its stats under `<build-cache>/history/<id>/`. The two
+    // sources overlap, so take the larger total instead of summing them.
+    return Math.max(rollup.totalMisses, history.totalMisses);
+  }
   return numberStat(readZccacheSessionSummary(buildCachePath).stats, "misses") ?? null;
+}
+
+/**
+ * Stats of every soldr front-door build recorded under
+ * `<build-cache>/history/<id>/last-session-stats.json` after `sinceMs` (the
+ * moment main finished restoring the build cache). History restored from the
+ * cache keeps its old mtimes and is excluded. Without a baseline nothing is
+ * returned, so restored history is never counted as new work.
+ */
+export function collectFreshHistorySessionStats(
+  buildCachePath: string,
+  sinceMs: number | undefined,
+): Array<Record<string, unknown>> {
+  if (sinceMs === undefined || !Number.isFinite(sinceMs)) return [];
+  const historyDir = path.join(buildCachePath, "history");
+  return collectArchivedSessionStats(historyDir, (statsPath) => {
+    try {
+      return fs.statSync(statsPath).mtimeMs >= sinceMs;
+    } catch {
+      return false;
+    }
+  });
 }
 
 /**
@@ -1525,7 +1563,7 @@ export async function run(): Promise<void> {
   const buildSaveStart = Date.now();
   const buildCacheRestored = buildCacheMatched.trim().length > 0;
   const buildDeltaMisses = restoreState.buildCacheEnabled
-    ? computeJobNewCompiles(result.buildCache.path)
+    ? computeJobNewCompiles(result.buildCache.path, readBuildCacheBaselineMs())
     : null;
   const buildSaveGate = decideBuildCacheSave({
     restored: buildCacheRestored,

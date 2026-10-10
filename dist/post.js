@@ -48603,6 +48603,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CLEAN_SAVE_MARKER = void 0;
 exports.hasCleanSaveProof = hasCleanSaveProof;
 exports.planAncestorRestore = planAncestorRestore;
+exports.planLocalAncestorRestore = planLocalAncestorRestore;
 const node_child_process_1 = __nccwpck_require__(31421);
 const ancestor_cache_git_js_1 = __nccwpck_require__(8376);
 const github = __importStar(__nccwpck_require__(93228));
@@ -48781,6 +48782,30 @@ async function planAncestorRestore(options) {
     if (selection.entry && selection.distance === 0)
         writeKey = selection.entry.key;
     return { writeKey, selection, writer, ref, elapsedMs: Date.now() - start, requests, apiMs, rateLimitRemaining };
+}
+/**
+ * setup-soldr#552 on a local runner (act/act2, `ACT=true`). There is no
+ * GitHub cache-list API and no foreign writer: the local cache server holds
+ * only this machine's saves, so the reviewed-writer gate does not apply. Write
+ * under this source's own key, so an exact hit of a stale legacy key can no
+ * longer block saving new workspace units, and restore the newest entry with
+ * the same identity (the action's restore-keys prefix rule). Content-addressed
+ * zccache entries make the choice a speed question only.
+ */
+async function planLocalAncestorRestore(options) {
+    const start = Date.now();
+    const { workspace, identity, env } = options;
+    const positive = (raw) => {
+        const value = Number(raw);
+        return Number.isSafeInteger(value) && value > 0 ? value : 1;
+    };
+    const sha = await git(workspace, ["rev-parse", "HEAD"]);
+    const writer = { identity, sha, runId: positive(env["GITHUB_RUN_ID"]),
+        attempt: positive(env["GITHUB_RUN_ATTEMPT"]), pr: null };
+    return { writeKey: (0, ancestor_cache_js_1.makeAncestorKey)(writer), writer, ref: env["GITHUB_REF"] ?? "",
+        elapsedMs: Date.now() - start, requests: 0, apiMs: 0, rateLimitRemaining: null,
+        restorePrefix: (0, ancestor_cache_js_1.ancestorKeyPrefix)(identity),
+        selection: { entry: null, distance: null, reason: "local-runner: newest same-identity entry", inspected: 0 } };
 }
 
 
@@ -51390,7 +51415,7 @@ function strField(stats, key) {
  * entries are silently skipped so one corrupt file doesn't poison the
  * whole roll-up. Non-object payloads are also skipped.
  */
-function collectArchivedSessionStats(archiveDir) {
+function collectArchivedSessionStats(archiveDir, accept = () => true) {
     if (!archiveDir)
         return [];
     let entries;
@@ -51408,6 +51433,8 @@ function collectArchivedSessionStats(archiveDir) {
         if (!ent.isDirectory())
             continue;
         const statsPath = path.join(archiveDir, ent.name, "last-session-stats.json");
+        if (!accept(statsPath))
+            continue;
         let raw;
         try {
             raw = fs.readFileSync(statsPath, "utf8");
@@ -58779,6 +58806,7 @@ exports.resolveCachePayloadPolicy = resolveCachePayloadPolicy;
 exports.applyCachePayloadOversizeAction = applyCachePayloadOversizeAction;
 exports.classifyCacheSaveReservation = classifyCacheSaveReservation;
 exports.computeJobNewCompiles = computeJobNewCompiles;
+exports.collectFreshHistorySessionStats = collectFreshHistorySessionStats;
 exports.resolveZccacheSessionJournalPath = resolveZccacheSessionJournalPath;
 exports.buildFinalCacheSummary = buildFinalCacheSummary;
 exports.formatFinalCacheSummaryMarkdown = formatFinalCacheSummaryMarkdown;
@@ -59265,6 +59293,14 @@ function readZccacheSessionSummary(buildCachePath) {
         };
     }
 }
+/** Wall clock main recorded after the build-cache restore (setup-soldr#573). */
+function readBuildCacheBaselineMs() {
+    const raw = core.getState("buildCacheBaselineMs").trim();
+    if (raw === "")
+        return undefined;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : undefined;
+}
 /**
  * Job-wide new-compile count for the delta-aware save gates (#230/#214,
  * fix for setup-soldr#543). A job with multiple cargo invocations
@@ -59284,12 +59320,39 @@ function readZccacheSessionSummary(buildCachePath) {
  * support, or archiving unavailable) so single-invocation jobs keep
  * working unchanged.
  */
-function computeJobNewCompiles(buildCachePath) {
+function computeJobNewCompiles(buildCachePath, sinceMs) {
     const archiveDir = path.join(buildCachePath, "logs", "archive");
     const rollup = (0, compile_cache_stats_js_1.aggregateSessions)((0, compile_cache_stats_js_1.collectArchivedSessionStats)(archiveDir));
-    if (rollup.sessionCount > 0)
-        return rollup.totalMisses;
+    const history = (0, compile_cache_stats_js_1.aggregateSessions)(collectFreshHistorySessionStats(buildCachePath, sinceMs));
+    if (rollup.sessionCount > 0 || history.sessionCount > 0) {
+        // setup-soldr#573: the archive holds only the daemon sessions shut down
+        // by this action, so a cargo run nested in another tool (uv -> PEP 517
+        // backend -> `soldr cargo build`) is missing from it. Every soldr front
+        // door also files its stats under `<build-cache>/history/<id>/`. The two
+        // sources overlap, so take the larger total instead of summing them.
+        return Math.max(rollup.totalMisses, history.totalMisses);
+    }
     return numberStat(readZccacheSessionSummary(buildCachePath).stats, "misses") ?? null;
+}
+/**
+ * Stats of every soldr front-door build recorded under
+ * `<build-cache>/history/<id>/last-session-stats.json` after `sinceMs` (the
+ * moment main finished restoring the build cache). History restored from the
+ * cache keeps its old mtimes and is excluded. Without a baseline nothing is
+ * returned, so restored history is never counted as new work.
+ */
+function collectFreshHistorySessionStats(buildCachePath, sinceMs) {
+    if (sinceMs === undefined || !Number.isFinite(sinceMs))
+        return [];
+    const historyDir = path.join(buildCachePath, "history");
+    return (0, compile_cache_stats_js_1.collectArchivedSessionStats)(historyDir, (statsPath) => {
+        try {
+            return fs.statSync(statsPath).mtimeMs >= sinceMs;
+        }
+        catch {
+            return false;
+        }
+    });
 }
 /**
  * Resolve a per-session zccache log file (e.g. `last-session-stats.json` or
@@ -60022,7 +60085,7 @@ async function run() {
     const buildSaveStart = Date.now();
     const buildCacheRestored = buildCacheMatched.trim().length > 0;
     const buildDeltaMisses = restoreState.buildCacheEnabled
-        ? computeJobNewCompiles(result.buildCache.path)
+        ? computeJobNewCompiles(result.buildCache.path, readBuildCacheBaselineMs())
         : null;
     const buildSaveGate = (0, compile_cache_stats_js_1.decideBuildCacheSave)({
         restored: buildCacheRestored,
