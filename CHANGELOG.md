@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- The build-cache save gate counts compiles made by a cargo nested inside
+  another tool (#573). A job whose build runs through uv -> a PEP 517 backend
+  -> `soldr cargo build` (zackees/bosn's `./install`) left those sessions out
+  of `logs/archive/`, so post saw "0 new compile(s)" and skipped the save.
+  Post now also reads every front-door record under
+  `<build-cache>/history/<id>/` written after main restored the cache, and
+  uses the larger of the two totals.
+- `key: auto` / `auto-key: true` works on a local runner (`ACT=true`, #552).
+  It needs no token or reviewed writer there: the build cache is written
+  under the source's own ancestor key, and restore takes the newest entry
+  with the same identity, then the legacy keys. A stale legacy key that
+  exact-hits no longer blocks saving new workspace units. GitHub-hosted
+  behaviour is unchanged.
+
 - The comparison benchmark no longer uses `Swatinem/rust-cache` anywhere
   (CACHE-025 now has no exceptions, zackees/ci.yml maintainer decision
   2026-10-02; reverts the #556 baseline carve-out). The baseline competitor

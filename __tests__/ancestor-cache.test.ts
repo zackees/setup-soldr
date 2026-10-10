@@ -5,7 +5,7 @@ import {
   autoKeyEnabled, dagDistances, makeAncestorKey, parseAncestorKey, selectAncestorCache,
   type AncestorBackend, type AncestorCacheEntry,
 } from "../src/lib/ancestor-cache.js";
-import { CLEAN_SAVE_MARKER, hasCleanSaveProof, planAncestorRestore } from "../src/lib/ancestor-cache-github.js";
+import { CLEAN_SAVE_MARKER, hasCleanSaveProof, planAncestorRestore, planLocalAncestorRestore } from "../src/lib/ancestor-cache-github.js";
 import { readRawInputs } from "../src/lib/raw-inputs.js";
 import { normalizeWorkflowPath, parseTrustedWriters, trustedWriterForRun, type WriterRunMetadata } from "../src/lib/ancestor-cache-trust.js";
 import { admitAncestorRequest, ancestorTelemetry, publishBuildCachePlan } from "../src/lib/ancestor-cache-telemetry.js";
@@ -266,4 +266,28 @@ test("local ancestry still requires merge-base verification", async () => {
     return "";
   });
   await assert.rejects(history.distance(near), /not an ancestor/);
+});
+
+test("#552 local runner writes a per-source key and restores newest same-identity entry without a token", async () => {
+  const { execFileSync } = await import("node:child_process");
+  const fs = await import("node:fs");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const repo = fs.mkdtempSync(path.join(os.tmpdir(), "local-ancestor-"));
+  try {
+    const run = (...args: string[]) => execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();
+    run("init", "-q");
+    run("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "c");
+    const sha = run("rev-parse", "HEAD");
+    const plan = await planLocalAncestorRestore({ workspace: repo, identity,
+      env: { ACT: "true", GITHUB_RUN_ID: "7", GITHUB_RUN_ATTEMPT: "2" } });
+    assert.equal(plan.writeKey, makeAncestorKey({ identity, sha, runId: 7, attempt: 2, pr: null }));
+    assert.equal(plan.restorePrefix, `setup-soldr-ancestor-build-v1-${identity}-`);
+    assert.ok(plan.writeKey.startsWith(plan.restorePrefix!));
+    assert.equal(plan.requests, 0);
+    const fallback = await planLocalAncestorRestore({ workspace: repo, identity, env: {} });
+    assert.equal(parseAncestorKey(fallback.writeKey)?.runId, 1);
+  } finally {
+    fs.rmSync(repo, { recursive: true, force: true });
+  }
 });
