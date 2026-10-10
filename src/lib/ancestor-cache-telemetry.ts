@@ -11,6 +11,9 @@ export interface AncestorRestorePlan {
   rateLimitRemaining: number | null;
   /** Local runner only: restore the newest same-identity entry by prefix. */
   restorePrefix?: string;
+  /** Local runner only: when no same-identity entry exists, restore the
+   * newest entry of the same toolchain/job family (setup-soldr#575). */
+  familyPrefix?: string;
 }
 
 export interface AncestorTelemetry {

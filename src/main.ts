@@ -598,19 +598,28 @@ export async function run(): Promise<void> {
     let selectionTelemetry: AncestorTelemetry | null = null;
     if (autoKeyEnabled(inputs.key, inputs.autoKey)) {
       try {
-        const identity = shortJsonHash({
+        const fine = shortJsonHash({
           legacyKey, mode: result.buildCache.mode,
           profile: result.targetCache.profile, lock: result.targetCache.lockfileHash,
           config: await cargoConfigHash(result.workspace),
           manifests: await workspaceManifestHash(result.workspace),
           targetEnv: targetEnvHash(process.env),
         });
-        const plan = isLocalRunner(process.env)
-          ? await planLocalAncestorRestore({ workspace: result.workspace, identity, env: process.env })
+        const local = isLocalRunner(process.env);
+        // setup-soldr#575: on a local runner a Cargo.lock change (a version
+        // bump) used to leave nothing to restore. Prefix the identity with a
+        // lockfile-free family so the newest same-family store is the fallback.
+        const family = local ? shortJsonHash({
+          jobPrefix: result.buildCache.restoreKeyToolchain, mode: result.buildCache.mode,
+          profile: result.targetCache.profile, targetEnv: targetEnvHash(process.env),
+        }) : undefined;
+        const identity = family === undefined ? fine : `${family}${fine}`;
+        const plan = local
+          ? await planLocalAncestorRestore({ workspace: result.workspace, identity, family, env: process.env })
           : await planAncestorRestore({ workspace: result.workspace, identity,
             token: ctx.githubToken, env: process.env, trustedWriters: inputs.autoKeyTrustedWriters });
         if (plan.restorePrefix) {
-          restoreKeys.unshift(plan.restorePrefix);
+          restoreKeys.unshift(...(plan.familyPrefix ? [plan.restorePrefix, plan.familyPrefix] : [plan.restorePrefix]));
           localAncestorKey = true;
         }
         selectedKey = plan.selection.entry?.key ?? "";

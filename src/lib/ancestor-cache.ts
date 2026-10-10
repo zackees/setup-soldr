@@ -39,6 +39,17 @@ export function ancestorKeyPrefix(identity: string): string {
   return `setup-soldr-ancestor-build-v1-${identity}-`;
 }
 
+/** Local-runner identities are `<family><fine>` (two 16-hex hashes). The
+ * family names what decides whether a store is worth restoring at all
+ * (toolchain, soldr, job suffix, mode, profile, target env); the fine part
+ * adds Cargo.lock, cargo config and manifests. zccache keys every unit by
+ * content, so a same-family store from another lockfile is always safe and
+ * still serves every unchanged unit (setup-soldr#575). */
+export function ancestorFamilyPrefix(family: string): string {
+  if (!/^[0-9a-f]{16}$/.test(family)) throw new Error("invalid ancestor cache family");
+  return `setup-soldr-ancestor-build-v1-${family}`;
+}
+
 export function makeAncestorKey(key: AncestorKey): string {
   const prefix = ancestorKeyPrefix(key.identity);
   if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/.test(key.sha) ||

@@ -48794,7 +48794,10 @@ async function planAncestorRestore(options) {
  */
 async function planLocalAncestorRestore(options) {
     const start = Date.now();
-    const { workspace, identity, env } = options;
+    const { workspace, identity, family, env } = options;
+    if (family !== undefined && !identity.startsWith(family)) {
+        throw new Error("ancestor cache identity must start with its family");
+    }
     const positive = (raw) => {
         const value = Number(raw);
         return Number.isSafeInteger(value) && value > 0 ? value : 1;
@@ -48805,6 +48808,7 @@ async function planLocalAncestorRestore(options) {
     return { writeKey: (0, ancestor_cache_js_1.makeAncestorKey)(writer), writer, ref: env["GITHUB_REF"] ?? "",
         elapsedMs: Date.now() - start, requests: 0, apiMs: 0, rateLimitRemaining: null,
         restorePrefix: (0, ancestor_cache_js_1.ancestorKeyPrefix)(identity),
+        ...(family === undefined ? {} : { familyPrefix: (0, ancestor_cache_js_1.ancestorFamilyPrefix)(family) }),
         selection: { entry: null, distance: null, reason: "local-runner: newest same-identity entry", inspected: 0 } };
 }
 
@@ -48910,6 +48914,7 @@ function normalizeWorkflowPath(path, repository) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.autoKeyEnabled = autoKeyEnabled;
 exports.ancestorKeyPrefix = ancestorKeyPrefix;
+exports.ancestorFamilyPrefix = ancestorFamilyPrefix;
 exports.makeAncestorKey = makeAncestorKey;
 exports.parseAncestorKey = parseAncestorKey;
 exports.selectAncestorCache = selectAncestorCache;
@@ -48922,6 +48927,17 @@ function ancestorKeyPrefix(identity) {
     if (!/^[0-9a-f]{16,64}$/.test(identity))
         throw new Error("invalid ancestor cache identity");
     return `setup-soldr-ancestor-build-v1-${identity}-`;
+}
+/** Local-runner identities are `<family><fine>` (two 16-hex hashes). The
+ * family names what decides whether a store is worth restoring at all
+ * (toolchain, soldr, job suffix, mode, profile, target env); the fine part
+ * adds Cargo.lock, cargo config and manifests. zccache keys every unit by
+ * content, so a same-family store from another lockfile is always safe and
+ * still serves every unchanged unit (setup-soldr#575). */
+function ancestorFamilyPrefix(family) {
+    if (!/^[0-9a-f]{16}$/.test(family))
+        throw new Error("invalid ancestor cache family");
+    return `setup-soldr-ancestor-build-v1-${family}`;
 }
 function makeAncestorKey(key) {
     const prefix = ancestorKeyPrefix(key.identity);
